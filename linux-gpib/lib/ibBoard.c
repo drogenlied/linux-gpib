@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <sys/ioctl.h>
+#include <string.h>
 
 int iberr = 0;
 int ibsta = 0;

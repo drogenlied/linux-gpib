@@ -24,3 +24,7 @@ make sure all necessary cleanups are done on close
 
 implement/fix serial autopolling
 
+get rid of global timeout variable
+
+check that REN is asserted when it should be
+
