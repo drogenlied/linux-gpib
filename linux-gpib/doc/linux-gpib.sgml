@@ -1978,7 +1978,15 @@ volatile int ibsta;
 	Description
 	</title>
 	<para>
+	Causes the board or device specified by the descriptor <parameter>ud</parameter>
+	to go to local mode.  If <parameter>ud</parameter> is a board descriptor,
+	and the board is in local lockout, then the function will fail.
 	</para>
+	<para>
+	Note, if the system controller is asserting the REN line, then devices on
+	the bus will
+	return to remote mode the next time they are addressed by the controller
+	in charge.
 </refsect1>
 <refsect1>
 	<title>
