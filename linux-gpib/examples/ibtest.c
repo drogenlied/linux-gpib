@@ -1,190 +1,174 @@
-/*
- *  This Example demonstrates how normal device functions (with implicit
- *  addressing) are used.
- *
- *  This Example makes use of the SRQ waiting feature
- *  if USE_SRQ is enabled.
- *
- */
+/***************************************************************************
+                                 ibtest.c
+                             -------------------
 
+Example program which uses gpib c library, good for initial test of library.
 
-/* here set your values to enable special features */
+    copyright            : (C) 2002 by Frank Mori Hess
+    email                : fmhess@users.sourceforge.net
+ ***************************************************************************/
 
-
-#define USE_SRQ 0
-#define READS 5
-#define WAIT 1
-
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
 
 #include <stdio.h>
 #include <unistd.h>
 #include <ib.h>
+#include <stdint.h>
 
-char cmd[130];
-char res[1024];
+uint8_t buffer[1024];
 
 void gpiberr(char *msga);
 
-int main(int argc,char **argv){
+enum Action
+{
+	GPIB_WRITE,
+	GPIB_READ,
+};
 
-register int i=0;
-int dev;
-	char result;
+// returns a device descriptor after prompting user for primary address
+int prompt_for_device(void)
+{
+	int ud, pad;
+	const int sad = 0;
+	const int minor = 0;
+	const int send_eoi = 1;
+	const int eos_mode = 0;
+	const int timeout = T1s;
 
-/*
-* Lookup device in the device configuration
-* and initialize board functions
-*
-*/
-
-
-if((dev = ibfind("voltmeter")) < 0)
+	while(1)
 	{
-	gpiberr("ibfind err");
-	exit(1);
+		printf("enter primary address for device [0-30]: ");
+		scanf("%i", &pad);
+		if(pad < 0 || pad > 30)
+			printf("primary address must be between 0 and 30\n");
+		else break;
+	}
+
+	printf("trying to open pad = %i on /dev/gpib%i ...\n", pad, minor);
+	ud = ibdev(minor, pad, sad, timeout, send_eoi, eos_mode);
+	if(ud < 0)
+	{
+		printf("failed to get descriptor\n");
+	}
+
+	return ud;
 }
 
-/* this could be used to set your debugging level
-* If you enable this you will see verbose messages in /usr/adm/messages
-* or with the 'dmesg' command.
-*/
+// asks user what they want to do next
+int prompt_for_action(void)
+{
+	char result;
+	while(1)
+	{
+		printf("You can (r)ead or (w)rite a string to your device (cntl-c to quit):");
+		result = getchar();
+		switch( result )
+		{
+			case 'r':
+			case 'R':
+				return GPIB_READ;
+				break;
+			case 'w':
+			case 'W':
+				return GPIB_WRITE;
+				break;
+			default:
+				break;
+		}
+	}
 
-/*ibSdbg(dev,0x06);*/
-
-/*
-* Send IFC and REN
-* this should not be necessary if configured to be done by ibfind
-*
-*/
-
-
-fprintf(stderr, "\nsend IFC\n");
-if( ibsic(dev) & ERR ){
-	gpiberr("ibsic Err");
-	exit(1);
-
+	return -1;
 }
 
-fprintf(stderr, "set REM\n");
-if( ibsre(dev,1) & ERR ){
-	gpiberr("ibsre err");
-	exit(1);
+int perform_read(int ud)
+{
+	char buffer[1024];
+
+	printf("trying to read from device...\n");
+
+	if( ibrd(ud, buffer, sizeof(buffer) - 1) & ERR)
+	{
+		gpiberr("read error");
+		return -1;
+	}
+	// make sure string is null-terminated
+	buffer[ibcnt] = 0;
+	printf("received string: '%s'\n"
+		"number of bytes read: %i\n", buffer, ibcnt);
+	return 0;
 }
 
+int prompt_for_write(int ud)
+{
+	char buffer[100];
 
-#if WAIT
-getchar();
-#endif
+	printf("enter a string to send to your device: ");
+	fgets(buffer, sizeof(buffer), stdin);
 
-/*
-* Now send device reset
-*
-*/
-
-fprintf(stderr, "clear device..\n");
-if(ibclr(dev) & ERR){
-	gpiberr("clr err");
-	exit(1);
+	printf("sending string: %s\n", buffer);
+	if( ibwrt(ud, buffer, strlen(buffer)) & ERR )
+	{
+		gpiberr("write error");
+		return -1;
+	}
+	return 0;
 }
 
-#if WAIT
-getchar();
-#endif
+int main(int argc,char **argv)
+{
+	int dev;
+	enum Action act;
 
-/*
-* Issue a string to the device
-* for my DVM that means that the string is displayed on the
-* front panel display.
-*/
+	dev = prompt_for_device();
+	if(dev < 0) exit(1);
 
-fprintf(stderr, "send nice string..\n");
-strcpy(cmd,"D2HELLO");
-if( ibwrt(dev,cmd,strlen(cmd)) & ERR ){
-	gpiberr("wrt err");
-	exit(1);
-}
+	/*
+	* send device reset
+	*
+	*/
 
-#if WAIT
-getchar();
-#endif
+	printf("clearing device..\n");
+	if(ibclr(dev) & ERR)
+	{
+		gpiberr("gpib clear error");
+		exit(1);
+	}
 
-/*
-* Send some configuration strings
-* if SRQ waiting is used my device has to be configured
-* to SRQ generation with 'Q1'
-*
-*/
+	act = prompt_for_action();
 
+	switch( act )
+	{
+		case GPIB_WRITE:
+			if(prompt_for_write(dev) < 0)
+				exit(1);
+			break;
+		case GPIB_READ:
+			if(perform_read(dev) < 0)
+				exit(1);
+			break;
+		default:
+			break;
+	}
 
-printf("\nsetup Device");
-#if USE_SRQ
-strcpy(cmd,"D0 L0 Q1 T1 R2 A1 S0");
-#else
-strcpy(cmd,"D1 F1 R2 T1 M77");
-#endif
-if( ibwrt(dev,cmd,strlen(cmd)) & ERR ){
-	gpiberr("wrt err");
-	exit(1);
-}
-
-
-for(i=0;i<READS;i++){
-
-#if USE_SRQ
-
-/*
-* If SRQ waiting is enabled your device will assert the SRQ line
-* whenever a value is reading for reading or another requested
-* action has been done.
-*
-* if you call ibwait() with the RQS flag the device will be serial
-* polled if the SRQ interrupt occurs, if the SRQ is not from the
-* requested the process goes to sleep again.
-*
-*/
-printf("\nWaiting for RQS...");fflush(stdout);
-if( ibwait(dev,TIMO|RQS) & (ERR |TIMO)){
-	gpiberr("ibwait Error");
-	/*exit(1);*/
-} else
-printf("OK GOT IT\n");fflush(stdout);
-
-
-#endif
-
-/*
-* OK, now read the value
-*
-*
-*/
 
 #if 0
-fprintf(stderr, "\nserial poll\n");
-if( ibrsp(dev, &result) & ERR ){
-	gpiberr("ibsic Err");
-	exit(1);
-}
-fprintf(stderr, "result 0x%x\n", result);
+	fprintf(stderr, "\nserial poll\n");
+	if( ibrsp(dev, &result) & ERR )
+	{
+		gpiberr("serial poll error");
+		exit(1);
+	}
+	fprintf(stderr, "result 0x%x\n", result);
 #endif
 
-printf("\nReading Value...");
-
-if( ibrd(dev, res, sizeof(res)) & ERR)
-	{
-	printf("\n Warning, error occured!");
-	gpiberr("read error");
-}
-res[ibcnt]=0;
-printf("\nres='%s' cnt=%d\n",res,ibcnt);
-
-}
-
-if( ibsre(dev,0) & ERR ){      /* unset rem */
-	gpiberr("ibsre err");
-	exit(1);
-}
-
-ibonl(dev,0);
+	ibonl(dev, 0);
 	return 0;
 }
 
@@ -194,55 +178,46 @@ ibonl(dev,0);
 */
 
 
-void gpiberr(char *msg) {
+void gpiberr(char *msg)
+{
 
-printf("%s\n",msg);
+	fprintf(stderr, "%s\n", msg);
 
-printf("ibsta=0x%x  <",ibsta);
+	fprintf(stderr, "ibsta = 0x%x  <", ibsta);
 
-if ( ibsta & ERR )  printf(" ERR");
-if ( ibsta & TIMO ) printf(" TIMO");
-if ( ibsta & END )  printf(" END");
-if ( ibsta & SRQI ) printf(" SRQI");
-/*if ( ibsta & RQS )  printf(" RQS");*/
-if ( ibsta & CMPL ) printf(" CMPL");
-/*if ( ibsta & LOK )  printf(" LOK");*/
-/*if ( ibsta & REM )  printf(" REM");*/
-if ( ibsta & CIC )  printf(" CIC");
-if ( ibsta & ATN )  printf(" ATM");
-if ( ibsta & TACS ) printf(" TACS");
-if ( ibsta & LACS ) printf(" LACS");
-/*if ( ibsta & DTAS ) printf(" DATS");*/
-/*if ( ibsta & DCAS ) printf(" DCTS");*/
+	if ( ibsta & ERR )  fprintf( stderr," ERR");
+	if ( ibsta & TIMO ) fprintf( stderr," TIMO");
+	if ( ibsta & END )  fprintf( stderr," END");
+	if ( ibsta & SRQI ) fprintf( stderr," SRQI");
+	if ( ibsta & CMPL ) fprintf( stderr," CMPL");
+	if ( ibsta & CIC )  fprintf( stderr," CIC");
+	if ( ibsta & ATN )  fprintf( stderr," ATM");
+	if ( ibsta & TACS ) fprintf( stderr," TACS");
+	if ( ibsta & LACS ) fprintf( stderr," LACS");
 
-printf(" >\n");
+	fprintf( stderr," >\n");
 
-printf("iberr= %d", iberr);
-if ( iberr == EDVR) printf(" EDVR <OS Error>\n");
-if ( iberr == ECIC) printf(" ECIC <Not CIC>\n");
-if ( iberr == ENOL) printf(" ENOL <No Listener>\n");
-if ( iberr == EADR) printf(" EADR <Adress Error>\n");
-if ( iberr == EARG) printf(" ECIC <Invalid Argument>\n");
-if ( iberr == ESAC) printf(" ESAC <No Sys Ctrlr>\n");
-if ( iberr == EABO) printf(" EABO <Operation Aborted>\n");
-if ( iberr == ENEB) printf(" ENEB <No Gpib Board>\n");
-if ( iberr == EOIP) printf(" EOIP <Async I/O in prg>\n");
-if ( iberr == ECAP) printf(" ECAP <No Capability>\n");
-if ( iberr == EFSO) printf(" EFSO <File sys. error>\n");
-if ( iberr == EBUS) printf(" EBUS <Command error>\n");
-if ( iberr == ESTB) printf(" ESTB <Status byte lost>\n");
-if ( iberr == ESRQ) printf(" ESRQ <SRQ stuck on>\n");
-if ( iberr == ETAB) printf(" ETAB <Table Overflow>\n");
-if ( iberr == EPAR) printf(" EPAR <Parse Error in Config>\n");
-if ( iberr == ECFG) printf(" ECFG <Can't open Config>\n");
-if ( iberr == ETAB) printf(" ETAB <Device Table Overflow>\n");
-if ( iberr == ENSD) printf(" ENSD <Configuration Error>\n");
+	fprintf( stderr,"iberr= %d", iberr);
+	if ( iberr == EDVR) fprintf( stderr," EDVR <OS Error>\n");
+	if ( iberr == ECIC) fprintf( stderr," ECIC <Not CIC>\n");
+	if ( iberr == ENOL) fprintf( stderr," ENOL <No Listener>\n");
+	if ( iberr == EADR) fprintf( stderr," EADR <Adress Error>\n");
+	if ( iberr == EARG) fprintf( stderr," ECIC <Invalid Argument>\n");
+	if ( iberr == ESAC) fprintf( stderr," ESAC <No Sys Ctrlr>\n");
+	if ( iberr == EABO) fprintf( stderr," EABO <Operation Aborted>\n");
+	if ( iberr == ENEB) fprintf( stderr," ENEB <No Gpib Board>\n");
+	if ( iberr == EOIP) fprintf( stderr," EOIP <Async I/O in prg>\n");
+	if ( iberr == ECAP) fprintf( stderr," ECAP <No Capability>\n");
+	if ( iberr == EFSO) fprintf( stderr," EFSO <File sys. error>\n");
+	if ( iberr == EBUS) fprintf( stderr," EBUS <Command error>\n");
+	if ( iberr == ESTB) fprintf( stderr," ESTB <Status byte lost>\n");
+	if ( iberr == ESRQ) fprintf( stderr," ESRQ <SRQ stuck on>\n");
+	if ( iberr == ETAB) fprintf( stderr," ETAB <Table Overflow>\n");
+	if ( iberr == EPAR) fprintf( stderr," EPAR <Parse Error in Config>\n");
+	if ( iberr == ECFG) fprintf( stderr," ECFG <Can't open Config>\n");
+	if ( iberr == ETAB) fprintf( stderr," ETAB <Device Table Overflow>\n");
+	if ( iberr == ENSD) fprintf( stderr," ENSD <Configuration Error>\n");
 
-
-printf("ibcnt= %d\n", ibcnt );
-printf("\n");
-
-
-/*ibonl(0);*/
+	fprintf(stderr, "ibcnt = %d\n", ibcnt );
 }
 
