@@ -42,8 +42,12 @@ unsigned int inw_wrapper( unsigned long address )
 {
 	return inw( address );
 };
-
-static const int pseudo_irq_period = (HZ + 99) / 100;
+/* this is a function instead of a constant because of Suse
+ * defining HZ to be a function call to get_hz() */
+static inline int pseudo_irq_period(void)
+{
+	return (HZ + 99) / 100;
+}
 
 void pseudo_irq_handler(unsigned long arg)
 {
@@ -53,7 +57,7 @@ void pseudo_irq_handler(unsigned long arg)
 	else
 		printk("gpib: bug! pseudo_irq.handler is NULL\n");
 	if(board->pseudo_irq.active)
-		mod_timer(&board->pseudo_irq.timer, jiffies + pseudo_irq_period);
+		mod_timer(&board->pseudo_irq.timer, jiffies + pseudo_irq_period());
 }
 
 int gpib_request_pseudo_irq(gpib_board_t *board, void (*handler)(int, void *, struct pt_regs *))
@@ -65,7 +69,7 @@ int gpib_request_pseudo_irq(gpib_board_t *board, void (*handler)(int, void *, st
 	}
 
 	board->pseudo_irq.handler = handler;
-	board->pseudo_irq.timer.expires = jiffies + pseudo_irq_period;
+	board->pseudo_irq.timer.expires = jiffies + pseudo_irq_period();
 	board->pseudo_irq.timer.function = pseudo_irq_handler;
 	board->pseudo_irq.timer.data = (unsigned long) board;
 	board->pseudo_irq.active = 1;
