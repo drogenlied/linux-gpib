@@ -292,7 +292,8 @@ enum ibconfig_option
 	IbcUnAddr = 0x1b,	/* device only */
 	IbcHSCableLength = 0x1f,	/* board only */
 	IbcIst = 0x20,	/* board only */
-	IbcRsv = 0x21	/* board only */
+	IbcRsv = 0x21,	/* board only */
+	IbcBNA = 0x200	/* device only */
 };
 
 enum t1_delays
