@@ -36,13 +36,4 @@ extern ibConf_t ibFindConfigs[ FIND_CONFIGS_LENGTH ];
 
 static const int sad_offset = 0x60;
 
-/* deal with stupid pad/sad packing scheme */
-extern __inline__ int padsad(int pad, int sad)
-{
-	int padsad = pad & 0xff;
-	if(sad >= 0 && sad <= gpib_addr_max )
-		padsad |= (sad + sad_offset);
-	return padsad;
-}
-
 #endif	/* _IBP_H */

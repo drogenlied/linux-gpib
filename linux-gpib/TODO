@@ -35,7 +35,12 @@ build static version of library, link examples against it
 possible problems when autopoll happens without remote enable
 
 online ioctl doesn't need to handle asserting IFC as there is a
-seperate ioctl for that
+seperate ioctl for that, also IFC should happen after remote enable.
 
-need to check close down when last process stops using board
+fix ibonl( ud, 1 )
+timeouts on read/write should handle data that was able to be
+received/sent before timeout occurred.
 
+stuck SRQ handling
+
+request immediate rfd holdoff on read/write timeout on boards that support it

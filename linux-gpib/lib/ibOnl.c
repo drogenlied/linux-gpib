@@ -39,6 +39,7 @@ int board_online( ibBoard_t *board, int online )
 	{
 		if( board->is_system_controller )
 		{
+			// remote enable should be asserted before IFC XXX
 			retval = remote_enable( board, 1 );
 			if( retval < 0 ) return retval;
 		}

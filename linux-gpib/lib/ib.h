@@ -23,7 +23,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include <gpib_user.h>
+#include "gpib_user.h"
 
 typedef uint16_t Addr4882_t;
 static const Addr4882_t NOADDR = -1;
@@ -56,6 +56,7 @@ extern void EnableRemote( int boardID, Addr4882_t addressList[] );
 extern void FindLstn( int boardID, Addr4882_t padList[],
 	Addr4882_t resultList[], int maxNumResults );
 extern void FindRQS( int boardID, Addr4882_t addressList[], short *result );
+extern void PassControl( int boardID, Addr4882_t address );
 extern void PPoll( int boardID, short *result );
 extern void PPollConfig( int boardID, Addr4882_t address, int dataLine, int lineSense );
 extern void PPollUnconfig( int boardID, Addr4882_t addressList[] );
@@ -86,36 +87,37 @@ extern long ThreadIbcntl( void );
 extern void Trigger( int boardID, Addr4882_t address );
 extern void TriggerList( int boardID, Addr4882_t addressList[] );
 extern void WaitSRQ( int boardID, short *result );
-extern int ibask(int ud, int option, int *value );
+extern int ibask( int ud, int option, int *value );
 extern int ibbna( int ud, char *board_name );
-extern int ibcac(int ud, int v);
-extern int ibclr(int ud);
+extern int ibcac( int ud, int v );
+extern int ibclr( int ud );
 extern int ibcmd( int ud, void *cmd, long cnt );
 extern int ibcmda( int ud, void *cmd, long cnt );
 extern int ibconfig( int ud, int option, int value );
-extern int ibdev(int minor, int pad, int sad, int timo, int eot, int eos);
+extern int ibdev( int boardID, int pad, int sad, int timo, int eot, int eos );
 extern int ibdma( int ud, int v );
-extern int ibeot(int ud, int v);
-extern int ibeos(int ud, int v);
-extern int ibevent(int ud, short *event);
-extern int ibfind(char *dev);
+extern int ibeot( int ud, int v );
+extern int ibeos( int ud, int v );
+extern int ibevent( int ud, short *event );
+extern int ibfind( const char *dev );
 extern int ibgts(int ud, int v);
 extern int iblines( int ud, short *line_status );
-extern int ibloc(int ud);
-extern int ibonl(int ud, int onl);
-extern int ibpad(int ud, int v);
+extern int ibloc( int ud );
+extern int ibonl( int ud, int onl );
+extern int ibpad( int ud, int v );
+extern int ibpct( int ud );
 extern int ibppc( int ud, int v );
-extern int ibrd(int ud, void *rd, long count);
-extern int ibrpp(int ud, char *ppr);
-extern int ibrsp(int ud, char *spr);
-extern int ibrsv(int ud, int v);
-extern int ibsad(int ud, int v);
-extern int ibsic(int ud);
-extern int ibsre(int ud, int v);
-extern int ibtmo(int ud,int v);
-extern int ibtrg(int ud);
-extern int ibwait(int ud, int mask);
-extern int ibwrt(int ud, void *rd, long count);
+extern int ibrd( int ud, void *rd, long count );
+extern int ibrpp( int ud, char *ppr );
+extern int ibrsp( int ud, char *spr );
+extern int ibrsv( int ud, int v );
+extern int ibsad( int ud, int v );
+extern int ibsic( int ud );
+extern int ibsre( int ud, int v );
+extern int ibtmo( int ud,int v );
+extern int ibtrg( int ud );
+extern int ibwait( int ud, int mask );
+extern int ibwrt( int ud, void *rd, long count );
 
 static __inline__ Addr4882_t MakeAddr( unsigned int pad, unsigned int sad )
 {

@@ -27,7 +27,7 @@ int ppoll_configure_device( ibConf_t *conf, Addr4882_t addressList[],
 	int i;
 	int retval;
 
-	if( interfaceBoard( conf )->is_system_controller == 0 )
+	if( is_system_controller( interfaceBoard( conf ) ) == 0 )
 	{
 		setIberr( ECIC );
 		return -1;

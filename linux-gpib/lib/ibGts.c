@@ -9,7 +9,7 @@ int internal_ibgts( ibConf_t *conf, int shadow_handshake )
 
 	board = interfaceBoard( conf );
 
-	if( board->is_system_controller == 0 )
+	if( is_system_controller( board ) == 0 )
 	{
 		setIberr( ECIC );
 		return -1;

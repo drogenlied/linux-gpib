@@ -89,7 +89,7 @@ void AllSPoll( int boardID, Addr4882_t addressList[], short resultList[] )
 
 	board = interfaceBoard( conf );
 
-	if( board->is_system_controller == 0 )
+	if( is_system_controller( board ) == 0 )
 	{
 		setIberr( ECIC );
 		exit_library( boardID, 1 );
@@ -150,7 +150,7 @@ void FindRQS( int boardID, Addr4882_t addressList[], short *result )
 
 	board = interfaceBoard( conf );
 
-	if( board->is_system_controller == 0 )
+	if( is_system_controller( board ) == 0 )
 	{
 		setIberr( ECIC );
 		exit_library( boardID, 1 );
@@ -214,7 +214,7 @@ void ReadStatusByte( int boardID, Addr4882_t address, short *result )
 
 	board = interfaceBoard( conf );
 
-	if( board->is_system_controller == 0 )
+	if( is_system_controller( board ) == 0 )
 	{
 		setIberr( ECIC );
 		exit_library( boardID, 1 );

@@ -32,7 +32,7 @@ int my_wait( ibConf_t *conf, int mask )
 	board = interfaceBoard( conf );
 
 	if( conf->is_interface == 0 &&
-		board->is_system_controller == 0 )
+		is_system_controller( board ) == 0 )
 	{
 		setIberr( ECIC );
 		return -1;

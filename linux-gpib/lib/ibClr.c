@@ -40,11 +40,6 @@ int ibclr( int ud )
 	}
 
 	i = send_setup_string( conf, cmd );
-	if( i < 0 )
-	{
-		setIberr( EDVR );
-		return exit_library( ud, 1 );
-	}
 	cmd[ i++ ] = SDC;
 
 	//XXX detect no listeners (EBUS) error
@@ -78,7 +73,7 @@ int InternalDevClearList( ibConf_t *conf, Addr4882_t addressList[] )
 
 	board = interfaceBoard( conf );
 
-	if( board->is_system_controller == 0 )
+	if( is_system_controller( board ) == 0 )
 	{
 		setIberr( ECIC );
 		return -1;

@@ -114,7 +114,7 @@ void FindLstn( int boardID, Addr4882_t padList[],
 
 	board = interfaceBoard( conf );
 
-	if( board->is_system_controller == 0 )
+	if( is_system_controller( board ) == 0 )
 	{
 		setIberr( ECIC );
 		exit_library( boardID, 1 );

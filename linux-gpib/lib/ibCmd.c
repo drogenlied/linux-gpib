@@ -74,7 +74,7 @@ int ibcmda( int ud, void *cmd_buffer, long cnt )
 
 	board = interfaceBoard( conf );
 
-	if( board->is_system_controller == 0 )
+	if( is_system_controller( board ) == 0 )
 	{
 		setIberr( ECIC );
 		return exit_library( ud, 1 );
@@ -140,8 +140,7 @@ ssize_t my_ibcmd( ibConf_t *conf, uint8_t *buffer, size_t count)
 
 	board = interfaceBoard( conf );
 
-	// check that interface board is master
-	if( board->is_system_controller == 0 )
+	if( is_system_controller( board ) == 0 )
 	{
 		setIberr( ECIC );
 		return -1;
@@ -206,7 +205,7 @@ unsigned int create_send_setup( const ibBoard_t *board,
 	return i;
 }
 
-int send_setup_string( const ibConf_t *conf,
+unsigned int send_setup_string( const ibConf_t *conf,
 	uint8_t *cmdString )
 {
 	ibBoard_t *board;
@@ -226,7 +225,6 @@ int send_setup( ibConf_t *conf )
 	int retval;
 
 	retval = send_setup_string( conf, cmdString );
-	if( retval < 0 ) return retval;
 
 	if( my_ibcmd( conf, cmdString, retval ) < 0 )
 		return -1;
@@ -256,7 +254,7 @@ int InternalSendSetup( ibConf_t *conf, Addr4882_t addressList[] )
 
 	board = interfaceBoard( conf );
 
-	if( board->is_system_controller == 0 )
+	if( is_system_controller( board ) == 0 )
 	{
 		setIberr( ECIC );
 		return -1;

@@ -20,7 +20,7 @@ int ibcac( int ud, int synchronous )
 
 	board = interfaceBoard( conf );
 
-	if( board->is_system_controller == 0 )
+	if( is_system_controller( board ) == 0 )
 	{
 		setIberr( ECIC );
 		return exit_library( ud, 1 );

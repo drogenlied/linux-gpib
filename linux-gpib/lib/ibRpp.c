@@ -10,7 +10,7 @@ int internal_ibrpp( ibConf_t *conf, char *result )
 	
 	board = interfaceBoard( conf );
 
-	if( board->is_system_controller == 0 )
+	if( is_system_controller( board ) == 0 )
 	{
 		setIberr( ENEB );
 		return -1;

@@ -132,7 +132,7 @@ int InternalRcvRespMsg( ibConf_t *conf, void *buffer, long count, int terminatio
 
 	board = interfaceBoard( conf );
 
-	if( board->is_system_controller == 0 )
+	if( is_system_controller( board ) == 0 )
 	{
 		setIberr( ECIC );
 		return -1;

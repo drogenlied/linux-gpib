@@ -18,8 +18,6 @@
 #ifndef _IB_INTERNAL_H
 #define _IB_INTERNAL_H
 
-#include <autoconf.h>
-
 #include "ib.h"
 #include "ibP.h"
 #include "gpib_types.h"
@@ -49,9 +47,9 @@ extern void ibPutMsg (char *format,...);
 extern void ibPutErrlog(int ud,char *routine);
 extern int ibParseConfigFile( void );
 extern int ibGetDescriptor(ibConf_t conf);
-extern int ibFindDevIndex(char *name);
+extern int ibFindDevIndex( const char *name );
 extern ssize_t my_ibcmd( ibConf_t *conf, uint8_t *buffer, size_t length);
-extern int send_setup_string( const ibConf_t *conf, uint8_t *cmdString );
+extern unsigned int send_setup_string( const ibConf_t *conf, uint8_t *cmdString );
 extern unsigned int create_send_setup( const ibBoard_t *board,
 	Addr4882_t addressList[], uint8_t *cmdString );
 extern int send_setup( ibConf_t *conf );
@@ -93,6 +91,7 @@ extern int config_read_eos( ibBoard_t *board, int use_eos_char,
 extern void sync_globals( void );
 extern int create_autopoll_thread( ibBoard_t *board );
 extern int destroy_autopoll_thread( ibBoard_t *board );
+extern int is_system_controller( const ibBoard_t *board );
 
 extern int internal_ibpad( ibConf_t *conf, unsigned int address );
 extern int internal_ibsad( ibConf_t *conf, int address );
@@ -105,6 +104,7 @@ extern int internal_iblines( ibConf_t *conf, short *line_status );
 extern int internal_ibgts( ibConf_t *conf, int shadow_handshake );
 extern int internal_ibsic( ibConf_t *conf );
 extern int InternalDevClearList( ibConf_t *conf, Addr4882_t addressList[] );
+extern int InternalReceiveSetup( ibConf_t *conf, Addr4882_t address );
 extern int InternalSendSetup( ibConf_t *conf, Addr4882_t addressList[] );
 extern int InternalSendList( ibConf_t *conf, Addr4882_t addressList[],
 	void *buffer, long count, int eotmode );

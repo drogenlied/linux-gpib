@@ -158,7 +158,9 @@ int ibask( int ud, int option, int *value )
 				return exit_library( ud, 0 );
 				break;
 			case IbaSC:
-				*value = board->is_system_controller;
+				retval = is_system_controller( board );
+				if( retval < 0 ) return exit_library( ud, 1 );
+				*value = retval;
 				return exit_library( ud, 0 );
 				break;
 			case IbaSRE:

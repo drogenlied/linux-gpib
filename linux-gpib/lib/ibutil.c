@@ -151,8 +151,7 @@ int ibGetDescriptor(ibConf_t p)
 	return ib_ndev;
 }
 
-/**********************************************************************/
-int ibFindDevIndex(char *name)
+int ibFindDevIndex( const char *name )
 {
 	int i;
 
@@ -505,7 +504,7 @@ Addr4882_t packAddress( unsigned int pad, int sad )
 	address = 0;
 	address |= pad & 0xff;
 	if( sad >= 0 )
-		address |= ( ( sad | 0x60 ) << 8 ) & 0xff00;
+		address |= ( ( sad | sad_offset ) << 8 ) & 0xff00;
 
 	return address;
 }
@@ -515,8 +514,12 @@ int addressIsValid( Addr4882_t address )
 	if( address == NOADDR ) return 1;
 
 	if( extractPAD( address ) == ADDR_INVALID ||
-		extractSAD( address ) == ADDR_INVALID ) return 0;
-
+		extractSAD( address ) == ADDR_INVALID )
+	{
+		setIberr( EARG );
+		return 0;
+	}
+	
 	return 1;
 }
 
@@ -530,7 +533,6 @@ int addressListIsValid( Addr4882_t addressList[] )
 	{
 		if( addressIsValid( addressList[ i ] ) == 0 )
 		{
-			setIberr( EARG );
 			setIbcnt( i );
 			return 0;
 		}
@@ -553,4 +555,24 @@ unsigned int numAddresses( Addr4882_t addressList[] )
 	}
 
 	return count;
+}
+
+int is_system_controller( const ibBoard_t *board )
+{
+	int retval;
+	int board_status;
+
+	retval = ioctl( board->fileno, IBSTATUS, &board_status );
+	if( retval < 0 )
+	{
+		setIberr( EDVR );
+		setIbcnt( errno );
+		fprintf( stderr, "libgpib: error in is_system_controller()\n");
+		return -1;
+	}
+
+	if( board_status & CIC )
+		return 1;
+
+	return 0;
 }

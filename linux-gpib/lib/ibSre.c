@@ -7,7 +7,7 @@ int remote_enable( const ibBoard_t *board, int enable )
 {
 	int retval;
 
-	if( board->is_system_controller == 0 )
+	if( is_system_controller( board ) == 0 )
 	{
 		// XXX we don't distinguish ECIC and ESAC?
 		setIberr( ESAC );
@@ -84,7 +84,7 @@ int InternalEnableRemote( ibConf_t *conf, Addr4882_t addressList[] )
 
 	board = interfaceBoard( conf );
 
-	if( board->is_system_controller == 0 )
+	if( is_system_controller( board ) == 0 )
 	{
 		setIberr( ECIC );
 		return -1;

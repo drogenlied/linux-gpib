@@ -1,10 +1,10 @@
 
 #include "ib_internal.h"
-#include <ibP.h>
+#include "ibP.h"
 #include <string.h>
 #include <stdlib.h>
 
-int ibfind(char *dev)
+int ibfind( const char *dev )
 {
 	int index;
 	int retval;
@@ -20,7 +20,7 @@ int ibfind(char *dev)
 		return -1;
 	}
 
-	if((index = ibFindDevIndex(dev)) < 0)
+	if( ( index = ibFindDevIndex( dev ) ) < 0 )
 	{ /* find desired entry */
 		setIberr( EDVR );
 		setIbsta( ERR );

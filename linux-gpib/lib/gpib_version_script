@@ -9,6 +9,7 @@ GPIB_DUMMY_VERSION {
 		EnableRemote;
 		FindLstn;
 		FindRQS;
+		PassControl;
 		PPoll;
 		PPollConfig;
 		PPollUnconfig;
@@ -54,6 +55,7 @@ GPIB_DUMMY_VERSION {
 		ibloc;
 		ibonl;
 		ibpad;
+		ibpct;
 		ibppc;
 		ibrd;
 		ibrpp;

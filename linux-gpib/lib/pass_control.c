@@ -1,8 +1,8 @@
 /***************************************************************************
-                          lib/ibbna.c
+                          lib/pass_control.c
                              -------------------
 
-    copyright            : (C) 2002 by Frank Mori Hess
+	copyright            : (C) 2002 by Frank Mori Hess
     email                : fmhess@users.sourceforge.net
  ***************************************************************************/
 
@@ -16,15 +16,30 @@
  ***************************************************************************/
 
 #include "ib_internal.h"
-#include <ibP.h>
+#include "ibP.h"
 
-int ibbna( int ud, char *board_name )
+int my_pass_control( ibConf_t *conf, unsigned int pad, int sad )
 {
-	ibConf_t *conf, *board_conf;
+	uint8_t cmd;
+	int retval;
+	int i;
+
+	i = InternalReceiveSetup( conf, packAddress( pad, sad ) );
+
+	cmd = TCT;
+	retval = my_ibcmd( conf, &cmd, 1 );
+	if( retval < 0 ) return retval;
+
+	retval = internal_ibgts( conf, 0 );
+
+	return 0;
+}
+
+int ibpct( int ud )
+{
+	ibConf_t *conf;
 	ibBoard_t *board;
 	int retval;
-	int find_index;
-	int old_board_index;
 
 	conf = enter_library( ud );
 	if( conf == NULL )
@@ -38,48 +53,47 @@ int ibbna( int ud, char *board_name )
 		return exit_library( ud, 1 );
 	}
 
-	retval = close_gpib_device( conf );
+	retval = my_pass_control( conf, conf->pad, conf->sad );
 	if( retval < 0 )
-	{
-		setIberr( EDVR );
 		return exit_library( ud, 1 );
-	}
 
-	if( ( find_index = ibFindDevIndex( board_name ) ) < 0 )
-	{
-		setIberr( EARG );
-		return exit_library( ud, 1 );
-	}
-
-	board_conf = &ibFindConfigs[ find_index ];
-	if( board_conf->is_interface == 0 )
-	{
-		setIberr( EARG );
-		return exit_library( ud, 1 );
-	}
-	if( is_system_controller( interfaceBoard( board_conf ) ) == 0 )
-	{
-		setIberr( ECIC );
-		return exit_library( ud, 1 );
-	}
-
-	old_board_index = conf->board;
-	conf->board = board_conf->board;
-
-	if( ibBoardOpen( interfaceBoard( conf ) ) < 0 )
-	{
-		setIberr( EDVR );
-		return exit_library( ud, 1 );
-	}
-
-	retval = open_gpib_device( conf );
-	if( retval < 0 )
-	{
-		setIberr( EDVR );
-		return exit_library( ud, 1 );
-	}
-
-	setIberr( old_board_index );
-	
 	return exit_library( ud, 0 );
+}
+
+void PassControl( int boardID, Addr4882_t address )
+{
+	ibConf_t *conf;
+	ibBoard_t *board;
+	int retval;
+
+	conf = enter_library( boardID );
+	if( conf == NULL )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	if( addressIsValid( address ) == 0 )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	board = interfaceBoard( conf );
+
+	if( conf->is_interface == 0 )
+	{
+		setIberr( EARG );
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	retval = my_pass_control( conf, extractPAD( address ), extractSAD( address ) );
+	if( retval < 0 )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	exit_library( boardID, 0 );
 }

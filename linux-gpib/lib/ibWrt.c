@@ -240,7 +240,7 @@ int InternalSendList( ibConf_t *conf, Addr4882_t addressList[],
 
 	board = interfaceBoard( conf );
 
-	if( board->is_system_controller == 0 )
+	if( is_system_controller( board ) == 0 )
 	{
 		setIberr( ECIC );
 		return -1;

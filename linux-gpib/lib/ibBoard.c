@@ -195,7 +195,7 @@ int InternalResetSys( ibConf_t *conf, Addr4882_t addressList[] )
 		return -1;
 	}
 
-	if( board->is_system_controller == 0 )
+	if( is_system_controller( board ) == 0 )
 	{
 		setIberr( ECIC );
 		return -1;

@@ -65,6 +65,7 @@ int iboffline( gpib_board_t *board, gpib_file_private_t *priv )
 	{
 		board->interface->detach( board );
 		gpib_deallocate_board( board );
+		GPIB_DPRINTK( "gpib: board offline\n" );
 	}
 	__MOD_DEC_USE_COUNT( board->interface->provider_module );
 	board->online--;
