@@ -43,5 +43,8 @@
 #define IBAPE           (APIO+2)
 
 
-
+typedef struct
+{
+	char name[100];
+} board_type_ioctl_t;
 

@@ -58,38 +58,12 @@ $(LIBNAME):   $(OBJS)
 	ar cr $(LIBNAME) $(OBJS)
 	ranlib $(LIBNAME)
 
-ibConfLex.c:  ibConfLex.l y.tab.h
-	$(LEX) -o$@ $<
-	sed s/yy/gpib_yy/g ibConfLex.c > dummy.c
-	mv dummy.c ibConfLex.c
-	sed s/gpib_gpib/gpib/g ibConfLex.c > dummy.c
-	mv dummy.c ibConfLex.c
-	sed s/gpib_yywrap/yywrap/g ibConfLex.c > dummy.c
-	mv dummy.c ibConfLex.c
-	sed s/YY/GPIB_YY/g ibConfLex.c > dummy.c
-	mv dummy.c ibConfLex.c
-	sed s/GPIB_GPIB/GPIB/g ibConfLex.c > dummy.c
-	mv dummy.c ibConfLex.c
+ibConfLex.c:  ibConfLex.l ibConfYacc.h 
+	flex -Pgpib_yy -o$@ $<
 	
 
-ibConfYacc.c + y.tab.h: ibConfYacc.y
-	$(YACC) $<
-	sed s/yy/gpib_yy/g y.tab.c > ibConfYacc.c
-	sed s/gpib_gpib/gpib/g ibConfYacc.c > dummy.c
-	mv dummy.c ibConfYacc.c
-	sed s/YY/GPIB_YY/g ibConfYacc.c > dummy.c
-	mv dummy.c ibConfYacc.c
-	sed s/GPIB_GPIB/GPIB/g ibConfYacc.c > dummy.c
-	mv dummy.c ibConfYacc.c
-	rm -f y.tab.c
-	sed s/yy/gpib_yy/g y.tab.h > dummy.h
-	mv dummy.h y.tab.h
-	sed s/gpib_gpib/gpib/g y.tab.h > dummy.h
-	mv dummy.h y.tab.h
-	sed s/YY/GPIB_YY/g y.tab.h > dummy.h
-	mv dummy.h y.tab.h
-	sed s/GPIB_GPIB/GPIB/g y.tab.h > dummy.h
-	mv dummy.h y.tab.h
+ibConfYacc.c + ibConfYacc.h: ibConfYacc.y
+	bison -d -y -p gpib_yy -o ibConfYacc.c ibConfYacc.y
 
 
 ibProto.h: $(SRCS)
@@ -112,7 +86,7 @@ ibProto.h: $(SRCS)
 
 
 clean: 
-	$(RM) $(EXP_INC) *.o ibConfYacc.c ibConfLex.c *.a .depend y.tab.h ibProto.h
+	$(RM) $(EXP_INC) *.o ibConfYacc.c ibConfLex.c *.a .depend ibConfYacc.h ibProto.h
 
 
 realclean : clean

@@ -34,7 +34,7 @@ typedef struct ibConfStruct {
 /*---------------------------------------------------------------------- */
 
 typedef struct ibBoardStruct {
-
+	char name[31];	// name (model) of interface board
   int  padsad;                        /* controller's device address      */
   int  timeout;                       /* timeout                          */
 

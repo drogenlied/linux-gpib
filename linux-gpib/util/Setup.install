@@ -21,7 +21,8 @@ if [ ! -r /etc/gpib.conf ]; then
         if [ $? = 0 ]; then
                 cat ./templates/gpib.conf | sed -e "s/?base?/$IBBASE/g" \
                         -e "s/?irq?/$IBIRQ/g" \
-                        -e "s/?dma?/$IBDMA/g" >/etc/gpib.conf
+                        -e "s/?dma?/$IBDMA/g" \
+			-e "s/?board_type?/$BOARDTYPE/g" > /etc/gpib.conf
         fi
 fi
 

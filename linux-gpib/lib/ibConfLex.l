@@ -1,7 +1,10 @@
+%option noyywrap
 
 %{
 
-#include "y.tab.h"
+#include "ibConfYacc.h"
+YYLTYPE yylloc;
+
 %}
 
 %x COMMENT
@@ -10,9 +13,11 @@ FNAME [A-Za-z/_+-][A-Za-z0-9/_():.+-]*
 NETD  [A-Za-z*_+-][A-Za-z0-9*_():.+-]*
 %%
 
+<COMMENT,INITIAL>\n {yylloc.first_line++;}
+
 "/*"		 BEGIN(COMMENT);
-<COMMENT>[^*]*
-<COMMENT>"*"+[^*/]*
+<COMMENT>[^*\n]*
+<COMMENT>"*"+[^*/i\n]*
 <COMMENT>"*"+"/" BEGIN(INITIAL);
 
 interface 	     { return (T_INTERFACE);}
@@ -78,18 +83,13 @@ none         { gpib_yylval.ival=0 ; return(T_TIVAL);}
 0x[0-9a-fA-F]+ { sscanf(gpib_yytext,"0x%x",&gpib_yylval.ival);
 	  return( T_NUMBER );}
 
-
 {FNAME}|{NETD} { gpib_yylval.sval=gpib_yytext; /*printf("<%s>\n",gpib_yytext);*/
 		       return (T_STRING);}
 
-
-
-
-[ \t\n]
+[ \t]
 
 .	{ return(gpib_yytext[0]);}
 
 
 %%
-
 

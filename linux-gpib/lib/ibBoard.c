@@ -45,6 +45,8 @@ int fd;
 
 if( ibBoard[bd].fileno == 0 ){
 
+printf("%s\n", ibBoard[bd].device);
+
   if( ( fd = open( ibBoard[bd].device, O_RDWR | flags )) < 0 ){
 
     ibsta =  ERR;

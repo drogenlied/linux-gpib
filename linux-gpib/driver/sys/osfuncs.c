@@ -86,13 +86,15 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
 		return -ENODEV;
 	}
 	device = &device_array[minor];
-	if(device->interface == NULL && cmd != CFCBOARDTYPE)
+	if(cmd == CFCBOARDTYPE)
+		return board_type_ioctl(minor, arg);
+	if(device->interface == NULL)
 	{
 		printk("gpib: no device configured on /dev/gpib%i\n", minor);
 		return -ENODEV;
 	}
 
-//printk("ioclt %i\n", cmd);
+printk("ioctl %i\n", cmd);
 
 	ibargp = (ibarg_t *) &m_ibarg;
 
@@ -398,23 +400,6 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
 		case CFCDMA:
 			osChngDMA(device, ibargp->ib_arg);
 			break;
-		case CFCDMABUFFER:
-			if (ibargp->ib_arg > MAX_DMA_SIZE)
-			{
-				GIVE_UP(-EINVAL);
-			}
-			if ( ibargp->ib_arg > gpib_dma_size )
-			{
-				gpib_dma_size = ibargp->ib_arg;
-				osMemInit();
-				printk("-- DMA Buffer now %d Bytes\n",gpib_dma_size);
-			}else
-			{
-				printk("-- DMA Buffer Not Changed \n");
-			}
-			break;
-		case CFCBOARDTYPE:
-			return board_type_ioctl(minor, arg);
 		default:
 			retval = -ENOTTY;
 			break;
@@ -441,7 +426,15 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
 int board_type_ioctl(unsigned int minor, unsigned long arg)
 {
 	struct list_head *list_ptr;
-	char *board_name = (char*) arg;
+	board_type_ioctl_t board;
+	int retval;
+
+	retval = copy_from_user(&board, (void*)arg, sizeof(board_type_ioctl_t));
+	if(retval)
+	{
+		return retval;
+	}
+printk("board name is %s\n", board.name);
 
 	device_array[minor].private_data = NULL;
 	device_array[minor].status = 0;
@@ -457,7 +450,7 @@ int board_type_ioctl(unsigned int minor, unsigned long arg)
 		gpib_interface_t *interface;
 
 		interface = list_entry(list_ptr, gpib_interface_t, list);
-		if(strcmp(interface->name, board_name) == 0)
+		if(strcmp(interface->name, board.name) == 0)
 		{
 			device_array[minor].interface = interface;
 			return 0;
@@ -466,25 +459,6 @@ int board_type_ioctl(unsigned int minor, unsigned long arg)
 
 	return -EINVAL;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
