@@ -175,7 +175,7 @@ void cb7210_free_private(gpib_board_t *board)
 }
 
 // generic part of attach functions shared by all cb7210 boards
-int cb_generic_attach(gpib_board_t *board)
+int cb7210_generic_attach(gpib_board_t *board)
 {
 	cb7210_private_t *cb_priv;
 	nec7210_private_t *nec_priv;
@@ -220,7 +220,7 @@ int cb_pci_attach(gpib_board_t *board)
 	int bits;
 	int retval;
 
-	retval = cb_generic_attach(board);
+	retval = cb7210_generic_attach(board);
 	if(retval) return retval;
 
 	cb_priv = board->private_data;
@@ -330,7 +330,7 @@ int cb_isa_attach(gpib_board_t *board)
 	unsigned int irq_bits;
 	int retval;
 
-	retval = cb_generic_attach(board);
+	retval = cb7210_generic_attach(board);
 	if(retval) return retval;
 
 	if(request_region(board->ibbase, cb7210_iosize, "isa-gpib"));

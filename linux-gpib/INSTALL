@@ -59,11 +59,11 @@ o) Unpacking the Software:
 
 o) Installing additional Software:
 	If you want to use TCL language support for the GPIB system
-	you have to get the newest TCL/Tk version and install it on your system.
+	you have to get the newest TCL version and install it on your system.
 	The GPIB module can be loaded with the dynamic link facility
 	using
 
-	load <path>/libgpib.so
+	load <path>/libgpib-tcl.so
 
 
 B) Installing Linux-GPIB
