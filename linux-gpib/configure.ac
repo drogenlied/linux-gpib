@@ -46,7 +46,7 @@ if test $LINUX_SRCDIR == no ; then
 	AC_MSG_ERROR([A Linux kernel source directory is required to compile driver modules.  Use --with-linux-srcdir=DIR.])
 fi
 AC_SUBST(LINUX_SRCDIR)
-[echo -n checking Linux kernel directory... ]
+AC_MSG_CHECKING([Linux kernel directory])
 if [[ ! -d "$LINUX_SRCDIR" ]];then
 	AC_MSG_ERROR([Linux kernel directory $LINUX_SRCDIR does not exist.  Specify using --with-linux-srcdir=DIR.])
 fi
@@ -58,14 +58,14 @@ fi
 if [[ ! -f "$LINUX_SRCDIR/.hdepend" ]];then
 	AC_MSG_ERROR([You need to run \'make dep\' on the kernel source before continuing.])
 fi
-[echo \ ok]
+AC_MSG_RESULT([ok])
 dnl get compile flags for modules from linux kernel source tree
-[echo -n checking Linux kernel compile flags... ]
+AC_MSG_CHECKING([Linux kernel compile flags])
 (cd util/linux_flags/ && make --quiet LINUXDIR=$LINUX_SRCDIR)
 if [[ $? != 0 ]]; then
 	AC_MSG_ERROR([Failed to get compile flags from Linux kernel directory.])
 fi
-[echo \ ok]
+AC_MSG_RESULT([ok])
 
 dnl Checks for programs.
 AC_PROG_INSTALL
@@ -75,7 +75,7 @@ AC_PROG_YACC
 AC_PROG_LIBTOOL
 AC_PATH_PROG(JW_PATH, jw, no)
 if test $JW_PATH == no ; then
-  AC_MSG_WARN([docbook-tools (jw) not found, disabling documentation])
+  AC_MSG_NOTICE([docbook-tools (jw) not found, disabling documentation])
 fi
 AM_PATH_PYTHON
 AC_PATH_PROG([PERL], [perl], [no], [])
