@@ -211,8 +211,11 @@ int init_module(void)
 	osMemInit();
 
 	init_waitqueue_head(&driver->wait);
-
+#if defined(CBI_PCMCIA)
+	return pcmcia_init_module();
+#else
 	return 0;
+#endif
 }
 
 void cleanup_module(void)
@@ -225,6 +228,9 @@ void cleanup_module(void)
 	} else {
 		printk("gpib: succesfully removed \n");
 	}
+#if defined(CBI_PCMCIA)
+	pcmcia_cleanup_module();
+#endif
 }
 
 

@@ -26,7 +26,7 @@
 
 void pc2_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
-	gpib_driver_t *driver = (gpib_driver_t*) arg;
+	gpib_driver_t *driver = arg;
 	pc2_private_t *priv = driver->private_data;
 
 	nec7210_interrupt(driver, &priv->nec7210_priv);
@@ -34,7 +34,7 @@ void pc2_interrupt(int irq, void *arg, struct pt_regs *registerp)
 
 void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
-	gpib_driver_t *driver = (gpib_driver_t*) arg;
+	gpib_driver_t *driver = arg;
 	pc2_private_t *priv = driver->private_data;
 
 	nec7210_interrupt(driver, &priv->nec7210_priv);
@@ -46,7 +46,7 @@ void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp)
 void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp )
 {
 	int bits, hs_status;
-	gpib_driver_t *driver = (gpib_driver_t*) arg;
+	gpib_driver_t *driver = arg;
 	cb7210_private_t *priv = driver->private_data;
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 
@@ -63,6 +63,15 @@ void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp )
 			HS_CLR_EMPTY_INT | HS_CLR_HF_INT, nec_priv->iobase + HS_MODE);
 		printk("gpib: cbi488 interrupt? 0x%x\n", hs_status);
 	}
+
+	nec7210_interrupt(driver, nec_priv);
+}
+
+void cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
+{
+	gpib_driver_t *driver = arg;
+	cb7210_private_t *priv = driver->private_data;
+	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 
 	nec7210_interrupt(driver, nec_priv);
 }

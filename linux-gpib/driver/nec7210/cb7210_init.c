@@ -107,7 +107,6 @@ int cb7210_serial_poll_response(gpib_driver_t *driver, uint8_t status)
 	return nec7210_serial_poll_response(driver, &priv->nec7210_priv, status);
 }
 
-
 gpib_driver_t cb_pci_driver =
 {
 	name: "nec7210",
@@ -130,7 +129,7 @@ gpib_driver_t cb_pci_driver =
 	serial_poll_response: cb7210_serial_poll_response,
 };
 
-static int allocate_private(gpib_driver_t *driver)
+int cb7210_allocate_private(gpib_driver_t *driver)
 {
 	driver->private_data = kmalloc(sizeof(cb7210_private_t), GFP_KERNEL);
 	if(driver->private_data == NULL)
@@ -139,7 +138,7 @@ static int allocate_private(gpib_driver_t *driver)
 	return 0;
 }
 
-static void free_private(gpib_driver_t *driver)
+void cb7210_free_private(gpib_driver_t *driver)
 {
 	if(driver->private_data)
 	{
@@ -157,13 +156,13 @@ int cb_pci_attach(gpib_driver_t *driver)
 
 	driver->status = 0;
 
-	if(allocate_private(driver))
+	if(cb7210_allocate_private(driver))
 		return -ENOMEM;
 	cb_priv = driver->private_data;
 	nec_priv = &cb_priv->nec7210_priv;
 	nec_priv->read_byte = ioport_read_byte;
 	nec_priv->write_byte = ioport_write_byte;
-	nec_priv->offset = cb_pci_reg_offset;
+	nec_priv->offset = cb7210_reg_offset;
 
 	// find board
 	cb_priv->pci_device = pci_find_device(PCI_VENDOR_ID_CBOARDS, PCI_DEVICE_ID_CBOARDS_PCI_GPIB, NULL);
@@ -241,6 +240,6 @@ void cb_pci_detach(gpib_driver_t *driver)
 			pci_release_regions(cb_priv->pci_device);
 		}
 	}
-	free_private(driver);
+	cb7210_free_private(driver);
 }
 

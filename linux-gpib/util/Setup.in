@@ -182,7 +182,7 @@ set_svar BOARD_TYPE $REPLY
 	       cbi_pcmcia) echo "#define NIPCII " >>../driver/include/gpib_board.h 
 			echo "#define CBI_4882 " >>../driver/include/gpib_board.h 
 			echo "#define CBI_PCMCIA " >>../driver/include/gpib_board.h 
-         	       ln -s ./cbi4882 ../driver/board
+         	       ln -s ./nec7210 ../driver/board
                         IBBASE=0x200
 		        IBIRQ=5
 		        IBDMA=1

@@ -40,6 +40,11 @@ gpib_driver_t *driver = &pc2a_driver;
 #warning using pc2a driver
 #endif
 
+#ifdef CBI_PCMCIA
+gpib_driver_t *driver = &cb_pcmcia_driver;
+#warning using cb_pcmcia driver
+#endif
+
 #ifdef CBI_PCI
 gpib_driver_t *driver = &cb_pci_driver;
 #warning using cb_pci driver
@@ -137,10 +142,6 @@ int board_attach(void)
 	ioports_allocated = iomem_allocated = irq_allocated =
 		dma_allocated = pcmcia_initialized = 0;
 
-#ifdef INES_PCMCIA
-	pcmcia_init_module();
-	pcmcia_initialized = 1;
-#endif
 #if defined(MODBUS_PCI) || defined(INES_PCI)
    bd_PCIInfo();
 #endif
@@ -264,13 +265,6 @@ void board_detach(void)
 		iounmap((void*) remapped_ibbase);
 		release_mem_region(ibbase, iomem_size);
 		iomem_allocated = 0;
-	}
-	if(pcmcia_initialized)
-	{
-#ifdef INES_PCMCIA
-		pcmcia_cleanup_module();
-#endif
-		pcmcia_initialized = 0;
 	}
 }
 

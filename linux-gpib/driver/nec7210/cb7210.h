@@ -37,11 +37,40 @@ typedef struct
 	unsigned int irq;
 } cb7210_private_t;
 
-// interrupt service routine
+// drivers
+extern gpib_driver_t cb_pci_driver;
+extern gpib_driver_t cb_pcmcia_driver;
+
+// interrupt service routines
 void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp);
+void cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp);
+
+// interface functions
+ssize_t cb7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int *end);
+ssize_t cb7210_write(gpib_driver_t *driver, uint8_t *buffer, size_t length, int send_eoi);
+ssize_t cb7210_command(gpib_driver_t *driver, uint8_t *buffer, size_t length);
+int cb7210_take_control(gpib_driver_t *driver, int synchronous);
+int cb7210_go_to_standby(gpib_driver_t *driver);
+void cb7210_interface_clear(gpib_driver_t *driver, int assert);
+void cb7210_remote_enable(gpib_driver_t *driver, int enable);
+void cb7210_enable_eos(gpib_driver_t *driver, uint8_t eos_byte, int compare_8_bits);
+void cb7210_disable_eos(gpib_driver_t *driver);
+unsigned int cb7210_update_status(gpib_driver_t *driver);
+void cb7210_primary_address(gpib_driver_t *driver, unsigned int address);
+void cb7210_secondary_address(gpib_driver_t *driver, unsigned int address, int enable);
+int cb7210_parallel_poll(gpib_driver_t *driver, uint8_t *result);
+int cb7210_serial_poll_response(gpib_driver_t *driver, uint8_t status);
+
+// utility functions
+int cb7210_allocate_private(gpib_driver_t *driver);
+void cb7210_free_private(gpib_driver_t *driver);
+
+// pcmcia init/cleanup
+int pcmcia_init_module(void);
+void pcmcia_cleanup_module(void);
 
 // pci-gpib register offset
-static const int cb_pci_reg_offset = 1;
+static const int cb7210_reg_offset = 1;
 
 // cb7210 specific registers and bits
 

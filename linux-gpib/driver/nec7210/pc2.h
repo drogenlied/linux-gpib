@@ -26,6 +26,10 @@ typedef struct
 	unsigned int irq;
 } pc2_private_t;
 
+// drivers
+extern gpib_driver_t pc2_driver;
+extern gpib_driver_t pc2a_driver;
+
 // pc2 uses 8 consecutive io addresses
 static const int pc2_iosize = 8;
 
