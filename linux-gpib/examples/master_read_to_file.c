@@ -83,7 +83,7 @@ int main( int argc, char *argv[] )
 	status = ibrd( dev, buffer, buffer_length );
 	if( status & ERR )
 	{
-		fprintf( stderr, "ibwrtf() failed\n" );
+		fprintf( stderr, "ibrd() failed\n" );
 		fprintf( stderr, "%s\n", gpib_error_string( ThreadIberr() ) );
 		return -1;
 	}
