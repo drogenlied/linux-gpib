@@ -206,7 +206,7 @@ int main( int argc, char *argv[] )
 
 	board = &boards[ options.minor ];
 
-	asprintf( &devicefile, "/dev/gpib%i\n", options.minor );
+	asprintf( &devicefile, "/dev/gpib%i", options.minor );
 	if( devicefile == NULL )
 	{
 		perror( __FUNCTION__ );
@@ -232,7 +232,7 @@ int main( int argc, char *argv[] )
 	board->fileno = open( devicefile, O_RDWR );
 	if( board->fileno < 0 )
 	{
-		fprintf( stderr, "failed to open device file\n" );
+		fprintf( stderr, "failed to open device file '%s'\n", devicefile );
 		perror( __FUNCTION__ );
 		return board->fileno;
 	}
