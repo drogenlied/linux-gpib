@@ -29,11 +29,18 @@ int insert_descriptor( int ud, ibConf_t p )
 {
 	ibConf_t *conf;
 
-	if( ibConfigs[ ud ] != NULL )	return -1;
-
+	if( ibConfigs[ ud ] != NULL )
+	{
+		setIberr( ENEB );
+		return -1;
+	}
 	ibConfigs[ ud ] = malloc( sizeof( ibConf_t ) );
-	if( ibConfigs[ ud ] == NULL ) return -1;
-
+	if( ibConfigs[ ud ] == NULL )
+	{
+		setIberr( EDVR );
+		setIbcnt( ENOMEM );
+		return -1;
+	}
 	conf = ibConfigs[ ud ];
 
 	/* put entry to the table */
@@ -111,7 +118,6 @@ int ibGetDescriptor(ibConf_t p)
 			retval = insert_descriptor( ib_ndev, p );
 			if( retval < 0 )
 			{
-				setIberr( ETAB );
 				return retval;
 			}
 			break;
