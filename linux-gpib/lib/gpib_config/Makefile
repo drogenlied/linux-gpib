@@ -11,7 +11,7 @@ BINS = gpib_config
 SRCS = $(BINS:%=%.c)
 
 CPPFLAGS += -I../
-LDFLAGS = -L../ -lgpib
+LDFLAGS = -L../ -lgpib -lpthread
 
 all: $(BINS) .depend
 
