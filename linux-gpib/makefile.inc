@@ -7,7 +7,7 @@ COMPILE	= gcc
 DEPEND	= gcc
 RLINK	= ld -r
 LINK	= gcc
-INSTALL	= $(ROOT)/util/Install.sh
+INSTALL	= install 
 YACC	= bison -d -y
 LEX	= flex 
 
