@@ -41,6 +41,7 @@ unsigned long ibbase = IBBASE;
 unsigned int ibirq = IBIRQ;
 unsigned int ibdma = IBDMA;
 unsigned long remapped_ibbase = 0;
+unsigned long amcc_iobase = 0;
 
 struct pci_dev *pci_dev_ptr = NULL;
 
@@ -402,7 +403,6 @@ int pnp_attach(void)
 
 int cb_pci_attach(void)
 {
-	unsigned int i, err;
 	int isr_flags = 0;
 	int bits;
 
@@ -472,9 +472,8 @@ int cb_pci_attach(void)
 	return 0;
 }
 
-void cb7210_detach(void)
+void cb_pci_detach(void)
 {
-	int i;
 	if(ioports_allocated)
 	{
 		// disable amcc interrupts

@@ -90,9 +90,10 @@
 #define ADR0	(0x6 * NEC7210_REG_OFFSET)
 #define ADR1	(0x7 * NEC7210_REG_OFFSET)
 
+//pc2a
 #define CLEAR_INTR_REG(irq)	(0x2f0 + (irq))	// interrupt clear register address
 
-#ifdef CBI_4882
+//#ifdef CBI_4882
 
 #define HS_MODE	(0x8 * NEC7210_REG_OFFSET)	/* HS_MODE register */
 #define HS_INT_LEVEL	(0x9 * NEC7210_REG_OFFSET)	/* HS_INT_LEVEL register */
@@ -128,7 +129,7 @@
 #define AUX_HISPEED     0x41
 #define AUX_LOSPEED     0x40
 
-#endif
+//#endif	// CBI4882
 
 #endif
 
