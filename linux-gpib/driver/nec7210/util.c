@@ -40,9 +40,9 @@ int nec7210_parallel_poll(gpib_board_t *board, nec7210_private_t *priv, uint8_t 
 {
 	int ret;
 
+	clear_bit(COMMAND_READY_BN, &priv->state);
 	// execute parallel poll
 	write_byte(priv, AUX_EPP, AUXMR);
-
 	// wait for result
 	ret = wait_event_interruptible(board->wait, test_bit(COMMAND_READY_BN, &priv->state));
 	if(ret)
@@ -50,7 +50,6 @@ int nec7210_parallel_poll(gpib_board_t *board, nec7210_private_t *priv, uint8_t 
 		printk("gpib: parallel poll interrupted\n");
 		return -ERESTARTSYS;
 	}
-
 	*result = read_byte(priv, CPTR);
 
 	return 0;
