@@ -50,6 +50,10 @@
  *
  */
 
+#if defined(NIPCIIa)
+#define NEC7210_REG_OFFSET 0x400
+#endif
+
 #if defined(MODBUS_PCI) || defined(NIAT)
 #define NEC7210_REG_OFFSET 0x2
 #endif

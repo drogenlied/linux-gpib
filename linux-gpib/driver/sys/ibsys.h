@@ -38,7 +38,6 @@
 #define OK 0
 
 extern int pgmstat;
-extern volatile int noTimo;
 extern uint32_t timeTable[];
 
 extern struct wait_queue *ibwait_queue;

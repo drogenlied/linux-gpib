@@ -160,7 +160,7 @@ void board_reset(void)
 	GPIBout(SPMR, 0);
 
 	GPIBout(EOSR, 0);
-	GPIBout(AUXMR, ICR | 8);                    /* set internal counter register N= 8 */
+	GPIBout(AUXMR, ICR | 5);                    /* set internal counter register N= 8 */
 	GPIBout(AUXMR, PPR | HR_PPU);               /* parallel poll unconfigure */
 
 	GPIBout(ADR, (PAD & ADDRESS_MASK));                /* set GPIB address; MTA=PAD|100, MLA=PAD|040 */
@@ -319,6 +319,10 @@ int pc2a_attach(void)
 		if(check_region(ibbase + i * pc2a_reg_offset, 1))
 			err++;
 	}
+	if(check_region(pc2a_clear_intr_iobase, pc2a_clear_intr_iosize))
+	{
+		err++;
+	}
 	if(err)
 	{
 		printk("gpib: ioports are already in use");
@@ -328,6 +332,7 @@ int pc2a_attach(void)
 	{
 		request_region(ibbase + i * pc2a_reg_offset, 1, "pc2a");
 	}
+	request_region(pc2a_clear_intr_iobase, pc2a_clear_intr_iosize, "pc2a");
 	ioports_allocated = 1;
 
 	if( request_irq(ibirq, pc2a_interrupt, isr_flags, "pc2a", &ibbase))
@@ -380,6 +385,7 @@ void pc2a_detach(void)
 		board_reset();
 		for(i = 0; i < nec7210_num_registers; i++)
 			release_region(ibbase + i * pc2a_reg_offset, 1);
+		release_region(pc2a_clear_intr_iobase, pc2a_clear_intr_iosize);
 		ioports_allocated = 0;
 	}
 	free_buffers();

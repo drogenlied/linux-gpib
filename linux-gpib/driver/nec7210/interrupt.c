@@ -147,8 +147,8 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 		{
 			set_bit(0, &dma_transfer_complete);
 			wake_up_interruptible(&nec7210_wait); /* wake up sleeping process */
-		}
-		enable_dma(ibdma);
+		}else
+			enable_dma(ibdma);
 		release_dma_lock(flags);
 	}
 
@@ -175,8 +175,8 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 			{
 				clear_bit(0, &write_in_progress);
 				wake_up_interruptible(&nec7210_wait); /* wake up sleeping process */
-			}
-			enable_dma(ibdma);
+			}else
+				enable_dma(ibdma);
 			release_dma_lock(flags);
 		}
 	}
@@ -201,7 +201,7 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 		printk("gpib output error\n");
 	}
 
-//	printk("isr1 0x%x, isr2 0x%x, status 0x%x\n", status1, status2, driver->status);
+printk("isr1 0x%x, isr2 0x%x, status 0x%x\n", status1, status2, driver->status);
 
 }
 

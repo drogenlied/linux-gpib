@@ -108,7 +108,7 @@ IBLCL int dvrsp(int padsad, uint8_t *result)
 
 	osStartTimer(pollTimeidx);
 
-	driver->take_control(1);
+	driver->take_control(0);
 
 	i = 0;
 	cmd_string[i++] = UNL;
@@ -134,11 +134,9 @@ IBLCL int dvrsp(int padsad, uint8_t *result)
 		return -1;
 	}
 
-	driver->take_control(1);
-
 	cmd_string[0] = SPD;	/* disable serial poll bytes */
 	cmd_string[1] = UNT;
-	if(ibcmd(cmd_string, 2) < 0 || !noTimo)
+	if(ibcmd(cmd_string, 2) < 0 )
 	{
 		return -1;
 	}

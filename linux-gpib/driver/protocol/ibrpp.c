@@ -23,11 +23,6 @@ IBLCL int ibrpp(uint8_t *buf)
 		printk("gpib: parallel poll failed\n");
 		return -1;
 	}
-	if (!noTimo)
-	{
-		printk("gpib: parallel poll timeout\n");
-		return -1;
-	}
 //supposed to send rpp local message false at end
 	osRemoveTimer();
 	return 0;

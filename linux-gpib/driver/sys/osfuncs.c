@@ -63,8 +63,8 @@ IBLCL int ibclose(struct inode *inode, struct file *file)
 
 IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned long arg)
 {
-	int	retval = OK;		/* assume everything OK for now */
-		ibarg_t m_ibarg,*ibargp;
+	int	retval = 0; 		/* assume everything OK for now */
+	ibarg_t m_ibarg,*ibargp;
 
 	int	bufsize;
 	int	remain;

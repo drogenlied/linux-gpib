@@ -49,7 +49,6 @@ extern unsigned int ibirq;	/* interrupt request line for GPIB (1-7)  */
 extern unsigned int ibdma ;      /* DMA channel                            */
 extern struct pci_dev *pci_dev_ptr;	// pci_dev for plug and play boards
 
-extern volatile int noTimo;     /* timeout flag */
 extern int          pgmstat;    /* Program state */
 extern int          auxa_bits;  /* static bits for AUXRA (EOS modes) */
 

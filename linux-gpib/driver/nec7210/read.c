@@ -118,12 +118,6 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, int *end)
 	pgmstat |= PS_HELD;
 	GPIBout(AUXMR, auxa_bits | HR_HLDA);
 
-	if (!noTimo)
-	{
-		set_bit(ERR_NUM, &driver->status);
-		set_bit(TIMO_NUM, &driver->status);
-	}
-
 	if(test_bit(END_NUM, &driver->status))
 		*end = 1;
 

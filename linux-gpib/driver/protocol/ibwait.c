@@ -50,12 +50,6 @@ IBLCL int ibwait(unsigned int mask)
 			retval = -1;
 			break;
 		}
-		if(!noTimo)
-		{
-			printk("gpib wait timed out\n");
-			retval = -1;
-			break;
-		}
 	}
 	osRemoveTimer();
 	return retval;

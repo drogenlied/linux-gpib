@@ -120,7 +120,7 @@ int main(int argc,char **argv){
 #if USE_SRQ
   strcpy(cmd,"D0 L0 Q1 T1 R2 A1 S0");
 #else
-  strcpy(cmd," D1 F1 R2 T1");
+  strcpy(cmd,"D1 F1 R2 T1");
 #endif
   if( ibwrt(dev,cmd,strlen(cmd)) & ERR ){
     gpiberr("wrt err");

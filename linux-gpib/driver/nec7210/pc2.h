@@ -31,7 +31,8 @@ void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp);
 // pc2 specific registers and bits
 
 // interrupt clear register address
-#define PC2A_CLEAR_INTR_IOBASE 0x2f0
-#define CLEAR_INTR_REG(irq)	(PC2A_CLEAR_INTR_IOBASE + (irq))
+static const int pc2a_clear_intr_iobase = 0x2f0;
+static const int pc2a_clear_intr_iosize = 8;
+#define CLEAR_INTR_REG(irq)	(pc2a_clear_intr_iobase + (irq))
 
 #endif	// _PC2_H

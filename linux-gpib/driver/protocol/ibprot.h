@@ -3,7 +3,6 @@
 #include <gpibP.h>
 
 extern volatile int pgmstat;
-extern volatile int noTimo;
 
 extern int timeidx;
 extern int pollTimeidx;

@@ -2,7 +2,6 @@
 #include <linux/kernel.h>
 
 int pgmstat	= 0;		/* program status vector */
-volatile int noTimo	= INITTIMO;	/* 0 = I/O or wait operation timed out */
 
 int timeidx	= DFLTTIMO;	/* timeout index into timeTable */
 int pollTimeidx	= T100ms;	/* timeidx for serial and parallel polls */
@@ -65,7 +64,6 @@ IBLCL int ibonl(int v)
 	{
 		pgmstat &= PS_STATIC; /* initialize program status vector */
 		timeidx = DFLTTIMO; /* initialize configuration variables... */
-		noTimo = INITTIMO; /* initialize timeout flag */
 		myPAD = PAD;
 		mySAD = SAD;
 #if !defined(HP82335) && !defined(TMS9914)

@@ -25,7 +25,7 @@ ssize_t nec7210_write(uint8_t *buffer, size_t length, int send_eoi)
 	unsigned long flags;
 	size_t count = 0;
 	int retval = 0;
-
+printk("write %i\n", length);
 	if(length == 0) return 0;
 
 	GPIBout(AUXMR, auxa_bits);	/* normal handshaking, XXX necessary?*/
@@ -120,11 +120,6 @@ ssize_t nec7210_write(uint8_t *buffer, size_t length, int send_eoi)
 	// disable 'data out' interrupts
 	imr1_bits &= ~HR_DOIE;
 	GPIBout(IMR1, imr1_bits);
-
-	if (!noTimo) {
-		set_bit(TIMO_NUM, &driver->status);
-		return -1;
-	}
 
 	if(retval < 0) return retval;
 	return count;
