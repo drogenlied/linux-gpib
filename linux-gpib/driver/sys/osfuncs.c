@@ -444,7 +444,7 @@ int write_ioctl(gpib_board_t *board, unsigned long arg)
 	while(remain > 0)
 	{
 		int send_eoi;
-		send_eoi = board->buffer_length <= remain && write_cmd.end;
+		send_eoi = remain <= board->buffer_length && write_cmd.end;
 		copy_from_user(board->buffer, userbuf, (board->buffer_length < remain) ?
 			board->buffer_length : remain );
 		ret = ibwrt(board, board->buffer, (board->buffer_length < remain) ?
