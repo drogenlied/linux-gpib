@@ -25,6 +25,8 @@ all-local: $(MODULE)
 clean-local:
 	$(RM) *.o
 
+$(OBJS): $(top_srcdir)/util/linux_flags/flags
+
 $(MODULE): $(OBJS)
 	$(LD) -r -o $(MODULE) $(OBJS)
 
