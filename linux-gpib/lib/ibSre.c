@@ -45,6 +45,7 @@ int ibsre(int ud, int v)
 	retval = internal_ibsre( conf, v );
 	if( retval < 0 )
 	{
+		fprintf( stderr, "libgpib: ibsre error\n");
 		return exit_library( ud, 1 );
 	}
 

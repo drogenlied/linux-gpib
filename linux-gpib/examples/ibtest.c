@@ -104,7 +104,7 @@ int prompt_for_device(void)
 	ud = ibdev(minor, pad, sad, timeout, send_eoi, eos_mode);
 	if(ud < 0)
 	{
-		fprintf( stderr, "failed to get descriptor\n" );
+		fprint_status( stderr, "ibdev error\n");
 		abort();
 	}
 

@@ -59,7 +59,8 @@ typedef struct ibConfStruct
 	int ppoll_config;	// current parallel poll configuration
 	unsigned send_eoi : 1;	// assert EOI at end of writes
 	unsigned is_interface : 1;	// is interface board
-	unsigned is_open : 1;
+	unsigned dev_is_open : 1;
+	unsigned board_is_open : 1;
 	unsigned has_lock : 1;
 	unsigned end : 1;	// EOI asserted or EOS received at end of IO operation */
 	unsigned local_lockout : 1;	// send local lockout when device is brought online
@@ -80,6 +81,7 @@ typedef struct ibBoardStruct {
 	int fileno;                        /* device file descriptor           */
 	char device[100];	// name of device file ( /dev/gpib0, etc.)
 	pthread_t *autopoll_thread;
+	unsigned int open_count;	// reference count
 	unsigned is_system_controller : 1;	/* board is busmaster or not */
 } ibBoard_t;
 

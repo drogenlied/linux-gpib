@@ -36,28 +36,9 @@ int insert_descriptor( int ud, ibConf_t p )
 
 	conf = ibConfigs[ ud ];
 
-	init_async_op( &conf->async );
-
 	/* put entry to the table */
-	strncpy(conf->name, p.name, sizeof(conf->name) );
-	conf->board = p.board;
-	conf->pad = p.pad;
-	conf->sad = p.sad;
-	conf->flags = p.flags;
-	conf->eos = p.eos;
-	conf->eos_flags = p.eos_flags;
-	conf->usec_timeout = p.usec_timeout;
-	conf->spoll_usec_timeout = p.spoll_usec_timeout;
-	conf->ppoll_usec_timeout = p.ppoll_usec_timeout;
-	conf->send_eoi = p.send_eoi;
-	conf->is_interface = p.is_interface;
-	conf->is_open = p.is_open;
-	conf->has_lock = p.has_lock;
-	conf->ppoll_config = p.ppoll_config;
-	conf->local_lockout = p.local_lockout;
-	conf->timed_out = p.timed_out;
-
-	strncpy(conf->init_string, p.init_string, sizeof(conf->init_string));
+	*conf = p;
+	init_async_op( &conf->async );
 
 	return 0;
 }
@@ -73,6 +54,23 @@ void setup_global_board_descriptors( void )
 			insert_descriptor( ibFindConfigs[ i ].board, ibFindConfigs[ i ] );
 		}
 	}
+}
+
+// initialize variables used in yyparse() - see ibConfYacc.y
+void init_yyparse_vars( void )
+{
+	int i ;
+
+	findIndex = 0; bdid = 0;
+	for( i = 0; i < FIND_CONFIGS_LENGTH; i++ )
+	{
+		init_ibconf( &ibFindConfigs[ i ] );
+	}
+
+	// initialize line counter to 1 before calling yyparse
+	yylloc.first_line = 1;
+
+	ibBoardDefaultValues();
 }
 
 int ibParseConfigFile(char *filename)
@@ -95,11 +93,7 @@ int ibParseConfigFile(char *filename)
 	gpib_yyin = infile;
 	gpib_yyrestart(gpib_yyin); /* Hmm ? */
 
-	// initialize line counter to 1 before calling yyparse
-	yylloc.first_line = 1;
-	ibBoardDefaultValues();
-	// initialize variables used in yyparse() - see ibConfYacc.y
-	findIndex = 0;
+	init_yyparse_vars();
 	if(gpib_yyparse() < 0)
 	{
 		fprintf(stderr, "failed to parse configuration file\n");
@@ -167,10 +161,16 @@ int ibFindDevIndex(char *name)
 	return -1;
 }
 
-int ibCheckDescriptor(int ud)
+int ibCheckDescriptor( int ud )
 {
-	if(ud < 0 || ud > NUM_CONFIGS || ibConfigs[ud] == NULL)
+	int retval;
+
+	if( ud < 0 || ud > NUM_CONFIGS || ibConfigs[ud] == NULL )
 		return -1;
+
+	retval = conf_online( &ibConfigs[ ud ], 1 );
+	if( retval < 0 ) return retval;
+
 	return 0;
 }
 
@@ -189,7 +189,8 @@ void init_ibconf( ibConf_t *conf )
 	conf->ppoll_usec_timeout = 2;
 	conf->send_eoi = 1;
 	conf->is_interface = 0;
-	conf->is_open = 0;
+	conf->dev_is_open = 0;
+	conf->board_is_open = 0;
 	conf->has_lock = 0;
 	conf->ppoll_config = 0;
 	conf->local_lockout = 0;
@@ -214,24 +215,22 @@ int open_gpib_device( ibConf_t *conf )
 	int retval;
 	ibBoard_t *board;
 
+	if( conf->dev_is_open ||
+		conf->is_interface ) return 0;
+
 	board = interfaceBoard( conf );
 
-	if( conf->is_open ) return 0;
-
-	if( conf->is_interface == 0 )
+	open_cmd.pad = conf->pad;
+	open_cmd.sad = conf->sad;
+	retval = ioctl( board->fileno, IBOPENDEV, &open_cmd );
+	if( retval < 0 )
 	{
-		open_cmd.pad = conf->pad;
-		open_cmd.sad = conf->sad;
-		retval = ioctl( board->fileno, IBOPENDEV, &open_cmd );
-		if( retval < 0 )
-		{
-			setIberr( EDVR );
-			setIbcnt( errno );
-			return retval;
-		}
+		setIberr( EDVR );
+		setIbcnt( errno );
+		return retval;
 	}
 
-	conf->is_open = 1;
+	conf->dev_is_open = 1;
 
 	return 0;
 }
@@ -242,24 +241,22 @@ int close_gpib_device( ibConf_t *conf )
 	int retval;
 	ibBoard_t *board;
 
+	if( conf->dev_is_open == 0 ||
+		conf->is_interface ) return 0;
+
 	board = interfaceBoard( conf );
 
-	if( conf->is_open == 0 ) return 0;
-
-	if( conf->is_interface == 0 )
+	close_cmd.pad = conf->pad;
+	close_cmd.sad = conf->sad;
+	retval = ioctl( board->fileno, IBCLOSEDEV, &close_cmd );
+	if( retval < 0 )
 	{
-		close_cmd.pad = conf->pad;
-		close_cmd.sad = conf->sad;
-		retval = ioctl( board->fileno, IBCLOSEDEV, &close_cmd );
-		if( retval < 0 )
-		{
-			setIberr( EDVR );
-			setIbcnt( errno );
-			return retval;
-		}
+		setIberr( EDVR );
+		setIbcnt( errno );
+		return retval;
 	}
 
-	conf->is_open = 0;
+	conf->dev_is_open = 0;
 
 	return 0;
 }

@@ -128,12 +128,14 @@ int ibBoardOpen( ibBoard_t *board )
 		return -1;
 	}
 	board->fileno = fd;
+	board->open_count++;
 
 	if( ibBdChrConfig( board ) < 0 )
 	{
 		setIberr( EDVR );
 		setIbcnt( errno );
 		fprintf( stderr, "libgpib: failed to configure board\n" );
+		ibBoardClose( board );
 		return -1;
 	}
 
@@ -151,16 +153,27 @@ int ibBoardClose( ibBoard_t *board )
 {
 	int retval;
 
-	if( board->fileno >= 0 )
+	if( board->open_count == 0 )
 	{
-		close( board->fileno );
-		board->fileno = -1;
+		fprintf( stderr, "libgpib: bug! board->open_count is zero on close\n");
+		return -1;
 	}
+
+	board->open_count--;
+	if( board->open_count > 0 )
+		return 0;
 
 	retval = destroy_autopoll_thread( board );
 	if( retval < 0 )
 	{
+		fprintf( stderr, "libgpib: failed to destroy autopoll thread\n");
 		return retval;
+	}
+
+	if( board->fileno >= 0 )
+	{
+		close( board->fileno );
+		board->fileno = -1;
 	}
 
 	return 0;

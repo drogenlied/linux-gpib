@@ -72,6 +72,9 @@ extern void setIberr( int error );
 extern void setIbcnt( long count );
 extern unsigned int usec_to_timeout( unsigned int usec );
 extern int query_ppc( const ibBoard_t *board );
+extern int conf_online( ibConf_t *conf, int online );
+extern int configure_autopoll( ibConf_t *conf, int enable );
+
 extern int internal_ibpad( ibConf_t *conf, unsigned int address );
 extern int internal_ibsad( ibConf_t *conf, int address );
 extern int internal_ibtmo( ibConf_t *conf, int timeout );
@@ -79,8 +82,6 @@ extern void internal_ibeot( ibConf_t *conf, int send_eoi );
 extern int internal_ibppc( ibConf_t *conf, int v );
 extern int internal_ibsre( ibConf_t *conf, int v );
 extern int internal_ibrsv( ibConf_t *conf, int v );
-
-extern int configure_autopoll( ibConf_t *conf, int enable );
 
 extern __inline__ ibBoard_t* interfaceBoard( const ibConf_t *conf )
 {

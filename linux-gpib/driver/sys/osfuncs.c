@@ -449,7 +449,7 @@ static int status_bytes_ioctl( gpib_board_t *board, unsigned long arg )
 
 	device = get_gpib_device( board, cmd.pad, cmd.sad );
 	if( device == NULL )
-		return cmd.num_bytes = 0;
+		cmd.num_bytes = 0;
 	else
 		cmd.num_bytes = num_status_bytes( device );
 

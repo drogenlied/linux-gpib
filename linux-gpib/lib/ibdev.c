@@ -96,15 +96,7 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 		return -1;
 	}
 
-	if( ibonl( uDesc, 1 ) & ERR )
-	{
-		fprintf(stderr, "libgpib: failed to bring device online\n");
-		// XXX free descriptors resources
-		setIbsta( ERR );
-		return -1;
-	}
-
-	if( board->is_system_controller )
+	if( conf.is_interface && board->is_system_controller )
 	{
 		// XXX free descriptors resources
 		if( ibsre( uDesc, 1 ) & ERR ) return -1;
