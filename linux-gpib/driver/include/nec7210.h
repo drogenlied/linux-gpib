@@ -20,6 +20,8 @@
 
 #include <linux/types.h>
 #include <linux/spinlock.h>
+#include <linux/string.h>
+
 #include "gpib_types.h"
 
 /* struct used to provide variables local to a nec7210 chip */
