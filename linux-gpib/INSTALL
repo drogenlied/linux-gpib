@@ -116,13 +116,16 @@ D) Loading the driver module
 		gpib_config --minor 0
 
 	You can also set up the modules to load automatically by adding a line
-	something like
+	something like (this does NOT apply to PCMCIA cards)
 
 	alias char-major-160 tnt4882
 	post-install tnt4882 export PATH=/sbin:/usr/sbin:/usr/local/sbin:$PATH;gpib_config --minor 0
 
 	to /etc/modules.conf, which would autoload the tnt4882.o module when
-	the library is used.
+	the library is used.  
+	
+	For PCMCIA cards, you just need to edit the gpib_config call in the 
+	/etc/pcmcia/linux-gpib-pcmcia script.
 
 	You may find the examples/ibtest program useful as a starting point in trying
 	out your setup.
