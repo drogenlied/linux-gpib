@@ -1,5 +1,8 @@
 Linux GPIB Package changelog
 
+3.1.92: Fixed compilation with PCMCIA support enabled.  No other
+changes.
+
 3.1.91: Fixed compilation of Perl and TCL bindings.  Added accelerated
 support for Ines, NI, and Measurement Computing chips.  Added ibpct(),
 PassControl(), ibrsc(), ibrdf(), and ibwrtf().  Reduced size of
