@@ -46,10 +46,8 @@ static ssize_t pio_read( gpib_board_t *board, ines_private_t *ines_priv, uint8_t
 		num_bytes = num_in_fifo_bytes( ines_priv );
 		if( num_bytes + count > length )
 		{
-			// should be prevented by transfer counter
-			printk( "ines: bug! buffer overflow\n" );
-			retval = -EIO;
-			break;
+			printk( "ines: counter allowed %i extra byte(s)\n", num_bytes - (length - count));
+			num_bytes = length - count;
 		}
 		for( i = 0; i < num_bytes; i++ )
 		{
@@ -70,18 +68,27 @@ ssize_t ines_accel_read( gpib_board_t *board, uint8_t *buffer,
 	ssize_t retval = 0;
 	ines_private_t *ines_priv = board->private_data;
 	nec7210_private_t *nec_priv = &ines_priv->nec7210_priv;
+	int counter_setting;
 
 	*end = 0;
 
+	if(length == 0) return 0;
+
 	clear_bit( DEV_CLEAR_BN, &nec_priv->state );
+
+	write_byte( nec_priv, INES_RFD_HLD_IMMEDIATE, AUXMR );
 
 	ines_priv->extend_mode_bits |= LAST_BYTE_HANDLING_BIT;
 	ines_priv->extend_mode_bits &= ~XFER_COUNTER_OUTPUT_BIT & ~XFER_COUNTER_ENABLE_BIT;
 	ines_outb( ines_priv, ines_priv->extend_mode_bits, EXTEND_MODE );
-	ines_set_xfer_counter( ines_priv, length );
-	ines_priv->extend_mode_bits |= XFER_COUNTER_ENABLE_BIT;
-	ines_outb( ines_priv, ines_priv->extend_mode_bits, EXTEND_MODE );
 
+	counter_setting = length - num_in_fifo_bytes(ines_priv);
+	if(counter_setting > 0)
+	{
+		ines_set_xfer_counter(ines_priv, length);
+		ines_priv->extend_mode_bits |= XFER_COUNTER_ENABLE_BIT;
+		ines_outb( ines_priv, ines_priv->extend_mode_bits, EXTEND_MODE );
+	}
 	// holdoff on END
 	nec7210_set_handshake_mode( board, nec_priv, HR_HLDE );
 	/* release rfd holdoff */
@@ -93,7 +100,6 @@ ssize_t ines_accel_read( gpib_board_t *board, uint8_t *buffer,
 	if( retval < 0 )
 	{
 		write_byte( nec_priv, INES_RFD_HLD_IMMEDIATE, AUXMR );
-		set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
 		return retval;
 	}
 	if( test_and_clear_bit( RECEIVED_END_BN, &nec_priv->state ) )

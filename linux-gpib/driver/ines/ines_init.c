@@ -291,7 +291,7 @@ int ines_generic_attach(gpib_board_t *board)
 	nec_priv = &ines_priv->nec7210_priv;
 	nec_priv->read_byte = nec7210_ioport_read_byte;
 	nec_priv->write_byte = nec7210_ioport_write_byte;
-	nec_priv->offset = ines_reg_offset;
+	nec_priv->offset = 1;
 	ines_priv->pci_chip_type = PCI_CHIP_NONE;
 
 	return 0;
@@ -330,6 +330,8 @@ void ines_online( ines_private_t *ines_priv, const gpib_board_t *board, int use_
 	}
 
 	nec7210_board_online( nec_priv, board );
+	if( use_accel )
+		nec7210_set_reg_bits( nec_priv, IMR1, HR_DOIE | HR_DIIE, 0 );
 }
 
 int ines_common_pci_attach( gpib_board_t *board )
@@ -451,7 +453,6 @@ int ines_common_pci_attach( gpib_board_t *board )
 			return -1;
 			break;
 		}
-	ines_online( ines_priv, board, 0 );
 
 	return 0;
 }

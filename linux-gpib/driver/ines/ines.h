@@ -101,9 +101,6 @@ static inline void ines_outb( ines_private_t *priv, unsigned int value, unsigned
 int ines_pcmcia_init_module(void);
 void ines_pcmcia_cleanup_module(void);
 
-// offset between consecutive nec7210 registers
-static const int ines_reg_offset = 1;
-
 enum ines_regs
 {
 	// read
