@@ -791,7 +791,7 @@ volatile int ibsta;
 
 </section>
 
-<section>
+<section ID="gpib-protocol">
 <title>GPIB protocol</title>
 
 <section ID="reference-command-bytes">
@@ -816,6 +816,7 @@ volatile int ibsta;
 	<entry></entry>
 	<entry></entry>
 	<entry></entry>
+	</row>
 	</tbody>
 	</tgroup>
 	</table>
@@ -824,7 +825,93 @@ volatile int ibsta;
 
 <section>
 <title>GPIB bus lines</title>
-<para></para>
+<para>
+Physically, the GPIB bus consists of 16 bidirectional lines (and 8 ground
+lines).  Brief descriptions
+of how they are used follow:
+</para>
+<para>
+	<table COLSEP="1" ROWSEP="1" ORIENT="port" PGWIDE="1">
+	<title>GPIB command bytes</title>
+	<tgroup COLS="3" ALIGN="left" >
+	<thead>
+	<row>
+	<entry>bus line</entry>
+	<entry>description</entry>
+	<entry>pin number</entry>
+	</row>
+	</thead>
+	<tbody>
+	<row>
+	<entry>DIO1 through DIO8</entry>
+	<entry>Data input/output bits.  These 8 lines are used to read and write the 8 bits
+	of a data or command byte that is being sent over the bus.</entry>
+	<entry>DIO1 to DIO4 use pins 1 to 4, DIO5 to DIO8 use pins 13 to 16</entry>
+	</row>
+	<row>
+	<entry>EOI</entry>
+	<entry>End-or-identify.  This line is asserted with the last byte of
+	data during a write, to indicate the end of the message.  It can
+	also be asserted along with the ATN line to conduct a parallel poll.</entry>
+	<entry>5</entry>
+	</row>
+	<row>
+	<entry>DAV</entry>
+	<entry>Data valid.  This is a handshaking line, used to signal that
+	the value being sent with DIO1-DIO8 is valid.  During transfers the
+	DIO1-DIO8 lines are set, then the DAV line is asserted after
+	a delay called the 'T1 delay'.  The T1 delay lets the data lines
+	settle to stable values before they are read.</entry>
+	<entry>6</entry>
+	</row>
+	<row>
+	<entry>NRFD</entry>
+	<entry>Not ready for data.  NRFD is a handshaking line asserted by
+	listeners to indicate
+	they are not ready to receive a data byte.</entry>
+	<entry>7</entry>
+	</row>
+	<row>
+	<entry>NDAC</entry>
+	<entry>Not data accepted.  NDAC is a handshaking line asserted by
+	listeners to indicate
+	they have not yet read the byte contained on the DIO lines.</entry>
+	<entry>8</entry>
+	</row>
+	<row>
+	<entry>IFC</entry>
+	<entry>Interface clear.  The system controller can assert this line
+	(it should be asserted for at least 100 microseconds) to reset
+	the bus and make itself controller-in-charge.</entry>
+	<entry>9</entry>
+	</row>
+	<row>
+	<entry>SRQ</entry>
+	<entry>Service request.  Devices on the bus can assert this line
+	to request service from the controller-in-charge.  The controller
+	can then poll the devices until it finds the device requesting
+	service, and perform whatever action is necessary.</entry>
+	<entry>10</entry>
+	</row>
+	<row>
+	<entry>ATN</entry>
+	<entry>Attention.  ATN is asserted to indicate that the DIO lines
+	contain a <link LINKEND="reference-command-bytes">command byte</link>
+	(as opposed to a data byte).  Also, it is asserted with EOI
+	when conducting parallel polls.</entry>
+	<entry>11</entry>
+	</row>
+	<row>
+	<entry>REN</entry>
+	<entry>Remote enable.  Asserted by the system controller to put
+	devices into remote mode.  When REN is asserted, a device will
+	enter remote mode when it is addressed by the controller.</entry>
+	<entry>17</entry>
+	</row>
+	</tbody>
+	</tgroup>
+	</table>
+</para>
 </section>
 
 </section>
