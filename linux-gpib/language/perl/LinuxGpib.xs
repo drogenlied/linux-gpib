@@ -18,20 +18,20 @@ constant(char *name, int len, int arg)
     return 0;
 }
 
-MODULE = LinuxGpib		PACKAGE = LinuxGpib
-
+MODULE = LinuxGpib PACKAGE = LinuxGpib
+PROTOTYPES: ENABLE
 
 double
 constant(sv,arg)
-    PREINIT:
-	STRLEN		len;
-    INPUT:
-	SV *		sv
-	char *		s = SvPV(sv, len);
-	int		arg
-    CODE:
+PREINIT:
+	STRLEN len;
+INPUT:
+	SV *sv
+	char *s = SvPV(sv, len);
+	int arg
+CODE:
 	RETVAL = constant(s,len,arg);
-    OUTPUT:
+OUTPUT:
 	RETVAL
 
 
@@ -154,14 +154,30 @@ OUTPUT:
 	RETVAL
 
 int
-ibrpp(ud, OUT ppr)
+ibrpp(ud, ppr)
 	int	ud
-	char ppr
+	SV *ppr
+CODE:
+	char response;
+
+	RETVAL = ibrsp( ud, &response );
+	if( ( RETVAL & ERR ) == 0 )
+		sv_setiv( ppr, response );
+OUTPUT:
+	RETVAL
 
 int
-ibrsp(ud, OUT result)
+ibrsp(ud, result)
 	int	ud
-	char result
+	SV *result
+CODE:
+	char status;
+
+	RETVAL = ibrsp( ud, &status );
+	if( ( RETVAL & ERR ) == 0 )
+		sv_setiv( result, status );
+OUTPUT:
+	RETVAL
 
 int
 ibrsv(ud, v)
@@ -226,3 +242,15 @@ CODE:
 	free( buf );
 OUTPUT:
 	RETVAL
+
+int
+ThreadIbsta()
+
+int
+ThreadIberr()
+
+int
+ThreadIbcnt()
+
+long
+ThreadIbcntl()
