@@ -7,12 +7,15 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
-SUBDIRS = $(PERL_SUBDIR) $(PYTHON_SUBDIR) $(PHP_SUBDIR) $(GUILE_SUBDIR) $(TCL_SUBDIR)
+SUBDIRS = $(PYTHON_SUBDIR) $(PHP_SUBDIR) $(GUILE_SUBDIR) $(TCL_SUBDIR)
+EXTRA_DIST = perl
 
 if BIND_PERL
-PERL_SUBDIR=perl
+ALL_PERL = all-perl
+CLEAN_PERL = clean-perl
 else
-PERL_SUBDIR=
+ALL_PERL =
+CLEAN_PERL =
 endif
 
 if BIND_PYTHON
@@ -38,3 +41,18 @@ TCL_SUBDIR=tcl
 else
 TCL_SUBDIR=
 endif
+
+all-local: $(ALL_PERL)
+
+clean-local: $(CLEAN_PERL)
+
+.PHONY: all-perl
+all-perl: perl/Makefile
+	$(MAKE) -C perl all
+
+.PHONY: clean-perl
+clean-perl: perl/Makefile
+	$(MAKE) -C perl clean
+
+perl/Makefile:
+	(cd perl && $(PERL) Makefile.PL)

@@ -158,11 +158,6 @@ echo "Python binding: $BIND_PYTHON"
 AM_CONDITIONAL(BIND_TCL, [test "$BIND_TCL" == "yes"])
 echo "TCL binding: $BIND_TCL"
 
-dnl create non-automake makefiles
-if test $BIND_PERL != "no"; then
-	AC_CONFIG_COMMANDS([language/perl/Makefile],[(cd language/perl/ && $PERL Makefile.PL)],[PERL=$PERL])
-fi
-
 AC_OUTPUT([\
 	Makefile \
 	lib/Makefile \
@@ -181,7 +176,7 @@ AC_OUTPUT([\
 	driver/tms9914/Makefile \
 	driver/tnt4882/Makefile \
 	driver/tnt4882-tms/Makefile \
-	driver//Makefile \
+	driver/Makefile \
 	doc/Makefile \
 	include/Makefile \
 	language/Makefile \
