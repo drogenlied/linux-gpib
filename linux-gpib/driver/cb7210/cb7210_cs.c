@@ -317,100 +317,95 @@ static void gpib_detach(dev_link_t *link)
 /*@*/
 static void gpib_config(dev_link_t *link)
 {
-    client_handle_t handle;
-    tuple_t tuple;
-    cisparse_t parse;
-    local_info_t *dev;
-    int i;
-    u_char buf[64];
+	client_handle_t handle;
+	tuple_t tuple;
+	cisparse_t parse;
+	local_info_t *dev;
+	int i;
+	u_char buf[64];
 
-    handle = link->handle;
-    dev = link->priv;
+	handle = link->handle;
+	dev = link->priv;
 
 #ifdef PCMCIA_DEBUG
-    if (pc_debug)
-	printk(KERN_DEBUG "gpib_config(0x%p)\n", link);
+	if (pc_debug)
+		printk(KERN_DEBUG "gpib_config(0x%p)\n", link);
 #endif
 
-    /*
-       This reads the card's CONFIG tuple to find its configuration
-       registers.
-    */
-    do {
-	tuple.DesiredTuple = CISTPL_CONFIG;
-	i = CardServices(GetFirstTuple, handle, &tuple);
-	if (i != CS_SUCCESS) break;
-	tuple.TupleData = buf;
-	tuple.TupleDataMax = 64;
-	tuple.TupleOffset = 0;
-	i = CardServices(GetTupleData, handle, &tuple);
-	if (i != CS_SUCCESS) break;
-	i = CardServices(ParseTuple, handle, &tuple, &parse);
-	if (i != CS_SUCCESS) break;
-	link->conf.ConfigBase = parse.config.base;
-    } while (0);
-    if (i != CS_SUCCESS) {
-	cs_error(link->handle, ParseTuple, i);
-	link->state &= ~DEV_CONFIG_PENDING;
-	return;
-    }
+	/*
+		This reads the card's CONFIG tuple to find its configuration
+		registers.
+	*/
+	do {
+		tuple.DesiredTuple = CISTPL_CONFIG;
+		i = CardServices(GetFirstTuple, handle, &tuple);
+		if (i != CS_SUCCESS) break;
+		tuple.TupleData = buf;
+		tuple.TupleDataMax = 64;
+		tuple.TupleOffset = 0;
+		i = CardServices(GetTupleData, handle, &tuple);
+		if (i != CS_SUCCESS) break;
+		i = CardServices(ParseTuple, handle, &tuple, &parse);
+		if (i != CS_SUCCESS) break;
+		link->conf.ConfigBase = parse.config.base;
+	} while (0);
+	if (i != CS_SUCCESS) {
+		cs_error(link->handle, ParseTuple, i);
+		link->state &= ~DEV_CONFIG_PENDING;
+		return;
+	}
 
-    /* Configure card */
-    link->state |= DEV_CONFIG;
+	/* Configure card */
+	link->state |= DEV_CONFIG;
 
-    do {
-        /*
+	do {
+	/*
 	 * try to get manufacturer and card  ID
 	 */
 
-        tuple.DesiredTuple = CISTPL_MANFID;
-        tuple.Attributes   = TUPLE_RETURN_COMMON;
-        if( first_tuple(handle,&tuple,&parse) == CS_SUCCESS ) {
-	   dev->manfid = parse.manfid.manf;
-	   dev->cardid = parse.manfid.card;
+		tuple.DesiredTuple = CISTPL_MANFID;
+		tuple.Attributes   = TUPLE_RETURN_COMMON;
+		if( first_tuple(handle,&tuple,&parse) == CS_SUCCESS ) {
+			dev->manfid = parse.manfid.manf;
+			dev->cardid = parse.manfid.card;
 #ifdef PCMCIA_DEBUG
-	  printk(KERN_DEBUG "gpib_cs: manufacturer: 0x%x card: 0x%x\n",
-		 dev->manfid,dev->cardid);
+			printk(KERN_DEBUG "gpib_cs: manufacturer: 0x%x card: 0x%x\n",
+			dev->manfid,dev->cardid);
 #endif
-	}
-        /* try to get board information from CIS */
+		}
+		/* try to get board information from CIS */
 
-         tuple.DesiredTuple = CISTPL_CFTABLE_ENTRY;
-         tuple.Attributes = 0;
-         if( first_tuple(handle,&tuple,&parse) == CS_SUCCESS ) {
-	    while(1) {
-	      /*if this tuple has an IRQ info, keep it for later use */
-	      if( parse.cftable_entry.irq.IRQInfo1 & IRQ_INFO2_VALID ) {
-		printk(KERN_DEBUG "gpib_cs: irqmask=0x%x\n",
-		       parse.cftable_entry.irq.IRQInfo2 );
-		link->irq.IRQInfo2 = parse.cftable_entry.irq.IRQInfo2;
-	      }
+		tuple.DesiredTuple = CISTPL_CFTABLE_ENTRY;
+		tuple.Attributes = 0;
+		if( first_tuple(handle,&tuple,&parse) == CS_SUCCESS ) {
+		while(1) {
+			printk(KERN_DEBUG "gpib_cs: irqmask=0x%x\n", link->irq.IRQInfo2 );
 
-	      if( parse.cftable_entry.io.nwin > 0) {
-	         link->io.BasePort1 = parse.cftable_entry.io.win[0].base;
-	         link->io.NumPorts1 = parse.cftable_entry.io.win[0].len;
-	         link->io.BasePort2 = 0;
-	         link->io.NumPorts2 = 0;
-	link->conf.ConfigIndex = parse.cftable_entry.index;
-	         i = CardServices(RequestIO, link->handle, &link->io);
-	         if (i == CS_SUCCESS) {
-		     printk( KERN_DEBUG "gpib_cs: base=0x%x len=%d registered\n",
-		       parse.cftable_entry.io.win[0].base,
-		       parse.cftable_entry.io.win[0].len
-		       );
-		     break;
-	         }
-	      }
-	      if ( next_tuple(handle,&tuple,&parse) != CS_SUCCESS ) break;
+			if( parse.cftable_entry.io.nwin > 0) {
+				link->io.BasePort1 = parse.cftable_entry.io.win[0].base;
+				link->io.NumPorts1 = parse.cftable_entry.io.win[0].len;
+				link->io.BasePort2 = 0;
+				link->io.NumPorts2 = 0;
+				link->conf.ConfigIndex = parse.cftable_entry.index;
+				i = CardServices(RequestIO, link->handle, &link->io);
+				if (i == CS_SUCCESS) {
+					printk( KERN_DEBUG "gpib_cs: base=0x%x len=%d registered\n",
+						parse.cftable_entry.io.win[0].base,
+						parse.cftable_entry.io.win[0].len
+					);
+					break;
+				}
+			}
+			if ( next_tuple(handle,&tuple,&parse) != CS_SUCCESS ) break;
 
-	    }
+		}
 
-	  if (i != CS_SUCCESS) {
-	      cs_error(link->handle, RequestIO, i);
-	  }
-	 } else {
-	    printk("gpib_cs: can't get card information\n");
-	 }
+		if (i != CS_SUCCESS) {
+			cs_error(link->handle, RequestIO, i);
+		}
+		} else {
+			printk("gpib_cs: can't get card information\n");
+		}
 
 	/*
 	   Now allocate an interrupt line.  Note that this does not
