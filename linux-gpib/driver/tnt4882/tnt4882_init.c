@@ -134,7 +134,7 @@ gpib_interface_t ni_pci_interface =
 
 gpib_interface_t ni_isa_interface =
 {
-	name: "atgpib",
+	name: "ni_isa",
 	attach: ni_isa_attach,
 	detach: ni_isa_detach,
 	read: tnt4882_read,
