@@ -496,12 +496,14 @@ int ines_common_pci_attach( gpib_board_t *board )
 	}
 
 	nec7210_board_reset( nec_priv, board );
+#if 0
 	if(ines_priv->pci_chip_type == PCI_CHIP_QUANCOM)
 	{
 		/* change interrupt polarity */
 		nec_priv->auxb_bits |= HR_INV;
 		ines_outb(ines_priv, nec_priv->auxb_bits, AUXMR);
 	}
+#endif	
 	isr_flags |= SA_SHIRQ;
 	if(request_irq(ines_priv->pci_device->irq, ines_interrupt, isr_flags, "pci-gpib", board))
 	{
