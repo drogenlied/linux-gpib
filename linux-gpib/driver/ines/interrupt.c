@@ -32,6 +32,12 @@ void ines_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	unsigned int isr3_bits, isr4_bits;
 	unsigned long flags;
 
+	if( priv->pci_chip_type == PCI_CHIP_QUANCOM )
+	{
+		if( ( inb( QUANCOM_IRQ_STATUS_REG ) & QUANCOM_IRQ_ASSERTED_BIT ) == 0 )
+			return;
+	}
+
 	spin_lock_irqsave( &board->spinlock, flags );
 
 	nec7210_interrupt( board, nec_priv );
@@ -49,6 +55,15 @@ void ines_interrupt(int irq, void *arg, struct pt_regs *registerp)
 
 	if( isr4_bits & ( IN_FIFO_WATERMARK_BIT | OUT_FIFO_WATERMARK_BIT | OUT_FIFO_EMPTY_BIT ) )
 		wake_up_interruptible( &board->wait );
+
+	if( priv->pci_chip_type == PCI_CHIP_QUANCOM )
+	{
+		int i;
+		for( i = 0xf0; i < 0x100; i++ )
+		{
+			outb( QUANCOM_IRQ_CLEAR_BIT, nec_priv->iobase + i );
+		}
+	}
 
 	spin_unlock_irqrestore( &board->spinlock, flags );
 }

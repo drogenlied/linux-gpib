@@ -37,13 +37,6 @@ int ines_isa_attach(gpib_board_t *board);
 void ines_pci_detach(gpib_board_t *board);
 void ines_isa_detach(gpib_board_t *board);
 
-enum ines_pci_chip
-{
-	PCI_CHIP_PLX9050,
-	PCI_CHIP_AMCC5920,
-	PCI_CHIP_QUANCOM,
-};
-
 typedef struct
 {
 	unsigned int vendor_id;
@@ -385,7 +378,9 @@ int ines_common_pci_attach( gpib_board_t *board )
 		return -1;
 	nec_priv->iobase = pci_resource_start(ines_priv->pci_device, found_id.gpib_region);
 
-	switch(found_id.pci_chip_type)
+	ines_priv->pci_chip_type = found_id.pci_chip_type;
+	nec_priv->offset = found_id.io_offset;
+	switch( ines_priv->pci_chip_type )
 	{
 		case PCI_CHIP_PLX9050:
 			ines_priv->plx_iobase = pci_resource_start(ines_priv->pci_device, 1);
@@ -402,7 +397,6 @@ int ines_common_pci_attach( gpib_board_t *board )
 			return -1;
 			break;
 	}
-	nec_priv->offset = found_id.io_offset;
 
 	nec7210_board_reset( nec_priv, board );
 
@@ -433,10 +427,20 @@ int ines_common_pci_attach( gpib_board_t *board )
 	}
 	ines_online( ines_priv, board, 0 );
 
-	printk( "quancom register dump:\n" );
-	for( i = 0; i < 256; i += 4 )
+	if( ines_priv->pci_chip_type == PCI_CHIP_QUANCOM )
 	{
-		printk( "0x%lx: 0x%x\n", nec_priv->iobase + i, inl( nec_priv->iobase + i ) );
+		printk( "quancom register dump:\n" );
+		for( i = 0; i < 256; i += 4 )
+		{
+			printk( "0x%lx: 0x%x\n", nec_priv->iobase + i, inb( nec_priv->iobase + i ) );
+		}
+		printk( "irq status: 0x%x\n", inb( nec_priv->iobase + QUANCOM_IRQ_STATUS_REG ) );
+		for( i = 0xf0; i < 0x100; i++ )
+		{
+			outb( QUANCOM_IRQ_CLEAR_BIT, nec_priv->iobase + i );
+			printk( "writing to: 0x%lx\n", nec_priv->iobase + i );
+			printk( "irq status: 0x%x\n", inb( nec_priv->iobase + QUANCOM_IRQ_STATUS_REG ) );
+		}
 	}
 
 	return 0;

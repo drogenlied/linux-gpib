@@ -801,6 +801,9 @@ static int online_ioctl( gpib_board_t *board, unsigned long arg )
 	online_ioctl_t online_cmd;
 	int retval;
 
+	if( !suser() )
+		return -EPERM;
+		
 	retval = copy_from_user( &online_cmd, ( void * ) arg, sizeof( online_cmd ) );
 	if( retval )
 		return -EFAULT;

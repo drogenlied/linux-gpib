@@ -25,6 +25,13 @@
 #include "amcc5920.h"
 #include <linux/config.h>
 
+enum ines_pci_chip
+{
+	PCI_CHIP_PLX9050,
+	PCI_CHIP_AMCC5920,
+	PCI_CHIP_QUANCOM,
+};
+
 typedef struct
 {
 	nec7210_private_t nec7210_priv;
@@ -34,6 +41,7 @@ typedef struct
 	// base address for amcc5920 pci chip
 	unsigned long amcc_iobase;
 	unsigned int irq;
+	enum ines_pci_chip pci_chip_type;
 	volatile uint8_t extend_mode_bits;
 } ines_private_t;
 
@@ -212,6 +220,24 @@ enum ines_auxd_bits
 	INES_INITIAL_T1_2000ns = 0x0,
 	INES_INITIAL_T1_1100ns = 0x4,
 	INES_INITIAL_T1_700ns = 0x8,
+};
+
+/* quancom registers */
+enum quancom_regs
+{
+	QUANCOM_IRQ_STATUS_REG = 0xfc,
+	QUANCOM_IRQ_CONTROL_REG = 0xfd, /* guess */
+};
+
+enum quancom_irq_status_bits
+{
+	QUANCOM_IRQ_ASSERTED_BIT = 0x1,
+	QUANCOM_IRQIN_ASSERTED_BIT = 0x2,
+};
+
+enum quancom_irq_control_bits
+{
+	QUANCOM_IRQ_CLEAR_BIT = 0x1, /* enable/clear interrupt */
 };
 
 #endif	// _INES_GPIB_H
