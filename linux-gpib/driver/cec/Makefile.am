@@ -31,7 +31,7 @@ $(MODULE): $(OBJS)
 	$(LD) -r -o $(MODULE) $(OBJS)
 
 install-data-local:
-	$(INSTALL_DATA) -D $(MODULE) $(MODLIB)/misc/$(MODULE)
+	$(INSTALL_DATA) -D $(MODULE) $(MODLIB)/gpib/$(MODULE)
 
 
 
