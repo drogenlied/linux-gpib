@@ -24,8 +24,6 @@ void ibBoardDefaultValues(void)
 	{
 		ibBoard[i].pad = 0;
 		ibBoard[i].sad = -1;
-		ibBoard[i].eos = '\n';
-		ibBoard[i].eosflags = 0;
 		ibBoard[i].base = 0;
 		ibBoard[i].irq = 0;
 		ibBoard[i].dma = 0;

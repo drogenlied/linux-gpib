@@ -31,8 +31,6 @@ typedef struct ibBoardStruct {
 	int pad;		// device primary address
 	int sad;		// device secodnary address (negative disables)
 	int timeout;                       /* timeout                          */
-	char eos;                           /* global eos modes                 */
-	int eosflags;
 	int base;                          /* base configuration               */
 	int irq;
 	int dma;

@@ -32,13 +32,8 @@ int iblcleos(int ud)
 	ibConf_t *conf = ibConfigs[ud];
 	int eosmode;
 
-	if(conf->eos || conf->eosflags)
-	{
-		eosmode = conf->eos | (conf->eosflags << 8);
-	}else
-	{
-		eosmode = ibBoard[conf->board].eos | (ibBoard[conf->board].eosflags << 8);
-	}
+	eosmode = conf->eos | (conf->eosflags << 8);
+
 	return ibBoardFunc(conf->board, IBEOS, eosmode);
 }
 

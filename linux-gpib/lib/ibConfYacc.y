@@ -76,9 +76,9 @@ char cval;
 
 	statement: T_PAD '=' T_NUMBER      { ibBoard[bdid].pad =  $3; ibFindConfigs[findIndex].pad = $3;}
 		| T_SAD '=' T_NUMBER      { ibBoard[bdid].sad = $3 - sad_offset; ibFindConfigs[findIndex].sad = $3 - sad_offset;}
-                 | T_EOSBYTE '=' T_NUMBER  { ibBoard[bdid].eos = $3; ibFindConfigs[findIndex].eos = $3;}
-		| T_REOS T_BOOL           { ibBoard[bdid].eosflags |= $2 * REOS; ibFindConfigs[findIndex].eosflags |= $2 * REOS;}
-		| T_BIN  T_BOOL           { ibBoard[bdid].eosflags |= $2 * BIN; ibFindConfigs[findIndex].eosflags |= $2 * BIN;}
+		| T_EOSBYTE '=' T_NUMBER  { ibFindConfigs[findIndex].eos = $3;}
+		| T_REOS T_BOOL           { ibFindConfigs[findIndex].eosflags |= $2 * REOS;}
+		| T_BIN  T_BOOL           { ibFindConfigs[findIndex].eosflags |= $2 * BIN;}
 		| T_TIMO '=' T_TIVAL      { ibBoard[bdid].timeout = $3; }
 		| T_BASE '=' T_NUMBER     { ibBoard[bdid].base = $3; }
 		| T_IRQ  '=' T_NUMBER     { ibBoard[bdid].irq = $3; }
