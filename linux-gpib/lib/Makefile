@@ -65,28 +65,8 @@ ibConfLex.c:  ibConfLex.l ibConfYacc.h
 ibConfYacc.c + ibConfYacc.h: ibConfYacc.y
 	bison -d -y -p gpib_yy -o ibConfYacc.c ibConfYacc.y
 
-
-ibProto.h: $(SRCS)
-	echo >ibProto.h
-	echo "#ifdef __cplusplus" >>ibProto.h 
-	echo "extern \"C\" {" >>ibProto.h 
-	echo "#endif" >>ibProto.h 
-	echo "/***** Public Functions ******/" >>ibProto.h
-	grep -h PUBLIC *.c|/lib/cpp -P -DPUBLIC=extern -DVOID=void| sed 's/)/);/' >>ibProto.h
-	echo "/***** Private Functions ******/" >>ibProto.h 
-	grep -h PRIVATE *.c|/lib/cpp -P -DPRIVATE=extern -DVOID=void| sed 's/)/);/' >>ibProto.h
-	grep -h _VARARGS *.c| awk '{print "extern "$$2" "$$3"();" }' >>ibProto.h
-	echo "#ifdef __cplusplus" >>ibProto.h
-	echo "}" >>ibProto.h 
-	echo "#endif" >>ibProto.h 
-
-
-
-
-
-
 clean: 
-	$(RM) $(EXP_INC) *.o ibConfYacc.c ibConfLex.c *.a .depend ibConfYacc.h ibProto.h
+	$(RM) $(EXP_INC) *.o ibConfYacc.c ibConfLex.c *.a .depend ibConfYacc.h
 
 
 realclean : clean

@@ -8,7 +8,7 @@
 
 #define YYERROR_VERBOSE
 
-static ibConf_t  temp;
+static ibConf_t temp;
 
 ibConf_t  ibConfigs[IB_MAXDEV];
 int bdid = 0;
@@ -59,7 +59,6 @@ char cval;
 				temp.eos=0;
 				temp.eosflags=0;
 				temp.flags = 0;
-				temp.networkdb = NULL;
 			}
 		;
 
@@ -108,7 +107,6 @@ char cval;
 				temp.eos=0;
 				temp.eosflags=0;
 				temp.flags = 0;
-				temp.networkdb = NULL;
 			}
 		;
 

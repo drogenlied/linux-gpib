@@ -37,7 +37,6 @@ ssize_t ibrd(gpib_device_t *device, uint8_t *buf, size_t length, int *end_flag)
 {
 	size_t count = 0;
 	ssize_t ret = 0;
-	int status = ibstatus(device);
 
 	if(length == 0) return 0;
 

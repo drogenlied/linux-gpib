@@ -34,7 +34,6 @@ ssize_t ibwrt(gpib_device_t *device, uint8_t *buf, size_t cnt, int send_eoi)
 {
 	size_t bytes_sent = 0;
 	ssize_t ret = 0;
-	int status = ibstatus(device);
 
 	if(cnt == 0) return 0;
 

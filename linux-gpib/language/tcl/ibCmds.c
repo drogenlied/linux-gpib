@@ -143,9 +143,6 @@ int ibFind  _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,cha
         sprintf((char *)tmpbuf,"0x%x",ibConfigs[i].eosflags);
         Tcl_SetVar2(interp,ibConfigs[i].name,"eosflags",(char *)tmpbuf,TCL_GLOBAL_ONLY);
 
-        if( ibConfigs[i].networkdb != NULL )
-        Tcl_SetVar2(interp,ibConfigs[i].name,"network",ibConfigs[i].networkdb,TCL_GLOBAL_ONLY);
-
         Tcl_SetVar2(interp,ibConfigs[i].name,"init",ibConfigs[i].init_string,TCL_GLOBAL_ONLY);
 
     }

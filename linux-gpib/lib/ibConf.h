@@ -10,54 +10,35 @@
 
 /*---------------------------------------------------------------------- */
 
-typedef struct ibConfStruct {
-  char name[31];                      /* name of the device               */
-  int  padsad;                        /* device address                   */
-
-  char init_string[61];               /* initialization string (optional) */
-#if 0
-  int  dcl;                           /* send clear DCL on init           */
-#endif
-  int  board;                         /* board number                     */
-
-  char eos;                           /* local eos modes                  */
-  int  eosflags;
-
-  int  flags;                         /* some flags                       */
-
-  char *networkdb;                    /* network access database  string  */
-
-  int tmo;
-
+typedef struct ibConfStruct
+{
+	char name[31];                      /* name of the device               */
+	int  padsad;                        /* device address                   */
+	char init_string[61];               /* initialization string (optional) */
+	int  board;                         /* board number                     */
+	char eos;                           /* local eos modes                  */
+	int  eosflags;
+	int  flags;                         /* some flags                       */
+	int tmo;
 } ibConf_t;
 
 /*---------------------------------------------------------------------- */
 
 typedef struct ibBoardStruct {
 	char name[31];	// name (model) of interface board
-  int  padsad;                        /* controller's device address      */
-  int  timeout;                       /* timeout                          */
-
-  char eos;                           /* global eos modes                 */
-  int  eosflags;
-
-  int  base;                          /* base configuration               */
-  int  irq;
-  int  dma;
-
-  int  fileno;                        /* device file descriptor           */
-  char device[61];  
-  char errlog [61];
-
-  int  ifc;                           /* send IFC on init                 */
-  int  debug;                         /* debugging mask                   */
-
-                     
-  int  dmabuf;                        /* size of DMA buffer               */
-
+	int  padsad;                        /* controller's device address      */
+	int  timeout;                       /* timeout                          */
+	char eos;                           /* global eos modes                 */
+	int  eosflags;
+	int  base;                          /* base configuration               */
+	int  irq;
+	int  dma;
+	int  fileno;                        /* device file descriptor           */
+	char device[61];
+	int  ifc;                           /* send IFC on init                 */
 } ibBoard_t;
 
- 
+
 
 
 

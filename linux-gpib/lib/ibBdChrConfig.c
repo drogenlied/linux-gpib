@@ -3,7 +3,7 @@
 #include <sys/ioctl.h>
 #include <string.h>
 
-PUBLIC int ibBdChrConfig(int ud, int base, int irq, int dma, int dmabuf)
+PUBLIC int ibBdChrConfig(int ud, int base, int irq, int dma)
 {
 	board_type_ioctl_t boardtype;
 	if(ibBoardOpen(CONF(ud,board),0) & ERR)
