@@ -30,6 +30,7 @@ void fprint_status( FILE* filep, char *msg  );
 
 enum Action
 {
+	GPIB_COMMAND,
 	GPIB_IFC,
 	GPIB_QUIT,
 	GPIB_READ,
@@ -207,6 +208,7 @@ int prompt_for_action(void)
 	{
 		printf("You can:\n"
 			"\tw(a)it for an event\n"
+			"\twrite (c)ommand bytes to bus (system controller only)\n"
 			"\tchange remote (e)nable line (system controller only)\n"
 			"\tsend (i)nterface clear (system controller only)\n"
 			"\tget bus (l)ine status (board only)\n"
@@ -215,7 +217,7 @@ int prompt_for_action(void)
 			"\tperform (s)erial poll (device only)\n"
 			"\tchange (t)imeout on io operations\n"
 			"\trequest ser(v)ice (board only)\n"
-			"\t(w)rite string\n"
+			"\t(w)rite data string\n"
 			": " );
 		do fgets( input, sizeof( input ), stdin );
 		while( input[0] == '\n' );
@@ -225,6 +227,10 @@ int prompt_for_action(void)
 			case 'A':
 			case 'a':
 				return GPIB_WAIT;
+				break;
+			case 'C':
+			case 'c':
+				return GPIB_COMMAND;
 				break;
 			case 'E':
 			case 'e':
@@ -285,6 +291,29 @@ int perform_read(int ud)
 	buffer[ibcnt] = 0;
 	printf("received string: '%s'\n"
 		"number of bytes read: %i\n", buffer, ibcnt);
+	return 0;
+}
+
+int prompt_for_commands(int ud)
+{
+	char buffer[ 1024 ];
+	char *next = buffer;
+	char *end;
+	int i;
+
+	printf("enter command bytes to send to the bus: ");
+	fgets( buffer, sizeof(buffer), stdin );
+	for(i = 0; i < sizeof(buffer); ++i)
+	{
+		buffer[i] = strtol(next, &end, 0);
+		if(end == next) break;
+		next = end; 
+	}
+	printf("writing %i command bytes to the bus\n", i);
+	if(ibcmd(ud, buffer, i) & ERR)
+	{
+		return -1;
+	}
 	return 0;
 }
 
@@ -478,6 +507,9 @@ int main(int argc, char **argv)
 
 		switch( act )
 		{
+			case GPIB_COMMAND:
+				prompt_for_commands(dev);
+				break;
 			case GPIB_IFC:
 				interface_clear( dev );
 				break;
