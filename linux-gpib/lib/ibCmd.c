@@ -117,11 +117,9 @@ void* start_async_cmd( void *arg )
 		conf->async.length = count;
 	}
 
-	conf->has_lock = 0;
-	retval = unlock_board_mutex( interfaceBoard( conf ) );
+	retval = conf_unlock_board( conf );
 	if( retval < 0 )
 	{
-		conf->has_lock = 1;
 		conf->async.length = 0;
 		conf->async.error = EDVR;
 	}

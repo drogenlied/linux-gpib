@@ -331,6 +331,37 @@ int unlock_board_mutex( ibBoard_t *board )
 	return retval;
 }
 
+int conf_lock_board( ibConf_t *conf )
+{
+	ibBoard_t *board;
+	int retval;
+
+	board = interfaceBoard( conf );
+
+	retval = lock_board_mutex( board );
+	if( retval < 0 ) return retval;
+
+	conf->has_lock = 1;
+
+	return retval;
+}
+
+int conf_unlock_board( ibConf_t *conf )
+{
+	ibBoard_t *board;
+	int retval;
+
+	board = interfaceBoard( conf );
+
+	if( conf->has_lock == 0 ) return 0;
+
+	conf->has_lock = 0;
+
+	retval = unlock_board_mutex( board );
+	if( retval < 0 ) conf->has_lock = 1;
+	return retval;
+}
+
 ibConf_t * enter_library( int ud )
 {
 	return general_enter_library( ud, 0, 0 );
@@ -370,13 +401,11 @@ ibConf_t * general_enter_library( int ud, int no_lock_board, int ignore_eoip )
 			}
 		}
 
-		retval = lock_board_mutex( board );
+		retval = conf_lock_board( conf );
 		if( retval < 0 )
 		{
-			setIberr( EDVR );
 			return NULL;
 		}
-		conf->has_lock = 1;
 	}
 
 	return conf;
@@ -451,14 +480,12 @@ int general_exit_library( int ud, int error, int keep_lock )
 
 	status = ibstatus( conf, error );
 
-	if( conf->has_lock && !keep_lock )
+	if( !keep_lock )
 	{
-		conf->has_lock = 0;
-		retval = unlock_board_mutex( board );
+		retval = conf_unlock_board( conf );
 		if( retval < 0 )
 		{
 			setIberr( EDVR );
-			conf->has_lock = 1;
 			status = ibstatus( conf, error );
 		}
 	}

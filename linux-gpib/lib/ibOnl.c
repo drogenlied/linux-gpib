@@ -105,8 +105,14 @@ int conf_online( ibConf_t *conf, int online )
 
 	if( online )
 	{
+		retval = conf_lock_board( conf );
+		if( retval < 0 ) return retval;
+
 		conf->board_is_open = 1;
 		retval = open_gpib_device( conf );
+		if( retval < 0 ) return retval;
+
+		retval = conf_unlock_board( conf );
 		if( retval < 0 ) return retval;
 	}else
 	{
@@ -122,8 +128,7 @@ int ibonl( int ud, int onl )
 	int retval;
 	ibBoard_t *board;
 
-	// XXX should probably lock board?
-	conf = general_enter_library( ud, 1, 0 );
+	conf = enter_library( ud );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 

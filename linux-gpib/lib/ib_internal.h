@@ -66,6 +66,8 @@ extern int gpibi_change_address( ibConf_t *conf,
 	unsigned int pad, int sad );
 extern int lock_board_mutex( ibBoard_t *board );
 extern int unlock_board_mutex( ibBoard_t *board );
+extern int conf_lock_board( ibConf_t *conf );
+extern int conf_unlock_board( ibConf_t *conf );
 extern int exit_library( int ud, int error );
 extern int general_exit_library( int ud, int error, int keep_lock );
 extern ibConf_t * enter_library( int ud );
