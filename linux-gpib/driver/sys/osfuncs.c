@@ -379,6 +379,8 @@ printk("minor %i ioctl %i\n", minor, cmd);
 		case CFCDMA:
 			osChngDMA(device, ibargp->ib_arg);
 			break;
+		case CFCDMABUFFER:
+			break;
 		default:
 			retval = -ENOTTY;
 			break;

@@ -55,7 +55,7 @@ environment Variable. Please check out if one exists or look for Syntax Errors.\
 
   printf("**Next Check The Driver.....                         ");
 
-  sprintf(str,"/dev/gpib%d/master",ind);
+  sprintf(str,"/dev/gpib%d",ind);
   if(( fd=open(str,O_RDWR) ) < 0 ){
     printf("\n There is a Problem with the Driver: ");
     printf("\n open(%s) says \"%s\" ",str,strerror(errno));
