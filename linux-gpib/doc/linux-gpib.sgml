@@ -1992,6 +1992,54 @@ volatile int ibsta;
 </refsect1>
 </refentry>
 
+<refentry ID="reference-function-ibonl">
+<refmeta>
+	<refentrytitle>ibonl</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibonl</refname>
+	<refpurpose>close or reinitialize descriptor (board or device)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibonl</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>int <parameter>online</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	If the <parameter>online</parameter> is zero, then ibonl() frees the
+	resources associated with the board or device descriptor
+	<parameter>ud</parameter>.  The descriptor cannot be used again after the
+	ibonl() call.
+	</para>
+	<para>
+	If the <parameter>online</parameter> is nonzero, then all the settings
+	associated with the descriptor (GPIB address, end-of-string mode, timeout,
+	etc.) are reset to their 'default' values.  The 'default' values are
+	the settings the descriptor had when it was first obtained with
+	<link LINKEND="reference-function-ibdev">ibdev()</link> or
+	<link LINKEND="reference-function-ibfind">ibfind()</link>.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
 <refentry ID="reference-function-ibpad">
 <refmeta>
 	<refentrytitle>ibpad</refentrytitle>
@@ -2037,6 +2085,44 @@ volatile int ibsta;
 </refsect1>
 </refentry>
 
+<refentry ID="reference-function-ibpct">
+<refmeta>
+	<refentrytitle>ibpct</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibpct</refname>
+	<refpurpose>pass control (board)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibpct</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibpct() passes control to the device specified by the device
+	descriptor <parameter>ud</parameter>.  The device becomes
+	the new controller-in-charge.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
 <refentry ID="reference-function-ibppc">
 <refmeta>
 	<refentrytitle>ibppc</refentrytitle>
@@ -2068,6 +2154,12 @@ volatile int ibsta;
 	<link LINKEND="reference-function-ppe-byte">PPE_byte()</link> inline
 	function to enable and
 	configure the parallel poll response.
+	</para>
+	<para>
+	After configuring the parallel poll response of devices on a bus,
+	you may use
+	<link LINKEND="reference-function-ibrpp">ibrpp()</link> to
+	parallel poll the devices.
 	</para>
 </refsect1>
 <refsect1>
@@ -2179,6 +2271,52 @@ volatile int ibsta;
 	</title>
 	<para>
 	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-ibrpp">
+<refmeta>
+	<refentrytitle>ibrpp</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibrpp</refname>
+	<refpurpose>perform a parallel poll (board or device)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibrpp</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>char *<parameter>ppoll_result</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibrpp() causes the interface board to perform a parallel poll, and stores
+	the resulting byte in the
+	location specified by <parameter>ppoll_result</parameter>.  The devices
+	on the bus you wish to poll should be configured beforehand with
+	<link LINKEND="reference-function-ibppc">ibppc()</link>.  The board
+	which performs the parallel poll must be controller-in-charge, and
+	is specified by the descriptor <parameter>ud</parameter>.
+	If <parameter>ud</parameter> is a device descriptor instead of
+	a board descriptor, the device's access board performs the
+	parallel poll.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+		The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
 	</para>
 </refsect1>
 </refentry>
@@ -2348,6 +2486,41 @@ volatile int ibsta;
 	<parameter>sad</parameter> to 0 disables the use of secondary addressing.
 	Valid GPIB secondary addresses are in the range from 0 to 30 (which correspond
 	to <parameter>sad</parameter> values of 0x60 to 0x7e).
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-ibsic">
+<refmeta>
+	<refentrytitle>ibsic</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibsic</refname>
+	<refpurpose>interface clear (board)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibsic</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
 	</para>
 </refsect1>
 <refsect1>
