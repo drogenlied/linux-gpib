@@ -14,17 +14,21 @@
 
 all: html man pdf
 
-html: linux-gpib.sgml
+gpib_version.txt:
+	cp ../util/version gpib_version.txt
+
+html: linux-gpib.sgml gpib_version.txt
 	docbook2html -o html linux-gpib.sgml && touch html
 
-man: linux-gpib.sgml
+man: linux-gpib.sgml gpib_version.txt
 	docbook2man -o man linux-gpib.sgml && touch man
 
-pdf: linux-gpib.sgml
+pdf: linux-gpib.sgml gpib_version.txt
 	docbook2pdf -o pdf linux-gpib.sgml && touch pdf
 
 clean:
 	rm -rf html
 	rm -rf man
 	rm -rf pdf
+	rm -f gpib_version.txt
 

@@ -17,7 +17,7 @@ INC_TARGET_DIR = $(TARGET_ROOT)/include
 LIB_CONFIG_FILE = /etc/gpib.conf
 
 
-LIBNAME=libgpib.so.3.1.92
+LIBNAME=libgpib.so.$(GPIB_VERSION)
 
 EXPORTED_INCLUDES = ib.h ibConf.h ibP.h
 EXP_INC = $(EXPORTED_INCLUDES:%=$(ROOT)/include/%)

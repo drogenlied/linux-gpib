@@ -1,5 +1,6 @@
 <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook V4.1//EN"
 	"docbook/dtd/4.1/docbook.dtd"[
+<!ENTITY version SYSTEM "gpib_version.txt">
 <!ENTITY license SYSTEM "fdl.xml">
 ]>
 
@@ -7,7 +8,7 @@
 
 <articleinfo>
 <title>
-	Linux-GPIB Documentation
+	Linux-GPIB &version Documentation
 </title>
 
 <author>

@@ -175,8 +175,7 @@ int init_module(void)
 {
 	int i;
 
-	// XXX print gpib version
-	printk("Linux-GPIB Driver -- Kernel Release %s\n", UTS_RELEASE);
+	printk("Linux-GPIB %s Driver -- Kernel Release %s\n", GPIB_VERSION, UTS_RELEASE);
 
 	init_board_array(board_array, MAX_NUM_GPIB_BOARDS);
 

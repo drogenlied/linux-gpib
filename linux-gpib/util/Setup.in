@@ -133,6 +133,7 @@ fi
 ##########
 
 set_var IBMAJOR 160
+set_svar GPIB_VERSION `cat version`
 
 ##########
 #
