@@ -2,9 +2,7 @@
 # Makefile for directory driver/protocol
 #
 
-.SILENT:
-
-ROOT=../..
+include $(ROOT)/util/.config
 
 SRCS = ibcac.c ibcmd.c ibgts.c ibinit.c iblines.c ibread.c ibrpp.c ibrsv.c ibsic.c \
 	ibsre.c ibutil.c ibwait.c ibwrite.c device.c ibAutoSP.c
@@ -12,7 +10,7 @@ SRCS = ibcac.c ibcmd.c ibgts.c ibinit.c iblines.c ibread.c ibrpp.c ibrsv.c ibsic
 OBJS = $(SRCS:.c=.o)
 
 
-INCLUDES = -I. -I../include -I../../include
+INCLUDES = -I. -I../include -I../../include -I$(LINUXDIR)/include
 
 CFLAGS = $(INCLUDES)  -D__KERNEL__ -DLINUX -O6 -m486 $(OPTIONS) -Wall -DMODULE
 

@@ -36,7 +36,7 @@ IBLCL uint8 osP8in(short in_addr)
 /*
  * Output a one-byte value to the specified I/O port
  */
-IBLCL void osP8out(short out_addr,uint8 out_value)	
+IBLCL void osP8out(short out_addr,uint8 out_value)
 {
 
 	DBGprint(DBG_REG, ("p8_%x^0x%x  ", out_addr, out_value));
@@ -69,24 +69,6 @@ IBLCL void osP16out(short out_addr, uint16 out_value)
 	outw_p(out_value,out_addr);
 
 }
-
-
-void osPrint(fmt, a, b, c, d, e, f, g)
-char *fmt;
-{
-#if DEBUG
-	  if (fmt){
-	    printk(fmt, a, b, c, d, e, f, g);
-	  }
-	  else if ( dbgMask & DBG_1PPL)
-	    printk("\n");
-#else
-	  printk(fmt, a, b, c, d, e, f, g);
-#endif
-	
-}
-
-
 
 IBLCL void osChngBase(int new_base)
 {

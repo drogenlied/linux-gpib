@@ -1,16 +1,16 @@
-BOLD		= "\033[1m"
-NBOLD		= "\033[0m"
+BOLD		= ""
+NBOLD		= ""
 
 ECHO		= /bin/echo
 
-COMPILE	= $(ECHO) "--- Compiling "$(BOLD)$<$(NBOLD)"..." ; gcc
-DEPEND	= $(ECHO) "--- Checking dependencies..." ; gcc
-RLINK	= $(ECHO) "--- Linking (relocatable) "$(BOLD)$@$(NBOLD)"..." ; ld -r
-LINK	= $(ECHO) "--- Linking "$(BOLD)$@$(NBOLD)"..." ; gcc
+COMPILE	= gcc
+DEPEND	= gcc
+RLINK	= ld -r
+LINK	= gcc
 INSTALL	= $(ROOT)/util/Install.sh
 RM	= $(ROOT)/util/Remove.sh
-YACC	= $(ECHO) --- Running bison on $(BOLD)$<$(NBOLD)...; bison -d -y
-LEX	= $(ECHO) --- Running flex on $(BOLD)$<$(NBOLD)...; flex 
+YACC	= bison -d -y
+LEX	= flex 
 
 CC	= $(COMPILE)
 

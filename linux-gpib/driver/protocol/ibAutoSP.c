@@ -9,7 +9,7 @@
 #include <linux/errno.h>
 #include <linux/major.h>
 #include <linux/module.h>
-#include <linux/malloc.h>
+#include <linux/slab.h>
 #include <linux/mm.h>
 #include <linux/timer.h>
 
@@ -20,7 +20,7 @@
 
 #define MAX_DEVICES 31
 
-struct semaphore AutoP_mutex = MUTEX;
+DECLARE_MUTEX(AutoP_mutex);
 
 void AP_Lock (void)
 {
@@ -40,7 +40,7 @@ void AP_UnLock (void)
 
 
 /*
- * The device entry in the Poll vector 
+ * The device entry in the Poll vector
  *
  */
 
@@ -64,12 +64,12 @@ struct AP_device AP_Vector[MAX_DEVICES];  /* The Poll Vector (only one entry per
  *
  */
 
-void AP_Init(void) 
+void AP_Init(void)
 {
-  int i; 
+  int i;
   DBGin("AP_Init");
   for(i=0;i<MAX_DEVICES;i++) {
-    AP_Vector[i].lock=MUTEX;
+    init_MUTEX(&AP_Vector[i].lock);
    /*(AP_Vector[i].lock).count = 1;*/
     AP_Vector[i].flags= 0;
     AP_Vector[i].spb  = 0;

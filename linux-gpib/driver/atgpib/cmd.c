@@ -6,7 +6,7 @@
  *  Note that ATN must already be asserted when this function is called.
  */
 IBLCL void bdcmd(ibio_op_t *cmdop)
-{ 
+{
 	faddr_t		buf;
 	unsigned	cnt;
 	uint8		s1, s2;		/* software copies of HW status regs */

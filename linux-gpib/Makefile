@@ -2,9 +2,7 @@
 #  Makefile for Linux GPIB
 #
 
-.SILENT:
-
-ROOT = .
+ROOT = $(PWD)
 MAKE = make -C
 
 INCDIR  = include
@@ -13,39 +11,33 @@ SUBDIRS = driver lib util examples language applications
 PKG_SRC = $(SUBDIRS) include Makefile
 DOCDIRS = doc
 
+export ROOT
+
 all: linux-gpib .test.stat
 
 linux-gpib: .config.stat 
 	set -e; \
 	for i in $(INCDIR) $(SUBDIRS); do \
-		$(ECHO) "|||" Making target $(BOLD)all$(NBOLD) in subdirectory $(BOLD)$$i$(NBOLD)... ; \
 		$(MAKE) $$i all; \
-		$(ECHO) "|||" Leaving subdirectory $(BOLD)$$i$(NBOLD)...; \
 	done
 
 doc: .config.stat 
 	set -e; \
 	for i in $(INCDIR) $(DOCDIRS); do \
-		$(ECHO) "|||" Making target $(BOLD)all$(NBOLD) in subdirectory $(BOLD)$$i$(NBOLD)... ; \
 		$(MAKE) $$i all; \
-		$(ECHO) "|||" Leaving subdirectory $(BOLD)$$i$(NBOLD)...; \
 	done
 
 clean:
 	set -e; \
 	for i in $(INCDIR) $(SUBDIRS); do \
-		$(ECHO) "|||" Making target $(BOLD)$@$(NBOLD) in subdirectory $(BOLD)$$i$(NBOLD)... ; \
 		$(MAKE) $$i NODEPS=y $@; \
-		$(ECHO) "|||" Leaving subdirectory $(BOLD)$$i$(NBOLD)...; \
 	done
 	$(RM) *.o .config.stat .test.stat
 
 rcsput rcsget:
 	set -e; \
 	for i in $(SUBDIRS); do \
-		$(ECHO) "|||" Making target $(BOLD)$@$(NBOLD) in subdirectory $(BOLD)$$i$(NBOLD)... ; \
 		$(MAKE) $$i $@; \
-		$(ECHO) "|||" Leaving subdirectory $(BOLD)$$i$(NBOLD)...; \
 	done
 
 
@@ -68,9 +60,7 @@ unload:
 install: all
 	set -e; \
 	for i in $(SUBDIRS) $(INCDIR); do \
-		$(ECHO) "|||" Making target $(BOLD)$@$(NBOLD) in subdirectory $(BOLD)$$i$(NBOLD)... ; \
 		$(MAKE) $$i -k install ; \
-		$(ECHO) "|||" Leaving subdirectory $(BOLD)$$i$(NBOLD)...; \
 	done
 	(cd ./util; ./Setup.install)
 

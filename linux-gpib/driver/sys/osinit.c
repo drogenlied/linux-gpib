@@ -121,7 +121,7 @@ extern  void ibintr(int);
 		timeTable[16] = TM(s,300,1);		/* 16: T300s    */
 		timeTable[17] = TM(s,1000,1);		/* 17: T1000s   */
 	}
-	ibtimer_list.next = ibtimer_list.prev = NULL;
+	ibtimer_list.list.next = ibtimer_list.list.prev = NULL;
 #endif
 
 #if USEINTS
@@ -211,15 +211,16 @@ extern int  ibVFSread  (struct inode *, struct file *, char *, int );
 extern int  ibVFSwrite (struct inode *, struct file *, char *, int );
 
 struct file_operations ib_fops = {
-  NULL,               /* seek */
-  ibVFSread,          /* read */
-  ibVFSwrite,         /* write */
-  NULL,               /* readdir */
-  NULL,               /* select */
-  ibioctl,            /* ioctl */
-  NULL,               /* mmap */
-  ibopen,             /* open */
-  ibclose             /* release */
+  owner: THIS_MODULE,
+  llseek: NULL,
+  read: ibVFSread,
+  write: ibVFSwrite,
+  readdir: NULL,
+  ioctl: ibioctl,
+  mmap: NULL,
+  open: ibopen,
+  flush: NULL,
+  release: ibclose,
 };
 
 

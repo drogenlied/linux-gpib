@@ -1,6 +1,6 @@
 #include <ibsys.h>
 
-struct semaphore osMutex = MUTEX;
+DECLARE_MUTEX(osMutex);
 
 void osLockMutex( void )
 {

@@ -1,5 +1,6 @@
 #include <board.h>
 #include <asm/io.h>
+#include <linux/delay.h>
 
 /* #define REALLY_SLOW_IO */
 
@@ -17,11 +18,11 @@ IBLCL void bdwait(unsigned int mask)
 #if USEINTS
 	if (!(pgmstat & PS_NOINTS)) {
 		DBGprint(DBG_BRANCH, ("use ints  "));
-		SLOW_DOWN_IO;
+		udelay(2);
 		s = GPIBin(isr1);           /* clear ISRs by reading */
-		SLOW_DOWN_IO;
+		udelay(2);
 		s = GPIBin(isr2);
-		SLOW_DOWN_IO;
+		udelay(2);
 		imr2mask = 0;
 		if (mask & SRQI)
 			imr2mask |= HR_SRQIE;
@@ -30,13 +31,13 @@ IBLCL void bdwait(unsigned int mask)
 		DBGprint(DBG_DATA, ("imr2mask=0x%x  ", imr2mask));
 		while (!(ibstat() & mask) && NotTimedOut()) {
 			ibsta = CMPL;
-			SLOW_DOWN_IO;
+			udelay(2);
 			GPIBout(imr2, imr2mask);
-			SLOW_DOWN_IO;
+			udelay(2);
 			osWaitForInt(HR_TLCI);
-			SLOW_DOWN_IO;
+			udelay(2);
 			GPIBout(imr2, 0);   /* clear imr2 IE bits */
-			SLOW_DOWN_IO;
+			udelay(2);
 			s = GPIBin(isr2);   /* clear isr2 status bits */
 			DBGprint(DBG_DATA, ("isr2=0x%x  ", s));
 		}
@@ -59,10 +60,10 @@ IBLCL uint8 bdWaitIn(void)
 {
 uint8 isreg1;
 DBGin("bdWaitIn");
-SLOW_DOWN_IO;
+udelay(2);
 while (!((isreg1 = GPIBin(isr1)) & HR_DI) && NotTimedOut())
   {
-    SLOW_DOWN_IO;
+    udelay(2);
   }
 
 DBGout();
@@ -72,10 +73,10 @@ return isreg1;
 IBLCL void bdWaitOut(void)
 {
 DBGin("bdWaitOut");
-SLOW_DOWN_IO;
+udelay(2);
 while (!(GPIBin(isr2) & HR_CO) && NotTimedOut())
   {
-    SLOW_DOWN_IO;
+    udelay(2);
   }
 DBGout();
 }

@@ -22,7 +22,7 @@ extern int   fidx;     /*defined in ../sys/osinit.c */
 extern char *fstk[];
 extern char *ffmt[];
 
-#define DBGprint(ms,ar)	{ if (dbgMask && (dbgMask & ms)) { osPrint("gpib - %s%s:", ffmt[fidx], fstk[fidx]); osPrint ar; osPrint(0); } }
+#define DBGprint(ms,ar)	{ if (dbgMask && (dbgMask & ms)) { printk("gpib - %s%s:", ffmt[fidx], fstk[fidx]); printk ar; } }
 #define DBGin(id)	{ fstk[++fidx] = id; DBGprint(DBG_ENTRY, ("in  ")); }
 #define DBGout()	{ DBGprint(DBG_EXIT, ("out  ")); fidx--; }
 

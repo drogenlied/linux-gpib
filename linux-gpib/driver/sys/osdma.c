@@ -4,7 +4,8 @@
 /*
  * Start a DMA operation and wait on its completion.
  */
-int osDoDMA(ibio_op_t *rwop)
+
+IBLCL int osDoDMA(ibio_op_t *rwop)
 {
 	int		resid;		/* residual transfer count */
 	int		cnt;		/* word transfer count */

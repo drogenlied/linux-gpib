@@ -1,5 +1,5 @@
 #include <ibprot.h>
-
+#include <linux/kernel.h>
 
 int       ibsta	= 0; 		/* status bits returned by last call      */
 int       ibcnt	= 0; 		/* actual byte count of last I/O transfer */

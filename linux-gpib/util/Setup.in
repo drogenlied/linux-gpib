@@ -55,6 +55,18 @@ fi
 
 ##########
 #
+# kernel source directory
+#
+##########
+
+dialog --title "Kernel Source Directory" --inputbox "Input path to linux \
+kernel source directory" 20 70 "/usr/src/linux" 2>/tmp/reply
+
+get_reply $?
+set_svar LINUXDIR $REPLY
+
+##########
+#
 # board selection
 #
 ##########
@@ -95,7 +107,7 @@ set_svar BOARD_TYPE $REPLY
          echo "#undef MODBUS_PCI " >>../driver/include/gpib_board.h
          echo "#undef INES_PCI ">>../driver/include/gpib_board.h
          echo "#undef INES_PCMCIA ">>../driver/include/gpib_board.h
- 
+
 
 
          dmasupport=off

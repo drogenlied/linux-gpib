@@ -88,7 +88,7 @@ int s;
 
 IBLCL void osWaitForInt( int imr3mask )
 {
-        struct wait_queue wait = {current, NULL}; /*@*/
+	DECLARE_WAITQUEUE(wait, current);
 
 	DBGin("osWaitForInt");
 #ifdef LINUX2_2
@@ -120,13 +120,13 @@ IBLCL void osWaitForInt( int imr3mask )
 		*/
 #endif
 
-#ifdef NIAT    
-	        DBGprint(DBG_DATA, ("imr3mask=0x%x  ", imr3mask));		
+#ifdef NIAT
+	        DBGprint(DBG_DATA, ("imr3mask=0x%x  ", imr3mask));
                 GPIBout(imr3, imr3mask);
 #endif
 #ifdef NIPCII
-                DBGprint(DBG_DATA, ("imr3mask=0x%x  ", imr3mask));		
-		GPIBout(imr2, imr3mask); /* sorry */	        
+                DBGprint(DBG_DATA, ("imr3mask=0x%x  ", imr3mask));
+		GPIBout(imr2, imr3mask); /* sorry */
 #endif
 #ifdef HP82335
 #if 0
@@ -135,8 +135,8 @@ IBLCL void osWaitForInt( int imr3mask )
                 GPIBout(ccr, ccrbits);            /* re-enable interrupts if set */
                 DBGprint(DBG_DATA,("===>csr=0x%x",GPIBin(csr)));
 #endif
-                DBGprint(DBG_DATA, ("imr3mask=0x%x  ", imr3mask));		
-		GPIBout(imr1, imr3mask); /* sorry */	        
+                DBGprint(DBG_DATA, ("imr3mask=0x%x  ", imr3mask));
+		GPIBout(imr1, imr3mask); /* sorry */
 #endif
 		/* now push process to sleep */
 		down(&espsemid);
@@ -148,13 +148,13 @@ IBLCL void osWaitForInt( int imr3mask )
 #endif
 
 	}
-        else	{ 
+		else{
 #ifdef LINUX2_2
-         sema_init( &espsemid, 0);
+		sema_init( &espsemid, 0);
 #else
-	  espsemid.count = 0;
+		espsemid.count = 0;
+		espsemid.wait  = NULL;
 #endif
-          espsemid.wait  = NULL;
 	}
 	DBGout();
 }

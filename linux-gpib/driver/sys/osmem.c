@@ -82,7 +82,7 @@ IBLCL void osMemRelease(void)
 }
 
 /* Return a pointer to a DMA buffer */
-char *osGetDMABuffer( int *size )
+IBLCL char *osGetDMABuffer( int *size )
 {
 	char *buf;
 	DBGin("osGetDMABuffer");
@@ -97,14 +97,14 @@ char *osGetDMABuffer( int *size )
 
 		buf = (char *)kmalloc( *size, MEMORY_PRIORITY );
 
-		
+
 	}
         DBGout();
 	return buf;
 }
 
 /* Free a DMA buffer if it was dynamically allocated */
-void osFreeDMABuffer( char *buf )
+IBLCL void osFreeDMABuffer( char *buf )
 {
         DBGin("osFreeDMABuffer");
 	if (!gpib_dma_buffer) {
