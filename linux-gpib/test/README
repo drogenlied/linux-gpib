@@ -19,6 +19,8 @@ Options:
 	loop through tests N times
 -d, --daemonize [N]
 	daemonize after Nth loop
+-M, --minor
+	Specify board index to use
 -m, --master
 	Use bus master gpib board
 -S, --slave
