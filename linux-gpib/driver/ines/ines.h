@@ -19,10 +19,10 @@
 #ifndef _INES_GPIB_H
 #define _INES_GPIB_H
 
-#include <nec7210.h>
-#include <gpibP.h>
-#include <plx9050.h>
-#include <amcc5920.h>
+#include "nec7210.h"
+#include "gpibP.h"
+#include "plx9050.h"
+#include "amcc5920.h"
 #include <linux/config.h>
 
 typedef struct
@@ -34,15 +34,20 @@ typedef struct
 	// base address for amcc5920 pci chip
 	unsigned long amcc_iobase;
 	unsigned int irq;
+	volatile uint8_t extend_mode_bits;
 } ines_private_t;
 
 // interfaces
 extern gpib_interface_t ines_pci_interface;
+extern gpib_interface_t ines_pci_accel_interface;
 extern gpib_interface_t ines_pcmcia_interface;
+extern gpib_interface_t ines_pcmcia_accel_interface;
 
 // interface functions
 ssize_t ines_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end);
 ssize_t ines_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi);
+ssize_t ines_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end);
+ssize_t ines_accel_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi);
 ssize_t ines_command(gpib_board_t *board, uint8_t *buffer, size_t length);
 int ines_take_control(gpib_board_t *board, int synchronous);
 int ines_go_to_standby(gpib_board_t *board);
@@ -65,7 +70,12 @@ void ines_interrupt(int irq, void *arg, struct pt_regs *registerp);
 // utility functions
 void ines_free_private(gpib_board_t *board);
 int ines_generic_attach(gpib_board_t *board);
-void ines_init( ines_private_t *priv, const gpib_board_t *board );
+void ines_online( ines_private_t *priv, const gpib_board_t *board, int use_accel );
+void ines_set_xfer_counter( ines_private_t *priv, unsigned int count );
+static inline unsigned long iobase( const ines_private_t *priv )
+{
+	return priv->nec7210_priv.iobase;
+};
 
 // pcmcia init/cleanup
 int ines_pcmcia_init_module(void);
@@ -76,7 +86,84 @@ static const int ines_reg_offset = 1;
 
 enum ines_regs
 {
+	// read
+	FIFO_STATUS = 0x8,
+	ISR3 = 0x9,
+	ISR4 = 0xa,
+	IN_FIFO_COUNT = 0x10,
+	OUT_FIFO_COUNT = 0x11,
+	EXTEND_STATUS = 0xf,
+
+	// write
+	XDMA_CONTROL = 0x8,
+	IMR3 = ISR3,
+	IMR4 = ISR4,
+	IN_FIFO_WATERMARK = IN_FIFO_COUNT,
+	OUT_FIFO_WATERMARK = OUT_FIFO_COUNT,
+	EXTEND_MODE = 0xf,
+
+	// read-write
+	XFER_COUNT_LOWER = 0xb,
+	XFER_COUNT_UPPER = 0xc,
 	BUS_CONTROL_MONITOR = 0x13,
+};
+
+enum isr3_imr3_bits
+{
+	XFER_COUNT_BIT = 0x2,
+	CMD_RECEIVED_BIT = 0x4,
+	TCT_RECEIVED_BIT = 0x8,
+	IFC_ACTIVE_BIT = 0x10,
+	ATN_ACTIVE_BIT = 0x20,
+	FIFO_ERROR_BIT = 0x40,
+};
+
+enum isr4_imr4_bits
+{
+	IN_FIFO_WATERMARK_BIT = 0x1,
+	OUT_FIFO_WATERMARK_BIT = 0x2,
+	IN_FIFO_FULL_BIT = 0x4,
+	OUT_FIFO_EMPTY_BIT = 0x8,
+	IN_FIFO_READY_BIT = 0x10,
+	OUT_FIFO_READY_BIT = 0x20,
+	IN_FIFO_EXIT_WATERMARK_BIT = 0x40,
+	OUT_FIFO_EXIT_WATERMARK_BIT = 0x80,
+};
+
+enum extend_mode_bits
+{
+	TR3_TRIG_ENABLE_BIT = 0x1,	// enable generation of trigger pulse T/R3 pin
+	MAV_ENABLE_BIT = 0x2,	// clear message available status bit when chip writes byte with EOI true
+	EOS1_ENABLE_BIT = 0x4,	// enable eos register 1
+	EOS2_ENABLE_BIT = 0x8,	// enable eos register 2
+	EOIDIS_BIT = 0x10,	// disable EOI interrupt when doing rfd holdoff on end?
+	XFER_COUNTER_ENABLE_BIT = 0x20,
+	XFER_COUNTER_OUTPUT_BIT = 0x40,	// use counter for output, clear for input
+	LAST_BYTE_HANDLING_BIT = 0x80,	// when xfer counter hits 0, assert EOI on write or RFD holdoff on read
+};
+
+enum extend_status_bits
+{
+	OUTPUT_MESSAGE_IN_PROGRESS_BIT = 0x1,
+	SCSEL_BIT = 0x2,	// statue of SCSEL pin
+	LISTEN_DISABLED = 0x4,
+	IN_FIFO_EMPTY_BIT = 0x8,
+	OUT_FIFO_FULL_BIT = 0x10,
+};
+
+// ines adds fifo enable bits to address mode register
+enum ines_admr_bits
+{
+	IN_FIFO_ENABLE_BIT = 0x8,
+	OUT_FIFO_ENABLE_BIT = 0x4,
+};
+
+enum xdma_control_bits
+{
+	DMA_OUTPUT_BIT = 0x1,	// use dma for output, clear for input
+	ENABLE_SYNC_DMA_BIT = 0x2,
+	DMA_ACCESS_EVERY_CYCLE = 0x4,	// dma accesses fifo every cycle, clear for every other cycle
+	DMA_16BIT = 0x8,	// clear for 8 bit transfers
 };
 
 enum bus_control_monitor_bits
@@ -89,6 +176,19 @@ enum bus_control_monitor_bits
 	BCM_SRQ_BIT = 0x20,
 	BCM_REN_BIT = 0x40,
 	BCM_EOI_BIT = 0x80,
+};
+
+enum ines_aux_reg_bits
+{
+	INES_AUXD = 0x40,
+};
+
+enum ines_aux_cmds
+{
+	INES_RFD_HLD_IMMEDIATE = 0x4,
+	INES_AUX_CLR_OUT_FIFO = 0x5,
+	INES_AUX_CLR_IN_FIFO = 0x6,
+	INES_AUX_XMODE = 0xa,
 };
 
 #endif	// _INES_GPIB_H

@@ -36,7 +36,10 @@ void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	spin_lock( &board->spinlock );
 	isr0_bits = priv->io_read( nec_priv->iobase + ISR0 );
 	if( isr0_bits & TNT_IFCI_BIT )
+	{
 		push_gpib_event( &board->event_queue, EventIFC );
+		wake_up_interruptible( &board->wait );
+	}
 	spin_unlock( &board->spinlock );
 }
 

@@ -33,7 +33,7 @@ static ssize_t pio_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *b
 			test_bit(TIMO_NUM, &board->status)))
 		{
 			printk("gpib: pio read wait interrupted\n");
-			retval = -EINTR;
+			retval = -ERESTARTSYS;
 			break;
 		};
 		if(test_bit(TIMO_NUM, &board->status))
@@ -91,7 +91,7 @@ static ssize_t __dma_read(gpib_board_t *board, nec7210_private_t *priv, size_t l
 		test_bit(TIMO_NUM, &board->status)))
 	{
 		printk("gpib: dma read wait interrupted\n");
-		retval = -EINTR;
+		retval = -ERESTARTSYS;
 	}
 	if(test_bit(TIMO_NUM, &board->status))
 		retval = -ETIMEDOUT;
@@ -138,8 +138,6 @@ ssize_t nec7210_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buff
 	ssize_t retval = 0;
 
 	*end = 0;
-
-	if(length == 0) return 0;
 
 	// holdoff on END
 	priv->auxa_bits &= ~HR_HANDSHAKE_MASK;

@@ -31,7 +31,7 @@ ssize_t nec7210_command(gpib_board_t *board, nec7210_private_t *priv, uint8_t
 			test_bit(TIMO_NUM, &board->status)))
 		{
 			printk("gpib command wait interrupted\n");
-			retval = -EINTR;
+			retval = -ERESTARTSYS;
 			break;
 		}
 		if(test_bit(TIMO_NUM, &board->status))
@@ -51,7 +51,7 @@ ssize_t nec7210_command(gpib_board_t *board, nec7210_private_t *priv, uint8_t
 		test_bit(TIMO_NUM, &board->status)))
 	{
 		printk("gpib command wait interrupted\n");
-		retval = -EINTR;
+		retval = -ERESTARTSYS;
 	}
 	if(test_bit(TIMO_NUM, &board->status))
 	{

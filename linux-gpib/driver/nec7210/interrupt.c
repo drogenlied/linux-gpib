@@ -45,7 +45,6 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 	if(status2 & HR_SRQI)
 	{
 		set_bit(SRQI_NUM, &board->status);
-		wake_up_interruptible(&board->wait);
 	}
 
 	// change in lockout status
@@ -70,7 +69,6 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 	if(status2 & HR_ADSC)
 	{
 		update_status_nolock( board, priv );
-		wake_up_interruptible(&board->wait); /* wake up sleeping process */
 	}
 
 	// record reception of END
@@ -83,7 +81,6 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 	if((status1 & HR_DI))
 	{
 		set_bit(READ_READY_BN, &priv->state);
-		wake_up_interruptible(&board->wait); /* wake up sleeping process */
 	}
 
 	// check for dma read transfer complete
@@ -95,7 +92,6 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 		if((status1 & HR_END) || get_dma_residue(priv->dma_channel) == 0)
 		{
 			clear_bit(DMA_READ_IN_PROGRESS_BN, &priv->state);
-			wake_up_interruptible(&board->wait); /* wake up sleeping process */
 		}else
 			enable_dma(priv->dma_channel);
 		release_dma_lock(flags);
@@ -113,7 +109,6 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 			if(get_dma_residue(priv->dma_channel) == 0)
 			{
 				clear_bit(DMA_WRITE_IN_PROGRESS_BN, &priv->state);
-				wake_up_interruptible(&board->wait);
 			}else
 			{
 				clear_bit(WRITE_READY_BN, &priv->state);
@@ -122,7 +117,6 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 			release_dma_lock(flags);
 		}else
 		{
-			wake_up_interruptible(&board->wait);
 		}
 	}
 
@@ -130,20 +124,22 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 	if(status2 & HR_CO)
 	{
 		set_bit(COMMAND_READY_BN, &priv->state);
-		wake_up_interruptible(&board->wait); /* wake up sleeping process */
 	}
 
 	// command pass through received
 	if(status1 & HR_CPT)
 	{
-		printk("gpib command pass thru 0x%x\n", read_byte(priv, CPTR));
+		unsigned int command;
+
+		command = read_byte(priv, CPTR);
 		write_byte(priv, AUX_NVAL, AUXMR);
+		printk( "gpib: command pass through 0x%x\n", command );
 	}
 
 	if(status1 & HR_ERR)
 	{
 		set_bit( BUS_ERROR_BN, &priv->state );
-		GPIB_DPRINTK( "gpib bus error\n" );
+		GPIB_DPRINTK( "gpib: bus error\n" );
 	}
 
 	if( status1 & HR_DEC )
@@ -163,6 +159,7 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 	{
 		GPIB_DPRINTK( "isr1 0x%x, imr1 0x%x, isr2 0x%x, imr2 0x%x, status 0x%x\n",
 			status1, priv->imr1_bits, status2, priv->imr2_bits, board->status);
+		wake_up_interruptible( &board->wait ); /* wake up sleeping process */
 	}
 }
 

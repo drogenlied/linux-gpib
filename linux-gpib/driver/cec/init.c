@@ -181,6 +181,9 @@ void cec_init( cec_private_t *cec_priv, const gpib_board_t *board )
 
 	nec7210_board_reset( nec_priv, board );
 
+	/* set internal counter register for 8 MHz input clock */
+	write_byte( nec_priv, ICR | 8, AUXMR );
+
 	nec7210_board_online( nec_priv, board );
 }
 

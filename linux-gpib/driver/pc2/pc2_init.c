@@ -248,6 +248,9 @@ int pc2_attach(gpib_board_t *board)
 	}
 	pc2_priv->irq = board->ibirq;
 
+	/* set internal counter register for 8 MHz input clock */
+	write_byte( nec_priv, ICR | 8, AUXMR );
+
 	nec7210_board_online( nec_priv, board );
 
 	return 0;
@@ -351,6 +354,9 @@ int pc2a_attach(gpib_board_t *board)
 
 	// make sure interrupt is clear
 	outb(0xff , CLEAR_INTR_REG(pc2_priv->irq));
+
+	/* set internal counter register for 8 MHz input clock */
+	write_byte( nec_priv, ICR | 8, AUXMR );
 
 	nec7210_board_online( nec_priv, board );
 

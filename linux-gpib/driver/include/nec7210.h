@@ -19,7 +19,7 @@
 #define _NEC7210_H
 
 #include <linux/types.h>
-#include <gpib_types.h>
+#include "gpib_types.h"
 
 /* struct used to provide variables local to a nec7210 chip */
 typedef struct nec7210_private_struct nec7210_private_t;
@@ -97,6 +97,8 @@ extern uint8_t nec7210_serial_poll_status( gpib_board_t *board,
 // utility functions
 extern void nec7210_board_reset( nec7210_private_t *priv, const gpib_board_t *board );
 extern void nec7210_board_online( nec7210_private_t *priv, const gpib_board_t *board );
+extern unsigned int nec7210_set_admr_bits( nec7210_private_t *priv, unsigned int mask, int set );
+extern unsigned int nec7210_set_auxa_bits( nec7210_private_t *priv, unsigned int mask, int set );
 
 // wrappers for io functions
 extern uint8_t nec7210_ioport_read_byte(nec7210_private_t *priv, unsigned int register_num);
@@ -276,6 +278,12 @@ enum auxrb_bits
 	HR_TRI = ( 1 << 2 ),
 	HR_INV = ( 1 << 3 ),
 	HR_ISS = ( 1 << 4 ),
+};
+
+enum auxre_bits
+{
+	HR_DAC_HLD_DCAS = 0x1,	/* perform DAC holdoff on receiving clear */
+	HR_DAC_HLD_DTAS = 0x2,	/* perform DAC holdoff on receiving trigger */
 };
 
 // parallel poll register

@@ -1,40 +1,40 @@
-Board Model         board_type (for /etc/gpib.conf)     Driver Module   Works?
+Board Model         board_type (for gpib.conf)          Driver Module   Works?
 ******************************************************************************
 
 Capital Eq. Corp.:
-  PCI-488                 cec_pci                     cec-gpib.o          Y
-  PC-488                  pcII                        pc2-gpib.o          ?
+  PCI-488             cec_pci                           cec-gpib.o         Y
+  PC-488              pcII                              pc2-gpib.o         ?
 
-HP:                      
-  HP82335                 hp82335                     hp82335.o           Y
-  HP27209                 hp82335                     hp82335.o           ?
+HP:
+  HP82335             hp82335                           hp82335.o          Y
+  HP27209             hp82335                           hp82335.o          Y
 
 Ines:
-  GPIB-PCI                ines_pci                    ines-gpib.o         Y
-  GPIB for PCMCIA         ines_pcmcia                 ines-gpib.o         Y
+  GPIB-PCI            ines_pci or ines_pci_accel        ines-gpib.o        Y
+  GPIB for PCMCIA     ines_pcmcia or ines_pcmcia_accel  ines-gpib.o        Y
 
 Iotech:
-  GP488B                  pcIIa                       pc2-gpib.o          Y
-  
+  GP488B              pcIIa                             pc2-gpib.o         Y
+
 Keithley:
-  KPCI-488                cec_pci                     cec-gpib.o          Y
-  MBC-488                 pcII                        pc2-gpib.o          ?
+  KPCI-488            cec_pci                           cec-gpib.o         Y
+  MBC-488             pcII                              pc2-gpib.o         ?
 
 Measurement Computing
 (Computer Boards):
-  ISA-GPIB                cbi_isa                     cb7210.o            ?
-  ISA-GPIB-PC2A           pcIIa                       pc2-gpib.o          Y
-  PCI-GPIB                cbi_pci                     cb7210.o            Y
-  PCMCIA-GPIB             cbi_pcmcia                  cb7210.o            Y
+  ISA-GPIB            cbi_isa                           cb7210.o           ?
+  ISA-GPIB-PC2A       pcIIa                             pc2-gpib.o         Y
+  PCI-GPIB            cbi_pci                           cb7210.o           Y
+  PCMCIA-GPIB         cbi_pcmcia                        cb7210.o           Y
 
 National Instruments:
-  AT-GPIB                 ni_isa                      tnt4882.o           Y
-  PCI-GPIB                ni_pci                      tnt4882.o           Y
-  PCI-GPIB+               ni_pci                      tnt4882.o           ?
-  PCII                    pcII                        pc2-gpib.o          Y
-  PCIIa                   pcIIa                       pc2-gpib.o          Y
-  PCII/IIa              * pcII or pcIIa               pc2-gpib.o          Y
-  PCMCIA-GPIB             ni_pcmcia                   tnt4882.o           Y
+  AT-GPIB             ni_isa                            tnt4882.o          Y
+  PCI-GPIB            ni_pci                            tnt4882.o          Y
+  PCI-GPIB+           ni_pci                            tnt4882.o          Y
+  PCII                pcII                              pc2-gpib.o         Y
+  PCIIa               pcIIa                             pc2-gpib.o         Y
+  PCII/IIa          * pcII or pcIIa                     pc2-gpib.o         Y
+  PCMCIA-GPIB         ni_pcmcia                         tnt4882.o          Y
 
 * depends on board switch which chooses pcII or pcIIa mode
 

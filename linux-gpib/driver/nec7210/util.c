@@ -45,11 +45,10 @@ int nec7210_parallel_poll(gpib_board_t *board, nec7210_private_t *priv, uint8_t 
 
 	// wait for result
 	ret = wait_event_interruptible(board->wait, test_bit(COMMAND_READY_BN, &priv->state));
-
 	if(ret)
 	{
 		printk("gpib: parallel poll interrupted\n");
-		return -EINTR;
+		return -ERESTARTSYS;
 	}
 
 	*result = read_byte(priv, CPTR);
@@ -154,13 +153,37 @@ unsigned int nec7210_update_status(gpib_board_t *board, nec7210_private_t *priv)
 	return retval;
 }
 
-EXPORT_SYMBOL(nec7210_enable_eos);
-EXPORT_SYMBOL(nec7210_disable_eos);
-EXPORT_SYMBOL(nec7210_serial_poll_response);
-EXPORT_SYMBOL(nec7210_serial_poll_status);
-EXPORT_SYMBOL(nec7210_parallel_poll_response);
-EXPORT_SYMBOL(nec7210_parallel_poll);
-EXPORT_SYMBOL(nec7210_primary_address);
-EXPORT_SYMBOL(nec7210_secondary_address);
-EXPORT_SYMBOL(nec7210_update_status);
+unsigned int nec7210_set_admr_bits( nec7210_private_t *priv, unsigned int mask, int set )
+{
+	if( set )
+		priv->admr_bits |= mask;
+	else
+		priv->admr_bits &= ~mask;
+	write_byte( priv, priv->admr_bits, ADMR );
+
+	return priv->admr_bits;
+}
+
+unsigned int nec7210_set_auxa_bits( nec7210_private_t *priv, unsigned int mask, int set )
+{
+	if( set )
+		priv->auxa_bits |= mask;
+	else
+		priv->auxa_bits &= ~mask;
+	write_byte( priv, priv->auxa_bits, AUXMR );
+
+	return priv->auxa_bits;
+}
+
+EXPORT_SYMBOL( nec7210_enable_eos );
+EXPORT_SYMBOL( nec7210_disable_eos );
+EXPORT_SYMBOL( nec7210_serial_poll_response );
+EXPORT_SYMBOL( nec7210_serial_poll_status );
+EXPORT_SYMBOL( nec7210_parallel_poll_response );
+EXPORT_SYMBOL( nec7210_parallel_poll );
+EXPORT_SYMBOL( nec7210_primary_address );
+EXPORT_SYMBOL( nec7210_secondary_address );
+EXPORT_SYMBOL( nec7210_update_status );
+EXPORT_SYMBOL( nec7210_set_admr_bits );
+EXPORT_SYMBOL( nec7210_set_auxa_bits );
 

@@ -45,7 +45,6 @@ void tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv,
 	if(status0 & HR_RLC || status0 & HR_MAC)
 	{
 		update_status_nolock( board, priv );
-		wake_up_interruptible(&board->wait); /* wake up sleeping process */
 	}
 
 	// record reception of END
@@ -58,7 +57,6 @@ void tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv,
 	if((status0 & HR_BI))
 	{
 		set_bit(READ_READY_BN, &priv->state);
-		wake_up_interruptible(&board->wait); /* wake up sleeping process */
 	}
 
 	if((status0 & HR_BO))
@@ -70,7 +68,6 @@ void tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv,
 		{
 			set_bit(WRITE_READY_BN, &priv->state);
 		}
-		wake_up_interruptible(&board->wait);
 	}
 
 	if( status0 & HR_SPAS )
@@ -82,7 +79,6 @@ void tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv,
 	if(status1 & HR_SRQ)
 	{
 		set_bit(SRQI_NUM, &board->status);
-		wake_up_interruptible(&board->wait);
 	}
 
 	// have been addressed (with secondary addressing disabled)
@@ -138,6 +134,8 @@ void tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv,
 
 			address_status = read_byte( priv, ADSR );
 
+			/* XXX is this necessary? need to check if AUX_VAL
+			 * handles listen/talk state automatically */
 			if( address_status & HR_TPAS )
 			{
 				write_byte(priv, AUX_TON | AUX_CS, AUXCR);
@@ -145,17 +143,21 @@ void tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv,
 			{
 				write_byte(priv, AUX_LON | AUX_CS, AUXCR);
 			}
-		}
+
+			write_byte(priv, AUX_VAL, AUXCR);
+		}else
+			write_byte(priv, AUX_INVAL, AUXCR);
 		update_status_nolock( board, priv );
-		// clear dac holdoff
-		write_byte(priv, AUX_VAL, AUXCR);
 	}
 
 	spin_unlock(&board->spinlock);
 
 	if( ( status0 & priv->imr0_bits ) || ( status1 & priv->imr1_bits ) )
+	{
 		GPIB_DPRINTK("isr0 0x%x, imr0 0x%x, isr1 0x%x, imr1 0x%x, status 0x%x\n",
 			status0, priv->imr0_bits, status1, priv->imr1_bits, board->status);
+		wake_up_interruptible( &board->wait );
+	}
 }
 
 EXPORT_SYMBOL(tms9914_interrupt);

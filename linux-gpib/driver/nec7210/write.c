@@ -35,7 +35,7 @@ static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 			test_bit( TIMO_NUM, &board->status ) ) )
 		{
 			printk("gpib write interrupted\n");
-			retval = -EINTR;
+			retval = -ERESTARTSYS;
 			break;
 		}
 		if( test_bit( TIMO_NUM, &board->status ) )
@@ -55,7 +55,7 @@ static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 		test_bit( TIMO_NUM, &board->status ) ) )
 	{
 		printk("gpib write interrupted\n");
-		retval = -EINTR;
+		retval = -ERESTARTSYS;
 	}
 	if( test_bit( TIMO_NUM, &board->status ) )
 	{
@@ -147,8 +147,6 @@ ssize_t nec7210_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buf
 {
 	size_t count = 0;
 	ssize_t retval = 0;
-
-	if(length == 0) return 0;
 
 	if(send_eoi)
 	{

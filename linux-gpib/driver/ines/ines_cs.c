@@ -590,6 +590,7 @@ void ines_pcmcia_cleanup_module(void)
 }
 
 int ines_pcmcia_attach(gpib_board_t *board);
+int ines_pcmcia_accel_attach(gpib_board_t *board);
 void ines_pcmcia_detach(gpib_board_t *board);
 
 gpib_interface_t ines_pcmcia_interface =
@@ -617,7 +618,32 @@ gpib_interface_t ines_pcmcia_interface =
 	provider_module: &__this_module,
 };
 
-int ines_pcmcia_attach(gpib_board_t *board)
+gpib_interface_t ines_pcmcia_accel_interface =
+{
+	name: "ines_pcmcia_accel",
+	attach: ines_pcmcia_accel_attach,
+	detach: ines_pcmcia_detach,
+	read: ines_accel_read,
+	write: ines_accel_write,
+	command: ines_command,
+	take_control: ines_take_control,
+	go_to_standby: ines_go_to_standby,
+	interface_clear: ines_interface_clear,
+	remote_enable: ines_remote_enable,
+	enable_eos: ines_enable_eos,
+	disable_eos: ines_disable_eos,
+	parallel_poll: ines_parallel_poll,
+	parallel_poll_response: ines_parallel_poll_response,
+	line_status: ines_line_status,
+	update_status: ines_update_status,
+	primary_address: ines_primary_address,
+	secondary_address: ines_secondary_address,
+	serial_poll_response: ines_serial_poll_response,
+	serial_poll_status: ines_serial_poll_status,
+	provider_module: &__this_module,
+};
+
+int ines_common_pcmcia_attach( gpib_board_t *board )
 {
 	ines_private_t *ines_priv;
 	nec7210_private_t *nec_priv;
@@ -637,6 +663,8 @@ int ines_pcmcia_attach(gpib_board_t *board)
 
 	nec_priv->iobase = dev_list->io.BasePort1;
 
+	nec7210_board_reset( nec_priv, board );
+
 	if(request_irq(dev_list->irq.AssignedIRQ, ines_interrupt, 0, "pcmcia-gpib", board))
 	{
 		printk("gpib: can't request IRQ %d\n", dev_list->irq.AssignedIRQ);
@@ -644,7 +672,33 @@ int ines_pcmcia_attach(gpib_board_t *board)
 	}
 	ines_priv->irq = dev_list->irq.AssignedIRQ;
 
-	ines_init( ines_priv, board );
+	return 0;
+}
+
+int ines_pcmcia_attach( gpib_board_t *board )
+{
+	ines_private_t *ines_priv;
+	int retval;
+
+	retval = ines_common_pcmcia_attach( board );
+	if( retval < 0 ) return retval;
+
+	ines_priv = board->private_data;
+	ines_online( ines_priv, board, 0 );
+
+	return 0;
+}
+
+int ines_pcmcia_accel_attach( gpib_board_t *board )
+{
+	ines_private_t *ines_priv;
+	int retval;
+
+	retval = ines_common_pcmcia_attach( board );
+	if( retval < 0 ) return retval;
+
+	ines_priv = board->private_data;
+	ines_online( ines_priv, board, 1 );
 
 	return 0;
 }

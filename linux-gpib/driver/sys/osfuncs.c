@@ -342,7 +342,7 @@ static int read_ioctl(gpib_board_t *board, unsigned long arg)
 	remain = read_cmd.count;
 	while(remain > 0 && end_flag == 0)
 	{
-		ret = ibrd(board, board->buffer, (board->buffer_length < remain) ? board->buffer_length :
+		ret = ibrd( board, board->buffer, (board->buffer_length < remain) ? board->buffer_length :
 			remain, &end_flag);
 		if(ret < 0)
 		{

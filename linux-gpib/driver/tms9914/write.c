@@ -31,7 +31,7 @@ static ssize_t pio_write(gpib_board_t *board, tms9914_private_t *priv, uint8_t *
 			test_bit(TIMO_NUM, &board->status)))
 		{
 			printk("gpib write interrupted!\n");
-			retval = -EINTR;
+			retval = -ERESTARTSYS;
 			break;
 		}
 		if(test_bit(TIMO_NUM, &board->status))
@@ -48,7 +48,7 @@ static ssize_t pio_write(gpib_board_t *board, tms9914_private_t *priv, uint8_t *
 		test_bit(TIMO_NUM, &board->status)))
 	{
 		printk("gpib write interrupted!\n");
-		retval = -EINTR;
+		retval = -ERESTARTSYS;
 	}
 	if(test_bit(TIMO_NUM, &board->status))
 	{

@@ -26,7 +26,7 @@ void watchdog_timeout( unsigned long arg )
 	gpib_board_t *board = (gpib_board_t*) arg;
 
 	set_bit( TIMO_NUM, &board->status );
-	wake_up( &board->wait );
+	wake_up_interruptible( &board->wait );
 }
 // store number of jiffies to wait for various timeouts
 unsigned int usec_to_jiffies( unsigned int usec )

@@ -28,7 +28,25 @@ void ines_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
 	gpib_board_t *board = arg;
 	ines_private_t *priv = board->private_data;
-	
-	nec7210_interrupt(board, &priv->nec7210_priv);
+	nec7210_private_t *nec_priv = &priv->nec7210_priv;
+	unsigned int isr3_bits, isr4_bits;
+
+	nec7210_interrupt( board, nec_priv );
+
+	spin_lock( &board->spinlock );
+	isr3_bits = inb( nec_priv->iobase + ISR3 );
+	isr4_bits = inb( nec_priv->iobase + ISR4 );
+	if( isr3_bits & IFC_ACTIVE_BIT )
+	{
+		push_gpib_event( &board->event_queue, EventIFC );
+		wake_up_interruptible( &board->wait );
+	}
+	if( isr3_bits & FIFO_ERROR_BIT )
+		printk( "ines gpib: fifo error\n" );
+
+	if( isr4_bits & ( IN_FIFO_WATERMARK_BIT | OUT_FIFO_WATERMARK_BIT | OUT_FIFO_EMPTY_BIT ) )
+		wake_up_interruptible( &board->wait );
+
+	spin_unlock( &board->spinlock );
 }
 

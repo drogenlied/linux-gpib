@@ -75,7 +75,7 @@ ssize_t tms9914_command(gpib_board_t *board, tms9914_private_t *priv, uint8_t *b
 	if(wait_event_interruptible(board->wait, test_bit(COMMAND_READY_BN,
 		&priv->state) || test_bit(TIMO_NUM, &board->status)))
 	{
-		retval = -EINTR;
+		retval = -ERESTARTSYS;
 	}
 	if(test_bit(TIMO_NUM, &board->status))
 	{

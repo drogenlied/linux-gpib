@@ -26,6 +26,7 @@
 MODULE_LICENSE("GPL");
 
 int ines_pci_attach(gpib_board_t *board);
+int ines_pci_accel_attach(gpib_board_t *board);
 int ines_isa_attach(gpib_board_t *board);
 
 void ines_pci_detach(gpib_board_t *board);
@@ -176,6 +177,31 @@ gpib_interface_t ines_pci_interface =
 	provider_module: &__this_module,
 };
 
+gpib_interface_t ines_pci_accel_interface =
+{
+	name: "ines_pci_accel",
+	attach: ines_pci_accel_attach,
+	detach: ines_pci_detach,
+	read: ines_accel_read,
+	write: ines_accel_write,
+	command: ines_command,
+	take_control: ines_take_control,
+	go_to_standby: ines_go_to_standby,
+	interface_clear: ines_interface_clear,
+	remote_enable: ines_remote_enable,
+	enable_eos: ines_enable_eos,
+	disable_eos: ines_disable_eos,
+	parallel_poll: ines_parallel_poll,
+	parallel_poll_response: ines_parallel_poll_response,
+	line_status: ines_line_status,
+	update_status: ines_update_status,
+	primary_address: ines_primary_address,
+	secondary_address: ines_secondary_address,
+	serial_poll_response: ines_serial_poll_response,
+	serial_poll_status: ines_serial_poll_status,
+	provider_module: &__this_module,
+};
+
 int ines_allocate_private(gpib_board_t *board)
 {
 	board->private_data = kmalloc(sizeof(ines_private_t), GFP_KERNEL);
@@ -212,16 +238,38 @@ int ines_generic_attach(gpib_board_t *board)
 	return 0;
 }
 
-void ines_init( ines_private_t *ines_priv, const gpib_board_t *board )
+void ines_online( ines_private_t *ines_priv, const gpib_board_t *board, int use_accel )
 {
 	nec7210_private_t *nec_priv = &ines_priv->nec7210_priv;
 
-	nec7210_board_reset( nec_priv, board );
+	/* set internal counter register for 8 MHz input clock */
+	write_byte( nec_priv, ICR | 8, AUXMR );
+
+	write_byte( nec_priv, INES_AUX_XMODE, AUXMR );
+	write_byte( nec_priv, INES_AUX_CLR_IN_FIFO );
+	write_byte( nec_priv, INES_AUX_CLR_OUT_FIFO );
+	write_byte( nec_priv, INES_AUXD | 0, AUXMR );
+	outb( IFC_ACTIVE_BIT | FIFO_ERROR_BIT, nec_priv->iobase + IMR3 );
+	outb( 0, nec_priv->iobase + XDMA_CONTROL );
+	ines_priv->extend_mode_bits = 0;
+	outb( ines_priv->extend_mode_bits, nec_priv->iobase + EXTEND_MODE );
+	if( use_accel )
+	{
+		outb( 0x80, nec_priv->iobase + OUT_FIFO_WATERMARK );
+		outb( 0x80, nec_priv->iobase + IN_FIFO_WATERMARK );
+		outb( IN_FIFO_WATERMARK_BIT | OUT_FIFO_WATERMARK_BIT |
+			OUT_FIFO_EMPTY_BIT, nec_priv->iobase + IMR4 );
+		nec7210_set_admr_bits( nec_priv, IN_FIFO_ENABLE_BIT | OUT_FIFO_ENABLE_BIT, 1 );
+	}else
+	{
+		nec7210_set_admr_bits( nec_priv, IN_FIFO_ENABLE_BIT | OUT_FIFO_ENABLE_BIT, 0 );
+		outb( 0, nec_priv->iobase + IMR4 );
+	}
 
 	nec7210_board_online( nec_priv, board );
 }
 
-int ines_pci_attach(gpib_board_t *board)
+int ines_common_pci_attach( gpib_board_t *board )
 {
 	ines_private_t *ines_priv;
 	nec7210_private_t *nec_priv;
@@ -286,6 +334,8 @@ int ines_pci_attach(gpib_board_t *board)
 	}
 	nec_priv->iobase = pci_resource_start(ines_priv->pci_device, found_id.gpib_region);
 
+	nec7210_board_reset( nec_priv, board );
+
 	isr_flags |= SA_SHIRQ;
 	if(request_irq(ines_priv->pci_device->irq, ines_interrupt, isr_flags, "pci-gpib", board))
 	{
@@ -311,7 +361,35 @@ int ines_pci_attach(gpib_board_t *board)
 		outl(bits, ines_priv->amcc_iobase + AMCC_PASS_THRU_REG);
 		outl(AMCC_ADDON_INTR_ENABLE_BIT, ines_priv->amcc_iobase + AMCC_INTCS_REG);
 	}
-	ines_init( ines_priv, board );
+	ines_online( ines_priv, board, 0 );
+
+	return 0;
+}
+
+int ines_pci_attach( gpib_board_t *board )
+{
+	ines_private_t *ines_priv;
+	int retval;
+
+	retval = ines_common_pci_attach( board );
+	if( retval < 0 ) return retval;
+
+	ines_priv = board->private_data;
+	ines_online( ines_priv, board, 0 );
+
+	return 0;
+}
+
+int ines_pci_accel_attach( gpib_board_t *board )
+{
+	ines_private_t *ines_priv;
+	int retval;
+
+	retval = ines_common_pci_attach( board );
+	if( retval < 0 ) return retval;
+
+	ines_priv = board->private_data;
+	ines_online( ines_priv, board, 1 );
 
 	return 0;
 }
@@ -346,9 +424,11 @@ int init_module(void)
 	EXPORT_NO_SYMBOLS;
 
 	gpib_register_driver(&ines_pci_interface);
+	gpib_register_driver(&ines_pci_accel_interface);
 
-#if defined(GPIB_CONFIG_PCMCIA) 
+#if defined(GPIB_CONFIG_PCMCIA)
 	gpib_register_driver(&ines_pcmcia_interface);
+	gpib_register_driver(&ines_pcmcia_accel_interface);
 	err += ines_pcmcia_init_module();
 #endif
 	if(err)
@@ -360,8 +440,10 @@ int init_module(void)
 void cleanup_module(void)
 {
 	gpib_unregister_driver(&ines_pci_interface);
+	gpib_unregister_driver(&ines_pci_accel_interface);
 #if defined(GPIB_CONFIG_PCMCIA)
 	gpib_unregister_driver(&ines_pcmcia_interface);
+	gpib_unregister_driver(&ines_pcmcia_accel_interface);
 	ines_pcmcia_cleanup_module();
 #endif
 }

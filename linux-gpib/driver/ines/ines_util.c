@@ -52,6 +52,15 @@ int ines_line_status( const gpib_board_t *board )
 	return status;
 }
 
-
+void ines_set_xfer_counter( ines_private_t *priv, unsigned int count )
+{
+	if( count > 0xffff )
+	{
+		printk("ines: bug! tried to set xfer counter > 0xffff\n" );
+		return;
+	}
+	outb( ( count >> 8 ) & 0xff, iobase( priv ) + XFER_COUNT_UPPER );
+	outb( count & 0xff, iobase( priv ) + XFER_COUNT_LOWER );
+}
 
 

@@ -50,7 +50,7 @@ static ssize_t pio_read(gpib_board_t *board, tms9914_private_t *priv, uint8_t *b
 			test_bit(TIMO_NUM, &board->status)))
 		{
 			printk("gpib: pio read wait interrupted\n");
-			retval = -EINTR;
+			retval = -ERESTARTSYS;
 			break;
 		};
 		if(test_bit(TIMO_NUM, &board->status))
@@ -82,11 +82,15 @@ ssize_t tms9914_read(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buff
 
 	if(length == 0) return 0;
 
-	write_byte(priv, AUX_HLDE | AUX_CS, AUXCR);
 	if( priv->eos_flags & REOS )
+	{
 		write_byte(priv, AUX_HLDA | AUX_CS, AUXCR);
-	else
+		write_byte(priv, AUX_HLDE, AUXCR);
+	}else
+	{
 		write_byte(priv, AUX_HLDA, AUXCR);
+		write_byte(priv, AUX_HLDE | AUX_CS, AUXCR);
+	}
 	write_byte(priv, AUX_RHDF, AUXCR);
 
 	// transfer data (except for last byte)

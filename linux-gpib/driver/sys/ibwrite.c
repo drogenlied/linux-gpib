@@ -45,7 +45,11 @@ ssize_t ibwrt(gpib_board_t *board, uint8_t *buf, size_t cnt, int send_eoi)
 	ssize_t ret = 0;
 	int retval;
 
-	if(cnt == 0) return 0;
+	if( cnt == 0 )
+	{
+		printk( "gpib: ibwrt() called with zero length?\n" );
+		return 0;
+	}
 
 	if( board->master )
 	{

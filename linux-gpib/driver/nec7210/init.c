@@ -29,14 +29,8 @@
 
 MODULE_LICENSE("GPL");
 
-// size of modbus pci memory io region
-static const int iomem_size = 0x2000;
-
 void nec7210_board_reset( nec7210_private_t *priv, const gpib_board_t *board )
 {
-#ifdef MODBUS_PCI
-	GPIBout(0x20, 0xff); /* enable controller mode */
-#endif
 	/* 7210 chip reset */
 	write_byte(priv, AUX_CR, AUXMR);
 
@@ -52,9 +46,6 @@ void nec7210_board_reset( nec7210_private_t *priv, const gpib_board_t *board )
 	read_byte(priv, ISR1);
 	read_byte(priv, ISR2);
 
-	write_byte(priv, 0, EOSR);
-	/* set internal counter register 8 for 8 MHz input clock */
-	write_byte(priv, ICR + 8, AUXMR);
 	/* parallel poll unconfigure */
 	write_byte(priv, PPR | HR_PPU, AUXMR);
 
@@ -64,8 +55,10 @@ void nec7210_board_reset( nec7210_private_t *priv, const gpib_board_t *board )
 	priv->auxa_bits = AUXRA | HR_HLDA;
 	write_byte(priv, priv->auxa_bits, AUXMR);
 
-	/* set INT pin to active high */
-	priv->auxb_bits = AUXRB;
+	write_byte( priv, AUXRE | 0, AUXMR );
+
+	/* set INT pin to active high, enable command pass through of unknown commands */
+	priv->auxb_bits = AUXRB | HR_CPTE;
 	write_byte(priv, priv->auxb_bits, AUXMR);
 	write_byte(priv, AUXRE, AUXMR);
 }

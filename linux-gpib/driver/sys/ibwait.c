@@ -58,7 +58,7 @@ static void wait_timeout( unsigned long arg )
 	struct wait_info *winfo = ( struct wait_info * ) arg;
 
 	winfo->timed_out = 1;
-	wake_up( &winfo->board->wait );
+	wake_up_interruptible( &winfo->board->wait );
 }
 
 /* install timer interrupt handler */
