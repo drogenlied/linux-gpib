@@ -19,12 +19,12 @@
 #include "board.h"
 #include <asm/bitops.h>
 
-int tms9914_take_control(gpib_board_t *board, tms9914_private_t *priv, int syncronous)
+int tms9914_take_control(gpib_board_t *board, tms9914_private_t *priv, int synchronous)
 {
 	int i;
 	const int timeout = 1000;
 
-	if(syncronous)
+	if(synchronous)
 	{
 		write_byte(priv, AUX_TCS, AUXCR);
 	}else
@@ -82,7 +82,6 @@ void tms9914_remote_enable(gpib_board_t *board, tms9914_private_t *priv, int ena
 	if(enable)
 	{
 		write_byte(priv, AUX_SRE | AUX_CS, AUXCR);
-		set_bit(CIC_NUM, &board->status);
 	}else
 		write_byte(priv, AUX_SRE, AUXCR);
 }
