@@ -236,4 +236,6 @@ enum quancom_irq_control_status_bits
 	QUANCOM_IRQ_ENABLE_BIT = 0x4, /* writeable */
 };
 
+static const int ines_isa_iosize = 0x20;
+
 #endif	// _INES_GPIB_H

@@ -569,9 +569,9 @@ int ines_pcmcia_attach(gpib_board_t *board);
 int ines_pcmcia_accel_attach(gpib_board_t *board);
 void ines_pcmcia_detach(gpib_board_t *board);
 
-gpib_interface_t ines_pcmcia_interface =
+gpib_interface_t ines_pcmcia_unaccel_interface =
 {
-	name: "ines_pcmcia",
+	name: "ines_pcmcia_unaccel",
 	attach: ines_pcmcia_attach,
 	detach: ines_pcmcia_detach,
 	read: ines_read,
@@ -600,6 +600,34 @@ gpib_interface_t ines_pcmcia_interface =
 gpib_interface_t ines_pcmcia_accel_interface =
 {
 	name: "ines_pcmcia_accel",
+	attach: ines_pcmcia_accel_attach,
+	detach: ines_pcmcia_detach,
+	read: ines_accel_read,
+	write: ines_accel_write,
+	command: ines_command,
+	take_control: ines_take_control,
+	go_to_standby: ines_go_to_standby,
+	request_system_control: ines_request_system_control,
+	interface_clear: ines_interface_clear,
+	remote_enable: ines_remote_enable,
+	enable_eos: ines_enable_eos,
+	disable_eos: ines_disable_eos,
+	parallel_poll: ines_parallel_poll,
+	parallel_poll_configure: ines_parallel_poll_configure,
+	parallel_poll_response: ines_parallel_poll_response,
+	line_status: ines_line_status,
+	update_status: ines_update_status,
+	primary_address: ines_primary_address,
+	secondary_address: ines_secondary_address,
+	serial_poll_response: ines_serial_poll_response,
+	serial_poll_status: ines_serial_poll_status,
+	t1_delay: ines_t1_delay,
+	return_to_local: ines_return_to_local,
+};
+
+gpib_interface_t ines_pcmcia_interface =
+{
+	name: "ines_pcmcia",
 	attach: ines_pcmcia_accel_attach,
 	detach: ines_pcmcia_detach,
 	read: ines_accel_read,

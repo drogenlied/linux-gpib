@@ -226,13 +226,41 @@ void ines_return_to_local( gpib_board_t *board )
 	nec7210_return_to_local( board, &priv->nec7210_priv );
 }
 
-gpib_interface_t ines_pci_interface =
+gpib_interface_t ines_pci_unaccel_interface =
 {
-	name: "ines_pci",
+	name: "ines_pci_unaccel",
 	attach: ines_pci_attach,
 	detach: ines_pci_detach,
 	read: ines_read,
 	write: ines_write,
+	command: ines_command,
+	take_control: ines_take_control,
+	go_to_standby: ines_go_to_standby,
+	request_system_control: ines_request_system_control,
+	interface_clear: ines_interface_clear,
+	remote_enable: ines_remote_enable,
+	enable_eos: ines_enable_eos,
+	disable_eos: ines_disable_eos,
+	parallel_poll: ines_parallel_poll,
+	parallel_poll_configure: ines_parallel_poll_configure,
+	parallel_poll_response: ines_parallel_poll_response,
+	line_status: ines_line_status,
+	update_status: ines_update_status,
+	primary_address: ines_primary_address,
+	secondary_address: ines_secondary_address,
+	serial_poll_response: ines_serial_poll_response,
+	serial_poll_status: ines_serial_poll_status,
+	t1_delay: ines_t1_delay,
+	return_to_local: ines_return_to_local,
+};
+
+gpib_interface_t ines_pci_interface =
+{
+	name: "ines_pci",
+	attach: ines_pci_accel_attach,
+	detach: ines_pci_detach,
+	read: ines_accel_read,
+	write: ines_accel_write,
 	command: ines_command,
 	take_control: ines_take_control,
 	go_to_standby: ines_go_to_standby,
@@ -259,6 +287,34 @@ gpib_interface_t ines_pci_accel_interface =
 	name: "ines_pci_accel",
 	attach: ines_pci_accel_attach,
 	detach: ines_pci_detach,
+	read: ines_accel_read,
+	write: ines_accel_write,
+	command: ines_command,
+	take_control: ines_take_control,
+	go_to_standby: ines_go_to_standby,
+	request_system_control: ines_request_system_control,
+	interface_clear: ines_interface_clear,
+	remote_enable: ines_remote_enable,
+	enable_eos: ines_enable_eos,
+	disable_eos: ines_disable_eos,
+	parallel_poll: ines_parallel_poll,
+	parallel_poll_configure: ines_parallel_poll_configure,
+	parallel_poll_response: ines_parallel_poll_response,
+	line_status: ines_line_status,
+	update_status: ines_update_status,
+	primary_address: ines_primary_address,
+	secondary_address: ines_secondary_address,
+	serial_poll_response: ines_serial_poll_response,
+	serial_poll_status: ines_serial_poll_status,
+	t1_delay: ines_t1_delay,
+	return_to_local: ines_return_to_local,
+};
+
+gpib_interface_t ines_isa_interface =
+{
+	name: "ines_isa",
+	attach: ines_isa_attach,
+	detach: ines_isa_detach,
 	read: ines_accel_read,
 	write: ines_accel_write,
 	command: ines_command,
@@ -517,6 +573,38 @@ int ines_pci_accel_attach( gpib_board_t *board )
 	return 0;
 }
 
+int ines_isa_attach( gpib_board_t *board )
+{
+	ines_private_t *ines_priv;
+	nec7210_private_t *nec_priv;
+	int isr_flags = 0;
+	int retval;
+
+	retval = ines_generic_attach(board);
+	if(retval) return retval;
+
+	ines_priv = board->private_data;
+	nec_priv = &ines_priv->nec7210_priv;
+
+	
+	if(request_region(board->ibbase, ines_isa_iosize, "ines_gpib") == 0)
+	{
+		printk("ines_gpib: ioports at 0x%lx already in use\n", board->ibbase);
+		return -1;
+	}
+	nec_priv->iobase = board->ibbase;
+	nec_priv->offset = 1;
+	nec7210_board_reset(nec_priv, board);
+	if(request_irq(board->ibirq, ines_interrupt, isr_flags, "ines_gpib", board))
+	{
+		printk("ines_gpib: failed to allocate IRQ %d\n", board->ibirq);
+		return -1;
+	}
+	ines_priv->irq = board->ibirq;
+	ines_online(ines_priv, board, 1);
+	return 0;
+}
+
 void ines_pci_detach(gpib_board_t *board)
 {
 	ines_private_t *ines_priv = board->private_data;
@@ -552,15 +640,38 @@ void ines_pci_detach(gpib_board_t *board)
 	ines_free_private(board);
 }
 
+void ines_isa_detach(gpib_board_t *board)
+{
+	ines_private_t *ines_priv = board->private_data;
+	nec7210_private_t *nec_priv;
+
+	if(ines_priv)
+	{
+		nec_priv = &ines_priv->nec7210_priv;
+		if(ines_priv->irq)
+		{
+			free_irq(ines_priv->irq, board);
+		}
+		if(nec_priv->iobase)
+		{
+			nec7210_board_reset( nec_priv, board );
+			release_region(nec_priv->iobase, ines_isa_iosize);
+		}
+	}
+	ines_free_private(board);
+}
+
 static int __init ines_init_module( void )
 {
 	int err = 0;
 
 	gpib_register_driver(&ines_pci_interface, &__this_module);
+	gpib_register_driver(&ines_pci_unaccel_interface, &__this_module);
 	gpib_register_driver(&ines_pci_accel_interface, &__this_module);
-
+	gpib_register_driver(&ines_isa_interface, &__this_module);
 #if defined(GPIB_CONFIG_PCMCIA)
 	gpib_register_driver(&ines_pcmcia_interface, &__this_module);
+	gpib_register_driver(&ines_pcmcia_unaccel_interface, &__this_module);
 	gpib_register_driver(&ines_pcmcia_accel_interface, &__this_module);
 	err += ines_pcmcia_init_module();
 #endif
@@ -573,9 +684,12 @@ static int __init ines_init_module( void )
 static void ines_exit_module( void )
 {
 	gpib_unregister_driver(&ines_pci_interface);
+	gpib_unregister_driver(&ines_pci_unaccel_interface);
 	gpib_unregister_driver(&ines_pci_accel_interface);
+	gpib_unregister_driver(&ines_isa_interface);
 #if defined(GPIB_CONFIG_PCMCIA)
 	gpib_unregister_driver(&ines_pcmcia_interface);
+	gpib_unregister_driver(&ines_pcmcia_unaccel_interface);
 	gpib_unregister_driver(&ines_pcmcia_accel_interface);
 	ines_pcmcia_cleanup_module();
 #endif
