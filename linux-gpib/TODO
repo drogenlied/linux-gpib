@@ -31,3 +31,5 @@ test/debug parallel poll support
 fix parallel poll timeouts
 
 build static version of library, link examples against it
+
+possible problems when autopoll happens without remote enable

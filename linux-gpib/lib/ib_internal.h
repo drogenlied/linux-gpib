@@ -23,7 +23,6 @@
 #include "ib.h"
 #include "ibP.h"
 #include "gpib_types.h"
-#include "gpib_registers.h"
 #include "gpib_ioctl.h"
 #include <unistd.h>
 #include <sys/ioctl.h>
@@ -92,6 +91,8 @@ extern int remote_enable( const ibBoard_t *board, int enable );
 extern int config_read_eos( ibBoard_t *board, int use_eos_char,
 	int eos_char, int compare_8_bits );
 extern void sync_globals( void );
+extern int create_autopoll_thread( ibBoard_t *board );
+extern int destroy_autopoll_thread( ibBoard_t *board );
 
 extern int internal_ibpad( ibConf_t *conf, unsigned int address );
 extern int internal_ibsad( ibConf_t *conf, int address );

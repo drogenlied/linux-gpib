@@ -8,13 +8,26 @@ int board_online( ibBoard_t *board, int online )
 	online_ioctl_t online_cmd;
 	int retval;
 
-	if( ibBoardOpen( board ) < 0 )
+	if( online )
 	{
-		return -1;
+		if( ibBoardOpen( board ) < 0 )
+			return -1;
+		if( ibBdChrConfig( board ) < 0 )
+		{
+			setIberr( EDVR );
+			setIbcnt( errno );
+			fprintf( stderr, "libgpib: failed to configure board\n" );
+			ibBoardClose( board );
+			return -1;
+		}
+	}else
+	{
+		retval = destroy_autopoll_thread( board );
+		if( retval < 0 )
+			return retval;
 	}
-
 	online_cmd.master = board->is_system_controller;
-	online_cmd.online = 1;
+	online_cmd.online = online;
 	retval = ioctl( board->fileno, IBONL, &online_cmd );
 	if( retval < 0 )
 	{
@@ -22,11 +35,16 @@ int board_online( ibBoard_t *board, int online )
 		return -1;
 	}
 
-	if( online && board->is_system_controller )
+	if( online )
 	{
-		retval = remote_enable( board, online );
-		if( retval < 0 ) return retval;
-	}
+		if( board->is_system_controller )
+		{
+			retval = remote_enable( board, 1 );
+			if( retval < 0 ) return retval;
+		}
+		if( create_autopoll_thread( board ) < 0)
+			return -1;
+	}else ibBoardClose( board );
 
 	return 0;
 }

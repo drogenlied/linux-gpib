@@ -1,4 +1,6 @@
 
+#error this file should never be used
+
 #ifndef _GPIB_REGISTERS_H
 #define _GPIB_REGISTERS_H
 
