@@ -1,6 +1,21 @@
 Linux GPIB Package changelog
 
-3.1.94:  Added 'gpib_config' utility which now must be
+3.1.95: Replaced old makefiles using autoconf/automake.
+Updates to Guile binding (from Stefan Jahn).  Fixed
+linking problems with gpib_config on some systems.
+Fixed compilation of Perl binding with Perl 5.8.
+Gratuitous changing of dashes module names to
+underscores.  Fixed compilation of TCL binding
+against several TCL versions.  Fixed support of
+NI AT-GPIB cards with older chipsets.  Fixed
+ISAPNP support for AT-GPIB/TNT where board would
+not be deactivated after first use.  Fixed
+regression in 3.1.94 where bus errors occur due
+to writing too soon after ATN is asserted/released.
+Catch bus errors on writing command bytes.
+Random bugfixes.
+
+3.1.94: Added 'gpib_config' utility which now must be
 run to configure drivers after loading, in order to
 implement proper permission checking when configuring
 hardware.  New Guile binding by Stefan Jahn.  New
