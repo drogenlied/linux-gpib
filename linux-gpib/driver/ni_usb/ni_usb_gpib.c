@@ -887,7 +887,7 @@ unsigned int ni_usb_update_status( gpib_board_t *board, unsigned int clear_mask 
 		printk("%s: kmalloc failed!\n", __FILE__);		
 		return board->status;
 	}
-	retval = ni_usb_receive_control_msg(ni_priv, 0x21, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE, 
+	retval = ni_usb_receive_control_msg(ni_priv, ni_usb_control_request, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE, 
 		0x200, 0x0, buffer, bufferLength, HZ);
 	if(retval != bufferLength)
 	{
@@ -1447,7 +1447,7 @@ static int ni_usb_set_interrupt_monitor(gpib_board_t *board, unsigned int monito
 		printk("%s: kmalloc failed!\n", __FILE__);		
 		return -ENOMEM;
 	}	
-	retval = ni_usb_receive_control_msg(ni_priv, 0x21, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE, 
+	retval = ni_usb_receive_control_msg(ni_priv, ni_usb_control_request, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE, 
 		0x300, ni_usb_ibsta_monitor_mask & monitored_bits, buffer, bufferLength, HZ);
 	if(retval != bufferLength)
 	{

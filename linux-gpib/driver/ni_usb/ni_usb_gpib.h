@@ -92,6 +92,8 @@ enum ni_usb_bulk_ids
 	NIUSB_IBRD_STATUS_ID = 0x38
 };
 
+static const int ni_usb_control_request = 0x21;
+
 static const unsigned int ni_usb_ibsta_monitor_mask = SRQI | LOK | REM | CIC | ATN | TACS | LACS | DTAS | DCAS;
 
 static inline int nec7210_to_tnt4882_offset(int offset)
