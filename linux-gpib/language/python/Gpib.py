@@ -14,8 +14,16 @@ class Gpib:
 	def write(self,str):
 		gpib.write(self.id, str)
 
+	def writebin(self,str,len):
+		gpib.writebin(self.id,str,len)
+
+
 	def read(self,len=512):
 		self.res = gpib.read(self.id,len)
+		return self.res
+
+	def readbin(self,len=512):
+		self.res = gpib.readbin(self.id,len)
 		return self.res
 
 	def clear(self):
@@ -31,6 +39,14 @@ class Gpib:
 	def trigger(self):
 		gpib.trg(self.id)
 
-
 	def ren(self,val):
 		gpib.ren(self.id,val)
+
+	def ibsta(self):
+		self.res = gpib.ibsta()
+		return self.res
+
+	def ibcnt(self):
+		self.res = gpib.ibcnt()
+		return self.res
+

@@ -63,6 +63,40 @@ static PyObject* gpib_read(PyObject *self, PyObject *args)
 	return Py_BuildValue("s", result);
 }
 
+static char gpib_readbin__doc__[] =
+""
+;
+
+
+static PyObject* gpib_readbin(PyObject *self, PyObject *args)
+{
+        static char *result = 0x0;
+	static int result_len = 0;
+
+	int device;
+        int len;
+
+	if (!PyArg_ParseTuple(args, "ii",&device,&len))
+		return NULL;
+
+	if (result_len < len+1)
+	  {
+	    if((result = realloc(result, len+1)) == NULL)
+	      {
+		PyErr_SetString(GpibError,"Read Error: can't get Memory ");
+		return NULL;
+	      }
+	  }
+	
+        if( ibrd(device,result,len) & ERR ){
+	   PyErr_SetString(GpibError,"Read Error: ibrd() failed");
+	   return NULL;
+	}
+
+	return Py_BuildValue("s#", result,ibcnt);
+}
+
+
 static char gpib_write__doc__[] =
 ""
 ;
@@ -81,6 +115,27 @@ static PyObject* gpib_write(PyObject *self, PyObject *args)
 
 	Py_INCREF(Py_None);
 	return Py_None;
+}
+
+static char gpib_writebin__doc__[] =
+""
+;
+
+static PyObject* gpib_writebin(PyObject *self, PyObject *args)
+{
+        char *command;
+        int device;
+        int length;
+
+        if (!PyArg_ParseTuple(args, "isi",&device,&command,&length))
+                return NULL;
+        if( ibwrt(device,command,length) & ERR ){
+           PyErr_SetString(GpibError,"Write Error: ibwrt");
+           return NULL;
+        }
+
+        Py_INCREF(Py_None);
+        return Py_None;
 }
 
 static char gpib_cmd__doc__[] =
@@ -235,11 +290,11 @@ static PyObject* gpib_trg(PyObject *self, PyObject *args)
 	return Py_None;
 }
 
-static char gpib_status__doc__[] =
+static char gpib_ibsta__doc__[] =
 ""
 ;
 
-static PyObject* gpib_status(PyObject *self, PyObject *args)
+static PyObject* gpib_ibsta(PyObject *self, PyObject *args)
 {
 
 	if (!PyArg_ParseTuple(args, ""))
@@ -248,12 +303,27 @@ static PyObject* gpib_status(PyObject *self, PyObject *args)
 	return Py_BuildValue("i",ibsta);
 }
 
+static char gpib_ibcnt__doc__[] =
+""
+;
+
+static PyObject* gpib_ibcnt(PyObject *self, PyObject *args)
+{
+
+	if (!PyArg_ParseTuple(args, ""))
+		return NULL;
+
+	return Py_BuildValue("i",ibcnt);
+}
+
 /* List of methods defined in the module */
 
 static struct PyMethodDef gpib_methods[] = {
  {"find",	gpib_find,	1,	gpib_find__doc__},
  {"read",	gpib_read,	1,	gpib_read__doc__},
+ {"readbin",	gpib_readbin,	1,	gpib_readbin__doc__},
  {"write",	gpib_write,	1,	gpib_write__doc__},
+ {"writebin",	gpib_writebin,	1,	gpib_writebin__doc__},
  {"cmd",	gpib_cmd,	1,	gpib_cmd__doc__},
  {"ren",	gpib_ren,	1,	gpib_ren__doc__},
  {"clear",	gpib_clear,	1,	gpib_clear__doc__},
@@ -261,7 +331,8 @@ static struct PyMethodDef gpib_methods[] = {
  {"wait",	gpib_wait,	1,	gpib_wait__doc__},
  {"rsp",	gpib_rsp,	1,	gpib_rsp__doc__},
  {"trg",	gpib_trg,	1,	gpib_trg__doc__},
- {"status",	gpib_status,	1,	gpib_status__doc__},
+ {"ibsta",	gpib_ibsta,	1,	gpib_ibsta__doc__},
+ {"ibcnt",	gpib_ibcnt,	1,	gpib_ibcnt__doc__},
 
 	{NULL,		NULL}		/* sentinel */
 };
