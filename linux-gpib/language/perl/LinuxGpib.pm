@@ -19,12 +19,7 @@ our @ISA = qw(Exporter DynaLoader);
 # If you do not need this, moving things directly into @EXPORT or @EXPORT_OK
 # will save memory.
 our %EXPORT_TAGS = ( 'all' => [ qw(
-	ibAPwait
-	ibape
 	ibcac
-	ibchbase
-	ibchdma
-	ibchirq
 	ibclr
 	ibcmd
 	ibconfig

@@ -36,34 +36,9 @@ constant(sv,arg)
 
 
 int
-ibAPwait(ud, mask)
-	int	ud
-	int	mask
-
-int
-ibape(ud, v)
-	int	ud
-	int	v
-
-int
 ibcac(ud, v)
 	int	ud
 	int	v
-
-int
-ibchbase(ud, base)
-	int	ud
-	int	base
-
-int
-ibchdma(ud, base)
-	int	ud
-	int	base
-
-int
-ibchirq(ud, base)
-	int	ud
-	int	base
 
 int
 ibclr(ud)
