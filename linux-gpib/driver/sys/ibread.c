@@ -65,7 +65,7 @@ ssize_t ibrd( gpib_board_t *board, uint8_t *buf, size_t length, int *end_flag )
 			buf += ret;
 			count += ret;
 		}
-	}while(ret > 0 && count < length && end_flag == 0);
+	}while(ret > 0 && count < length && *end_flag == 0);
 
 	osRemoveTimer(board);
 
