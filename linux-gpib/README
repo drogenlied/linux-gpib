@@ -1,42 +1,33 @@
-
-      =====================================================
-
-
-		    The Linux GPIB Package           
-             ----------------------------------- 
-                 (c) 1994,1995,1996 by C.Schroeter       
-                 (c) 2001,2002 by Frank Mori Hess
-      
-      =====================================================
+=====================================================
 
 
+	The Linux GPIB Package
+	-----------------------------------
+		(c) 1994,1995,1996 by C.Schroeter
+		(c) 2001,2002 by Frank Mori Hess
 
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      SEE README.PCIIa if you have a pcIIa card
-      SEE README.hp82335 if you have this card or 27209
-      SEE README.<mycard> for your card type
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+=====================================================
 
-      This is Linux-GPIB the IEEE-488 card support
-      package and measurement suite for LINUX.
+This is Linux-GPIB the IEEE-488 card support
+package and measurement suite for LINUX.
 
-      It is based on the 2.05-alpha release from the Linux Lab
-      Project, which was maintained by C. Schroeter.  However,
-      The package was left unmaintained for a couple years so
-      I (Frank Hess) decided to pick it up and port it to the 
-      2.4 Linux kernel.
+It is based on the 2.05-alpha release from the Linux Lab
+Project, which was maintained by C. Schroeter.  However,
+the package was left unmaintained for a couple years so
+I (Frank Hess) decided to pick it up and port it to the
+2.4 Linux kernel.
 
-      Send comments, questions and suggestions to 
-      fmhess@users.sourceforge.net
-      or better to the linux-gpib mailing list
-      linux-gpib-general@lists.sourceforge.net
+Send comments, questions and suggestions to
+fmhess@users.sourceforge.net
+or better to the linux-gpib mailing list
+linux-gpib-general@lists.sourceforge.net
 
-      *************** COPYRIGHT NOTICE ***********************
+*************** COPYRIGHT NOTICE ***********************
 
-	If You want to use the Package for Commercial Purpose
-	Please read the COPYRIGHTS File very Carefuly.
+If You want to use the Package for Commercial Purpose
+Please read the COPYRIGHTS File very Carefuly.
 
-      ********************************************************
+********************************************************
 
 
 

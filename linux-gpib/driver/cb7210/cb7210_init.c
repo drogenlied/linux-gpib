@@ -136,7 +136,7 @@ gpib_interface_t cb_pci_interface =
 
 gpib_interface_t cb_isa_interface =
 {
-	name: "cbi4882",
+	name: "cbi_isa",
 	attach: cb_isa_attach,
 	detach: cb_isa_detach,
 	read: cb7210_read,

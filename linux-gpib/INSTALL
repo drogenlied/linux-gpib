@@ -5,58 +5,14 @@ Installing Linux-GPIB
 Supported Hardware:
 ---------------------------------------------------------------------
 
-	NI AT-GPIB Chipsets:
-		* nec7210+turbo488
-		* NAT4882BPL+turbo488
-		* TNT-4882
-
-		no NI Plug and Play Boards!
-			(I heard that they can be used with the isapnp utility but they are not
-			officially supported)
-		no NI PCI-GPIB Boards!
-
-	NI PCII and compatible:
-			* KEITHLEY MBC-488 (bishop@rutchem.rutgers.edu)
-			* CEC PC-488 (# 01000-00300)   (untested)
-
-	NI PCIIa and compatible
-		* Combuter Boards CI-PCIIA (tested)
-			* IBM GPIB Adapter (tested)
-
-	COMPUTER BOARDS
-			* ISA/LC
-			* ISA
-			* PCI
-			* PCM (PCMCIA-Card)
-
-	HP 27209 and 82335 Boards
-
-	Ziatech 2T1444 or 'Plain 9914' based boards
-		(untested pre alpha)
-
-	Janz MODBUS-PCI carrier board with a MODBUS-GPIB Module
-		(pre alpha)
-
-If your board is not listed here:
----------------------------------
-	If your card uses a nec7210 and your address range is in a continous
-	block you should try PCII mode.
-	If your card uses addresses with 0x400
-	gaps between each register address you should try PCIIa mode.
-
-	If you have unsupported hardware and are willing to assist with
-	testing and debugging a new driver for it, we can might be able
-	to get a driver running for it (if sufficient documentation is
-	available).
+See the file named drivers.txt
 
 ------------------------------------------------------------------------
 
 Important Note:
 
-You'll need the dialog package to be installed on your system to run the
-installation scripts correctly (normally this is the default
-on slackware distributions)
-you can get the package from sunsite or from the slackware tree.
+You'll need the 'dialog' package installed on your system to run the
+installation scripts correctly.
 
 -------------------------------------------------------------------------
 
@@ -75,9 +31,8 @@ o) Installing your Hardware:
 	install the board in your computer.
 
 o) Unpacking the Software:
-	(No,No not this 'how to rip off the cellophane' section :-) )
 	Choose a directory on your system where linux-gpib should reside,
-	cd to this directory and unpack the archives.
+	cd to this directory and unpack the archives with the 'tar' program.
 
 	You will also need the linux kernel source code, which the linux-gpib
 	package reads for header files and compilation variables when compiling
@@ -86,7 +41,7 @@ o) Unpacking the Software:
 	a fresh kernel.  Otherwise, you can prepare a kernel source tree that matches
 	the kernel you are currently running if you have its config file (in
 	the Debian distibution the config files for the kernel-image packages
-	is in the /boot directory).  Perform the following steps:
+	are in the /boot directory).  Perform the following steps:
 	1) Get a copy of the kernel source that matches the kernel you are
 		running.  Unpack it and copy your kernel config file to '.config'
 		in the top directory of your kernel source.
@@ -107,92 +62,13 @@ o) Installing additional Software:
 	load <path>/libgpib.so
 
 
-
-************ PLEASE **************
-o) read the README (and README.<card_type>)
-	print out the postscript documentation in ./doc
-
-
 B) Installing Linux-GPIB
 -------------------------
 
 o) cd to your linux-gpib directory and type 'make config'.  If you
 	have old files you want to clean up, do a 'make clean' first.
-	You'll se some screens asking for your board type, your
-	board characteristics (irq,dma etc) and configuration options
-
-	Selecting the board type:
-
-	+----------------------- Board Type Selection -----------------------+
-	|                   Please select Your GPIB Board                    |
-	| +----------------------------------------------------------------+ |
-	| |       atgpib  National Instruments AT GPIB Board (16bit)       | |
-	| |       pcIIa   National Instruments PCIIa Board (8bit)          | |
-	| |       pcII    National Instruments PCII  Board (8bit)          | |
-	| |       hp82335 Hewlett Packard HP82335 and HP27209 boards       | |
-	| |       (other boards not listed here)                           | |
-	| +----------------------------------------------------------------+ |
-	+--------------------------------------------------------------------+
-	|                       <  OK  >      <Cancel>                       |
-	+--------------------------------------------------------------------+
-
-	now choose your board type. For NI-cards with TNT chipset please choose
-	'atgpib'.
-
-
-		+------------------------------------------------+
-		|                                                |
-		|    Do you want to change the Default           |
-		|    Board characteristics                       |
-		|    as base address or IRQ ?                    |
-		|                                                |
-		|                                                |
-		+------------------------------------------------+
-		|              < Yes >      <  No  >             |
-		+------------------------------------------------+
-
-	If you jumpered your board to a base address, irq or dma other than the
-	defaults you should select < Yes > here and select the base address
-	IRQ and DMA channel.
-
-
-	Now select your base address, IRQ- and dma-settings correctly.
-
-
-	+-------------------------- Driver Options --------------------------+
-	|                    Select the following Options                    |
-	| +----------------------------------------------------------------+ |
-	| |    [X] USE_DMA         Use DMA Mode for Transfers              | |
-	| |    [ ] HAS_DMAMANAGER  Use David Niemi's Dma Manager Patch     | |
-	| |    [X] BUILD_DEBUG     Build Driver With Debugging Code        | |
-	| |    [X] DEFAULT_DEBUG   Set Default Debugging Mode to 'none'    | |
-	| |                                                                | |
-	| +----------------------------------------------------------------+ |
-	+--------------------------------------------------------------------+
-	|                       <  OK  >      <Cancel>                       |
-	+--------------------------------------------------------------------+
-
-
-	This Menu selects if you want to use DMA transfer mode or
-	if you want verbose driver-debugging.
-
-	+------------------- Driver Major Number Settings -------------------+
-	|    Please Select one of the following MAJOR Numbers                |
-	|                   Or 'Custom' if you want to Specify Your Own Major|
-	| +----------------------------------------------------------------+ |
-	| |              31      Default Major for GPIB Driver             | |
-	| |              29      Alternate Major for GPIB Driver           | |
-	| |              19      Alternate Major for GPIB Driver           | |
-	| |              Custom  Specify Your Own Setting                  | |
-	| |                                                                | |
-	| +----------------------------------------------------------------+ |
-	|                                                                    |
-	+--------------------------------------------------------------------+
-	|                       <  OK  >      <Cancel>                       |
-	+--------------------------------------------------------------------+
-
-	Now you have to set the driver's Major-Number. The Major has to be
-	unique for the system (see /proc/devices for used major numbers)
+	You will be prompted for the path to your linux kernel source,
+	and which gpib drivers you wish to compile.
 
 	Type 'make'.  Now the Package will be compiled.
 
@@ -205,7 +81,7 @@ o) cd to your linux-gpib directory and type 'make config'.  If you
 	To give a user access to the computer's gpib board you will have to add
 	them to the group 'gpib' (you can use the 'usermod' tool to change the
 	groups a user belongs to).  Or, you could use 'chmod' to change the
-	permissions on the device file /dev/gpib0/master to something you like
+	permissions on the device files /dev/gpib[0-15] to something you like
 	better.
 
 C) Loading the driver module
@@ -213,26 +89,17 @@ C) Loading the driver module
 
 	You can load the driver module by typing
 
-		modprobe gpib0
+		modprobe <driver name>
 
+	See the file 'drivers.txt' to see which driver your board is supported
+	by.
 
 
 D) Configuring the GPIB-Library
 ---------------------------
 
-	If you have Tcl/Tk installed on your system or better if you have ibsh
-	compiled and installed sucessfully you should use the Linux-GPIB
-	Configuration and test utility in ./applications/ibconf.
-	If you want to use the bus test functions you must have ibsh!
-
-	If you have ibsh you should type
-
-		./ibconf in ./applications/ibconf
-
-	but if you haven't ibsh you can use ibconf in fallback mode
-	(without the bus-test functions) by typing
-
-		wish -f ./ibconf
+	If you have Tcl/Tk installed on your system you can use the Linux-GPIB
+	Configuration and test utility 'ibconf' to edit your configuration file.
 
 	If hou haven't Tcl/Tk you have to edit /etc/gpib.conf by hand
 	to reflect your bus layout.
@@ -240,21 +107,12 @@ D) Configuring the GPIB-Library
 E) Checking your software configuration:
 -----------------------------------------
 
-	linux-gpib comes with a Soft- and hardware check utility ./util/ibchk that
+	linux-gpib comes with a utility called ibchk (linux-gpib/util/ibchk) that
 	performs some simple tests on your installation. The error-messages
 	generated by this program should be helpful finding any problems during
 	the installation.
 
 
-F) Known Problems:
------------------------------------------
-
-	-)  In some newer slackware distributions the search path for the
-		X11 librarys
-		is not set correctly with X11R6, please in this case add -L/usr/X11/lib
-		to the XLIBS variable in applications/ibsh/Makefile.
-
-	-)  At this time only Kernels from the 2.4.x tree are supported
 
 
 

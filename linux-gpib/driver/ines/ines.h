@@ -21,6 +21,7 @@
 
 #include <nec7210.h>
 #include <gpibP.h>
+#include <plx9050.h>
 #include <linux/config.h>
 
 typedef struct
@@ -66,17 +67,5 @@ void ines_pcmcia_cleanup_module(void);
 
 // offset between consecutive nec7210 registers
 static const int ines_reg_offset = 1;
-
-// plx pci chip registers and bits
-enum
-{
-	PLX_INTCSR_REG = 0x4c,
-};
-
-enum
-{
-	INTCSR_ENABLE_INTR = 0x43,
-	INTCSR_DISABLE_INTR = 0x0,
-};
 
 #endif	// _INES_GPIB_H

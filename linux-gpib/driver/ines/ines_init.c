@@ -233,7 +233,8 @@ int ines_pci_attach(gpib_device_t *device)
 	ines_priv->irq = ines_priv->pci_device->irq;
 
 	// enable interrupts on plx chip
-	outl(INTCSR_ENABLE_INTR, ines_priv->plx_iobase + PLX_INTCSR_REG);
+	outl(LINTR1_EN_BIT | LINTR1_POLARITY_BIT | PCI_INTR_EN_BIT,
+		ines_priv->plx_iobase + PLX_INTCSR_REG);
 
 	ines_init(ines_priv);
 
@@ -251,7 +252,7 @@ void ines_pci_detach(gpib_device_t *device)
 		if(ines_priv->irq)
 		{
 			// disable amcc interrupts
-			outl(INTCSR_DISABLE_INTR, ines_priv->plx_iobase + PLX_INTCSR_REG );
+			outl(0, ines_priv->plx_iobase + PLX_INTCSR_REG );
 			free_irq(ines_priv->irq, device);
 		}
 		if(nec_priv->iobase)

@@ -1,0 +1,25 @@
+Board Type                Interface Name           Driver Module
+****************************************************************
+
+Capital Eq. Corp.:
+  PCI-488                 cec_pci                  cec-gpib.o
+
+Ines:
+  GPIB-PCI                ines_pci                 ines-gpib.o
+  GPIB for PCMCIA         ines_pcmcia              ines-gpib.o
+
+Keithley:
+  KPCI-488                cec_pci                  cec-gpib.o
+
+Measurement Computing
+(Computer Boards):
+  ISA-GPIB                cbi_isa                  cb7210.o
+  ISA-GPIB-PC2A           pcIIa                    pc2-gpib.o
+  PCI-GPIB                cbi_pci                  cb7210.o
+  PCMCIA-GPIB             cbi_pcmcia               cb7210.o
+
+National Instruments:
+  AT-GPIB                 ni_isa                   tnt4882.o
+  PCI-GPIB                ni_pci                   tnt4882.o
+  PCII                    pc2                      pc2-gpib.o
+  PCIIa                   pc2a                     pc2-gpib.o
