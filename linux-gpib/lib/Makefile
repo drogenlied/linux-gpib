@@ -35,7 +35,7 @@ LDFLAGS = -L.
 SRCS =  ibCac.c ibClr.c ibCmd.c ibConfYacc.c ibConfLex.c  ibEos.c ibEot.c \
 	ibFind.c ibLines.c ibOnl.c ibPad.c ibRd.c ibRpp.c ibRsp.c ibRsv.c \
 	ibSad.c ibSic.c ibSre.c ibTmo.c ibTrg.c ibWait.c ibWrt.c ibBdChrConfig.c\
-	ibGts.c ibBoard.c ibError.c ibutil.c \
+	ibGts.c ibBoard.c ibError.c ibutil.c globals.c \
 	ibLoc.c ibDma.c ibConfig.c ibdev.c \
 	ibEvent.c
 
@@ -46,7 +46,7 @@ OBJS =  $(SRCS:.c=.o)
 all: $(EXP_INC) libgpib.so 
 
 libgpib.so:   $(OBJS) 
-	ld --version-script=gpib_version_script -shared $(OBJS) -o libgpib.so	
+	ld --version-script=gpib_version_script -shared -lpthread $(OBJS) -o libgpib.so	
 
 ibConfLex.c:  ibConfLex.l ibConfYacc.h 
 	flex -Pgpib_yy -o$@ $<

@@ -13,10 +13,6 @@
 #include <sys/types.h>
 #include <signal.h>
 
-int iberr = 0;
-int ibsta = 0;
-int ibcnt = 0;
-
 ibBoard_t ibBoard[ MAX_BOARDS ];
 
 void ibBoardDefaultValues( void )

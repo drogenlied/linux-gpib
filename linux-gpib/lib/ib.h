@@ -26,7 +26,11 @@ extern "C" {
 #include <gpib_user.h>
 
 extern int ibsta, ibcnt, iberr;
-#define ibcntl ibcnt
+extern long ibcntl;
+extern int ThreadIbsta( void );
+extern int ThreadIberr( void );
+extern int ThreadIbcnt( void );
+extern long ThreadIbcntl( void );
 
 /***** Public Functions ******/
 extern int ibcac(int ud, int v);

@@ -46,6 +46,9 @@ extern int lock_board_mutex( ibBoard_t *board );
 extern int unlock_board_mutex( ibBoard_t *board );
 extern int exit_library( int ud, int error );
 extern ibConf_t * enter_library( int ud, int lock_library );
+extern void setIbsta( int status );
+extern void setIberr( int error );
+extern void setIbcnt( long count );
 
 #include <stdio.h>
 int gpib_yyparse(void);

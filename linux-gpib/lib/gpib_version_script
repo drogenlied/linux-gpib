@@ -1,6 +1,10 @@
 
 GPIB_DUMMY_VERSION {
 	global:
+		ThreadIbsta;
+		ThreadIberr;
+		ThreadIbcnt;
+		ThreadIbcntl;
 		ibcac;
 		ibclr;
 		ibcmd;
