@@ -729,6 +729,7 @@ int ni_pcmcia_attach(gpib_board_t *board)
 	tnt_priv->io_readb = inb_wrapper;
 	tnt_priv->io_writew = outw_wrapper;
 	tnt_priv->io_readw = inw_wrapper;
+	tnt_priv->chipset = TNT4882;
 	nec_priv = &tnt_priv->nec7210_priv;
 	nec_priv->read_byte = nec7210_ioport_read_byte;
 	nec_priv->write_byte = nec7210_ioport_write_byte;
@@ -736,8 +737,6 @@ int ni_pcmcia_attach(gpib_board_t *board)
 
 	GPIB_DPRINTK( "ioport1 window attributes: 0x%x\n", dev_list->io.Attributes1 );
 	nec_priv->iobase = dev_list->io.BasePort1;
-
-	tnt_priv->chipset = TNT4882;
 
 	// get irq
 	if( request_irq( dev_list->irq.AssignedIRQ, tnt4882_interrupt, isr_flags, "tnt4882", board))
@@ -766,7 +765,7 @@ void ni_pcmcia_detach(gpib_board_t *board)
 		}
 		if(nec_priv->iobase)
 		{
-			nec7210_board_reset( nec_priv, board );
+			tnt4882_board_reset( tnt_priv, board );
 		}
 	}
 	tnt4882_free_private(board);

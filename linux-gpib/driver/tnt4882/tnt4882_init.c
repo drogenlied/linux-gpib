@@ -386,6 +386,18 @@ gpib_interface_t ni_nec_isa_accel_interface =
 	provider_module: &__this_module,
 };
 
+void tnt4882_board_reset( tnt4882_private_t *tnt_priv, gpib_board_t *board )
+{
+	nec7210_private_t *nec_priv = &tnt_priv->nec7210_priv;
+
+	tnt_writeb( tnt_priv, 0, IMR0 );
+	tnt_priv->imr3_bits = 0;
+	tnt_writeb( tnt_priv, tnt_priv->imr3_bits, IMR3 );
+	tnt_readb( tnt_priv, IMR0 );
+	tnt_readb( tnt_priv, IMR0 );
+	nec7210_board_reset( nec_priv, board );
+}
+
 int tnt4882_allocate_private(gpib_board_t *board)
 {
 	board->private_data = kmalloc(sizeof(tnt4882_private_t), GFP_KERNEL);
@@ -407,7 +419,7 @@ void tnt4882_free_private(gpib_board_t *board)
 void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 {
 	nec7210_private_t *nec_priv = &tnt_priv->nec7210_priv;
-	
+
 	/* Turbo488 software reset */
 	tnt_writeb( tnt_priv, SOFT_RESET, CMDR );
 	udelay(1);
@@ -458,6 +470,7 @@ int ni_pci_attach(gpib_board_t *board)
 	tnt_priv->io_readb = readb_wrapper;
 	tnt_priv->io_writew = writew_wrapper;
 	tnt_priv->io_readw = readw_wrapper;
+	tnt_priv->chipset = TNT4882;
 	nec_priv = &tnt_priv->nec7210_priv;
 	nec_priv->read_byte = nec7210_iomem_read_byte;
 	nec_priv->write_byte = nec7210_iomem_write_byte;
@@ -497,8 +510,6 @@ int ni_pci_attach(gpib_board_t *board)
 
 	nec_priv->iobase = mite_iobase(tnt_priv->mite);
 
-	tnt_priv->chipset = TNT4882;
-
 	// get irq
 	if(request_irq(mite_irq(tnt_priv->mite), tnt4882_interrupt, isr_flags, "ni-pci-gpib", board))
 	{
@@ -521,13 +532,14 @@ void ni_pci_detach(gpib_board_t *board)
 	if(tnt_priv)
 	{
 		nec_priv = &tnt_priv->nec7210_priv;
+
+		if(nec_priv->iobase)
+		{
+			tnt4882_board_reset( tnt_priv, board );
+		}
 		if(tnt_priv->irq)
 		{
 			free_irq(tnt_priv->irq, board);
-		}
-		if(nec_priv->iobase)
-		{
-			nec7210_board_reset( nec_priv, board );
 		}
 		if(tnt_priv->mite)
 			mite_unsetup(tnt_priv->mite);
@@ -581,6 +593,7 @@ int ni_isa_attach_common( gpib_board_t *board, ni_chipset_t chipset )
 	tnt_priv->io_readb = inb_wrapper;
 	tnt_priv->io_writew = outw_wrapper;
 	tnt_priv->io_readw = inw_wrapper;
+	tnt_priv->chipset = chipset;
 	nec_priv = &tnt_priv->nec7210_priv;
 	nec_priv->read_byte = nec7210_ioport_read_byte;
 	nec_priv->write_byte = nec7210_ioport_write_byte;
@@ -606,8 +619,6 @@ int ni_isa_attach_common( gpib_board_t *board, ni_chipset_t chipset )
 		return -1;
 	}
 	nec_priv->iobase = board->ibbase;
-
-	tnt_priv->chipset = chipset;
 
 	// get irq
 	if(request_irq(board->ibirq, tnt4882_interrupt, isr_flags, "atgpib", board))
@@ -645,13 +656,16 @@ void ni_isa_detach(gpib_board_t *board)
 	if(tnt_priv)
 	{
 		nec_priv = &tnt_priv->nec7210_priv;
+		if(nec_priv->iobase)
+		{
+			tnt4882_board_reset( tnt_priv, board );
+		}
 		if( tnt_priv->irq )
 		{
 			free_irq( tnt_priv->irq, board );
 		}
 		if( nec_priv->iobase )
 		{
-			nec7210_board_reset( nec_priv, board );
 			release_region(nec_priv->iobase, atgpib_iosize);
 		}
 		if( tnt_priv->isapnp_dev )
