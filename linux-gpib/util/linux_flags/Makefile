@@ -11,7 +11,7 @@ ESCAPED_LINUXDIR=$(shell echo $(LINUXDIR) | sed 's^/^\\/^g')
 
 .PHONY: flags
 flags:
-	echo LINUX_ARCH="$(ARCH)" >>$(obj)/flags
+	echo LINUX_ARCH="$(ARCH)" >$(obj)/flags
 	echo LINUX_AFLAGS="$(AFLAGS)" | sed 's/Iinclude/I$(ESCAPED_LINUXDIR)\/include/g'>>$(obj)/flags
 	echo LINUX_LDFLAGS="" >>$(obj)/flags
 	echo LINUX_ARFLAGS="$(ARFLAGS)" >>$(obj)/flags
