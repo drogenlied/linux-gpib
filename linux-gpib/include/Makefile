@@ -1,5 +1,4 @@
 #
-#  Makefile for ieee488 driver
 #
 
 ROOT = ..
@@ -10,8 +9,6 @@ all:	gpib
 
 gpib:
 	ln -s . gpib
-
-
 
 install:
 	if [ ! -d $(INSTALLDIR)/gpib ]; then \
@@ -25,8 +22,6 @@ install:
 clean:
 	rm -f gpib
 
-
-.SILENT:
 
 include $(ROOT)/makefile.inc
 

@@ -106,6 +106,8 @@ int ibBoardFunc (int bd, int code, ...)
 			cnt=0;
 			break;
 	}
+	if(code == IBRD)
+		memset(buf, 0, cnt);
 
 	if( ibBoard[bd].fileno > 0 )
 	{

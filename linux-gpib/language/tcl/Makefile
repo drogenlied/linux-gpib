@@ -48,5 +48,5 @@ realclean:
 	set -e;for i in $(SUBDIRS) ./modules; do make -C $$i clean; done
 
 install:
-	install ./libgpib-tcl.so $(INSTALLDIR)	
-
+	install -D ./libgpib-tcl.so $(INSTALLDIR)/libgpib-tcl.so	
+	ldconfig $(INSTALLDIR)

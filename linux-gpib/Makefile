@@ -31,7 +31,7 @@ clean:
 	for i in $(INCDIR) $(SUBDIRS); do \
 		$(MAKE) -C $$i NODEPS=y $@; \
 	done
-	rm -f *.o .config.stat .test.stat
+	rm -f *.o 
 
 rcsput rcsget:
 	set -e; \
@@ -66,11 +66,6 @@ install: all
 .config.stat config: 
 	(cd ./util; ./Setup)
 	touch .config.stat
-
-.test.stat test:
-	(cd ./util; ./Setup --test)
-	touch .test.stat
-
 
 
 include $(ROOT)/makefile.inc
