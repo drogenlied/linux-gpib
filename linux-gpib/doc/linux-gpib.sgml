@@ -1542,6 +1542,11 @@ volatile int ibsta;
 	Description
 	</title>
 	<para>
+	If <parameter>ist</parameter> is nonzero, then the individual status bit
+	of the board specified by the board descriptor <parameter>ud</parameter>
+	is set.  If <parameter>ist</parameter> is zero then the individual status
+	bit is cleared.  The individual status bit is sent by the board in response
+	to parallel polls.
 	</para>
 </refsect1>
 <refsect1>
@@ -1606,7 +1611,7 @@ volatile int ibsta;
 </refmeta>
 <refnamediv>
 	<refname>ibppc</refname>
-	<refpurpose>parallel poll configure (board)</refpurpose>
+	<refpurpose>parallel poll configure (board or device)</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
@@ -1623,6 +1628,13 @@ volatile int ibsta;
 	Description
 	</title>
 	<para>
+	Configures the parallel poll response of the device or board specified
+	by <parameter>ud</parameter>.  The <parameter>configuration</parameter>
+	should either be set to the 'PPD' constant to disable parallel poll
+	responses, or set to the return value of the
+	<link LINKEND="reference-function-ppe-byte">PPE_byte()</link> inline
+	function to enable and
+	configure the parallel poll response.
 	</para>
 </refsect1>
 <refsect1>
@@ -1762,6 +1774,16 @@ volatile int ibsta;
 	Description
 	</title>
 	<para>
+	If <parameter>request_control</parameter> is nonzero, then the board
+	specified by the board descriptor <parameter>ud</parameter> is
+	made system controller.  If <parameter>request_control</parameter>
+	is zero, then the board releases system control.
+	</para>
+	<para>
+	The system controller has the ability
+	to assert the REN and IFC lines, and is typically also the
+	controller-in-charge.  A GPIB bus may not have more than one
+	system controller.
 	</para>
 </refsect1>
 <refsect1>
@@ -1836,6 +1858,10 @@ volatile int ibsta;
 	Description
 	</title>
 	<para>
+	The serial poll response byte of the board specified by the board
+	descriptor <parameter>ud</parameter> is set to <parameter>status_byte</parameter>.
+	If the request service bit (0x40 hexadecimal) in <parameter>status_byte</parameter>
+	is set, then the board will also request service by asserting the RQS line.
 	</para>
 </refsect1>
 <refsect1>
@@ -1925,6 +1951,10 @@ volatile int ibsta;
 	Description
 	</title>
 	<para>
+	If <parameter>enable</parameter> is nonzero, then the board specified
+	by the board descriptor <parameter>ud</parameter> asserts the REN line.
+	If <parameter>enable</parameter> is zero, the REN line is unasserted.
+	The board must be the system controller.
 	</para>
 </refsect1>
 <refsect1>
@@ -2413,6 +2443,59 @@ volatile int ibsta;
 	<link LINKEND="reference-function-allspoll">AllSPoll()</link>.
 	Serial polls may also be conducted with the 'traditional API' function
 	<link LINKEND="reference-function-ibrsp">ibrsp()</link>.
+	</para>
+</refsect1>
+</refentry>
+
+</section>
+
+<section>
+<title>
+	Utility Functions
+</title>
+
+<refentry ID="reference-function-ppe-byte">
+<refmeta>
+	<refentrytitle>PPE_byte</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>PPE_byte</refname>
+	<refpurpose>Generate parallel poll enable command byte</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>uint8_t <function>PPE_byte</function></funcdef>
+		<paramdef>unsigned int <parameter>dio_line</parameter></paramdef>
+		<paramdef>int <parameter>sense</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	PPE_byte() returns a 'parallel poll enable'
+	<link LINKEND="reference-command-bytes">command byte</link> corresponding
+	to the <parameter>dio_line</parameter> and <parameter>sense</parameter>
+	arguments.  The <parameter>dio_line</parameter> (valid values are 1 through 8)
+	specifies which dio line the device being configured should use to send
+	back its parallel poll response.  The <parameter>sense</parameter> argument
+	specifies the polarity of the response.  If <parameter>sense</parameter>
+	is nonzero, then the specified dio line will be asserted to indicate
+	that the 'individual status bit' (or 'ist') is 1.  If <parameter>sense</parameter>
+	is zero, then the specified dio line will be asserted when ist is zero.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The appropriate PPE command byte is returned.
 	</para>
 </refsect1>
 </refentry>
