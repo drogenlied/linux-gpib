@@ -98,12 +98,6 @@ typedef struct
 	void (*enable_eos)(uint8_t eos, int compare_8_bits);
 	/* disable END on eos byte (END on EOI only)*/
 	void (*disable_eos)(void);
-	/* suspend until one of the conditions specified by 'status_mask' is
-	 * true.  The meaning of the bits in the 'status_mask' is the same
-	 * as the meaning of the bits in the 'status' variable below.
-	 * returns board's status.
-	 */
-	unsigned int (*wait)(unsigned int status_mask);
 	/* TODO: conduct serial poll */
 	void (*serial_poll)(void);
 	/* TODO: conduct parallel poll */
@@ -116,6 +110,10 @@ typedef struct
 	 * The meaning of the bits
 	 * are specified in gpib_user.h in the IBSTA section. */
 	unsigned int (*update_status)(void);
+
+	/* The rest of the members of this struct can be used as
+	 * the driver sees fit. */
+
 	/* Holds board's current status */
 	volatile unsigned int status;
 	/* Holds error code for last error. */

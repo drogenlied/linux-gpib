@@ -1,5 +1,5 @@
 #include <ibprot.h>
-
+#include <linux/sched.h>
 
 /*
  * IBWAIT
@@ -12,25 +12,38 @@
  */
 IBLCL int ibwait(unsigned int mask)
 {
+	DECLARE_WAIT_QUEUE_HEAD(wait);
+	int status = board.update_status();
+
 	DBGin("ibwait");
 	if (mask == 0) {
 		DBGprint(DBG_BRANCH, ("mask=0  "));
 		DBGout();
-		return board.update_status();
+		return status;
 	}
 	else if (mask & ~WAITBITS) {
 		DBGprint(DBG_BRANCH, ("bad mask 0x%x ",mask));
 		ibsta |= ERR;
 		iberr = EARG;
 		DBGout();
-		return board.update_status();
+		return status;
 	}
 	osStartTimer(timeidx);
-	board.wait(mask | TIMO);
-	if (!noTimo)
-		ibsta |= TIMO;
+	while(((status = board.update_status()) & mask) == 0)
+	{
+		if(interruptible_sleep_on_timeout(&wait, 1))
+		{
+			printk("wait interrupted\n");
+			break;	//XXX
+		}
+		if(!noTimo)
+		{
+			printk("gpib wait timed out\n");
+			break;	//XXX
+		}
+	}
 	osRemoveTimer();
 	DBGout();
-	return board.update_status();
+	return status;
 }
 

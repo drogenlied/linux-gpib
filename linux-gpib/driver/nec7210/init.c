@@ -42,7 +42,6 @@ gpib_board_t board =
 	remote_enable:	nec7210_remote_enable,
 	enable_eos:	nec7210_enable_eos,
 	disable_eos:	nec7210_disable_eos,
-	wait:	nec7210_wait,
 	serial_poll:	NULL,	// XXX
 	parallel_poll:	NULL,	// XXX
 	line_status:	NULL,

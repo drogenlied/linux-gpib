@@ -4,7 +4,7 @@
 include $(ROOT)/util/.config
 
 SRCS =  cmd.c init.c lines.c read.c util.c \
-	wait.c write.c aux.c gpib_pci.c ines_pci.c ines_cs.c \
+	write.c aux.c gpib_pci.c ines_pci.c ines_cs.c \
 	interrupt.c
 
 OBJS =  $(SRCS:.c=.o)
