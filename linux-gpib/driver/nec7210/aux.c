@@ -30,10 +30,9 @@ int nec7210_take_control(gpib_board_t *board, nec7210_private_t *priv, int syncr
 	if(syncronous)
 	{
 		// make sure we aren't asserting rfd holdoff
-		if(test_and_clear_bit(RFD_HOLDOFF_BN, &priv->state))
-		{
-			write_byte(priv, AUX_FH, AUXMR);
-		}
+		write_byte(priv, priv->auxa_bits | HR_HLDA, AUXMR);
+		write_byte(priv, AUX_FH, AUXMR);
+
 		write_byte(priv, AUX_TCS, AUXMR);
 	}else
 		write_byte(priv, AUX_TCA, AUXMR);

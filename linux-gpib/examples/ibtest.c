@@ -85,7 +85,8 @@ int prompt_for_action(void)
 			"\trequest ser(v)ice\n"
 			"\t(w)rite string to device\n"
 			);
-		fgets( input, sizeof( input ), stdin );
+		do fgets( input, sizeof( input ), stdin );
+		while( input[0] == '\n' );
 
 		switch( input[0] )
 		{

@@ -17,7 +17,6 @@
  ***************************************************************************/
 
 #include "gpibP.h"
-#include <linux/module.h>
 
 int gpib_clear_to_write( gpib_board_t *board )
 {
@@ -91,4 +90,3 @@ ssize_t ibwrt(gpib_board_t *board, uint8_t *buf, size_t cnt, int send_eoi)
 	return bytes_sent;
 }
 
-EXPORT_SYMBOL( gpib_clear_to_write );

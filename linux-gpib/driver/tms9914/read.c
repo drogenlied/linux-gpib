@@ -61,15 +61,10 @@ ssize_t tms9914_read(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buff
 
 	// become active listener
 	write_byte(priv, AUX_LON | AUX_CS, AUXCR);
-/*
- *	holdoff on END
- */
-	write_byte(priv, AUX_HLDE, AUXCR);
 
-	if(test_and_clear_bit(RFD_HOLDOFF_BN, &priv->state))
-	{
-		write_byte(priv, AUX_RHDF, AUXCR);
-	}
+	write_byte(priv, AUX_HLDA, AUXCR);
+	write_byte(priv, AUX_RHDF, AUXCR);
+	write_byte(priv, AUX_HLDE, AUXCR);
 
 	// transfer data (except for last byte)
 	length--;
@@ -97,8 +92,6 @@ ssize_t tms9914_read(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buff
 
 	if(test_and_clear_bit(RECEIVED_END_BN, &priv->state))
 		*end = 1;
-
-	set_bit(RFD_HOLDOFF_BN, &priv->state);
 
 	return count;
 }

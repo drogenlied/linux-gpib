@@ -28,10 +28,9 @@ int tms9914_take_control(gpib_board_t *board, tms9914_private_t *priv, int syncr
 	if(syncronous)
 	{
 		// make sure we aren't asserting rfd holdoff
-		if(test_and_clear_bit(RFD_HOLDOFF_BN, &priv->state))
-		{
-			write_byte(priv, AUX_RHDF, AUXCR);
-		}
+		write_byte(priv, AUX_HLDA, AUXCR);
+		write_byte(priv, AUX_RHDF, AUXCR);
+
 		write_byte(priv, AUX_TCS, AUXCR);
 	}else
 		write_byte(priv, AUX_TCA, AUXCR);

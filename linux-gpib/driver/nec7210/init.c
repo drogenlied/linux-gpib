@@ -68,8 +68,7 @@ void nec7210_board_reset( nec7210_private_t *priv, const gpib_board_t *board )
 
 	// holdoff on all data
 	priv->auxa_bits = AUXRA;
-	write_byte(priv, priv->auxa_bits, AUXMR);
-	clear_bit( RFD_HOLDOFF_BN, &priv->state );
+	write_byte(priv, priv->auxa_bits | HR_HLDA, AUXMR);
 
 	/* set INT pin to active high */
 	priv->auxb_bits = AUXRB;

@@ -37,24 +37,11 @@ static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 		// wait until byte is ready to be sent
 		if( wait_event_interruptible( board->wait,
 			test_bit( WRITE_READY_BN, &priv->state) ||
-			test_bit( OUTPUT_ERROR_BN, &priv->state ) ||
 			test_bit(TIMO_NUM, &board->status ) ) )
 		{
 			printk("gpib write interrupted\n");
 			retval = -EINTR;
 			break;
-		}
-		if( test_and_clear_bit( OUTPUT_ERROR_BN, &priv->state ) )
-		{
-			count--;
-			if( wait_event_interruptible( board->wait,
-				gpib_clear_to_write( board ) ||
-				test_bit(TIMO_NUM, &board->status ) ) )
-			{
-				printk("gpib output error wait interrupted\n");
-				retval = -EINTR;
-				break;
-			}
 		}
 		if( test_bit( TIMO_NUM, &board->status ) )
 		{

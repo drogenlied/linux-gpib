@@ -10,7 +10,7 @@ Ines:
   GPIB for PCMCIA         ines_pcmcia                 ines-gpib.o         Y
 
 Iotech:
-  GP488B                  pcIIa                       pc2-gpib.o          ?
+  GP488B                  pcIIa                       pc2-gpib.o          Y
   
 Keithley:
   KPCI-488                cec_pci                     cec-gpib.o          Y

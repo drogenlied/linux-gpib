@@ -141,15 +141,13 @@ ssize_t nec7210_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buff
 
 	if(length == 0) return 0;
 
-	if(test_and_clear_bit(RFD_HOLDOFF_BN, &priv->state))
-	{
-//		write_byte(priv, priv->auxa_bits | HR_HLDA, AUXMR);
-		GPIB_DPRINTK( "finishing handshake\n" );
-		write_byte(priv, AUX_FH, AUXMR);
-	}
-/*
- *	holdoff on END
- */
+	/* seem to need this to make sure board is not unhappy
+	 * about doing AUX_FH when we are not actually asserting
+	 * rfd holdoff */
+	write_byte(priv, priv->auxa_bits | HR_HLDA, AUXMR);
+	/* release rfd holdoff */
+	write_byte(priv, AUX_FH, AUXMR);
+	// holdoff on END
 	write_byte(priv, priv->auxa_bits | HR_HLDE, AUXMR);
 
 	// transfer data (except for last byte)
@@ -183,8 +181,6 @@ ssize_t nec7210_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buff
 
 	if(test_and_clear_bit(RECEIVED_END_BN, &priv->state))
 		*end = 1;
-
-	set_bit(RFD_HOLDOFF_BN, &priv->state);
 
 	return count;
 }
