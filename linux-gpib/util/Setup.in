@@ -242,13 +242,11 @@ set_svar BOARD_TYPE $REPLY
 USE_DMA=0
 BUILD_DEBUG=0
 DEFAULT_DEBUG=0
-SWAP_UNL_LAD=0
 
 dialog --title "Driver Options" --checklist "Select the following Options" 17 70 10 \
 	USE_DMA "Use DMA Mode for Transfers" "$dmasupport" \
 	BUILD_DEBUG "Build Driver With Debugging Code" "on"\
-	DEFAULT_DEBUG "Set Default Debugging Mode to 'none'" "on"\
-	SWAP_UNL_LAD "Swap UNL/LAD Sequence (nec7210 only)" "off" 2>/tmp/reply
+	DEFAULT_DEBUG "Set Default Debugging Mode to 'none'" "on" 2>/tmp/reply
 
 if [ $? = 0 ]; then
 for i in `cat /tmp/reply | sed 's!\"!!g' `; do

@@ -236,21 +236,6 @@ IBLCL int send_setup(int padsad)
 		return ibsta;
 	}
 
-
-	/* I don't know if this is really necessary for the 9914
-         * but in my 488.1 documentation UNL is ever the first command
-         * on a command sequence followed by the listener addresses.
-         */
-
-#if !defined(HP82335) && !defined(TMS9914) && !defined(SWAP_UNL_LAD)
-	cmdString[i++] = myPAD | TAD;	/* controller's talk address */
-	if (mySAD)
-		cmdString[i++] = mySAD;
-	cmdString[i++] = UNL;
-	cmdString[i++] = pad | LAD;
-	if (sad)
-		cmdString[i++] = sad;
-#else
 	cmdString[i++] = UNL;
 	cmdString[i++] = pad | LAD;
 	if (sad)
@@ -258,7 +243,7 @@ IBLCL int send_setup(int padsad)
 	cmdString[i++] = myPAD | TAD;	/* controller's talk address */
 	if (mySAD)
 		cmdString[i++] = mySAD;
-#endif
+
 	if ((ibcmd(cmdString, i) & ERR) && (iberr == EABO))
 		iberr = EBUS;
 

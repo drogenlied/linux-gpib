@@ -10,5 +10,7 @@ add support for more file operations
 
 fix completely useless interrupt handling
 
+make it so it doesn't segfault when there is a typo in gpib.conf
+
 generally make this software suck less
  
