@@ -38,3 +38,5 @@ lock on board online/offline
 
 libgpib_test: add test for serial poll without autopolling
 
+remove devices that time out from autopoll list
+

@@ -36,11 +36,14 @@ static int setup_serial_poll( gpib_board_t *board, unsigned int usec_timeout )
 		cmd_string[ i++ ] = MSA( board->sad );
 	cmd_string[ i++ ] = SPE;	//serial poll enable
 
+	osStartTimer( board, usec_timeout );
 	if( board->interface->command( board, cmd_string, i ) < i )
 	{
 		printk("gpib: failed to setup serial poll\n");
+		osRemoveTimer( board );
 		return -EIO;
 	}
+	osRemoveTimer( board );
 
 	return 0;
 }
@@ -63,9 +66,11 @@ static int read_serial_poll_byte( gpib_board_t *board, unsigned int pad,
 	if( sad >= 0 )
 		cmd_string[i++] = MSA( sad );
 
+	osStartTimer( board, usec_timeout );
 	if( board->interface->command( board, cmd_string, i ) < i )
 	{
 		printk("gpib: failed to setup serial poll\n");
+		osRemoveTimer( board );
 		return -EIO;
 	}
 
@@ -76,8 +81,10 @@ static int read_serial_poll_byte( gpib_board_t *board, unsigned int pad,
 	if( ret < 1 )
 	{
 		printk( "gpib: serial poll failed\n" );
+		osRemoveTimer( board );
 		return -EIO;
 	}
+	osRemoveTimer( board );
 
 	return 0;
 }
@@ -92,11 +99,14 @@ static int cleanup_serial_poll( gpib_board_t *board, unsigned int usec_timeout )
 
 	cmd_string[ 0 ] = SPD;	/* disable serial poll bytes */
 	cmd_string[ 1 ] = UNT;
+	osStartTimer( board, usec_timeout );
 	if( board->interface->command( board, cmd_string, 2 ) < 2 )
 	{
 		printk( "gpib: failed to disable serial poll\n" );
+		osRemoveTimer( board );
 		return -EIO;
 	}
+	osRemoveTimer( board );
 
 	return 0;
 }
@@ -129,6 +139,7 @@ int serial_poll_all( gpib_board_t *board, unsigned int usec_timeout )
 
 	if( head->next == head ) return 0;
 
+
 	retval = setup_serial_poll( board, usec_timeout );
 	if( retval < 0 ) return retval;
 
@@ -139,11 +150,11 @@ int serial_poll_all( gpib_board_t *board, unsigned int usec_timeout )
 		device = list_entry( cur, gpib_status_queue_t, list );
 		retval = read_serial_poll_byte( board,
 			device->pad, device->sad, usec_timeout, &result );
-		if( retval < 0 ) return retval;
+		if( retval < 0 ) continue;
 		if( result & request_service_bit )
 		{
 			retval = push_status_byte( device, result );
-			if( retval < 0 ) return retval;
+			if( retval < 0 ) continue;
 			num_bytes++;
 		}
 	}
@@ -181,12 +192,8 @@ int dvrsp( gpib_board_t *board, unsigned int pad, int sad,
 		return -1;
 	}
 
-	osStartTimer( board, usec_timeout );
-
 	retval = serial_poll_single( board, pad, sad, usec_timeout, result );
 	if( io_timed_out( board ) ) retval = -ETIMEDOUT;
-
-	osRemoveTimer( board );
 
 	return retval;
 }

@@ -125,7 +125,6 @@ int get_serial_poll_byte( gpib_board_t *board, unsigned int pad, int sad, unsign
 int autopoll_all_devices( gpib_board_t *board )
 {
 	int retval;
-	static const unsigned int autopoll_usec_timeout = 3000000;
 
 	GPIB_DPRINTK( "entered autopoll_all_devices()\n" );
 	if( down_interruptible( &board->mutex ) )
@@ -133,14 +132,11 @@ int autopoll_all_devices( gpib_board_t *board )
 		return -ERESTARTSYS;
 	}
 
-	osStartTimer( board, autopoll_usec_timeout );
-
 	GPIB_DPRINTK( "autopoll has board lock\n" );
 
 	retval = serial_poll_all( board, serial_timeout );
 	if( retval < 0 )
 	{
-		osRemoveTimer( board );
 		up( &board->mutex );
 		return retval;
 	}
@@ -149,8 +145,6 @@ int autopoll_all_devices( gpib_board_t *board )
 	/* need to wake wait queue in case someone is
 	* waiting on RQS */
 	wake_up_interruptible( &board->wait );
-
-	osRemoveTimer( board );
 	up( &board->mutex );
 
 	return retval;

@@ -1056,7 +1056,7 @@ static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 		}
 		board->locking_pid = current->pid;
 		file_priv->holding_mutex = 1;
-		GPIB_DPRINTK( "locked board mutex\n" );
+		GPIB_DPRINTK("locked board %d mutex\n", board->minor);
 	}else
 	{
 		if( current->pid != board->locking_pid )
@@ -1073,7 +1073,7 @@ static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 				atomic_read( &board->mutex.count ) );
 		}
 		up( &board->mutex );
-		GPIB_DPRINTK( "unlocked board mutex\n" );
+		GPIB_DPRINTK("unlocked board %i mutex\n", board->minor);
 	}
 
 

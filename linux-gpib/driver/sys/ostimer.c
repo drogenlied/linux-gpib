@@ -40,6 +40,11 @@ unsigned int usec_to_jiffies( unsigned int usec )
 void osStartTimer( gpib_board_t *board, unsigned int usec_timeout )
 /* Starts the timeout task  */
 {
+	if( timer_pending( &board->timer ) )
+	{
+		printk("gpib: bug! timer already running?\n");
+		return;
+	}
 	clear_bit( TIMO_NUM, &board->status );
 
 	if( usec_timeout > 0 )
