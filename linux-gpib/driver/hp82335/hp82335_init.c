@@ -107,6 +107,11 @@ void hp82335_parallel_poll_configure( gpib_board_t *board, uint8_t config )
 	hp82335_private_t *priv = board->private_data;
 	tms9914_parallel_poll_configure( board, &priv->tms9914_priv, config );
 }
+void hp82335_parallel_poll_response( gpib_board_t *board, int ist )
+{
+	hp82335_private_t *priv = board->private_data;
+	tms9914_parallel_poll_response( board, &priv->tms9914_priv, ist );
+}
 void hp82335_serial_poll_response( gpib_board_t *board, uint8_t status )
 {
 	hp82335_private_t *priv = board->private_data;
@@ -145,6 +150,7 @@ gpib_interface_t hp82335_interface =
 	disable_eos: hp82335_disable_eos,
 	parallel_poll: hp82335_parallel_poll,
 	parallel_poll_configure: hp82335_parallel_poll_configure,
+	parallel_poll_response: hp82335_parallel_poll_response,
 	line_status: hp82335_line_status,
 	update_status: hp82335_update_status,
 	primary_address: hp82335_primary_address,

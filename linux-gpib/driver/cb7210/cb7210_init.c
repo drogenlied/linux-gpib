@@ -123,6 +123,11 @@ void cb7210_parallel_poll_configure( gpib_board_t *board, uint8_t configuration 
 	cb7210_private_t *priv = board->private_data;
 	nec7210_parallel_poll_configure(board, &priv->nec7210_priv, configuration );
 }
+void cb7210_parallel_poll_response( gpib_board_t *board, int ist )
+{
+	cb7210_private_t *priv = board->private_data;
+	nec7210_parallel_poll_response(board, &priv->nec7210_priv, ist );
+}
 void cb7210_serial_poll_response(gpib_board_t *board, uint8_t status)
 {
 	cb7210_private_t *priv = board->private_data;
@@ -151,6 +156,7 @@ gpib_interface_t cb_pci_interface =
 	disable_eos: cb7210_disable_eos,
 	parallel_poll: cb7210_parallel_poll,
 	parallel_poll_configure: cb7210_parallel_poll_configure,
+	parallel_poll_response: cb7210_parallel_poll_response,
 	line_status: NULL,	//XXX
 	update_status: cb7210_update_status,
 	primary_address: cb7210_primary_address,
@@ -178,6 +184,7 @@ gpib_interface_t cb_pci_accel_interface =
 	disable_eos: cb7210_disable_eos,
 	parallel_poll: cb7210_parallel_poll,
 	parallel_poll_configure: cb7210_parallel_poll_configure,
+	parallel_poll_response: cb7210_parallel_poll_response,
 	line_status: NULL,	//XXX
 	update_status: cb7210_update_status,
 	primary_address: cb7210_primary_address,
@@ -205,6 +212,7 @@ gpib_interface_t cb_isa_interface =
 	disable_eos: cb7210_disable_eos,
 	parallel_poll: cb7210_parallel_poll,
 	parallel_poll_configure: cb7210_parallel_poll_configure,
+	parallel_poll_response: cb7210_parallel_poll_response,
 	line_status: cb7210_line_status,
 	update_status: cb7210_update_status,
 	primary_address: cb7210_primary_address,
@@ -232,6 +240,7 @@ gpib_interface_t cb_isa_accel_interface =
 	disable_eos: cb7210_disable_eos,
 	parallel_poll: cb7210_parallel_poll,
 	parallel_poll_configure: cb7210_parallel_poll_configure,
+	parallel_poll_response: cb7210_parallel_poll_response,
 	line_status: cb7210_line_status,
 	update_status: cb7210_update_status,
 	primary_address: cb7210_primary_address,

@@ -131,6 +131,11 @@ void tnt4882_parallel_poll_configure(gpib_board_t *board, uint8_t config )
 	tnt4882_private_t *priv = board->private_data;
 	nec7210_parallel_poll_configure( board, &priv->nec7210_priv, config );
 }
+void tnt4882_parallel_poll_response(gpib_board_t *board, int ist )
+{
+	tnt4882_private_t *priv = board->private_data;
+	nec7210_parallel_poll_response( board, &priv->nec7210_priv, ist );
+}
 // XXX tnt4882 has fancier serial poll capability, should send reqt AUX command
 void tnt4882_serial_poll_response(gpib_board_t *board, uint8_t status)
 {
@@ -160,6 +165,7 @@ gpib_interface_t ni_pci_interface =
 	disable_eos: tnt4882_disable_eos,
 	parallel_poll: tnt4882_parallel_poll,
 	parallel_poll_configure: tnt4882_parallel_poll_configure,
+	parallel_poll_response: tnt4882_parallel_poll_response,
 	line_status: tnt4882_line_status,
 	update_status: tnt4882_update_status,
 	primary_address: tnt4882_primary_address,
@@ -187,6 +193,7 @@ gpib_interface_t ni_pci_accel_interface =
 	disable_eos: tnt4882_disable_eos,
 	parallel_poll: tnt4882_parallel_poll,
 	parallel_poll_configure: tnt4882_parallel_poll_configure,
+	parallel_poll_response: tnt4882_parallel_poll_response,
 	line_status: tnt4882_line_status,
 	update_status: tnt4882_update_status,
 	primary_address: tnt4882_primary_address,
@@ -214,6 +221,7 @@ gpib_interface_t ni_isa_interface =
 	disable_eos: tnt4882_disable_eos,
 	parallel_poll: tnt4882_parallel_poll,
 	parallel_poll_configure: tnt4882_parallel_poll_configure,
+	parallel_poll_response: tnt4882_parallel_poll_response,
 	line_status: tnt4882_line_status,
 	update_status: tnt4882_update_status,
 	primary_address: tnt4882_primary_address,
@@ -241,6 +249,7 @@ gpib_interface_t ni_isa_accel_interface =
 	disable_eos: tnt4882_disable_eos,
 	parallel_poll: tnt4882_parallel_poll,
 	parallel_poll_configure: tnt4882_parallel_poll_configure,
+	parallel_poll_response: tnt4882_parallel_poll_response,
 	line_status: tnt4882_line_status,
 	update_status: tnt4882_update_status,
 	primary_address: tnt4882_primary_address,

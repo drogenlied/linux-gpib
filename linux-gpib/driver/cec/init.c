@@ -108,6 +108,11 @@ void cec_parallel_poll_configure( gpib_board_t *board, uint8_t config )
 	cec_private_t *priv = board->private_data;
 	nec7210_parallel_poll_configure( board, &priv->nec7210_priv, config );
 }
+void cec_parallel_poll_response( gpib_board_t *board, int ist )
+{
+	cec_private_t *priv = board->private_data;
+	nec7210_parallel_poll_response( board, &priv->nec7210_priv, ist );
+}
 void cec_serial_poll_response(gpib_board_t *board, uint8_t status )
 {
 	cec_private_t *priv = board->private_data;
@@ -141,6 +146,7 @@ gpib_interface_t cec_pci_interface =
 	disable_eos: cec_disable_eos,
 	parallel_poll: cec_parallel_poll,
 	parallel_poll_configure: cec_parallel_poll_configure,
+	parallel_poll_response: cec_parallel_poll_response,
 	line_status: NULL,	//XXX
 	update_status: cec_update_status,
 	primary_address: cec_primary_address,

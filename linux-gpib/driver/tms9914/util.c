@@ -53,24 +53,32 @@ int tms9914_parallel_poll(gpib_board_t *board, tms9914_private_t *priv, uint8_t 
 	return 0;
 }
 
-void tms9914_parallel_poll_configure( gpib_board_t *board,
-	tms9914_private_t *priv, uint8_t config )
+void set_ppoll_reg( tms9914_private_t *priv, int enable,
+	unsigned int dio_line, int sense, int ist )
 {
 	uint8_t dio_byte;
 
-	if( config & PPC_DISABLE )
-		dio_byte = 0;
-	else
-		dio_byte = 1 << ( 7 - ( config & PPC_DIO_MASK ) );
-
-	if( config & PPC_SENSE )
+	if( enable && ( ( sense && ist ) || ( !sense && !ist ) ) )
 	{
-		// XXX assert line on ist
-	}
+		dio_byte = 1 << ( 8 - dio_line );
+		write_byte( priv, dio_byte, PPR );
+	}else
+		write_byte( priv, 0, PPR );
+}
 
-	dio_byte = 0;
-	
-	write_byte( priv, dio_byte, PPR );
+void tms9914_parallel_poll_configure( gpib_board_t *board,
+	tms9914_private_t *priv, uint8_t config )
+{
+	priv->ppoll_enable = ( config & PPC_DISABLE ) == 0;
+	priv->ppoll_line = ( config & PPC_DIO_MASK ) + 1;
+	priv->ppoll_sense = ( config & PPC_SENSE ) != 0;
+	set_ppoll_reg( priv, priv->ppoll_enable, priv->ppoll_line, priv->ppoll_sense, board->ist );
+}
+
+void tms9914_parallel_poll_response( gpib_board_t *board,
+	tms9914_private_t *priv, int ist )
+{
+	set_ppoll_reg( priv, priv->ppoll_enable, priv->ppoll_line, priv->ppoll_sense, board->ist );
 }
 
 void tms9914_serial_poll_response(gpib_board_t *board, tms9914_private_t *priv, uint8_t status)
@@ -201,6 +209,7 @@ EXPORT_SYMBOL(tms9914_serial_poll_response);
 EXPORT_SYMBOL(tms9914_serial_poll_status);
 EXPORT_SYMBOL(tms9914_parallel_poll);
 EXPORT_SYMBOL(tms9914_parallel_poll_configure);
+EXPORT_SYMBOL(tms9914_parallel_poll_response);
 EXPORT_SYMBOL(tms9914_primary_address);
 EXPORT_SYMBOL(tms9914_secondary_address);
 EXPORT_SYMBOL(tms9914_update_status);

@@ -62,6 +62,14 @@ void nec7210_parallel_poll_configure( gpib_board_t *board,
 	write_byte( priv, PPR | configuration , AUXMR );
 }
 
+void nec7210_parallel_poll_response( gpib_board_t *board, nec7210_private_t *priv, int ist )
+{
+	if( ist )
+		write_byte( priv, AUX_SPPF , AUXMR );
+	else
+		write_byte( priv, AUX_CPPF , AUXMR );
+}
+
 void nec7210_serial_poll_response(gpib_board_t *board, nec7210_private_t *priv, uint8_t status)
 {
 //	write_byte(priv, 0, SPMR);		/* clear current serial poll status */
@@ -197,6 +205,7 @@ EXPORT_SYMBOL( nec7210_disable_eos );
 EXPORT_SYMBOL( nec7210_serial_poll_response );
 EXPORT_SYMBOL( nec7210_serial_poll_status );
 EXPORT_SYMBOL( nec7210_parallel_poll_configure );
+EXPORT_SYMBOL( nec7210_parallel_poll_response );
 EXPORT_SYMBOL( nec7210_parallel_poll );
 EXPORT_SYMBOL( nec7210_primary_address );
 EXPORT_SYMBOL( nec7210_secondary_address );

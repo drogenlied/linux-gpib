@@ -38,6 +38,9 @@ struct tms9914_private_struct
 	uint8_t eos;	// eos character
 	short eos_flags;
 	volatile uint8_t spoll_status;
+	unsigned int ppoll_line;
+	unsigned ppoll_sense : 1;
+	unsigned ppoll_enable : 1;
 	// wrappers for outb, inb, readb, or writeb
 	uint8_t (*read_byte)(tms9914_private_t *priv, unsigned int register_number);
 	void (*write_byte)(tms9914_private_t *priv, uint8_t byte, unsigned int
@@ -91,6 +94,8 @@ extern void tms9914_secondary_address(gpib_board_t *board, tms9914_private_t *pr
 extern int tms9914_parallel_poll(gpib_board_t *board, tms9914_private_t *priv, uint8_t *result);
 extern void tms9914_parallel_poll_configure( gpib_board_t *board,
 	tms9914_private_t *priv, uint8_t config );
+extern void tms9914_parallel_poll_response( gpib_board_t *board,
+	tms9914_private_t *priv, int ist );
 extern void tms9914_serial_poll_response(gpib_board_t *board, tms9914_private_t *priv, uint8_t status);
 extern uint8_t tms9914_serial_poll_status( gpib_board_t *board, tms9914_private_t *priv );
 extern int tms9914_line_status( const gpib_board_t *board, tms9914_private_t *priv );

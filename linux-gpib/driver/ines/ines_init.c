@@ -157,6 +157,11 @@ void ines_parallel_poll_configure(gpib_board_t *board, uint8_t config)
 	ines_private_t *priv = board->private_data;
 	nec7210_parallel_poll_configure(board, &priv->nec7210_priv, config);
 }
+void ines_parallel_poll_response(gpib_board_t *board, int ist)
+{
+	ines_private_t *priv = board->private_data;
+	nec7210_parallel_poll_response(board, &priv->nec7210_priv, ist);
+}
 void ines_serial_poll_response(gpib_board_t *board, uint8_t status)
 {
 	ines_private_t *priv = board->private_data;
@@ -185,6 +190,7 @@ gpib_interface_t ines_pci_interface =
 	disable_eos: ines_disable_eos,
 	parallel_poll: ines_parallel_poll,
 	parallel_poll_configure: ines_parallel_poll_configure,
+	parallel_poll_response: ines_parallel_poll_response,
 	line_status: ines_line_status,
 	update_status: ines_update_status,
 	primary_address: ines_primary_address,
@@ -212,6 +218,7 @@ gpib_interface_t ines_pci_accel_interface =
 	disable_eos: ines_disable_eos,
 	parallel_poll: ines_parallel_poll,
 	parallel_poll_configure: ines_parallel_poll_configure,
+	parallel_poll_response: ines_parallel_poll_response,
 	line_status: ines_line_status,
 	update_status: ines_update_status,
 	primary_address: ines_primary_address,
