@@ -72,19 +72,3 @@ IBLCL void osChngDMA(int new_dma)
 }
 
 
-IBLCL uint32_t osRegAddr(faddr_t io_addr)
-{
-	faddr_t		local_addr;	/* local address of GPIB interface */
-
-	DBGin("osRegAddr");
-	local_addr = io_addr;
-	DBGprint(DBG_DATA, ("localAddr=0x%p  ", local_addr));
-	DBGout();
-	return ((uint32_t) local_addr);
-}
-
-
-
-
-
-

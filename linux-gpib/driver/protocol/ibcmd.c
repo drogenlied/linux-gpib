@@ -13,43 +13,35 @@
  *      2.  Before calling ibcmd for the first time, ibsic
  *          must be called to initialize the GPIB and enable
  *          the interface to leave the controller idle state.
- *      3.  Be sure to type cast the buffer to (faddr_t) before
- *          calling this function.
  */
-IBLCL int ibcmd(uint8_t *buf, size_t cnt)
+IBLCL ssize_t ibcmd(uint8_t *buf, size_t cnt)
 {
-	size_t	requested_cnt;
-	ssize_t ret;
+	size_t	bytes_sent = 0;
+	ssize_t ret = 0;
 	int status = board.update_status();
 
-	DBGin("ibcmd");
-	if((status & CIC) == 0) 
+	if((status & CIC) == 0)
 	{
-		ibcnt = 0;
-		DBGout();
-		return status;
+		return -1;
 	}
 	osStartTimer(timeidx);
 
-	DBGprint(DBG_BRANCH, ("take control  "));
 	if(board.take_control(0))
 	{
 		printk("gpib error while becoming active controller\n");
-		return ibsta;
+		return -1;
 	}
-	requested_cnt = cnt;
-	while ((cnt > 0) && !(board.status & (ERR | TIMO))) {
+	while ((bytes_sent < cnt) && !(board.update_status() & (TIMO)))
+	{
 		ret = board.command(buf, cnt);
 		if(ret < 0)
 		{
 			printk("error writing gpib command bytes\n");
 			break;
-			// XXX
 		}
 		buf += ret;
-		cnt -= ret;
+		bytes_sent += ret;
 	}
-	ibcnt = requested_cnt - cnt;
 
 	if(board.go_to_standby())
 	{
@@ -58,9 +50,10 @@ IBLCL int ibcmd(uint8_t *buf, size_t cnt)
 
 	osRemoveTimer();
 
-	ibstat();
-	DBGout();
-	return ibsta;
+	if(ret < 0)
+		return ret;
+
+	return bytes_sent;
 }
 
 

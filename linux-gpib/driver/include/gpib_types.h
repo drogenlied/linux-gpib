@@ -22,12 +22,10 @@
 #include <stdint.h>
 #endif
 
-typedef unsigned char	*faddr_t;
-
 typedef struct ibio_op {
-	faddr_t		io_vbuf;	/* virtual buffer address	*/
-	uint32_t		io_pbuf;	/* physical buffer address	*/
-	unsigned	io_cnt;		/* transfer count		*/
+	uint8_t 		*io_vbuf;	/* virtual buffer address	*/
+	unsigned long		io_pbuf;	/* physical buffer address	*/
+	unsigned long	io_cnt;		/* transfer count		*/
 	int		io_flags;	/* direction flags, etc.	*/
 	uint8_t		io_ccfunc;	/* carry-cycle function		*/
 } ibio_op_t;
@@ -39,9 +37,7 @@ typedef struct {
 	int		ib_ibsta;	/* returned status vector	*/
 	int		ib_iberr;	/* returned error code (if ERR)	*/
 	int		ib_ibcnt;	/* returned I/O count		*/
-
-	char            *ib_buf;
-
+	uint8_t            *ib_buf;
 } ibarg_t;
 
 #ifdef __KERNEL__
@@ -105,8 +101,10 @@ typedef struct
 	 * state of the bus lines. */
 	int (*line_status)(void);
 	/* updates and returns the board's current status.
-	 * The meaning of the bits
-	 * are specified in gpib_user.h in the IBSTA section. */
+	 * The meaning of the bits are specified in gpib_user.h
+	 * in the IBSTA section.  The driver does not need to
+	 * worry about setting the CMPL, END, or ERR bits.
+	 */
 	unsigned int (*update_status)(void);
 	/* Sets primary address 0-30 for gpib interface card.
 	 */
@@ -114,10 +112,13 @@ typedef struct
 	/* Sets and enables, or disables secondary address 0-30 for gpib interface card.
 	 */
 	void (*secondary_address)(unsigned int address, int enable);
-	/* Holds board's current status */
+	/* Sets the byte the board should send in response to a serial poll.  Returns
+	 * zero on success.  Function should also request service if appropriate.  
+	 */
+	int (*serial_poll_response)(uint8_t status);
+	/* Can be used to hold the board's current status (see update_status() above)
+	 */
 	volatile unsigned int status;
-	/* Holds error code for last error. */
-	int error;
 	/* 'private_data' can be used as seen fit by the driver to
 	 * store additional variables for this board */
 	void *private_data;

@@ -47,8 +47,8 @@ gpib_board_t board =
 	update_status:	nec7210_update_status,
 	primary_address:	nec7210_primary_address,
 	secondary_address:	nec7210_secondary_address,
+	serial_poll_response:	nec7210_serial_poll_response,
 	status:	0,
-	error:	0,
 	private_data:	NULL,
 };
 

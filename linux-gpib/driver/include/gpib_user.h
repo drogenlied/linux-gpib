@@ -31,7 +31,8 @@
 #define DCAS	(1 << DCAS_NUM)	// device clear state
 
 #define WAITBITS (TIMO | SRQI | CIC | TACS | LACS)
-
+//status bits that drivers are responsible for
+#define DRIVERBITS (SRQI | RQS | LOK | REM | CIC | ATN | TACS | LACS | DTAS | DCAS)
 
 /* IBERR error codes */
 
@@ -45,6 +46,7 @@
 #define ENEB     7		/* non-existent board (GPIB interface offline) */
 #define EDMA     8		/* DMA hardware error detected */
 #define EBTO     9		/* DMA hardware uP bus timeout */
+// EIOP XXX ??
 #define EOIP    10		/* new I/O attempted with old I/O in progress  */
 #define ECAP    11		/* no capability for intended opeation */
 #define EFSO    12		/* file system operation error */

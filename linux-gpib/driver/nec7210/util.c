@@ -69,15 +69,12 @@ int nec7210_parallel_poll(uint8_t *result)
 	return 0;
 }
 
-/* -- bdSetSPMode(reg)
-* Sets Serial Poll Mode
-*
-*/
-
-IBLCL void bdSetSPMode(int v)
+int nec7210_serial_poll_response(uint8_t status)
 {
 	GPIBout(SPMR, 0);		/* clear current serial poll status */
-	GPIBout(SPMR, v);		/* set new status to v */
+	GPIBout(SPMR, status);		/* set new status to v */
+
+	return 0;
 }
 
 void nec7210_primary_address(unsigned int address)

@@ -38,6 +38,7 @@ extern unsigned int nec7210_update_status(void);
 extern void nec7210_primary_address(unsigned int address);
 extern void nec7210_secondary_address(unsigned int address, int enable);
 extern int nec7210_parallel_poll(uint8_t *result);
+extern int nec7210_serial_poll_response(uint8_t status);
 
 extern unsigned long ibbase;	/* base addr of GPIB interface registers  */
 extern unsigned long remapped_ibbase;	// ioremapped memory io address

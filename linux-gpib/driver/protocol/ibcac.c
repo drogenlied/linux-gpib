@@ -10,25 +10,18 @@
  * If v is non-zero, take control synchronously, if
  * possible.  Otherwise, take control asynchronously.
  */
-IBLCL int ibcac(int v)
+IBLCL int ibcac(int sync)
 {
 	int status = board.update_status();
-	DBGin("ibcac");
-	if((status & CIC) == 0) 
+	if((status & CIC) == 0)
 	{
-		DBGout();
-		return status;
+		printk("gpib: not CIC during ibcac\n");
+		return -1;
 	}
-	if (v && (pgmstat & PS_HELD) && (status & LACS)) {
-		DBGprint(DBG_BRANCH, ("sync  "));
-		board.take_control(1);            /* assert ATN synchronously */
-	}
-	else {
-		DBGprint(DBG_BRANCH, ("async  "));
-		board.take_control(0);            /* assert ATN asynchronously */
-	}
-	DBGout();
-	return status;
+
+	board.take_control(sync);
+
+	return 0;
 }
 
 

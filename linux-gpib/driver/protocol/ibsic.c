@@ -15,26 +15,19 @@ extern int drvstat,ib_opened;
 IBLCL int ibsic(void)
 {
 	DBGin("ibsic");
-	if( !(drvstat & DRV_IFC) || (ib_opened <= 1)){
-#if 0 
-	if (fnInit(0) & ERR) {
-		DBGout();
-		return ibsta;
+	if( !(drvstat & DRV_IFC) || (ib_opened <= 1))
+	{
+
+		pgmstat |= PS_SAC;
+			/* set controller state */
+		board.interface_clear(1);                   /* assert IFC */
+		udelay(100);
+		board.interface_clear(0);                   /* clear IFC */
+		drvstat |= DRV_IFC;
 	}
-#endif
-	pgmstat |= PS_SAC;
-        /* set controller state */
-	board.interface_clear(1);                   /* assert IFC */
-	udelay(100);
-	board.interface_clear(0);                   /* clear IFC */
-	drvstat |= DRV_IFC;
-        }
-	ibstat();
 #if defined(CBI_4882)
 	 fix4882Bug();
-
 #endif
-	DBGout();
-	return ibsta;
+	return 0;
 }
 

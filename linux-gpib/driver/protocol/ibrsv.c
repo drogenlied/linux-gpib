@@ -6,18 +6,15 @@
  * Request service from the CIC and/or set the serial poll
  * status byte.
  */
-IBLCL int ibrsv(int v)
+IBLCL int ibrsv(uint8_t poll_status)
 {
 	int status = board.update_status();
 
-	DBGin("ibrsv");
 	if((status & CIC)) 
 	{
-		DBGout();
-		return status;
+		printk("gpib: interface requested service while CIC\n");
+		return -1;
 	}
-	DBGprint(DBG_DATA, ("stb=0x%x  ", v));
-	bdSetSPMode(v);		/* set new status to v */
-	DBGout();
-	return status;
+	board.serial_poll_response(poll_status);		/* set new status to v */
+	return 0;
 }

@@ -33,28 +33,25 @@
  *      2.  Prior to calling ibwrt, the intended devices as
  *          well as the interface board itself must be
  *          addressed by calling ibcmd.
- *      3.  Be sure to type cast the buffer to (faddr_t) before
- *          calling this function.
  */
-IBLCL int ibwrt(uint8_t *buf, size_t cnt, unsigned int more)
+IBLCL ssize_t ibwrt(uint8_t *buf, size_t cnt, unsigned int more)
 {
-	unsigned int	requested_cnt;
-	ssize_t ret;
+	size_t bytes_sent = 0;
+	ssize_t ret = 0;
 	int status = board.update_status();
 
 	DBGin("ibwrt");
-	if((status & TACS) == 0) 
+	if((status & TACS) == 0)
 	{
-		ibcnt = 0;
-		DBGout();
-		return status;
+		printk("gpib: not talker during write\n");
+		return -1;
 	}
 	board.go_to_standby();
 	// mark io in progress
 	clear_bit(CMPL_NUM, &board.status);
 	osStartTimer(timeidx);
-	requested_cnt = cnt;
-	while ((cnt > 0) && !(board.status & (ERR | TIMO))) {
+	while ((bytes_sent < cnt) && !(board.status & (TIMO)))
+	{
 		ret = board.write(buf, cnt, !more);
 		if(ret < 0)
 		{
@@ -62,14 +59,14 @@ IBLCL int ibwrt(uint8_t *buf, size_t cnt, unsigned int more)
 			break;
 		}
 		buf += ret;
-		cnt -= ret;
+		bytes_sent += ret;
 	}
-	ibcnt = requested_cnt - cnt;
 	osRemoveTimer();
-	
+
 	// mark io complete
 	set_bit(CMPL_NUM, &board.status);
 
-	DBGout();
-	return board.update_status();
+	if(ret < 0) return ret;
+	
+	return bytes_sent;
 }

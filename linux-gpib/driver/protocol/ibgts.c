@@ -11,14 +11,12 @@ IBLCL int ibgts(void)
 {
 	int status = board.update_status();
 
-	DBGin("ibgts");
-	if((status & CIC) == 0) 
+	if((status & CIC) == 0)
 	{
-		DBGout();
-		return ibsta;
+		printk("gpib: not CIC during ibgts\n");
+		return -1;
 	}
 	board.go_to_standby();                    /* go to standby */
-	DBGout();
-	return status;
+	return 0;
 }
 

@@ -1,6 +1,5 @@
 #include <ibprot.h>
 
-
 /*
  * IBPAD
  * change the GPIB address of the interface board.  The address
@@ -8,18 +7,16 @@
  */
 IBLCL int ibpad(int v)
 {
-	DBGin("ibpad");
-	if ((v < 0) || (v > 30)) {
-		ibsta |= ERR;
-		iberr = EARG;
-	}
-	else {
+	if ((v < 0) || (v > 30))
+	{
+		printk("gpib: invalid primary address\n");
+		return -1;
+	}else
+	{
 		myPAD = v;
-		DBGprint(DBG_DATA, ("pad=0x%x  ", myPAD));
 		board.primary_address( myPAD );
 	}
-	DBGout();
-	return board.update_status();
+	return 0;
 }
 
 
@@ -31,25 +28,23 @@ IBLCL int ibpad(int v)
  */
 IBLCL int ibsad(int v)
 {
-	DBGin("ibsad");
-	if (v && ((v < 0x60) || (v > 0x7F))) {
-		ibsta |= ERR;
-		iberr = EARG;
-	}
-	else {
+	if (v && ((v < 0x60) || (v > 0x7F)))
+	{
+		printk("gpib: invalid secondary address\n");
+		return -1;
+	}else
+	{
 		if (v == 0x7F)
 			v = 0;		/* v == 0x7F also disables */
-		if ((mySAD = v)) {
-			DBGprint(DBG_BRANCH, ("enabled  "));
+		if ((mySAD = v))
+		{
 			board.secondary_address(mySAD - 0x60, 1);
-		}
-		else {
-			DBGprint(DBG_BRANCH, ("disabled  "));
+		}else
+		{
 			board.secondary_address(0,0);
 		}
 	}
-	DBGout();
-	return board.update_status();
+	return 0;
 }
 
 
@@ -62,23 +57,15 @@ IBLCL int ibsad(int v)
  */
 IBLCL int ibtmo(int v)
 {
-	DBGin("ibtmo");
-#if 0
-	if (fnInit(0) & ERR) {
-		DBGout();
-		return ibsta;
-	}
-#endif
-	if ((v < TNONE) || (v > T1000s)) {
-		ibsta |= ERR;
-		iberr = EARG;
-	}
-	else {
-		DBGprint(DBG_DATA, ("oldtmo=%d newtmo=%d  ", timeidx, v));
+	if ((v < TNONE) || (v > T1000s))
+	{
+		printk("gpib: error setting timeout\n");
+		return -1;
+	}else
+	{
 		timeidx = v;
 	}
-	DBGout();
-	return board.update_status();
+	return 0;
 }
 
 
@@ -90,23 +77,14 @@ IBLCL int ibtmo(int v)
  */
 IBLCL int ibeot(int v)
 {
-	DBGin("ibeot");
-#if 0
-	if (fnInit(0) & ERR) {
-		DBGout();
-		return ibsta;
-	}
-#endif
-	if (v) {
-		DBGprint(DBG_BRANCH, ("enable EOI  "));
+	if (v)
+	{
 		pgmstat &= ~PS_NOEOI;
-	}
-	else {
-		DBGprint(DBG_BRANCH, ("disable EOI  "));
+	}else
+	{
 		pgmstat |= PS_NOEOI;
 	}
-	DBGout();
-	return board.update_status();
+	return 0;
 }
 
 /*
@@ -117,23 +95,20 @@ IBLCL int ibeot(int v)
 IBLCL int ibeos(int v)
 {
 	int ebyte, emodes;
-	DBGin("ibeos");
 	ebyte = v & 0xFF;
 	emodes = (v >> 8) & 0xFF;
-	if (emodes & ~EOSM) {
-		DBGprint(DBG_BRANCH, ("bad EOS modes  "));
-		ibsta |= ERR;
-		iberr = EARG;
-	}else 
+	if (emodes & ~EOSM)
 	{
-		DBGprint(DBG_DATA, ("byte=0x%x modes=0x%x  ", ebyte, emodes));
+		printk("bad EOS modes\n");
+		return -1;
+	}else
+	{
 		if(emodes & REOS)
 		{
 			board.enable_eos(ebyte, emodes & BIN);
 		}else
 			board.disable_eos();
 	}
-	DBGout();
 	return 0;
 }
 
@@ -142,6 +117,6 @@ IBLCL int ibeos(int v)
 IBLCL int ibstat(void)
 /* update the GPIB status information */
 {
-	return board.update_status(); 
+	return board.update_status();
 }
 

@@ -25,43 +25,39 @@
  * is a bit vector corresponding to the status bit vector.  It
  * has a bit set for each condition which can terminate the wait
  * If the mask is 0 then
- * no condition is waited for and the current status is simply
- * returned.
+ * no condition is waited for.
  */
 IBLCL int ibwait(unsigned int mask)
 {
+	int retval = 0;
 	DECLARE_WAIT_QUEUE_HEAD(wait);
-	int status = board.update_status();
 
-	DBGin("ibwait");
-	if (mask == 0) {
-		DBGprint(DBG_BRANCH, ("mask=0  "));
-		DBGout();
-		return status;
+	if (mask == 0)
+	{
+		return 0;
 	}
-	else if (mask & ~WAITBITS) {
-		DBGprint(DBG_BRANCH, ("bad mask 0x%x ",mask));
-		ibsta |= ERR;
-		iberr = EARG;
-		DBGout();
-		return status;
+	else if (mask & ~WAITBITS)
+	{
+		printk("bad mask 0x%x \n",mask);
+		return -1;
 	}
 	osStartTimer(timeidx);
-	while(((status = board.update_status()) & mask) == 0)
+	while((board.update_status() & mask) == 0)
 	{
 		if(interruptible_sleep_on_timeout(&wait, 1))
 		{
 			printk("wait interrupted\n");
-			break;	//XXX
+			retval = -1;
+			break;
 		}
 		if(!noTimo)
 		{
 			printk("gpib wait timed out\n");
-			break;	//XXX
+			retval = -1;
+			break;
 		}
 	}
 	osRemoveTimer();
-	DBGout();
-	return status;
+	return retval;
 }
 
