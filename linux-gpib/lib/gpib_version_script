@@ -5,6 +5,7 @@ GPIB_DUMMY_VERSION {
 		ThreadIberr;
 		ThreadIbcnt;
 		ThreadIbcntl;
+		ibask;
 		ibcac;
 		ibclr;
 		ibcmd;
@@ -12,6 +13,7 @@ GPIB_DUMMY_VERSION {
 		ibconfig;
 		ibdev;
 		ibdma;
+		ibeos;
 		ibeot;
 		iberr;
 		ibevent;

@@ -104,10 +104,20 @@ int tnt4882_parallel_poll(gpib_board_t *board, uint8_t *result)
 	tnt4882_private_t *priv = board->private_data;
 	return tms9914_parallel_poll(board, &priv->tms9914_priv, result);
 }
-int tnt4882_serial_poll_response(gpib_board_t *board, uint8_t status)
+void tnt4882_parallel_poll_response(gpib_board_t *board, uint8_t config )
 {
 	tnt4882_private_t *priv = board->private_data;
-	return tms9914_serial_poll_response(board, &priv->tms9914_priv, status);
+	tms9914_parallel_poll_response(board, &priv->tms9914_priv, config );
+}
+void tnt4882_serial_poll_response(gpib_board_t *board, uint8_t status)
+{
+	tnt4882_private_t *priv = board->private_data;
+	tms9914_serial_poll_response(board, &priv->tms9914_priv, status);
+}
+uint8_t tnt4882_serial_poll_status( gpib_board_t *board )
+{
+	tnt4882_private_t *priv = board->private_data;
+	return tms9914_serial_poll_status( board, &priv->tms9914_priv );
 }
 
 gpib_interface_t ni_pci_interface =

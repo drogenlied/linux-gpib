@@ -2,27 +2,19 @@
 #include "ib_internal.h"
 #include <ibP.h>
 
-/*
- *-----------------------------------------------------------------
- * Function:  ibconfig
- * Purpose:   Change the software configuration input.
- * Input:     ud      - Board or device unit descriptor.
- *    	      option  - A parameter that selects the software
- *    	      	      	configuration item.
- *    	      value   - The value to shich the selected
- *    	      	      	configuration item is to be changed.
- * Output:    Returns the value of "ibsta".
- * Author:    Tobias Blomberg
- * Created:   1998-08-04
- * Remarks:   
- * Bugs:      
- *-----------------------------------------------------------------
- */
 int ibconfig( int ud, int option, int value )
 {
+	ibConf_t *conf;
+	ibBoard_t *board;
 
-  ibsta = CMPL;
-  return ibsta;	/* FIXME -- Implement me */
-  
+	conf = enter_library( ud, 1 );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
+
+	board = interfaceBoard( conf );
+
+	fprintf( stderr, "libgpib: ibconfig() unimplemented!\n" );
+
+	return exit_library( ud, 0 );
 } /* ibconfig */
 

@@ -33,7 +33,7 @@ int ibfind(char *dev)
 
 	if((index = ibFindDevIndex(dev)) < 0)
 	{ /* find desired entry */
-		setIberr( ENSD );
+		setIberr( EDVR );
 		setIbsta( ERR );
 		return -1;
 	}

@@ -50,10 +50,34 @@ int tms9914_parallel_poll(gpib_board_t *board, tms9914_private_t *priv, uint8_t 
 	return 0;
 }
 
-int tms9914_serial_poll_response(gpib_board_t *board, tms9914_private_t *priv, uint8_t status)
+void tms9914_parallel_poll_response( gpib_board_t *board,
+	tms9914_private_t *priv, uint8_t config )
+{
+	uint8_t dio_byte;
+
+	if( config & PPC_DISABLE )
+		dio_byte = 0;
+	else
+		dio_byte = 1 << ( 7 - ( config & PPC_DIO_MASK ) );
+
+	if( config & PPC_SENSE )
+	{
+		// XXX assert line on ist
+	}
+
+	dio_byte = 0;
+	
+	write_byte( priv, dio_byte, PPR );
+}
+
+void tms9914_serial_poll_response(gpib_board_t *board, tms9914_private_t *priv, uint8_t status)
 {
 	write_byte(priv, status, SPMR);		/* set new status to v */
+}
 
+uint8_t tms9914_serial_poll_status( gpib_board_t *board, tms9914_private_t *priv )
+{
+	// XXX
 	return 0;
 }
 
@@ -105,7 +129,9 @@ unsigned int tms9914_update_status(gpib_board_t *board, tms9914_private_t *priv)
 EXPORT_SYMBOL(tms9914_enable_eos);
 EXPORT_SYMBOL(tms9914_disable_eos);
 EXPORT_SYMBOL(tms9914_serial_poll_response);
+EXPORT_SYMBOL(tms9914_serial_poll_status);
 EXPORT_SYMBOL(tms9914_parallel_poll);
+EXPORT_SYMBOL(tms9914_parallel_poll_response);
 EXPORT_SYMBOL(tms9914_primary_address);
 EXPORT_SYMBOL(tms9914_secondary_address);
 EXPORT_SYMBOL(tms9914_update_status);

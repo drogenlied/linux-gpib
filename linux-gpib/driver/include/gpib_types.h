@@ -86,7 +86,9 @@ struct gpib_interface_struct
 	void (*enable_eos)(gpib_board_t *board, uint8_t eos, int compare_8_bits);
 	/* disable END on eos byte (END on EOI only)*/
 	void (*disable_eos)(gpib_board_t *board);
-	/* TODO: conduct parallel poll */
+	/* configure parallel poll */
+	void (*parallel_poll_response)( gpib_board_t *board, uint8_t configuration );
+	/* conduct parallel poll */
 	int (*parallel_poll)(gpib_board_t *board, uint8_t *result);
 	/* Returns current status of the bus lines.  Should be set to
 	 * NULL if your board does not have the ability to query the
@@ -106,10 +108,13 @@ struct gpib_interface_struct
 	 */
 	void (*secondary_address)(gpib_board_t *board, unsigned int address,
 	int enable);
-	/* Sets the byte the board should send in response to a serial poll.  Returns
-	 * zero on success.  Function should also request service if appropriate.
+	/* Sets the byte the board should send in response to a serial poll.
+	 * Function should also request service if appropriate.
 	 */
-	int (*serial_poll_response)(gpib_board_t *board, uint8_t status);
+	void (*serial_poll_response)(gpib_board_t *board, uint8_t status);
+	/* returns the byte the board will send in response to a serial poll.
+	 */
+	uint8_t ( *serial_poll_status )( gpib_board_t *board );
 	/* Pointer to module whose use count we should increment when this
 	 * interface is in use */
 	struct module *provider_module;
@@ -162,6 +167,8 @@ struct gpib_board_struct
 	int sad;
 	// timeout for io operations, in microseconds
 	unsigned int usec_timeout;
+	// board's parallel poll configuration byte
+	uint8_t parallel_poll_configuration;
 	/* Count that keeps track of whether board is up and running or not */
 	unsigned int online;
 	/* Flag that indicates whether board is system controller of the bus */

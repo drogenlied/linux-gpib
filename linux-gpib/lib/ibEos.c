@@ -11,7 +11,7 @@ int ibeos(int ud, int v)
 		return exit_library( ud, 1 );
 
 	conf->eos = v & 0xff;
-	conf->eos_flags = (v >> 8) & 0xff;
+	conf->eos_flags = v & 0xff00;
 
 	return exit_library( ud, 0 );
 }

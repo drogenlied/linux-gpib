@@ -70,6 +70,8 @@ extern ibConf_t * enter_library( int ud, int lock_library );
 extern void setIbsta( int status );
 extern void setIberr( int error );
 extern void setIbcnt( long count );
+extern unsigned int usec_to_timeout( unsigned int usec );
+extern int query_ppc( const ibBoard_t *board );
 
 extern __inline__ ibBoard_t* interfaceBoard( ibConf_t *conf )
 {

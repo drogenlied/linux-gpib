@@ -91,7 +91,7 @@ int ibrd(int ud, void *rd, long cnt)
 		switch( errno )
 		{
 			case ETIMEDOUT:
-				board->timed_out = 1;
+				conf->timed_out = 1;
 				setIberr( EABO );
 				break;
 			default:

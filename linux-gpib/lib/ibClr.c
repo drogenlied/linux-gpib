@@ -2,7 +2,7 @@
                           lib/ibClr.c
                              -------------------
 
-	copyright            : (C) 2001,2001 by Frank Mori Hess
+	copyright            : (C) 2001,2002 by Frank Mori Hess
     email                : fmhess@users.sourceforge.net
  ***************************************************************************/
 
@@ -21,7 +21,7 @@
 int ibclr( int ud )
 {
 	uint8_t cmd[ 16 ];
-	ibConf_t *conf = ibConfigs[ud];
+	ibConf_t *conf;
 	ibBoard_t *board;
 	ssize_t count;
 	int i;

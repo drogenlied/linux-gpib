@@ -621,11 +621,13 @@ gpib_interface_t ines_pcmcia_interface =
 	enable_eos: ines_enable_eos,
 	disable_eos: ines_disable_eos,
 	parallel_poll: ines_parallel_poll,
+	parallel_poll_response: ines_parallel_poll_response,
 	line_status: NULL,	//XXX
 	update_status: ines_update_status,
 	primary_address: ines_primary_address,
 	secondary_address: ines_secondary_address,
 	serial_poll_response: ines_serial_poll_response,
+	serial_poll_status: ines_serial_poll_status,
 	provider_module: &__this_module,
 };
 

@@ -89,8 +89,10 @@ int tms9914_go_to_standby(gpib_board_t *board, tms9914_private_t *priv)
 void tms9914_interface_clear(gpib_board_t *board, tms9914_private_t *priv, int assert)
 {
 	if(assert)
+	{
 		write_byte(priv, AUX_SIC | AUX_CS, AUXCR);
-	else
+		set_bit(CIC_NUM, &board->status);
+	}else
 		write_byte(priv, AUX_SIC, AUXCR);
 }
 

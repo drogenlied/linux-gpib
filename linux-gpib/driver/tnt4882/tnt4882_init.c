@@ -104,10 +104,20 @@ int tnt4882_parallel_poll(gpib_board_t *board, uint8_t *result)
 	tnt4882_private_t *priv = board->private_data;
 	return nec7210_parallel_poll(board, &priv->nec7210_priv, result);
 }
-int tnt4882_serial_poll_response(gpib_board_t *board, uint8_t status)
+void tnt4882_parallel_poll_response(gpib_board_t *board, uint8_t config )
 {
 	tnt4882_private_t *priv = board->private_data;
-	return nec7210_serial_poll_response(board, &priv->nec7210_priv, status);
+	nec7210_parallel_poll_response( board, &priv->nec7210_priv, config );
+}
+void tnt4882_serial_poll_response(gpib_board_t *board, uint8_t status)
+{
+	tnt4882_private_t *priv = board->private_data;
+	nec7210_serial_poll_response(board, &priv->nec7210_priv, status);
+}
+uint8_t tnt4882_serial_poll_status( gpib_board_t *board )
+{
+	tnt4882_private_t *priv = board->private_data;
+	return nec7210_serial_poll_status( board, &priv->nec7210_priv );
 }
 
 gpib_interface_t ni_pci_interface =
@@ -125,11 +135,13 @@ gpib_interface_t ni_pci_interface =
 	enable_eos: tnt4882_enable_eos,
 	disable_eos: tnt4882_disable_eos,
 	parallel_poll: tnt4882_parallel_poll,
+	parallel_poll_response: tnt4882_parallel_poll_response,
 	line_status: NULL,	//XXX
 	update_status: tnt4882_update_status,
 	primary_address: tnt4882_primary_address,
 	secondary_address: tnt4882_secondary_address,
 	serial_poll_response: tnt4882_serial_poll_response,
+	serial_poll_status: tnt4882_serial_poll_status,
 	provider_module: &__this_module,
 };
 
@@ -148,11 +160,13 @@ gpib_interface_t ni_isa_interface =
 	enable_eos: tnt4882_enable_eos,
 	disable_eos: tnt4882_disable_eos,
 	parallel_poll: tnt4882_parallel_poll,
+	parallel_poll_response: tnt4882_parallel_poll_response,
 	line_status: NULL,	//XXX
 	update_status: tnt4882_update_status,
 	primary_address: tnt4882_primary_address,
 	secondary_address: tnt4882_secondary_address,
 	serial_poll_response: tnt4882_serial_poll_response,
+	serial_poll_status: tnt4882_serial_poll_status,
 	provider_module: &__this_module,
 };
 

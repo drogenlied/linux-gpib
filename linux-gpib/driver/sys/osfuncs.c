@@ -46,6 +46,11 @@ static int autopoll_ioctl( gpib_board_t *board);
 static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 	unsigned long arg );
 static int timeout_ioctl( gpib_board_t *board, unsigned long arg );
+static int status_bytes_ioctl( gpib_board_t *board, unsigned long arg );
+static int query_ppc_ioctl( const gpib_board_t *board, unsigned long arg );
+static int ppc_ioctl( gpib_board_t *board, unsigned long arg );
+static int query_autopoll_ioctl( const gpib_board_t *board, unsigned long arg );
+static int query_board_rsv_ioctl( gpib_board_t *board, unsigned long arg );
 
 static int cleanup_open_devices( gpib_file_private_t *file_priv, gpib_board_t *board );
 
@@ -206,35 +211,50 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 
 	switch( cmd )
 	{
-		case IBRD:
-			return read_ioctl( board, arg );
-			break;
-		case IBWRT:
-			return write_ioctl( board, arg );
+		case IBCLOSEDEV:
+			return close_dev_ioctl( filep, board, arg );
 			break;
 		case IBCMD:
 			return command_ioctl( board, arg );
 			break;
-		case IBSTATUS:
-			return status_ioctl( board, arg );
-			break;
-		case IBTMO:
-			return timeout_ioctl( board, arg );
-			break;
 		case IBOPENDEV:
 			return open_dev_ioctl( filep, board, arg );
 			break;
-		case IBCLOSEDEV:
-			return close_dev_ioctl( filep, board, arg );
+		case IBPPC:
+			return ppc_ioctl( board, arg );
+			break;
+		case IBQUERY_AUTOPOLL:
+			return query_autopoll_ioctl( board, arg );
+			break;
+		case IBQUERY_BOARD_RSV:
+			return query_board_rsv_ioctl( board, arg );
+			break;
+		case IBQUERY_PPC:
+			return query_ppc_ioctl( board, arg );
+			break;
+		case IBRD:
+			return read_ioctl( board, arg );
+			break;
+		case IBRPP:
+			return parallel_poll_ioctl( board, arg );
 			break;
 		case IBRSP:
 			return serial_poll_ioctl( board, arg );
 			break;
+		case IBSPOLL_BYTES:
+			return status_bytes_ioctl( board, arg );
+			break;
+		case IBSTATUS:
+			return status_ioctl( board, arg );
+			break;
+		case IBWRT:
+			return write_ioctl( board, arg );
+			break;
+		case IBTMO:
+			return timeout_ioctl( board, arg );
+			break;
 		case IBWAIT:
 			return wait_ioctl( board, arg );
-			break;
-		case IBRPP:
-			return parallel_poll_ioctl( board, arg );
 			break;
 		case IBAPE:
 			return auto_poll_enable_ioctl( board, arg );
@@ -425,20 +445,36 @@ static int write_ioctl(gpib_board_t *board, unsigned long arg)
 	return 0;
 }
 
-static int status_ioctl(gpib_board_t *board, unsigned long arg)
+static int status_bytes_ioctl( gpib_board_t *board, unsigned long arg )
 {
-	int retval;
-	wait_status_ioctl_t cmd;
 	gpib_device_t *device;
+	spoll_bytes_ioctl_t cmd;
+	int retval;
 
-	copy_from_user( &cmd, (void *) arg, sizeof( wait_status_ioctl_t ) );
+	retval = copy_from_user( &cmd, (void *) arg, sizeof( cmd ) );
+	if( retval )
+		return -EFAULT;
 
 	device = get_gpib_device( board, cmd.pad, cmd.sad );
 	if( device == NULL )
-		cmd.mask = 0;
-	else cmd.mask = full_ibstatus( board, device );
+		return cmd.num_bytes = 0;
+	else
+		cmd.num_bytes = num_status_bytes( device );
 
-	retval = copy_to_user( (void *) arg, &cmd, sizeof( wait_status_ioctl_t ) );
+	retval = copy_to_user( (void *) arg, &cmd, sizeof( cmd ) );
+	if( retval )
+		return -EFAULT;
+
+	return 0;
+}
+
+static int status_ioctl(gpib_board_t *board, unsigned long arg)
+{
+	int retval;
+	int status;
+
+	status = ibstatus( board );
+	retval = copy_to_user( (void *) arg, &status, sizeof( status ) );
 	if (retval)
 		return -EFAULT;
 
@@ -604,7 +640,7 @@ static int serial_poll_ioctl( gpib_board_t *board, unsigned long arg )
 
 static int wait_ioctl( gpib_board_t *board, unsigned long arg )
 {
-	wait_status_ioctl_t wait_cmd;
+	wait_ioctl_t wait_cmd;
 	int retval;
 
 	retval = copy_from_user( &wait_cmd, ( void * ) arg, sizeof( wait_cmd ) );
@@ -613,10 +649,6 @@ static int wait_ioctl( gpib_board_t *board, unsigned long arg )
 
 	retval = ibwait( board, wait_cmd.mask, wait_cmd.pad, wait_cmd.sad );
 	if( retval < 0 ) return retval;
-
-	retval = copy_to_user( ( void * ) arg, &wait_cmd, sizeof( wait_cmd ) );
-	if( retval )
-		return -EFAULT;
 
 	return 0;
 }
@@ -879,6 +911,61 @@ static int timeout_ioctl( gpib_board_t *board, unsigned long arg )
 
 	board->usec_timeout = timeout;
 	GPIB_DPRINTK( "timeout set to %i usec\n", timeout );
+
+	return 0;
+}
+
+static int query_ppc_ioctl( const gpib_board_t *board, unsigned long arg)
+{
+	int configuration;
+	int retval;
+
+	configuration = board->parallel_poll_configuration;
+
+	retval = copy_to_user( ( void * ) arg, &configuration, sizeof( configuration ) );
+	if( retval )
+		return -EFAULT;
+
+	return 0;
+}
+
+static int ppc_ioctl( gpib_board_t *board, unsigned long arg)
+{
+	int configuration;
+	int retval;
+
+	retval = copy_from_user( &configuration, ( void * ) arg, sizeof( configuration ) );
+	if( retval )
+		return -EFAULT;
+
+	return ibppc( board, configuration );
+
+}
+
+static int query_autopoll_ioctl( const gpib_board_t *board, unsigned long arg )
+{
+	int autopolling;
+	int retval;
+
+	autopolling = board->autopoll;
+
+	retval = copy_to_user( ( void * ) arg, &autopolling, sizeof( autopolling ) );
+	if( retval )
+		return -EFAULT;
+
+	return 0;
+}
+
+static int query_board_rsv_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	int status;
+	int retval;
+
+	status = board->interface->serial_poll_status( board );
+
+	retval = copy_to_user( ( void * ) arg, &status, sizeof( status ) );
+	if( retval )
+		return -EFAULT;
 
 	return 0;
 }

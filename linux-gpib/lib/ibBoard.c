@@ -30,7 +30,6 @@ void ibBoardDefaultValues( void )
 		strcpy( ibBoard[ i ].device, "" );
 		strcpy( ibBoard[ i ].board_type, "" );
 		ibBoard[ i ].autopoll_pid = 0;
-		ibBoard[ i ].timed_out = 0;
 	}
 }
 
@@ -92,18 +91,17 @@ int ibBoardOpen( int bd, int flags )
 	{
 		if( ( fd = open( board->device, O_RDWR | flags ) ) < 0 )
 		{
-			ibsta =  ERR;
-			iberr = EDVR;
-			ibcnt = errno;
-			ibPutErrlog(-1,"ibBoardOpen");
-			return ERR;
+			setIberr( EDVR );
+			setIbcnt( errno );
+			fprintf( stderr, "libgpib: ibBoardOpen failed to open device file\n" );
+			return -1;
 		}
 		board->fileno = fd;
 
 		if( fork_autopoll_process( board ) < 0)
 		{
 			ibBoardClose( bd );
-			return ERR;
+			return -1;
 		}
 	}
 	return 0;

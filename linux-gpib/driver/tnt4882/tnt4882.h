@@ -63,7 +63,9 @@ void tnt4882_primary_address(gpib_board_t *board, unsigned int address);
 void tnt4882_secondary_address(gpib_board_t *board, unsigned int address, int
  enable);
 int tnt4882_parallel_poll(gpib_board_t *board, uint8_t *result);
-int tnt4882_serial_poll_response(gpib_board_t *board, uint8_t status);
+void tnt4882_parallel_poll_response( gpib_board_t *board, uint8_t config );
+void tnt4882_serial_poll_response(gpib_board_t *board, uint8_t status);
+uint8_t tnt4882_serial_poll_status( gpib_board_t *board );
 
 // pcmcia init/cleanup
 int __init init_ni_gpib_cs(void);

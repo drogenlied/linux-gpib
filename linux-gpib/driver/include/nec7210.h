@@ -63,7 +63,7 @@ enum
 	WRITE_READY_BN,	// board is ready to send a data byte
 	COMMAND_READY_BN,	// board is ready to send a command byte
 	RECEIVED_END_BN,	// received END
-	OUTPUT_ERROR_BN,	// output error has occurred
+	BUS_ERROR_BN,	// output error has occurred
 };
 
 // interface functions
@@ -87,7 +87,11 @@ extern void nec7210_primary_address( const gpib_board_t *board,
 extern void nec7210_secondary_address( const gpib_board_t *board, nec7210_private_t *priv,
 	unsigned int address, int enable);
 extern int nec7210_parallel_poll(gpib_board_t *board, nec7210_private_t *priv, uint8_t *result);
-extern int nec7210_serial_poll_response(gpib_board_t *board, nec7210_private_t *priv, uint8_t status);
+extern void nec7210_serial_poll_response(gpib_board_t *board, nec7210_private_t *priv, uint8_t status);
+extern void nec7210_parallel_poll_response( gpib_board_t *board,
+	nec7210_private_t *priv, unsigned int configuration );
+extern uint8_t nec7210_serial_poll_status( gpib_board_t *board,
+	nec7210_private_t *priv );
 
 // utility functions
 extern void nec7210_board_reset( nec7210_private_t *priv, const gpib_board_t *board );

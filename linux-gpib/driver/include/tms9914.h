@@ -83,7 +83,10 @@ extern void tms9914_primary_address(gpib_board_t *board,
 extern void tms9914_secondary_address(gpib_board_t *board, tms9914_private_t *priv,
 	unsigned int address, int enable);
 extern int tms9914_parallel_poll(gpib_board_t *board, tms9914_private_t *priv, uint8_t *result);
-extern int tms9914_serial_poll_response(gpib_board_t *board, tms9914_private_t *priv, uint8_t status);
+extern void tms9914_parallel_poll_response( gpib_board_t *board,
+	tms9914_private_t *priv, uint8_t config );
+extern void tms9914_serial_poll_response(gpib_board_t *board, tms9914_private_t *priv, uint8_t status);
+extern uint8_t tms9914_serial_poll_status( gpib_board_t *board, tms9914_private_t *priv );
 
 // utility functions
 extern void tms9914_board_reset(tms9914_private_t *priv);
@@ -120,6 +123,7 @@ enum
 	ISR0 = 0,	/* interrupt status 0          */
 	ISR1 = 1,	/* interrupt status 1          */
 	ADSR = 2,	/* address status               */
+	BSR = 3,	/* bus status */
 	CPTR = 6,	/* command pass thru           */
 	DIR = 7,	/* data in register            */
 };

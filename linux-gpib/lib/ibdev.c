@@ -92,5 +92,7 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 		if( ibsre( uDesc, 1 ) & ERR ) return -1;
 	}
 
+	// XXX do local lockout if appropriate
+
 	return uDesc;
 }

@@ -24,10 +24,8 @@ int ibonl( int ud, int onl )
 
 	if( board->fileno < 0 )
 	{
-		if( ibBoardOpen( conf->board, oflags ) & ERR )
+		if( ibBoardOpen( conf->board, oflags ) < 0 )
 		{
-			setIberr( EDVR );
-			setIbcnt( errno );
 			return exit_library( ud, 1 );
 		}
 		if( ibBdChrConfig( conf ) < 0 )

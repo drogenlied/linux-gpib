@@ -26,11 +26,11 @@ int ibcmd(int ud, void *cmd, long cnt)
 
 	if(count < 0)
 	{
-		switch(errno)
+		switch( errno )
 		{
 			case ETIMEDOUT:
 				setIberr( EABO );
-				board->timed_out = 1;
+				conf->timed_out = 1;
 				break;
 			default:
 				break;

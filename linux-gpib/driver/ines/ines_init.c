@@ -137,10 +137,20 @@ int ines_parallel_poll(gpib_board_t *board, uint8_t *result)
 	ines_private_t *priv = board->private_data;
 	return nec7210_parallel_poll(board, &priv->nec7210_priv, result);
 }
-int ines_serial_poll_response(gpib_board_t *board, uint8_t status)
+void ines_parallel_poll_response(gpib_board_t *board, uint8_t config)
 {
 	ines_private_t *priv = board->private_data;
-	return nec7210_serial_poll_response(board, &priv->nec7210_priv, status);
+	nec7210_parallel_poll_response(board, &priv->nec7210_priv, config);
+}
+void ines_serial_poll_response(gpib_board_t *board, uint8_t status)
+{
+	ines_private_t *priv = board->private_data;
+	nec7210_serial_poll_response(board, &priv->nec7210_priv, status);
+}
+uint8_t ines_serial_poll_status( gpib_board_t *board )
+{
+	ines_private_t *priv = board->private_data;
+	return nec7210_serial_poll_status( board, &priv->nec7210_priv );
 }
 
 gpib_interface_t ines_pci_interface =
@@ -158,11 +168,13 @@ gpib_interface_t ines_pci_interface =
 	enable_eos: ines_enable_eos,
 	disable_eos: ines_disable_eos,
 	parallel_poll: ines_parallel_poll,
+	parallel_poll_response: ines_parallel_poll_response,
 	line_status: NULL,	//XXX
 	update_status: ines_update_status,
 	primary_address: ines_primary_address,
 	secondary_address: ines_secondary_address,
 	serial_poll_response: ines_serial_poll_response,
+	serial_poll_status: ines_serial_poll_status,
 	provider_module: &__this_module,
 };
 

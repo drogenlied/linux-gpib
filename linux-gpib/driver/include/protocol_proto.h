@@ -23,4 +23,5 @@ extern  ssize_t ibwrt(gpib_board_t *board, uint8_t *buf, size_t cnt, int more );
 extern unsigned int ibstatus( gpib_board_t *board );
 extern unsigned int full_ibstatus( gpib_board_t *board, const gpib_device_t *device );
 extern int io_timed_out( gpib_board_t *board );
+extern int ibppc( gpib_board_t *board, uint8_t configuration );
 

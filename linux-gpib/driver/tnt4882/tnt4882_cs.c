@@ -665,11 +665,13 @@ gpib_interface_t ni_pcmcia_interface =
 	enable_eos: tnt4882_enable_eos,
 	disable_eos: tnt4882_disable_eos,
 	parallel_poll: tnt4882_parallel_poll,
+	parallel_poll_response: tnt4882_parallel_poll_response,
 	line_status: NULL,	//XXX
 	update_status: tnt4882_update_status,
 	primary_address: tnt4882_primary_address,
 	secondary_address: tnt4882_secondary_address,
 	serial_poll_response: tnt4882_serial_poll_response,
+	serial_poll_status: tnt4882_serial_poll_status,
 	provider_module: &__this_module,
 };
 

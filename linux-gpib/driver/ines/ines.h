@@ -54,7 +54,8 @@ unsigned int ines_update_status(gpib_board_t *board);
 void ines_primary_address(gpib_board_t *board, unsigned int address);
 void ines_secondary_address(gpib_board_t *board, unsigned int address, int enable);
 int ines_parallel_poll(gpib_board_t *board, uint8_t *result);
-int ines_serial_poll_response(gpib_board_t *board, uint8_t status);
+void ines_parallel_poll_response( gpib_board_t *board, uint8_t config );
+void ines_serial_poll_response(gpib_board_t *board, uint8_t status);
 
 // interrupt service routines
 void ines_interrupt(int irq, void *arg, struct pt_regs *registerp);

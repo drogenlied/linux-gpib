@@ -2,7 +2,7 @@
                           lib/ibTrg.c
                              -------------------
 
-	copyright            : (C) 2001,2001 by Frank Mori Hess
+	copyright            : (C) 2001,2002 by Frank Mori Hess
     email                : fmhess@users.sourceforge.net
  ***************************************************************************/
 

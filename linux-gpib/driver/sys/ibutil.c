@@ -60,15 +60,15 @@ int ibsad( gpib_board_t *board, int addr )
  */
 int ibeos( gpib_board_t *board, int eos, int eosflags )
 {
-	if( eosflags & ~EOSM )
+	if( eosflags & ~EOS_MASK )
 	{
 		printk( "bad EOS modes\n" );
 		return -EINVAL;
 	}else
 	{
-		if( eosflags & REOS )
+		if( eosflags & EOS_RD )
 		{
-			board->interface->enable_eos( board, eos, eosflags & BIN );
+			board->interface->enable_eos( board, eos, eosflags & EOS_BIN );
 		}else
 			board->interface->disable_eos( board );
 	}

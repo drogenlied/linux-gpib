@@ -346,10 +346,7 @@ void gpiberr(char *msg)
 	if ( iberr == ESTB) fprintf( stderr," ESTB <Status byte lost>\n");
 	if ( iberr == ESRQ) fprintf( stderr," ESRQ <SRQ stuck on>\n");
 	if ( iberr == ETAB) fprintf( stderr," ETAB <Table Overflow>\n");
-	if ( iberr == EPAR) fprintf( stderr," EPAR <Parse Error in Config>\n");
-	if ( iberr == ECFG) fprintf( stderr," ECFG <Can't open Config>\n");
 	if ( iberr == ETAB) fprintf( stderr," ETAB <Device Table Overflow>\n");
-	if ( iberr == ENSD) fprintf( stderr," ENSD <Configuration Error>\n");
 
 	fprintf(stderr, "ibcnt = %d\n", ibcnt );
 }

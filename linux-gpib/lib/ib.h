@@ -33,6 +33,7 @@ extern int ThreadIbcnt( void );
 extern long ThreadIbcntl( void );
 
 /***** Public Functions ******/
+extern int ibask(int ud, int option, int *value );
 extern int ibcac(int ud, int v);
 extern int ibclr(int ud);
 extern int ibcmd(int ud, void *cmd, long cnt);
@@ -40,6 +41,7 @@ extern int ibconfig( int ud, int option, int value );
 extern int ibdev(int minor, int pad, int sad, int timo, int eot, int eos);
 extern int ibdma( int ud, int v );
 extern int ibeot(int ud, int v);
+extern int ibeos(int ud, int v);
 extern int ibevent(int ud, short *event);
 extern int ibfind(char *dev);
 extern int ibgts(int ud, int v);

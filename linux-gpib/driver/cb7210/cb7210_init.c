@@ -106,10 +106,20 @@ int cb7210_parallel_poll(gpib_board_t *board, uint8_t *result)
 	cb7210_private_t *priv = board->private_data;
 	return nec7210_parallel_poll(board, &priv->nec7210_priv, result);
 }
-int cb7210_serial_poll_response(gpib_board_t *board, uint8_t status)
+void cb7210_parallel_poll_response( gpib_board_t *board, uint8_t configuration )
 {
 	cb7210_private_t *priv = board->private_data;
-	return nec7210_serial_poll_response(board, &priv->nec7210_priv, status);
+	nec7210_parallel_poll_response(board, &priv->nec7210_priv, configuration );
+}
+void cb7210_serial_poll_response(gpib_board_t *board, uint8_t status)
+{
+	cb7210_private_t *priv = board->private_data;
+	nec7210_serial_poll_response(board, &priv->nec7210_priv, status);
+}
+uint8_t cb7210_serial_poll_status( gpib_board_t *board )
+{
+	cb7210_private_t *priv = board->private_data;
+	return nec7210_serial_poll_status( board, &priv->nec7210_priv );
 }
 
 gpib_interface_t cb_pci_interface =
@@ -127,11 +137,13 @@ gpib_interface_t cb_pci_interface =
 	enable_eos: cb7210_enable_eos,
 	disable_eos: cb7210_disable_eos,
 	parallel_poll: cb7210_parallel_poll,
+	parallel_poll_response: cb7210_parallel_poll_response,
 	line_status: NULL,	//XXX
 	update_status: cb7210_update_status,
 	primary_address: cb7210_primary_address,
 	secondary_address: cb7210_secondary_address,
 	serial_poll_response: cb7210_serial_poll_response,
+	serial_poll_status: cb7210_serial_poll_status,
 	provider_module: &__this_module,
 };
 
@@ -150,11 +162,13 @@ gpib_interface_t cb_isa_interface =
 	enable_eos: cb7210_enable_eos,
 	disable_eos: cb7210_disable_eos,
 	parallel_poll: cb7210_parallel_poll,
+	parallel_poll_response: cb7210_parallel_poll_response,
 	line_status: NULL,	//XXX
 	update_status: cb7210_update_status,
 	primary_address: cb7210_primary_address,
 	secondary_address: cb7210_secondary_address,
 	serial_poll_response: cb7210_serial_poll_response,
+	serial_poll_status: cb7210_serial_poll_status,
 	provider_module: &__this_module,
 };
 

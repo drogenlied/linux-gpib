@@ -15,11 +15,19 @@ int ibrpp( int ud, char *ppr )
 
 	board = interfaceBoard( conf );
 
-	set_timeout( board, conf->usec_timeout );
+	set_timeout( board, conf->ppoll_usec_timeout );
 
 	retval = ioctl( board->fileno, IBRPP, &poll_byte );
 	if( retval < 0 )
 	{
+		switch( errno )
+		{
+			case ETIMEDOUT:
+				conf->timed_out = 1;
+				break;
+			default:
+				break;
+		}
 		return exit_library( ud, 1 );
 	}
 

@@ -18,7 +18,7 @@ int ibrsp(int ud, char *spr)
 	poll_cmd.pad = conf->pad;
 	poll_cmd.sad = conf->sad;
 
-	set_timeout( board, conf->usec_timeout );
+	set_timeout( board, conf->spoll_usec_timeout );
 
 	retval = ioctl( board->fileno, IBRSP, &poll_cmd );
 	if(retval < 0)
@@ -26,7 +26,7 @@ int ibrsp(int ud, char *spr)
 		switch( errno )
 		{
 			case ETIMEDOUT:
-				board->timed_out = 1;
+				conf->timed_out = 1;
 				setIberr( EABO );
 				break;
 			default:

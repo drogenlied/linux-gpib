@@ -100,10 +100,20 @@ int cec_parallel_poll(gpib_board_t *board, uint8_t *result)
 	cec_private_t *priv = board->private_data;
 	return nec7210_parallel_poll(board, &priv->nec7210_priv, result);
 }
-int cec_serial_poll_response(gpib_board_t *board, uint8_t status)
+void cec_parallel_poll_response( gpib_board_t *board, uint8_t config )
 {
 	cec_private_t *priv = board->private_data;
-	return nec7210_serial_poll_response(board, &priv->nec7210_priv, status);
+	nec7210_parallel_poll_response( board, &priv->nec7210_priv, config );
+}
+void cec_serial_poll_response(gpib_board_t *board, uint8_t status )
+{
+	cec_private_t *priv = board->private_data;
+	nec7210_serial_poll_response(board, &priv->nec7210_priv, status);
+}
+uint8_t cec_serial_poll_status( gpib_board_t *board )
+{
+	cec_private_t *priv = board->private_data;
+	return nec7210_serial_poll_status( board, &priv->nec7210_priv );
 }
 
 gpib_interface_t cec_pci_interface =
@@ -121,11 +131,13 @@ gpib_interface_t cec_pci_interface =
 	enable_eos: cec_enable_eos,
 	disable_eos: cec_disable_eos,
 	parallel_poll: cec_parallel_poll,
+	parallel_poll_response: cec_parallel_poll_response,
 	line_status: NULL,	//XXX
 	update_status: cec_update_status,
 	primary_address: cec_primary_address,
 	secondary_address: cec_secondary_address,
 	serial_poll_response: cec_serial_poll_response,
+	serial_poll_status: cec_serial_poll_status,
 	provider_module: &__this_module,
 };
 

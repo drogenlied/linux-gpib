@@ -2,28 +2,18 @@
 #include "ib_internal.h"
 #include <ibP.h>
 
-
-/*
- *-----------------------------------------------------------------
- * Function:  ibdma
- * Purpose:   Enable or disable DMA.
- * Input:     ud  - A board descriptor.
- *    	      v   - Enable or disable the use of DMA.
- * Output:    Returns the value of "ibsta".
- * Author:    Tobias Blomberg
- * Created:   1998-08-04
- * Remarks:   Does not do anything at all right now...
- * Bugs:      
- *-----------------------------------------------------------------
- */
 int ibdma( int ud, int v )
 {
-  if (ud < 0) {
-    ibsta = CMPL | ERR;
-    iberr = EDVR;
-    return ibsta;
-  }
-  
-  ibsta = CMPL;
-  return ibsta;
+	ibConf_t *conf;
+	ibBoard_t *board;
+
+	conf = enter_library( ud, 1 );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
+
+	board = interfaceBoard( conf );
+
+	fprintf( stderr, "libgpib: ibdma() unimplemented!\n" );
+
+	return exit_library( ud, 0 );
 } /* ibdma */

@@ -33,7 +33,7 @@ int ibParseConfigFile(char *filename)
 	if ((infile = fopen(filename, "r")) == NULL)
 	{
 		fprintf(stderr, "failed to open configuration file\n");
-		iberr = ECFG;
+		setIberr( EDVR );
 		return -1;
 	}
 
@@ -66,7 +66,7 @@ int ibGetDescriptor(ibConf_t p)
 	/* check validity of values */
 	if( p.pad >= IB_MAXDEV )
 	{
-		iberr = ETAB;
+		setIberr( ETAB );
 		return -1;
 	}
 	// search for an unused descriptor
@@ -80,7 +80,7 @@ int ibGetDescriptor(ibConf_t p)
 	}
 	if( ib_ndev == NUM_CONFIGS)
 	{
-		iberr = ETAB;
+		setIberr( ETAB );
 		return -1;
 	}
 	conf = ibConfigs[ib_ndev];
@@ -93,11 +93,16 @@ int ibGetDescriptor(ibConf_t p)
 	conf->eos = p.eos;
 	conf->eos_flags = p.eos_flags;
 	conf->usec_timeout = p.usec_timeout;
+	conf->spoll_usec_timeout = p.spoll_usec_timeout;
+	conf->ppoll_usec_timeout = p.ppoll_usec_timeout;
 	conf->send_eoi = p.send_eoi;
 	conf->is_interface = p.is_interface;
 	conf->is_open = p.is_open;
 	conf->has_lock = p.has_lock;
-
+	conf->ppoll_config = p.ppoll_config;
+	conf->local_lockout = p.local_lockout;
+	conf->timed_out = p.timed_out;
+	
 	strncpy(conf->init_string, p.init_string, sizeof(conf->init_string));
 	return ib_ndev;
 }
@@ -127,16 +132,21 @@ void init_ibconf( ibConf_t *conf )
 	conf->name[0] = 0;
 	conf->pad = -1;
 	conf->sad = -1;
-	conf->init_string[0] = 0;     
-	conf->board = -1;           
-	conf->eos = 0;             
+	conf->init_string[0] = 0;
+	conf->board = -1;
+	conf->eos = 0;
 	conf->eos_flags = 0;
-	conf->flags = 0;                
+	conf->flags = 0;
 	conf->usec_timeout = 3000000;
+	conf->spoll_usec_timeout = 1000000;
+	conf->ppoll_usec_timeout = 2;
 	conf->send_eoi = 1;
 	conf->is_interface = 0;
 	conf->is_open = 0;
 	conf->has_lock = 0;
+	conf->ppoll_config = 0;
+	conf->local_lockout = 0;
+	conf->timed_out = 0;
 }
 
 int ib_lock_mutex( ibBoard_t *board )
@@ -252,8 +262,9 @@ ibConf_t * enter_library( int ud, int lock_library )
 
 	if( ibCheckDescriptor( ud ) < 0 ) return NULL;
 
+	conf->timed_out = 0;
+
 	board = interfaceBoard( conf );
-	board->timed_out = 0;
 
 	if( lock_library )
 	{
@@ -272,21 +283,44 @@ int ibstatus( ibConf_t *conf, int error )
 {
 	int status = 0;
 	int retval;
-	wait_status_ioctl_t board_status;
+	static const int common_status_mask = ERR | TIMO | END | CMPL;
+	int device_status_mask, board_status_mask;
 
-	board_status.pad = conf->pad;
-	board_status.sad = conf->sad;
-	retval = ioctl( interfaceBoard( conf )->fileno, IBSTATUS, &board_status );
-	if( retval < 0 )
+	device_status_mask = common_status_mask | RQS;
+	board_status_mask = common_status_mask | SRQI |
+		SPOLL | EVENT | LOK | REM | CIC | ATN | TACS | LACS | DTAS | DCAS;
+
+	if( conf->is_interface )
 	{
-		error++;
-		setIberr( EDVR );
+		int board_status;
+		retval = ioctl( interfaceBoard( conf )->fileno, IBSTATUS, &board_status );
+		if( retval < 0 )
+		{
+			error++;
+			setIberr( EDVR );
+		}else
+			status |= board_status & board_status_mask;
 	}else
-		status = board_status.mask;
+	{
+		spoll_bytes_ioctl_t cmd;
+		cmd.pad = conf->pad;
+		cmd.sad = conf->sad;
+		retval = ioctl( interfaceBoard( conf )->fileno, IBSPOLL_BYTES, &cmd );
+		if( retval < 0 )
+		{
+			error++;
+			setIberr( EDVR );
+		}else
+		{
+			if( cmd.num_bytes > 0 )
+				status |= RQS;
+		}
+	}
 
+	// XXX
 	status |= CMPL;
 	if( error ) status |= ERR;
-	if( interfaceBoard( conf )->timed_out )
+	if( conf->timed_out )
 		status |= TIMO;
 	if( conf->end )
 		status |= END;

@@ -22,8 +22,6 @@ int ibsic(gpib_board_t *board)
 		udelay(100);
 		board->interface->interface_clear(board, 0);                   /* clear IFC */
 	}
-// CIC should be set by driver, this is a temporary hack for tms9914 XXX
-	set_bit(CIC_NUM, &board->status);
 
 	return 0;
 }

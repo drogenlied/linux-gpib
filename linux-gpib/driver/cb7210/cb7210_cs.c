@@ -599,11 +599,13 @@ gpib_interface_t cb_pcmcia_interface =
 	enable_eos: cb7210_enable_eos,
 	disable_eos: cb7210_disable_eos,
 	parallel_poll: cb7210_parallel_poll,
+	parallel_poll_response: cb7210_parallel_poll_response,
 	line_status: NULL,	//XXX
 	update_status: cb7210_update_status,
 	primary_address: cb7210_primary_address,
 	secondary_address: cb7210_secondary_address,
 	serial_poll_response: cb7210_serial_poll_response,
+	serial_poll_status: cb7210_serial_poll_status,
 	provider_module: &__this_module,
 };
 

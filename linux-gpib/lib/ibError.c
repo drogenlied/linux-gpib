@@ -113,12 +113,7 @@ char strtime[60];
     if ( iberr == ESTB) fprintf(stderr," ESTB <Status byte lost>\n");
     if ( iberr == ESRQ) fprintf(stderr," ESRQ <SRQ stuck on>\n");
     if ( iberr == ETAB) fprintf(stderr," ETAB <Table Overflow>\n");
-    if ( iberr == EPAR) fprintf(stderr," EPAR <Parse Error in Config>\n");
-    if ( iberr == ECFG) fprintf(stderr," ECFG <Can't open Config>\n");
     if ( iberr == ETAB) fprintf(stderr," ETAB <Device Table Overflow>\n");
-    if ( iberr == ENSD) fprintf(stderr," ENSD <Configuration Error>\n");
-    if ( iberr == ENWE) fprintf(stderr," ENWE <Network Errror>\n");
-    if ( iberr == ENTF) fprintf(stderr," ENTF <Network Table Overflow>\n");
 
     if ( iberr == EDVR && ibcnt != 0) {
       fprintf(stderr,"               -- errno=%d (%s)\n",ibcnt,strerror(ibcnt));

@@ -63,7 +63,8 @@ void cb7210_primary_address(gpib_board_t *board, unsigned int address);
 void cb7210_secondary_address(gpib_board_t *board, unsigned int address, int
  enable);
 int cb7210_parallel_poll(gpib_board_t *board, uint8_t *result);
-int cb7210_serial_poll_response(gpib_board_t *board, uint8_t status);
+void cb7210_serial_poll_response(gpib_board_t *board, uint8_t status);
+void cb7210_parallel_poll_response(gpib_board_t *board, uint8_t configuration);
 
 // utility functions
 void cb7210_generic_detach(gpib_board_t *board);

@@ -149,11 +149,10 @@ void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv)
 		write_byte(priv, AUX_NVAL, AUXMR);
 	}
 
-	// output byte has been lost
 	if(status1 & HR_ERR)
 	{
-		set_bit( OUTPUT_ERROR_BN, &priv->state );
-		GPIB_DPRINTK( "gpib output error\n" );
+		set_bit( BUS_ERROR_BN, &priv->state );
+		GPIB_DPRINTK( "gpib bus error\n" );
 	}
 
 	if( status1 & HR_DEC )

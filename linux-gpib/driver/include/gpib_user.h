@@ -10,7 +10,11 @@
 #define SRQI_NUM	12
 #define SRQI	 (1 << SRQI_NUM)	/* SRQ is asserted */
 #define RQS_NUM	11
-#define RQS      (1 << RQS_NUM)      /* Device requesting Service */
+#define RQS	 (1 <<  RQS_NUM)	/* Device requesting service  */
+#define SPOLL_NUM	10
+#define SPOLL      (1 << SPOLL_NUM)      /* board serial polled by busmaster */
+#define EVENT_NUM	9
+#define EVENT      (1 << EVENT_NUM)      /* DCAS, DTAS, or IFC has occurred */
 #define CMPL_NUM	8
 #define CMPL	 (1 <<  CMPL_NUM)	/* I/O is complete  */
 #define LOK_NUM	7
@@ -36,32 +40,25 @@ static const int DRIVERBITS = ( SRQI | LOK | REM | CIC | ATN | TACS | LACS | DTA
 
 /* IBERR error codes */
 
-#define EDVR     0		/* system error */
-#define ECIC     1		/* not CIC */
-#define ENOL     2		/* no listeners */
-#define EADR     3		/* CIC and not addressed before I/O */
-#define EARG     4		/* bad argument to function call */
-#define ESAC     5		/* not SAC */
-#define EABO     6		/* I/O operation was aborted */
-#define ENEB     7		/* non-existent board (GPIB interface offline) */
-#define EDMA     8		/* DMA hardware error detected */
-#define EBTO     9		/* DMA hardware uP bus timeout */
-#define EOIP    10		/* new I/O attempted with old I/O in progress  */
-#define ECAP    11		/* no capability for intended opeation */
-#define EFSO    12		/* file system operation error */
-#define EOWN    13		/* shareable board exclusively owned */
-#define EBUS    14		/* bus error */
-#define ESTB    15		/* lost serial poll bytes */
-#define ESRQ    16		/* SRQ stuck on */
-
-#define ECFG    17              /* Config file not found */
-#define EPAR    18              /* Parse Error in Config */
-#define ETAB    19              /* Table Overflow */
-#define ENSD    20              /* Device not found */
-#define ENWE    21              /* Network Error */
-#define ENTF    22              /* Nethandle-table full */
-#define EMEM    23              /* Memory allocation Error */
-
+enum iberr_code
+{
+	EDVR = 0,		/* system error */
+	ECIC = 1,	/* not CIC */
+	ENOL = 2,		/* no listeners */
+	EADR = 3,		/* CIC and not addressed before I/O */
+	EARG = 4,		/* bad argument to function call */
+	ESAC = 5,		/* not SAC */
+	EABO = 6,		/* I/O operation was aborted */
+	ENEB = 7,		/* non-existent board (GPIB interface offline) */
+	EDMA = 8,		/* DMA hardware error detected */
+	EOIP = 10,		/* new I/O attempted with old I/O in progress  */
+	ECAP = 11,		/* no capability for intended opeation */
+	EFSO = 12,		/* file system operation error */
+	EBUS = 14,		/* bus error */
+	ESTB = 15,		/* lost serial poll bytes */
+	ESRQ = 16,		/* SRQ stuck on */
+	ETAB = 20              /* Table Overflow */
+};
 /* Timeout values and meanings */
 
 enum gpib_timeout
@@ -88,11 +85,13 @@ enum gpib_timeout
 
 /* End-of-string (EOS) modes for use with ibeos */
 
-#define REOS     0x04		/* Terminate reads on EOS	*/
-#define BIN      0x10		/* Do 8-bit compare on EOS	*/
-
-#define EOSM	(REOS | BIN)
-
+enum eos_flags
+{
+	EOS_MASK = 0x1c00,
+	EOS_RD = 0x0400,		/* Terminate reads on EOS	*/
+	EOS_EOI = 0x800,	/* assert EOI when EOS char is sent */
+	EOS_BIN = 0x1000		/* Do 8-bit compare on EOS	*/
+};
 
 /* GPIB Bus Control Lines bit vector */
 
@@ -120,20 +119,19 @@ enum cmd_byte
 	PPU = 0x15,	/* parallel poll unconfigure 	*/
 	SPE = 0x18,	/* serial poll enable 		*/
 	SPD = 0x19,	/* serial poll disable 		*/
+	LAD = 0x20,	/* value to be 'ored' in to obtain listen address */
 	UNL = 0x3F,	/* unlisten 			*/
+	TAD = 0x40,	/* value to be 'ored' in to obtain talk address   */
 	UNT = 0x5F,	/* untalk 			*/
-	PPE = 0x60,	/* parallel poll enable (base)	*/
-	PPD = 0x70	/* parallel poll disable */
+	PPE = 0x60	/* parallel poll enable (base)	*/
 };
 
 enum ppe_bits
 {
+	PPC_DISABLE = 0x10,
 	PPC_SENSE = 0x8,	/* parallel poll sense bit	*/
 	PPC_DIO_MASK = 0x7
 };
-
-#define LAD 0x20 /* value to be 'ored' in to obtain listen address */
-#define TAD 0x40 /* value to be 'ored' in to obtain talk address   */
 
 extern __inline__ uint8_t MLA( unsigned int addr )
 {
@@ -160,3 +158,42 @@ extern __inline__ int gpib_address_equal( unsigned int pad1, int sad1, unsigned 
 
 	return 0;
 }
+
+enum ibask_option
+{
+	IbaPAD = 0x1,
+	IbaSAD = 0x2,
+	IbaTMO = 0x3,
+	IbaEOT = 0x4,
+	IbaPPC = 0x5,	/* board only */
+	IbaREADDR = 0x6,	/* device only */
+	IbaAUTOPOLL = 0x7,	/* board only */
+	IbaCICPROT = 0x8,	/* board only */
+	IbaIRQ = 0x9,	/* board only */
+	IbaSC = 0xa,	/* board only */
+	IbaSRE = 0xb,	/* board only */
+	IbaEOSrd = 0xc,
+	IbaEOSwrt = 0xd,
+	IbaEOScmp = 0xe,
+	IbaEOSchar = 0xf,
+	IbaPP2 = 0x10,	/* board only */
+	IbaTIMING = 0x11,	/* board only */
+	IbaDMA = 0x12,	/* board only */
+	IbaReadAdjust = 0x13,
+	IbaWriteAdjust = 0x14,
+	IbaEventQueue = 0x15,	/* board only */
+	IbaSPollBit = 0x16,	/* board only XXX capitalization? */
+	IbaSendLLO = 0x17,	/* board only */
+	IbaSPollTime = 0x18,	/* device only */
+	IbaPPollTime = 0x19,	/* board only */
+	IbaEndBitIsNormal = 0x1a,
+	IbaUnAddr = 0x1b,	/* device only */
+	IbaHSCableLength = 0x1f,	/* board only */
+	IbaIst = 0x20,	/* board only */
+	IbaRsv = 0x21,	/* board only */
+	IbaBNA = 0x200	/* device only */
+};
+enum ibask_option_alias
+{
+	IbaSpollBit = IbaSPollBit
+};

@@ -19,10 +19,30 @@
 #include "ibP.h"
 #include <sys/ioctl.h>
 
+int find_eos( uint8_t *buffer, size_t length, int eos, int eos_flags )
+{
+	unsigned int i;
+	unsigned int compare_mask;
+
+	if( eos_flags & EOS_BIN ) compare_mask = 0xff;
+	else compare_mask = 0x7f;
+
+	for( i = 0; i < length; i++ )
+	{
+		if( ( buffer[i] & compare_mask ) == ( eos & compare_mask ) )
+		return i;
+	}
+
+	return -1;
+}
+
 ssize_t my_ibwrt( const ibBoard_t *board, const ibConf_t *conf,
 	uint8_t *buffer, size_t count )
 {
 	read_write_ioctl_t write_cmd;
+	size_t block_size;
+	size_t bytes_sent = 0;
+	int retval;
 
 	iblcleos( conf );
 
@@ -35,17 +55,43 @@ ssize_t my_ibwrt( const ibBoard_t *board, const ibConf_t *conf,
 		}
 	}
 
-	write_cmd.buffer = buffer;
-	write_cmd.count = count;
-	write_cmd.end = conf->send_eoi;
-
 	set_timeout( board, conf->usec_timeout );
 
-	if( ioctl( board->fileno, IBWRT, &write_cmd) < 0)
+	while( count )
 	{
-		return -1;
+		int eos_on_eoi;
+		int eos_found = 0;
+
+		eos_on_eoi = conf->eos_flags & EOS_EOI;
+
+		block_size = count;
+
+		if( eos_on_eoi )
+		{
+			retval = find_eos( buffer, count, conf->eos, conf->eos_flags );
+			if( retval < 0 ) eos_found = 0;
+			else
+			{
+				block_size = retval;
+				eos_found = 1;
+			}
+		}
+
+		write_cmd.buffer = buffer;
+		write_cmd.count = block_size;
+		write_cmd.end = conf->send_eoi ||
+			( eos_on_eoi && eos_found );
+
+		if( ioctl( board->fileno, IBWRT, &write_cmd) < 0)
+		{
+			return -1;
+		}
+		count -= block_size;
+		bytes_sent += block_size;
+		buffer += block_size;
 	}
-	return write_cmd.count;
+
+	return bytes_sent;
 }
 
 int ibwrt(int ud, void *rd, long cnt)
@@ -70,7 +116,7 @@ int ibwrt(int ud, void *rd, long cnt)
 		{
 			case ETIMEDOUT:
 				setIberr( EABO );
-				board->timed_out = 1;
+				conf->timed_out = 1;
 				break;
 			default:
 				break;
