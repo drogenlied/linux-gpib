@@ -163,15 +163,12 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			return board_type_ioctl(board, arg);
 			break;
 		case CFCBASE:
-			if (board->online) return -EINVAL;
 			return iobase_ioctl( board, arg );
 			break;
 		case CFCIRQ:
-			if (board->online) return -EINVAL;
 			return irq_ioctl( board, arg );
 			break;
 		case CFCDMA:
-			if (board->online) return -EINVAL;
 			return dma_ioctl( board, arg );
 			break;
 		case IBMUTEX:
