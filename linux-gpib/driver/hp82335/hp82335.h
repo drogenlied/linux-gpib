@@ -55,6 +55,7 @@ int hp82335_parallel_poll( gpib_board_t *board, uint8_t *result );
 void hp82335_parallel_poll_configure( gpib_board_t *board, uint8_t config );
 void hp82335_parallel_poll_response( gpib_board_t *board, int ist );
 void hp82335_serial_poll_response( gpib_board_t *board, uint8_t status );
+void hp82335_return_to_local( gpib_board_t *board );
 
 // interrupt service routines
 void hp82335_interrupt(int irq, void *arg, struct pt_regs *registerp);

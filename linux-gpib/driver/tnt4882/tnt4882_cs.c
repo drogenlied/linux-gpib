@@ -675,6 +675,7 @@ gpib_interface_t ni_pcmcia_interface =
 	serial_poll_response: tnt4882_serial_poll_response,
 	serial_poll_status: tnt4882_serial_poll_status,
 	t1_delay: tnt4882_t1_delay,
+	return_to_local: tnt4882_return_to_local,
 	provider_module: &__this_module,
 };
 
@@ -703,6 +704,7 @@ gpib_interface_t ni_pcmcia_accel_interface =
 	serial_poll_response: tnt4882_serial_poll_response,
 	serial_poll_status: tnt4882_serial_poll_status,
 	t1_delay: tnt4882_t1_delay,
+	return_to_local: tnt4882_return_to_local,
 	provider_module: &__this_module,
 };
 

@@ -59,6 +59,7 @@ void tnt4882_secondary_address(gpib_board_t *board, unsigned int address, int
 int tnt4882_parallel_poll(gpib_board_t *board, uint8_t *result);
 void tnt4882_parallel_poll_response( gpib_board_t *board, uint8_t config );
 void tnt4882_serial_poll_response(gpib_board_t *board, uint8_t status);
+void tnt4882_return_to_local( gpib_board_t *board );
 
 // interrupt service routines
 void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp);

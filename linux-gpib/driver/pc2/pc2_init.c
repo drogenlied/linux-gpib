@@ -130,6 +130,11 @@ unsigned int pc2_t1_delay( gpib_board_t *board, unsigned int nano_sec )
 	pc2_private_t *priv = board->private_data;
 	return nec7210_t1_delay( board, &priv->nec7210_priv, nano_sec );
 }
+void pc2_return_to_local( gpib_board_t *board )
+{
+	pc2_private_t *priv = board->private_data;
+	nec7210_return_to_local( board, &priv->nec7210_priv );
+}
 
 gpib_interface_t pc2_interface =
 {
@@ -156,6 +161,7 @@ gpib_interface_t pc2_interface =
 	serial_poll_response:	pc2_serial_poll_response,
 	serial_poll_status:	pc2_serial_poll_status,
 	t1_delay: pc2_t1_delay,
+	return_to_local: pc2_return_to_local,
 	provider_module: &__this_module,
 };
 
@@ -184,6 +190,7 @@ gpib_interface_t pc2a_interface =
 	serial_poll_response:	pc2_serial_poll_response,
 	serial_poll_status:	pc2_serial_poll_status,
 	t1_delay: pc2_t1_delay,
+	return_to_local: pc2_return_to_local,
 	provider_module: &__this_module,
 };
 

@@ -48,11 +48,11 @@ struct tms9914_private_struct
 };
 
 // slightly shorter way to access read_byte and write_byte
-extern inline uint8_t read_byte(tms9914_private_t *priv, unsigned int register_number)
+static inline uint8_t read_byte(tms9914_private_t *priv, unsigned int register_number)
 {
 	return priv->read_byte(priv, register_number);
 }
-extern inline void write_byte(tms9914_private_t *priv, uint8_t byte, unsigned int register_number)
+static inline void write_byte(tms9914_private_t *priv, uint8_t byte, unsigned int register_number)
 {
 	priv->write_byte(priv, byte, register_number);
 }
@@ -70,47 +70,48 @@ enum
 };
 
 // interface functions
-extern ssize_t tms9914_read(gpib_board_t *board, tms9914_private_t *priv,
+ssize_t tms9914_read(gpib_board_t *board, tms9914_private_t *priv,
 	uint8_t *buffer, size_t length, int *end);
-extern ssize_t tms9914_write(gpib_board_t *board, tms9914_private_t *priv,
+ssize_t tms9914_write(gpib_board_t *board, tms9914_private_t *priv,
 	uint8_t *buffer, size_t length, int send_eoi);
-extern ssize_t tms9914_command(gpib_board_t *board, tms9914_private_t *priv,
+ssize_t tms9914_command(gpib_board_t *board, tms9914_private_t *priv,
 	uint8_t *buffer, size_t length);
-extern int tms9914_take_control(gpib_board_t *board, tms9914_private_t *priv,
+int tms9914_take_control(gpib_board_t *board, tms9914_private_t *priv,
 	int syncronous);
-extern int tms9914_go_to_standby(gpib_board_t *board, tms9914_private_t *priv);
-extern void tms9914_request_system_control( gpib_board_t *board, tms9914_private_t *priv,
+int tms9914_go_to_standby(gpib_board_t *board, tms9914_private_t *priv);
+void tms9914_request_system_control( gpib_board_t *board, tms9914_private_t *priv,
 	int request_control );
-extern void tms9914_interface_clear(gpib_board_t *board, tms9914_private_t *priv, int assert);
-extern void tms9914_remote_enable(gpib_board_t *board, tms9914_private_t *priv, int enable);
-extern void tms9914_enable_eos(gpib_board_t *board, tms9914_private_t *priv,
+void tms9914_interface_clear(gpib_board_t *board, tms9914_private_t *priv, int assert);
+void tms9914_remote_enable(gpib_board_t *board, tms9914_private_t *priv, int enable);
+void tms9914_enable_eos(gpib_board_t *board, tms9914_private_t *priv,
 	uint8_t eos_bytes, int compare_8_bits);
-extern void tms9914_disable_eos(gpib_board_t *board, tms9914_private_t *priv);
-extern unsigned int tms9914_update_status(gpib_board_t *board, tms9914_private_t *priv);
-extern void tms9914_primary_address(gpib_board_t *board,
+void tms9914_disable_eos(gpib_board_t *board, tms9914_private_t *priv);
+unsigned int tms9914_update_status(gpib_board_t *board, tms9914_private_t *priv);
+void tms9914_primary_address(gpib_board_t *board,
 	tms9914_private_t *priv, unsigned int address);
-extern void tms9914_secondary_address(gpib_board_t *board, tms9914_private_t *priv,
+void tms9914_secondary_address(gpib_board_t *board, tms9914_private_t *priv,
 	unsigned int address, int enable);
-extern int tms9914_parallel_poll(gpib_board_t *board, tms9914_private_t *priv, uint8_t *result);
-extern void tms9914_parallel_poll_configure( gpib_board_t *board,
+int tms9914_parallel_poll(gpib_board_t *board, tms9914_private_t *priv, uint8_t *result);
+void tms9914_parallel_poll_configure( gpib_board_t *board,
 	tms9914_private_t *priv, uint8_t config );
-extern void tms9914_parallel_poll_response( gpib_board_t *board,
+void tms9914_parallel_poll_response( gpib_board_t *board,
 	tms9914_private_t *priv, int ist );
-extern void tms9914_serial_poll_response(gpib_board_t *board, tms9914_private_t *priv, uint8_t status);
-extern uint8_t tms9914_serial_poll_status( gpib_board_t *board, tms9914_private_t *priv );
-extern int tms9914_line_status( const gpib_board_t *board, tms9914_private_t *priv );
-extern unsigned int tms9914_t1_delay( gpib_board_t *board, tms9914_private_t *priv,
+void tms9914_serial_poll_response(gpib_board_t *board, tms9914_private_t *priv, uint8_t status);
+uint8_t tms9914_serial_poll_status( gpib_board_t *board, tms9914_private_t *priv );
+int tms9914_line_status( const gpib_board_t *board, tms9914_private_t *priv );
+unsigned int tms9914_t1_delay( gpib_board_t *board, tms9914_private_t *priv,
 	unsigned int nano_sec );
+void tms9914_return_to_local( const gpib_board_t *board, tms9914_private_t *priv );
 
 // utility functions
-extern void tms9914_board_reset(tms9914_private_t *priv);
-extern void tms9914_online( gpib_board_t *board, tms9914_private_t *priv );
+void tms9914_board_reset(tms9914_private_t *priv);
+void tms9914_online( gpib_board_t *board, tms9914_private_t *priv );
 
 // wrappers for io functions
-extern uint8_t tms9914_ioport_read_byte(tms9914_private_t *priv, unsigned int register_num);
-extern void tms9914_ioport_write_byte(tms9914_private_t *priv, uint8_t data, unsigned int register_num);
-extern uint8_t tms9914_iomem_read_byte(tms9914_private_t *priv, unsigned int register_num);
-extern void tms9914_iomem_write_byte(tms9914_private_t *priv, uint8_t data, unsigned int register_num);
+uint8_t tms9914_ioport_read_byte(tms9914_private_t *priv, unsigned int register_num);
+void tms9914_ioport_write_byte(tms9914_private_t *priv, uint8_t data, unsigned int register_num);
+uint8_t tms9914_iomem_read_byte(tms9914_private_t *priv, unsigned int register_num);
+void tms9914_iomem_write_byte(tms9914_private_t *priv, uint8_t data, unsigned int register_num);
 
 // interrupt service routine
 void tms9914_interrupt(gpib_board_t *board, tms9914_private_t *priv );

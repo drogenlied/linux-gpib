@@ -44,11 +44,11 @@ struct nec7210_private_struct
 };
 
 // slightly shorter way to access read_byte and write_byte
-extern inline uint8_t read_byte(nec7210_private_t *priv, unsigned int register_number)
+static inline uint8_t read_byte(nec7210_private_t *priv, unsigned int register_number)
 {
 	return priv->read_byte(priv, register_number);
 }
-extern inline void write_byte(nec7210_private_t *priv, uint8_t byte, unsigned int register_number)
+static inline void write_byte(nec7210_private_t *priv, uint8_t byte, unsigned int register_number)
 {
 	priv->write_byte(priv, byte, register_number);
 }
@@ -68,52 +68,53 @@ enum
 };
 
 // interface functions
-extern ssize_t nec7210_read(gpib_board_t *board, nec7210_private_t *priv,
+ssize_t nec7210_read(gpib_board_t *board, nec7210_private_t *priv,
 	uint8_t *buffer, size_t length, int *end);
-extern ssize_t nec7210_write(gpib_board_t *board, nec7210_private_t *priv,
+ssize_t nec7210_write(gpib_board_t *board, nec7210_private_t *priv,
 	uint8_t *buffer, size_t length, int send_eoi);
-extern ssize_t nec7210_command(gpib_board_t *board, nec7210_private_t *priv,
+ssize_t nec7210_command(gpib_board_t *board, nec7210_private_t *priv,
 	uint8_t *buffer, size_t length);
-extern int nec7210_take_control(gpib_board_t *board, nec7210_private_t *priv,
+int nec7210_take_control(gpib_board_t *board, nec7210_private_t *priv,
 	int syncronous);
-extern int nec7210_go_to_standby(gpib_board_t *board, nec7210_private_t *priv);
-extern void nec7210_request_system_control( gpib_board_t *board,
+int nec7210_go_to_standby(gpib_board_t *board, nec7210_private_t *priv);
+void nec7210_request_system_control( gpib_board_t *board,
 	nec7210_private_t *priv, int request_control );
-extern void nec7210_interface_clear(gpib_board_t *board, nec7210_private_t *priv, int assert);
-extern void nec7210_remote_enable(gpib_board_t *board, nec7210_private_t *priv, int enable);
-extern void nec7210_enable_eos(gpib_board_t *board, nec7210_private_t *priv,
+void nec7210_interface_clear(gpib_board_t *board, nec7210_private_t *priv, int assert);
+void nec7210_remote_enable(gpib_board_t *board, nec7210_private_t *priv, int enable);
+void nec7210_enable_eos(gpib_board_t *board, nec7210_private_t *priv,
 	uint8_t eos_bytes, int compare_8_bits);
-extern void nec7210_disable_eos(gpib_board_t *board, nec7210_private_t *priv);
-extern unsigned int nec7210_update_status(gpib_board_t *board, nec7210_private_t *priv);
-extern void nec7210_primary_address( const gpib_board_t *board,
+void nec7210_disable_eos(gpib_board_t *board, nec7210_private_t *priv);
+unsigned int nec7210_update_status(gpib_board_t *board, nec7210_private_t *priv);
+void nec7210_primary_address( const gpib_board_t *board,
 	nec7210_private_t *priv, unsigned int address);
-extern void nec7210_secondary_address( const gpib_board_t *board, nec7210_private_t *priv,
+void nec7210_secondary_address( const gpib_board_t *board, nec7210_private_t *priv,
 	unsigned int address, int enable);
-extern int nec7210_parallel_poll(gpib_board_t *board, nec7210_private_t *priv, uint8_t *result);
-extern void nec7210_serial_poll_response(gpib_board_t *board, nec7210_private_t *priv, uint8_t status);
-extern void nec7210_parallel_poll_configure( gpib_board_t *board,
+int nec7210_parallel_poll(gpib_board_t *board, nec7210_private_t *priv, uint8_t *result);
+void nec7210_serial_poll_response(gpib_board_t *board, nec7210_private_t *priv, uint8_t status);
+void nec7210_parallel_poll_configure( gpib_board_t *board,
 	nec7210_private_t *priv, unsigned int configuration );
-extern void nec7210_parallel_poll_response( gpib_board_t *board,
+void nec7210_parallel_poll_response( gpib_board_t *board,
 	nec7210_private_t *priv, int ist );
-extern uint8_t nec7210_serial_poll_status( gpib_board_t *board,
+uint8_t nec7210_serial_poll_status( gpib_board_t *board,
 	nec7210_private_t *priv );
-extern unsigned int nec7210_t1_delay( gpib_board_t *board,
+unsigned int nec7210_t1_delay( gpib_board_t *board,
 	nec7210_private_t *priv, unsigned int nano_sec );
+void nec7210_return_to_local( const gpib_board_t *board, nec7210_private_t *priv );
 
 // utility functions
-extern void nec7210_board_reset( nec7210_private_t *priv, const gpib_board_t *board );
-extern void nec7210_board_online( nec7210_private_t *priv, const gpib_board_t *board );
-extern unsigned int nec7210_set_reg_bits( nec7210_private_t *priv, unsigned int reg,
+void nec7210_board_reset( nec7210_private_t *priv, const gpib_board_t *board );
+void nec7210_board_online( nec7210_private_t *priv, const gpib_board_t *board );
+unsigned int nec7210_set_reg_bits( nec7210_private_t *priv, unsigned int reg,
 	unsigned int mask, unsigned int bits );
-extern void nec7210_set_handshake_mode( gpib_board_t *board, nec7210_private_t *priv, int mode );
-extern void nec7210_release_rfd_holdoff( gpib_board_t *board, nec7210_private_t *priv );
-extern uint8_t nec7210_read_data_in( gpib_board_t *board, nec7210_private_t *priv, int *end );
+void nec7210_set_handshake_mode( gpib_board_t *board, nec7210_private_t *priv, int mode );
+void nec7210_release_rfd_holdoff( gpib_board_t *board, nec7210_private_t *priv );
+uint8_t nec7210_read_data_in( gpib_board_t *board, nec7210_private_t *priv, int *end );
 
 // wrappers for io functions
-extern uint8_t nec7210_ioport_read_byte(nec7210_private_t *priv, unsigned int register_num);
-extern void nec7210_ioport_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num);
-extern uint8_t nec7210_iomem_read_byte(nec7210_private_t *priv, unsigned int register_num);
-extern void nec7210_iomem_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num);
+uint8_t nec7210_ioport_read_byte(nec7210_private_t *priv, unsigned int register_num);
+void nec7210_ioport_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num);
+uint8_t nec7210_iomem_read_byte(nec7210_private_t *priv, unsigned int register_num);
+void nec7210_iomem_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num);
 
 // interrupt service routine
 void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv);

@@ -122,10 +122,15 @@ unsigned int tnt4882_t1_delay( gpib_board_t *board, unsigned int nano_sec )
 	tnt4882_private_t *priv = board->private_data;
 	return tms9914_t1_delay( board, &priv->tms9914_priv, nano_sec );
 }
+void tnt4882_return_to_local( gpib_board_t *board )
+{
+	tnt4882_private_t *priv = board->private_data;
+	tms9914_return_to_local( board, &priv->tms9914_priv );
+}
 
 gpib_interface_t ni_pci_interface =
 {
-	name: "ni_pci",
+	name: "ni_pci_tms",
 	attach: ni_pci_attach,
 	detach: ni_pci_detach,
 	read: tnt4882_read,
@@ -145,6 +150,7 @@ gpib_interface_t ni_pci_interface =
 	secondary_address: tnt4882_secondary_address,
 	serial_poll_response: tnt4882_serial_poll_response,
 	t1_delay: tnt4882_t1_delay,
+	return_to_local: tnt4882_return_to_local,
 	provider_module: &__this_module,
 };
 

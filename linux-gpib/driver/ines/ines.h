@@ -66,6 +66,7 @@ void ines_serial_poll_response(gpib_board_t *board, uint8_t status);
 uint8_t ines_serial_poll_status( gpib_board_t *board );
 int ines_line_status( const gpib_board_t *board );
 unsigned int ines_t1_delay( gpib_board_t *board, unsigned int nano_sec );
+void ines_return_to_local( gpib_board_t *board );
 
 // interrupt service routines
 void ines_interrupt(int irq, void *arg, struct pt_regs *registerp);

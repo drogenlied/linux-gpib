@@ -618,6 +618,7 @@ gpib_interface_t ines_pcmcia_interface =
 	serial_poll_response: ines_serial_poll_response,
 	serial_poll_status: ines_serial_poll_status,
 	t1_delay: ines_t1_delay,
+	return_to_local: ines_return_to_local,
 	provider_module: &__this_module,
 };
 
@@ -646,6 +647,7 @@ gpib_interface_t ines_pcmcia_accel_interface =
 	serial_poll_response: ines_serial_poll_response,
 	serial_poll_status: ines_serial_poll_status,
 	t1_delay: ines_t1_delay,
+	return_to_local: ines_return_to_local,
 	provider_module: &__this_module,
 };
 

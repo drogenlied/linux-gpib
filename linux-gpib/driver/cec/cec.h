@@ -54,7 +54,8 @@ void cec_secondary_address(gpib_board_t *board, unsigned int address, int enable
 int cec_parallel_poll(gpib_board_t *board, uint8_t *result);
 void cec_parallel_poll_configure( gpib_board_t *board, uint8_t configuration );
 void cec_parallel_poll_response( gpib_board_t *board, int ist );
-void cec_serial_poll_response(gpib_board_t *board, uint8_t status);
+void cec_serial_poll_response( gpib_board_t *board, uint8_t status );
+void cec_return_to_local( gpib_board_t *board );
 
 // interrupt service routines
 void cec_interrupt(int irq, void *arg, struct pt_regs *registerp);

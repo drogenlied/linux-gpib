@@ -131,11 +131,16 @@ unsigned int nec7210_t1_delay( gpib_board_t *board, nec7210_private_t *priv,
 	return retval;
 }
 
-EXPORT_SYMBOL( nec7210_t1_delay );
-EXPORT_SYMBOL( nec7210_request_system_control );
-EXPORT_SYMBOL( nec7210_take_control );
-EXPORT_SYMBOL( nec7210_go_to_standby );
-EXPORT_SYMBOL( nec7210_interface_clear );
-EXPORT_SYMBOL( nec7210_remote_enable );
-EXPORT_SYMBOL( nec7210_release_rfd_holdoff );
+void nec7210_return_to_local( const gpib_board_t *board, nec7210_private_t *priv )
+{
+	write_byte( priv, AUX_RTL, AUXMR );
+}
 
+EXPORT_SYMBOL_GPL( nec7210_t1_delay );
+EXPORT_SYMBOL_GPL( nec7210_request_system_control );
+EXPORT_SYMBOL_GPL( nec7210_take_control );
+EXPORT_SYMBOL_GPL( nec7210_go_to_standby );
+EXPORT_SYMBOL_GPL( nec7210_interface_clear );
+EXPORT_SYMBOL_GPL( nec7210_remote_enable );
+EXPORT_SYMBOL_GPL( nec7210_release_rfd_holdoff );
+EXPORT_SYMBOL_GPL( nec7210_return_to_local );

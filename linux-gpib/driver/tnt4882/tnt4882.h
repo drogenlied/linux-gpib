@@ -84,6 +84,7 @@ void tnt4882_serial_poll_response(gpib_board_t *board, uint8_t status);
 uint8_t tnt4882_serial_poll_status( gpib_board_t *board );
 int tnt4882_line_status( const gpib_board_t *board );
 unsigned int tnt4882_t1_delay( gpib_board_t *board, unsigned int nano_sec );
+void tnt4882_return_to_local( gpib_board_t *board );
 
 // pcmcia init/cleanup
 int __init init_ni_gpib_cs(void);

@@ -128,6 +128,11 @@ unsigned int cec_t1_delay( gpib_board_t *board, unsigned int nano_sec )
 	cec_private_t *priv = board->private_data;
 	return nec7210_t1_delay( board, &priv->nec7210_priv, nano_sec );
 }
+void cec_return_to_local( gpib_board_t *board )
+{
+	cec_private_t *priv = board->private_data;
+	nec7210_return_to_local( board, &priv->nec7210_priv );
+}
 
 gpib_interface_t cec_pci_interface =
 {
@@ -154,6 +159,7 @@ gpib_interface_t cec_pci_interface =
 	serial_poll_response: cec_serial_poll_response,
 	serial_poll_status: cec_serial_poll_status,
 	t1_delay: cec_t1_delay,
+	return_to_local: cec_return_to_local,
 	provider_module: &__this_module,
 };
 

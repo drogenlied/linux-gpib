@@ -172,6 +172,11 @@ uint8_t ines_serial_poll_status( gpib_board_t *board )
 	ines_private_t *priv = board->private_data;
 	return nec7210_serial_poll_status( board, &priv->nec7210_priv );
 }
+void ines_return_to_local( gpib_board_t *board )
+{
+	ines_private_t *priv = board->private_data;
+	nec7210_return_to_local( board, &priv->nec7210_priv );
+}
 
 gpib_interface_t ines_pci_interface =
 {
@@ -198,6 +203,7 @@ gpib_interface_t ines_pci_interface =
 	serial_poll_response: ines_serial_poll_response,
 	serial_poll_status: ines_serial_poll_status,
 	t1_delay: ines_t1_delay,
+	return_to_local: ines_return_to_local,
 	provider_module: &__this_module,
 };
 
@@ -226,6 +232,7 @@ gpib_interface_t ines_pci_accel_interface =
 	serial_poll_response: ines_serial_poll_response,
 	serial_poll_status: ines_serial_poll_status,
 	t1_delay: ines_t1_delay,
+	return_to_local: ines_return_to_local,
 	provider_module: &__this_module,
 };
 

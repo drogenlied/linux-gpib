@@ -125,10 +125,15 @@ unsigned int tms9914_t1_delay( gpib_board_t *board, tms9914_private_t *priv,
 	return num_cycles * clock_period;
 }
 
-EXPORT_SYMBOL( tms9914_t1_delay );
-EXPORT_SYMBOL( tms9914_request_system_control );
-EXPORT_SYMBOL( tms9914_take_control );
-EXPORT_SYMBOL( tms9914_go_to_standby );
-EXPORT_SYMBOL( tms9914_interface_clear );
-EXPORT_SYMBOL( tms9914_remote_enable );
+void tms9914_return_to_local( const gpib_board_t *board, tms9914_private_t *priv )
+{
+	write_byte( priv, AUX_RTL, AUXCR );
+}
+
+EXPORT_SYMBOL_GPL( tms9914_t1_delay );
+EXPORT_SYMBOL_GPL( tms9914_request_system_control );
+EXPORT_SYMBOL_GPL( tms9914_take_control );
+EXPORT_SYMBOL_GPL( tms9914_go_to_standby );
+EXPORT_SYMBOL_GPL( tms9914_interface_clear );
+EXPORT_SYMBOL_GPL( tms9914_remote_enable );
 

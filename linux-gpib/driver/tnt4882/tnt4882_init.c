@@ -147,6 +147,11 @@ uint8_t tnt4882_serial_poll_status( gpib_board_t *board )
 	tnt4882_private_t *priv = board->private_data;
 	return nec7210_serial_poll_status( board, &priv->nec7210_priv );
 }
+void tnt4882_return_to_local( gpib_board_t *board )
+{
+	tnt4882_private_t *priv = board->private_data;
+	nec7210_return_to_local( board, &priv->nec7210_priv );
+}
 
 gpib_interface_t ni_pci_interface =
 {
@@ -173,6 +178,7 @@ gpib_interface_t ni_pci_interface =
 	serial_poll_response: tnt4882_serial_poll_response,
 	serial_poll_status: tnt4882_serial_poll_status,
 	t1_delay: tnt4882_t1_delay,
+	return_to_local: tnt4882_return_to_local,
 	provider_module: &__this_module,
 };
 
@@ -201,6 +207,7 @@ gpib_interface_t ni_pci_accel_interface =
 	serial_poll_response: tnt4882_serial_poll_response,
 	serial_poll_status: tnt4882_serial_poll_status,
 	t1_delay: tnt4882_t1_delay,
+	return_to_local: tnt4882_return_to_local,
 	provider_module: &__this_module,
 };
 
@@ -229,6 +236,7 @@ gpib_interface_t ni_isa_interface =
 	serial_poll_response: tnt4882_serial_poll_response,
 	serial_poll_status: tnt4882_serial_poll_status,
 	t1_delay: tnt4882_t1_delay,
+	return_to_local: tnt4882_return_to_local,
 	provider_module: &__this_module,
 };
 
@@ -257,6 +265,7 @@ gpib_interface_t ni_isa_accel_interface =
 	serial_poll_response: tnt4882_serial_poll_response,
 	serial_poll_status: tnt4882_serial_poll_status,
 	t1_delay: tnt4882_t1_delay,
+	return_to_local: tnt4882_return_to_local,
 	provider_module: &__this_module,
 };
 

@@ -132,6 +132,11 @@ unsigned int hp82335_t1_delay( gpib_board_t *board, unsigned int nano_sec )
 	hp82335_private_t *priv = board->private_data;
 	return tms9914_t1_delay( board, &priv->tms9914_priv, nano_sec );
 }
+void hp82335_return_to_local( gpib_board_t *board )
+{
+	hp82335_private_t *priv = board->private_data;
+	tms9914_return_to_local( board, &priv->tms9914_priv );
+}
 
 gpib_interface_t hp82335_interface =
 {
@@ -157,6 +162,7 @@ gpib_interface_t hp82335_interface =
 	secondary_address: hp82335_secondary_address,
 	serial_poll_response: hp82335_serial_poll_response,
 	t1_delay: hp82335_t1_delay,
+	return_to_local: hp82335_return_to_local,
 	provider_module: &__this_module,
 };
 
