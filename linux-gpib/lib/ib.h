@@ -37,6 +37,13 @@ enum sad_special_address
 	ALL_SAD = 0xff
 };
 
+enum send_eotmode
+{
+	NULLend,
+	DABend,
+	NLend
+};
+
 extern volatile int ibsta, ibcnt, iberr;
 extern volatile long ibcntl;
 
@@ -58,6 +65,12 @@ extern void Receive( int boardID, Addr4882_t address,
 	void *buffer, long count, int termination );
 extern void ReceiveSetup( int boardID, Addr4882_t address );
 extern void ResetSys( int boardID, Addr4882_t addressList[] );
+extern void Send( int boardID, Addr4882_t address, void *buffer,
+	long count, int eotmode );
+extern void SendDataBytes( int boardID, void *buffer,
+	long count, int eotmode );
+extern void SendList( int boardID, Addr4882_t addressList[], void *buffer,
+	long count, int eotmode );
 extern void SendSetup( int boardID, Addr4882_t addressList[] );
 extern int ThreadIbsta( void );
 extern int ThreadIberr( void );

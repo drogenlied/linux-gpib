@@ -17,6 +17,9 @@ GPIB_DUMMY_VERSION {
 		Receive;
 		ReceiveSetup;
 		ResetSys;
+		Send;
+		SendDataBytes;
+		SendList;
 		SendSetup;
 		ThreadIbsta;
 		ThreadIberr;

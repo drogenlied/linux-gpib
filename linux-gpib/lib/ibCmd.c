@@ -243,32 +243,24 @@ int send_setup( ibConf_t *conf )
 	return 0;
 }
 
-void SendSetup( int boardID, Addr4882_t addressList[] )
+int InternalSendSetup( ibConf_t *conf, Addr4882_t addressList[] )
 {
 	int i;
-	ibConf_t *conf;
 	ibBoard_t *board;
 	uint8_t *cmd;
 	int count;
 
-	conf = enter_library( boardID );
-	if( conf == NULL )
-	{
-		exit_library( boardID, 1 );
-		return;
-	}
 	if( addressListIsValid( addressList ) == 0 ||
 		numAddresses( addressList ) == 0 )
 	{
-		exit_library( boardID, 1 );
-		return;
+		setIberr( EARG );
+		return -1;
 	}
 
 	if( conf->is_interface == 0 )
 	{
 		setIberr( EDVR );
-		exit_library( boardID, 1 );
-		return;
+		return -1;
 	}
 
 	board = interfaceBoard( conf );
@@ -276,8 +268,7 @@ void SendSetup( int boardID, Addr4882_t addressList[] )
 	if( board->is_system_controller == 0 )
 	{
 		setIberr( ECIC );
-		exit_library( boardID, 1 );
-		return;
+		return -1;
 	}
 
 	cmd = malloc( 16 + 2 * numAddresses( addressList ) );
@@ -285,8 +276,7 @@ void SendSetup( int boardID, Addr4882_t addressList[] )
 	{
 		setIberr( EDVR );
 		setIbcnt( ENOMEM );
-		exit_library( boardID, 1 );
-		return;
+		return -1;
 	}
 
 	i = create_send_setup( board, addressList, cmd );
@@ -298,6 +288,27 @@ void SendSetup( int boardID, Addr4882_t addressList[] )
 	cmd = NULL;
 
 	if(count != i)
+	{
+		return -1;
+	}
+
+	return 0;
+}
+
+void SendSetup( int boardID, Addr4882_t addressList[] )
+{
+	int retval;
+	ibConf_t *conf;
+
+	conf = enter_library( boardID );
+	if( conf == NULL )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	retval = InternalSendSetup( conf, addressList );
+	if( retval < 0 )
 	{
 		exit_library( boardID, 1 );
 		return;

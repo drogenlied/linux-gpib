@@ -440,6 +440,7 @@ int general_exit_library( int ud, int error, int keep_lock )
 	{
 		setIberr( EDVR );
 		setIbsta( ERR );
+		sync_globals();
 		return ERR;
 	}
 
@@ -458,6 +459,8 @@ int general_exit_library( int ud, int error, int keep_lock )
 			status = ibstatus( conf, error );
 		}
 	}
+
+	sync_globals();
 
 	return status;
 }

@@ -84,8 +84,6 @@ void setIbsta( int status )
 {
 	int *thread_ibsta;
 
-	ibsta = status;
-
 	globals_alloc();
 	thread_ibsta = pthread_getspecific( ibsta_key );
 	if( thread_ibsta == NULL )
@@ -100,8 +98,6 @@ void setIberr( int error )
 {
 	int *thread_iberr;
 
-	iberr = error;
-
 	globals_alloc();
 	thread_iberr = pthread_getspecific( iberr_key );
 	if( thread_iberr == NULL )
@@ -115,9 +111,6 @@ void setIberr( int error )
 void setIbcnt( long count )
 {
 	int *thread_ibcntl;
-
-	ibcnt = count;
-	ibcntl = count;
 
 	globals_alloc();
 	thread_ibcntl = pthread_getspecific( ibcntl_key );
@@ -182,4 +175,12 @@ long ThreadIbcntl( void )
 	}
 
 	return *thread_ibcntl;
+}
+
+void sync_globals( void )
+{
+	ibsta = ThreadIbsta();
+	iberr = ThreadIberr();
+	ibcntl = ThreadIbcnt();
+	ibcnt = ibcntl;
 }

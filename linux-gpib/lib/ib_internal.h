@@ -91,6 +91,7 @@ extern unsigned int numAddresses( Addr4882_t addressList[] );
 extern int remote_enable( const ibBoard_t *board, int enable );
 extern int config_read_eos( ibBoard_t *board, int use_eos_char,
 	int eos_char, int compare_8_bits );
+extern void sync_globals( void );
 
 extern int internal_ibpad( ibConf_t *conf, unsigned int address );
 extern int internal_ibsad( ibConf_t *conf, int address );
@@ -103,6 +104,9 @@ extern int internal_iblines( ibConf_t *conf, short *line_status );
 extern int internal_ibgts( ibConf_t *conf, int shadow_handshake );
 extern int internal_ibsic( ibConf_t *conf );
 extern int InternalDevClearList( ibConf_t *conf, Addr4882_t addressList[] );
+extern int InternalSendSetup( ibConf_t *conf, Addr4882_t addressList[] );
+extern int InternalSendList( ibConf_t *conf, Addr4882_t addressList[],
+	void *buffer, long count, int eotmode );
 
 static __inline__ ibBoard_t* interfaceBoard( const ibConf_t *conf )
 {

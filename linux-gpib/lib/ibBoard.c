@@ -229,7 +229,8 @@ int InternalResetSys( ibConf_t *conf, Addr4882_t addressList[] )
 	retval = InternalDevClearList( conf, NULL );
 	if( retval < 0 ) return retval;
 
-	// XXX send "*RST\n" to devices in addressList
+	retval = InternalSendList( conf, addressList, "*RST", 4, NLend );
+	if( retval < 0 ) return retval;
 
 	return 0;
 }
