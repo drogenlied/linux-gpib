@@ -152,13 +152,14 @@ void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv)
 	// output byte has been lost
 	if(status1 & HR_ERR)
 	{
-		printk("gpib output error\n");
+		set_bit( OUTPUT_ERROR_BN, &priv->state );
+		GPIB_DPRINTK( "gpib output error\n" );
 	}
 
 	if( status1 & HR_DEC )
 	{
 		// XXX should clear buffers, etc.
-		printk(" gpib: received device clear command\n" );
+		GPIB_DPRINTK(" gpib: received device clear command\n" );
 	}
 
 	spin_unlock(&board->spinlock);

@@ -17,11 +17,22 @@
  ***************************************************************************/
 
 #include "gpibP.h"
+#include <linux/module.h>
+
+int gpib_clear_to_write( gpib_board_t *board )
+{
+	unsigned int status;
+
+	status = ibstatus( board );
+	if( ( status & ATN ) == 0 && ( status & TACS ) ) return 1;
+
+	return 0;
+}
 
 /*
  * IBWRT
  * Write cnt bytes of data from buf to the GPIB.  The write
- * operation terminates only on I/O complete. 
+ * operation terminates only on I/O complete.
  *
  * NOTE:
  *      1.  Prior to beginning the write, the interface is
@@ -48,7 +59,7 @@ ssize_t ibwrt(gpib_board_t *board, uint8_t *buf, size_t cnt, int send_eoi)
 	/* wait until board is addressed as talker and ATN is not asserted
 	 * (only matters when not busmaster) */
 	if( wait_event_interruptible( board->wait,
-		( test_bit( TACS_NUM, &board->status ) && test_bit( ATN_NUM, &board->status ) == 0 ) ||
+		gpib_clear_to_write( board ) ||
 		test_bit( TIMO_NUM, &board->status ) ) )
 	{
 		ret = -ERESTARTSYS;
@@ -79,3 +90,5 @@ ssize_t ibwrt(gpib_board_t *board, uint8_t *buf, size_t cnt, int send_eoi)
 
 	return bytes_sent;
 }
+
+EXPORT_SYMBOL( gpib_clear_to_write );

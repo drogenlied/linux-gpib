@@ -16,6 +16,7 @@
 
 void gpib_register_driver(gpib_interface_t *interface);
 void gpib_unregister_driver(gpib_interface_t *interface);
+int gpib_clear_to_write( gpib_board_t *board );
 
 #define MAX_NUM_GPIB_BOARDS 16
 extern gpib_board_t board_array[MAX_NUM_GPIB_BOARDS];

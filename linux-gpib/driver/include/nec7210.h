@@ -64,6 +64,7 @@ enum
 	COMMAND_READY_BN,	// board is ready to send a command byte
 	RECEIVED_END_BN,	// received END
 	RFD_HOLDOFF_BN,	// board is asserting a request for data holdoff
+	OUTPUT_ERROR_BN,	// output error has occurred
 };
 
 // interface functions
