@@ -56,6 +56,9 @@ typedef struct
 	unsigned int monitored_ibsta_bits;
 	struct urb *interrupt_urb;
 	uint8_t interrupt_buffer[0x11];
+	struct semaphore bulk_transfer_lock;
+	struct semaphore control_transfer_lock;
+	struct semaphore interrupt_transfer_lock;
 } ni_usb_private_t;
 
 struct ni_usb_status_block
