@@ -42,10 +42,12 @@ static ssize_t pio_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *b
 		spin_lock_irqsave(&board->spinlock, flags);
 		clear_bit(READ_READY_BN, &priv->state);
 		buffer[count++] = read_byte(priv, DIR);
-		spin_unlock_irqrestore(&board->spinlock, flags);
-
 		if(test_bit(RECEIVED_END_BN, &priv->state))
+		{
+			spin_unlock_irqrestore(&board->spinlock, flags);
 			break;
+		}
+		spin_unlock_irqrestore(&board->spinlock, flags);
 	}
 	if(test_bit(TIMO_NUM, &board->status))
 		retval = -ETIMEDOUT;
