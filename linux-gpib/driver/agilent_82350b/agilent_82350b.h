@@ -24,12 +24,19 @@
 
 enum pci_vendor_ids
 {
-	PCI_VENDOR_ID_AGILENT = 0x0,
+	PCI_VENDOR_ID_AGILENT = 0x15bc,
 };
 
 enum pci_device_ids
 {
-	PCI_DEVICE_ID_82350B = 0x0,
+	PCI_DEVICE_ID_82350B = 0x0b01,
+};
+
+enum pci_regions
+{
+	GPIB_REGION = 0,
+	SRAM_REGION = 1,
+	MISC_REGION = 2,
 };
 
 // struct which defines private_data for board
@@ -37,7 +44,11 @@ typedef struct
 {
 	tms9914_private_t tms9914_priv;
 	struct pci_dev *pci_device;
+	unsigned long gpib_base;
+	unsigned long sram_base;
+	unsigned long misc_base;
 	int irq;
+	unsigned short card_mode_bits;
 } agilent_82350b_private_t;
 
 // interfaces
@@ -71,5 +82,58 @@ irqreturn_t agilent_82350b_interrupt(int irq, void *arg, struct pt_regs *registe
 // utility functions
 int agilent_82350b_allocate_private(gpib_board_t *board);
 void agilent_82350b_free_private(gpib_board_t *board);
+
+//registers
+enum agilent_82350b_gpib_registers
+{
+	CARD_MODE_REG = 0x1,
+	INTERRUPT_ENABLE_REG = 0x3,
+	EVENT_STATUS_REG = 0x4,
+	EVENT_ENABLE_REG = 0x5,
+	STREAM_STATUS_REG = 0x7,
+	DEBUG_RAM0_REG = 0x8,
+	DEBUG_RAM1_REG = 0x9,
+	DEBUG_RAM2_REG = 0xa,
+	DEBUG_RAM3_REG = 0xb,
+	XFER_COUNT_LO_REG = 0xc,
+	XFER_COUNT_MID_REG = 0xd,
+	XFER_COUNT_HI_REG = 0xe,
+	TMS9914_BASE_REG = 0x10,
+	INTERNAL_CONFIG_REG = 0x18,
+	IMR0_READ_REG = 0x19, //read
+	T1_DELAY_REG = 0x19, // write
+	IMR1_READ_REG = 0x1a,
+	ADR_READ_REG = 0x1b,
+	SPMR_READ_REG = 0x1c,
+	PPR_READ_REG = 0x1d,
+	CDOR_READ_REG = 0x1e,
+	SRAM_ACCESS_CONTROL_REG = 0x1f,
+};
+
+enum card_mode_bits
+{
+	ACTIVE_CONTROLLER_BIT = 0x2,	// read-only
+	CM_SYSTEM_CONTROLLER_BIT = 0x8,
+	ENABLE_BUS_MONITOR_BIT = 0x10,
+	ENABLE_PCI_IRQ_BIT = 0x20,
+};
+
+enum interrupt_enable_bits
+{
+	ENABLE_TMS9914_INTERRUPTS_BIT = 0x1,
+	ENABLE_BUFFER_END_INTERRUPT_BIT = 0x10,
+	ENABLE_TERM_COUNT_INTERRUPT_BIT = 0x20,
+};
+
+enum internal_config_bits
+{
+	IC_SYSTEM_CONTROLLER_BIT = 0x80,
+};
+
+enum sram_access_control_bits
+{
+	DIRECTION_GPIB_TO_HOST = 0x20,	// transfer direction
+	ENABLE_TI_TO_SRAM = 0x40,	// enable fifo
+};
 
 #endif	// _AGILENT_82350B_H

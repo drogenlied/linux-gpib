@@ -216,7 +216,7 @@ gpib_interface_t pc2a_cb7210_interface =
 	parallel_poll:	pc2_parallel_poll,
 	parallel_poll_configure:	pc2_parallel_poll_configure,
 	parallel_poll_response:	pc2_parallel_poll_response,
-	line_status:	NULL,
+	line_status:	NULL, //XXX
 	update_status:	pc2_update_status,
 	primary_address:	pc2_primary_address,
 	secondary_address:	pc2_secondary_address,

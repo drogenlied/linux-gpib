@@ -15,7 +15,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "agilent_82350b"
+#include "agilent_82350b.h"
 #include <linux/ioport.h>
 #include <linux/sched.h>
 #include <linux/module.h>
@@ -60,8 +60,19 @@ int agilent_82350b_go_to_standby( gpib_board_t *board )
 }
 void agilent_82350b_request_system_control( gpib_board_t *board, int request_control )
 {
-	agilent_82350b_private_t *priv = board->private_data;
-	tms9914_request_system_control( board, &priv->tms9914_priv, request_control );
+	agilent_82350b_private_t *a_priv = board->private_data;
+	
+	if(request_control)
+	{
+		a_priv->card_mode_bits |= CM_SYSTEM_CONTROLLER_BIT;
+		writeb(IC_SYSTEM_CONTROLLER_BIT, a_priv->gpib_base + INTERNAL_CONFIG_REG); 
+	}else
+	{
+		a_priv->card_mode_bits &= ~CM_SYSTEM_CONTROLLER_BIT;
+		writeb(0, a_priv->gpib_base + INTERNAL_CONFIG_REG); 
+	}
+	writeb(a_priv->card_mode_bits, a_priv->gpib_base + CARD_MODE_REG); 
+	tms9914_request_system_control(board, &a_priv->tms9914_priv, request_control);
 }
 void agilent_82350b_interface_clear( gpib_board_t *board, int assert )
 {
@@ -128,10 +139,15 @@ int agilent_82350b_line_status( const gpib_board_t *board )
 	agilent_82350b_private_t *priv = board->private_data;
 	return tms9914_line_status( board, &priv->tms9914_priv );
 }
-unsigned int agilent_82350b_t1_delay( gpib_board_t *board, unsigned int nano_sec )
+unsigned int agilent_82350b_t1_delay( gpib_board_t *board, unsigned int nanosec )
 {
-	agilent_82350b_private_t *priv = board->private_data;
-	return tms9914_t1_delay( board, &priv->tms9914_priv, nano_sec );
+	agilent_82350b_private_t *a_priv = board->private_data;
+	static const int nanosec_per_clock = 30;
+	unsigned value = (nanosec + nanosec_per_clock / 2) / nanosec_per_clock;
+	if(value > 0xff) value = 0xff;
+	writeb(value, a_priv->gpib_base + T1_DELAY_REG);
+	return value * nanosec_per_clock;
+//	return tms9914_t1_delay( board, &priv->tms9914_priv, nano_sec );
 }
 void agilent_82350b_return_to_local( gpib_board_t *board )
 {
@@ -190,22 +206,6 @@ static inline unsigned int tms9914_to_agilent_82350b_offset( unsigned int regist
 	return 0x3ff8 + register_num;
 }
 
-uint8_t agilent_82350b_read_byte( tms9914_private_t *priv, unsigned int register_num )
-{
-	return tms9914_iomem_read_byte( priv, tms9914_to_agilent_82350b_offset( register_num ) );
-}
-
-void agilent_82350b_write_byte( tms9914_private_t *priv, uint8_t data, unsigned int register_num )
-{
-	tms9914_iomem_write_byte( priv, data, tms9914_to_agilent_82350b_offset( register_num ) );
-}
-
-void agilent_82350b_clear_interrupt( agilent_82350b_private_t *a_priv)
-{
-	tms9914_private_t *tms_priv = &a_priv->tms9914_priv;
-	writeb( 0, tms_priv->iobase + HPREG_INTR_CLEAR );
-}
-
 int agilent_82350b_attach( gpib_board_t *board )
 {
 	agilent_82350b_private_t *a_priv;
@@ -217,8 +217,8 @@ int agilent_82350b_attach( gpib_board_t *board )
 		return -ENOMEM;
 	a_priv = board->private_data;
 	tms_priv = &a_priv->tms9914_priv;
-	tms_priv->read_byte = agilent_82350b_read_byte;
-	tms_priv->write_byte = agilent_82350b_write_byte;
+	tms_priv->read_byte = tms9914_iomem_read_byte;
+	tms_priv->write_byte = tms9914_iomem_write_byte;
 	tms_priv->offset = 1;
 
 	// find board
@@ -229,16 +229,18 @@ int agilent_82350b_attach( gpib_board_t *board )
 		printk("gpib: no 82350B board found\n");
 		return -ENODEV;
 	}
-	if(pci_enable_device(a_priv->pci_device))
-	{
-		printk("error enabling pci device\n");
-		return -EIO;
-	}
 	if(pci_request_regions(a_priv->pci_device, "agilent_82350b"))
 		return -EIO;
-	tms_priv->iobase = ( unsigned long ) ioremap( board->ibbase, agilent_82350b_iomem_size );
-	printk("%s: base address 0x%x remapped to 0x%lx\n", __FUNCTION__, a_priv->raw_iobase,
-		tms_priv->iobase );
+	a_priv->gpib_base = (unsigned long) ioremap(pci_resource_start(a_priv->pci_device, GPIB_REGION),
+		pci_resource_len(a_priv->pci_device, GPIB_REGION));
+	printk("%s: gpib base address remapped to 0x%lx\n", __FUNCTION__, a_priv->gpib_base );
+	tms_priv->iobase = a_priv->gpib_base + TMS9914_BASE_REG;
+	a_priv->sram_base = (unsigned long) ioremap(pci_resource_start(a_priv->pci_device, SRAM_REGION),
+		pci_resource_len(a_priv->pci_device, SRAM_REGION));
+	printk("%s: sram base address remapped to 0x%lx\n", __FUNCTION__, a_priv->sram_base );
+	a_priv->misc_base = (unsigned long) ioremap(pci_resource_start(a_priv->pci_device, MISC_REGION),
+		pci_resource_len(a_priv->pci_device, MISC_REGION));
+	printk("%s: misc base address remapped to 0x%lx\n", __FUNCTION__, a_priv->misc_base );
 
 	if(request_irq(a_priv->pci_device->irq, agilent_82350b_interrupt, SA_SHIRQ, "agilent_82350b", board))
 	{
@@ -247,12 +249,18 @@ int agilent_82350b_attach( gpib_board_t *board )
 	}
 	a_priv->irq = a_priv->pci_device->irq;
 	printk( "agilent_82350b: IRQ %d\n", a_priv->irq );
-
+	if(pci_enable_device(a_priv->pci_device))
+	{
+		printk("error enabling pci device\n");
+		return -EIO;
+	}
+	
+	writeb(0, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG); 
+	a_priv->card_mode_bits = ENABLE_PCI_IRQ_BIT;
+	writeb(a_priv->card_mode_bits, a_priv->gpib_base + CARD_MODE_REG); 
+	writeb(ENABLE_TMS9914_INTERRUPTS_BIT, a_priv->gpib_base + INTERRUPT_ENABLE_REG); 
+	
 	tms9914_board_reset(tms_priv);
-
-	agilent_82350b_clear_interrupt( a_priv );
-
-	writeb( INTR_ENABLE, tms_priv->iobase + HPREG_CCR );
 
 	tms9914_online( board, tms_priv );
 
@@ -264,22 +272,21 @@ void agilent_82350b_detach(gpib_board_t *board)
 	agilent_82350b_private_t *a_priv = board->private_data;
 	tms9914_private_t *tms_priv;
 
-	if( a_priv )
+	if(a_priv)
 	{
 		tms_priv = &a_priv->tms9914_priv;
-		if( a_priv->irq )
+		if(a_priv->irq)
 		{
-			free_irq( a_priv->irq, board );
+			free_irq(a_priv->irq, board);
 		}
-		if( tms_priv->iobase )
+		if(a_priv->gpib_base)
 		{
-			writeb( 0, tms_priv->iobase + HPREG_CCR );
-			tms9914_board_reset( tms_priv );
-			iounmap( ( void * ) tms_priv->iobase );
+			tms9914_board_reset(tms_priv);
+			iounmap((void *)a_priv->misc_base);
+			iounmap((void *)a_priv->sram_base);
+			iounmap((void *)a_priv->gpib_base);
+			pci_release_regions(a_priv->pci_device);
 		}
-		if( a_priv->raw_iobase )
-			release_mem_region( a_priv->raw_iobase + agilent_82350b_rom_size,
-				agilent_82350b_iomem_size - agilent_82350b_rom_size );
 	}
 	agilent_82350b_free_private( board );
 }
@@ -314,7 +321,6 @@ irqreturn_t agilent_82350b_interrupt(int irq, void *arg, struct pt_regs *registe
 	spin_lock_irqsave( &board->spinlock, flags );
 	status1 = read_byte( &priv->tms9914_priv, ISR0);
 	status2 = read_byte( &priv->tms9914_priv, ISR1);
-	agilent_82350b_clear_interrupt( priv );
 	retval = tms9914_interrupt_have_status(board, &priv->tms9914_priv, status1, status2);
 	spin_unlock_irqrestore( &board->spinlock, flags );
 	return retval;
