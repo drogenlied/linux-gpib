@@ -8,6 +8,7 @@
 
 extern ssize_t nec7210_read(uint8_t *buffer, size_t length, uint8_t eos);
 extern ssize_t nec7210_write(uint8_t *buffer, size_t length, int send_eoi);
+extern ssize_t nec7210_command(uint8_t *buffer, size_t length);
 extern int nec7210_take_control(int syncronous);
 extern void nec7210_go_to_standby(void);
 extern void nec7210_interface_clear(int assert);
@@ -40,6 +41,7 @@ extern volatile int command_out_ready;	// command can be sent
 extern volatile int dma_transfer_complete;	// dma transfer is done
 
 extern wait_queue_head_t nec7210_write_wait;
+extern wait_queue_head_t nec7210_command_wait;
 extern wait_queue_head_t nec7210_read_wait;
 extern wait_queue_head_t nec7210_status_wait;
 

@@ -9,6 +9,7 @@ volatile int dma_transfer_complete = 0;
 
 DECLARE_WAIT_QUEUE_HEAD(nec7210_read_wait);
 DECLARE_WAIT_QUEUE_HEAD(nec7210_write_wait);
+DECLARE_WAIT_QUEUE_HEAD(nec7210_command_wait);
 DECLARE_WAIT_QUEUE_HEAD(nec7210_status_wait);
 
 /*
@@ -113,8 +114,9 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	if(status2 & HR_CO)
 	{
 		set_bit(0, &command_out_ready);
-		wake_up_interruptible(&nec7210_write_wait); /* wake up sleeping process */
-	}
+		wake_up_interruptible(&nec7210_command_wait); /* wake up sleeping process */
+	}else
+		clear_bit(0, &command_out_ready);
 
 	// command pass through received
 	if(status1 & HR_CPT)

@@ -69,6 +69,10 @@ typedef struct
 	 * written or negative value on error.
 	 */
 	ssize_t (*write)(uint8_t *buffer, size_t length, int send_eoi);
+	/* command() writes the command bytes in 'buffer' to the bus
+	 * Returns number of bytes written or negative value on error.
+	 */
+	ssize_t (*command)(uint8_t *buffer, size_t length);
 	/* Take control (assert ATN).  If 'asyncronous' is nonzero, take
 	 * control asyncronously (assert ATN immediately without waiting
 	 * for other processes to complete first).  Should not return

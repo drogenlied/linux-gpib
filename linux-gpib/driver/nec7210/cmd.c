@@ -5,14 +5,24 @@ IBLCL ssize_t nec7210_command(uint8_t *buffer, size_t length)
 {
 	size_t count = 0;
 
+	// enable command out interrupt
+	imr2_bits |= HR_COIE;
+	GPIBout(IMR2, imr2_bits);
+
 	while(count < length)
 	{
+		if(wait_event_interruptible(nec7210_command_wait, test_and_clear_bit(0, &command_out_ready)))
+		{
+			printk("gpib command wait interrupted\n");
+			break;
+		}
 		GPIBout(CDOR, buffer[count]);
-//		bdWaitOut(); XXX
 		count++;
 	}
 
-	GPIBout(AUXMR, AUX_GTS);	/* go to standby */
+	// disable command out interrupt
+	imr2_bits |= HR_COIE;
+	GPIBout(IMR2, imr2_bits);
 
 	if (!noTimo) {
 		ibsta |= (ERR | TIMO);

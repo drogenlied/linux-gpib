@@ -28,18 +28,12 @@ IBLCL int ibcmd(uint8_t *buf, size_t cnt)
 		return ibsta;
 	}
 	osStartTimer(timeidx);
-#if !defined(HP82335) && !defined(TMS9914)
-	if ( bdGetAdrStat() & HR_NATN) {	/* if standby, go to CAC */
-#else
-	if ( !(bdGetAdrStat() & HR_ATN) ) {	/* if standby, go to CAC */
-#endif
 
-		DBGprint(DBG_BRANCH, ("take control  "));
-		if(board.take_control(0))
-		{
-			printk("gpib error while becoming active controller\n");
-			return ibsta;
-		}
+	DBGprint(DBG_BRANCH, ("take control  "));
+	if(board.take_control(0))
+	{
+		printk("gpib error while becoming active controller\n");
+		return ibsta;
 	}
 	requested_cnt = cnt;
 	while ((cnt > 0) && !(ibsta & (ERR | TIMO))) {
@@ -55,6 +49,7 @@ IBLCL int ibcmd(uint8_t *buf, size_t cnt)
 	}
 	ibcnt = requested_cnt - cnt;
 
+	board.go_to_standby();
 
 	osRemoveTimer();
 
