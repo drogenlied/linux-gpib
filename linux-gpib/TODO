@@ -22,3 +22,5 @@ stuck SRQ handling
 
 add query to ibask() for support of IFC events
 
+fix support parallel poll timeout support (should be hardware-based)
+
