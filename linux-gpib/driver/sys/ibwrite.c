@@ -17,17 +17,6 @@
 
 #include "gpibP.h"
 
-#if 0
-static int gpib_clear_to_write( gpib_board_t *board )
-{
-	unsigned int status;
-
-	status = ibstatus( board );
-	if( ( status & ATN ) == 0 && ( status & TACS ) ) return 1;
-
-	return 0;
-}
-#endif
 /*
  * IBWRT
  * Write cnt bytes of data from buf to the GPIB.  The write
@@ -58,30 +47,14 @@ ssize_t ibwrt(gpib_board_t *board, uint8_t *buf, size_t cnt, int send_eoi)
 		if( retval < 0 ) return retval;
 	}
 	osStartTimer( board, board->usec_timeout );
-#if 0
-	/* wait until board is addressed as talker and ATN is not asserted
-	 * (only matters when not busmaster) */
-	if( wait_event_interruptible( board->wait,
-		gpib_clear_to_write( board ) ||
-		test_bit( TIMO_NUM, &board->status ) ) )
+	ret = board->interface->write(board, buf, cnt, send_eoi);
+	if(ret < 0)
 	{
-		ret = -ERESTARTSYS;
-		printk( "gpib: wait interrupted while waiting to be addressed as talker\n");
-#else
-	if(0)
-	{
-#endif
+		printk("gpib write error\n");
 	}else
 	{
-		ret = board->interface->write(board, buf, cnt, send_eoi);
-		if(ret < 0)
-		{
-			printk("gpib write error\n");
-		}else
-		{
-			buf += ret;
-			bytes_sent += ret;
-		}
+		buf += ret;
+		bytes_sent += ret;
 	}
 
 	if( io_timed_out( board ) )
