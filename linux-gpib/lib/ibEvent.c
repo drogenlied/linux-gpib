@@ -6,7 +6,7 @@
 
 static ibEventHandler event_handle;
 
-PUBLIC int ibevent(int ud, ibEventHandler handler )
+int ibevent(int ud, ibEventHandler handler )
 {
 int dev;
 

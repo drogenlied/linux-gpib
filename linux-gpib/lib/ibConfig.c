@@ -19,7 +19,7 @@
  * Bugs:      
  *-----------------------------------------------------------------
  */
-PUBLIC int ibconfig( int ud, int option, int value )
+int ibconfig( int ud, int option, int value )
 {
 
   ibsta = CMPL;

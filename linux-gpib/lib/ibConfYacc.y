@@ -39,8 +39,8 @@ char cval;
 		| device input
 		| interface input
 		| error
- 			{	
- 				fprintf(stderr, "input error on line %i of %s\n", @1.first_line, DEFAULT_CONFIG_FILE);
+			{
+				fprintf(stderr, "input error on line %i of %s\n", @1.first_line, DEFAULT_CONFIG_FILE);
 				return -1;
 			}
 		;
@@ -90,7 +90,7 @@ char cval;
 		| T_BASE '=' T_NUMBER     { ibBoard[bdid].base = $3; }
 		| T_IRQ  '=' T_NUMBER     { ibBoard[bdid].irq = $3; }
 		| T_DMA  '=' T_NUMBER     { ibBoard[bdid].dma = $3; }
-        	| T_NAME '=' T_STRING	{ strncpy(ibBoard[bdid].name,$3,30); strncpy(temp.name,$3,30);}
+		| T_NAME '=' T_STRING	{ strncpy(ibBoard[bdid].name,$3,30); strncpy(temp.name,$3,30);}
 		;
 
 	device: T_DEVICE '{' option '}'
@@ -121,20 +121,20 @@ char cval;
 
 	assign:
 		T_PAD '=' T_NUMBER { temp.padsad  |= $3; }
-                | T_SAD '=' T_NUMBER { temp.padsad |= ($3<<8); }
+		| T_SAD '=' T_NUMBER { temp.padsad |= ($3<<8); }
 		| T_INIT_S '=' T_STRING { strncpy(temp.init_string,$3,60); }
-                | T_EOSBYTE '=' T_NUMBER  { temp.eos = $3; }
+		| T_EOSBYTE '=' T_NUMBER  { temp.eos = $3; }
 		| T_REOS T_BOOL           { temp.eosflags |= $2 * REOS;}
-                | T_BIN  T_BOOL           { temp.eosflags |= $2 * BIN; }
-                | T_MASTER                { temp.flags |= CN_ISCNTL; }
-                | T_AUTOPOLL              { temp.flags |= CN_AUTOPOLL; }
+		| T_BIN  T_BOOL           { temp.eosflags |= $2 * BIN; }
+		| T_MASTER                { temp.flags |= CN_ISCNTL; }
+		| T_AUTOPOLL              { temp.flags |= CN_AUTOPOLL; }
 		| T_INIT_F '=' flags
-        	| T_NAME '=' T_STRING	{ strncpy(temp.name,$3,30);}
-		| T_MINOR '=' T_NUMBER	{ temp.board = $3;} 
+		| T_NAME '=' T_STRING	{ strncpy(temp.name,$3,30);}
+		| T_MINOR '=' T_NUMBER	{ temp.board = $3;}
 		;
-		
+
 	flags: /* empty */
-		| ',' flags 
+		| ',' flags
 	        | oneflag flags
 		;
 
@@ -147,7 +147,7 @@ char cval;
 
 
 
-PRIVATE void yyerror(char *s)
+void yyerror(char *s)
 {
 	fprintf(stderr, "%s\n", s);
 }

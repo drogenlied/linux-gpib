@@ -2,7 +2,7 @@
 #include <ib.h>
 #include <ibP.h>
 
-PUBLIC int ibAPwait(int ud, int mask)
+int ibAPwait(int ud, int mask)
 {
 char spr;
 

@@ -64,7 +64,7 @@ if { [llength [info commands gpib]] > 0 } {
 # get settings from configuration
 #
 #
-catch "exec rm /tmp/ibdump"
+catch "exec rm -f /tmp/ibdump"
 catch "exec $ibdump tcl >/tmp/ibdump"
 catch "source /tmp/ibdump"
 

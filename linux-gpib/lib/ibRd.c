@@ -2,7 +2,7 @@
 #include <ib.h>
 #include <ibP.h>
 
-PUBLIC int ibrd(int ud, char *rd, unsigned long cnt)
+int ibrd(int ud, char *rd, unsigned long cnt)
 {
   iblcleos(ud);
   ibtmo(ud, CONF(ud,tmo));

@@ -9,6 +9,7 @@ extern  int ibcac(int ud, int v);
 extern  int ibclr(int ud);
 extern  int ibcmd(int ud,char *cmd,unsigned long cnt);
 extern  int ibconfig( int ud, int option, int value );
+extern int ibdev(int minor, int pad, int sad, int timo, int eot, int eos);
 extern  int ibdma( int ud, int v );
 extern  int ibeot(int ud, int v);
 extern  int ibevent(int ud, ibEventHandler handler );

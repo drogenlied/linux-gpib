@@ -4,10 +4,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-char ibfind_called = 0;       /* first call = setup board */
+int ibfind_called = 0;       /* first call = setup board */
 
-
-PUBLIC int ibfind(char *dev)
+int ibfind(char *dev)
 {
 
 	int ind;
@@ -21,7 +20,7 @@ PUBLIC int ibfind(char *dev)
 			{
 				ibsta |= ERR;
 				ibPutErrlog(-1,"ibParseConfig");
-				return ERR;
+				return -1;
 			}
 		}else
 		{
@@ -29,7 +28,7 @@ PUBLIC int ibfind(char *dev)
 			{
 				ibsta = ERR;
 				ibPutErrlog(-1,"ibParseConfig");
-				return ERR;
+				return -1;
 			}
 		}
 	}
@@ -39,7 +38,7 @@ PUBLIC int ibfind(char *dev)
 		iberr = ENSD;
 		ibsta = ERR;
 		ibPutErrlog(-1,"ibFindDevIndex");
-		return ERR;
+		return -1;
 	}
 
 	if(!ibfind_called)
@@ -51,7 +50,7 @@ PUBLIC int ibfind(char *dev)
 			ibBoard[CONF(ind,board)].irq,
 			ibBoard[CONF(ind,board)].dma) & ERR )
 		{
-			return ERR;
+			return -1;
 		}
 
 
@@ -60,12 +59,12 @@ PUBLIC int ibfind(char *dev)
 			*/
 		if(!(CONF(ind,flags) & CN_ISCNTL) )
 		{
-			if( ibonl(ind,1) & ERR ) return ERR;
+			if( ibonl(ind,1) & ERR ) return -1;
 
 			if( ibeos(ind, ibBoard[CONF(ind,board)].eos
-				| (ibBoard[CONF(ind,board)].eosflags << 8)) & ERR) return ERR;
+				| (ibBoard[CONF(ind,board)].eosflags << 8)) & ERR) return -1;
 
-			if( ibtmo(ind, ibBoard[CONF(ind,board)].timeout ) & ERR ) return ERR;
+			if( ibtmo(ind, ibBoard[CONF(ind,board)].timeout ) & ERR ) return -1;
 
 			if( CONF(ind,flags) & CN_AUTOPOLL )
 				ibape( ind, 1);   /* set autopoll flag */
@@ -74,24 +73,24 @@ PUBLIC int ibfind(char *dev)
 			if(  ibBoard[CONF(ind,board)].ifc )
 			{
 				ibPutMsg("IFC ");
-				if ( ibsic(ind) & ERR ) return ERR;
-				if ( ibsre(ind,1) & ERR ) return ERR;
+				if ( ibsic(ind) & ERR ) return -1;
+				if ( ibsre(ind,1) & ERR ) return -1;
 
 				if( CONF(ind,flags) & CN_SDCL )
 				{
 					ibPutMsg("CLR ");
-					if(ibclr(ind) & ERR ) return ERR;
+					if(ibclr(ind) & ERR ) return -1;
 				}
 				ibPutMsg("INIT: ");
 				if(ibConfigs[ind].init_string !='\0')
 				{
 					if( ibwrt(ind, ibConfigs[ind].init_string,
-						strlen( ibConfigs[ind].init_string)) & ERR ) return ERR;
+						strlen( ibConfigs[ind].init_string)) & ERR ) return -1;
 					ibPutMsg(ibConfigs[ind].init_string);
 				}
 			}
 		}
-		ibfind_called++;
+		ibfind_called = 1;
 	}
 	return( ind );
 }

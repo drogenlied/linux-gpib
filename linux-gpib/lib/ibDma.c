@@ -16,7 +16,7 @@
  * Bugs:      
  *-----------------------------------------------------------------
  */
-PUBLIC int ibdma( int ud, int v )
+int ibdma( int ud, int v )
 {
   if (ud < 0) {
     ibsta = CMPL | ERR;

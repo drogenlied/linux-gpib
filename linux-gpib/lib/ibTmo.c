@@ -2,7 +2,7 @@
 #include <ib.h>
 #include <ibP.h>
 
-PUBLIC int ibtmo(int ud,int v)
+int ibtmo(int ud,int v)
 {
     static int current_timeout = -1;
 

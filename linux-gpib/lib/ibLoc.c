@@ -1,8 +1,7 @@
 #include <ib.h>
 #include <ibP.h>
 
-	
-PUBLIC int ibloc(int ud)
+int ibloc(int ud)
 {
   char cmds[256];
   

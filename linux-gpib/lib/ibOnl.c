@@ -2,7 +2,7 @@
 #include <ib.h>
 #include <ibP.h>
 
-PUBLIC int ibonl(int ud, int onl)
+int ibonl(int ud, int onl)
 {
   extern char ibfind_called;
   int oflags=0;

@@ -40,7 +40,8 @@ int main(int argc,char **argv){
    */
 
 
-  if((dev = ibfind("voltmeter")) & ERR){
+  if((dev = ibfind("voltmeter")) < 0)
+	{
     gpiberr("ibfind err");
     exit(1);
   }

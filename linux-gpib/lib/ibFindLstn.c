@@ -10,8 +10,12 @@
  * Description: Find listening devices on the GPIB.
  *
  * $Log$
- * Revision 1.1  2001/12/19 16:45:44  fmhess
- * Initial revision
+ * Revision 1.2  2002/02/12 23:27:41  fmhess
+ * some cleanups
+ *
+ * Revision 1.1.1.1  2001/12/19 16:45:44  fmhess
+ * initial import of linux-gpib-2.05-alpha package from Linux Lab Project
+ *
  *
  *-----------------------------------------------------------------
  * Signatures:
@@ -39,7 +43,7 @@
  *    	      
  *-----------------------------------------------------------------
  */
-PUBLIC void FindLstn( int boardID, Addr4882_t *padlist, Addr4882_t *resultlist, int limit )
+void FindLstn( int boardID, Addr4882_t *padlist, Addr4882_t *resultlist, int limit )
 {
   int i, res = 0;
   char spr;

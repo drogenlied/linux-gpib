@@ -2,11 +2,8 @@
 #include <ib.h>
 #include <ibP.h>
 
-PUBLIC int ibsad(int ud, int v)
+int ibsad(int ud, int v)
 {
-#if NO_RSD_PATCH
-  return  ibBoardFunc(CONF(ud,board),IBSAD, v);
-#else
    if (CONF(ud,flags) & CN_ISCNTL)
       return ibBoardFunc(CONF(ud,board),IBSAD,v);
    else
@@ -27,6 +24,5 @@ PUBLIC int ibsad(int ud, int v)
          ibPutErrlog(-1,ibVerbCode(IBSAD));
       }
    }   
-#endif
 	return 0;	//XXX
 }

@@ -40,7 +40,7 @@ char *routptr[]= {
     "unknown"
   };
 
-PRIVATE char *ibVerbCode(int code)
+char *ibVerbCode(int code)
 {
 
   if( code >=0 && code <=17 )    return routptr[code];
@@ -49,7 +49,7 @@ PRIVATE char *ibVerbCode(int code)
   else return routptr[26];
 }
 
-PRIVATE void ibPutMsg (char *format,...) 
+void ibPutMsg (char *format,...) 
 {
 
 va_list ap;
@@ -68,7 +68,7 @@ va_list ap;
 
 }
 
-PRIVATE void ibPutErrlog(int ud,char *routine)
+void ibPutErrlog(int ud,char *routine)
 {
 
 time_t tm;

@@ -65,7 +65,7 @@ int ibInstallConfigItem(ibConf_t *p)
 	return (ib_ndev);
 }
 
-int ibGetNrDev(VOID)
+int ibGetNrDev(void)
 {
 return ib_ndev;
 }

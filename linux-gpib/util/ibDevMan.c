@@ -55,17 +55,7 @@ int ibDumpConfiguration(int format,char *filename)
 			fprintf(outfile,"fi \n");
 			for(bd = 0; bd < ibGetNrBoards(); bd++)
 			{
-				fprintf(outfile,"mknod $device_dir/gpib%d/master c $device_major 0 \n", bd);
-				fprintf(outfile,"# Devices for board %d :\n",bd);
-				for(ud = 0; ud < ibGetNrDev(); ud++)
-				{
-					if( CONF(ud,board) == bd )
-					{ /* only current board */
-						fprintf(outfile,"echo Creating: $device_dir/gpib%d/%s  \n",bd, ibConfigs[ud].name);
-						fprintf(outfile,"mknod $device_dir/gpib%d/%s c $device_major %d \n",
-						bd,ibConfigs[ud].name,CONF(ud,padsad) );
-					}
-				}
+				fprintf(outfile,"mknod $device_dir/gpib%d c $device_major 0 \n", bd);
 			}
 			break;
 

@@ -2,7 +2,7 @@
 #include <ib.h>
 #include <ibP.h>
 
-PUBLIC int ibwait(int ud, int mask)
+int ibwait(int ud, int mask)
 {
 char spr;
 int pollflag = 0;
@@ -32,7 +32,5 @@ if ( mask & RQS && !(ud & UD_REMOTE) ){
 else
   return  ibBoardFunc(CONF(ud,board),IBWAIT, mask); /*pollflag not necessary will be*/ 
                                                     /*taken from remote*/
-
-
 
 }

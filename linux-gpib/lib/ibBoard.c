@@ -34,7 +34,7 @@ void ibBoardDefaultValues(void)
 }
 
 /**********************/
-PRIVATE int ibBoardOpen(int bd,int flags)
+int ibBoardOpen(int bd,int flags)
 {
 	int fd;
 
@@ -54,7 +54,7 @@ PRIVATE int ibBoardOpen(int bd,int flags)
 }
 
 /**********************/
-PRIVATE int ibBoardClose(int bd)
+int ibBoardClose(int bd)
 {
 	if(ibBoard[bd].fileno > 0)
 	{
@@ -66,7 +66,7 @@ PRIVATE int ibBoardClose(int bd)
 
 /**********************/
 
-PRIVATE int ibBoardFunc (int bd, int code, ...)
+int ibBoardFunc (int bd, int code, ...)
 {
 	va_list ap;
 	static int arg;

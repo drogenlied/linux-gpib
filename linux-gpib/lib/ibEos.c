@@ -2,7 +2,7 @@
 #include <ib.h>
 #include <ibP.h>
 
-PRIVATE int ibeos(int ud, int v)
+int ibeos(int ud, int v)
 {
 
 return ibBoardFunc(CONF(ud,board), IBEOS, v);
@@ -16,7 +16,7 @@ return ibBoardFunc(CONF(ud,board), IBEOS, v);
  *
  */
 
-PRIVATE int iblcleos(int ud)
+int iblcleos(int ud)
 {
 
   if( CONF(ud,eos) | CONF(ud,eosflags) ){  /* set only if unit description has been changed*/
