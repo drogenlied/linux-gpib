@@ -1,5 +1,16 @@
 Linux GPIB Package changelog
 
+3.1.96: Re-fixed compatibility with older 2.4 kernels.
+Fixed race conditions for at-gpib boards with nat4882 chips.
+Fixed iblines() for Measurement Computing
+PCI boards.  Prebuilt documentation no longer gets rebuilt
+during compile.  Added support for newer NI PCI boards
+with tnt500x chips.  Fixes for TCL binding.  Fixed
+creation of gpib group.  Boards are brought online
+when gpib_config is run now, instead of being brought
+online/offline when open count becomes nonzero/zero.
+More gpib_config options.  Random bugfixes.
+
 3.1.95: Replaced old makefiles using autoconf/automake.
 Updates to Guile binding (from Stefan Jahn).  Fixed
 linking problems with gpib_config on some systems.
