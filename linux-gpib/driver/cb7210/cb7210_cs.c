@@ -219,6 +219,7 @@ static dev_link_t *gpib_attach(void)
 	else
 		for(i = 0; i < 4; i++)
 			link->irq.IRQInfo2 |= 1 << irq_list[i];
+	printk(KERN_DEBUG "cb7210: irq_mask=0x%x\n", link->irq.IRQInfo2 );
 	link->irq.Handler = NULL;
 	link->irq.Instance = NULL;
 
@@ -379,8 +380,6 @@ static void gpib_config(dev_link_t *link)
 		tuple.Attributes = 0;
 		if( first_tuple(handle,&tuple,&parse) == CS_SUCCESS ) {
 		while(1) {
-			printk(KERN_DEBUG "gpib_cs: irqmask=0x%x\n", link->irq.IRQInfo2 );
-
 			if( parse.cftable_entry.io.nwin > 0) {
 				link->io.BasePort1 = parse.cftable_entry.io.win[0].base;
 				link->io.NumPorts1 = parse.cftable_entry.io.win[0].len;
@@ -669,9 +668,9 @@ int cb_pcmcia_attach( gpib_board_t *board )
 	nec_priv->iobase = dev_list->io.BasePort1;
 
 	if(request_irq(dev_list->irq.AssignedIRQ, cb7210_interrupt, SA_SHIRQ,
-		"pcmcia-gpib", board))
+		"cb7210", board))
 	{
-		printk("gpib: can't request IRQ %d\n", dev_list->irq.AssignedIRQ);
+		printk("cb7210: failed to request IRQ %d\n", dev_list->irq.AssignedIRQ);
 		return -1;
 	}
 	cb_priv->irq = dev_list->irq.AssignedIRQ;
