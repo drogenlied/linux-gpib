@@ -11,6 +11,9 @@
 
    @END-MAN */
 
+ibbase = IBBASE;
+ibirq = IBIRQ;
+ibdma = IBDMA;
 
 /*
  * BDONL

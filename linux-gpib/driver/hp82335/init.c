@@ -1,6 +1,8 @@
-
-
 #include <board.h>
+
+ibbase = IBBASE;
+ibirq = IBIRQ;
+ibdma = IBDMA;
 
 /*
  * BDONL
