@@ -2,7 +2,7 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
-
+#include <stdlib.h>
 
 static int
 not_here(char *s)
@@ -116,10 +116,17 @@ ibrd(ud, rd, cnt)
 CODE:
 	int i;
 	STRLEN len;
-	char buf[cnt];
-	for(i = 0; i < cnt; i++) { buf[i] = 0; }
-	RETVAL = ibrd(ud, buf, cnt);
-	sv_setpvn(rd, buf, cnt);
+	char *buf;
+
+	buf = malloc( cnt + 1 );
+	if( buf )
+	{
+		for(i = 0; i <= cnt; i++) { buf[i] = 0; }
+		RETVAL = ibrd(ud, buf, cnt);
+		sv_setpvn(rd, buf, cnt + 1);
+		free( buf );
+	}else
+		RETVAL = ERR;
 
 int
 ibrpp(ud, ppr)
