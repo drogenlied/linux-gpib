@@ -175,12 +175,7 @@ None by default.
 
 =head2 Exportable functions
 
-  int ibAPwait(int ud, int mask)
-  int ibape(int ud, int v)
   int ibcac(int ud, int v)
-  int ibchbase(int ud, int base)
-  int ibchdma(int ud, int base)
-  int ibchirq(int ud, int base)
   int ibclr(int ud)
   int ibcmd(int ud, char *cmd, unsigned long cnt)
   int ibconfig( int ud, int option, int value )
@@ -195,6 +190,7 @@ None by default.
   int ibonl(int ud, int onl)
   int ibpad(int ud, int v)
   int ibrd(int ud, char *rd, unsigned long cnt)
+  int ibrdi(int ud, char *rd, unsigned long cnt)
   int ibrpp(int ud, char *ppr)
   int ibrsp(int ud, char *spr)
   int ibrsv(int ud, int v)
@@ -205,6 +201,7 @@ None by default.
   int ibtrg(int ud)
   int ibwait(int ud, int mask)
   int ibwrt(int ud, char *rd, unsigned long cnt)
+  int ibwrti(int ud, char *rd, unsigned long cnt)
 
 
 =head1 AUTHOR

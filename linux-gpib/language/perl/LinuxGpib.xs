@@ -76,9 +76,9 @@ ibeot(ud, v)
 	int	v
 
 int
-ibevent(ud, event)
+ibevent(ud, OUT event)
 	int	ud
-	short *	event
+	short event
 
 int
 ibfind(dev)
@@ -90,9 +90,9 @@ ibgts(ud, v)
 	int	v
 
 int
-iblines(ud, buf)
+iblines(ud, OUT line_status)
 	int	ud
-	unsigned short *	buf
+	short line_status
 
 int
 ibloc(ud)
@@ -154,14 +154,14 @@ OUTPUT:
 	RETVAL
 
 int
-ibrpp(ud, ppr)
+ibrpp(ud, OUT ppr)
 	int	ud
-	char *	ppr
+	char ppr
 
 int
-ibrsp(ud, spr)
+ibrsp(ud, OUT result)
 	int	ud
-	char *	spr
+	char result
 
 int
 ibrsv(ud, v)
