@@ -5,7 +5,7 @@
 -include $(ROOT)/util/.config
 
 SRCS =  osfuncs.c  osinit.c  ostimer.c \
-	osutil.c 
+	osutil.c autopoll.c
 OBJS =  $(SRCS:.c=.o)
 
 INCLUDES = -I. -I../include -I ../board/ -I../../include 

@@ -61,6 +61,5 @@ typedef struct
 #define CFCIRQ _IOW( GPIB_CODE, 22, unsigned int )
 #define CFCDMA _IOW( GPIB_CODE, 23, unsigned int )
 #define CFCBOARDTYPE _IOW( GPIB_CODE, 24, board_type_ioctl_t )
-
-
+#define IBAUTOPOLL _IO( GPIB_CODE, 25 )
 

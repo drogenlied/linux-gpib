@@ -15,7 +15,8 @@
  *                                                                         *
  ***************************************************************************/
 
-#include <ibsys.h>
+#include "ibsys.h"
+#include "autopoll.h"
 
 #include <linux/fcntl.h>
 
@@ -42,6 +43,7 @@ int request_service_ioctl( gpib_board_t *board, unsigned long arg );
 int iobase_ioctl( gpib_board_t *board, unsigned long arg );
 int irq_ioctl( gpib_board_t *board, unsigned long arg );
 int dma_ioctl( gpib_board_t *board, unsigned long arg );
+int autopoll_ioctl( gpib_board_t *board);
 
 int ibopen(struct inode *inode, struct file *filep)
 {
@@ -219,6 +221,10 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			break;
 		case CFCDMA:
 			retval = dma_ioctl( board, arg );
+			break;
+		case IBAUTOPOLL:
+			up(&board->mutex);
+			return autopoll_ioctl( board );
 			break;
 		default:
 			retval = -ENOTTY;
@@ -537,40 +543,6 @@ int close_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned long arg 
 	return 0;
 }
 
-gpib_device_t * get_gpib_device( gpib_board_t *board, unsigned int pad, int sad )
-{
-	gpib_device_t *device;
-	struct list_head *list_ptr;
-	const struct list_head *head = &board->device_list;
-
-	for( list_ptr = head->next; list_ptr != head; list_ptr = list_ptr->next )
-	{
-		device = list_entry( list_ptr, gpib_device_t, list );
-		if( device->pad == pad && device->sad == sad )
-			return device;
-	}
-
-	return NULL;
-}
-
-#if 0
-unsigned int num_status_bytes( const gpib_device_t *dev )
-{
-	struct list_head *list_ptr;
-	const struct list_head *head = &device->serial_poll_bytes;
-	unsigned int count;
-
-	count = 0;
-	for( list_ptr = head->next; list_ptr != head; list_ptr = list_ptr->next )
-		count++
-
-	GPIB_DPRINTK( "%i status bytes stored for pad %i, sad %i\n", count,
-		dev->pad, dev->sad );
-
-	return count;
-}
-#endif
-
 int serial_poll_ioctl( gpib_board_t *board, unsigned long arg )
 {
 	serial_poll_ioctl_t serial_cmd;
@@ -579,8 +551,8 @@ int serial_poll_ioctl( gpib_board_t *board, unsigned long arg )
 	retval = copy_from_user( &serial_cmd, ( void* ) arg, sizeof( serial_cmd ) );
 	if( retval )
 		return -EFAULT;
-//XXX check for autopoll
-	retval = dvrsp( board, serial_cmd.pad, serial_cmd.sad, board->usec_timeout,
+
+	retval = get_serial_poll_byte( board, serial_cmd.pad, serial_cmd.sad, board->usec_timeout,
 		&serial_cmd.status_byte );
 	if( retval < 0 )
 		return retval;
@@ -630,9 +602,9 @@ int auto_poll_enable_ioctl( gpib_board_t *board, unsigned long arg )
 		return -EFAULT;
 
 	if( enable )
-		board->auto_poll = 1;
+		board->autopoll = 1;
 	else
-		board->auto_poll = 0;
+		board->autopoll = 0;
 
 	return 0;
 }
@@ -782,4 +754,37 @@ int dma_ioctl( gpib_board_t *board, unsigned long arg )
 	board->ibdma = dma_channel;
 
 	return 0;
+}
+
+int autopoll_ioctl( gpib_board_t *board )
+{
+	int retval = 0;
+
+	if( down_interruptible( &board->autopoll_mutex ) )
+	{
+		return -ERESTARTSYS;
+	}
+
+	while( 1 )
+	{
+		if( wait_event_interruptible( board->wait,
+			board->autopoll && board->stuck_srq == 0 &&
+			test_and_clear_bit( SRQI_NUM, &board->status) ) )
+		{
+			retval = -ERESTARTSYS;
+			break;
+		}
+
+		retval = autopoll_all_devices( board );
+		if( retval < 0 )
+		{
+			board->stuck_srq = 1;
+			set_bit( SRQI_NUM, &board->status );
+			break;
+		}
+	}
+
+	up( &board->autopoll_mutex );
+
+	return retval;
 }

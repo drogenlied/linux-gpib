@@ -9,6 +9,8 @@
 #include <stdarg.h>
 #include <sys/ioctl.h>
 #include <string.h>
+#include <sys/types.h>
+
 
 int iberr = 0;
 int ibsta = 0;
@@ -33,14 +35,29 @@ void ibBoardDefaultValues(void)
 	}
 }
 
+int fork_autopoll_process( ibBoard_t *board )
+{
+	pid_t process_id;
+	int retval;
+
+	process_id = fork();
+	if( process_id < 0 ) return process_id;
+
+	if( process_id ) return 0;
+
+	retval = ioctl( board->fileno, IBAUTOPOLL );
+	exit( retval );
+}
+
 /**********************/
 int ibBoardOpen( int bd, int flags )
 {
 	int fd;
+	ibBoard_t *board = &ibBoard[ bd ];
 
-	if( ibBoard[bd].fileno < 0 )
+	if( board->fileno < 0 )
 	{
-		if((fd = open(ibBoard[bd].device, O_RDWR | flags)) < 0 )
+		if( ( fd = open( board->device, O_RDWR | flags ) ) < 0 )
 		{
 			ibsta =  ERR;
 			iberr = EDVR;
@@ -48,7 +65,12 @@ int ibBoardOpen( int bd, int flags )
 			ibPutErrlog(-1,"ibBoardOpen");
 			return ERR;
 		}
-		ibBoard[bd].fileno = fd;
+		board->fileno = fd;
+		if( fork_autopoll_process( board ) < 0)
+		{
+			ibBoardClose( bd );
+			return ERR;
+		}
 	}
 	return 0;
 }

@@ -133,6 +133,9 @@ struct gpib_board_struct
 	wait_queue_head_t wait;
 	/* Lock that only allows one process to access this board at a time */
 	struct semaphore mutex;
+	/* Lock that prevents more than one process from actively autopolling
+	 * (we only need one autopoller) */
+	struct semaphore autopoll_mutex;
 	/* Spin lock for dealing with races with the interrupt handler */
 	spinlock_t spinlock;
 	/* Watchdog timer to enable timeouts */
@@ -154,7 +157,7 @@ struct gpib_board_struct
 	unsigned int pad;
 	// secondary address
 	int sad;
-	// timeout for operations, in microseconds
+	// timeout for io operations, in microseconds
 	unsigned int usec_timeout;
 	/* Flag that indicates whether board is up and running or not */
 	unsigned online : 1;
@@ -163,7 +166,9 @@ struct gpib_board_struct
 	/* Flag board has been opened for exclusive access */
 	unsigned exclusive : 1;
 	// enable auto serial polling or no
-	unsigned auto_poll : 1;
+	unsigned autopoll : 1;
+	// error dong autopoll
+	unsigned stuck_srq : 1;
 };
 
 /* Each board has a list of gpib_device_t to keep track of all open devices
@@ -180,6 +185,12 @@ typedef struct
 	// number of times this address is opened
 	unsigned int reference_count;
 } gpib_device_t;
+
+typedef struct
+{
+	struct list_head list;
+	uint8_t poll_byte;
+} status_byte_t;
 
 void init_gpib_device( gpib_device_t *device );
 

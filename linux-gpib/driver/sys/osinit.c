@@ -156,6 +156,7 @@ void init_gpib_board( gpib_board_t *board )
 	board->open_count = 0;
 	init_waitqueue_head(&board->wait);
 	init_MUTEX(&board->mutex);
+	init_MUTEX(&board->autopoll_mutex);
 	spin_lock_init(&board->spinlock);
 	init_timer(&board->timer);
 	board->interface = NULL;
@@ -165,7 +166,8 @@ void init_gpib_board( gpib_board_t *board )
 	board->pad = 0;
 	board->sad = -1;
 	board->usec_timeout = 3000000;
-	board->auto_poll = 1;
+	board->autopoll = 1;
+	board->stuck_srq = 0;
 }
 
 void init_board_array( gpib_board_t *board_array, unsigned int length )
