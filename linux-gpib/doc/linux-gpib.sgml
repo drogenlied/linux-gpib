@@ -1,5 +1,5 @@
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook V4.1//EN"
-	"docbook/dtd/4.1/docbook.dtd"[
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook V4.2//EN"
+	[
 <!ENTITY version SYSTEM "gpib_version.txt">
 <!ENTITY license SYSTEM "fdl.xml">
 ]>
@@ -412,7 +412,7 @@ pci board.  If used, you must also specify the pci slot with <option>--pci-slot<
 </para>
 <para><option>--[no-]ifc</option></para>
 <para> Perform (or not) interface clear after bringing board online.
-Default is <option>--ifc</option>.
+Default is <option>--ifc</option>.</para>
 <para><option>--[no-]sre</option></para>
 <para>Assert (or not) remote enable line after bringing board online.
 Default is <option>--sre</option>.</para>
@@ -642,6 +642,7 @@ Default is <option>--sre</option>.</para>
 	<entry>ines_pci, ines_pci_accel</entry>
 	</row>
 	</tbody>
+	</tgroup>
 	</table>
 </para>
 </section>
@@ -2096,6 +2097,8 @@ volatile int ibsta;
 	<entry>constant</entry>
 	<entry>value</entry>
 	<entry>description</entry>
+	</row>
+	</thead>
 	<tbody>
 	<row>
 	<entry>EventNone</entry>
@@ -2454,6 +2457,7 @@ volatile int ibsta;
 	it as a listener.  <parameter>ud</parameter> specifies the GPIB
 	interface board which should check for listeners.  If <parameter>ud</parameter>
 	is a device descriptor, then the device's access board is used.
+	</para>
 	<para>
 	The GPIB address to check is specified by the
 	<parameter>pad</parameter> and <parameter>sad</parameter> arguments.
