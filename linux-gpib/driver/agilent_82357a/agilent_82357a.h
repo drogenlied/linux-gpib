@@ -88,6 +88,8 @@ typedef struct
 	unsigned short eos_char;
 	unsigned short eos_mode;
 	unsigned short hw_control_bits;
+	struct urb *interrupt_urb;
+	uint8_t interrupt_buffer[0x8];	
 	struct semaphore bulk_transfer_lock;
 	struct semaphore interrupt_transfer_lock;
 	struct semaphore control_transfer_lock;

@@ -480,6 +480,73 @@ unsigned int agilent_82357a_t1_delay( gpib_board_t *board, unsigned int nano_sec
 	return 0;
 }
 
+void agilent_82357a_interrupt_complete(struct urb *urb, struct pt_regs *regs)
+{
+	gpib_board_t *board = urb->context;
+	agilent_82357a_private_t *a_priv = board->private_data;
+	int retval;
+	int i;
+	
+	printk("debug: %s: %s: status=0x%x, error_count=%i, actual_length=%i transfer_buffer:\n", __FILE__, __FUNCTION__,
+		urb->status, urb->error_count, urb->actual_length); 
+	for(i = 0; i < urb->actual_length; i++)
+	{
+		printk("%2x ", ((uint8_t*)urb->transfer_buffer)[i]); 
+	}
+	printk("\n");
+	// don't resubmit if urb was unlinked
+	if(urb->status) return;
+	
+	retval = usb_submit_urb(a_priv->interrupt_urb, GFP_ATOMIC);
+	if(retval)
+	{
+		printk("%s: failed to resubmit interrupt urb\n", __FUNCTION__);
+	}
+	wake_up_interruptible(&board->wait);
+}
+
+static int agilent_82357a_setup_urbs(gpib_board_t *board)
+{
+	agilent_82357a_private_t *a_priv = board->private_data;
+	struct usb_device *usb_dev;
+	int int_pipe;
+	int retval;
+	
+	retval = down_interruptible(&a_priv->interrupt_transfer_lock);
+	if(retval) return retval;
+	if(a_priv->bus_interface == NULL)
+	{
+		up(&a_priv->interrupt_transfer_lock);
+		return -ENODEV;
+	}
+	a_priv->interrupt_urb = usb_alloc_urb(0, GFP_KERNEL);
+	if(a_priv->interrupt_urb == NULL)
+	{
+		up(&a_priv->interrupt_transfer_lock);
+		return -ENOMEM;
+	}
+	usb_dev = interface_to_usbdev(a_priv->bus_interface);
+	int_pipe = usb_rcvintpipe(usb_dev, AGILENT_82357A_INTERRUPT_IN_ENDPOINT);
+	usb_fill_int_urb(a_priv->interrupt_urb, usb_dev, int_pipe, a_priv->interrupt_buffer, 
+		sizeof(a_priv->interrupt_buffer), agilent_82357a_interrupt_complete, board, 1);
+	retval = usb_submit_urb(a_priv->interrupt_urb, GFP_KERNEL);
+	up(&a_priv->interrupt_transfer_lock);
+	if(retval) 
+	{
+		printk("%s: failed to submit first interrupt urb, retval=%i\n", __FILE__, retval);
+		return retval;
+	}
+	return 0;
+}
+
+static void agilent_82357a_cleanup_urbs(agilent_82357a_private_t *a_priv)
+{
+	if(a_priv && a_priv->interrupt_urb)
+	{
+		usb_kill_urb(a_priv->interrupt_urb);
+	}
+};
+
 static int agilent_82357a_allocate_private(gpib_board_t *board)
 {
 	agilent_82357a_private_t *a_priv;
@@ -497,6 +564,8 @@ static int agilent_82357a_allocate_private(gpib_board_t *board)
 
 static void agilent_82357a_free_private(agilent_82357a_private_t *a_priv)
 {
+	if(a_priv->interrupt_urb)
+		usb_free_urb(a_priv->interrupt_urb);
 	kfree(a_priv);
 	return;
 }
@@ -550,6 +619,12 @@ int agilent_82357a_attach(gpib_board_t *board)
 		printk("No NI usb-b gpib adapters found, have you loaded its firmware?\n");
 		return -ENODEV;
 	}
+	retval = agilent_82357a_setup_urbs(board);
+	if(retval < 0) 
+	{
+		up(&agilent_82357a_hotplug_lock);
+		return retval;
+	}
 	retval = agilent_82357a_init(board);
 	if(retval < 0) 
 	{
@@ -577,6 +652,7 @@ void agilent_82357a_detach(gpib_board_t *board)
 		down(&a_priv->control_transfer_lock);
 		down(&a_priv->interrupt_transfer_lock);
 		
+		agilent_82357a_cleanup_urbs(a_priv);
 		agilent_82357a_free_private(a_priv);
 		
 		up(&a_priv->interrupt_transfer_lock);
