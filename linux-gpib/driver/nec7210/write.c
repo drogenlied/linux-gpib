@@ -68,6 +68,7 @@ static ssize_t __dma_write(gpib_device_t *device, nec7210_private_t *priv, dma_a
 {
 	unsigned long flags, dma_irq_flags;
 	int residue = 0;
+	int retval = 0;
 
 	spin_lock_irqsave(&device->spinlock, flags);
 
@@ -96,6 +97,8 @@ static ssize_t __dma_write(gpib_device_t *device, nec7210_private_t *priv, dma_a
 	{
 		printk("gpib write interrupted!\n");
 	}
+	if(test_bit(TIMO_NUM, &device->status))
+		retval = -ETIMEDOUT;	
 
 	// disable board's dma
 	priv->imr2_bits &= ~HR_DMAO;
@@ -108,9 +111,9 @@ static ssize_t __dma_write(gpib_device_t *device, nec7210_private_t *priv, dma_a
 	release_dma_lock(flags);
 
 	if(residue)
-		return -EIO;
+		retval = -EIO;
 
-	return length;
+	return retval ? retval : length;
 }
 
 static ssize_t dma_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t *buffer, size_t length)

@@ -64,7 +64,6 @@ static ssize_t __dma_read(gpib_device_t *device, nec7210_private_t *priv, size_t
 
 	dma_irq_flags = claim_dma_lock();
 	disable_dma(priv->dma_channel);
-
 	/* program dma controller */
 	clear_dma_ff(priv->dma_channel);
 	set_dma_count(priv->dma_channel, length);
@@ -90,6 +89,8 @@ static ssize_t __dma_read(gpib_device_t *device, nec7210_private_t *priv, size_t
 		printk("gpib: dma read wait interrupted\n");
 		retval = -EINTR;
 	}
+	if(test_bit(TIMO_NUM, &device->status))
+		retval = -ETIMEDOUT;
 
 	// disable nec7210 dma
 	priv->imr2_bits &= ~HR_DMAI;
@@ -119,6 +120,7 @@ static ssize_t dma_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t 
 		memcpy(buffer, priv->dma_buffer, transfer_size);
 		remain -= retval;
 		buffer += retval;
+		if(test_bit(RECEIVED_END_BN, &priv->state)) break;
 	}
 
 	if(retval < 0) return retval;
