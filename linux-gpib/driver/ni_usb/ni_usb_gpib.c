@@ -1590,11 +1590,10 @@ void ni_usb_detach(gpib_board_t *board)
 		down(&ni_priv->interrupt_transfer_lock);
 		if(ni_priv->bus_interface)
 			ni_usb_cleanup_urbs(ni_priv);
-		ni_usb_free_private(ni_priv);
-		
 		up(&ni_priv->interrupt_transfer_lock);
 		up(&ni_priv->control_transfer_lock);
 		up(&ni_priv->bulk_transfer_lock);
+		ni_usb_free_private(ni_priv);
 	}
 //	printk("%s: exit\n", __FUNCTION__);
 	up(&ni_usb_hotplug_lock);
@@ -1696,15 +1695,17 @@ static void ni_usb_driver_disconnect(struct usb_interface *interface)
 			if(board)
 			{
 				ni_usb_private_t *ni_priv = board->private_data;
-				
-				down(&ni_priv->bulk_transfer_lock);
-				down(&ni_priv->control_transfer_lock);
-				down(&ni_priv->interrupt_transfer_lock);
-				ni_usb_cleanup_urbs(ni_priv);
-				ni_priv->bus_interface = NULL;
-				up(&ni_priv->interrupt_transfer_lock);
-				up(&ni_priv->control_transfer_lock);
-				up(&ni_priv->bulk_transfer_lock);
+				if(ni_priv)
+				{
+					down(&ni_priv->bulk_transfer_lock);
+					down(&ni_priv->control_transfer_lock);
+					down(&ni_priv->interrupt_transfer_lock);
+					ni_usb_cleanup_urbs(ni_priv);
+					ni_priv->bus_interface = NULL;
+					up(&ni_priv->interrupt_transfer_lock);
+					up(&ni_priv->control_transfer_lock);
+					up(&ni_priv->bulk_transfer_lock);
+				}
 			}	
 //			printk("nulled ni_usb_driver_interfaces[%i]\n", i);
 			ni_usb_driver_interfaces[i] = NULL;
