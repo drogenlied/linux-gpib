@@ -20,18 +20,18 @@ SUBDIRS = include
 
 -include $(top_srcdir)/util/linux_flags/flags
 
-modules-all-local: 
+all-local: 
 	$(RM) $(GPIB_MODVERDIR)/*
 	$(MAKE) -C $(LINUX_SRCDIR) V=1 modules\
 		CC="$(LINUX_CC) -I@abs_top_srcdir@ -I@abs_top_srcdir@/driver/include -I@abs_top_srcdir@/include" \
 		SUBDIRS="$(GPIB_ABS_MODULE_SUBDIRS)" \
 		MODVERDIR="$(GPIB_MODVERDIR)"
 
-modules-clean-local:
+clean-local:
 	find $(srcdir) \( -name '*.[oas]' -o -name '*.ko' -o -name core -o -name '.*.cmd' \) -type f \
 		-exec $(RM) {} \;
 
-setup-data-hook: device-file-check /etc/gpib.conf
+install-data-hook: device-file-check /etc/gpib.conf
 	for module in $(GPIB_MODULES) ; do \
 		$(INSTALL_DATA) -D $$module $(LINUX_MODLIB)/gpib/$$(basename $$module) ; \
 	done
