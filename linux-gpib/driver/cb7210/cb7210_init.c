@@ -215,8 +215,10 @@ void cb7210_init(cb7210_private_t *cb_priv, const gpib_board_t *board )
 
 	nec7210_board_reset( nec_priv, board );
 
-	// XXX set clock register for 20MHz? driving frequency
-	write_byte(nec_priv, ICR | 8, AUXMR);
+	/* set clock register for maximum (20 MHz) driving frequency
+	 * ICR should be set to clock in megahertz (1-15) and to zero
+	 * for clocks faster than 15 MHz (max 20MHz) */
+	write_byte(nec_priv, ICR, AUXMR);
 
 	// enable nec7210 interrupts
 	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
