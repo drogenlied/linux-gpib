@@ -318,7 +318,7 @@ void ines_online( ines_private_t *ines_priv, const gpib_board_t *board, int use_
 		ines_outb( ines_priv, 0x80, OUT_FIFO_WATERMARK );
 		ines_outb( ines_priv, 0x80, IN_FIFO_WATERMARK );
 		ines_outb( ines_priv, IFC_ACTIVE_BIT | FIFO_ERROR_BIT | XFER_COUNT_BIT, IMR3 );
-		ines_outb( ines_priv, IN_FIFO_WATERMARK_BIT | OUT_FIFO_WATERMARK_BIT |
+		ines_outb( ines_priv, IN_FIFO_WATERMARK_BIT | IN_FIFO_FULL_BIT | OUT_FIFO_WATERMARK_BIT |
 			OUT_FIFO_EMPTY_BIT, IMR4 );
 		nec7210_set_reg_bits( nec_priv, ADMR, IN_FIFO_ENABLE_BIT | OUT_FIFO_ENABLE_BIT,
 			IN_FIFO_ENABLE_BIT | OUT_FIFO_ENABLE_BIT );

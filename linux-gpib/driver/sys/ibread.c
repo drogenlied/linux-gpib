@@ -59,6 +59,9 @@ ssize_t ibrd( gpib_board_t *board, uint8_t *buf, size_t length, int *end_flag )
 		retval = ibgts( board );
 		if( retval < 0 ) return retval;
 	}
+	/* XXX reseting timer here could cause timeouts take longer than they should,
+	 * since read_ioctl calls this
+	 * function in a loop, there is probably a similar problem with writes/commands */
 	osStartTimer( board, board->usec_timeout );
 	// initialize status to END not yet received
 	clear_bit(END_NUM, &board->status);
@@ -73,19 +76,22 @@ ssize_t ibrd( gpib_board_t *board, uint8_t *buf, size_t length, int *end_flag )
 		printk( "gpib: wait interrupted while waiting to be addressed as listener\n");
 	}else
 	{
-		ret = board->interface->read(board, buf, length, end_flag);
-		if(ret < 0)
+		do
 		{
-			printk("gpib read error\n");
-		}else
-		{
-			buf += ret;
-			count += ret;
-		}
+			ret = board->interface->read(board, buf, length - count, end_flag);
+			if(ret < 0)
+			{
+				printk("gpib read error\n");
+			}else
+			{
+				buf += ret;
+				count += ret;
+			}
+		}while(ret > 0 && count < length && end_flag == 0);
 	}
 
 	osRemoveTimer(board);
 
-	return ret ? ret : count;
+	return (ret < 0) ? ret : count;
 }
 

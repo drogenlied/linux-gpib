@@ -16,6 +16,8 @@
  ***************************************************************************/
 #include "ines.h"
 
+static const int in_fifo_size = 0xff;
+
 static inline unsigned short num_in_fifo_bytes( ines_private_t *ines_priv )
 {
 	return ines_inb( ines_priv, IN_FIFO_COUNT );
@@ -37,7 +39,7 @@ static ssize_t pio_read( gpib_board_t *board, ines_private_t *ines_priv, uint8_t
 		{
 			printk("gpib: pio read wait interrupted\n");
 			return -ERESTARTSYS;
-		};
+		}
 		if( test_bit( TIMO_NUM, &board->status ) )
 			return -ETIMEDOUT;
 		if( test_bit( DEV_CLEAR_BN, &nec_priv->state ) )
@@ -57,6 +59,7 @@ static ssize_t pio_read( gpib_board_t *board, ines_private_t *ines_priv, uint8_t
 		{
 			break;
 		}
+		if(current->need_resched) schedule();
 	}
 
 	return retval ? retval : count;
@@ -73,6 +76,10 @@ ssize_t ines_accel_read( gpib_board_t *board, uint8_t *buffer,
 	*end = 0;
 
 	if(length == 0) return 0;
+	/* chip seems to freak out if input fifo ever becomes
+	 * full (all registers read 0xff), so we'll use
+	 * transfer counter to prevent that from ever happening */
+	if(length >= in_fifo_size) length = in_fifo_size - 1;
 
 	clear_bit( DEV_CLEAR_BN, &nec_priv->state );
 

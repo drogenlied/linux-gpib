@@ -31,6 +31,7 @@ void ines_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 	unsigned int isr3_bits, isr4_bits;
 	unsigned long flags;
+	int wake = 0;
 
 	if( priv->pci_chip_type == PCI_CHIP_QUANCOM )
 	{
@@ -47,15 +48,23 @@ void ines_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	if( isr3_bits & IFC_ACTIVE_BIT )
 	{
 		push_gpib_event( board, EventIFC );
-		wake_up_interruptible( &board->wait );
+		wake++;
 	}
 	if( isr3_bits & FIFO_ERROR_BIT )
 		printk( "ines gpib: fifo error\n" );
 	if( isr3_bits & XFER_COUNT_BIT )
-		wake_up_interruptible( &board->wait );
+		wake++;
 
-	if( isr4_bits & ( IN_FIFO_WATERMARK_BIT | OUT_FIFO_WATERMARK_BIT | OUT_FIFO_EMPTY_BIT ) )
-		wake_up_interruptible( &board->wait );
+	if( isr4_bits & ( IN_FIFO_WATERMARK_BIT | IN_FIFO_FULL_BIT | OUT_FIFO_WATERMARK_BIT |
+		OUT_FIFO_EMPTY_BIT ) )
+		wake++;
+
+	if( isr4_bits & IN_FIFO_FULL_BIT )
+	{
+		printk("ines: uh-oh, input fifo became full!\n");
+		wake++;
+	}
+	if(wake) wake_up_interruptible(&board->wait);
 
 	spin_unlock_irqrestore( &board->spinlock, flags );
 }
