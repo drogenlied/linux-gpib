@@ -1,5 +1,5 @@
 
-#include <ib.h>
+#include "ib_internal.h"
 #include <ibP.h>
 #include <string.h>
 #include <stdlib.h>
@@ -26,8 +26,7 @@ int ibfind(char *dev)
 		return -1;
 	}
 
-	if(dev == NULL) index = 0;	// XXX temporary hack to get ibchk working
-	else if((index = ibFindDevIndex(dev)) < 0)
+	if((index = ibFindDevIndex(dev)) < 0)
 	{     /* find desired entry */
 		iberr = ENSD;
 		ibsta = ERR;

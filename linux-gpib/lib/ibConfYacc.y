@@ -1,6 +1,6 @@
 %{
 #include <stdio.h>
-#include <ib.h>
+#include "ib_internal.h"
 #undef EXTERN
 #include <ibP.h>
 #include <string.h>

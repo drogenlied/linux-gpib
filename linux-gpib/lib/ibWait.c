@@ -1,5 +1,5 @@
 
-#include <ib.h>
+#include "ib_internal.h"
 #include <ibP.h>
 
 int ibwait(int ud, int mask)
@@ -10,7 +10,7 @@ int amask;
 
 if( CONF(ud,flags) & CN_AUTOPOLL ) pollflag=1;
 
-if ( mask & RQS && !(ud & UD_REMOTE) ){
+if ( mask & RQS ){
   amask = ( mask | SRQI ) & ~RQS ;
 
   while(1){

@@ -1,5 +1,6 @@
+
 #include <stdio.h>
-#include <ib.h>
+#include "ib_internal.h"
 #include <ibP.h>
 
 int ibrd(int ud, void *rd, unsigned long cnt)

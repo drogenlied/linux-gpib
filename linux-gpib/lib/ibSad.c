@@ -1,5 +1,5 @@
 
-#include <ib.h>
+#include "ib_internal.h"
 #include <ibP.h>
 
 int ibsad(int ud, int v)

@@ -1,4 +1,5 @@
-#include <ib.h>
+
+#include "ib_internal.h"
 #include <ibP.h>
 #include <sys/ioctl.h>
 #include <string.h>

@@ -1,26 +1,10 @@
 
-#include <ib.h>
+#include "ib_internal.h"
 #include <ibP.h>
 
-#define DB(a) a
-
-static ibEventHandler event_handle;
-
-int ibevent(int ud, ibEventHandler handler )
+int ibevent(int ud, short *event )
 {
-int dev;
-
-  DB(printf("handler = 0x%x",handler));
-  event_handle = handler;
-  if( !fork() ){
-  DB(printf("waiting..."));
-    if( ibwait(ud, RQS) & ERR ){
-      ibPutMsg("Error Waiting for Event on Device %d",CONF(ud,padsad));
-      _exit(1);
-    } else
-    DB(printf("OK calling 0x%x\n", event_handle));
-    if( event_handle != NULL )(*event_handle)(ud);
-    _exit(0);
-  }
-  return 1;
+	*event = 0; // XXX
+	return ibsta;
 }
+

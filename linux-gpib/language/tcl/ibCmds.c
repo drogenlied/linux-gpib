@@ -5,7 +5,6 @@
 
 #include <tcl.h>
 #include <ib.h>
-#include <ibP.h>
 
 void ib_CreateVerboseError(Tcl_Interp *interp,char *entry );
 
@@ -91,7 +90,7 @@ int ibRead  _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,cha
 
 
   buf[ibcnt] = '\0';
-  Tcl_AppendResult(interp, buf, (char *) NULL ); 
+  Tcl_AppendResult(interp, buf, (char *) NULL );
   free(buf);
 
   return TCL_OK;
@@ -100,71 +99,27 @@ int ibRead  _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,cha
 /**********************************************************************/
 static int Gpib_find_called = 0;
 
-int ibFind  _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,char *argv[])){
+int ibFind  _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,char *argv[]))
+{
+	int dev;
+	char res[10];
 
-  int dev;
-  char res[10];
-    char *tmpbuf[120];
-    int i;
-    extern ibConf_t *ibConfigs[];
+	if( argc != 2 )
+	{
+		Tcl_SetResult(interp, "Error: ibfind <string>", TCL_STATIC);
+		return TCL_ERROR;
+	}
 
-  if( argc != 2 ){
-    Tcl_SetResult(interp, "Error: ibfind <string>", TCL_STATIC);
-    return TCL_ERROR;
-  }
+	if(( dev = ibfind(argv[1])) & ERR )
+	{
+		ib_CreateVerboseError(interp,"ibfind");
+		return TCL_ERROR;
+	}
 
+	sprintf(res, "%4d", dev);
+	Tcl_SetResult( interp, res, TCL_VOLATILE );
 
-  if(( dev = ibfind(argv[1])) & ERR ){
-    ib_CreateVerboseError(interp,"ibfind");
-    return TCL_ERROR;
-  }
-
-  if( ! Gpib_find_called ){
-
-    sprintf((char *)tmpbuf,"%d",ibGetNrBoards());
-    Tcl_SetVar(interp,"Gpib_Boards",(char *)tmpbuf, TCL_GLOBAL_ONLY);
-
-    for(i=0; i < NUM_CONFIGS ; i++){
-    	if(ibConfigs[i] == NULL) continue;
-        sprintf((char *)tmpbuf,"%d",i );
-        Tcl_SetVar2(interp,"ibDevices",(char *)tmpbuf,ibConfigs[i]->name,TCL_GLOBAL_ONLY);
-
-        /* names */
-        sprintf((char *)tmpbuf,"%d",ibConfigs[i]->padsad & 0xff );
-        Tcl_SetVar2(interp,ibConfigs[i]->name,"pad",(char *)tmpbuf,TCL_GLOBAL_ONLY);
-        sprintf((char *)tmpbuf,"%d",ibConfigs[i]->padsad>>8 & 0xff );
-        Tcl_SetVar2(interp,ibConfigs[i]->name,"sad",(char *)tmpbuf,TCL_GLOBAL_ONLY);
-        /*flags*/
-        sprintf((char *)tmpbuf,"0x%x",ibConfigs[i]->flags);
-        Tcl_SetVar2(interp,ibConfigs[i]->name,"flags",(char *)tmpbuf,TCL_GLOBAL_ONLY);
-        sprintf((char *)tmpbuf,"0x%x",ibConfigs[i]->eos);
-        Tcl_SetVar2(interp,ibConfigs[i]->name,"eos",(char *)tmpbuf,TCL_GLOBAL_ONLY);
-        sprintf((char *)tmpbuf,"0x%x",ibConfigs[i]->eosflags);
-        Tcl_SetVar2(interp,ibConfigs[i]->name,"eosflags",(char *)tmpbuf,TCL_GLOBAL_ONLY);
-
-        Tcl_SetVar2(interp,ibConfigs[i]->name,"init",ibConfigs[i]->init_string,TCL_GLOBAL_ONLY);
-
-    }
-    Gpib_find_called++;
-  }
-
-  sprintf(res,"%4d",dev );
-  Tcl_SetResult( interp,res, TCL_VOLATILE );
-
-  return TCL_OK;
-}
-/**********************************************************************/
-int ibInfo  _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,char *argv[])){
-
-    int i;
-    extern ibConf_t *ibConfigs[];
-
-	for(i=0; i < NUM_CONFIGS; i++ ){
-		if(ibConfigs[i] == NULL) continue;
-    Tcl_AppendResult(interp,ibConfigs[i]->name," ",(char *)NULL);
-  }
-  return TCL_OK;
-
+	return TCL_OK;
 }
 
 /**********************************************************************/
@@ -271,22 +226,6 @@ int ibClose  _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,ch
 
   if( ibonl( atoi( argv[1]),0 ) & ERR ){
     ib_CreateVerboseError(interp,"ibclose");
-    return TCL_ERROR;
-  }
-  return TCL_OK;
-}
-/**********************************************************************/
-/**********************************************************************/
-int ibSetDBG  _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,char *argv[])){
-
-
-  if( argc < 3){
-    Tcl_SetResult(interp, "Error: debug <dev> <level> ", TCL_STATIC);
-    return TCL_ERROR;
-  }
-
-  if( ibSdbg( atoi( argv[1]), atoi(argv[2]) ) & ERR ){
-    ib_CreateVerboseError(interp,"debug");
     return TCL_ERROR;
   }
   return TCL_OK;
@@ -408,7 +347,7 @@ int gpibCmd _ANSI_ARGS_(( ClientData clientData,
 			      Tcl_Interp *interp,
 			       int argc,
 			       char *argv[]
-			       )) 
+			       ))
 {
 
 if( *argv[1]=='f' && !strcmp(argv[1],"find")){
@@ -449,12 +388,6 @@ if( *argv[1]=='r' && !strcmp(argv[1],"rsv")){
 }
 if( *argv[1]=='t' && !strcmp(argv[1],"trg")){
   return ibTrg( clientData, interp, argc-1,argv+1 );
-}
-if( *argv[1]=='i' && !strcmp(argv[1],"info")){
-  return ibInfo( clientData, interp, argc-1,argv+1 );
-}
-if( *argv[1]=='d' && !strcmp(argv[1],"debug")){
-  return ibSetDBG( clientData, interp, argc-1,argv+1 );
 }
 
 

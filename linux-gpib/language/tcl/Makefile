@@ -5,8 +5,6 @@
 #
 #####################################################################
 
--include make.config
-
 #######################################################################
 # The switches for your GPIB library
 #
@@ -23,6 +21,7 @@ MAKE = make -C
 
 SUBDIRS = examples 
 
+INSTALLDIR = /usr/local/lib
 
 LIBS =  $(GPIBLIBS) -lfl -lm
 INCLUDES = -I. -I$(ROOT)/include -I$(ROOT)/driver/include -I/usr/include/tcl8.3 
@@ -50,11 +49,4 @@ realclean:
 
 install:
 	install ./libgpib-tcl.so $(INSTALLDIR)	
-
-make.config:
-	tclsh config.tcl >make.config
-
-
-
-
 

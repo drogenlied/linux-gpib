@@ -18,7 +18,7 @@ LIB_CONFIG_FILE = /etc/gpib.conf
 
 LIBNAME=libgpib.so.3.1.1
 
-EXPORTED_INCLUDES = ib.h ibProto.h ibConf.h ibP.h
+EXPORTED_INCLUDES = ib.h ibConf.h ibP.h
 EXP_INC = $(EXPORTED_INCLUDES:%=$(ROOT)/include/%)
 CWD := `pwd`
 
@@ -35,18 +35,18 @@ LDFLAGS = -L.
 SRCS =  ibCac.c ibClr.c ibCmd.c ibConfYacc.c ibConfLex.c  ibEos.c ibEot.c \
 	ibFind.c ibLines.c ibOnl.c ibPad.c ibRd.c ibRpp.c ibRsp.c ibRsv.c \
 	ibSad.c ibSic.c ibSre.c ibTmo.c ibTrg.c ibWait.c ibWrt.c ibBdChrConfig.c\
-	ibOpt.c ibGts.c ibBoard.c ibError.c ibutil.c ibAPE.c ibSdbg.c \
+	ibOpt.c ibGts.c ibBoard.c ibError.c ibutil.c ibAPE.c \
 	ibFlags.c ibLoc.c ibDma.c ibConfig.c \
-	ibFindLstn.c #ibEvent.c ibdev.c 
+	#ibEvent.c ibdev.c
 
 
 OBJS =  $(SRCS:.c=.o) 
 
 
-all: $(EXP_INC) $(LIBNAME) 
+all: $(EXP_INC) libgpib.so 
 
-$(LIBNAME):   $(OBJS) 
-	$(CC) -shared $(OBJS) -o $(LIBNAME)	
+libgpib.so:   $(OBJS) 
+	$(CC) -shared $(OBJS) -o libgpib.so	
 
 ibConfLex.c:  ibConfLex.l ibConfYacc.h 
 	flex -Pgpib_yy -o$@ $<
@@ -56,7 +56,7 @@ ibConfYacc.c + ibConfYacc.h: ibConfYacc.y
 	bison -d -y -p gpib_yy -o ibConfYacc.c ibConfYacc.y
 
 clean: 
-	$(RM) $(EXP_INC) *.o ibConfYacc.c ibConfLex.c *.a .depend ibConfYacc.h $(LIBNAME)
+	$(RM) $(EXP_INC) *.o ibConfYacc.c ibConfLex.c *.a .depend ibConfYacc.h *.so
 
 
 realclean : clean
@@ -64,7 +64,7 @@ realclean : clean
 
 
 install:
-	$(INSTALL) $(LIBNAME)     $(LIB_TARGET_DIR)
+	$(INSTALL) -D libgpib.so $(LIB_TARGET_DIR)/$(LIBNAME)
 	cd $(LIB_TARGET_DIR)
 	ln -sf $(LIBNAME) libgpib.so
 	ldconfig $(LIB_TARGET_DIR)		
@@ -86,7 +86,7 @@ $(EXP_INC):
 depend:
 
 ifndef NODEPS
-.depend: ibProto.h $(SRCS) $(EXP_INC)
+.depend: $(SRCS) $(EXP_INC)
 	$(DEPEND) $(CFLAGS) -M $(SRCS)  >./.depend
 
 -include .depend

@@ -1,5 +1,5 @@
 /*
- *  This Example demonstrates how normal device functions (with implicit 
+ *  This Example demonstrates how normal device functions (with implicit
  *  addressing) are used.
  *
  *  This Example makes use of the SRQ waiting feature
@@ -20,8 +20,6 @@
 #include <unistd.h>
 #include <ib.h>
 
-extern int ibsta,ibcnt,iberr;
-
 char cmd[130];
 char res[1024];
 
@@ -29,189 +27,189 @@ void gpiberr(char *msga);
 
 int main(int argc,char **argv){
 
-  register int i=0;
-  int dev;
+register int i=0;
+int dev;
 	char result;
 
-  /* 
-   * Lookup device in the device configuration
-   * and initialize board functions
-   * 
-   */
+/*
+* Lookup device in the device configuration
+* and initialize board functions
+*
+*/
 
 
-  if((dev = ibfind("voltmeter")) < 0)
+if((dev = ibfind("voltmeter")) < 0)
 	{
-    gpiberr("ibfind err");
-    exit(1);
-  }
+	gpiberr("ibfind err");
+	exit(1);
+}
 
-  /* this could be used to set your debugging level 
-   * If you enable this you will see verbose messages in /usr/adm/messages
-   * or with the 'dmesg' command.
-   */
+/* this could be used to set your debugging level
+* If you enable this you will see verbose messages in /usr/adm/messages
+* or with the 'dmesg' command.
+*/
 
-  /*ibSdbg(dev,0x06);*/  
+/*ibSdbg(dev,0x06);*/
 
-  /*
-   * Send IFC and REN
-   * this should not be necessary if configured to be done by ibfind
-   *
-   */
+/*
+* Send IFC and REN
+* this should not be necessary if configured to be done by ibfind
+*
+*/
 
 
-  fprintf(stderr, "\nsend IFC\n");
-  if( ibsic(dev) & ERR ){
-    gpiberr("ibsic Err");
-    exit(1);
+fprintf(stderr, "\nsend IFC\n");
+if( ibsic(dev) & ERR ){
+	gpiberr("ibsic Err");
+	exit(1);
 
-  }
+}
 
-  fprintf(stderr, "set REM\n");
-  if( ibsre(dev,1) & ERR ){
-    gpiberr("ibsre err");
-    exit(1);
-  }
+fprintf(stderr, "set REM\n");
+if( ibsre(dev,1) & ERR ){
+	gpiberr("ibsre err");
+	exit(1);
+}
 
 
 #if WAIT
-  getchar();
+getchar();
 #endif
 
-  /* 
-   * Now send device reset
-   *
-   */
- 
-  fprintf(stderr, "clear device..\n");
-  if(ibclr(dev) & ERR){
-    gpiberr("clr err");
-    exit(1);
-  }
+/*
+* Now send device reset
+*
+*/
+
+fprintf(stderr, "clear device..\n");
+if(ibclr(dev) & ERR){
+	gpiberr("clr err");
+	exit(1);
+}
 
 #if WAIT
-  getchar();
+getchar();
 #endif
 
-  /*
-   * Issue a string to the device
-   * for my DVM that means that the string is displayed on the
-   * front panel display.
-   */
+/*
+* Issue a string to the device
+* for my DVM that means that the string is displayed on the
+* front panel display.
+*/
 
-  fprintf(stderr, "send nice string..\n");
-  strcpy(cmd,"D2HELLO");
-  if( ibwrt(dev,cmd,strlen(cmd)) & ERR ){
-    gpiberr("wrt err");
-    exit(1);
-  }
+fprintf(stderr, "send nice string..\n");
+strcpy(cmd,"D2HELLO");
+if( ibwrt(dev,cmd,strlen(cmd)) & ERR ){
+	gpiberr("wrt err");
+	exit(1);
+}
 
 #if WAIT
-  getchar();
+getchar();
 #endif
 
-  /*
-   * Send some configuration strings
-   * if SRQ waiting is used my device has to be configured
-   * to SRQ generation with 'Q1'
-   *
-   */
+/*
+* Send some configuration strings
+* if SRQ waiting is used my device has to be configured
+* to SRQ generation with 'Q1'
+*
+*/
 
 
-  printf("\nsetup Device");
+printf("\nsetup Device");
 #if USE_SRQ
-  strcpy(cmd,"D0 L0 Q1 T1 R2 A1 S0");
+strcpy(cmd,"D0 L0 Q1 T1 R2 A1 S0");
 #else
-  strcpy(cmd,"D1 F1 R2 T1 M77");
+strcpy(cmd,"D1 F1 R2 T1 M77");
 #endif
-  if( ibwrt(dev,cmd,strlen(cmd)) & ERR ){
-    gpiberr("wrt err");
-    exit(1);
-  }
+if( ibwrt(dev,cmd,strlen(cmd)) & ERR ){
+	gpiberr("wrt err");
+	exit(1);
+}
 
 
-  for(i=0;i<READS;i++){
+for(i=0;i<READS;i++){
 
 #if USE_SRQ
 
-  /*
-   * If SRQ waiting is enabled your device will assert the SRQ line 
-   * whenever a value is reading for reading or another requested
-   * action has been done.
-   *
-   * if you call ibwait() with the RQS flag the device will be serial
-   * polled if the SRQ interrupt occurs, if the SRQ is not from the
-   * requested the process goes to sleep again.
-   *
-   */
-  printf("\nWaiting for RQS...");fflush(stdout);
-  if( ibwait(dev,TIMO|RQS) & (ERR |TIMO)){
-    gpiberr("ibwait Error");
-    /*exit(1);*/
-  } else
-  printf("OK GOT IT\n");fflush(stdout);
+/*
+* If SRQ waiting is enabled your device will assert the SRQ line
+* whenever a value is reading for reading or another requested
+* action has been done.
+*
+* if you call ibwait() with the RQS flag the device will be serial
+* polled if the SRQ interrupt occurs, if the SRQ is not from the
+* requested the process goes to sleep again.
+*
+*/
+printf("\nWaiting for RQS...");fflush(stdout);
+if( ibwait(dev,TIMO|RQS) & (ERR |TIMO)){
+	gpiberr("ibwait Error");
+	/*exit(1);*/
+} else
+printf("OK GOT IT\n");fflush(stdout);
 
 
 #endif
 
-  /*
-   * OK, now read the value
-   *
-   *
-   */
+/*
+* OK, now read the value
+*
+*
+*/
 
 #if 0
-  fprintf(stderr, "\nserial poll\n");
-  if( ibrsp(dev, &result) & ERR ){
-    gpiberr("ibsic Err");
-    exit(1);
-  }
+fprintf(stderr, "\nserial poll\n");
+if( ibrsp(dev, &result) & ERR ){
+	gpiberr("ibsic Err");
+	exit(1);
+}
 fprintf(stderr, "result 0x%x\n", result);
 #endif
 
-  printf("\nReading Value...");
+printf("\nReading Value...");
 
-  if( ibrd(dev, res, sizeof(res)) & ERR)
+if( ibrd(dev, res, sizeof(res)) & ERR)
 	{
-    printf("\n Warning, error occured!");
-    gpiberr("read error");
-  }
-  res[ibcnt]=0;
-  printf("\nres='%s' cnt=%d\n",res,ibcnt);
+	printf("\n Warning, error occured!");
+	gpiberr("read error");
+}
+res[ibcnt]=0;
+printf("\nres='%s' cnt=%d\n",res,ibcnt);
 
-  }
+}
 
- /*
-  * This shows how ibcmd could be used
-  * to clean up the bus sending UNL UNT messages.
-  *
-  */
-
-
-  printf("\nSend Unlisten,Untalk\n");
-  cmd[0] = UNL;
-  cmd[1] = UNT;
-  if( ibcmd(dev,cmd,2L) & ERR ){
-    gpiberr("error sending UNL,UNT\n");
-    exit(1);
-  }
+/*
+* This shows how ibcmd could be used
+* to clean up the bus sending UNL UNT messages.
+*
+*/
 
 
-  if( ibsre(dev,0) & ERR ){      /* unset rem */
-    gpiberr("ibsre err");
-    exit(1);
-  }
+printf("\nSend Unlisten,Untalk\n");
+cmd[0] = UNL;
+cmd[1] = UNT;
+if( ibcmd(dev,cmd,2L) & ERR ){
+	gpiberr("error sending UNL,UNT\n");
+	exit(1);
+}
 
-  ibonl(dev,0);
+
+if( ibsre(dev,0) & ERR ){      /* unset rem */
+	gpiberr("ibsre err");
+	exit(1);
+}
+
+ibonl(dev,0);
 	return 0;
 }
 
 
 
 /*
- * This is a simple error handling function
- *
- */
+* This is a simple error handling function
+*
+*/
 
 
 void gpiberr(char *msg) {

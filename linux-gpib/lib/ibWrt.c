@@ -1,5 +1,5 @@
 
-#include <ib.h>
+#include "ib_internal.h"
 #include <ibP.h>
 
 int ibwrt(int ud, void *rd, unsigned long cnt)
