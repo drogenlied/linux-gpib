@@ -92,6 +92,7 @@ extern int destroy_autopoll_thread( ibBoard_t *board );
 extern int is_system_controller( const ibBoard_t *board );
 extern int is_cic( const ibBoard_t *board );
 extern int assert_ifc( ibBoard_t *board, unsigned int usec );
+extern int request_system_control( ibBoard_t *board, int request_control );
 
 extern int internal_ibpad( ibConf_t *conf, unsigned int address );
 extern int internal_ibsad( ibConf_t *conf, int address );
@@ -102,6 +103,7 @@ extern int internal_ibsre( ibConf_t *conf, int v );
 extern int internal_ibrsv( ibConf_t *conf, int v );
 extern int internal_iblines( ibConf_t *conf, short *line_status );
 extern int internal_ibgts( ibConf_t *conf, int shadow_handshake );
+extern int internal_ibrsc( ibConf_t *conf, int request_control );
 extern int internal_ibsic( ibConf_t *conf );
 extern int InternalDevClearList( ibConf_t *conf, Addr4882_t addressList[] );
 extern int InternalReceiveSetup( ibConf_t *conf, Addr4882_t address );

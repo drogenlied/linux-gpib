@@ -109,6 +109,7 @@ extern int ibpct( int ud );
 extern int ibppc( int ud, int v );
 extern int ibrd( int ud, void *rd, long count );
 extern int ibrpp( int ud, char *ppr );
+extern int ibrsc( int ud, int v );
 extern int ibrsp( int ud, char *spr );
 extern int ibrsv( int ud, int v );
 extern int ibsad( int ud, int v );

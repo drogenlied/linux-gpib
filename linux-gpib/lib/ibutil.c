@@ -556,8 +556,8 @@ int is_cic( const ibBoard_t *board )
 	retval = ioctl( board->fileno, IBSTATUS, &board_status );
 	if( retval < 0 )
 	{
-		fprintf( stderr, "libgpib: fatal error in is_cic(), aborting\n");
-		abort();
+		fprintf( stderr, "libgpib: error in is_cic()!\n");
+		return retval;
 	}
 
 	if( board_status & CIC )
@@ -574,8 +574,8 @@ int is_system_controller( const ibBoard_t *board )
 	retval = ioctl( board->fileno, IBBOARD_INFO, &info );
 	if( retval < 0 )
 	{
-		fprintf( stderr, "libgpib: fatal error in is_system_controller(), aborting\n");
-		abort();
+		fprintf( stderr, "libgpib: error in is_system_controller()!\n");
+		return retval;
 	}
 
 	return info.is_system_controller;

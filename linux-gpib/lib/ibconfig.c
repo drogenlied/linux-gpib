@@ -173,10 +173,11 @@ int ibconfig( int ud, int option, int value )
 					return exit_library( ud, 0 );
 				break;
 			case IbcSC:
-				// XXX
-				fprintf( stderr, "libgpib: request/release control protocol not supported\n");
-				setIberr( ECAP );
-				return exit_library( ud, 1 );
+				retval = internal_ibrsc( conf, value );
+				if( retval < 0 )
+					return exit_library( ud, 1 );
+				else
+					return exit_library( ud, 0 );
 				break;
 			case IbcSRE:
 				retval = internal_ibsre( conf, value );

@@ -4,7 +4,7 @@
 
 
 #include <tcl.h>
-#include <ib.h>
+#include <gpib/ib.h>
 
 void ib_CreateVerboseError(Tcl_Interp *interp,char *entry );
 

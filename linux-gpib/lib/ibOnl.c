@@ -53,19 +53,13 @@ int board_online( ibBoard_t *board, int online )
 
 	if( online )
 	{
-		rsc_ioctl_t rsc_cmd;
-
 		retval = lock_board_mutex( board );
 		if( retval < 0 ) return retval;
 
-		rsc_cmd = board->is_system_controller;
-		retval = ioctl( board->fileno, IBRSC, &rsc_cmd );
+		retval = request_system_control( board, board->is_system_controller );
 		if( retval < 0 )
 		{
-			fprintf( stderr, "libgpib: IBRSC ioctl failed\n" );
 			unlock_board_mutex( board );
-			setIberr( EDVR );
-			setIbcnt( errno );
 			return retval;
 		}
 		if( board->is_system_controller )
