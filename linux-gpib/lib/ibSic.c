@@ -36,7 +36,7 @@ int internal_ibsic( ibConf_t *conf )
 
 	if( conf->is_interface == 0 )
 	{
-		setIberr( EDVR );
+		setIberr( EARG );
 		return -1;
 	}
 
