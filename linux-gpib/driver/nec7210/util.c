@@ -131,4 +131,11 @@ unsigned int nec7210_update_status(gpib_device_t *device, nec7210_private_t *pri
 	return device->status;
 }
 
+EXPORT_SYMBOL(nec7210_enable_eos);
+EXPORT_SYMBOL(nec7210_disable_eos);
+EXPORT_SYMBOL(nec7210_serial_poll_response);
+EXPORT_SYMBOL(nec7210_parallel_poll);
+EXPORT_SYMBOL(nec7210_primary_address);
+EXPORT_SYMBOL(nec7210_secondary_address);
+EXPORT_SYMBOL(nec7210_update_status);
 

@@ -22,12 +22,9 @@
 
 #include <gpibP.h>
 #include <asm/io.h>
+#include <linux/module.h>
 
-#include "nec7210.h"
-#include "pc2.h"
-#include "cb7210.h"
-#include "ines.h"
-#include "tnt4882.h"
+#include <nec7210.h>
 
 #endif	//_GPIB_PCIIA_BOARD_H
 

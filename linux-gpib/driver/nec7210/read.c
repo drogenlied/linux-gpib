@@ -178,7 +178,7 @@ ssize_t nec7210_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t *bu
 	return count;
 }
 
-
+EXPORT_SYMBOL(nec7210_read);
 
 
 

@@ -86,83 +86,40 @@ void nec7210_board_reset(nec7210_private_t *priv)
 }
 
 // wrapper for inb
-uint8_t ioport_read_byte(nec7210_private_t *priv, unsigned int register_num)
+uint8_t nec7210_ioport_read_byte(nec7210_private_t *priv, unsigned int register_num)
 {
 	return inb(priv->iobase + register_num * priv->offset);
 }
 // wrapper for outb
-void ioport_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num)
+void nec7210_ioport_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num)
 {
 	outb(data, priv->iobase + register_num * priv->offset);
 }
 
 // wrapper for readb
-uint8_t iomem_read_byte(nec7210_private_t *priv, unsigned int register_num)
+uint8_t nec7210_iomem_read_byte(nec7210_private_t *priv, unsigned int register_num)
 {
 	return readb(priv->iobase + register_num * priv->offset);
 }
 // wrapper for writeb
-void iomem_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num)
+void nec7210_iomem_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num)
 {
 	writeb(data, priv->iobase + register_num * priv->offset);
 }
 
 int init_module(void)
 {
-	int err = 0;
-
-	EXPORT_NO_SYMBOLS;
-
-	INIT_LIST_HEAD(&pc2_interface.list);
-	INIT_LIST_HEAD(&pc2a_interface.list);
-	INIT_LIST_HEAD(&cb_pci_interface.list);
-	INIT_LIST_HEAD(&cb_isa_interface.list);
-	INIT_LIST_HEAD(&ines_pci_interface.list);
-	INIT_LIST_HEAD(&ni_isa_interface.list);
-
-	gpib_register_driver(&pc2_interface);
-	gpib_register_driver(&pc2a_interface);
-	gpib_register_driver(&cb_pci_interface);
-	gpib_register_driver(&cb_isa_interface);
-	gpib_register_driver(&ines_pci_interface);
-	gpib_register_driver(&ni_isa_interface);
-
-#ifdef CONFIG_PCMCIA
-	INIT_LIST_HEAD(&cb_pcmcia_interface.list);
-	INIT_LIST_HEAD(&ines_pcmcia_interface.list);
-
-	gpib_register_driver(&cb_pcmcia_interface);
-	gpib_register_driver(&ines_pcmcia_interface);
-	err += cb_pcmcia_init_module();
-	err += ines_pcmcia_init_module();
-#endif
-	if(err)
-		return -1;
-
 	return 0;
 }
 
 void cleanup_module(void)
 {
-	gpib_unregister_driver(&pc2_interface);
-	gpib_unregister_driver(&pc2a_interface);
-	gpib_unregister_driver(&cb_pci_interface);
-	gpib_unregister_driver(&cb_isa_interface);
-	gpib_unregister_driver(&ines_pci_interface);
-	gpib_unregister_driver(&ni_isa_interface);
-#ifdef CONFIG_PCMCIA
-	gpib_unregister_driver(&cb_pcmcia_interface);
-	gpib_unregister_driver(&cb_pcmcia_interface);
-	cb_pcmcia_cleanup_module();
-	ines_pcmcia_cleanup_module();
-#endif
 }
 
+EXPORT_SYMBOL(nec7210_board_reset);
 
-
-
-
-
-
-
+EXPORT_SYMBOL(nec7210_ioport_read_byte);
+EXPORT_SYMBOL(nec7210_ioport_write_byte);
+EXPORT_SYMBOL(nec7210_iomem_read_byte);
+EXPORT_SYMBOL(nec7210_iomem_write_byte);
 

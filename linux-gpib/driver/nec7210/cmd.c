@@ -54,6 +54,7 @@ ssize_t nec7210_command(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 	return count ? count : retval;
 }
 
+EXPORT_SYMBOL(nec7210_command);
 
 
 

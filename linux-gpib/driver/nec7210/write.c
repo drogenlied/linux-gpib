@@ -174,7 +174,7 @@ ssize_t nec7210_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t *b
 	return count ? count : -1;
 }
 
-
+EXPORT_SYMBOL(nec7210_write);
 
 
 

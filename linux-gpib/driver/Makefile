@@ -40,7 +40,7 @@ MAKE = make OPTIONS="$(OPTIONS) " -C
 SUBDIRS = nec7210 protocol sys
 
 
-all : $(EXP_INC) subdirs gpib0.o gpib-common.o
+all : $(EXP_INC) subdirs gpib-common.o
 
 subdirs:
 	set -e; \

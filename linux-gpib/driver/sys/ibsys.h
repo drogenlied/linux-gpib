@@ -20,8 +20,6 @@
 #include <asm/uaccess.h>
 #include <asm/system.h>
 
-#include <board.h>
-
 #ifndef IBMAJOR
 /* default value for major number */
 #define IBMAJOR 250
