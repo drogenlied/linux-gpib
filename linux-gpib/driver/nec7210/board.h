@@ -16,6 +16,7 @@ extern unsigned int nec7210_wait(unsigned int status_mask);
 extern void nec7210_remote_enable(int enable);
 extern void nec7210_enable_eos(uint8_t eos_bytes, int compare_8_bits);
 extern void nec7210_disable_eos(void);
+extern unsigned int nec7210_update_status(void);
 
 extern void bdSendAuxCmd(int cmd);
 

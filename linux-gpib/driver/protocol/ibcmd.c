@@ -20,12 +20,14 @@ IBLCL int ibcmd(uint8_t *buf, size_t cnt)
 {
 	size_t	requested_cnt;
 	ssize_t ret;
+	int status = board.update_status();
 
 	DBGin("ibcmd");
-	if (fnInit(HR_CIC) & ERR) {
+	if((status & CIC) == 0) 
+	{
 		ibcnt = 0;
 		DBGout();
-		return ibsta;
+		return status;
 	}
 	osStartTimer(timeidx);
 

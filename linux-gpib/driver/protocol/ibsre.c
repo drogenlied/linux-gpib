@@ -10,19 +10,19 @@ IBLCL int ibsre(int v)
 	DBGin("ibsre");
 
         if( !(drvstat & DRV_REN || !v ) || (ib_opened <= 1) ){
+#if 0
 	  if (fnInit(0) & ERR) {
 	    DBGout();
 	    return ibsta;
 	  }
+#endif
 	  pgmstat |= PS_SAC;
-	  bdsc();
 	board.remote_enable(v);	/* set or clear REN */
           if( !v ) drvstat &= ~DRV_REN;
           else     drvstat |= DRV_REN;
         }
-	ibstat();
 	  
 	DBGout();
-	return ibsta;
+	return board.update_status();
 }
 

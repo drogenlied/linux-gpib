@@ -11,13 +11,15 @@
  */
 IBLCL int iblines(int *buf)
 {
+	int status = board.update_status();
+
 	DBGin("iblines");
-	if (fnInit(0) & ERR)
-		*buf = 0;
-	else {
-		*buf = bdlines();
-		ibstat();
-	}
+//	if (fnInit(0) & ERR)
+//		*buf = 0;
+//	else {
+	*buf = bdlines();
+	ibstat();
+//	}
 	DBGout();
-	return ibsta;
+	return status;
 }

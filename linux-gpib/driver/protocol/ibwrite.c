@@ -23,14 +23,18 @@ IBLCL int ibwrt(uint8_t *buf, size_t cnt, unsigned int more)
 {
 	unsigned int	requested_cnt;
 	ssize_t ret;
+	int status = board.update_status();
 
 	DBGin("ibwrt");
-	if (fnInit(HR_TA) & ERR) {
+	if((status & TACS) == 0) 
+	{
 		ibcnt = 0;
 		DBGout();
-		return board.status;
+		return status;
 	}
 	board.go_to_standby();
+	// mark io in progress
+	clear_bit(CMPL_NUM, &board.status);
 	osStartTimer(timeidx);
 	requested_cnt = cnt;
 	while ((cnt > 0) && !(board.status & (ERR | TIMO))) {
@@ -45,8 +49,10 @@ IBLCL int ibwrt(uint8_t *buf, size_t cnt, unsigned int more)
 	}
 	ibcnt = requested_cnt - cnt;
 	osRemoveTimer();
+	
+	// mark io complete
+	set_bit(CMPL_NUM, &board.status);
 
-	ibstat();
 	DBGout();
-	return ibsta;
+	return board.update_status();
 }

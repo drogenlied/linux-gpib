@@ -11,11 +11,13 @@
 IBLCL int dvtrg(int padsad)
 {
 	char cmdString[2];
+	int status = board.update_status();
 
 	DBGin("dvtrg");
-	if (fnInit(HR_CIC) & ERR) {
+	if(status & CIC == 0)
+	{
 		DBGout();
-		return ibsta;
+		return status;
 	}
 	if (!(send_setup(padsad) & ERR)) {
 		cmdString[0] = GET;
@@ -36,11 +38,13 @@ IBLCL int dvtrg(int padsad)
 IBLCL int dvclr(int padsad)
 {
 	char cmdString[2];
+	int status = board.update_status();
 
 	DBGin("dvclr");
-	if (fnInit(HR_CIC) & ERR) {
+	if((status & CIC ) == 0)
+	{
 		DBGout();
-		return ibsta;
+		return status;
 	}
 	if (!(send_setup(padsad) & ERR)) {
 		cmdString[0] = SDC;
@@ -136,12 +140,15 @@ IBLCL int dvrsp(int padsad,char *spb)
  */
 IBLCL int dvrd(int padsad,faddr_t buf,unsigned int cnt)
 {
+	int status = board.update_status();
 	DBGin("dvrd");
+
 	ibcnt = 0;
-	if (fnInit(HR_CIC) & ERR) {
-printk("fnInit err");
+	if((status & CIC) == 0) 
+	{
+		printk("board not CIC on dvrd\n");
 		DBGout();
-		return ibsta;
+		return status;
 	}
 	if (!(receive_setup(padsad, 0) & ERR))
 		ibrd(buf, cnt);
@@ -161,11 +168,13 @@ printk("fnInit err");
  */
 IBLCL int dvwrt(int padsad,faddr_t buf,unsigned int cnt)
 {
+	int status = board.update_status();
 	DBGin("dvwrt");
 	ibcnt = 0;
-	if (fnInit(HR_CIC) & ERR) {
+	if((status & CIC) == 0) 
+	{
 		DBGout();
-		return ibsta;
+		return status;
 	}
 	if (!(send_setup(padsad) & ERR)){
 		ibwrt(buf, cnt, 0);	// XXX assumes all the data is written in this call
@@ -253,47 +262,5 @@ IBLCL int send_setup(int padsad)
 	DBGout();
 	return ibsta;
 }
-
-
-/*
- * Function initialization -- checks bus status
- */
-IBLCL int fnInit(int reqd_adsbit)
-{
-	int brdstat;
-
-	DBGin("fninit");
-	ibsta = CMPL;
-	noTimo = INITTIMO;
-	if (!(pgmstat & PS_ONLINE)) {
-		DBGprint(DBG_BRANCH, ("ERR:offline  "));
-		ibsta |= ERR;
-		iberr = ENEB;
-	}
-	else if (reqd_adsbit) {
-		brdstat = bdGetAdrStat();
-		/*printk("brdstat=0x%x\n",brdstat);*/
-		if (brdstat & HR_CIC) {
-			if (!(brdstat & reqd_adsbit)) {
-				DBGprint(DBG_BRANCH, ("ERR:not addressed \n brdstat=0x%x rqd=0x%x",brdstat,reqd_adsbit));
-				ibsta |= ERR;
-				iberr = EADR;
-				ibstat();
-			}
-		}
-		else if (reqd_adsbit & HR_CIC) {
-			DBGprint(DBG_BRANCH, ("ERR:not CIC  "));
-			ibsta |= ERR;
-			iberr = ECIC;
-			ibstat();
-		}
-	}
-	DBGout();
-	return ibsta;
-}
-
-
-
-
 
 

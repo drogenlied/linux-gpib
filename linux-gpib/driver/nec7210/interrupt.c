@@ -34,7 +34,28 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 
 	// record service request in status
 	if(status2 & HR_SRQI)
+	{
 		set_bit(SRQI_NUM, &board.status);
+		wake_up_interruptible(&nec7210_status_wait);
+	}
+
+	// change in lockout status
+	if(status2 & HR_LOKC)
+	{
+		if(status2 & HR_LOK)
+			set_bit(LOK_NUM, &board.status);
+		else
+			clear_bit(LOK_NUM, &board.status);
+	}
+
+	// change in remote status
+	if(status2 & HR_REMC)
+	{
+		if(status2 & HR_REM)
+			set_bit(REM_NUM, &board.status);
+		else
+			clear_bit(REM_NUM, &board.status);
+	}
 
 	// record address status change in status
 	if(status2 & HR_ADSC)
@@ -56,6 +77,10 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 			clear_bit(LACS_NUM, &board.status);
 		wake_up_interruptible(&nec7210_status_wait); /* wake up sleeping process */
 	}
+
+	// record reception of END
+	if(status1 & HR_END)
+		set_bit(END_NUM, &board.status);
 
 	// get incoming data in PIO mode
 	if((status1 & HR_DI) & (imr1_bits & HR_DIIE))

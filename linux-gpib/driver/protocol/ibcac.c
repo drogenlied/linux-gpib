@@ -12,12 +12,14 @@
  */
 IBLCL int ibcac(int v)
 {
+	int status = board.update_status();
 	DBGin("ibcac");
-	if (fnInit(HR_CIC) & ERR) {
+	if((status & CIC) == 0) 
+	{
 		DBGout();
-		return ibsta;
+		return status;
 	}
-	if (v && (pgmstat & PS_HELD) && ( bdGetAdrStat() & HR_LA)) {
+	if (v && (pgmstat & PS_HELD) && (status & LACS)) {
 		DBGprint(DBG_BRANCH, ("sync  "));
 		board.take_control(1);            /* assert ATN synchronously */
 	}
@@ -25,9 +27,8 @@ IBLCL int ibcac(int v)
 		DBGprint(DBG_BRANCH, ("async  "));
 		board.take_control(0);            /* assert ATN asynchronously */
 	}
-	ibstat();
 	DBGout();
-	return ibsta;
+	return status;
 }
 
 

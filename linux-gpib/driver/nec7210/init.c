@@ -46,6 +46,7 @@ gpib_board_t board =
 	serial_poll:	NULL,	// XXX
 	parallel_poll:	NULL,	// XXX
 	line_status:	NULL,
+	update_status:	nec7210_update_status,
 	status:	0,
 	error:	0,
 	private_data:	NULL,

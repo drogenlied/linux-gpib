@@ -9,10 +9,12 @@
 IBLCL int ibpad(int v)
 {
 	DBGin("ibpad");
-	if (fnInit(0) & ERR) {
+#if 0
+	if(fnInit(0) & ERR) {
 		DBGout();
 		return ibsta;
 	}
+#endif
 	if ((v < 0) || (v > 30)) {
 		ibsta |= ERR;
 		iberr = EARG;
@@ -22,9 +24,8 @@ IBLCL int ibpad(int v)
 		DBGprint(DBG_DATA, ("pad=0x%x  ", myPAD));
 		bdSetPAD( myPAD );
 	}
-	ibstat();
 	DBGout();
-	return ibsta;
+	return board.update_status();
 }
 
 
@@ -37,10 +38,12 @@ IBLCL int ibpad(int v)
 IBLCL int ibsad(int v)
 {
 	DBGin("ibsad");
+#if 0
 	if (fnInit(0) & ERR) {
 		DBGout();
 		return ibsta;
 	}
+#endif
 	if (v && ((v < 0x60) || (v > 0x7F))) {
 		ibsta |= ERR;
 		iberr = EARG;
@@ -57,9 +60,8 @@ IBLCL int ibsad(int v)
 			bdSetSAD(mySAD,0);
 		}
 	}
-	ibstat();
 	DBGout();
-	return ibsta;
+	return board.update_status();
 }
 
 
@@ -73,10 +75,12 @@ IBLCL int ibsad(int v)
 IBLCL int ibtmo(int v)
 {
 	DBGin("ibtmo");
+#if 0
 	if (fnInit(0) & ERR) {
 		DBGout();
 		return ibsta;
 	}
+#endif
 	if ((v < TNONE) || (v > T1000s)) {
 		ibsta |= ERR;
 		iberr = EARG;
@@ -85,9 +89,8 @@ IBLCL int ibtmo(int v)
 		DBGprint(DBG_DATA, ("oldtmo=%d newtmo=%d  ", timeidx, v));
 		timeidx = v;
 	}
-	ibstat();
 	DBGout();
-	return ibsta;
+	return board.update_status();
 }
 
 
@@ -100,10 +103,12 @@ IBLCL int ibtmo(int v)
 IBLCL int ibeot(int v)
 {
 	DBGin("ibeot");
+#if 0
 	if (fnInit(0) & ERR) {
 		DBGout();
 		return ibsta;
 	}
+#endif
 	if (v) {
 		DBGprint(DBG_BRANCH, ("enable EOI  "));
 		pgmstat &= ~PS_NOEOI;
@@ -112,9 +117,8 @@ IBLCL int ibeot(int v)
 		DBGprint(DBG_BRANCH, ("disable EOI  "));
 		pgmstat |= PS_NOEOI;
 	}
-	ibstat();
 	DBGout();
-	return ibsta;
+	return board.update_status();
 }
 
 /*
@@ -126,10 +130,12 @@ IBLCL int ibeos(int v)
 {
 	int ebyte, emodes;
 	DBGin("ibeos");
+#if 0
 	if (fnInit(0) & ERR) {
 		DBGout();
 		return ibsta;
 	}
+#endif
 	ebyte = v & 0xFF;
 	emodes = (v >> 8) & 0xFF;
 	if (emodes & ~EOSM) {
@@ -145,9 +151,8 @@ IBLCL int ibeos(int v)
 		}else
 			board.disable_eos();
 	}
-	ibstat();
 	DBGout();
-	return ibsta;
+	return board.update_status();
 }
 
 
@@ -155,21 +160,6 @@ IBLCL int ibeos(int v)
 IBLCL int ibstat(void)
 /* update the GPIB status information */
 {
-	register int brdstat;
-
-	DBGin("ibstat");
-	brdstat = bdGetAdrStat();
-	ibsta |= bdSRQstat();
-	ibsta |= (brdstat & HR_CIC)  ? CIC  : 0;
-#if !defined(HP82335) && !defined(TMS9914)
-	ibsta |= (brdstat & HR_NATN) ? 0    : ATN;
-#else
-	ibsta |= (brdstat & HR_ATN) ? ATN    : 0;
-#endif
-	ibsta |= (brdstat & HR_TA)   ? TACS : 0;
-	ibsta |= (brdstat & HR_LA)   ? LACS : 0;
-	DBGprint(DBG_DATA, ("ibsta=0x%x  ", ibsta));
-	DBGout();
-	return ibsta;
+	return board.update_status(); 
 }
 

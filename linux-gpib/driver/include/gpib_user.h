@@ -6,13 +6,13 @@
 #define TIMO_NUM	14
 #define TIMO	 (1 << TIMO_NUM)	/* Time limit on I/O or wait function exceeded */
 #define END_NUM	13
-#define END	 (1 << END_NUM)	/* EOI terminated the ibrd call */
+#define END	 (1 << END_NUM)	/* EOI or EOS encountered */
 #define SRQI_NUM	12
 #define SRQI	 (1 << SRQI_NUM)	/* SRQ is asserted */
 #define RQS_NUM	11
 #define RQS      (1 << RQS_NUM)      /* Device requesting Service */
 #define CMPL_NUM	8
-#define CMPL	 (1 <<  CMPL_NUM)	/* I/O is complete (should always be set) */
+#define CMPL	 (1 <<  CMPL_NUM)	/* I/O is complete  */
 #define LOK_NUM	7
 #define LOK	(1 << LOK_NUM)	// lockout state
 #define REM_NUM	6

@@ -19,16 +19,22 @@ IBLCL int ibrd(uint8_t *buf, size_t cnt)
 {
 	size_t requested_cnt;
 	ssize_t ret;
+	int status = board.update_status();
 
 	DBGin("ibrd");
-	if (fnInit(HR_LA) & ERR) {
+	if((status & LACS) == 0) 
+	{
 		ibcnt = 0;
 		DBGout();
-		return board.status;
+		return status;
 	}
 	board.go_to_standby();
 	osStartTimer(timeidx);
 	requested_cnt = cnt;
+	// mark io in progress
+	clear_bit(CMPL_NUM, &board.status);
+	// initialize status to END not yet received
+	clear_bit(END_NUM, &board.status);
 	while ((cnt > 0) && !(board.status & (ERR | TIMO | END))) {
 		ret = board.read(buf, cnt, 0);	// eos XXX
 		if(ret < 0)
@@ -42,13 +48,9 @@ IBLCL int ibrd(uint8_t *buf, size_t cnt)
 	}
 	ibcnt = requested_cnt - cnt;
 	osRemoveTimer();
-
-	if ((pgmstat & PS_NOEOSEND) && (board.status & END)) {
-		if (! bdCheckEOI() )
-			board.status &= ~END;
-	}
-	ibstat();
+	// mark io completed
+	set_bit(CMPL_NUM, &board.status);
 	DBGout();
-	return ibsta;
+	return board.update_status();
 }
 

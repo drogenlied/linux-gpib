@@ -9,14 +9,16 @@
 
 IBLCL int ibgts(void)
 {
+	int status = board.update_status();
+
 	DBGin("ibgts");
-	if (fnInit(HR_CIC) & ERR) {
+	if((status & CIC) == 0) 
+	{
 		DBGout();
 		return ibsta;
 	}
 	board.go_to_standby();                    /* go to standby */
-	ibstat();
 	DBGout();
-	return ibsta;
+	return status;
 }
 

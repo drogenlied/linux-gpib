@@ -8,14 +8,16 @@
  */
 IBLCL int ibrsv(int v)
 {
+	int status = board.update_status();
+
 	DBGin("ibrsv");
-	if (fnInit(0) & ERR) {
+	if((status & CIC)) 
+	{
 		DBGout();
-		return ibsta;
+		return status;
 	}
 	DBGprint(DBG_DATA, ("stb=0x%x  ", v));
 	bdSetSPMode(v);		/* set new status to v */
-	ibstat();
 	DBGout();
-	return ibsta;
+	return status;
 }

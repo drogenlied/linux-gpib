@@ -112,10 +112,12 @@ typedef struct
 	 * NULL if your board does not have the ability to query the
 	 * state of the bus lines. */
 	int (*line_status)(void);
-	/* Stores information on the board's current status.  Usually
-	 * updated by the interrupt handler.  The meaning of the bits
-	 * is specified in gpib_user.h in the IBSTA section. */
-	volatile int status;
+	/* updates and returns the board's current status.
+	 * The meaning of the bits
+	 * are specified in gpib_user.h in the IBSTA section. */
+	unsigned int (*update_status)(void);
+	/* Holds board's current status */
+	volatile unsigned int status;
 	/* Holds error code for last error. */
 	int error;
 	/* 'private_data' can be used as seen fit by the driver to

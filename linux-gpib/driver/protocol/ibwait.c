@@ -13,24 +13,17 @@
 IBLCL int ibwait(unsigned int mask)
 {
 	DBGin("ibwait");
-	if (fnInit((mask & SRQI) ? HR_CIC : 0) & ERR) {
-		DBGprint(DBG_BRANCH, ("fninit err "));
-		DBGout();
-		return ibsta;
-	}
 	if (mask == 0) {
 		DBGprint(DBG_BRANCH, ("mask=0  "));
-		ibstat();
 		DBGout();
-		return ibsta;
+		return board.update_status();
 	}
 	else if (mask & ~WAITBITS) {
 		DBGprint(DBG_BRANCH, ("bad mask 0x%x ",mask));
 		ibsta |= ERR;
 		iberr = EARG;
-		ibstat();
 		DBGout();
-		return ibsta;
+		return board.update_status();
 	}
 	osStartTimer(timeidx);
 	board.wait(mask | TIMO);
@@ -38,6 +31,6 @@ IBLCL int ibwait(unsigned int mask)
 		ibsta |= TIMO;
 	osRemoveTimer();
 	DBGout();
-	return ibsta;
+	return board.update_status();
 }
 

@@ -1,82 +1,5 @@
 #include "board.h"
 
-int eosmodes = 0;
-
-/*
- * BDSRQSTAT
- * Return the 'ibsta' status of the SRQ line.
- */
-IBLCL int bdSRQstat(void)
-{
-	return board.status & SRQI;
-}
-
-
-/*
- * BDSC
- * Enable System Controller state.
- */
-IBLCL void bdsc(void)
-{
-	DBGin("bdsc");
-/*	GPIBout(cmdr, SETSC);	*/	/* set system controller */
-	DBGout();
-}
-
-
-/* -- bdGetDataByte()
- * get last byte from bus
- */
-IBLCL uint8_t bdGetDataByte(void)
-{
-  DBGin("bdGetDataByte");
-  DBGout();
-  return GPIBin(DIR);
-}
-
-/* -- bdGetCmdByte()
- * get last Cmd byte from bus
- */
-
-IBLCL uint8_t bdGetCmdByte(void)
-{
-  DBGin("bdGetCmdByte");
-  DBGout();
-  return (GPIBin(CPTR));
-}
-
-/* -- bdGetAdrStat()
- * get address status
- */
-
-IBLCL uint8_t bdGetAdrStat(void)
-{
-  DBGin("bdGetAdrStatus");
-  DBGout();
-  return (GPIBin(ADSR));
-}
-
-
-/* -- bdCheckEOI()
- * Checks if EOI is set in ADR1
- *
- */
-
-IBLCL uint8_t bdCheckEOI(void)
-{
-  DBGin("bdCheckEOI");
-  DBGout();
-  return ( GPIBin(ADR1) & HR_EOI );
-}
-
-/* -- bdSetEOS(eos)
- * set eos byte
- *
- */
-
-static int eosbyte = 0x0a; /*default eos byte for write operations*/
-
-
 void nec7210_enable_eos(uint8_t eos_byte, int compare_8_bits)
 {
 	DBGin("bdSetEOS");
@@ -94,14 +17,6 @@ void nec7210_disable_eos(void)
 {
 	auxa_bits &= ~HR_REOS;
 	GPIBout(AUXMR, auxa_bits);
-}
-
-IBLCL uint8_t bdGetEOS(void)
-{
-  DBGin("bdGetEOS");
-  DBGout();
-
-  return(eosbyte);
 }
 
 /* -- bdSetSPMode(reg)
@@ -149,6 +64,18 @@ IBLCL void bdSetSAD(int mySAD,int enable)
   DBGout();
 }
 
+unsigned int nec7210_update_status(void)
+{
+	int address_status_bits = GPIBin(ADSR);
 
+	/* everything but ATN is updated by
+	 * interrupt handler */
+	if(address_status_bits & HR_NATN)
+		clear_bit(ATN_NUM, &board.status);
+	else
+		set_bit(ATN_NUM, &board.status);
+
+	return board.status;
+}
 
 
