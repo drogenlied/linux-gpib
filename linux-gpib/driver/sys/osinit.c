@@ -125,7 +125,7 @@ struct file_operations ib_fops =
 	get_unmapped_area: NULL,
 };
 
-gpib_board_t board_array[MAX_NUM_GPIB_DEVICES];
+gpib_board_t board_array[MAX_NUM_GPIB_BOARDS];
 
 LIST_HEAD(registered_drivers);
 
@@ -141,9 +141,33 @@ void gpib_unregister_driver(gpib_interface_t *interface)
 	printk("gpib: unregistered %s interface\n", interface->name);
 }
 
+void init_board_array(gpib_board_t *board_array, unsigned int length)
+{
+	int i;
+	for( i = 0; i < length; i++)
+	{
+		board_array[i].private_data = NULL;
+		board_array[i].status = 0;
+		board_array[i].ibbase = 0;
+		board_array[i].ibirq = 0;
+		board_array[i].ibdma = 0;
+		board_array[i].master = 1;
+		board_array[i].online = 0;
+		init_waitqueue_head(&board_array[i].wait);
+		init_MUTEX(&board_array[i].mutex);
+		spin_lock_init(&board_array[i].spinlock);
+		init_timer(&board_array[i].timer);
+		board_array[i].interface = NULL;
+		board_array[i].buffer_length = 0;
+		board_array[i].buffer = NULL;
+	}
+}
+
 int init_module(void)
 {
 	printk("Linux-GPIB Driver -- Kernel Release %s\n", UTS_RELEASE);
+
+	init_board_array(board_array, MAX_NUM_GPIB_BOARDS);
 
 	if(register_chrdev(IBMAJOR, "gpib", &ib_fops))
 	{

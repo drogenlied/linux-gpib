@@ -35,7 +35,7 @@ int ibopen(struct inode *inode, struct file *filep)
 {
 	unsigned int minor = MINOR(inode->i_rdev);
 
-	if(minor >= MAX_NUM_GPIB_DEVICES)
+	if(minor >= MAX_NUM_GPIB_BOARDS)
 	{
 		printk("gpib: invalid minor number of device file\n");
 		return -ENODEV;
@@ -66,7 +66,7 @@ int ibclose(struct inode *inode, struct file *file)
 	unsigned int minor = MINOR(inode->i_rdev);
 	gpib_board_t *board;
 
-	if(minor >= MAX_NUM_GPIB_DEVICES)
+	if(minor >= MAX_NUM_GPIB_BOARDS)
 	{
 		printk("gpib: invalid minor number of device file\n");
 		return -ENODEV;
@@ -92,7 +92,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 	unsigned int minor = MINOR(inode->i_rdev);
 	gpib_board_t *board;
 
-	if(minor >= MAX_NUM_GPIB_DEVICES)
+	if(minor >= MAX_NUM_GPIB_BOARDS)
 	{
 		printk("gpib: invalid minor number of device file\n");
 		return -ENODEV;
@@ -287,25 +287,11 @@ int board_type_ioctl(gpib_board_t *board, unsigned long arg)
 		return retval;
 	}
 
-	board->private_data = NULL;
-	board->status = 0;
-	board->ibbase = 0;
-	board->ibirq = 0;
-	board->ibdma = 0;
-	board->master = 1;
-	board->online = 0;
-	init_waitqueue_head(&board->wait);
-	init_MUTEX(&board->mutex);
-	spin_lock_init(&board->spinlock);
-	init_timer(&board->timer);
-	board->interface = NULL;
-
-	board->buffer_length = 0x1000;
-	if(board->buffer)
-		vfree(board->buffer);
-	board->buffer = vmalloc(board->buffer_length);
-	if(board->buffer == NULL)
-		return -ENOMEM;
+	if(strcmp(cmd.name, "") == 0)
+	{
+		board->interface = NULL;
+		return 0;
+	}
 
 	for(list_ptr = registered_drivers.next; list_ptr != &registered_drivers; list_ptr = list_ptr->next)
 	{

@@ -1,6 +1,7 @@
 
 #include <ibprot.h>
 #include <linux/kernel.h>
+#include <linux/vmalloc.h>
 
 int timeidx	= T1s;	/* timeout index into timeTable */
 int pollTimeidx = T100ms;	/* timeidx for serial and parallel polls */
@@ -75,6 +76,13 @@ int ibonl(gpib_board_t *board, int v)
 	{
 		if( (ib_opened <= 1) && !(board->online))
 		{
+			board->buffer_length = 0x1000;
+			if(board->buffer)
+				vfree(board->buffer);
+			board->buffer = vmalloc(board->buffer_length);
+			if(board->buffer == NULL)
+				return -ENOMEM;
+
 			if(board->interface->attach(board) < 0)
 			{
 				board->interface->detach(board);
@@ -91,6 +99,12 @@ int ibonl(gpib_board_t *board, int v)
 		if( ib_opened <= 1)
 		{
 			board->interface->detach(board);
+			if(board->buffer)
+			{
+				vfree(board->buffer);
+				board->buffer = NULL;
+			}
+			board->buffer_length = 0;
 			board->online = 0;
 		}
 	}
