@@ -380,12 +380,16 @@ ssize_t agilent_82357a_command(gpib_board_t *board, uint8_t *buffer, size_t leng
 
 int agilent_82357a_take_control(gpib_board_t *board, int synchronous)
 {
+	agilent_82357a_private_t *a_priv = board->private_data;
+	a_priv->bogus_ibsta |= ATN;
 	//FIXME: implement
 	return 0;
 }
 
 int agilent_82357a_go_to_standby(gpib_board_t *board)
 {
+	agilent_82357a_private_t *a_priv = board->private_data;
+	a_priv->bogus_ibsta &= ~ATN;
 	//FIXME: implement
 	return 0;
 }
@@ -408,6 +412,7 @@ void agilent_82357a_request_system_control(gpib_board_t *board, int request_cont
 	{
 		printk("%s: %s: agilent_82357a_write_registers() returned error\n", __FILE__, __FUNCTION__);
 	}
+	a_priv->bogus_ibsta |= CIC;
 	return;// retval;
 }
 //FIXME maybe the interface should have a "pulse interface clear" function that can return an error?
@@ -441,8 +446,9 @@ void agilent_82357a_disable_eos(gpib_board_t *board)
 }
 unsigned int agilent_82357a_update_status( gpib_board_t *board, unsigned int clear_mask )
 {
+	agilent_82357a_private_t *a_priv = board->private_data;
 	//FIXME: implement
-	return 0;
+	return a_priv->bogus_ibsta;
 }
 //FIXME: prototype should return int
 void agilent_82357a_primary_address(gpib_board_t *board, unsigned int address)

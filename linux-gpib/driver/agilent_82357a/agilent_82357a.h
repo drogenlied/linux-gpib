@@ -121,6 +121,7 @@ typedef struct
 	unsigned short eos_mode;
 	unsigned short hw_control_bits;
 	unsigned long interrupt_flags;
+	unsigned int bogus_ibsta;
 	struct urb *interrupt_urb;
 	uint8_t interrupt_buffer[0x8];	
 	struct semaphore bulk_transfer_lock;
