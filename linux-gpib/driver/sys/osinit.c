@@ -194,7 +194,7 @@ int ibmajor = IBMAJOR;   /* major number for dynamic configuration */
 
 int init_module(void)
 {
-
+	EXPORT_NO_SYMBOLS;
 #if DEBUG
 	if(dbgMask != 0 )
          	dbgMask |= DBG_1PPL;
