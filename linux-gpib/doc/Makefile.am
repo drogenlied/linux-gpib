@@ -7,11 +7,14 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
+docs = html linux-gpib.pdf #man
+
 SGML = linux-gpib.sgml gpib_version.txt
-EXTRA_DIST = linux-gpib.sgml fdl.xml html linux-gpib.pdf gpib_version.txt #man
+
+EXTRA_DIST = linux-gpib.sgml fdl.xml gpib_version.txt $(docs)
 
 if BUILD_DOCS
-all-local: html linux-gpib.pdf #man
+all-local: $(docs)
 else
 all-local:
 endif
@@ -23,8 +26,8 @@ install-data-local:
 	-$(INSTALL_DATA) html/* $(pkgdatadir)/html
 
 maintainer-clean-local:
-	rm -rf html man
-	rm -f linux-gpib.pdf gpib_version.txt
+	$(RM) gpib_version.txt
+	$(RM) -r $(docs)
 
 linux-gpib.pdf: $(SGML)
 	$(JW_PATH) -f docbook -b pdf linux-gpib.sgml
