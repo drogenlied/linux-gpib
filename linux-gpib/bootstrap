@@ -1,5 +1,7 @@
 #!/bin/sh
-aclocal -I m4 && \
+#run this script to create the 'configure' script
+
+aclocal && \
 libtoolize --copy --force && \
 autoheader && \
 autoconf && \
