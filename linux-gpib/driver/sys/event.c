@@ -37,10 +37,8 @@ int push_gpib_event( gpib_board_t *board, short event_type )
 	retval = push_gpib_event_nolock( board, event_type );
 	spin_unlock_irqrestore( &board->event_queue.lock, flags );
 
-	spin_lock_irqsave( &board->spinlock, flags );
 	if( event_type == EventDevTrg ) board->status |= DTAS;
 	if( event_type == EventDevClr ) board->status |= DCAS;
-	spin_unlock_irqrestore( &board->spinlock, flags );
 
 	return retval;
 }
