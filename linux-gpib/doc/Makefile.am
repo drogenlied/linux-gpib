@@ -29,7 +29,7 @@ maintainer-clean-local:
 linux-gpib.pdf: $(SGML)
 	$(JW_PATH) -f docbook -b pdf linux-gpib.sgml
 
-doc_html: $(SGML)
+doc_html/*: $(SGML)
 	$(RM) -r doc_html
 	{ $(JW_PATH) -f docbook -b html -o doc_html linux-gpib.sgml && touch doc_html; } || { $(RM) -r doc_html; exit 1; }
 
