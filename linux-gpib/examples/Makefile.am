@@ -1,6 +1,7 @@
 
-noinst_PROGRAMS = ibtest master_read_to_file master_write_from_file \
+noinst_PROGRAMS = master_read_to_file master_write_from_file \
 	slave_read_to_file slave_write_from_file
+bin_PROGRAMS = ibtest
 
 ibtest_SOURCES = ibtest.c
 ibtest_CFLAGS = $(LIBGPIB_CFLAGS)
