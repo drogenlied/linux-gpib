@@ -76,9 +76,7 @@ ibeot(ud, v)
 	int	v
 
 int
-ibevent(ud, OUT event)
-	int	ud
-	short event
+ibevent(int ud, OUT short event)
 
 int
 ibfind(dev)
@@ -90,9 +88,7 @@ ibgts(ud, v)
 	int	v
 
 int
-iblines(ud, OUT line_status)
-	int	ud
-	short line_status
+iblines(int ud, OUT short line_status)
 
 int
 ibloc(ud)
