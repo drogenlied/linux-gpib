@@ -517,11 +517,11 @@ static int eos_test( const struct board_descriptors *boards )
 	fprintf( stderr, "%s...", __FUNCTION__ );
 
 	retval = do_eos_pass(boards, 'x' | REOS, "adfis\xf8gibblex",
-	"adfis\xf8", "gibblex");
+		"adfis\xf8", "gibblex");
 	if(retval < 0) return retval;
 
 	retval = do_eos_pass(boards, 'x' | REOS | BIN, "adfis\xf8gibblex",
-	"adfis\xf8gibblex", NULL);
+		"adfis\xf8gibblex", NULL);
 	if(retval < 0) return retval;
 
 	fprintf( stderr, "OK\n" );
