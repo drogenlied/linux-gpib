@@ -165,10 +165,14 @@ gpib_interface_t cec_pci_interface =
 
 int cec_allocate_private(gpib_board_t *board)
 {
+	cec_private_t *priv;
+
 	board->private_data = kmalloc(sizeof(cec_private_t), GFP_KERNEL);
 	if(board->private_data == NULL)
 		return -1;
-	memset(board->private_data, 0, sizeof(cec_private_t));
+	priv = board->private_data;
+	memset( priv, 0, sizeof(cec_private_t));
+	init_nec7210_private( &priv->nec7210_priv );
 	return 0;
 }
 

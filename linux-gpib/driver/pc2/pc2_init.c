@@ -228,10 +228,14 @@ gpib_interface_t pc2_2a_interface =
 
 static int allocate_private(gpib_board_t *board)
 {
+	pc2_private_t *priv;
+
 	board->private_data = kmalloc(sizeof(pc2_private_t), GFP_KERNEL);
 	if(board->private_data == NULL)
 		return -1;
-	memset(board->private_data, 0, sizeof(pc2_private_t));
+	priv = board->private_data;
+	memset( priv, 0, sizeof(pc2_private_t));
+	init_nec7210_private( &priv->nec7210_priv );
 	return 0;
 }
 

@@ -261,10 +261,14 @@ gpib_interface_t cb_isa_accel_interface =
 
 int cb7210_allocate_private(gpib_board_t *board)
 {
+	cb7210_private_t *priv;
+
 	board->private_data = kmalloc(sizeof(cb7210_private_t), GFP_KERNEL);
 	if(board->private_data == NULL)
 		return -1;
-	memset(board->private_data, 0, sizeof(cb7210_private_t));
+	priv = board->private_data;
+	memset( priv, 0, sizeof(cb7210_private_t));
+	init_nec7210_private( &priv->nec7210_priv );
 	return 0;
 }
 
