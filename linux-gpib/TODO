@@ -40,3 +40,7 @@ libgpib_test: add test for serial poll without autopolling
 
 remove devices that time out from autopoll list
 
+add depmod check to configure script
+
+better error on uknown board_type
+
