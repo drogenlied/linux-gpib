@@ -8,6 +8,8 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, uint8_t eos) // XXX eos bro
 	int ret;
 	unsigned long flags;
 
+printk("entering nec7210_read %i\n", length);
+
 	if(length == 0) return 0;
 
 	if (pgmstat & PS_HELD) {
@@ -38,7 +40,11 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, uint8_t eos) // XXX eos bro
 	GPIBout(IMR2, imr2_bits);
 
 	// wait for data to transfer
-	wait_event_interruptible(nec7210_read_wait, test_and_clear_bit(0, &dma_transfer_complete));
+	if(wait_event_interruptible(nec7210_read_wait, test_and_clear_bit(0, &dma_transfer_complete)))
+	{
+		printk("read wait interrupted\n");
+		// XXX
+	}
 
 	// disable nec7210 dma
 	imr2_bits &= ~HR_DMAI;
@@ -51,7 +57,7 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, uint8_t eos) // XXX eos bro
 	count += length - get_dma_residue(ibdma);
 	release_dma_lock(flags);
 
-	set_bit(END_NUM, &board.status);
+	set_bit(END_NUM, &board.status); // not always
 
 #else	// PIO transfer
 
@@ -92,9 +98,12 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, uint8_t eos) // XXX eos bro
 	if (!noTimo)
 	{
 		DBGprint(DBG_BRANCH, ("timeout  "));
-		board.status |= (ERR | TIMO);
+		set_bit(ERR_NUM, &board.status);
+		set_bit(TIMO_NUM, &board.status);
 		iberr = EABO;
 	}
+
+printk("bs 0x%x\n", board.status);
 
 	return count;
 }

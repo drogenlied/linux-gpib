@@ -72,8 +72,7 @@ int nec7210_take_control(int syncronous)
 	// wait until we have control
 	while(GPIBin(ADSR) & HR_NATN)
 	{
-		printk("waiting on ATN\n");
-		if(interruptible_sleep_on_timeout(&nec7210_status_wait, 100))
+		if(interruptible_sleep_on_timeout(&nec7210_status_wait, 1))
 		{
 			printk("error waiting for ATN\n");
 			return -1;
@@ -87,8 +86,7 @@ int nec7210_go_to_standby(void)
 	GPIBout(AUXMR, AUX_GTS);
 	while((GPIBin(ADSR) & HR_NATN) == 0)
 	{
-		printk("waiting on NATN\n");
-		if(interruptible_sleep_on_timeout(&nec7210_status_wait, 100))
+		if(interruptible_sleep_on_timeout(&nec7210_status_wait, 1))
 		{
 			printk("error waiting for NATN\n");
 			return -1;

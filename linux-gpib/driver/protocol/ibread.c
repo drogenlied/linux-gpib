@@ -4,7 +4,7 @@
 
 /*
  * IBRD
- * Read up to cnt bytes of data from the GPIB into buf.  End
+ * Read up to 'length' bytes of data from the GPIB into buf.  End
  * on detection of EOI.
  *
  * NOTE:
@@ -15,28 +15,28 @@
  *          calling ibcmd.
  */
 
-IBLCL int ibrd(uint8_t *buf, size_t cnt)
+IBLCL ssize_t ibrd(uint8_t *buf, size_t length)
 {
-	size_t requested_cnt;
+	size_t count = 0;
 	ssize_t ret;
 	int status = board.update_status();
+printk("entering ibrd\n");
 
 	DBGin("ibrd");
 	if((status & LACS) == 0) 
 	{
-		ibcnt = 0;
+		printk("gpib read failed: not listener\n");
 		DBGout();
-		return status;
+		return -1;
 	}
 	board.go_to_standby();
 	osStartTimer(timeidx);
-	requested_cnt = cnt;
 	// mark io in progress
 	clear_bit(CMPL_NUM, &board.status);
 	// initialize status to END not yet received
 	clear_bit(END_NUM, &board.status);
-	while ((cnt > 0) && !(board.status & (ERR | TIMO | END))) {
-		ret = board.read(buf, cnt, 0);	// eos XXX
+	while ((count < length) && !(board.status & (ERR | TIMO | END))) {
+		ret = board.read(buf, length - count, 0);	// eos XXX
 		if(ret < 0)
 		{
 			printk("gpib read error\n");
@@ -44,13 +44,13 @@ IBLCL int ibrd(uint8_t *buf, size_t cnt)
 			// XXX
 		}
 		buf += ret;
-		cnt -= ret;
+		count += ret;
+printk("board status 0x%x\n", board.status);
 	}
-	ibcnt = requested_cnt - cnt;
 	osRemoveTimer();
 	// mark io completed
 	set_bit(CMPL_NUM, &board.status);
 	DBGout();
-	return board.update_status();
+	return count;
 }
 

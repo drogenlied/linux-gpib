@@ -90,6 +90,7 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, uns
 	char 	*buf;
 	char 	*userbuf;
 	char 	c;
+	ssize_t ret;
 
 	DBGin("ibioctl");
 	DBGprint(DBG_DATA,("cmd=%d",cmd));
@@ -149,11 +150,12 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, uns
 			remain = ibargp->ib_cnt;
 			do
 			{
-				ibrd( buf, (bufsize < remain) ? bufsize : remain );
-				copy_to_user( userbuf, buf, ibcnt );
-				remain -= ibcnt;
-				userbuf += ibcnt;
-			}while (remain > 0 && ibcnt > 0 && !(ibsta & END));
+				ret = ibrd( buf, (bufsize < remain) ? bufsize : remain );
+				if(ret < 0) break;
+				copy_to_user( userbuf, buf, ret );
+				remain -= ret;
+				userbuf += ret;
+			}while (remain > 0 && !(board.update_status() & END));
 			ibcnt = ibargp->ib_cnt - remain;
 			/* Free the DMA buffer */
 			osFreeDMABuffer( buf );
@@ -316,11 +318,12 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, uns
 			remain = ibargp->ib_cnt;
 			do
 			{
-				dvrd( ibargp->ib_arg, buf, (bufsize < remain) ? bufsize : remain );
-				copy_to_user( userbuf, buf, ibcnt );
-				remain -= ibcnt;
-				userbuf += ibcnt;
-			}while (remain > 0 && ibcnt > 0 && !(ibsta & (END|ERR|TIMO)));
+				ret = dvrd( ibargp->ib_arg, buf, (bufsize < remain) ? bufsize : remain );
+				if(ret < 0) break;
+				copy_to_user( userbuf, buf, ret );
+				remain -= ret;
+				userbuf += ret;
+			}while (remain > 0  && !(board.update_status() & (END|ERR|TIMO)));
 			ibcnt = ibargp->ib_cnt - remain;
 
 			/* Free the DMA buffer */

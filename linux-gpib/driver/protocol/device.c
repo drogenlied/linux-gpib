@@ -14,7 +14,7 @@ IBLCL int dvtrg(int padsad)
 	int status = board.update_status();
 
 	DBGin("dvtrg");
-	if(status & CIC == 0)
+	if((status & CIC) == 0)
 	{
 		DBGout();
 		return status;
@@ -138,8 +138,9 @@ IBLCL int dvrsp(int padsad,char *spb)
  * then called to read cnt bytes from the device and place them
  * in buf.
  */
-IBLCL int dvrd(int padsad,faddr_t buf,unsigned int cnt)
+IBLCL ssize_t dvrd(int padsad,faddr_t buf,unsigned int cnt)
 {
+	ssize_t ret = 0;
 	int status = board.update_status();
 	DBGin("dvrd");
 
@@ -148,13 +149,15 @@ IBLCL int dvrd(int padsad,faddr_t buf,unsigned int cnt)
 	{
 		printk("board not CIC on dvrd\n");
 		DBGout();
-		return status;
+		return -1;
 	}
-	if (!(receive_setup(padsad, 0) & ERR))
-		ibrd(buf, cnt);
+	if (receive_setup(padsad, 0) & ERR)
+		return -1;
+
+	ret = ibrd(buf, cnt);
 
 	DBGout();
-	return ibsta;
+	return ret;
 }
 
 
