@@ -110,9 +110,7 @@ int iboffline( gpib_board_t *board )
 		return 0;
 	}
 
-	if(board->autospoll_pid <= 0)
-		printk("gpib: bug! autospoll_pid is not positive\n");
-	else
+	if(down_trylock(&board->autospoll_completion))
 	{
 		retval = kill_proc(board->autospoll_pid, SIGKILL, 1);
 		if(retval)
