@@ -103,6 +103,14 @@ int main( int argc, char *argv[] )
 		return -1;
 	}
 
+	status = ibwait( board, TACS );
+	if( ( status & LACS ) == 0 )
+	{
+		fprintf( stderr, "ibwait() for TACS failed\n" );
+		fprintf( stderr, "%s\n", gpib_error_string( ThreadIberr() ) );
+		return -1;
+	}
+
 	status = ibwrt( board, buffer, buffer_length );
 	if( status & ERR )
 	{

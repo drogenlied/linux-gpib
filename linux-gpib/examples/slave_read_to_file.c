@@ -53,6 +53,14 @@ int main( int argc, char *argv[] )
 		return -1;
 	}
 
+	status = ibwait( board, LACS );
+	if( ( status & LACS ) == 0 )
+	{
+		fprintf( stderr, "ibwait() for LACS failed\n" );
+		fprintf( stderr, "%s\n", gpib_error_string( ThreadIberr() ) );
+		return -1;
+	}
+
 	status = ibrdf( board, file_path );
 	if( status & ERR )
 	{
