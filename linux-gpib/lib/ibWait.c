@@ -1,6 +1,7 @@
 
 #include "ib_internal.h"
 #include <ibP.h>
+#include <pthread.h>
 
 int ibwait( int ud, int mask )
 {
