@@ -7,7 +7,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-#define errp stderr
+FILE* errp=NULL;
 
 
 PRIVATE void ibOpenErrlog(char *name)
