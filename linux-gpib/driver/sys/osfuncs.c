@@ -31,8 +31,17 @@ int serial_poll_ioctl( gpib_board_t *board, unsigned long arg );
 int wait_ioctl( gpib_board_t *board, unsigned long arg );
 int parallel_poll_ioctl( gpib_board_t *board, unsigned long arg );
 int auto_poll_enable_ioctl( gpib_board_t *board, unsigned long arg );
-
-#define GIVE_UP(a) {up(&board->mutex); return a;}
+int online_ioctl( gpib_board_t *board, unsigned long arg );
+int remote_enable_ioctl( gpib_board_t *board, unsigned long arg );
+int take_control_ioctl( gpib_board_t *board, unsigned long arg );
+int line_status_ioctl( gpib_board_t *board, unsigned long arg );
+int pad_ioctl( gpib_board_t *board, unsigned long arg );
+int sad_ioctl( gpib_board_t *board, unsigned long arg );
+int eos_ioctl( gpib_board_t *board, unsigned long arg );
+int request_service_ioctl( gpib_board_t *board, unsigned long arg );
+int iobase_ioctl( gpib_board_t *board, unsigned long arg );
+int irq_ioctl( gpib_board_t *board, unsigned long arg );
+int dma_ioctl( gpib_board_t *board, unsigned long arg );
 
 int ibopen(struct inode *inode, struct file *filep)
 {
@@ -85,10 +94,10 @@ int ibclose(struct inode *inode, struct file *filep)
 		return -ENODEV;
 	}
 
-	board = &board_array[minor];
+	board = &board_array[ minor ];
 
 	if( board->online && board->open_count == 1 )
-		ibonl( board, 0 );
+		iboffline( board );
 
 	board->open_count--;
 
@@ -107,8 +116,6 @@ int ibclose(struct inode *inode, struct file *filep)
 int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned long arg)
 {
 	int	retval = 0; 		/* assume everything OK for now */
-	ibarg_t m_ibarg,*ibargp;
-	int end_flag = 0;
 	unsigned int minor = MINOR(inode->i_rdev);
 	gpib_board_t *board;
 
@@ -129,167 +136,97 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 
 	GPIB_DPRINTK( "minor %i ioctl %i\n", minor, cmd);
 
-	if(cmd == CFCBOARDTYPE)
-	{
-		retval = board_type_ioctl(board, arg);
-		GIVE_UP( retval );
-	}
-
-	if(board->interface == NULL)
+	if( board->interface == NULL && cmd != CFCBOARDTYPE )
 	{
 		printk("gpib: no gpib board configured on /dev/gpib%i\n", minor);
-		GIVE_UP( -ENODEV );
+		up( &board->mutex );
+		return -ENODEV;
 	}
 
 	switch( cmd )
 	{
+		case CFCBOARDTYPE:
+			retval = board_type_ioctl(board, arg);
+			break;
 		case IBRD:
 			retval = read_ioctl( board, arg );
-			GIVE_UP( retval );
 			break;
 		case IBWRT:
 			retval = write_ioctl( board, arg );
-			GIVE_UP( retval );
 			break;
 		case IBCMD:
 			retval = command_ioctl( board, arg );
-			GIVE_UP( retval );
 			break;
 		case IBSTATUS:
 			retval = status_ioctl( board, arg );
-			GIVE_UP( retval );
 			break;
 		case IBTMO:
 			retval = ibtmo( board, arg );
-			GIVE_UP( retval );
 			break;
 		case IBOPENDEV:
 			retval = open_dev_ioctl( filep, board, arg );
-			GIVE_UP( retval );
 			break;
 		case IBCLOSEDEV:
 			retval = close_dev_ioctl( filep, board, arg );
-			GIVE_UP( retval );
 			break;
 		case IBRSP:
 			retval = serial_poll_ioctl( board, arg );
-			GIVE_UP( retval );
 			break;
 		case IBWAIT:
 			retval = wait_ioctl( board, arg );
-			GIVE_UP( retval );
 			break;
 		case IBRPP:
 			retval = parallel_poll_ioctl( board, arg );
-			GIVE_UP( retval );
 			break;
 		case IBAPE:
 			retval = auto_poll_enable_ioctl( board, arg );
-			GIVE_UP( retval );
 			break;
-		default:
-			break;
-	}
-
-	ibargp = (ibarg_t *) &m_ibarg;
-
-	/* Check the arg buffer is readable & writable by the current process */
-	retval = verify_area(VERIFY_WRITE, (void *)arg, sizeof(ibarg_t));
-	if (retval)
-	{
-		GIVE_UP (retval);
-	}
-
-	retval = verify_area(VERIFY_READ, (void *)arg, sizeof(ibarg_t));
-	if (retval)
-	{
-		GIVE_UP (retval);
-	}
-
-	copy_from_user( ibargp , (ibarg_t *) arg , sizeof(ibarg_t));
-
-	ibargp->ib_iberr = EDVR;
-
-// XXX
-#if 0
-	if( cmd == IBAPWAIT )
-	{
-		/* special case for IBAPWAIT : does his own locking */
-		ibAPWait(ibargp->ib_arg);
-		ibargp->ib_ibsta = ibsta;
-		ibargp->ib_iberr = iberr;
-		ibargp->ib_ibcnt = ibcnt;
-		copy_to_user((ibarg_t *) arg, (ibarg_t *) ibargp , sizeof(ibarg_t));
-
-		return retval;
-	}
-#endif
-
-	switch (cmd)
-	{
 		case IBONL:
-			retval = ibonl(board, ibargp->ib_arg);
+			retval = online_ioctl( board, arg );
 			break;
 		case IBSIC:
-			retval = ibsic(board);
+			retval = ibsic( board );
 			break;
 		case IBSRE:
-			retval = ibsre(board, ibargp->ib_arg);
+			retval = remote_enable_ioctl( board, arg );
 			break;
 		case IBGTS:
-			retval = ibgts(board);
+			retval = ibgts( board );
 			break;
 		case IBCAC:
-			retval = ibcac(board, ibargp->ib_arg);
-			break;
-		case IBSDBG:
+			retval = take_control_ioctl( board, arg );
 			break;
 		case IBLINES:
-			retval = iblines(board, &ibargp->ib_ret);
+			retval = line_status_ioctl( board, arg );
 			break;
 		case IBPAD:
-			retval = ibpad(board, ibargp->ib_arg);
+			retval = pad_ioctl( board, arg );
 			break;
 		case IBSAD:
-			retval = ibsad(board, ibargp->ib_arg);
+			retval = sad_ioctl( board, arg );
 			break;
 		case IBEOS:
-			retval = ibeos(board, ibargp->ib_arg);
+			retval = eos_ioctl( board, arg );
 			break;
 		case IBRSV:
-			retval = ibrsv(board, ibargp->ib_arg);
+			retval = request_service_ioctl( board, arg );
 			break;
-		/* special configuration options */
 		case CFCBASE:
-			osChngBase(board, ibargp->ib_arg);
+			retval = iobase_ioctl( board, arg );
 			break;
 		case CFCIRQ:
-			osChngIRQ(board, ibargp->ib_arg);
+			retval = irq_ioctl( board, arg );
 			break;
 		case CFCDMA:
-			osChngDMA(board, ibargp->ib_arg);
+			retval = dma_ioctl( board, arg );
 			break;
 		default:
 			retval = -ENOTTY;
 			break;
 	}
 
-	// return status bits
-	ibargp->ib_ibsta = ibstatus(board);
-	if(retval)
-		ibargp->ib_ibsta |= ERR;
-	else
-		ibargp->ib_ibsta &= ~ERR;
-	if(end_flag)
-		ibargp->ib_ibsta |= END;
-	else
-		ibargp->ib_ibsta &= ~END;
-	// XXX io is always complete since we don't support asynchronous transfers yet
-	ibargp->ib_ibsta |= CMPL;
-
-	copy_to_user((ibarg_t *) arg, (ibarg_t *) ibargp , sizeof(ibarg_t));
-
-	GIVE_UP(retval);
+	up( &board->mutex );
+	return retval;
 }
 
 int board_type_ioctl(gpib_board_t *board, unsigned long arg)
@@ -696,6 +633,153 @@ int auto_poll_enable_ioctl( gpib_board_t *board, unsigned long arg )
 		board->auto_poll = 1;
 	else
 		board->auto_poll = 0;
+
+	return 0;
+}
+
+int online_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	int online;
+	int retval;
+
+	retval = copy_from_user( &online, ( void * ) arg, sizeof( online ) );
+	if( retval )
+		return -EFAULT;
+
+	if( online )
+		return ibonline( board );
+	else
+		return iboffline( board );
+
+	return 0;
+}
+
+int remote_enable_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	int enable;
+	int retval;
+
+	retval = copy_from_user( &enable, ( void * ) arg, sizeof( enable ) );
+	if( retval )
+		return -EFAULT;
+
+	return ibsre( board, enable );
+}
+
+int take_control_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	int synchronous;
+	int retval;
+
+	retval = copy_from_user( &synchronous, ( void * ) arg, sizeof( synchronous ) );
+	if( retval )
+		return -EFAULT;
+
+	return ibcac( board, synchronous );
+}
+
+int line_status_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	short lines;
+	int retval;
+
+	retval = iblines( board, &lines );
+	if( retval < 0 )
+		return retval;
+
+	retval = copy_to_user( ( void * ) arg, &lines, sizeof( lines ) );
+	if( retval )
+		return -EFAULT;
+
+	return 0;
+}
+
+int pad_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	unsigned int address;
+	int retval;
+
+	retval = copy_from_user( &address, ( void * ) arg, sizeof( address ) );
+	if( retval )
+		return -EFAULT;
+
+	return ibpad( board, address );
+}
+
+int sad_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	int address;
+	int retval;
+
+	retval = copy_from_user( &address, ( void * ) arg, sizeof( address ) );
+	if( retval )
+		return -EFAULT;
+
+	return ibsad( board, address );
+}
+
+int eos_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	eos_ioctl_t eos_cmd;
+	int retval;
+
+	retval = copy_from_user( &eos_cmd, ( void * ) arg, sizeof( eos_cmd ) );
+	if( retval )
+		return -EFAULT;
+
+	return ibeos( board, eos_cmd.eos, eos_cmd.eos_flags );
+}
+
+int request_service_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	uint8_t status_byte;
+	int retval;
+
+	retval = copy_from_user( &status_byte, ( void * ) arg, sizeof( status_byte ) );
+	if( retval )
+		return -EFAULT;
+
+	return ibrsv( board, status_byte );
+}
+
+int iobase_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	unsigned long base_addr;
+	int retval;
+
+	retval = copy_from_user( &base_addr, ( void * ) arg, sizeof( base_addr ) );
+	if( retval )
+		return -EFAULT;
+
+	board->ibbase = base_addr;
+
+	return 0;
+}
+
+int irq_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	unsigned int irq;
+	int retval;
+
+	retval = copy_from_user( &irq, ( void * ) arg, sizeof( irq ) );
+	if( retval )
+		return -EFAULT;
+
+	board->ibirq = irq;
+
+	return 0;
+}
+
+int dma_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	unsigned int dma_channel;
+	int retval;
+
+	retval = copy_from_user( &dma_channel, ( void * ) arg, sizeof( dma_channel ) );
+	if( retval )
+		return -EFAULT;
+
+	board->ibdma = dma_channel;
 
 	return 0;
 }

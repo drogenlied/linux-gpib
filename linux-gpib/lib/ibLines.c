@@ -2,15 +2,33 @@
 #include "ib_internal.h"
 #include <ibP.h>
 
-int iblines(int ud, unsigned short *buf)
+int iblines( int ud, short *line_status )
 {
+	ibConf_t *conf = ibConfigs[ud];
+	ibBoard_t *board;
+	int retval;
+	int status = CMPL;
 
-  ibBoardFunc(CONF(ud,board), IBLINES, 0 );
-  if( ibsta & ERR )
-    *buf = 0;
-  else
-    *buf = ibarg.ib_ret;
+	if( ibCheckDescriptor( ud ) < 0 )
+	{
+		iberr = EDVR;
+		return ibsta | ERR;
+	}
 
-  return ibsta;
+	board = &ibBoard[ conf->board ];
 
+	retval = ioctl( board->fileno, IBLINES, line_status );
+	if( retval < 0 )
+	{
+		switch( errno )
+		{
+			default:
+				iberr = EDVR;
+				break;
+		}
+		status |= ERR;
+	}
+
+	ibsta = status;
+	return status;
 }

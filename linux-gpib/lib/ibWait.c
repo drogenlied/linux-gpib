@@ -2,42 +2,32 @@
 #include "ib_internal.h"
 #include <ibP.h>
 
-int ibwait(int ud, int mask)
+//broken
+int ibwait( int ud, int mask )
 {
-	char spr;
-	int pollflag = 0;
-	int amask;
-	ibConf_t *conf = ibConfigs[ud];
+	ibConf_t *conf = ibConfigs[ ud ];
+	ibBoard_t *board;
+	int retval, status = ibsta & CMPL;
+	unsigned int wait_mask = mask;
 
-	if(ibCheckDescriptor(ud) < 0)
+	if( ibCheckDescriptor( ud ) < 0 )
 	{
 		iberr = EDVR;
-		return ibsta | ERR;
+		status |= ERR;
+		ibsta = status;
+		return status;
 	}
 
-	if( conf->flags & CN_AUTOPOLL ) pollflag = 1;
+	board = &ibBoard[ conf->board ];
 
-	// XXX this if should depend on whether ud is a board or device descriptor
-	if( mask & RQS )
+	retval = ioctl( board->fileno, IBWAIT, &wait_mask );
+	if( retval < 0 )
 	{
-		amask = ( mask | SRQI ) & ~RQS ;
-
-		while(1)
-		{
-			/* wait for SRQ */
-			if(ibBoardFunc(conf->board, pollflag ? IBAPWAIT : IBWAIT,
-				pollflag ? padsad(conf->pad, conf->sad) : amask) & ( ERR | TIMO ) )
-				return ERR;
-			/* Serial Poll Device */
-			if( ibBoardFunc( conf->board, pollflag ? IBAPRSP : DVRSP,
-				padsad(conf->pad, conf->sad), &spr ) & ( ERR | TIMO ))
-        		return ERR;
-	/* if RQS set return */
-			if ( spr & 0x40 ) return spr;
-		}
+		iberr = EDVR;
+		status |= ERR;
+		ibsta = status;
+		return status;
 	}
-	/*pollflag will not necessary be*/
-	/*taken from remote*/
-	else
-		return ibBoardFunc(conf->board, IBWAIT, mask);
+
+	return wait_mask;
 }

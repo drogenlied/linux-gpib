@@ -9,13 +9,13 @@
  * Next LSB (bits 8-15) - STATUS lines mask (lines that are currently set).
  *
  */
-int iblines(gpib_board_t *board, int *buf)
+int iblines( const gpib_board_t *board, short *lines)
 {
-	if(board->interface->line_status == NULL)
+	if( board->interface->line_status == NULL )
 	{
 		printk("driver cannot query gpib line status\n");
 		return -1;
 	}
-	*buf = board->interface->line_status(board);
+	*lines = board->interface->line_status( board );
 	return 0;
 }

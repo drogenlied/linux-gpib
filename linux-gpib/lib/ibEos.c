@@ -15,7 +15,7 @@ int ibeos(int ud, int v)
 	}
 
 	conf->eos = v & 0xff;
-	conf->eosflags = (v >> 8) & 0xff;
+	conf->eos_flags = (v >> 8) & 0xff;
 
 	return ibsta;
 }
@@ -27,13 +27,14 @@ int ibeos(int ud, int v)
  *
  */
 
-int iblcleos(int ud)
+int iblcleos( const ibConf_t *conf )
 {
-	ibConf_t *conf = ibConfigs[ud];
-	int eosmode;
+	eos_ioctl_t eos_cmd;
+	const ibBoard_t *board = &ibBoard[ conf->board ];
 
-	eosmode = conf->eos | (conf->eosflags << 8);
+	eos_cmd.eos = conf->eos;
+	eos_cmd.eos_flags = conf->eos_flags;
 
-	return ibBoardFunc(conf->board, IBEOS, eosmode);
+	return ioctl( board->fileno, IBEOS, &eos_cmd );
 }
 

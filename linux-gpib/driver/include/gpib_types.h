@@ -18,28 +18,6 @@
 #ifndef _GPIB_TYPES_H
 #define _GPIB_TYPES_H
 
-#ifndef __KERNEL__
-#include <stdint.h>
-#endif
-
-typedef struct ibio_op {
-	uint8_t 		*io_vbuf;	/* virtual buffer address	*/
-	unsigned long		io_pbuf;	/* physical buffer address	*/
-	unsigned long	io_cnt;		/* transfer count		*/
-	int		io_flags;	/* direction flags, etc.	*/
-	uint8_t		io_ccfunc;	/* carry-cycle function		*/
-} ibio_op_t;
-
-typedef struct {
-	int		ib_cnt;		/* I/O count  (rd, wrt, etc)	*/
-	int		ib_arg;		/* other argument value 	*/
-	int		ib_ret;		/* general purpose return value	*/
-	int		ib_ibsta;	/* returned status vector	*/
-	int		ib_iberr;	/* returned error code (if ERR)	*/
-	int		ib_ibcnt;	/* returned I/O count		*/
-	uint8_t            *ib_buf;
-} ibarg_t;
-
 #ifdef __KERNEL__
 /* gpib_interface_t defines the interface
  * between the board-specific details dealt with in the drivers
@@ -113,7 +91,7 @@ struct gpib_interface_struct
 	/* Returns current status of the bus lines.  Should be set to
 	 * NULL if your board does not have the ability to query the
 	 * state of the bus lines. */
-	int (*line_status)(gpib_board_t *board);
+	int ( *line_status )( const gpib_board_t *board );
 	/* updates and returns the board's current status.
 	 * The meaning of the bits are specified in gpib_user.h
 	 * in the IBSTA section.  The driver does not need to

@@ -37,9 +37,9 @@ int ibwrt(int ud, void *rd, unsigned long cnt)
 		return status;
 	}
 
-	board = &ibBoard[conf->board];
+	board = &ibBoard[ conf->board ];
 
-	iblcleos(ud);
+	iblcleos( conf );
 
 	if(conf->is_interface == 0)
 	{

@@ -4,43 +4,63 @@
 #include <sys/ioctl.h>
 #include <string.h>
 
+int set_iobase( ibBoard_t *board, ibConf_t *conf )
+{
+	return ioctl( board->fileno, CFCBASE, &board->base );
+}
+
 int ibBdChrConfig(int ud)
 {
 	ibConf_t *conf = ibConfigs[ud];
 	ibBoard_t *board;
 	board_type_ioctl_t boardtype;
+	int status = ibsta & CMPL;
+	int retval;
 
-	if(ibCheckDescriptor(ud) < 0)
+	if( ibCheckDescriptor( ud ) < 0 )
 	{
-		return ibsta | ERR;
+		status |= ERR;
+		ibsta = status;
+		return status;
 	}
 
-	board = &ibBoard[conf->board];
+	board = &ibBoard[ conf->board ];
 
-	if(board->fileno >= 0) return ibsta;
-
-	if(ibBoardOpen(conf->board, 0) & ERR)
+	if( board->fileno >= 0 )
 	{
-		ibsta = ibarg.ib_ibsta | ERR;
+		ibsta = status;
+		return status;
+	}
+
+	if( ibBoardOpen( conf->board, 0 ) & ERR)
+	{
+		status |= ERR;
 		iberr = EDVR;
 		ibcnt = errno;
-		ibPutErrlog(ud,"ibBdChrConfig");
-	}else 
+	}else
 	{
-		strncpy(boardtype.name, board->board_type, sizeof(boardtype.name));
-		ioctl(board->fileno, CFCBOARDTYPE, &boardtype); 
-		ibBoardFunc(conf->board, CFCBASE, board->base);
-		ibBoardFunc(conf->board, CFCIRQ , board->irq);
-		ibBoardFunc(conf->board, CFCDMA , board->dma);
+		strncpy( boardtype.name, board->board_type, sizeof( boardtype.name ) );
+		retval = ioctl( board->fileno, CFCBOARDTYPE, &boardtype );
+		if( retval < 0 )
+			status |= ERR;
+		retval = ioctl( board->fileno, CFCBASE, &board->base );
+		if( retval < 0 )
+			status |= ERR;
+		retval = ioctl( board->fileno, CFCIRQ, &board->irq );
+		if( retval < 0 )
+			status |= ERR;
+		retval = ioctl( board->fileno, CFCDMA, &board->dma );
+		if( retval < 0 )
+			status |= ERR;
 
-		if(!(ibsta & ERR)) 
+		if( !( status & ERR ) )
 		{
 			iberr = EDVR;
 			ibcnt = 0;
-			ibPutErrlog(ud,"ibBdChrConfig");
 		}
 		ibBoardClose(conf->board);
 	}
-	return ibsta;
+	ibsta = status;
+	return status;
 }
 

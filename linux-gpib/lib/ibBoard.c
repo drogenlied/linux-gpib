@@ -14,8 +14,6 @@ int iberr = 0;
 int ibsta = 0;
 int ibcnt = 0;
 
-ibarg_t ibarg = {0 };
-
 ibBoard_t ibBoard[MAX_BOARDS];
 
 void ibBoardDefaultValues(void)
@@ -36,7 +34,7 @@ void ibBoardDefaultValues(void)
 }
 
 /**********************/
-int ibBoardOpen(int bd,int flags)
+int ibBoardOpen( int bd, int flags )
 {
 	int fd;
 
@@ -68,68 +66,6 @@ int ibBoardClose(int bd)
 
 /**********************/
 
-int ibBoardFunc (int bd, int code, ...)
-{
-	va_list ap;
-	static int arg;
-	static uint8_t *buf;
-	static int cnt;
-
-	switch (code)
-	{
-		case IBAPE:
-			va_start(ap, code);
-			arg=va_arg(ap, int);
-			buf=va_arg(ap, void*);
-			cnt=va_arg(ap, unsigned long);
-			va_end(ap);
-			break;
-		case IBAPRSP:
-		case IBRPP:
-			va_start(ap, code);
-			arg=va_arg(ap, int);
-			buf=va_arg(ap, char *);
-			buf[0]=0;
-			va_end(ap);
-			cnt=1;
-			break;
-		default:
-			va_start(ap, code);
-			arg=va_arg(ap, int);
-			va_end(ap);
-			buf=NULL;
-			cnt=0;
-			break;
-	}
-
-	if( ibBoard[bd].fileno > 0 )
-	{
-		ibarg.ib_arg = arg;
-
-		ibarg.ib_buf =  buf;
-
-		ibarg.ib_cnt = cnt;
-		if( ioctl( ibBoard[bd].fileno, code, (ibarg_t *) &ibarg ) < 0)
-		{
-			ibsta = ERR;
-			iberr = EDVR;
-			ibcnt = errno;
-		}else
-		{
-			ibsta = ibarg.ib_ibsta;
-			iberr = ibarg.ib_iberr;
-			ibcnt = ibarg.ib_ibcnt;
-			ibPutErrlog(-1,ibVerbCode(code));
-		}
-	}else
-	{
-		ibsta = CMPL | ERR;
-		iberr = ENEB;
-		ibcnt = 0;
-	}
-	ibPutErrlog(-1,"ibBoardFunc");
-	return ibsta;
-}
 
 
 

@@ -40,7 +40,7 @@ extern int ibeot(int ud, int v);
 extern int ibevent(int ud, short *event);
 extern int ibfind(char *dev);
 extern int ibgts(int ud, int v);
-extern int iblines(int ud, unsigned short *buf);
+extern int iblines( int ud, short *line_status );
 extern int ibloc(int ud);
 extern int ibonl(int ud, int onl);
 extern int ibchbase(int ud, int base);

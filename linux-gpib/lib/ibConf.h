@@ -17,7 +17,7 @@ typedef struct ibConfStruct
 	char init_string[100];               /* initialization string (optional) */
 	int board;                         /* board number                     */
 	char eos;                           /* local eos modes                  */
-	int eosflags;
+	int eos_flags;
 	int flags;                         /* some flags                       */
 	unsigned int usec_timeout;
 	unsigned int send_eoi : 1;	// assert EOI at end of writes
@@ -30,9 +30,9 @@ typedef struct ibBoardStruct {
 	char board_type[100];	// name (model) of interface board
 	int pad;		// device primary address
 	int sad;		// device secodnary address (negative disables)
-	int base;                          /* base configuration               */
-	int irq;
-	int dma;
+	unsigned long base;                          /* base configuration               */
+	unsigned int irq;
+	unsigned int dma;
 	int fileno;                        /* device file descriptor           */
 	char device[100];	// name of device file ( /dev/gpib0, etc.)
 	int is_system_controller : 1;	/* board is busmaster or not */

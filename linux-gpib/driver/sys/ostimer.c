@@ -41,6 +41,7 @@ void osStartTimer( gpib_board_t *board, unsigned int usec_timeout )
 void osRemoveTimer( gpib_board_t *board )
 /* Removes the timeout task */
 {
-	del_timer_sync( &board->timer );
+	if( timer_pending( &board->timer ) )
+		del_timer_sync( &board->timer );
 }
 

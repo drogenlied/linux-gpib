@@ -54,7 +54,7 @@ int ibrd(int ud, void *rd, unsigned long cnt)
 	board = &ibBoard[conf->board];
 
 	// set eos mode
-	iblcleos(ud);
+	iblcleos( conf );
 
 	if(conf->is_interface == 0)
 	{

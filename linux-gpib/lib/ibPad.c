@@ -2,33 +2,47 @@
 #include "ib_internal.h"
 #include <ibP.h>
 
-int ibpad(int ud, int v)
+int ibpad( int ud, int addr )
 {
-	ibConf_t *conf = ibConfigs[ud];
+	ibConf_t *conf = ibConfigs[ ud ];
+	ibBoard_t *board;
+	int status = ibsta & CMPL;
+	int retval;
+	unsigned int address = addr;
 
-	ibsta &= ~ERR;
-
-	if(ibCheckDescriptor(ud) < 0)
+	if( ibCheckDescriptor( ud ) < 0 )
 	{
+		status |= ERR;
+		ibsta = status;
 		iberr = EDVR;
-		return ibsta | ERR;
+		return status;
 	}
+
+	board = &ibBoard[ conf->board ];
 
 	if ( conf->is_interface )
-		return ibBoardFunc(conf->board, IBPAD, v);
-	/* enable ibpad also working on devices, not only on boards */
-	else
 	{
-		if (v >= 31)
+		retval = ioctl( board->fileno, IBPAD, &address );
+		if( retval < 0 )
 		{
-			ibsta = CMPL | ERR;
+			status |= ERR;
+			ibsta = status;
+			return status;
+		}
+	}else
+	{
+		if( address > 30 )
+		{
+			status |= ERR;
+			ibsta = status;
 			iberr = EARG;
-			ibcnt = errno;
-			ibPutErrlog(-1, ibVerbCode(IBPAD));
+			fprintf( stderr, "invalid gpib address\n" );
 		}else
 		{
-			ibConfigs[ud]->pad = v ;
+			conf->pad = address ;
 		}
 	}
-		return ibsta;
+
+	ibsta = status;
+	return status;
 }

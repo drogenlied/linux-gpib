@@ -35,7 +35,9 @@ int ibsad( gpib_board_t *board, int addr )
 		return -1;
 	}else
 	{
-		if( ( board->sad = addr ) >= 0 )
+		board->sad = addr;
+		if( board->sad < 0 ) board->sad = -1;
+		if( board->sad >= 0 )
 		{
 			board->interface->secondary_address( board, board->sad, 1 );
 		}else
@@ -63,22 +65,19 @@ int ibtmo(gpib_board_t *board, unsigned int usec_timeout)
  * Set the end-of-string modes for I/O operations to v.
  *
  */
-int ibeos( gpib_board_t *board, int v )
+int ibeos( gpib_board_t *board, int eos, int eosflags )
 {
-	int ebyte, emodes;
-	ebyte = v & 0xFF;
-	emodes = (v >> 8) & 0xFF;
-	if (emodes & ~EOSM)
+	if( eosflags & ~EOSM )
 	{
-		printk("bad EOS modes\n");
-		return -1;
+		printk( "bad EOS modes\n" );
+		return -EINVAL;
 	}else
 	{
-		if(emodes & REOS)
+		if( eosflags & REOS )
 		{
-			board->interface->enable_eos(board, ebyte, emodes & BIN);
+			board->interface->enable_eos( board, eos, eosflags & BIN );
 		}else
-			board->interface->disable_eos(board);
+			board->interface->disable_eos( board );
 	}
 	return 0;
 }

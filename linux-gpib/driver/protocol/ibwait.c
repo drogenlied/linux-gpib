@@ -40,8 +40,7 @@ int ibwait( gpib_board_t *board, unsigned int mask )
 		printk("bad mask 0x%x \n",mask);
 		return -1;
 	}
-	if( mask & TIMO )
-		osStartTimer( board, board->usec_timeout );
+	osStartTimer( board, board->usec_timeout );
 	while( ( ibstatus( board ) & mask) == 0 )
 	{
 		if( interruptible_sleep_on_timeout( &board->wait, 1 ) )
@@ -51,8 +50,7 @@ int ibwait( gpib_board_t *board, unsigned int mask )
 			break;
 		}
 	}
-	if( mask & TIMO )
-		osRemoveTimer( board );
+	osRemoveTimer( board );
 	return retval;
 }
 

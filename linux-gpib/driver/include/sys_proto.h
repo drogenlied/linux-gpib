@@ -9,7 +9,4 @@ extern  void osStartTimer( gpib_board_t *board, unsigned int usec_timeout );
 extern  void osRemoveTimer( gpib_board_t *board );
 extern  void osSendEOI( void );
 extern  void osSendEOI( void );
-extern  void osChngBase( gpib_board_t *board, unsigned long new_base );
-extern  void osChngIRQ( gpib_board_t *board, int new_irq );
-extern  void osChngDMA( gpib_board_t *board, int new_dma );
-
+extern void init_gpib_board( gpib_board_t *board );

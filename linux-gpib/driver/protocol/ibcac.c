@@ -12,8 +12,8 @@
  */
 int ibcac(gpib_board_t *board, int sync)
 {
-	int status = ibstatus(board);
-	if((status & CIC) == 0)
+	int status = ibstatus( board );
+	if( ( status & CIC ) == 0 )
 	{
 		printk("gpib: not CIC during ibcac\n");
 		return -1;

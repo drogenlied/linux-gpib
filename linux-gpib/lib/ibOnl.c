@@ -3,44 +3,63 @@
 #include <ibP.h>
 #include <stdlib.h>
 
-int ibonl(int ud, int onl)
+int ibonl( int ud, int onl )
 {
 	int oflags=0;
 	ibConf_t *conf = ibConfigs[ud];
+	int retval;
+	ibBoard_t *board;
+	int status = ibsta & CMPL;
 
-	ibsta &= ~ERR;
-
-	if(ibCheckDescriptor(ud) < 0)
+	if( ibCheckDescriptor( ud ) < 0 )
 	{
-		ibsta |= ERR;
-		return ibsta;
+		status |= ERR;
+		ibsta = status;
+		return status;
 	}
 
-	if(conf->flags & CN_EXCLUSIVE )
+	board = &ibBoard[ conf->board ];
+
+	// XXX
+	if( conf->flags & CN_EXCLUSIVE )
 		oflags |= O_EXCL;
 
-	if((ibBoard[conf->board].fileno < 0)
-		&& (ibBoardOpen(conf->board, oflags) & ERR))
+	if( ( board->fileno < 0 )
+		&& ( ibBoardOpen( conf->board, oflags ) & ERR ) )
 	{
-		ibsta = ibarg.ib_ibsta | ERR;
+		status |= ERR;
 		iberr = EDVR;
 		ibcnt = errno;
-		return ibsta;
+		ibsta = status;
+		return status;
 	}
 
-	ibBoardFunc(conf->board, IBONL, onl );
+	retval = ioctl( board->fileno, IBONL, &onl );
+	if( retval < 0 )
+	{
+		switch( errno )
+		{
+			default:
+				iberr = EDVR;
+				break;
+		}
+		status |= ERR;
+		ibsta = status;
+		return status;
+	}
+
 	if(onl == 0)
 	{
-		if(conf->is_interface)
-			ibBoardClose(conf->board);
-		if(conf)
+		if( conf->is_interface )
+			ibBoardClose( conf->board );
+		if( conf )
 		{
-			free(ibConfigs[ud]);
-			ibConfigs[ud] = NULL;
+			free( ibConfigs[ ud ] );
+			ibConfigs[ ud ] = NULL;
 		}
 	}
 
-	return ibsta;
+	return status;
 }
 
 

@@ -28,7 +28,7 @@ int ibdev(int minor, int pad, int sad, int timo, int eot, int eos)
 		eot, eos & 0xff, ( eos >> 8 ) & 0xff );
 }
 
-int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_eoi, int eos, int eosflags)
+int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_eoi, int eos, int eos_flags)
 {
 	char *envptr;
 	int retval;
@@ -60,7 +60,7 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 	conf.init_string[0] = 0;               /* initialization string (optional) */
 	conf.board = minor;                         /* board number                     */
 	conf.eos = eos;                           /* local eos modes                  */
-	conf.eosflags = eosflags;
+	conf.eos_flags = eos_flags;
 	conf.usec_timeout = usec_timeout;
 	if( send_eoi )
 		conf.send_eoi = 1;

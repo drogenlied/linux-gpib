@@ -2,26 +2,40 @@
 #include "ib_internal.h"
 #include <ibP.h>
 
-int ibsad(int ud, int v)
+int ibsad( int ud, int v )
 {
-	ibConf_t *conf = ibConfigs[ud];
+	ibConf_t *conf = ibConfigs[ ud ];
+	ibBoard_t *board;
+	int status = ibsta & CMPL;
+	int retval;
+	int sad = v - sad_offset;
 
-	ibsta &= ~ERR;
-	
-	if(ibCheckDescriptor(ud) < 0)
+	if( ibCheckDescriptor( ud ) < 0 )
 	{
+		status |= ERR;
+		ibsta = status;
 		iberr = EDVR;
-		return ibsta | ERR;
+		return status;
 	}
 
+	board = &ibBoard[ conf->board ];
+
 	if( conf->is_interface )
-		return ibBoardFunc( conf->board, IBSAD, v - sad_offset);
-	else
 	{
-		/* enable ibsad also working on devices, not only on boards */
-		if ( ( v >= sad_offset && v <= sad_offset + gpib_addr_max ) ||  (v == 0x0))
+		retval = ioctl( board->fileno, IBSAD, &sad );
+		if( retval < 0 )
 		{
-			ibBoard[ud].sad = v - sad_offset;
+			status |= ERR;
+			ibsta = status;
+			iberr = EDVR;
+			return status;
+		}
+	}else
+	{
+		if ( sad_offset <= 30 )
+		{
+			conf->sad = sad;
+			if( conf->sad < 0 ) conf->sad = -1;
 		}
 		else
 		{
