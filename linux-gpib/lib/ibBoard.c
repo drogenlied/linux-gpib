@@ -16,12 +16,12 @@ int iberr = 0;
 int ibsta = 0;
 int ibcnt = 0;
 
-ibBoard_t ibBoard[MAX_BOARDS];
+ibBoard_t ibBoard[ MAX_BOARDS ];
 
-void ibBoardDefaultValues(void)
+void ibBoardDefaultValues( void )
 {
 	int i;
-	for(i = 0; i < MAX_BOARDS; i++)
+	for( i = 0; i < MAX_BOARDS; i++ )
 	{
 		ibBoard[i].pad = 0;
 		ibBoard[i].sad = -1;
@@ -30,8 +30,8 @@ void ibBoardDefaultValues(void)
 		ibBoard[i].dma = 0;
 		ibBoard[i].is_system_controller = 0;
 		ibBoard[i].fileno = -1;
-		strcpy(ibBoard[i].device, "");
-		strcpy(ibBoard[i].board_type, "");
+		strcpy( ibBoard[i].device, "" );
+		strcpy( ibBoard[i].board_type, "" );
 	}
 }
 

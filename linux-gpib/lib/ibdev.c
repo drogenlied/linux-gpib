@@ -91,7 +91,10 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 		return -1;
 	}
 
-	if(ibsre(uDesc, 1) & ERR ) return -1;
+	if( board->is_system_controller )
+	{
+		if(ibsre(uDesc, 1) & ERR ) return -1;
+	}
 
 	return uDesc;
 }

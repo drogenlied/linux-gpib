@@ -3,11 +3,6 @@
 #include <linux/kernel.h>
 #include <linux/vmalloc.h>
 
-#if !defined(HP82335) && !defined(TMS9914)
-#else
-int ccrbits	= 0;	/* static bits for AUXRA (EOS modes) */
-#endif
-
 /*
 * IBONL
 * Initialize the interface hardware.  If v is non-zero then
@@ -18,9 +13,7 @@ int ccrbits	= 0;	/* static bits for AUXRA (EOS modes) */
 *      1.  Ibonl must be called before any other function.
 */
 
-int drvstat = 0;
-
-int ibonline( gpib_board_t *board )
+int ibonline( gpib_board_t *board, int master )
 {
 	if( ( board->open_count <= 1 ) && !( board->online ) )
 	{
@@ -40,8 +33,15 @@ int ibonline( gpib_board_t *board )
 	}
 	/* initialize system support functions */
 	board->online = 1;
-	if( board->master )
+	if( master )
+	{
+		board->master = 1;
 		ibsic(board);
+	}else
+	{
+		board->master = 0;
+	}
+
 	return 0;
 }
 

@@ -42,6 +42,12 @@ typedef struct
 	int sad;
 } wait_ioctl_t;
 
+typedef struct
+{
+	int online;
+	int master;
+} online_ioctl_t;
+
 /* Standard functions. */
 #define IBRD _IOWR( GPIB_CODE, 0, read_write_ioctl_t )
 #define IBWRT _IOWR( GPIB_CODE, 1, read_write_ioctl_t )
@@ -51,7 +57,7 @@ typedef struct
 #define IBWAIT _IOWR( GPIB_CODE, 5, wait_ioctl_t )
 #define IBRPP _IOWR( GPIB_CODE, 6, uint8_t )
 #define IBAPE _IOW( GPIB_CODE, 7, int )
-#define IBONL _IOW( GPIB_CODE, 8, int)
+#define IBONL _IOW( GPIB_CODE, 8, online_ioctl_t )
 #define IBSIC _IO( GPIB_CODE, 9 )
 #define IBSRE _IOW( GPIB_CODE, 10, int )
 #define IBGTS _IO( GPIB_CODE, 11 )

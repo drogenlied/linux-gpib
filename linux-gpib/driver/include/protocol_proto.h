@@ -7,7 +7,7 @@ extern  void ibAPE(gpib_board_t *board, int pad, int v);
 extern  int ibcac(gpib_board_t *board, int sync);
 extern  ssize_t ibcmd( gpib_board_t *board, uint8_t *buf, size_t length );
 extern  int ibgts(gpib_board_t *board);
-extern  int ibonline( gpib_board_t *board );
+extern  int ibonline( gpib_board_t *board, int master );
 extern  int iboffline( gpib_board_t *board );
 extern  int iblines( const gpib_board_t *board, short *lines );
 extern  ssize_t ibrd(gpib_board_t *board, uint8_t *buf, size_t length, int *end_flag);

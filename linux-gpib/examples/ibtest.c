@@ -30,9 +30,10 @@ void gpiberr(char *msga);
 
 enum Action
 {
-	GPIB_WRITE,
+	GPIB_QUIT,
 	GPIB_READ,
-	GPIB_QUIT
+	GPIB_TIMEOUT,
+	GPIB_WRITE,
 };
 
 // returns a device descriptor after prompting user for primary address
@@ -72,21 +73,30 @@ int prompt_for_action(void)
 	char input[10];
 	while(1)
 	{
-		printf("You can (r)ead or (w)rite a string to your device or (q)uit: ");
-		fgets(input, sizeof(input), stdin);
+		printf("You can:\n"
+ 			"\t(q)uit\n"
+			"\t(r)ead string from device\n"
+			"\tchange (t)imeout on io operations\n"
+			"\t(w)rite string to device\n"
+			);
+		fgets( input, sizeof( input ), stdin );
 		switch( input[0] )
 		{
+			case 'q':
+			case 'Q':
+				return GPIB_QUIT;
+				break;
 			case 'r':
 			case 'R':
 				return GPIB_READ;
 				break;
+			case 't':
+			case 'T':
+				return GPIB_TIMEOUT;
+				break;
 			case 'w':
 			case 'W':
 				return GPIB_WRITE;
-				break;
-			case 'q':
-			case 'Q':
-				return GPIB_QUIT;
 				break;
 			default:
 				break;
@@ -116,7 +126,7 @@ int perform_read(int ud)
 
 int prompt_for_write(int ud)
 {
-	char buffer[100];
+	char buffer[1024];
 
 	printf("enter a string to send to your device: ");
 	fgets( buffer, sizeof(buffer), stdin );
@@ -125,6 +135,40 @@ int prompt_for_write(int ud)
 	if( ibwrt(ud, buffer, strlen(buffer)) & ERR )
 	{
 		gpiberr("write error");
+		return -1;
+	}
+	return 0;
+}
+
+int prompt_for_timeout( int ud )
+{
+	int timeout;
+
+	printf( "enter the desired timeout:\n"
+		"(0) none\n"
+		"\t(1) 10 microsec\n"
+		"\t(2) 30 microsec\n"
+		"\t(3) 100 microsec\n"
+		"\t(4) 300 microsec\n"
+		"\t(5) 1 millisec\n"
+		"\t(6) 3 millisec\n"
+		"\t(7) 10 millisec\n"
+		"\t(8) 30 millisec\n"
+		"\t(9) 100 millisec\n"
+		"\t(10) 300 millisec\n"
+		"\t(11) 1 sec\n"
+		"\t(12) 3 sec\n"
+		"\t(13) 10 sec\n"
+		"\t(14) 30 sec\n"
+		"\t(15) 100 sec\n"
+		"\t(16) 300 sec\n"
+		"\t(17) 1000 sec\n"
+		);
+	scanf( "%i", &timeout );
+
+	if( ibtmo( ud, timeout ) & ERR )
+	{
+		fprintf( stderr, "failed to set timeout to %i\n", timeout );
 		return -1;
 	}
 	return 0;
@@ -157,15 +201,17 @@ int main(int argc,char **argv)
 
 		switch( act )
 		{
-			case GPIB_WRITE:
-				if(prompt_for_write(dev) < 0)
+			case GPIB_READ:
+				if(perform_read(dev) < 0)
 				{
 					ibonl(dev, 0);
 					exit(1);
 				}
 				break;
-			case GPIB_READ:
-				if(perform_read(dev) < 0)
+			case GPIB_TIMEOUT:
+				prompt_for_timeout( dev ); 
+			case GPIB_WRITE:
+				if(prompt_for_write(dev) < 0)
 				{
 					ibonl(dev, 0);
 					exit(1);
@@ -174,7 +220,7 @@ int main(int argc,char **argv)
 			default:
 				break;
 		}
-	}while(act != GPIB_QUIT);
+	}while( act != GPIB_QUIT );
 
 
 #if 0

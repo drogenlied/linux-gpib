@@ -30,55 +30,6 @@
 #endif
 MODULE_LICENSE("GPL");
 
-/* format patterns for different function levels 
- * so debugging output is easier to read
- * this will cost a little memory of course but there is 
- * not much perfomance drop */
-
-char *ffmt[32] = 
-{
-   "",
-   " ",
-   "  ",
-   "   ",
-   "    ",
-   "     ",
-   "      ",
-   "       ",
-   "        ",
-   "         ",
-   "          ",
-   "           ",
-   "            ",
-   "             ",
-   "              ",
-   "               ",
-   "*",
-   "* ",
-   "*  ",
-   "*   ",
-   "*    ",
-   "*     ",
-   "*      ",
-   "*       ",
-   "*        ",
-   "*         ",
-   "*          ",
-   "*           ",
-   "*            ",
-   "*             ",
-   "*              ",
-   "*               "
-};
-
-
-#if SYSTIMO
-int       espwdid   = 0;		/* watchdog timer ID for ESP routines */
-#endif
-#if USEINTS
-struct semaphore espsemid;		/* semaphore ID for ESP interrupt support */
-int       espintcon = 0;		        /* ESP interrupt routine is "connected" */
-#endif
 
 /*
  * Linux initialization functions
@@ -104,7 +55,7 @@ void osReset(void)
 ********************************************************************************
 ********/
 
-struct file_operations ib_fops = 
+struct file_operations ib_fops =
 {
 	owner: THIS_MODULE,
 	llseek: NULL,
@@ -122,7 +73,7 @@ struct file_operations ib_fops =
 	lock: NULL,
 	readv: NULL,
 	writev: NULL,
-// sendpage and get_unmapped_area were added in 2.4.4		
+// sendpage and get_unmapped_area were added in 2.4.4
 //	sendpage: NULL,
 //	get_unmapped_area: NULL,
 };

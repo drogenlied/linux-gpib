@@ -133,12 +133,12 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 	unsigned int minor = MINOR(inode->i_rdev);
 	gpib_board_t *board;
 
-	if(minor >= MAX_NUM_GPIB_BOARDS)
+	if( minor >= MAX_NUM_GPIB_BOARDS )
 	{
 		printk("gpib: invalid minor number of device file\n");
 		return -ENODEV;
 	}
-	board = &board_array[minor];
+	board = &board_array[ minor ];
 
 	GPIB_DPRINTK( "minor %i ioctl %i\n", minor, cmd);
 
@@ -616,15 +616,15 @@ int auto_poll_enable_ioctl( gpib_board_t *board, unsigned long arg )
 
 int online_ioctl( gpib_board_t *board, unsigned long arg )
 {
-	int online;
+	online_ioctl_t online_cmd;
 	int retval;
 
-	retval = copy_from_user( &online, ( void * ) arg, sizeof( online ) );
+	retval = copy_from_user( &online_cmd, ( void * ) arg, sizeof( online_cmd ) );
 	if( retval )
 		return -EFAULT;
 
-	if( online )
-		return ibonline( board );
+	if( online_cmd.online )
+		return ibonline( board, online_cmd.master );
 	else
 		return iboffline( board );
 
