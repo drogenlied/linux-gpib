@@ -81,16 +81,14 @@ int main(int argc,char **argv)
 		fprintf(stderr, "failed to get gpib descriptor\n");
 		exit(1);
 	}
-	if(ibBdChrConfig(ind, ibBoard[CONF(ind,board)].base,
-		ibBoard[CONF(ind,board)].irq,
-		ibBoard[CONF(ind,board)].dma) & ERR )
+	if(ibBdChrConfig(ud) & ERR )
 	{
 		fprintf(stderr, "\n  Problems while setting up Base and Irq\n"
 			"Perhaps you changed Base and Irq Without reloading the Driver?\n");
 		exit(1);
 	}
 
-	if( ibonl( ind, 1) & ERR )
+	if( ibonl(ud, 1) & ERR )
 	{
 		if (iberr == ENEB)
 		{
@@ -109,12 +107,12 @@ int main(int argc,char **argv)
 
 	fprintf(stderr, "**Checking some Bus Functions...                     ");
 
-	if( ibsic(ind) & ERR )
+	if( ibsic(ud) & ERR )
 	{
 		fprintf(stderr, "\n  Problem Sending IFC\n");
 		exit(1);
 	}
-	if(ibcmd(ind, "  ", 3) & ERR )
+	if(ibcmd(ud, "  ", 3) & ERR )
 	{
 		fprintf(stderr, "\n  Bus or another Hardware Problem\n");
 		if( ibsta & TIMO )
