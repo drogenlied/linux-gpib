@@ -671,7 +671,8 @@ void agilent_82357a_primary_address(gpib_board_t *board, unsigned int address)
 
 void agilent_82357a_secondary_address(gpib_board_t *board, unsigned int address, int enable)
 {
-	printk("%s: %s: warning: assigning a secondary address not supported\n", __FILE__, __FUNCTION__);
+	if(enable)
+		printk("%s: %s: warning: assigning a secondary address not supported\n", __FILE__, __FUNCTION__);
 	return;
 }
 
