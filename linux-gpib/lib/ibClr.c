@@ -31,7 +31,7 @@ int ibclr( int ud )
 		cmd[ i++ ] = MSA( conf->sad );
 	cmd[ i++ ] = SDC;
 
-	count = __ibcmd( board, conf, &cmd, i );
+	count = __ibcmd( board, conf, cmd, i );
 	if(count != i)
 	{
 		iberr = EDVR;
