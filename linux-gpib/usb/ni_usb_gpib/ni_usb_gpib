@@ -48,7 +48,7 @@ if [ ! -r $SS_LOADER ]; then
 fi
 
 # missing fxload?
-if [ ! -x $FXLOAD ]; then
+if ! which $FXLOAD; then
     if [ -x /usr/bin/logger ]; then
 	/usr/bin/logger -t $0 "missing $FXLOAD ??"
     fi
