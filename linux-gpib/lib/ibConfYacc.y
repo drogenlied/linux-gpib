@@ -47,10 +47,9 @@ char cval;
 
 	interface: T_INTERFACE '{' minor parameter '}'
 			{
-				init_ibconf( &ibFindConfigs[ findIndex ] );
 				ibFindConfigs[findIndex].is_interface = 1;
 				ibFindConfigs[findIndex].send_eoi = 1;
-				if(++findIndex > FIND_CONFIGS_LENGTH)
+				if(++findIndex >= FIND_CONFIGS_LENGTH)
 				{
 					fprintf(stderr, " too many devices in config file\n");
 					return -1;
@@ -100,10 +99,9 @@ char cval;
 
 	device: T_DEVICE '{' option '}'
 			{
-				init_ibconf( &ibFindConfigs[ findIndex ] );
 				ibFindConfigs[findIndex].is_interface = 0;
 				ibFindConfigs[findIndex].send_eoi = 1;
-				if(++findIndex > FIND_CONFIGS_LENGTH)
+				if(++findIndex >= FIND_CONFIGS_LENGTH)
 				{
 					fprintf(stderr, "too many devices in config file\n");
 					return -1;
