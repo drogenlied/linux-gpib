@@ -87,6 +87,7 @@ typedef struct
 	struct usb_interface *bus_interface;
 	unsigned short eos_char;
 	unsigned short eos_mode;
+	unsigned short hw_control_bits;
 	struct semaphore bulk_transfer_lock;
 	struct semaphore interrupt_transfer_lock;
 	struct semaphore control_transfer_lock;
@@ -96,6 +97,21 @@ struct agilent_82357a_register_pairlet
 {
 	short address;
 	unsigned short value;
+};
+
+enum firmware_registers
+{
+	HW_CONTROL = 0xa,
+};
+
+enum hardware_control_bits
+{
+	NOT_TI_RESET = 0x1,
+	SYSTEM_CONTROLLER = 0x2,
+	NOT_PARALLEL_POLL = 0x4,
+	OSCILLATOR_5V_ON = 0x8,
+	OUTPUT_5V_ON = 0x20,
+	CPLD_3V_ON = 0x80,
 };
 
 #endif	// _AGILENT_82357_H

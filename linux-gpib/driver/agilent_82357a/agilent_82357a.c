@@ -376,10 +376,24 @@ int agilent_82357a_go_to_standby(gpib_board_t *board)
 }
 
 //FIXME should change prototype to return int
-void agilent_82357a_request_system_control( gpib_board_t *board, int request_control )
+void agilent_82357a_request_system_control(gpib_board_t *board, int request_control)
 {
-	//FIXME: implement
-	return;// 0;
+	agilent_82357a_private_t *a_priv = board->private_data;
+	struct agilent_82357a_register_pairlet write;
+	int retval;
+	
+	if(request_control)
+		a_priv->hw_control_bits |= SYSTEM_CONTROLLER;
+	else
+		a_priv->hw_control_bits &= ~SYSTEM_CONTROLLER;
+	write.address = HW_CONTROL;
+	write.value = a_priv->hw_control_bits;
+	retval = agilent_82357a_write_registers(a_priv, &write, 1);
+	if(retval)
+	{
+		printk("%s: %s: agilent_82357a_write_registers() returned error\n", __FILE__, __FUNCTION__);
+	}
+	return;// retval;
 }
 //FIXME maybe the interface should have a "pulse interface clear" function that can return an error?
 void agilent_82357a_interface_clear(gpib_board_t *board, int assert)
@@ -479,6 +493,17 @@ static void agilent_82357a_free_private(agilent_82357a_private_t *a_priv)
 
 static int agilent_82357a_init(gpib_board_t *board)
 {
+	agilent_82357a_private_t *a_priv = board->private_data;
+	struct agilent_82357a_register_pairlet hw_control;
+	int retval;
+	
+	hw_control.address = HW_CONTROL;
+	retval = agilent_82357a_read_registers(a_priv, &hw_control, 1);
+	if(retval)
+	{
+		printk("%s: %s: agilent_82357a_read_registers() returned error\n", __FILE__, __FUNCTION__);
+	}
+	a_priv->hw_control_bits = hw_control.value;
 	//FIXME: implement
 	return 0;
 }
