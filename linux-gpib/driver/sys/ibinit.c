@@ -15,7 +15,7 @@
 
 int ibonline( gpib_board_t *board, int master )
 {
-	if( ( board->open_count <= 1 ) && !( board->online ) )
+	if( !board->online )
 	{
 		board->buffer_length = 0x1000;
 		if( board->buffer )
@@ -30,13 +30,13 @@ int ibonline( gpib_board_t *board, int master )
 			printk("GPIB Hardware Error! (Chip type not found or wrong Base Address?)\n");
 			return -1;
 		}
+		/* initialize system support functions */
+		board->online = 1;
 	}
-	/* initialize system support functions */
-	board->online = 1;
 	if( master )
 	{
 		board->master = 1;
-		ibsic(board);
+		ibsic( board );
 	}else
 	{
 		board->master = 0;

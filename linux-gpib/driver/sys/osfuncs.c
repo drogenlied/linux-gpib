@@ -148,7 +148,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 		up( &board->mutex );
 		return -ENODEV;
 	}
-
+//XXX need more checks to be sure board is online
 	switch( cmd )
 	{
 		case CFCBOARDTYPE:
