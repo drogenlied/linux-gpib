@@ -11,5 +11,7 @@ SUBDIRS = include lib examples test driver doc language
 
 EXTRA_DIST = etc util README.HAMEG README.hp82335 bootstrap
 
+ACLOCAL_AMFLAGS = -I m4
+
 dist-hook:
 	rm -rf `find $(distdir) -name CVS`
