@@ -3,27 +3,24 @@
 #   Makefile for Example files
 #
 #   (c) C.Schroeter 1994
+#   (c) Frank Mori Hess 2002,2003
 #
 #######################################################################
 
 CFLAGS= -I. -I../include -I ../driver/include -Wall -O2 -D_REENTRANT 
-LDFLAGS = -L../lib
+LDFLAGS = -L../lib -lgpib
 
-SRCS = ibtest.c master_write_from_file.c slave_read_to_file.c
+BINS = ibtest master_write_from_file slave_read_to_file master_read_to_file \
+	slave_write_from_file
+SRCS = $(BINS:%=%.c)
 
-all:  .depend ibtest master_write_from_file slave_read_to_file
+all: $(BINS) .depend
 
-ibtest:	ibtest.o
-	$(CC) -o ibtest  ibtest.o $(LDFLAGS) -lgpib
-
-master_write_from_file:	master_write_from_file.o
-	$(CC) -o master_write_from_file master_write_from_file.o $(LDFLAGS) -lgpib
-
-slave_read_to_file:	slave_read_to_file.o
-	$(CC) -o slave_read_to_file slave_read_to_file.o $(LDFLAGS) -lgpib
+$(BINS) : % : %.o
+	$(CC) -o $@ $< $(LDFLAGS)
 
 clean:
-	rm -f *.o ibtest master_write_from_file slave_read_to_file .depend
+	rm -f *.o $(BINS) .depend
 
 .depend : $(SRCS)
 	$(CPP) $(CFLAGS) -MM $(SRCS)  >./.depend
