@@ -93,15 +93,17 @@ int general_ibstatus( gpib_board_t *board, const gpib_status_queue_t *device,
 		 * board->status to avoid confusion */
 		status &= ~TIMO;
 		/* get real SRQI status if we can */
-		iblines(board, &line_status);
-		if((line_status & ValidSRQ))
+		if(iblines(board, &line_status) == 0)
 		{
-			if((line_status & BusSRQ))
+			if((line_status & ValidSRQ))
 			{
-				status |= SRQI;
-			}else
-			{
-				status &= ~SRQI;
+				if((line_status & BusSRQ))
+				{
+					status |= SRQI;
+				}else
+				{
+					status &= ~SRQI;
+				}
 			}
 		}
 	}
