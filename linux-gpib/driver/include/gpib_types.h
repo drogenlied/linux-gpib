@@ -44,6 +44,7 @@ typedef struct {
 
 } ibarg_t;
 
+#ifdef __KERNEL__
 /* gpib_board_t is filled out by driver.  It is the interface
  * between the board-specific details dealt with in the drivers
  * and generic interface provided by gpib-common.
@@ -51,12 +52,6 @@ typedef struct {
 typedef struct
 {
 	char *name;	// name of board
-	/* attach() does board-specific initialization and allocation
-	 */
-	int (*attach)(int *option, num_options);
-	/* detach() does board-specific freeing of resources and hardware shutdown
-	 */
-	void (*detach)();
 	/* read() should read at most 'length' bytes from the bus into
 	 * 'buffer'.  It should not return until it fills buffer or
 	 * encounters an EOI (and or EOS if appropriate).  If 'eos'
@@ -109,5 +104,7 @@ typedef struct
 	 * store additional variables for this board */
 	void *private_data;
 } gpib_board_t;
+
+#endif	// __KERNEL__
 
 #endif	// _GPIB_TYPES_H

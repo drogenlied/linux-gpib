@@ -1,5 +1,5 @@
 #include <ibprot.h>
-
+#include <linux/delay.h>
 
 extern int drvstat,ib_opened;
 
