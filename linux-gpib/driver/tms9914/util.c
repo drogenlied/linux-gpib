@@ -34,8 +34,6 @@ void tms9914_disable_eos(gpib_board_t *board, tms9914_private_t *priv)
 
 int tms9914_parallel_poll(gpib_board_t *board, tms9914_private_t *priv, uint8_t *result)
 {
-	int ret;
-
 	// execute parallel poll
 	write_byte(priv, AUX_CS | AUX_RPP, AUXCR);
 	udelay(2);
