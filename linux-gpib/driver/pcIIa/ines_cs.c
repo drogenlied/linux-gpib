@@ -15,12 +15,10 @@
 #include "board.h"
 
 #ifdef INES_PCMCIA
-#include <pcmcia/config.h>
-#include <pcmcia/k_compat.h>
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/ptrace.h>
-#include <linux/malloc.h>
+#include <linux/slab.h>
 #include <linux/string.h>
 #include <linux/timer.h>
 #include <asm/io.h>
@@ -285,9 +283,8 @@ static void gpib_detach(dev_link_t *link)
     /* Unlink device structure, free pieces */
     *linkp = link->next;
     if (link->priv) {
-	kfree_s(link->priv, sizeof(local_info_t));
+	kfree(link->priv);
     }
-    kfree_s(link, sizeof(struct dev_link_t));
     
 } /* gpib_detach */
 
@@ -548,8 +545,7 @@ static int gpib_event(event_t event, int priority,
 	link->state &= ~DEV_PRESENT;
 	if (link->state & DEV_CONFIG) {
 	    /* ((local_info_t *)link->priv)->block = 1;*/
-	    link->release.expires = RUN_AT(HZ/20);
-	    add_timer(&link->release);
+		mod_timer(&link->release, jiffies + HZ/20);
 	}
 	break;
     case CS_EVENT_CARD_INSERTION:

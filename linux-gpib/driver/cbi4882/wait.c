@@ -8,7 +8,7 @@ extern uint8 ibirq;
  */
 IBLCL void bdwait(unsigned int mask)
 {
-	uint8 s1, s2,  f, imr2mask;
+	uint8 s1, s2 = 0, imr2mask = 0;
 
 	DBGin("bdwait");
 

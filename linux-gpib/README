@@ -5,7 +5,7 @@
 		    The Linux GPIB Package           
              ----------------------------------- 
                  (c) 1994,1995,1996 by C.Schroeter       
-
+                 (c) 2001 by Frank Mori Hess
       
       =====================================================
 
@@ -20,11 +20,16 @@
       This is Linux-GPIB the IEEE-488 card support
       package and measurement suite for LINUX.
 
+      It is based on the 2.05-alpha release from the Linux Lab
+      Project, which was maintained by C. Schroeter.  However,
+      The package was left unmaintained for a couple years so
+      I (Frank Hess) decided to pick it up and port it to the 
+      2.4 Linux kernel.
 
       Send comments, questions and suggestions to 
-      clausi@chemie.fu-berlin.de!
+      fmhess@users.sourceforge.net
       or better to the linux-gpib mailing list
-      gpib@listserv.llp.fu-berlin.de
+      linux-gpib-general@lists.sourceforge.net
 
       *************** COPYRIGHT NOTICE ***********************
 

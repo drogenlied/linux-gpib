@@ -2,7 +2,7 @@
 
 #include <board.h>
 #include <asm/io.h>
-
+#include <linux/delay.h>
 
 
 
@@ -12,7 +12,7 @@
  *
  */
 
-IBLCL int bdSendAuxCmd(int cmd)
+IBLCL void bdSendAuxCmd(int cmd)
 {
   DBGin("bdSendAuxCmd");
   switch(cmd){
@@ -30,7 +30,7 @@ IBLCL int bdSendAuxCmd(int cmd)
 
     GPIBout(auxmr,AUX_TCS);
 #if 1
-    SLOW_DOWN_IO;
+    udelay(2);
     GPIBout(auxmr,AUX_TCS);
 #endif
     break;
@@ -39,7 +39,7 @@ IBLCL int bdSendAuxCmd(int cmd)
 
     GPIBout(auxmr,AUX_TCA);
 #if 1
-    SLOW_DOWN_IO;
+    udelay(2);
     GPIBout(auxmr,AUX_TCA);
 #endif
     break;
@@ -67,7 +67,7 @@ IBLCL int bdSendAuxCmd(int cmd)
     DBGprint(DBG_BRANCH,("Aux Send FH"));
     GPIBout(auxmr,AUX_FH);
 #if 1
-    SLOW_DOWN_IO;
+    udelay(2);
     GPIBout(auxmr,AUX_FH);
 #endif
     break;
@@ -96,7 +96,7 @@ IBLCL int bdSendAuxCmd(int cmd)
  *
  */
 
-IBLCL int bdSendAuxACmd(int cmd)
+IBLCL void bdSendAuxACmd(int cmd)
 {
   DBGin("bdSendAuxACmd");
   DBGprint(DBG_BRANCH,("Aux Send=0x%x",cmd));

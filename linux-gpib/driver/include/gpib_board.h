@@ -12,4 +12,4 @@
 #undef INES_PCI 
 #undef INES_PCMCIA 
 #define NIPCII 
-#define CBI_4882 
+#define INES_PCI 

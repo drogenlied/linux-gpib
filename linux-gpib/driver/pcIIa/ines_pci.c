@@ -1,6 +1,6 @@
 /*================================================================
 
-  PCI related stuff for ines GPIB-PCI board  
+  PCI related stuff for ines GPIB-PCI board
   adapted from ../cbi4882/gpib_pci.c
   13.1.99 Axel Dziemba (axel.dziemba@ines.de)
 
@@ -15,7 +15,6 @@
 #define INTCSR_REG    0x4c
 
 #include <linux/pci.h>
-#include <linux/bios32.h>
 #include <asm/io.h>
 
 #define INES_VENDOR_ID 0x10b5
@@ -29,51 +28,44 @@ unsigned int pci_config_reg = 0x0000;
 
 
 void bd_PCIInfo() {
-  extern uint16      ibbase;	/* base addr of GPIB interface registers  */
-  extern uint8       ibirq;	/* interrupt request line for GPIB (1-7)  */
+	extern unsigned int      ibbase;	/* base addr of GPIB interface registers  */
+	extern uint8       ibirq;	/* interrupt request line for GPIB (1-7)  */
 
-  DBGin("bd_PCIInfo");
-  
-  if( pcibios_present() ) {
-    int pci_index;
-    for(pci_index = 0;pci_index < 8; pci_index++ ) {
-      unsigned char pci_bus, pci_device_fn;
-      unsigned int pci_ioaddr;
-      unsigned int pci_IRQ_line;
-      unsigned int pci_subid;
+	DBGin("bd_PCIInfo");
 
-      if ( pcibios_find_device ( INES_VENDOR_ID,
-				 INES_DEV_ID, pci_index,
-				 &pci_bus, &pci_device_fn ) != 0 )
+	ib_pci_dev = NULL;
+	while((ib_pci_dev = pci_find_device(INES_VENDOR_ID, INES_DEV_ID, ib_pci_dev)))
 	{
-	  printk("GPIB: no PCI board found\n ");
-	  break;
+		// check for board with PLX PCI controller but not ines GPIB PCI board
+		if(ib_pci_dev->subsystem_device == INES_SUBID)
+		{
+			break;
+		}
 	}
-      // check ines subID too!
-      pcibios_read_config_dword(pci_bus,pci_device_fn,PCI_SUBSYSTEM_ID,&pci_subid);
-      if(pci_subid!=INES_SUBID)
-         continue; // board with PLX PCI controller but not ines GPIB PCI board
-      pcibios_read_config_byte (pci_bus, pci_device_fn,
-			  PCI_INTERRUPT_LINE, &pci_IRQ_line );
-      pcibios_read_config_dword ( pci_bus, pci_device_fn,
-			  PCI_BASE_ADDRESS_2, &pci_ioaddr );
-      pcibios_read_config_dword ( pci_bus, pci_device_fn,
-			  PCI_BASE_ADDRESS_1, &pci_config_reg );
-      pci_ioaddr &= PCI_BASE_ADDRESS_IO_MASK;
-      pci_config_reg &= PCI_BASE_ADDRESS_IO_MASK;
-      ibbase = bus_to_virt(pci_ioaddr);
-      ibirq = pci_IRQ_line;
-      pci_DisableIRQ ();
-      printk("GPIB: PCI base=0x%x config=0x%x irq=0x%lx \n",ibbase,pci_config_reg, ibirq );
-     break;      
-    }
-  } 
-  DBGout();
+	if(ib_pci_dev == NULL)
+	{
+		printk("GPIB: no PCI board found\n ");
+		return;
+	}
+	if(pci_enable_device(ib_pci_dev))
+	{
+		printk("error enabling pci device\n");
+		return;
+	}
+
+	ibbase = ib_pci_dev->resource[2].start & PCI_BASE_ADDRESS_IO_MASK;
+
+	ibirq = ib_pci_dev->irq;
+	pci_DisableIRQ ();
+	printk("GPIB: PCI base=0x%x config=0x%x irq=0x%x \n",ibbase,pci_config_reg, ibirq );
+
+	DBGout();
 }
 
 /* enable or disable PCI interrupt on PLX PCI controller */
 
-void pci_EnableIRQ () {
+IBLCL void pci_EnableIRQ ()
+{
 
 DBGin("pci_EnableIRQ");
       outl( INTCSR_DWORD_ENABLE, pci_config_reg+INTCSR_REG );
@@ -81,7 +73,8 @@ DBGout();
 
 }
 
-void pci_ResetIRQ () {
+IBLCL void pci_ResetIRQ ()
+{
 
   DBGin("pci_ResetIRQ");
       outl( INTCSR_DWORD_ENABLE, pci_config_reg+INTCSR_REG );
@@ -91,7 +84,8 @@ void pci_ResetIRQ () {
 
 
 
-void pci_DisableIRQ () {
+IBLCL void pci_DisableIRQ ()
+{
 
 DBGin("pci_DisableIRQ");
      outl( INTCSR_DWORD_DISABLE , pci_config_reg+INTCSR_REG );

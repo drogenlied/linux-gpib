@@ -5,9 +5,10 @@
 #include <gpibP.h>
 #include <asm/io.h>
 
-extern uint16      ibbase;	/* base addr of GPIB interface registers  */
+extern unsigned int      ibbase;	/* base addr of GPIB interface registers  */
 extern uint8       ibirq;	/* interrupt request line for GPIB (1-7)  */
 extern uint8       ibdma ;      /* DMA channel                            */
+extern struct pci_dev *ib_pci_dev;	// pci_dev for plug and play boards	
 
 extern volatile int noTimo;     /* timeout flag */
 extern int          pgmstat;    /* Program state */
@@ -28,24 +29,22 @@ extern ibregs_t *ib;            /* Local pointer to IB registers */
 extern unsigned int pci_base_reg;
 
 #if defined(MODBUS_PCI)
-extern inline uint8 bdP8in(in_addr)
-faddr_t in_addr;
+extern inline uint8 bdP8in(faddr_t in_addr)
 {
 	int		retval;
-        faddr_t         addr = pci_base_reg + ( (unsigned long) in_addr << 0x1 );
+        unsigned int         addr = pci_base_reg + ( (unsigned long) in_addr << 0x1 );
 	retval = readw(addr);
-	printk("INB: 0x%x = 0x%x off=0x%x\n",addr,(retval & 0xff),in_addr);
+	printk("INB: 0x%x = 0x%x off=0x%p\n",addr,(retval & 0xff),in_addr);
 	return (uint8) (retval & 0xff );
 }
 #else
-extern inline uint8 bdP8in(in_addr)
-short in_addr;
+extern inline uint8 bdP8in(faddr_t in_addr)
 {
 	uint8		retval;
 #if !defined(NIPCIIa)
-	retval = osP8in(in_addr);
+	retval = osP8in((unsigned int) in_addr);
 #else
-	retval = osP8in( (in_addr << 10) | ibbase  );
+	retval = osP8in( (unsigned int) (in_addr << 10) | ibbase  );
 #endif
 	return retval;
 }
@@ -56,11 +55,9 @@ short in_addr;
  * Output a one-byte value to the specified I/O port
  */
 #if defined(MODBUS_PCI)
-extern inline void bdP8out(out_addr, out_value)
-faddr_t out_addr;
-uint8 out_value;
+extern inline void bdP8out(faddr_t out_addr, uint8 out_value)
 {
-        faddr_t addr = pci_base_reg + ((unsigned long) out_addr << 0x1 );
+        unsigned int addr = pci_base_reg + ((unsigned long) out_addr << 0x1 );
 	printk("OUTB: 0x%x , 0x%x\n",addr ,out_value);
 	writeb(out_value, addr );
 }

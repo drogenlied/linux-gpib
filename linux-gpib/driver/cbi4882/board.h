@@ -1,9 +1,10 @@
 #include <asm/io.h>
 #include <gpibP.h>
 
-extern uint16      ibbase;	/* base addr of GPIB interface registers  */
+extern unsigned int      ibbase;	/* base addr of GPIB interface registers  */
 extern uint8       ibirq;	/* interrupt request line for GPIB (1-7)  */
 extern uint8       ibdma ;      /* DMA channel                            */
+extern struct pci_dev *ib_pci_dev;	// pci_dev for plug and play boards
 
 #define CBI_ISA_GPIB         0
 #define CBI_ISA_GPIB_LC      1

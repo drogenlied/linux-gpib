@@ -3,7 +3,7 @@
 #include <board.h>
 
 
-uint16      ibbase = IBBASE;	/* base addr of GPIB interface registers  */
+unsigned int      ibbase = IBBASE;	/* base addr of GPIB interface registers  */
 uint8       ibirq  = IBIRQ;	/* interrupt request line for GPIB (1-7)  */
 uint8       ibdma  = IBDMA;     /* DMA channel                            */
 uint8       board_type = CBI_ISA_GPIB;
@@ -122,7 +122,8 @@ IBLCL int bdonl(int v)
 
 /*is called by ibsic */
 
-void fix4882Bug() {
+IBLCL void fix4882Bug(void )
+{
 #if !defined(CBI_PCI)
   int i;
   extern int myPAD;
@@ -161,7 +162,8 @@ void fix4882Bug() {
 #endif
 }
 
-void setup4882int( int level ) {
+IBLCL void setup4882int( int level ) 
+{
 
   DBGin("setup4882Int");
 

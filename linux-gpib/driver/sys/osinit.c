@@ -131,7 +131,7 @@ extern  void ibintr(int irq, void *d, struct pt_regs *regs);
 	/* register IRQ and DMA channel */
 
 #if USEINTS
-	if( request_irq(ibirq,ibintr,SA_INTERRUPT,"gpib",NULL)){
+	if( request_irq(ibirq, ibintr, 0, "gpib", NULL)){
 	  printk("can't request IRQ %d\n",ibirq);
           DBGout();
 	  return(0);

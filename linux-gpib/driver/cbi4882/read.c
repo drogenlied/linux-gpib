@@ -126,13 +126,13 @@ IBLCL void bdPIOread(ibio_op_t *rdop)
 	faddr_t		buf;
 	unsigned	cnt;
 	uint8		s1, s2;		/* software copies of HW status regs */
-	int             isreg1;
+	int             isreg1 = 0;
 
 	DBGin("bdread");
 
 	buf = rdop->io_vbuf;
 	cnt = rdop->io_cnt;
-	DBGprint(DBG_DATA, ("bdread: buf=0x%x cnt=%d  ", buf, cnt));
+	DBGprint(DBG_DATA, ("bdread: buf=0x%p cnt=%d  ", buf, cnt));
 
 	GPIBout(imr1, 0);
 	GPIBout(imr2, 0);		/* clear any previously arrived bits */
@@ -181,7 +181,7 @@ IBLCL void bdPIOread(ibio_op_t *rdop)
 #ifdef GREG_BUGFIX  /* warning this produces errors for me! */
 	while (ibcnt < cnt - 1 ) { 
 
-		if( bdWaitIn() == 0 ) {         /* end is set with EOS byte so wait first */
+		if( (isreg1 = bdWaitIn()) == 0 ) {         /* end is set with EOS byte so wait first */
 		  ibsta |= END;
 		  break;
 		}
