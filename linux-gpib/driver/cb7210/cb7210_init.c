@@ -293,8 +293,8 @@ int cb7210_generic_attach(gpib_board_t *board)
 		return -ENOMEM;
 	cb_priv = board->private_data;
 	nec_priv = &cb_priv->nec7210_priv;
-	nec_priv->read_byte = nec7210_ioport_read_byte;
-	nec_priv->write_byte = nec7210_ioport_write_byte;
+	nec_priv->read_byte = nec7210_locking_ioport_read_byte;
+	nec_priv->write_byte = nec7210_locking_ioport_write_byte;
 	nec_priv->offset = cb7210_reg_offset;
 
 	return 0;

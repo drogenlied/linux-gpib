@@ -29,15 +29,11 @@ int cb7210_line_status( const gpib_board_t *board )
 	int bsr_bits;
 	cb7210_private_t *cb_priv;
 	nec7210_private_t *nec_priv;
-	unsigned long flags;
 
 	cb_priv = board->private_data;
 	nec_priv = &cb_priv->nec7210_priv;
 
-	spin_lock_irqsave( &board->spinlock, flags );
-	write_byte( nec_priv, page_in_bits( BUS_STATUS_PAGE ), AUXMR);
-	bsr_bits = inb( cb_priv->nec7210_priv.iobase + BUS_STATUS );
-	spin_unlock_irqrestore( &board->spinlock, flags );
+	bsr_bits = cb7210_paged_read_byte( cb_priv, BUS_STATUS, BUS_STATUS_PAGE );
 
 	if( ( bsr_bits & BSR_REN_BIT ) == 0 )
 		status |= BusREN;

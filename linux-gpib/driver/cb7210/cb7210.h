@@ -24,6 +24,7 @@
 #include "amccs5933.h"
 
 #include <linux/config.h>
+#include <linux/delay.h>
 
 enum
 {
@@ -115,9 +116,35 @@ enum cb7210_page_in
 	BUS_STATUS_PAGE = 1,
 };
 
-static inline int page_in_bits( unsigned int page )
+static inline int cb7210_page_in_bits( unsigned int page )
 {
 	return 0x50 | (page & 0xf);
+}
+static inline uint8_t cb7210_paged_read_byte( cb7210_private_t *cb_priv,
+	unsigned int register_num, unsigned int page )
+{
+	nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
+	uint8_t retval;
+	unsigned long flags;
+
+	spin_lock_irqsave( &nec_priv->register_page_lock, flags );
+	outb( cb7210_page_in_bits( page ), nec_priv->iobase + AUXMR * nec_priv->offset );
+	udelay( 1 );
+	retval = inb( nec_priv->iobase + register_num * nec_priv->offset);
+	spin_unlock_irqrestore( &nec_priv->register_page_lock, flags );
+	return retval;
+}
+static inline void cb7210_paged_write_byte( cb7210_private_t *cb_priv,
+	uint8_t data, unsigned int register_num, unsigned int page )
+{
+	nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
+	unsigned long flags;
+
+	spin_lock_irqsave( &nec_priv->register_page_lock, flags );
+	outb( cb7210_page_in_bits( page ), nec_priv->iobase + AUXMR * nec_priv->offset );
+	udelay( 1 );
+	outb(data, nec_priv->iobase + register_num * nec_priv->offset);
+	spin_unlock_irqrestore( &nec_priv->register_page_lock, flags );
 }
 
 enum hs_regs
