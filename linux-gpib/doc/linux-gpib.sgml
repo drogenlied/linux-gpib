@@ -2150,6 +2150,44 @@ volatile int ibsta;
 </refsect1>
 </refentry>
 
+<refentry ID="reference-function-ibln">
+<refmeta>
+	<refentrytitle>ibln</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibln</refname>
+	<refpurpose>check if listener is present (board or device)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibln</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>int <parameter>pad</parameter></paramdef>
+		<paramdef>int <parameter>sad</parameter></paramdef>
+		<paramdef>short *<parameter>found_listener</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
 <refentry ID="reference-function-ibloc">
 <refmeta>
 	<refentrytitle>ibloc</refentrytitle>
@@ -2182,6 +2220,7 @@ volatile int ibsta;
 	the bus will
 	return to remote mode the next time they are addressed by the controller
 	in charge.
+	</para>
 </refsect1>
 <refsect1>
 	<title>

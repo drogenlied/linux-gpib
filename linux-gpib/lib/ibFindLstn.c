@@ -25,13 +25,17 @@ int listenerFound( ibConf_t *conf, const Addr4882_t addressList[] )
 	int i, j;
 	short line_status;
 	int retval;
-	
-	if( addressList == NULL ) return 0;
+
+	if( addressList == NULL )
+		return 0;
+	if( addressListIsValid( addressList ) == 0 )
+		return -1;
 
 	cmd = malloc( 16 + 2 * numAddresses( addressList ) );
 	if( cmd == NULL )
 	{
 		setIberr( EDVR );
+		setIbcnt( ENOMEM );
 		return -1;
 	}
 
@@ -98,11 +102,6 @@ void FindLstn( int boardID, const Addr4882_t padList[],
 		exit_library( boardID, 1 );
 		return;
 	}
-	if( addressListIsValid( padList ) == 0 )
-	{
-		exit_library( boardID, 1 );
-		return;
-	}
 
 	if( conf->is_interface == 0 )
 	{
@@ -112,13 +111,6 @@ void FindLstn( int boardID, const Addr4882_t padList[],
 	}
 
 	board = interfaceBoard( conf );
-
-	if( is_cic( board ) == 0 )
-	{
-		setIberr( ECIC );
-		exit_library( boardID, 1 );
-		return;
-	}
 
 	retval = internal_iblines( conf, &line_status );
 	if( retval < 0 )
@@ -132,7 +124,7 @@ void FindLstn( int boardID, const Addr4882_t padList[],
 		exit_library( boardID, 1 );
 		return;
 	}
-/* XXX check that padList doesn't contain secondary addresses */
+
 	resultIndex = 0;
 	for( i = 0; i < numAddresses( padList ); i++ )
 	{
@@ -197,3 +189,32 @@ void FindLstn( int boardID, const Addr4882_t padList[],
 	}
 	exit_library( boardID, 0 );
 } /* FindLstn */
+
+int ibln( int ud, int pad, int sad, short *found_listener )
+{
+	ibConf_t *conf;
+	Addr4882_t addressList[ 2 ];
+	int retval;
+
+	conf = enter_library( ud );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
+
+	switch( sad )
+	{
+	case ALL_SAD:
+		retval = secondaryListenerFound( conf, pad );
+		break;
+	case NO_SAD:
+	default:
+		addressList[ 0 ] = MakeAddr( pad, sad );
+		addressList[ 1 ] = NOADDR;
+		retval = listenerFound( conf, addressList );
+		break;
+	}
+	if( retval < 0 ) return exit_library( ud, 1 );
+
+	*found_listener = retval;
+
+	return exit_library( ud, 0 );
+}

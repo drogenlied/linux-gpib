@@ -53,6 +53,7 @@ GPIB_DUMMY_VERSION {
 		ibgts;
 		ibist;
 		iblines;
+		ibln;
 		ibloc;
 		ibonl;
 		ibpad;

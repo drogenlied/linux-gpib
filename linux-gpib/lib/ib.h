@@ -103,6 +103,7 @@ int ibfind( const char *dev );
 int ibgts(int ud, int shadow_handshake);
 int ibist( int ud, int ist );
 int iblines( int ud, short *line_status );
+int ibln( int ud, int pad, int sad, short *found_listener );
 int ibloc( int ud );
 int ibonl( int ud, int onl );
 int ibpad( int ud, int v );
