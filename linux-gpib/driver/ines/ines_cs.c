@@ -56,14 +56,11 @@ static char *version =
 "ines_cs.c 0.12";
 #endif
 
-/*====================================================================*/
 
 /* Parameters that can be set with 'insmod' */
 
 /* Bit map of interrupts to choose from */
 static u_long irq_mask = 0xffff;
-
-/*====================================================================*/
 
 
 static int get_tuple(int fn, client_handle_t handle, tuple_t *tuple,
@@ -79,8 +76,6 @@ static int get_tuple(int fn, client_handle_t handle, tuple_t *tuple,
 
 #define first_tuple(a, b, c) get_tuple(GetFirstTuple, a, b, c)
 #define next_tuple(a, b, c) get_tuple(GetNextTuple, a, b, c)
-
-/*====================================================================*/
 
 /*
    The event() function is this driver's Card Services event handler.
@@ -155,7 +150,6 @@ typedef struct local_info_t {
     u_short cardid;
 } local_info_t;
 
-/*====================================================================*/
 
 static void cs_error(client_handle_t handle, int func, int ret)
 {
@@ -163,8 +157,7 @@ static void cs_error(client_handle_t handle, int func, int ret)
     CardServices(ReportError, handle, &err);
 }
 
-/*======================================================================
-
+/*
     gpib_attach() creates an "instance" of the driver, allocating
     local data structures for one device.  The device is registered
     with Card Services.
@@ -173,7 +166,7 @@ static void cs_error(client_handle_t handle, int func, int ret)
     configure the card at this point -- we wait until we receive a
     card insertion event.
 
-======================================================================*/
+*/
 
 static dev_link_t *gpib_attach(void)
 {
@@ -240,14 +233,14 @@ static dev_link_t *gpib_attach(void)
 	return link;
 } /* gpib_attach */
 
-/*======================================================================
+/*
 
     This deletes a driver "instance".  The device is de-registered
     with Card Services.  If it has been released, all local data
     structures are freed.  Otherwise, the structures will be freed
     when the device is released.
 
-======================================================================*/
+*/
 
 static void gpib_detach(dev_link_t *link)
 {
@@ -290,14 +283,13 @@ static void gpib_detach(dev_link_t *link)
 
 } /* gpib_detach */
 
-/*======================================================================
+/*
 
     gpib_config() is scheduled to run after a CARD_INSERTION event
     is received, to configure the PCMCIA socket, and to make the
     ethernet device available to the system.
 
-======================================================================*/
-/*@*/
+*/
 static void gpib_config(dev_link_t *link)
 {
 	client_handle_t handle;
@@ -312,7 +304,8 @@ static void gpib_config(dev_link_t *link)
 
 	handle = link->handle;
 	dev = link->priv;
-	
+	unsigned long virt;
+
 #ifdef PCMCIA_DEBUG
 	if (pc_debug)
 		printk(KERN_DEBUG "gpib_config(0x%p)\n", link);
@@ -415,8 +408,8 @@ static void gpib_config(dev_link_t *link)
 		}
 		virt = ( unsigned long ) ioremap( req.Base, req.Size );
 		writeb( ( link->io.BasePort1 >> 2 ) & 0xff, virt + 0xf0 ); // IOWindow base
-//		writeb(COR_LEVEL_REQ | 0x30,virt+0x100);                  // LevlIrq, 32 byte IOWindow
-//		writeb(CCSR_IOIS8,virt+0x102);                  // IOis8
+		writeb(COR_LEVEL_REQ | 0x30, virt + 0x100 );                  // LevlIrq, 32 byte IOWindow
+		writeb(CCSR_IOIS8, virt + 0x102 );                  // IOis8
 		iounmap( ( void* ) virt );
 //		CardServices(ReleaseWindow,handle);
 
@@ -460,13 +453,13 @@ static void gpib_config(dev_link_t *link)
 	printk(KERN_DEBUG "gpib device loaded\n");
 } /* gpib_config */
 
-/*======================================================================
+/*
 
     After a card is removed, gpib_release() will unregister the net
     device, and release the PCMCIA configuration.  If the device is
     still open, this will be postponed until it is closed.
 
-======================================================================*/
+*/
 
 static void gpib_release(u_long arg)
 {
@@ -506,7 +499,7 @@ static void gpib_release(u_long arg)
     
 } /* gpib_release */
 
-/*======================================================================
+/*
 
     The card status event handler.  Mostly, this schedules other
     stuff to run after an event is received.  A CARD_REMOVAL event
@@ -517,8 +510,8 @@ static void gpib_release(u_long arg)
     to block future accesses to this device.  All the functions that
     actually access the device should check this flag to make sure
     the card is still present.
-    
-======================================================================*/
+
+*/
 
 static int gpib_event(event_t event, int priority,
 			  event_callback_args_t *args)
@@ -566,7 +559,6 @@ static int gpib_event(event_t event, int priority,
     return 0;
 } /* gpib_event */
 
-/*====================================================================*/
 
 int ines_pcmcia_init_module(void)
 {
