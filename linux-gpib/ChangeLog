@@ -8,7 +8,7 @@ and PMC-GPIB (Uwe Strempel).  Fixed allocation of ioports for ISA
 Measurement Computing boards.  Fixed behaviour of DevClearList when passed 
 an empty addressList.  Interrupted reads now return the data that was 
 received before the interruption, for example by a timeout (based on patch 
-from Steve Holland).
+from Steve Holland).  Fixed interrupt polarity for Quancom board.
 
 3.2.00: Port to 2.6.xx Linux kernels.
 
