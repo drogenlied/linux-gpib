@@ -23,7 +23,6 @@ program needs to be really, but useful for testing library functions.
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <mcheck.h>
 #include <getopt.h>
 #include "gpib/ib.h"
 
@@ -466,9 +465,6 @@ int main(int argc, char **argv)
 	int dev;
 	enum Action act;
 	parsed_options_t parsed_opts;
-
-	if( mcheck( NULL ) )
-		fprintf( stderr, "mcheck() failed\n" );
 
 	parse_options( argc, argv, &parsed_opts );
 
