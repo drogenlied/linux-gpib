@@ -9,9 +9,9 @@
 
 EXTRA_DIST = $(SRCS) ines.h ines_cis_dump.txt
 
-include $(top_srcdir)/util/linux_flags/flags
-CFLAGS = -I$(top_srcdir) -I$(top_srcdir)/driver/include -I$(top_srcdir)/include \
-	$(CFLAGS_LINUX)
+-include $(top_srcdir)/util/linux_flags/flags
+CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/driver/include -I$(top_srcdir)/include
+CFLAGS = $(CFLAGS_LINUX)
 CC = $(CC_LINUX)
 LD = $(LD_LINUX)
 MODLIB = $(MODLIB_LINUX)
@@ -34,6 +34,15 @@ $(MODULE): $(OBJS)
 
 install-data-local:
 	$(INSTALL_DATA) -D $(MODULE) $(MODLIB)/gpib/$(MODULE)
+
+#automatic dependency handling
+-include $(SRCS:.c=.d)
+%.d: %.c
+	set -e; $(CC) -MM $(CPPFLAGS) $< \
+	| sed 's/\($*\)\.o[ :]*/\1.o $@ : /g' > $@; \
+	[ -s $@ ] || rm -f $@
+
+
 
 
 
