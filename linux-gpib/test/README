@@ -1,0 +1,4 @@
+libgpib_test is used by developers to test the library, feel free to add
+tests for untested functions.  It requires two gpib boards to be installed
+in the computer, on the same GPIB bus.  Exactly one of which is the system
+controller.
