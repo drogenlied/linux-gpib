@@ -1,7 +1,17 @@
 libgpib_test is used by developers to test the library, feel free to add
-tests for untested functions.  It requires two gpib boards to be installed
-in the computer, on the same GPIB bus.  Exactly one of which is the system
-controller.
+tests for untested functions.  It requires two gpib boards on the same GPIB
+bus, exactly one of which is the system controller.  Two instances of
+libgpib_test must be run, one with the --master option and one with
+--slave.  Start the slave first.
+
+Example:
+On computer with slave gpib board, run
+
+/libgpib_test --slave --pad 10
+
+Then on computer with bus master gpib board, run
+
+/libgpib_test --master --pad 10
 
 Options:
 
@@ -9,5 +19,18 @@ Options:
 	loop through tests N times
 -d, --daemonize [N]
 	daemonize after Nth loop
-
-
+-m, --master
+	Use bus master gpib board
+-S, --slave
+	Use slave gpib board
+-p, --pad N
+	For master, open device with primary address N.  For slave,
+	sets board's primary address to N.
+-s, --sad
+	For master, open device with secondary address N.  For slave,
+	sets board's secondary address to N.  N must be in the range
+	[0, 30].  If this option is not specified, then secondary
+	addressing is disabled.
+-v, --verbose
+	Produce verbose debugging output (doesn't do much yet).
+	
