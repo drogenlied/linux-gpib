@@ -62,7 +62,7 @@ int ibonl( int ud, int onl )
 	}else
 	{
 		if( conf->is_interface )
-			ibBoardClose( board );
+			ibBoardClose( board );	// XXX wrong
 		free( ibConfigs[ ud ] );
 		ibConfigs[ ud ] = NULL;
 		setIbsta( 0 );

@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <signal.h>
 #include <pthread.h>
+#include <stdlib.h>
 
 ibBoard_t ibBoard[ MAX_BOARDS ];
 
@@ -30,56 +31,60 @@ void ibBoardDefaultValues( void )
 		ibBoard[ i ].fileno = -1;
 		strcpy( ibBoard[ i ].device, "" );
 		strcpy( ibBoard[ i ].board_type, "" );
-		ibBoard[ i ].autopoll_pid = 0;
+		ibBoard[ i ].autopoll_thread = NULL;
 	}
 }
 
-void cleanup_autopoll_processes( void )
+void cleanup_autopoll( void *arg )
 {
-	unsigned int i;
-	int retval;
-	for( i = 0; i < MAX_BOARDS; i++ )
+	ibBoard_t *board = arg;
+
+	if( board->autopoll_thread )
 	{
-		if( ibBoard[ i ].autopoll_pid > 0 )
-		{
-			retval = kill( ibBoard[ i ].autopoll_pid, SIGTERM );
-			if( retval < 0 )
-			{
-				fprintf( stderr, "libgpib: failed to terminate child autopoll process\n" );
-			}
-		}
+		free( board->autopoll_thread );
+		board->autopoll_thread = NULL;
 	}
 }
 
-int fork_autopoll_process( ibBoard_t *board )
+void * run_autopoll( void *arg )
 {
-	pid_t process_id;
+	ibBoard_t *board = arg;
 	int retval;
-	static int atexit_registered = 0;
 
-	if( board->autopoll_pid > 0 ) return 0;
+	pthread_cleanup_push( cleanup_autopoll, (void*) board );
 
-	process_id = fork();
-	if( process_id < 0 ) return process_id;
-
-	board->autopoll_pid = process_id;
-
-	if( process_id )
-	{
-		if( atexit_registered == 0 )
-		{
-			retval = atexit( cleanup_autopoll_processes );
-			if( retval < 0 )
-			{
-				fprintf( stderr, "libgpib: failed to register atexit cleanup function\n" );
-			}
-			atexit_registered = 1;
-		}
-		return 0;
-	}
+	pthread_setcanceltype( PTHREAD_CANCEL_ASYNCHRONOUS, NULL );
+	pthread_setcancelstate( PTHREAD_CANCEL_ENABLE, NULL );
 
 	retval = ioctl( board->fileno, IBAUTOPOLL );
-	exit( retval );
+	if( retval )
+	{
+		fprintf( stderr, "libgpib: autopoll ioctl returned error!\n" );
+	}
+
+	pthread_cleanup_pop( 1 );
+	return NULL;
+}
+
+int create_autopoll_process( ibBoard_t *board )
+{
+	int retval;
+
+	if( board->autopoll_thread ) return 0;
+
+	board->autopoll_thread = malloc( sizeof( pthread_t ) );
+	if( board->autopoll_thread == NULL ) return -1;
+
+	retval = pthread_create( board->autopoll_thread, NULL, run_autopoll, board );
+	if( retval )
+	{
+		cleanup_autopoll( board );
+		return -1;
+	};
+
+	pthread_detach( *board->autopoll_thread );
+
+	return 0;
 }
 
 /**********************/
@@ -107,7 +112,7 @@ int ibBoardOpen( ibBoard_t *board )
 		return -1;
 	}
 
-	if( fork_autopoll_process( board ) < 0)
+	if( create_autopoll_process( board ) < 0)
 	{
 		ibBoardClose( board );
 		return -1;
@@ -127,15 +132,14 @@ int ibBoardClose( ibBoard_t *board )
 		board->fileno = -1;
 	}
 
-	if( board->autopoll_pid > 0 )
+	if( board->autopoll_thread )
 	{
-		retval = kill( board->autopoll_pid, SIGTERM );
-		if( retval < 0 )
+		retval = pthread_cancel( *board->autopoll_thread );
+		if( retval )
 		{
-			fprintf( stderr, "libgpib: failed to terminate child autopoll process\n" );
-			return retval;
+			fprintf( stderr, "libgpib: failed to terminate autopoll thread\n" );
+			return -1;
 		}
-		board->autopoll_pid = 0;
 	}
 
 	return 0;

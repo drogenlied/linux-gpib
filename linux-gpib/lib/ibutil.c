@@ -291,13 +291,10 @@ ibConf_t * general_enter_library( int ud, int no_lock_board, int ignore_eoip )
 	{
 		if( ignore_eoip == 0 )
 		{
-			if( pthread_mutex_trylock( &conf->async.lock ) )
+			if( conf->async.in_progress )
 			{
 				setIberr( EOIP );
 				return NULL;
-			}else
-			{
-				pthread_mutex_unlock( &conf->async.lock );
 			}
 		}
 
