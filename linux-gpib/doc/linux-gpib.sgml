@@ -922,6 +922,56 @@ volatile int ibsta;
 </refsect1>
 </refentry>
 
+<refentry ID="reference-function-ibbna">
+<refmeta>
+	<refentrytitle>ibbna</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibbna</refname>
+	<refpurpose>change access board (device)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibbna</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>const char *<parameter>name</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibbna() changes the GPIB interface board used to access the device
+	specified by <parameter>ud</parameter>.  Subsequent device level
+	calls using the descriptor <parameter>ud</parameter> will assume
+	the device is connected to the interface board specified by
+	<parameter>name</parameter>.  	If you wish to specify a
+	device's new access board by board index instead
+	of name, you can use the IbcBNA option of ibconfig().
+	</para>
+	<para>
+	The name of a board can be specified
+	in the configuration file <link LINKEND="configuration">gpib.conf</link>.
+	</para>
+	<para>
+	On success, iberr is set to the board index of the device's old access board.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
 <refentry ID="reference-function-ibclr">
 <refmeta>
 	<refentrytitle>ibclr</refentrytitle>
@@ -1293,6 +1343,16 @@ volatile int ibsta;
 	serial polls.  Same as <link LINKEND="reference-function-ibrsv">ibrsv()</link>.
 	</entry>
 	<entry>board</entry>
+	</row>
+	<row>
+	<entry>IbcBNA</entry>
+	<entry>0x200</entry>
+	<entry>Changes the GPIB interface board used to access a device.  The
+	setting specifies the board index of the new access board.  This configuration
+	option is similar to <link LINKEND="reference-function-ibbna">ibbna()</link>
+	except the new board is specified by its board index instead of a name.
+	</entry>
+	<entry>device</entry>
 	</row>
 	</tbody>
 	</tgroup>
