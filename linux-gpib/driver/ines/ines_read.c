@@ -28,11 +28,6 @@ static ssize_t pio_read( gpib_board_t *board, ines_private_t *ines_priv, uint8_t
 	unsigned int num_bytes, i;
 	nec7210_private_t *nec_priv = &ines_priv->nec7210_priv;
 
-	ines_priv->extend_mode_bits |= LAST_BYTE_HANDLING_BIT | XFER_COUNTER_ENABLE_BIT;
-	ines_priv->extend_mode_bits &= ~XFER_COUNTER_OUTPUT_BIT;
-	ines_outb( ines_priv, ines_priv->extend_mode_bits, EXTEND_MODE );
-	ines_set_xfer_counter( ines_priv, length );
-
 	while( count < length )
 	{
 		if( wait_event_interruptible( board->wait,
@@ -80,15 +75,27 @@ ssize_t ines_accel_read( gpib_board_t *board, uint8_t *buffer,
 
 	clear_bit( DEV_CLEAR_BN, &nec_priv->state );
 
+	ines_priv->extend_mode_bits |= LAST_BYTE_HANDLING_BIT;
+	ines_priv->extend_mode_bits &= ~XFER_COUNTER_OUTPUT_BIT & ~XFER_COUNTER_ENABLE_BIT;
+	ines_outb( ines_priv, ines_priv->extend_mode_bits, EXTEND_MODE );
+	ines_set_xfer_counter( ines_priv, length );
+	ines_priv->extend_mode_bits |= XFER_COUNTER_ENABLE_BIT;
+	ines_outb( ines_priv, ines_priv->extend_mode_bits, EXTEND_MODE );
+
 	// holdoff on END
 	nec7210_set_handshake_mode( board, nec_priv, HR_HLDE );
 	/* release rfd holdoff */
 	write_byte( nec_priv, AUX_FH, AUXMR );
 
 	retval = pio_read( board, ines_priv, buffer, length );
+	ines_priv->extend_mode_bits &= ~XFER_COUNTER_ENABLE_BIT;
+	ines_outb( ines_priv, ines_priv->extend_mode_bits, EXTEND_MODE );
 	if( retval < 0 )
+	{
+		write_byte( nec_priv, INES_RFD_HLD_IMMEDIATE, AUXMR );
+		set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
 		return retval;
-
+	}
 	if( test_and_clear_bit( RECEIVED_END_BN, &nec_priv->state ) )
 		*end = 1;
 
