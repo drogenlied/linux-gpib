@@ -39,6 +39,7 @@ static inline void output_fifo_enable( gpib_board_t *board, int enable )
 	if( enable )
 	{
 		nec7210_set_reg_bits( nec_priv, IMR1, HR_DOIE, 0 );
+		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAO, HR_DMAO );
 
 		outb( HS_RX_ENABLE | HS_TX_ENABLE | HS_CLR_SRQ_INT |
 			HS_CLR_EOI_EMPTY_INT | HS_CLR_HF_INT, nec_priv->iobase + HS_MODE );
@@ -47,16 +48,16 @@ static inline void output_fifo_enable( gpib_board_t *board, int enable )
 		cb_priv->hs_mode_bits |= HS_TX_ENABLE;
 		outb( cb_priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
 
+		outb( irq_bits( cb_priv->irq ), nec_priv->iobase + HS_INT_LEVEL );
+
 		clear_bit( WRITE_READY_BN, &nec_priv->state );
 
-		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAO, 0 );
 	}else
 	{
-		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAO, 0 );
-
 		cb_priv->hs_mode_bits &= ~HS_ENABLE_MASK;
 		outb( cb_priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
 
+		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAO, 0 );
 		nec7210_set_reg_bits( nec_priv, IMR1, HR_DOIE, HR_DOIE );
 	}
 
@@ -76,6 +77,7 @@ ssize_t fifo_write( gpib_board_t *board, uint8_t *buffer, size_t length )
 	if( length == 0 ) return 0;
 
 	output_fifo_enable( board, 1 );
+
 	while( count < length )
 	{
 		// wait until byte is ready to be sent
@@ -94,8 +96,9 @@ ssize_t fifo_write( gpib_board_t *board, uint8_t *buffer, size_t length )
 			break;
 		}
 
-		num_bytes = cb7210_fifo_size;
-		if( count ) num_bytes /= 2;
+		if( output_fifo_empty( cb_priv ) )
+			num_bytes = cb7210_fifo_size - cb7210_fifo_width;
+		else num_bytes = cb7210_fifo_size / 2;
 		if( num_bytes + count > length )
 			num_bytes = length - count;
 		if( num_bytes % cb7210_fifo_width )
@@ -115,7 +118,8 @@ ssize_t fifo_write( gpib_board_t *board, uint8_t *buffer, size_t length )
 			outw( word, iobase + CDOR );
 		}
 		cb_priv->out_fifo_half_empty = 0;
-		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAO, HR_DMAO );
+		outb( cb_priv->hs_mode_bits | HS_CLR_EOI_EMPTY_INT | HS_CLR_HF_INT, nec_priv->iobase + HS_MODE );
+		outb( cb_priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
 		spin_unlock_irqrestore( &board->spinlock, flags );
 	}
 	// wait last byte has been sent
@@ -136,7 +140,7 @@ ssize_t fifo_write( gpib_board_t *board, uint8_t *buffer, size_t length )
 	if( retval < 0 )
 		return retval;
 
-	return length;
+	return count;
 }
 
 ssize_t cb7210_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi )
@@ -155,7 +159,8 @@ ssize_t cb7210_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length,
 
 	retval = fifo_write( board, buffer, fast_chunk_size );
 	if( retval < 0 ) return retval;
-
+	if( retval < fast_chunk_size ) return -EIO;
+	
 	retval = nec7210_write( board, nec_priv, buffer + fast_chunk_size, leftover, send_eoi );
 	if( retval < 0 ) return retval;
 
