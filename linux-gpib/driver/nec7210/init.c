@@ -80,7 +80,8 @@ void nec7210_board_reset(nec7210_private_t *priv)
 	write_byte(priv, priv->auxa_bits | HR_HLDA, AUXMR);
 
 	/* set INT pin to active high */
-	write_byte(priv, AUXRB, AUXMR);
+	priv->auxb_bits = AUXRB;
+	write_byte(priv, priv->auxb_bits, AUXMR);
 	write_byte(priv, AUXRE, AUXMR);
 }
 

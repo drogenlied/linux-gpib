@@ -36,6 +36,7 @@ struct nec7210_private_struct
 	// bits written to address mode register
 	volatile uint8_t admr_bits;
 	volatile uint8_t auxa_bits;	// bits written to auxilliary register A
+	volatile uint8_t auxb_bits;	// bits written to auxilliary register B
 	// used to keep track of board's state, bit definitions given below
 	volatile int state;
 	// wrappers for outb, inb, readb, or writeb
