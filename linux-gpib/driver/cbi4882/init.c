@@ -9,6 +9,7 @@
 unsigned long ibbase = IBBASE;	/* base addr of GPIB interface registers  */
 uint8 ibirq  = IBIRQ;	/* interrupt request line for GPIB (1-7)  */
 uint8 ibdma  = IBDMA;     /* DMA channel                            */
+unsigned long remapped_ibbase = 0;
 
 uint8       board_type = CBI_ISA_GPIB;
 uint8       CurHSMode = 0;      /* hs mode register value */
@@ -164,7 +165,9 @@ void board_detach(void)
 	}
 	if(pcmcia_initialized)
 	{
+#ifdef CBI_PCMCIA
 		pcmcia_cleanup_module();
+#endif
 		pcmcia_initialized = 0;
 	}
 }

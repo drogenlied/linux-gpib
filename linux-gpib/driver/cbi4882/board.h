@@ -47,7 +47,7 @@ extern inline uint8_t bdP8in(unsigned long in_addr)
 extern inline void bdP8out(unsigned long out_addr, uint8_t out_value)
 {
 //#if defined(CBI_PCI)
-	writeb(out_value, remapped_ibbase + out_addr);
+//	writeb(out_value, remapped_ibbase + out_addr);
 //#else
 	outb(out_value, ibbase + out_addr);
 //#endif

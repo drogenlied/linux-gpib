@@ -26,7 +26,7 @@ unsigned long ibbase = IBBASE;
 uint8 ibirq = IBIRQ;
 uint8 ibdma = IBDMA;
 
-unsigned long remapped_ibbase;
+unsigned long remapped_ibbase = 0;
 
 // flags to indicate if various resources have been allocated
 static unsigned int ioports_allocated = 0, iomem_allocated = 0, irq_allocated = 0, dma_allocated = 0;

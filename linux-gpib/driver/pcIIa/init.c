@@ -25,6 +25,7 @@
 unsigned long ibbase = IBBASE;
 uint8 ibirq = IBIRQ;
 uint8 ibdma = IBDMA;
+unsigned long remapped_ibbase = 0;
 
 // flags to indicate if various resources have been allocated
 static unsigned int ioports_allocated = 0, iomem_allocated = 0,
@@ -201,7 +202,9 @@ void board_detach(void)
 	}
 	if(pcmcia_initialized)
 	{
+#ifdef INES_PCMCIA
 		pcmcia_cleanup_module();
+#endif
 		pcmcia_initialized = 0;
 	}
 }
