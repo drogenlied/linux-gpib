@@ -28,8 +28,10 @@ void cec_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
 	gpib_device_t *device = arg;
 	cec_private_t *priv = device->private_data;
-
+static int i = 0;
+i++;
 printk("plx intcsr 0x%x\n", inl(priv->plx_iobase + PLX_INTCSR_REG));
+if(i > 100) outl(0, priv->plx_iobase + PLX_INTCSR_REG);
 
 	nec7210_interrupt(device, &priv->nec7210_priv);
 }

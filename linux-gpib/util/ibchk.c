@@ -35,12 +35,12 @@ int main(int argc,char **argv)
 	char str[30];
 
 	/****************/
-	printf("**First checking your config file....                ");
+	fprintf(stderr, "**First checking your config file....                ");
 	if(( envptr = (char *) getenv("IB_CONFIG"))== (char *)0 )
 	{
 		if(ibParseConfigFile("/etc/gpib.conf") < 0  )
 		{
-			printf("\n"
+			fprintf(stderr, "\n"
 				"OOps! There is a Problem With your Default Config File\n"
 				"/etc/gpib.conf. Please check out if one exists or look for Syntax Errors.\n");
 				exit(1);
@@ -49,37 +49,37 @@ int main(int argc,char **argv)
 	{
 		if(ibParseConfigFile(envptr) < 0)
 		{
-			printf("\n"
+			fprintf(stderr, "\n"
 				"OOps! There is a Problem With your Config File set in IB_CONFIG\n"
 				"environment Variable. Please check out if one exists or look for Syntax Errors.\n");
 			exit(1);
 		}
 	}
 
-	printf("OK\n");
+	fprintf(stderr, "OK\n");
 
-	printf("**Next Check The Driver.....                         ");
+	fprintf(stderr, "**Next Check The Driver.....                         ");
 
 	sprintf(str, "/dev/gpib%d", ind);
 	if(( fd=open(str,O_RDWR) ) < 0 )
 	{
-		printf("\n There is a Problem with the Driver: ");
-		printf("\n open(%s) says \"%s\" ", str, strerror(errno));
-		printf("\n Have you loaded the Driver Module into the Kernel?\n"
+		fprintf(stderr, "\n There is a Problem with the Driver: ");
+		fprintf(stderr, "\n open(%s) says \"%s\" ", str, strerror(errno));
+		fprintf(stderr, "\n Have you loaded the Driver Module into the Kernel?\n"
 			"Or check if '%s' exists!\n",str);
 		exit(1);
 	}
 
 	close(fd);
-	printf("OK\n");
+	fprintf(stderr, "OK\n");
 
 	/************/
-	printf("**Check if Board present....                         ");
+	fprintf(stderr, "**Check if Board present....                         ");
 	if(ibBdChrConfig(ind, ibBoard[CONF(ind,board)].base,
 		ibBoard[CONF(ind,board)].irq,
 		ibBoard[CONF(ind,board)].dma) & ERR )
 	{
-		printf("\n  Problems while setting up Base and Irq\n"
+		fprintf(stderr, "\n  Problems while setting up Base and Irq\n"
 			"Perhaps you changed Base and Irq Without reloading the Driver?\n");
 		exit(1);
 	}
@@ -88,42 +88,42 @@ int main(int argc,char **argv)
 	{
 		if (iberr == ENEB)
 		{
-			printf("\n  Board not found at Base Adress: 0x%x. \n"
+			fprintf(stderr, "\n  Board not found at Base Adress: 0x%x. \n"
 				"Check if Base-Adress or IRQ/DMA has correctly been set\n"
 				"or if you have an unsupported board.\n"
 				"Dump of Additional Messages follows:\n"
 				"--------------------------\n", ibBoard[CONF(ind,board)].base );
 			system("tail -n5 /usr/adm/messages");
-			printf("\n  --------------------------\n");
+			fprintf(stderr, "\n  --------------------------\n");
 		}
 		exit(1);
 	}
-	printf("OK\n");
+	fprintf(stderr, "OK\n");
 	/***************/
 
-	printf("**Checking some Bus Functions...                     ");
+	fprintf(stderr, "**Checking some Bus Functions...                     ");
 
 	if( ibsic(ind) & ERR )
 	{
-		printf("\n  Problem Sending IFC\n");
+		fprintf(stderr, "\n  Problem Sending IFC\n");
 		exit(1);
 	}
 	if(ibcmd(ind, "  ", 3) & ERR )
 	{
-		printf("\n  Bus or another Hardware Problem\n");
+		fprintf(stderr, "\n  Bus or another Hardware Problem\n");
 		if( ibsta & TIMO )
-			printf("Look if your Card's IRQ and DMA Jumper matches those\n"
+			fprintf(stderr, "Look if your Card's IRQ and DMA Jumper matches those\n"
 				"in the Configuration file and check if you have at least\n"
 				"one device connected to your bus.\n");
 		exit(1);
 	}
 
-	printf("OK\n");
+	fprintf(stderr, "OK\n");
 
 	/****************/
 
 
-	printf("\n\n  Everything seems to be OK for me.(Found %d Devices).\n"
+	fprintf(stderr, "\n\n  Everything seems to be OK for me.(Found %d Devices).\n"
 		"It's now your turn to check out\n"
 		"Some Device Commands with ibsh or with own Programs that uses GPIB Commands.\n"
 		"Good Luck.\n", ibGetNrDev());
