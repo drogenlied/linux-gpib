@@ -30,7 +30,7 @@ int main(int argc,char **argv){
 
   register int i=0;
   int dev;
-
+	char result;
 
   /* 
    * Lookup device in the device configuration
@@ -98,7 +98,7 @@ int main(int argc,char **argv){
    */
 
   fprintf(stderr, "send nice string..\n");
-  strcpy(cmd,"D2INIT ");
+  strcpy(cmd,"D2INIT");
   if( ibwrt(dev,cmd,strlen(cmd)) & ERR ){
     gpiberr("wrt err");
     exit(1);
@@ -120,7 +120,7 @@ int main(int argc,char **argv){
 #if USE_SRQ
   strcpy(cmd,"D0 L0 Q1 T1 R2 A1 S0");
 #else
-  strcpy(cmd,"D1 F1 R2 T1");
+  strcpy(cmd,"D1 F1 R2 T1 M77");
 #endif
   if( ibwrt(dev,cmd,strlen(cmd)) & ERR ){
     gpiberr("wrt err");
@@ -158,8 +158,12 @@ int main(int argc,char **argv){
    *
    *
    */
-
-
+  fprintf(stderr, "\nserial poll\n");
+  if( ibrsp(dev, &result) & ERR ){
+    gpiberr("ibsic Err");
+    exit(1);
+  }
+fprintf(stderr, "result 0x%x\n", result);
   printf("\nReading Value...");
 
   if( ibrd(dev,res,1223) & ERR){

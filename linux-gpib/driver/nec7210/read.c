@@ -23,39 +23,33 @@ ssize_t pio_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer
 {
 	size_t count = 0;
 	ssize_t retval = 0;
-	uint8_t data;
-
-	init_gpib_buffer(&priv->buffer, buffer, length);
-
-	set_bit(PIO_IN_PROGRESS_BN, &priv->state);
 
 	// enable 'data in' and 'end' interrupt
 	priv->imr1_bits |= HR_DIIE | HR_ENDIE;
 	priv->write_byte(priv, priv->imr1_bits, IMR1);
 
-	// try busy wait XXX
-	if(wait_event_interruptible(driver->wait,
-		test_bit(PIO_IN_PROGRESS_BN, &priv->state) == 0 ||
-		test_bit(TIMO_NUM, &driver->status)))
-	{
-		printk("gpib: pio read wait interrupted\n");
-		retval = -EINTR;
-	};
 
 	while(count < length)
 	{
-		retval = gpib_buffer_get(&priv->buffer, &data);
-		if(retval < 0)
+		// try busy wait XXX
+		if(wait_event_interruptible(driver->wait,
+			test_bit(READ_READY_BN, &priv->state) ||
+			test_bit(TIMO_NUM, &driver->status)))
 		{
+			printk("gpib: pio read wait interrupted\n");
+			retval = -EINTR;
 			break;
-		}
-		buffer[count++] = data;
+		};
+		if(test_bit(TIMO_NUM, &driver->status))
+			break;
+
+		clear_bit(READ_READY_BN, &priv->state);
+		buffer[count++] = priv->read_byte(priv, DIR);
 	}
 
 	// disable 'data in' and 'end' interrupt
 	priv->imr1_bits &= ~HR_DIIE & ~HR_ENDIE;
 	priv->write_byte(priv, priv->imr1_bits, IMR1);
-
 
 	return retval ? retval : count;
 }
@@ -121,13 +115,13 @@ ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int 
 	size_t	count = 0;
 	ssize_t retval = 0;
 	nec7210_private_t *priv = driver->private_data;
-
 	*end = 0;
 
 	if(length == 0) return 0;
 
 	if(test_and_clear_bit(RFD_HOLDOFF_BN, &priv->state))
 	{
+		priv->write_byte(priv, priv->auxa_bits | HR_HLDA, AUXMR);
 		priv->write_byte(priv, AUX_FH, AUXMR);
 	}
 /*
@@ -153,7 +147,7 @@ ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int 
 	}
 
 	// read last byte if we havn't received an END yet
-	if(priv->buffer.end_flag == 0)
+	if(test_bit(END_NUM, &driver->status) == 0)
 	{
 		// make sure we holdoff after last byte read
 		priv->write_byte(priv, priv->auxa_bits | HR_HLDA, AUXMR);
@@ -164,7 +158,8 @@ ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int 
 			count++;
 	}
 
-	*end = priv->buffer.end_flag;
+	if(test_and_clear_bit(END_NUM, &driver->status))
+		*end = 1;
 
 	set_bit(RFD_HOLDOFF_BN, &priv->state);
 

@@ -24,6 +24,8 @@ ssize_t pio_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffe
 	size_t count = 0;
 	ssize_t retval = 0;
 
+printk("pio write %p %i\n", buffer, length);
+
 	// enable 'data out' interrupts
 	priv->imr1_bits |= HR_DOIE;
 	priv->write_byte(priv, priv->imr1_bits, IMR1);
@@ -63,6 +65,8 @@ ssize_t dma_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffe
 	unsigned long flags;
 	int residue = 0;
 
+printk("dma write %p %i\n", buffer, length);
+
 	/* program dma controller */
 	flags = claim_dma_lock();
 	disable_dma(priv->dma_channel);
@@ -76,6 +80,8 @@ ssize_t dma_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffe
 	// enable board's dma for output
 	priv->imr2_bits |= HR_DMAO;
 	priv->write_byte(priv, priv->imr2_bits, IMR2);
+
+	set_bit(DMA_IN_PROGRESS_BN, &priv->state);
 
 	// enable 'data out' interrupts
 	priv->imr1_bits |= HR_DOIE;
@@ -117,7 +123,7 @@ ssize_t nec7210_write(gpib_driver_t *driver, uint8_t *buffer, size_t length, int
 	if(length == 0) return 0;
 
 	/* normal handshaking, XXX necessary?*/
-	priv->write_byte(priv, priv->auxa_bits, AUXMR);
+//	priv->write_byte(priv, priv->auxa_bits, AUXMR);
 
 	if(send_eoi)
 	{

@@ -66,6 +66,10 @@ IBLCL ssize_t ibwrt(uint8_t *buf, size_t cnt, int more)
 		buf += ret;
 		bytes_sent += ret;
 	}
+
+	if(driver->update_status(driver) & TIMO)
+		ret = -ETIMEDOUT;
+
 	osRemoveTimer();
 
 	// mark io complete

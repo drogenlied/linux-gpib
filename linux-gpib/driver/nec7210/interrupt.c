@@ -60,11 +60,9 @@ printk("ammc status 0x%x\n", inl(amcc_iobase + INTCSR_REG));
 void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 {
 	int status1, status2, address_status;
-	int ret;
 	unsigned long flags;
 	gpib_driver_t *driver = (gpib_driver_t*) arg;
 	nec7210_private_t *priv = driver->private_data;
-	uint8_t data;
 	
 	/* interrupt should also update RDF_HOLDOFF in state
 	 * by checking auxa_bits and END, but I need to make
@@ -127,23 +125,13 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	// record reception of END
 	if(status1 & HR_END)
 	{
-		priv->buffer.end_flag = 1;
+		set_bit(END_NUM, &driver->status);
 	}
 
 	// get incoming data in PIO mode
-	if((status1 & HR_DI) && test_bit(PIO_IN_PROGRESS_BN, &priv->state))
+	if((status1 & HR_DI))
 	{
-		ret = gpib_buffer_put(&priv->buffer, priv->read_byte(priv, DIR));
-		if(ret)
-		{
-			printk("read buffer full\n");
-			priv->buffer.error_flag = 1;
-		}
-		if((status1 & HR_END) ||
-			atomic_read(&priv->buffer.size) == priv->buffer.length)
-		{
-			clear_bit(PIO_IN_PROGRESS_BN, &priv->state);
-		}
+		set_bit(READ_READY_BN, &priv->state);
 		wake_up_interruptible(&driver->wait); /* wake up sleeping process */
 	}
 
@@ -164,8 +152,6 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 
 	if((status1 & HR_DO))
 	{
-		// for writing data, pio mode
-		set_bit(WRITE_READY_BN, &priv->state);
 		if(test_bit(DMA_IN_PROGRESS_BN, &priv->state))	// write data, isa dma mode
 		{
 			// check if dma transfer is complete
@@ -179,6 +165,10 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 			}else
 				enable_dma(priv->dma_channel);
 			release_dma_lock(flags);
+		}else
+		{ // for writing data, pio mode
+			set_bit(WRITE_READY_BN, &priv->state);
+			wake_up_interruptible(&driver->wait); 
 		}
 	}
 
@@ -202,7 +192,7 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 		printk("gpib output error\n");
 	}
 
-printk("isr1 0x%x, isr2 0x%x, status 0x%x\n", status1, status2, driver->status);
+printk("isr1 0x%x, imr1 0x%x, isr2 0x%x, imr2 0x%x, status 0x%x\n", status1, priv->imr1_bits, status2, priv->imr2_bits, driver->status);
 
 }
 

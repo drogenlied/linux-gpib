@@ -406,8 +406,7 @@ printk("ioclt %i\n", cmd);
 	}
 
 	// return status bits
-	ibargp->ib_ibsta &= ~DRIVERBITS;
-	ibargp->ib_ibsta |= driver->update_status(driver) & DRIVERBITS;
+	ibargp->ib_ibsta = driver->update_status(driver);
 	if(retval)
 		ibargp->ib_ibsta |= ERR;
 	else

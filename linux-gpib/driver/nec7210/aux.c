@@ -59,7 +59,7 @@ int nec7210_take_control(gpib_driver_t *driver, int syncronous)
 
 	if(test_bit(TIMO_NUM, &driver->status))
 	{
-		printk("gpib: synchronous take control timed out\n");
+		printk("gpib: take control timed out\n");
 		return -ETIMEDOUT;
 	}
 

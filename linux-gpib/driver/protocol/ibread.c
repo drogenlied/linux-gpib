@@ -36,7 +36,7 @@
 IBLCL ssize_t ibrd(uint8_t *buf, size_t length, int *end_flag)
 {
 	size_t count = 0;
-	ssize_t ret;
+	ssize_t ret = 0;
 	int status = driver->update_status(driver);
 
 	if((status & LACS) == 0) 
@@ -51,7 +51,7 @@ IBLCL ssize_t ibrd(uint8_t *buf, size_t length, int *end_flag)
 	clear_bit(CMPL_NUM, &driver->status);
 	// initialize status to END not yet received
 	clear_bit(END_NUM, &driver->status);
-	while ((count < length) && !(driver->update_status(driver) & TIMO)) 
+	while ((count < length) && !(status = driver->update_status(driver) & TIMO)) 
 	{
 		ret = driver->read(driver, buf, length - count, end_flag);
 		if(ret < 0)
@@ -67,6 +67,6 @@ IBLCL ssize_t ibrd(uint8_t *buf, size_t length, int *end_flag)
 	// mark io completed
 	set_bit(CMPL_NUM, &driver->status);
 
-	return count;
+	return ret ? ret : count;
 }
 
