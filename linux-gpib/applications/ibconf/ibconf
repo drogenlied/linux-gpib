@@ -2,7 +2,7 @@
 # the next line restarts using wish \
 exec wish "$0" "$@"
 
-#/usr/local/bin/wish
+#!/usr/bin/wish
 #######################################################################################
 #
 # IBCONF a little configuration and bus-test utility
@@ -65,7 +65,7 @@ if { [llength [info commands gpib]] > 0 } {
 #
 #
 catch "exec rm /tmp/ibdump"
-catch "exec $ibdump tcl >/tmp/ibdump" 
+catch "exec $ibdump tcl >/tmp/ibdump"
 catch "source /tmp/ibdump"
 
 
@@ -77,9 +77,9 @@ set changed_state 0
 # if not found fall back to defaults
 #
 
-if !$ibBoard(boards) { 
+if !$ibBoard(boards) {
 
-set ibBoard(boards) 1 
+set ibBoard(boards) 1
 
 set ibBoard(0,devices) {}
 set ibBoard(0,pad) 0
@@ -92,11 +92,6 @@ set ibBoard(0,eos) 0x0a
 set ibBoard(0,reos) 1
 set ibBoard(0,bin)  0
 set ibBoard(0,ifc)  1
-set ibBoard(0,debug)  0
-set ibBoard(0,dmabuf)  0
-set ibBoard(0,errlog)  /dev/console
-
-
 
 }
 
@@ -185,7 +180,7 @@ foreach i $ibBoard(0,devices) {
 
 ######################################################################
 proc add_new { {aname Unknown} } {
-   global name init pad sad eos reos bin init_flags network master new_device changed_state
+   global name init pad sad eos reos bin init_flags master new_device changed_state
    global tk_version autopoll
 
    set name     $aname
@@ -200,7 +195,6 @@ proc add_new { {aname Unknown} } {
    set init_flags     ""
    set master    0
    set autopoll  0
-   set network  ""	   
    } else {
    upvar $name Device
    set new_device 0
@@ -211,7 +205,6 @@ proc add_new { {aname Unknown} } {
    set reos       $Device(reos)
    set bin        $Device(bin)
    set init_flags      $Device(init_flags)
-   set network    $Device(network)	   
    set master     $Device(master)
    set autopoll   $Device(autopoll)
    }
@@ -304,17 +297,8 @@ set scrolloption -scroll
    label       .new.master.l    -text "Bus Master Configuration" -relief ridge -borderwidth 2
    checkbutton .new.master.c    -text "Device is Bus Master" -variable master \
                                   -relief flat
-   label       .new.master.l2   -text "Export Bus to Host(s):"
-   entry       .new.master.e    -relief sunken -background grey90 -textvariable network -width 50 \
-                                $scrolloption ".new.master.s set"
-   scrollbar   .new.master.s    -relief sunken -orient horiz -command \
-                                ".new.master.e view"
-
-   pack     .new.master.l       -side top -fill x -padx 8 -pady 10 -expand yes 
+   pack     .new.master.l       -side top -fill x -padx 8 -pady 10 -expand yes
    pack     .new.master.c       -side top  -anchor w -expand yes  -padx 10
-   pack     .new.master.l2      -side top -fill x -expand yes   
-   pack     .new.master.e       -side top -fill x -expand yes -padx 8  
-   pack     .new.master.s       -side top -fill x -expand yes -padx 8  
    pack     .new.master         -side top -fill both -expand yes -padx 8 -pady 5 
 
    #####
@@ -337,7 +321,7 @@ set scrolloption -scroll
 ######################################################################
 proc update_struct {  } {
    global ibBoard changed_state
-   global name init pad sad eos reos bin init_flags network master new_device
+   global name init pad sad eos reos bin init_flags master new_device
    global $name autopoll
 
    set changed_state 1
@@ -350,7 +334,6 @@ proc update_struct {  } {
    eval "set $name\(reos\)       $reos"
    eval "set $name\(bin\)        $bin"
    eval "set $name\(init_flags\) \{$init_flags\}"
-   eval "set $name\(network\)    \{$network\}"	   
    eval "set $name\(master\)     $master"
    eval "set $name\(autopoll\)   $autopoll"
 
@@ -402,24 +385,21 @@ set status "Saving Setup to $filename..."
 update idletasks
   for { set bd 0 } { $bd < $ibBoard(boards) } { incr bd } {
         set devices [ eval "set ibBoard($bd,devices)" ]
-        
-        puts $outfile "config \{ "
-	 puts $outfile "      pad     = $ibBoard($bd,pad)"	
-	 puts $outfile "      sad     = $ibBoard($bd,sad)"	
-	 puts $outfile "      timeout = $ibBoard($bd,timeout)"	
-	 puts $outfile "      base    = $ibBoard($bd,base)"	
-	 puts $outfile "      irq     = $ibBoard($bd,irq)"	
-	 puts $outfile "      dma     = $ibBoard($bd,dma)"	
-         puts $outfile ""
-	 puts $outfile "      eos     = $ibBoard($bd,eos)"	
-	 puts $outfile "      debug   = $ibBoard($bd,debug)"	
-	 puts $outfile "      dma-bufsize   = $ibBoard($bd,dmabuf) "	
 
-	 vput_bool $outfile ibBoard "      set-reos " $bd,reos	
-	 vput_bool $outfile ibBoard "      set-bin  " $bd,bin	
-	 vput_bool $outfile ibBoard "      set-ifc  " $bd,ifc	
+        puts $outfile "config \{ "
+	 puts $outfile "      pad     = $ibBoard($bd,pad)"
+	 puts $outfile "      sad     = $ibBoard($bd,sad)"
+	 puts $outfile "      timeout = $ibBoard($bd,timeout)"
+	 puts $outfile "      base    = $ibBoard($bd,base)"
+	 puts $outfile "      irq     = $ibBoard($bd,irq)"
+	 puts $outfile "      dma     = $ibBoard($bd,dma)"
          puts $outfile ""
-	 puts $outfile "      errlog  = $ibBoard($bd,errlog)"	
+	 puts $outfile "      eos     = $ibBoard($bd,eos)"
+
+	 vput_bool $outfile ibBoard "      set-reos " $bd,reos
+	 vput_bool $outfile ibBoard "      set-bin  " $bd,bin
+	 vput_bool $outfile ibBoard "      set-ifc  " $bd,ifc
+         puts $outfile ""
          puts $outfile "\}"
 
 	 foreach i  $devices  {
@@ -435,7 +415,6 @@ update idletasks
           set masterflag  [eval "global $i;set $i\(master\)"]
           if  $masterflag {
              puts $outfile        "        master"
-             vput_s $outfile "$i" "        network " network	
           }
 
           set pollflag  [eval "global $i;set $i\(autopoll\)"]
@@ -479,7 +458,7 @@ if "$tval > 0" {
 ######################################################################
 proc configure_board {} {
 global ibBoard
-global bpad bsad timo beos breos bbin base irq dma ifc errlog changed_state debug dmabuf
+global bpad bsad timo beos breos bbin base irq dma ifc changed_state 
 
 toplevel .board
 wm title .board "Configure Board Characteristics"
@@ -496,9 +475,6 @@ set base   $ibBoard(0,base)
 set irq    $ibBoard(0,irq)
 set dma    $ibBoard(0,dma)
 set ifc    $ibBoard(0,ifc)
-set debug  $ibBoard(0,debug)
-set errlog $ibBoard(0,errlog)
-set dmabuf [ expr $ibBoard(0,dmabuf) / 1024 ]
 }
 
 
@@ -526,38 +502,30 @@ set dmabuf [ expr $ibBoard(0,dmabuf) / 1024 ]
    #####
 
    frame     .board.chr -relief ridge -borderwidth 2
-   label     .board.chr.l -text "Hardware Settings" -relief ridge -borderwidth 2 
+   label     .board.chr.l -text "Hardware Settings" -relief ridge -borderwidth 2
 
-   frame     .board.chr.f1 
+   frame     .board.chr.f1
    label     .board.chr.f1.l -text "Base Address"
    entry     .board.chr.f1.e -relief sunken -background grey90 -width 6 -textvariable base
-   pack      .board.chr.f1.e -side right 
-   pack      .board.chr.f1.l -side left 
+   pack      .board.chr.f1.e -side right
+   pack      .board.chr.f1.l -side left
 
-   frame     .board.chr.f2 
+   frame     .board.chr.f2
    label     .board.chr.f2.l -text "IRQ Level"
    entry     .board.chr.f2.e -relief sunken -background grey90 -width 6 -textvariable irq
-   pack      .board.chr.f2.e -side right  
-   pack      .board.chr.f2.l -side left  
+   pack      .board.chr.f2.e -side right
+   pack      .board.chr.f2.l -side left
 
-   frame     .board.chr.f3 
+   frame     .board.chr.f3
    label     .board.chr.f3.l -text "DMA Channel"
    entry     .board.chr.f3.e -relief sunken -background grey90 -width 6 -textvariable dma
-   pack      .board.chr.f3.e -side right 
-   pack      .board.chr.f3.l -side left 
-
-   frame     .board.chr.f4 
-   label     .board.chr.f4.l -text "Debug Level"
-   entry     .board.chr.f4.e -relief sunken -background grey90 -width 6 -textvariable debug
-   pack      .board.chr.f4.e -side right 
-   pack      .board.chr.f4.l -side left 
-
+   pack      .board.chr.f3.e -side right
+   pack      .board.chr.f3.l -side left
 
    pack      .board.chr.l -fill x -side top -padx 4 -pady 4
    pack      .board.chr.f1 -side top -padx 4 -pady 4 -fill x
    pack      .board.chr.f2 -side top -padx 4 -pady 4 -fill x
    pack      .board.chr.f3 -side top -padx 4 -pady 4 -fill x
-   pack      .board.chr.f4 -side top -padx 4 -pady 4 -fill x
    pack      .board.chr -side left -padx 8 -pady 5 -fill both
 
 
@@ -571,16 +539,6 @@ set dmabuf [ expr $ibBoard(0,dmabuf) / 1024 ]
    frame    .board.chr.sad
    selector .board.chr.sad bsad "Secondary GPIB Address"
    pack     .board.chr.sad  -side top -fill x
-
-
-   #####
-   ## dma buffer size
-   #####
-   frame    .board.chr.dmabuf
-   selector .board.chr.dmabuf dmabuf "DMA Buffer Size (kB)"
-   pack     .board.chr.dmabuf  -side top -fill x
-
-
 
 
    #####
@@ -658,28 +616,13 @@ set dmabuf [ expr $ibBoard(0,dmabuf) / 1024 ]
    pack .board.ifc -side top -fill both -expand yes -padx 8 -pady 5
 
 
-
-   ###
-   #  errlog
-   ###
-
-   frame       .board.errlog -relief ridge -borderwidth 2
-   label       .board.errlog.l -relief ridge -borderwidth 2 -text "Error Logging Path"
-   entry       .board.errlog.e -relief sunken -background grey90 -textvariable errlog
-
-   pack .board.errlog.l -padx 8 -pady 5 -fill x
-   pack .board.errlog.e -padx 8 -pady 5 -fill x
-   pack .board.errlog -side top -fill both -expand yes -padx 8 -pady 5
-   
-
-
-   grab set .board	
+   grab set .board
 
 }
 
 proc accept_boardopts {} {
 global ibBoard changed_state
-global bpad bsad timo beos breos bbin base irq dma ifc errlog debug dmabuf
+global bpad bsad timo beos breos bbin base irq dma ifc
 
 set changed_state 1
 
@@ -693,9 +636,6 @@ set ibBoard(0,base) $base
 set ibBoard(0,irq) $irq
 set ibBoard(0,dma) $dma
 set ibBoard(0,ifc) $ifc
-set ibBoard(0,debug) $debug
-set ibBoard(0,errlog) $errlog
-set ibBoard(0,dmabuf) [ expr $dmabuf * 1024 ]
 
 
 }
