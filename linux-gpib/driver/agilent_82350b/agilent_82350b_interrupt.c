@@ -41,7 +41,7 @@ irqreturn_t agilent_82350b_interrupt(int irq, void *arg, struct pt_regs *registe
 	
 	spin_lock_irqsave( &board->spinlock, flags );
 	event_status = readb(a_priv->gpib_base + EVENT_STATUS_REG);
-	printk("event_status=0x%x\n", event_status);
+// 	printk("event_status=0x%x\n", event_status);
 	if(event_status & IRQ_STATUS_BIT)
 	{
 		retval = IRQ_HANDLED;

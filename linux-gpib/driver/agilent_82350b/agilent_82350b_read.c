@@ -21,9 +21,9 @@ ssize_t agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t 
 {
 	agilent_82350b_private_t *a_priv = board->private_data;
 	tms9914_private_t *tms_priv = &a_priv->tms9914_priv;
-	int i;
 	int retval = 0;
 	unsigned short event_status;
+	int need_release;
 	//hardware doesn't support checking for end-of-string character when using fifo
 	if(tms_priv->eos_flags & REOS) 
 	{
@@ -35,24 +35,38 @@ ssize_t agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t 
 	*nbytes = 0;
 	if(length == 0) return 0;
 	--length;
-printk("%s: using fifo to transfer %i bytes\n", __FUNCTION__, length);
-	write_byte(tms_priv, AUX_HLDA, AUXCR);
+	//disable fifo for the moment
+	writeb(DIRECTION_GPIB_TO_HOST, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG);
+	// handle corner case of board not in holdoff and one byte has slipped in already
+	need_release = tms9914_need_release_holdoff(board, tms_priv);
+	if(!need_release)
+	{
+		int bytes_read;
+		retval = tms9914_read(board, tms_priv, buffer, 1, end, &bytes_read);
+		*nbytes += bytes_read;
+		if(retval < 0 || *end)
+		{
+			printk("%s: retval=%i end=%i\n", __FUNCTION__, retval, *end);
+			return retval;
+		}
+	}
 	write_byte(tms_priv, AUX_HLDE | AUX_CS, AUXCR);
+	write_byte(tms_priv, AUX_HLDA, AUXCR);
 	write_byte(tms_priv, AUX_RHDF, AUXCR);
-	for(i = 0; i < length && *end == 0;)
+	while(*nbytes < length && *end == 0)
 	{
 		int block_size;
 		int j;
 		int count;
-		if(length - i < agilent_82350b_fifo_size)
-			block_size = length - i;
+		if(length - *nbytes < agilent_82350b_fifo_size)
+			block_size = length - *nbytes;
 		else
 			block_size = agilent_82350b_fifo_size;
-		writeb(DIRECTION_GPIB_TO_HOST, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG);
 		set_transfer_counter(a_priv, block_size);
 		writeb(ENABLE_TI_TO_SRAM | DIRECTION_GPIB_TO_HOST, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG); 
 		if(readb(a_priv->gpib_base + STREAM_STATUS_REG) & HALTED_STATUS_BIT) 
 			writeb(RESTART_STREAM_BIT, a_priv->gpib_base + STREAM_STATUS_REG); 
+		clear_bit(READ_READY_BN, &tms_priv->state);
 		if(wait_event_interruptible(board->wait, 
 			((event_status = read_and_clear_event_status(board)) & (TERM_COUNT_STATUS_BIT | BUFFER_END_STATUS_BIT)) ||
 			test_bit(DEV_CLEAR_BN, &tms_priv->state) ||
@@ -63,13 +77,8 @@ printk("%s: using fifo to transfer %i bytes\n", __FUNCTION__, length);
 			break;
 		}
 		count = block_size - read_transfer_counter(a_priv);
-		for(j = 0; j < count && i < length; ++j)
-			buffer[i++] = readb(a_priv->sram_base + j); 
-		printk("Count regs: lo=0x%x mid=0x%x hi=0x%x\n",
-			readb(a_priv->gpib_base + XFER_COUNT_LO_REG),
-			readb(a_priv->gpib_base + XFER_COUNT_MID_REG),
-			readb(a_priv->gpib_base + XFER_COUNT_HI_REG));
-		printk("remaining=%i\n", read_transfer_counter(a_priv));
+		for(j = 0; j < count && *nbytes < length; ++j)
+			buffer[(*nbytes)++] = readb(a_priv->sram_base + j); 
 		if(test_bit(TIMO_NUM, &board->status))
 		{
 			printk("%s: minor %i: write timed out\n", __FILE__, board->minor);
@@ -83,16 +92,20 @@ printk("%s: using fifo to transfer %i bytes\n", __FUNCTION__, length);
 			break;
 		}
 		if(event_status & BUFFER_END_STATUS_BIT)
+		{
+			clear_bit(RECEIVED_END_BN, &tms_priv->state);
 			*end = 1;
+		}
 	}
+	write_byte(tms_priv, AUX_HLDA | AUX_CS, AUXCR);
+	write_byte(tms_priv, AUX_HLDE, AUXCR);
 	writeb(DIRECTION_GPIB_TO_HOST, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG);
-	*nbytes = i;
 	if(retval < 0) return retval;
 	// read last byte if we havn't received an END yet
 	if(*end == 0)
 	{
 		int bytes_read;
-		// make sure we holdoff after last byte read
+		// try to make sure we holdoff after last byte read
 		retval = tms9914_read(board, tms_priv, &buffer[*nbytes], 1, end, &bytes_read);
 		*nbytes += bytes_read;
 		if(retval < 0)

@@ -32,6 +32,7 @@ ssize_t agilent_82350b_accel_write( gpib_board_t *board, uint8_t *buffer, size_t
 	}
 	clear_bit(DEV_CLEAR_BN, &tms_priv->state);
 	read_and_clear_event_status(board);
+	writeb(0, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG); 
 	for(i = 0; i < fifoTransferLength;)
 	{
 		int block_size;
@@ -39,7 +40,6 @@ ssize_t agilent_82350b_accel_write( gpib_board_t *board, uint8_t *buffer, size_t
 			block_size = fifoTransferLength - i;
 		else
 			block_size = agilent_82350b_fifo_size;
-		writeb(0, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG); 
 		set_transfer_counter(a_priv, block_size);
 		for(j = 0; j < block_size; ++j, ++i)
 		{
@@ -70,7 +70,7 @@ ssize_t agilent_82350b_accel_write( gpib_board_t *board, uint8_t *buffer, size_t
 			retval = -EINTR;
 			break;
 		}
-}
+	}
 	writeb(0, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG); 
 	if(retval) return retval;
 	if(send_eoi)
