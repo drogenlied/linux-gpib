@@ -71,15 +71,13 @@ struct gpib_interface_struct
 	 * read.  Positive return value is number of bytes read, negative
 	 * return indicates error.
 	 */
-	ssize_t (*read)(gpib_device_t *device, uint8_t *buffer, size_t length, int
- *end);
+	ssize_t (*read)(gpib_device_t *device, uint8_t *buffer, size_t length, int *end);
 	/* write() should write 'length' bytes from buffer to the bus.
 	 * If the boolean value send_eoi is nonzero, then EOI should
 	 * be sent along with the last byte.  Returns number of bytes
 	 * written or negative value on error.
 	 */
-	ssize_t (*write)(gpib_device_t *device, uint8_t *buffer, size_t length, int
- send_eoi);
+	ssize_t (*write)(gpib_device_t *device, uint8_t *buffer, size_t length, int send_eoi);
 	/* command() writes the command bytes in 'buffer' to the bus
 	 * Returns number of bytes written or negative value on error.
 	 */
@@ -142,6 +140,10 @@ struct gpib_device_struct
 {
 	/* functions used by this device */
 	gpib_interface_t *interface;
+	/* buffer used to store read/write data for this device */
+	uint8_t *buffer;
+	/* length of buffer */
+	unsigned int buffer_length;
 	/* Used to hold the board's current status (see update_status() above)
 	 */
 	volatile unsigned int status;
@@ -163,6 +165,8 @@ struct gpib_device_struct
 	/* 'private_data' can be used as seen fit by the driver to
 	 * store additional variables for this board */
 	void *private_data;
+	/* Flag that indicates wheter device is up and running or not */
+	unsigned int online : 1;
 };
 
 #endif	// __KERNEL__

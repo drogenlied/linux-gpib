@@ -175,12 +175,11 @@ void cb7210_free_private(gpib_device_t *device)
 	}
 }
 
-int cb_pci_attach(gpib_device_t *device)
+// generic part of attach functions shared by all cb7210 boards
+int cb_generic_attach(gpib_device_t *device)
 {
 	cb7210_private_t *cb_priv;
 	nec7210_private_t *nec_priv;
-	int isr_flags = 0;
-	int bits;
 
 	device->status = 0;
 
@@ -192,6 +191,42 @@ int cb_pci_attach(gpib_device_t *device)
 	nec_priv->write_byte = nec7210_ioport_write_byte;
 	nec_priv->offset = cb7210_reg_offset;
 
+	return 0;
+}
+
+void cb7210_init(cb7210_private_t *cb_priv)
+{
+	nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
+
+	nec7210_board_reset(nec_priv);
+
+	// XXX set clock register for 20MHz? driving frequency
+	write_byte(nec_priv, ICR | 8, AUXMR);
+
+	// enable nec7210 interrupts
+	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
+		HR_DETIE | HR_APTIE | HR_CPTIE;
+	nec_priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
+	write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
+	write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
+
+	write_byte(nec_priv, AUX_PON, AUXMR);
+}
+
+int cb_pci_attach(gpib_device_t *device)
+{
+	cb7210_private_t *cb_priv;
+	nec7210_private_t *nec_priv;
+	int isr_flags = 0;
+	int bits;
+	int retval;
+
+	retval = cb_generic_attach(device);
+	if(retval) return retval;
+
+	cb_priv = device->private_data;
+	nec_priv = &cb_priv->nec7210_priv;
+	
 	// find board
 	cb_priv->pci_device = pci_find_device(PCI_VENDOR_ID_CBOARDS, PCI_DEVICE_ID_CBOARDS_PCI_GPIB, NULL);
 	if(cb_priv->pci_device == NULL)
@@ -205,8 +240,6 @@ int cb_pci_attach(gpib_device_t *device)
 		printk("error enabling pci device\n");
 		return -1;
 	}
-
-	pci_set_master(cb_priv->pci_device);
 
 	if(pci_request_regions(cb_priv->pci_device, "pci-gpib"))
 		return -1;
@@ -227,11 +260,6 @@ int cb_pci_attach(gpib_device_t *device)
 	}
 	cb_priv->irq = cb_priv->pci_device->irq;
 
-	nec7210_board_reset(nec_priv);
-
-	// XXX set clock register for 20MHz? driving frequency
-	write_byte(nec_priv, ICR | 8, AUXMR);
-
 	// make sure mailbox flags are clear
 	inl(cb_priv->amcc_iobase + INCOMING_MAILBOX_REG(3));
 	// enable interrupts on amccs5933 chip
@@ -239,14 +267,7 @@ int cb_pci_attach(gpib_device_t *device)
 		INBOX_INTR_CS_BIT;
 	outl(bits, cb_priv->amcc_iobase + INTCSR_REG );
 
-	// enable interrupts for cb7210
-	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
-		HR_DETIE | HR_APTIE | HR_CPTIE;
-	nec_priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
-	write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
-	write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
-
-	write_byte(nec_priv, AUX_PON, AUXMR);
+	cb7210_init(cb_priv);
 
 	return 0;
 }
@@ -308,16 +329,10 @@ int cb_isa_attach(gpib_device_t *device)
 	cb7210_private_t *cb_priv;
 	nec7210_private_t *nec_priv;
 	unsigned int irq_bits;
+	int retval;
 
-	device->status = 0;
-
-	if(cb7210_allocate_private(device))
-		return -ENOMEM;
-	cb_priv = device->private_data;
-	nec_priv = &cb_priv->nec7210_priv;
-	nec_priv->offset = cb7210_reg_offset;
-	nec_priv->read_byte = nec7210_ioport_read_byte;
-	nec_priv->write_byte = nec7210_ioport_write_byte;
+	retval = cb_generic_attach(device);
+	if(retval) return retval;
 
 	if(request_region(device->ibbase, cb7210_iosize, "isa-gpib"));
 	{
@@ -332,6 +347,11 @@ int cb_isa_attach(gpib_device_t *device)
 		printk("board incapable of using irq %i, try 2-5, 7, 10, or 11\n", device->ibirq);
 	}
 
+	// put in nec7210 compatibility mode and configure board irq
+	write_byte(nec_priv, HS_RESET7210, HS_INT_LEVEL);
+	write_byte(nec_priv, irq_bits, HS_INT_LEVEL);
+	write_byte(nec_priv, 0, HS_MODE); /* disable system control */
+
 	// install interrupt handler
 	if(request_irq(device->ibirq, cb7210_interrupt, isr_flags, "isa-gpib", device))
 	{
@@ -340,24 +360,7 @@ int cb_isa_attach(gpib_device_t *device)
 	}
 	cb_priv->irq = device->ibirq;
 
-	// put in nec7210 compatibility mode and configure board irq
-	write_byte(nec_priv, HS_RESET7210, HS_INT_LEVEL);
-	write_byte(nec_priv, irq_bits, HS_INT_LEVEL);
-	write_byte(nec_priv, 0, HS_MODE); /* disable system control */
-
-	nec7210_board_reset(nec_priv);
-
-	// XXX set clock register for unknown? driving frequency
-	write_byte(nec_priv, ICR | 8, AUXMR);
-
-	// enable interrupts
-	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE |
-		HR_DETIE | HR_APTIE | HR_CPTIE;
-	nec_priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
-	write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
-	write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
-
-	write_byte(nec_priv, AUX_PON, AUXMR);
+	cb7210_init(cb_priv);
 
 	return 0;
 }

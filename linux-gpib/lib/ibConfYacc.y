@@ -5,14 +5,10 @@
 #include <ibP.h>
 #include <string.h>
 #include <stdlib.h>
-#include "parse.h"
 
 #define YYERROR_VERBOSE
-#define YYDEBUG 1
 
 static ibConf_t  temp;
-
-yydebug = 1;
 
 ibConf_t  ibConfigs[IB_MAXDEV];
 int bdid = 0;
@@ -44,7 +40,7 @@ char cval;
 		| interface input
 		| error
  			{	
- 				fprintf(stderr, "input error on line %i of %s\n", @$.first_line, DEFAULT_CONFIG_FILE);
+ 				fprintf(stderr, "input error on line %i of %s\n", @1.first_line, DEFAULT_CONFIG_FILE);
 				return -1;
 			}
 		;
@@ -65,7 +61,7 @@ char cval;
 		| statement parameter
 		| error
  			{	
- 				fprintf(stderr, "parameter error on line %i of %s\n", @$.first_line, DEFAULT_CONFIG_FILE);
+ 				fprintf(stderr, "parameter error on line %i of %s\n", @1.first_line, DEFAULT_CONFIG_FILE);
 				return -1;
 			}
 		;
@@ -105,7 +101,7 @@ char cval;
 	        | assign option 
 		| error 
  			{	
- 				fprintf(stderr, "option error on line %i of %s\n", @$.first_line, DEFAULT_CONFIG_FILE);
+ 				fprintf(stderr, "option error on line %i of %s\n", @1.first_line, DEFAULT_CONFIG_FILE);
 				return -1;
 			}
 		;

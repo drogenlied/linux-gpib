@@ -23,9 +23,7 @@
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <asm/dma.h>
-#include <gpib_buffer.h>
 #include <linux/pci.h>
-#include <linux/pci_ids.h>
 #include <linux/string.h>
 
 #ifdef MODULE_LICENSE
@@ -172,20 +170,65 @@ static void free_private(gpib_device_t *device)
 	}
 }
 
+int pc2_generic_attach(gpib_device_t *device)
+{
+	pc2_private_t *pc2_priv;
+	nec7210_private_t *nec_priv;
+
+	device->status = 0;
+	if(allocate_private(device))
+		return -ENOMEM;
+	pc2_priv = device->private_data;
+	nec_priv = &pc2_priv->nec7210_priv;
+	nec_priv->read_byte = nec7210_ioport_read_byte;
+	nec_priv->write_byte = nec7210_ioport_write_byte;
+
+#if DMAOP
+	nec_priv->dma_buffer_length = 0x1000;
+	nec_priv->dma_buffer = pci_alloc_consistent(NULL, nec_priv->dma_buffer_length,
+		&nec_priv->dma_buffer_addr);
+	if(nec_priv->dma_buffer == NULL)
+		return -ENOMEM;
+
+	// request isa dma channel
+	if( request_dma( device->ibdma, "pc2" ) )
+	{
+		printk("gpib: can't request DMA %d\n", device->ibdma);
+		return -1;
+	}
+	nec_priv->dma_channel = device->ibdma;
+#endif
+
+	return 0;
+}
+
+void pc2_init(nec7210_private_t *nec_priv)
+{
+	nec7210_board_reset(nec_priv);
+
+	// enable interrupts
+	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE |
+		HR_DETIE | HR_APTIE | HR_CPTIE;
+	nec_priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
+	write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
+	write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
+
+	write_byte(nec_priv, AUX_PON, AUXMR);
+}
+
 int pc2_attach(gpib_device_t *device)
 {
 	int isr_flags = 0;
 	pc2_private_t *pc2_priv;
 	nec7210_private_t *nec_priv;
-	device->status = 0;
+	int retval;
 
-	if(allocate_private(device))
-		return -ENOMEM;
+	retval = pc2_generic_attach(device);
+	if(retval) return retval;
+
 	pc2_priv = device->private_data;
 	nec_priv = &pc2_priv->nec7210_priv;
 	nec_priv->offset = pc2_reg_offset;
-	nec_priv->read_byte = nec7210_ioport_read_byte;
-	nec_priv->write_byte = nec7210_ioport_write_byte;
 
 	if(request_region(device->ibbase, pc2_iosize, "pc2"));
 	{
@@ -202,25 +245,7 @@ int pc2_attach(gpib_device_t *device)
 	}
 	pc2_priv->irq = device->ibirq;
 
-	// request isa dma channel
-#if DMAOP
-	if( request_dma( device->ibdma, "pc2" ) )
-	{
-		printk("gpib: can't request DMA %d\n", device->ibdma);
-		return -1;
-	}
-	nec_priv->dma_channel = device->ibdma;
-#endif
-	nec7210_board_reset(nec_priv);
-
-	// enable interrupts
-	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE |
-		HR_DETIE | HR_APTIE | HR_CPTIE;
-	nec_priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
-	write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
-	write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
-
-	write_byte(nec_priv, AUX_PON, AUXMR);
+	pc2_init(nec_priv);
 
 	return 0;
 }
@@ -246,6 +271,12 @@ void pc2_detach(gpib_device_t *device)
 			nec7210_board_reset(nec_priv);
 			release_region(nec_priv->iobase, pc2_iosize);
 		}
+		if(nec_priv->dma_buffer)
+		{
+			pci_free_consistent(NULL, nec_priv->dma_buffer_length, nec_priv->dma_buffer,
+				nec_priv->dma_buffer_addr);
+			nec_priv->dma_buffer = NULL;
+		}
 	}
 	free_private(device);
 }
@@ -256,16 +287,14 @@ int pc2a_attach(gpib_device_t *device)
 	int isr_flags = 0;
 	pc2_private_t *pc2_priv;
 	nec7210_private_t *nec_priv;
+	int retval;
 
-	device->status = 0;
+	retval = pc2_generic_attach(device);
+	if(retval) return retval;
 
-	if(allocate_private(device))
-		return -ENOMEM;
 	pc2_priv = device->private_data;
 	nec_priv = &pc2_priv->nec7210_priv;
 	nec_priv->offset = pc2a_reg_offset;
-	nec_priv->read_byte = nec7210_ioport_read_byte;
-	nec_priv->write_byte = nec7210_ioport_write_byte;
 
 	switch( device->ibbase ){
 
@@ -315,28 +344,11 @@ int pc2a_attach(gpib_device_t *device)
 		return -1;
 	}
 	pc2_priv->irq = device->ibirq;
-	// request isa dma channel
-#if DMAOP
-	if(request_dma(device->ibdma, "pc2a"))
-	{
-		printk("gpib: can't request DMA %d\n", device->ibdma );
-		return -1;
-	}
-	nec_priv->dma_channel = device->ibdma;
-#endif
-	nec7210_board_reset(nec_priv);
+
+	pc2_init(nec_priv);
 
 	// make sure interrupt is clear
 	outb(0xff , CLEAR_INTR_REG(pc2_priv->irq));
-
-	// enable interrupts
-	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
-		HR_DETIE | HR_APTIE | HR_CPTIE;
-	nec_priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
-	write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
-	write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
-
-	write_byte(nec_priv, AUX_PON, AUXMR);
 
 	return 0;
 }
@@ -366,6 +378,12 @@ void pc2a_detach(gpib_device_t *device)
 		}
 		if(pc2_priv->clear_intr_addr)
 			release_region(pc2_priv->clear_intr_addr, 1);
+		if(nec_priv->dma_buffer)
+		{
+			pci_free_consistent(NULL, nec_priv->dma_buffer_length, nec_priv->dma_buffer,
+				nec_priv->dma_buffer_addr);
+			nec_priv->dma_buffer = NULL;
+		}
 	}
 	free_private(device);
 }

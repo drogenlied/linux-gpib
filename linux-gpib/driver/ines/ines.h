@@ -56,8 +56,9 @@ int ines_serial_poll_response(gpib_device_t *device, uint8_t status);
 void ines_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
 // utility functions
-int ines_allocate_private(gpib_device_t *device);
 void ines_free_private(gpib_device_t *device);
+int ines_generic_attach(gpib_device_t *device);
+void ines_init(ines_private_t *priv);
 
 // pcmcia init/cleanup
 int ines_pcmcia_init_module(void);

@@ -66,8 +66,9 @@ int cb7210_parallel_poll(gpib_device_t *device, uint8_t *result);
 int cb7210_serial_poll_response(gpib_device_t *device, uint8_t status);
 
 // utility functions
-int cb7210_allocate_private(gpib_device_t *device);
 void cb7210_free_private(gpib_device_t *device);
+int cb7210_generic_attach(gpib_device_t *device);
+void cb7210_init(cb7210_private_t *private);
 
 // pcmcia init/cleanup
 int cb_pcmcia_init_module(void);

@@ -28,6 +28,9 @@ struct nec7210_private_struct
 	unsigned long iobase;
 	unsigned int offset;	// offset between successive nec7210 io addresses
 	unsigned int dma_channel;
+	uint8_t *dma_buffer;
+	unsigned int dma_buffer_length;	// length of dma buffer
+	dma_addr_t dma_buffer_addr;	// bus address of device->buffer for use with dma
 	// software copy of bits written to interrupt mask registers
 	volatile uint8_t imr1_bits, imr2_bits;
 	// bits written to address mode register
@@ -37,8 +40,7 @@ struct nec7210_private_struct
 	volatile int state;
 	// wrappers for outb, inb, readb, or writeb
 	uint8_t (*read_byte)(nec7210_private_t *priv, unsigned int register_number);
-	void (*write_byte)(nec7210_private_t *priv, uint8_t byte, unsigned int
- register_number);
+	void (*write_byte)(nec7210_private_t *priv, uint8_t byte, unsigned int register_number);
 };
 
 // slightly shorter way to access read_byte and write_byte

@@ -24,3 +24,7 @@ typedef void (*ibEventHandler)(int);
 #define NULL 0
 #endif
 
+#include <stdio.h>
+int gpib_yyparse(void);
+void gpib_yyrestart(FILE*);
+int gpib_yylex(void);

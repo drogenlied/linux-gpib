@@ -149,11 +149,10 @@ void ines_free_private(gpib_device_t *device)
 	}
 }
 
-int ines_pci_attach(gpib_device_t *device)
+int ines_generic_attach(gpib_device_t *device)
 {
 	ines_private_t *ines_priv;
 	nec7210_private_t *nec_priv;
-	int isr_flags = 0;
 
 	device->status = 0;
 
@@ -164,6 +163,38 @@ int ines_pci_attach(gpib_device_t *device)
 	nec_priv->read_byte = nec7210_ioport_read_byte;
 	nec_priv->write_byte = nec7210_ioport_write_byte;
 	nec_priv->offset = ines_reg_offset;
+
+	return 0;
+}
+
+void ines_init(ines_private_t *ines_priv)
+{
+	nec7210_private_t *nec_priv = &ines_priv->nec7210_priv;
+
+	nec7210_board_reset(nec_priv);
+
+	// enable interrupts for 7210
+	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
+		HR_DETIE | HR_APTIE | HR_CPTIE;
+	nec_priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
+	write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
+	write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
+
+	write_byte(nec_priv, AUX_PON, AUXMR);
+}
+
+int ines_pci_attach(gpib_device_t *device)
+{
+	ines_private_t *ines_priv;
+	nec7210_private_t *nec_priv;
+	int isr_flags = 0;
+	int retval;
+
+	retval = ines_generic_attach(device);
+	if(retval) return retval;
+
+	ines_priv = device->private_data;
+	nec_priv = &ines_priv->nec7210_priv;
 
 	// find board
 	ines_priv->pci_device = NULL;
@@ -201,19 +232,10 @@ int ines_pci_attach(gpib_device_t *device)
 	}
 	ines_priv->irq = ines_priv->pci_device->irq;
 
-	nec7210_board_reset(nec_priv);
-
 	// enable interrupts on plx chip
 	outl(INTCSR_ENABLE_INTR, ines_priv->plx_iobase + PLX_INTCSR_REG);
 
-	// enable interrupts for 7210
-	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
-		HR_DETIE | HR_APTIE | HR_CPTIE;
-	nec_priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
-	write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
-	write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
-
-	write_byte(nec_priv, AUX_PON, AUXMR);
+	ines_init(ines_priv);
 
 	return 0;
 }

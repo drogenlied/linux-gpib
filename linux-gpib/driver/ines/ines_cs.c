@@ -631,7 +631,7 @@ int ines_pcmcia_attach(gpib_device_t *device)
 	ines_private_t *ines_priv;
 	nec7210_private_t *nec_priv;
 	int isr_flags = 0;
-//	int bits;
+	int retval;
 
 	if(dev_list == NULL)
 	{
@@ -639,15 +639,11 @@ int ines_pcmcia_attach(gpib_device_t *device)
 		return -1;
 	}
 
-	device->status = 0;
+	retval = ines_generic_attach(device);
+	if(retval) return retval;
 
-	if(ines_allocate_private(device))
-		return -ENOMEM;
 	ines_priv = device->private_data;
 	nec_priv = &ines_priv->nec7210_priv;
-	nec_priv->read_byte = nec7210_ioport_read_byte;
-	nec_priv->write_byte = nec7210_ioport_write_byte;
-	nec_priv->offset = ines_reg_offset;
 
 	nec_priv->iobase = dev_list->io.BasePort1;
 
@@ -658,19 +654,7 @@ int ines_pcmcia_attach(gpib_device_t *device)
 	}
 	ines_priv->irq = dev_list->irq.AssignedIRQ;
 
-	nec7210_board_reset(nec_priv);
-
-	// XXX set clock register for 20MHz? driving frequency
-	write_byte(nec_priv, ICR | 8, AUXMR);
-
-	// enable interrupts
-	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
-		HR_DETIE | HR_APTIE | HR_CPTIE;
-	nec_priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
-	write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
-	write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
-
-	write_byte(nec_priv, AUX_PON, AUXMR);
+	ines_init(ines_priv);
 
 	return 0;
 }
@@ -681,7 +665,6 @@ void ines_pcmcia_detach(gpib_device_t *device)
 
 	if(priv && priv->irq)
 		free_irq(priv->irq, device);
-
 	ines_free_private(device);
 }
 

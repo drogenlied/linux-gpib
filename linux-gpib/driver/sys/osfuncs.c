@@ -70,11 +70,9 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
 {
 	int	retval = 0; 		/* assume everything OK for now */
 	ibarg_t m_ibarg,*ibargp;
-	int	bufsize;
 	int	remain;
-	char 	*buf;
-	char 	*userbuf;
-	char 	c;
+	uint8_t 	*userbuf;
+	char c;
 	ssize_t ret;
 	int end_flag = 0;
 	unsigned int minor = MINOR(inode->i_rdev);
@@ -94,7 +92,7 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
 		return -ENODEV;
 	}
 
-printk("ioctl %i\n", cmd);
+//printk("ioctl %i\n", cmd);
 
 	ibargp = (ibarg_t *) &m_ibarg;
 
@@ -147,30 +145,23 @@ printk("ioctl %i\n", cmd);
 			if (retval)
 				GIVE_UP (retval);
 
-			/* Get a DMA buffer */
-			bufsize = ibargp->ib_cnt;
-			if ((buf = osGetDMABuffer( &bufsize )) == NULL)
-			{
-				GIVE_UP( -ENOMEM ) ;
-			}
-			/* Read DMA buffer loads till we fill the user supplied buffer */
+			/* Read buffer loads till we fill the user supplied buffer */
 			userbuf = ibargp->ib_buf;
 			remain = ibargp->ib_cnt;
-			do
+			while(remain > 0 && end_flag == 0)
 			{
-				ret = ibrd(device, buf, (bufsize < remain) ? bufsize : remain, &end_flag);
+				ret = ibrd(device, device->buffer, (device->buffer_length < remain) ? device->buffer_length :
+					remain, &end_flag);
 				if(ret < 0)
 				{
 					retval = -EIO;
 					break;
 				}
-				copy_to_user( userbuf, buf, ret );
+				copy_to_user(userbuf, device->buffer, ret);
 				remain -= ret;
 				userbuf += ret;
-			}while (remain > 0 && end_flag == 0);
+			}
 			ibargp->ib_ibcnt = ibargp->ib_cnt - remain;
-			/* Free the DMA buffer */
-			osFreeDMABuffer( buf );
 			break;
 		case IBWRT:	// XXX write should not be an ioclt
 
@@ -178,20 +169,15 @@ printk("ioctl %i\n", cmd);
 			retval = verify_area(VERIFY_READ, ibargp->ib_buf, ibargp->ib_cnt);
 			if (retval)
 				GIVE_UP(retval);
-			/* Get a DMA buffer */
-			bufsize = ibargp->ib_cnt;
-			if ((buf = osGetDMABuffer( &bufsize )) == NULL)
-			{
-				GIVE_UP(-ENOMEM);
-			}
-			/* Write DMA buffer loads till we empty the user supplied buffer */
+			/* Write buffer loads till we empty the user supplied buffer */
 			userbuf = ibargp->ib_buf;
 			remain = ibargp->ib_cnt;
 			do
 			{
-				copy_from_user( buf, userbuf, (bufsize < remain) ? bufsize : remain );
-				ret = ibwrt(device, buf, (bufsize < remain) ? bufsize : remain, (bufsize < remain)
- );
+				copy_from_user(device->buffer, userbuf, (device->buffer_length < remain) ?
+					device->buffer_length : remain );
+				ret = ibwrt(device, device->buffer, (device->buffer_length < remain) ?
+					device->buffer_length : remain, (device->buffer_length < remain));
 				if(ret < 0)
 				{
 					retval = -EIO;
@@ -201,8 +187,6 @@ printk("ioctl %i\n", cmd);
 				userbuf += ret;
 			}while (remain > 0);
 			ibargp->ib_ibcnt = ibargp->ib_cnt - remain;
-			/* Free the DMA buffer */
-			osFreeDMABuffer( buf );
 			break;
 		case IBCMD:
 			/* Check read access to buffer */
@@ -210,19 +194,15 @@ printk("ioctl %i\n", cmd);
 			if (retval)
 				GIVE_UP(retval);
 
-			/* Get a DMA buffer */
-			bufsize = ibargp->ib_cnt;
-			if ((buf = osGetDMABuffer( &bufsize )) == NULL) {
-				GIVE_UP(-ENOMEM);
-			}
-
-			/* Write DMA buffer loads till we empty the user supplied buffer */
+			/* Write buffer loads till we empty the user supplied buffer */
 			userbuf = ibargp->ib_buf;
 			remain = ibargp->ib_cnt;
 			while (remain > 0 && !(ibstatus(device) & (TIMO)))
 			{
-				copy_from_user( buf, userbuf, (bufsize < remain) ? bufsize : remain );
-				ret = ibcmd(device, buf, (bufsize < remain) ? bufsize : remain );
+				copy_from_user(device->buffer, userbuf, (device->buffer_length < remain) ?
+					device->buffer_length : remain );
+				ret = ibcmd(device, device->buffer, (device->buffer_length < remain) ?
+					device->buffer_length : remain );
 				if(ret < 0)
 				{
 					retval = -EIO;
@@ -233,11 +213,7 @@ printk("ioctl %i\n", cmd);
 			}
 			ibargp->ib_ibcnt = ibargp->ib_cnt - remain;
 
-			/* Free the DMA buffer */
-			osFreeDMABuffer( buf );
-
 			break;
-
 		case IBWAIT:
 			DBGprint(DBG_DATA,("**arg=%x",ibargp->ib_arg));
 			retval = ibwait(device, ibargp->ib_arg);
@@ -324,36 +300,28 @@ printk("ioctl %i\n", cmd);
 			retval = verify_area(VERIFY_WRITE, ibargp->ib_buf, ibargp->ib_cnt);
 			if (retval)
 				GIVE_UP(retval);
-
-			/* Get a DMA buffer */
-			bufsize = ibargp->ib_cnt;
-			if ((buf = osGetDMABuffer( &bufsize )) == NULL)
-			{
-				GIVE_UP(-ENOMEM);
-			}
 			if(receive_setup(device, ibargp->ib_arg))
 			{
 				retval = -EIO;
 				break;
 			}
-			/* Read DMA buffer loads till we fill the user supplied buffer */
+			/* Read buffer loads till we fill the user supplied buffer */
 			userbuf = ibargp->ib_buf;
 			remain = ibargp->ib_cnt;
 			do
 			{
-				ret = ibrd(device, buf, (bufsize < remain) ? bufsize : remain, &end_flag);
+				ret = ibrd(device, device->buffer, (device->buffer_length < remain) ?
+					device->buffer_length : remain, &end_flag);
 				if(ret < 0)
 				{
 					retval = -EIO;
 					break;
 				}
-				copy_to_user( userbuf, buf, ret );
+				copy_to_user( userbuf, device->buffer, ret );
 				remain -= ret;
 				userbuf += ret;
 			}while (remain > 0  && end_flag == 0);	//!(ibstatus() & TIMO));
 			ibargp->ib_ibcnt = ibargp->ib_cnt - remain;
-			/* Free the DMA buffer */
-			osFreeDMABuffer( buf );
 			break;
 		case DVWRT:	// XXX unnecessary, should be in user space lib
 
@@ -362,19 +330,15 @@ printk("ioctl %i\n", cmd);
 			if (retval)
 				GIVE_UP(retval);
 
-			/* Get a DMA buffer */
-			bufsize = ibargp->ib_cnt;
-			if ((buf = osGetDMABuffer( &bufsize )) == NULL) {
-				GIVE_UP(-ENOMEM);
-			}
-
-			/* Write DMA buffer loads till we empty the user supplied buffer */
+			/* Write buffer loads till we empty the user supplied buffer */
 			userbuf = ibargp->ib_buf;
 			remain = ibargp->ib_cnt;
 			while (remain > 0  && !(ibstatus(device) & (TIMO)))
 			{
-				copy_from_user( buf, userbuf, (bufsize < remain) ? bufsize : remain );
-				ret = dvwrt(device, ibargp->ib_arg, buf, (bufsize < remain) ? bufsize : remain );
+				copy_from_user(device->buffer, userbuf, (device->buffer_length < remain) ?
+					device->buffer_length : remain );
+				ret = dvwrt(device, ibargp->ib_arg, device->buffer, (device->buffer_length < remain) ?
+					device->buffer_length : remain );
 				if(ret < 0)
 				{
 					retval = -EIO;
@@ -384,9 +348,6 @@ printk("ioctl %i\n", cmd);
 				userbuf += ret;
 			}
 			ibargp->ib_ibcnt = ibargp->ib_cnt - remain;
-
-			/* Free the DMA buffer */
-			osFreeDMABuffer( buf );
 
 			break;
 
@@ -428,23 +389,31 @@ int board_type_ioctl(unsigned int minor, unsigned long arg)
 	struct list_head *list_ptr;
 	board_type_ioctl_t board;
 	int retval;
+	gpib_device_t *device = &device_array[minor];
 
 	retval = copy_from_user(&board, (void*)arg, sizeof(board_type_ioctl_t));
 	if(retval)
 	{
 		return retval;
 	}
-printk("board name is %s\n", board.name);
 
-	device_array[minor].private_data = NULL;
-	device_array[minor].status = 0;
-	device_array[minor].ibbase = IBBASE;
-	device_array[minor].ibirq = IBIRQ;
-	device_array[minor].ibdma = IBDMA;
-	init_waitqueue_head(&device_array[minor].wait);
-	init_MUTEX(&device_array[minor].mutex);
-	spin_lock_init(&device_array[minor].spinlock);
-	device_array[minor].interface = NULL;
+	device->private_data = NULL;
+	device->status = 0;
+	device->ibbase = IBBASE;
+	device->ibirq = IBIRQ;
+	device->ibdma = IBDMA;
+	init_waitqueue_head(&device->wait);
+	init_MUTEX(&device->mutex);
+	spin_lock_init(&device->spinlock);
+	device->interface = NULL;
+
+	device->buffer_length = 0x1000;
+	if(device->buffer)
+		vfree(device->buffer);
+	device->buffer = vmalloc(device->buffer_length);
+	if(device->buffer == NULL)
+		return -ENOMEM;
+
 	for(list_ptr = registered_drivers.next; list_ptr != &registered_drivers; list_ptr = list_ptr->next)
 	{
 		gpib_interface_t *interface;
@@ -452,7 +421,7 @@ printk("board name is %s\n", board.name);
 		interface = list_entry(list_ptr, gpib_interface_t, list);
 		if(strcmp(interface->name, board.name) == 0)
 		{
-			device_array[minor].interface = interface;
+			device->interface = interface;
 			return 0;
 		}
 	}
