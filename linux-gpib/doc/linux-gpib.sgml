@@ -29,7 +29,7 @@
 
 <section>
 <title>
-	Terms of Use
+	Copying
 </title>
 <para>
 Permission is granted to copy, distribute and/or modify this document
@@ -46,7 +46,7 @@ Free Documentation License".
 	Linux-GPIB Reference
 </title>
 <para>
-	Reference for functions, macros, and constants.
+	Reference for libgpib functions, macros, and constants.
 </para>
 <section>
 <title>
@@ -85,13 +85,17 @@ Free Documentation License".
 	other functions in the library.  The argument <parameter>board_index</parameter>
 	specifies which GPIB interface board the device is connected to.
 	The <parameter>pad</parameter> and <parameter>sad</parameter> arguments specify
-	the GPIB address of the device to be opened (see ibpad() and ibsad()).
+	the GPIB address of the device to be opened (see <link LINKEND="function-reference-ibpad">
+	ibpad()</link> and <link LINKEND="function-reference-ibsad">ibsad()</link>).
 	The timeout for io operations is specified by <parameter> timeout </parameter>
-	(see ibtmo()). If <parameter>send_eoi</parameter> is nonzero, then the EOI
-	line will be asserted with the last byte sent during writes (see ibeot()).
+	(see <link LINKEND="function-reference-ibtmo">ibtmo()</link>). If
+	<parameter>send_eoi</parameter> is nonzero, then the EOI
+	line will be asserted with the last byte sent during writes (see
+	<link LINKEND="function-reference-ibeot">ibeot()</link>).
 	Finally, the <parameter>eos</parameter>
 	argument specifies the end-of-string character and whether or not its
-	reception should terminate reads (see ibeos()).
+	reception should terminate reads (see <link LINKEND="function-reference-ibeos">
+	ibeos()</link>).
 	</para>
 </refsect1>
 <refsect1>
@@ -176,6 +180,80 @@ Free Documentation License".
 </refsect1>
 </refentry>
 
+<refentry id="function-reference-ibeot">
+<refmeta>
+	<refentrytitle>ibeot</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibeot</refname>
+	<refpurpose>assert EOI with last data byte (board or device)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibeot</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>int <parameter>send_eoi</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibeot()
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of ibsta is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry id="function-reference-ibpad">
+<refmeta>
+	<refentrytitle>ibpad</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibpad</refname>
+	<refpurpose>set primary GPIB address (board or device)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibpad</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>int <parameter>pad</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibpad()
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of ibsta is returned.
+	</para>
+</refsect1>
+</refentry>
+
 <refentry id="function-reference-ibrd">
 <refmeta>
 	<refentrytitle>ibrd</refentrytitle>
@@ -208,12 +286,88 @@ Free Documentation License".
 	board as listener before performing the read.  Up to
 	<parameter>num_bytes</parameter> bytes
 	are read into the user-supplied array <parameter>buffer</parameter>.  The
-	read may be terminated by an end-of-string character (see ibeos()), a
-	timeout (see ibtmo()), or by the talker asserting the EOI line.
+	read may be terminated by an end-of-string character (see
+	<link LINKEND="function-reference-ibeos">ibeos()</link>), a
+	timeout (see <link LINKEND="function-reference-ibtmo">ibtmo()</link>),
+	or by the talker asserting the EOI line.
 	</para>
 	<para>
 	After the ibrd() call, ibcnt and ibcntl are set to the number of bytes
 	read.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of ibsta is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry id="function-reference-ibsad">
+<refmeta>
+	<refentrytitle>ibsad</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibsad</refname>
+	<refpurpose>set secondary GPIB address (board or device)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibsad</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>int <parameter>sad</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibsad()
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of ibsta is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry id="function-reference-ibtmo">
+<refmeta>
+	<refentrytitle>ibtmo</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibtmo</refname>
+	<refpurpose>adjust io timeout (board or device)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibtmo</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>int <parameter>timeout</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibtmo()
 	</para>
 </refsect1>
 <refsect1>
@@ -258,8 +412,12 @@ Free Documentation License".
 	board as talker before performing the write.
 	<parameter>num_bytes</parameter> bytes
 	are written from the user-supplied array <parameter>buffer</parameter>.
-	EOI may be asserted with the last byte sent (see ibeot()).  The write
-	may be interrupted by a timeout (see ibtmo()).
+	EOI may be asserted with the last byte sent or when the end-of-string
+	character is sent (see <link LINKEND="function-reference-ibeos">
+	ibeos()</link> and <link LINKEND="function-reference-ibeot">
+	ibeot()</link>).  The write
+	may be interrupted by a timeout (see <link LINKEND="function-reference-ibtmo">
+	ibtmo()</link>).
 	</para>
 	<para>
 	After the ibwrt() call, ibcnt and ibcntl are set to the number of bytes
