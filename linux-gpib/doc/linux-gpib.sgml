@@ -1001,6 +1001,11 @@ volatile int ibsta;
 	ibcac() causes the board specified by the board descriptor <parameter>ud</parameter>
 	to become active controller by asserting the ATN line.
 	The board must be controller-in-change in order to assert ATN.
+	If <parameter>synchronous</parameter> is nonzero, then
+	the board will wait for a data
+	byte on the bus to complete its transfer before asserting ATN.
+	If the synchronous attempt times out, or <parameter>synchronous</parameter>
+	is zero, then ATN will be asserted immediately.
 	</para>
 	<para>
 	It is generally not necessary to call ibcac().  It is provided
@@ -1710,6 +1715,54 @@ volatile int ibsta;
 </refsect1>
 </refentry>
 
+<refentry ID="reference-function-ibgts">
+<refmeta>
+	<refentrytitle>ibgts</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibgts</refname>
+	<refpurpose>release ATN (board)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibgts</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>int <parameter>shadow_handshake</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibgts() is the complement of <link LINKEND="reference-function-ibcac">ibcac()</link>,
+	and causes the board specified by the board descriptor <parameter>ud</parameter>
+	to go to standby by releasing the ATN line.
+	The board must be controller-in-change to change the state of the ATN line.
+	If <parameter>shadow_handshake</parameter> is nonzero, then
+	the board will handshake any data
+	bytes it receives until it encounters an EOI or end-of-string character,
+	or the ATN line is asserted again.  The received data is discarded.
+	</para>
+	<para>
+	It is generally not necessary to call ibgts().  It is provided
+	for advanced users who want direct, low-level access to the GPIB bus.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
 <refentry ID="reference-function-ibist">
 <refmeta>
 	<refentrytitle>ibist</refentrytitle>
@@ -1751,6 +1804,188 @@ volatile int ibsta;
 	</title>
 	<para>
 		The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-iblines">
+<refmeta>
+	<refentrytitle>iblines</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>iblines</refname>
+	<refpurpose>monitor bus lines (board)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>iblines</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>short *<parameter>line_status</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	iblines() is used to obtain the status of the control and
+	handshaking <link LINKEND="gpib-protocol-bus-lines">bus lines</link> of the
+	bus.  The board used to monitor the bus
+	is specified by the <parameter>ud</parameter> argument,
+	and the status of the various bus lines are written to
+	the location specified by <parameter>line_status</parameter>.
+	</para>
+	<para>
+	Some older chips are not capable of reporting the status
+	of the bus lines, so each line has two corresponding bits in
+	<parameter>line_status</parameter>.  One bit indicates if
+	the board can monitor the line, and the other bit indicates
+	the line's state.
+	The meaning of the <parameter>line_status</parameter> bits are
+	as follows:
+	</para>
+		<table COLSEP="1" ROWSEP="1" ORIENT="port" PGWIDE="0">
+	<title>line status bits</title>
+	<tgroup COLS="3" ALIGN="left" >
+	<thead>
+	<row>
+	<entry>constant</entry>
+	<entry>value</entry>
+	<entry>description</entry>
+	</row>
+	</thead>
+	<tbody>
+	<row>
+	<entry>ValidDAV</entry>
+	<entry>0x1</entry>
+	<entry>The BusDAV bit is valid.</entry>
+	</row>
+	<row>
+	<entry>ValidNDAC</entry>
+	<entry>0x2</entry>
+	<entry>The BusNDAC bit is valid.</entry>
+	</row>
+	<row>
+	<entry>ValidNRFD</entry>
+	<entry>0x4</entry>
+	<entry>The BusNRFD bit is valid.</entry>
+	</row>
+	<row>
+	<entry>ValidIFC</entry>
+	<entry>0x8</entry>
+	<entry>The BusIFC bit is valid.</entry>
+	</row>
+	<row>
+	<entry>ValidREN</entry>
+	<entry>0x10</entry>
+	<entry>The BusREN bit is valid.</entry>
+	</row>
+	<row>
+	<entry>ValidSRQ</entry>
+	<entry>0x20</entry>
+	<entry>The BusSRQ bit is valid.</entry>
+	</row>
+	<row>
+	<entry>ValidATN</entry>
+	<entry>0x40</entry>
+	<entry>The BusATN bit is valid.</entry>
+	</row>
+	<row>
+	<entry>ValidEOI</entry>
+	<entry>0x80</entry>
+	<entry>The BusEOI bit is valid.</entry>
+	</row>
+	<row>
+	<entry>BusDAV</entry>
+	<entry>0x100</entry>
+	<entry>Set/cleared if the DAV line is asserted/unasserted.</entry>
+	</row>
+	<row>
+	<entry>BusNDAC</entry>
+	<entry>0x200</entry>
+	<entry>Set/cleared if the NDAC line is asserted/unasserted.</entry>
+	</row>
+	<row>
+	<entry>BusNRFD</entry>
+	<entry>0x400</entry>
+	<entry>Set/cleared if the NRFD line is asserted/unasserted.</entry>
+	</row>
+	<row>
+	<entry>BusIFC</entry>
+	<entry>0x800</entry>
+	<entry>Set/cleared if the IFC line is asserted/unasserted.</entry>
+	</row>
+	<row>
+	<entry>BusREN</entry>
+	<entry>0x1000</entry>
+	<entry>Set/cleared if the REN line is asserted/unasserted.</entry>
+	</row>
+	<row>
+	<entry>BusSRQ</entry>
+	<entry>0x2000</entry>
+	<entry>Set/cleared if the SRQ line is asserted/unasserted.</entry>
+	</row>
+	<row>
+	<entry>BusATN</entry>
+	<entry>0x4000</entry>
+	<entry>Set/cleared if the ATN line is asserted/unasserted.</entry>
+	</row>
+	<row>
+	<entry>BusEOI</entry>
+	<entry>0x8000</entry>
+	<entry>Set/cleared if the EOI line is asserted/unasserted.</entry>
+	</row>
+	</tbody>
+	</tgroup>
+	</table>
+	<para>
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-ibloc">
+<refmeta>
+	<refentrytitle>ibloc</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibloc</refname>
+	<refpurpose>go to local mode (board or device)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibloc</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
 	</para>
 </refsect1>
 </refentry>
@@ -2942,7 +3177,7 @@ volatile int ibsta;
 	</para>
 </section>
 
-<section>
+<section ID="gpib-protocol-bus-lines">
 <title>GPIB bus lines</title>
 <para>
 Physically, the GPIB bus consists of 8 data lines, 3 handshaking
