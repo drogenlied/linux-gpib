@@ -5,6 +5,7 @@
 #include <board_proto.h>
 #include <sys_proto.h>
 #include <protocol_proto.h>
+#include <linux/kernel.h>
 
 
   /* osutil.c */

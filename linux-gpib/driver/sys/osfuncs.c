@@ -2,7 +2,6 @@
 
 #include <linux/fcntl.h>
 
-
 #define GIVE_UP(a) { osUnlockMutex(); DBGout(); return (a); }
 
 #define LINUX_STD_PARAM  struct inode* inode,struct file* filep
@@ -11,7 +10,7 @@ int ib_opened=0;
 int ib_exclusive=0;
 
 
-ibopen(LINUX_STD_PARAM)
+int ibopen(LINUX_STD_PARAM)
 {
 	DBGin("ibopen");
 
@@ -60,7 +59,7 @@ ibopen(LINUX_STD_PARAM)
 }
 
 
-void ibclose(LINUX_STD_PARAM)
+IBLCL int ibclose(struct inode *inode, struct file *file)
 {
 	DBGin("ibclose");
 
@@ -87,7 +86,7 @@ void ibclose(LINUX_STD_PARAM)
 }
 
 
-ibioctl(LINUX_STD_PARAM,unsigned int cmd, unsigned long arg)
+int ibioctl(LINUX_STD_PARAM,unsigned int cmd, unsigned long arg)
 {
 	int	retval = OK;		/* assume everything OK for now */
         ibarg_t m_ibarg,*ibargp;
@@ -157,7 +156,7 @@ ibioctl(LINUX_STD_PARAM,unsigned int cmd, unsigned long arg)
  	  retval = verify_area(VERIFY_WRITE, ibargp->ib_buf, ibargp->ib_cnt);
  	  if (retval)
  	    GIVE_UP (retval);
- 	  
+
 	  /* Get a DMA buffer */
 	  bufsize = ibargp->ib_cnt;
 	  if ((buf = osGetDMABuffer( &bufsize )) == NULL) {
@@ -235,7 +234,7 @@ ibioctl(LINUX_STD_PARAM,unsigned int cmd, unsigned long arg)
 	  userbuf = ibargp->ib_buf;
 	  remain = ibargp->ib_cnt;
 	  do {
-#ifdef LINUX2_2        
+#ifdef LINUX2_2
 		  copy_from_user( buf, userbuf, (bufsize < remain) ? bufsize : remain );
 #else
 		  memcpy_fromfs( buf, userbuf, (bufsize < remain) ? bufsize : remain );

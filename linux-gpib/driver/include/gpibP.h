@@ -1,3 +1,4 @@
+#include <linux/fs.h>
 
 #include <autoconf.h>
 #include <gpib_board.h>

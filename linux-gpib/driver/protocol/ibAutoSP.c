@@ -104,7 +104,7 @@ void AP_LocalUnLock(int pad)
 
 int AP_virgin = 1;
 
-int ibAPWait(int pad)
+IBLCL int ibAPWait(int pad)
 {
   int i;
   char tspb[2];
@@ -173,7 +173,7 @@ int ibAPWait(int pad)
  *
  */
 
-int ibAPrsp(int padsad, char *spb)
+IBLCL int ibAPrsp(int padsad, char *spb)
 {
         int pad = padsad & 0xff;
 
@@ -205,13 +205,13 @@ int ibAPrsp(int padsad, char *spb)
  *
  */
 
-int ibAPE(int pad, int v)
+IBLCL void ibAPE(int pad, int v)
 {
   DBGin("ibAPE");
 
   pad &= 0xff;
   DBGprint(DBG_DATA,("AP_POLL(%d)=%d",pad,v));
-  if(v){ 
+  if(v){
     AP_Vector[pad].flags |= AP_POLL;
   } else {
     AP_Vector[pad].flags &= ~AP_POLL;

@@ -3,9 +3,12 @@
 extern  void osDMAAdjCnt(ibio_op_t *rwop);
 extern  void osPIOAdjCnt(ibio_op_t *rwop);
 extern  int osDoDMA(ibio_op_t *rwop);
+extern  int ibclose(struct inode *, struct file *);
 extern  int osInit(void);
 extern  void osReset(void);
 extern  void osWaitForInt( int imr3mask );
+extern  void osLockMutex( void );
+extern  void osUnlockMutex( void );
 extern  void osMemInit(void); 
 extern  void osMemRelease(void); 
 extern  char *osGetDMABuffer( int *size );

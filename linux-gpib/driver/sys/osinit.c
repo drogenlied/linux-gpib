@@ -92,7 +92,7 @@ IBLCL int osInit(void)
 {
 	int	s;
 extern  struct timer_list ibtimer_list;
-extern  void ibintr(int);
+extern  void ibintr(int irq, void *d, struct pt_regs *regs);
 
 
 	DBGin("osInit");
@@ -139,11 +139,7 @@ extern  void ibintr(int);
 	/* register IRQ and DMA channel */
 
 #if USEINTS
-#ifdef LINUX2_0
 	if( request_irq(ibirq,ibintr,SA_INTERRUPT,"gpib",NULL)){
-#else
-	if( request_irq(ibirq,ibintr,0,"gpib")){
-#endif
 	  printk("can't request IRQ %d\n",ibirq);
           DBGout();
 	  return(0);
@@ -204,11 +200,10 @@ IBLCL void osReset(void)
 
 ****************************************************************************************/
 
-extern int  ibioctl    (struct inode *, struct file *, unsigned int, unsigned long);
-extern int  ibopen     (struct inode *, struct file *);
-extern void ibclose    (struct inode *, struct file *);
-extern int  ibVFSread  (struct inode *, struct file *, char *, int );
-extern int  ibVFSwrite (struct inode *, struct file *, char *, int );
+//extern int  ibioctl    (struct inode *, struct file *, unsigned int, unsigned long);
+//extern int  ibopen     (struct inode *, struct file *);
+//extern int  ibVFSread  (struct file *, char *, size_t, loff_t * );
+//extern int  ibVFSwrite (struct file *, const char *, size_t, loff_t * );
 
 struct file_operations ib_fops = {
   owner: THIS_MODULE,
@@ -248,7 +243,7 @@ int init_module(void)
 #endif
 #ifdef INES_PCMCIA
    pcmcia_init_module();
-#endif  
+#endif
 
 
 #ifdef CBI_PCI
