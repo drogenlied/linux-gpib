@@ -76,7 +76,7 @@ void tms9914_board_reset(tms9914_private_t *priv)
 #endif
 
 	// request for data holdoff
-	write_byte(priv, AUX_HLDA, AUXCR);
+	write_byte(priv, AUX_HLDA | AUX_CS, AUXCR);
 }
 
 // wrapper for inb

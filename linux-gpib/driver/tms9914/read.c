@@ -59,12 +59,9 @@ ssize_t tms9914_read(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buff
 
 	if(length == 0) return 0;
 
-	// become active listener
-	write_byte(priv, AUX_LON | AUX_CS, AUXCR);
-
 	write_byte(priv, AUX_HLDA, AUXCR);
 	write_byte(priv, AUX_RHDF, AUXCR);
-	write_byte(priv, AUX_HLDE, AUXCR);
+	write_byte(priv, AUX_HLDE | AUX_CS, AUXCR);
 
 	// transfer data (except for last byte)
 	length--;
@@ -82,7 +79,8 @@ ssize_t tms9914_read(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buff
 	if(test_bit(RECEIVED_END_BN, &priv->state) == 0)
 	{
 		// make sure we holdoff after last byte read
-		write_byte(priv, AUX_HLDA, AUXCR);
+		write_byte(priv, AUX_HLDE, AUXCR);
+		write_byte(priv, AUX_HLDA | AUX_CS, AUXCR);
 		retval = pio_read(board, priv, &buffer[count], 1);
 		if(retval < 0)
 			return retval;

@@ -163,7 +163,6 @@ int ni_pci_attach(gpib_board_t *board)
 {
 	tnt4882_private_t *tnt_priv;
 	tms9914_private_t *tms_priv;
-	int isr_flags = 0;
 
 	board->status = 0;
 
@@ -200,7 +199,7 @@ int ni_pci_attach(gpib_board_t *board)
 	tms_priv->iobase = mite_iobase(tnt_priv->mite);
 
 	// get irq
-	if(request_irq(mite_irq(tnt_priv->mite), tnt4882_interrupt, isr_flags, "ni-pci-gpib", board))
+	if(request_irq(mite_irq(tnt_priv->mite), tnt4882_interrupt, SA_SHIRQ, "ni-pci-gpib", board))
 	{
 		printk("gpib: can't request IRQ %d\n", mite_irq( tnt_priv->mite ) );
 		return -1;

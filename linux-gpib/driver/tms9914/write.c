@@ -26,7 +26,7 @@ static ssize_t pio_write(gpib_board_t *board, tms9914_private_t *priv, uint8_t *
 
 	while(count < length)
 	{
-		// wait until byte is ready to be sent
+		// wait until next byte is ready to be sent
 		if(wait_event_interruptible(board->wait, test_bit(WRITE_READY_BN, &priv->state) ||
 			test_bit(TIMO_NUM, &board->status)))
 		{
@@ -36,15 +36,14 @@ static ssize_t pio_write(gpib_board_t *board, tms9914_private_t *priv, uint8_t *
 		}
 		if(test_bit(TIMO_NUM, &board->status))
 		{
+			retval = -ETIMEDOUT;
 			break;
 		}
-
 		spin_lock_irqsave(&board->spinlock, flags);
 		clear_bit(WRITE_READY_BN, &priv->state);
 		write_byte(priv, buffer[count++], CDOR);
 		spin_unlock_irqrestore(&board->spinlock, flags);
 	}
-	// wait till last byte gets sent
 	if(wait_event_interruptible(board->wait, test_bit(WRITE_READY_BN, &priv->state) ||
 		test_bit(TIMO_NUM, &board->status)))
 	{
@@ -69,9 +68,6 @@ ssize_t tms9914_write(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buf
 	ssize_t retval = 0;
 
 	if(length == 0) return 0;
-
-	//make active talker
-	write_byte(priv, AUX_TON | AUX_CS, AUXCR);
 
 	if(send_eoi)
 	{
