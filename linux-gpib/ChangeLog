@@ -1,5 +1,14 @@
 Linux GPIB Package changelog
 
+3.1.97: Added support for Quancom PCIGPIB-1, and newer
+revisions of Ines PCI boards.  Fixes for accelerated
+Ines support.  Fixed interrupt enabling on older
+NI at-gpib boards, which was broken recently.  Fixed
+SMP deadlock in ni_nat4882_isa interface.  Fixed
+meaningless status bits getting set for device
+descriptors.  Worked around issues some distros seem to
+have with EXPORT_SYMBOL_GPL().
+
 3.1.96: Re-fixed compatibility with older 2.4 kernels.
 Fixed race conditions for at-gpib boards with nat4882 chips.
 Fixed iblines() for Measurement Computing
