@@ -105,6 +105,7 @@ if [ $? = 0 ]; then
 	for i in `cat /tmp/reply | sed 's!\"!!g' `; do
 		set_var $i 1
 	done
+	rm -f /tmp/reply
 fi
 
 ##########

@@ -14,3 +14,5 @@ break up huge dependency files so make isn't so slow
 
 write a macro for printing debugging messages
 
+improve error reporting during make config
+
