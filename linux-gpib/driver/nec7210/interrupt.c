@@ -156,8 +156,14 @@ irqreturn_t nec7210_interrupt_have_status( gpib_board_t *board,
 
 	if( status1 & HR_DEC )
 	{
-		push_gpib_event( board, EventDevClr );
-		set_bit( DEV_CLEAR_BN, &priv->state );
+		unsigned short address_status_bits = read_byte(priv, ADSR);
+
+		// ignore device clear events if we are controller in charge
+		if((address_status_bits & HR_CIC) == 0)
+		{
+			push_gpib_event( board, EventDevClr );
+			set_bit( DEV_CLEAR_BN, &priv->state );
+		}
 	}
 
 	if( status1 & HR_DET )
