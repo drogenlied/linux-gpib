@@ -214,6 +214,10 @@ void pc2_init(nec7210_private_t *nec_priv)
 	write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
 	write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
 
+	// make sure interrupt is clear
+	read_byte( nec_priv, ISR1 );
+	read_byte( nec_priv, ISR2 );
+
 	write_byte(nec_priv, AUX_PON, AUXMR);
 }
 
