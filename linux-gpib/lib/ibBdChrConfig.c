@@ -27,6 +27,10 @@ int ibBdChrConfig( ibConf_t *conf )
 	if( retval < 0 ) return retval;
 	retval = ioctl( board->fileno, CFCDMA, &board->dma );
 	if( retval < 0 ) return retval;
+ 	retval = ioctl( board->fileno, IBPAD, &board->pad );
+	if( retval < 0 ) return retval;
+	retval = ioctl( board->fileno, IBSAD, &board->sad );
+	if( retval < 0 ) return retval;
 
 	return 0;
 }

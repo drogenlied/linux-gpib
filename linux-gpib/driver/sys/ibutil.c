@@ -17,6 +17,7 @@ int ibpad( gpib_board_t *board, unsigned int addr )
 		board->pad = addr;
 		if( board->online )
 			board->interface->primary_address( board, board->pad );
+		GPIB_DPRINTK( "set primary addr to %i\n", board->pad );
 	}
 	return 0;
 }
@@ -47,6 +48,7 @@ int ibsad( gpib_board_t *board, int addr )
 				board->interface->secondary_address( board, 0, 0 );
 			}
 		}
+		GPIB_DPRINTK( "set secondary addr to %i\n", board->sad );
 	}
 	return 0;
 }
