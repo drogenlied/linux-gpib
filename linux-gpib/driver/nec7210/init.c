@@ -26,6 +26,7 @@
 #include <linux/pci.h>
 #include <linux/pci_ids.h>
 #include <linux/string.h>
+#include <linux/init.h>
 
 MODULE_LICENSE("GPL");
 
@@ -104,14 +105,17 @@ void nec7210_iomem_write_byte(nec7210_private_t *priv, uint8_t data, unsigned in
 		udelay(1);
 }
 
-int init_module(void)
+static int nec7210_init_module( void )
 {
 	return 0;
 }
 
-void cleanup_module(void)
+static void nec7210_exit_module( void )
 {
 }
+
+module_init( nec7210_init_module );
+module_exit( nec7210_exit_module );
 
 EXPORT_SYMBOL(nec7210_board_reset);
 EXPORT_SYMBOL(nec7210_board_online);

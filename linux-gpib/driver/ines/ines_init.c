@@ -22,6 +22,7 @@
 #include <linux/pci.h>
 #include <asm/io.h>
 #include <linux/module.h>
+#include <linux/init.h>
 
 MODULE_LICENSE("GPL");
 
@@ -456,7 +457,7 @@ void ines_pci_detach(gpib_board_t *board)
 	ines_free_private(board);
 }
 
-int init_module(void)
+static int ines_init_module( void )
 {
 	int err = 0;
 
@@ -476,7 +477,7 @@ int init_module(void)
 	return 0;
 }
 
-void cleanup_module(void)
+static void ines_exit_module( void )
 {
 	gpib_unregister_driver(&ines_pci_interface);
 	gpib_unregister_driver(&ines_pci_accel_interface);
@@ -487,7 +488,8 @@ void cleanup_module(void)
 #endif
 }
 
-
+module_init( ines_init_module );
+module_exit( ines_exit_module );
 
 
 

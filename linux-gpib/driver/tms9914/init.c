@@ -26,6 +26,7 @@
 #include <linux/pci.h>
 #include <linux/pci_ids.h>
 #include <linux/string.h>
+#include <linux/init.h>
 
 MODULE_LICENSE("GPL");
 
@@ -103,19 +104,22 @@ void tms9914_iomem_write_byte(tms9914_private_t *priv, uint8_t data, unsigned in
 		udelay(1);
 }
 
-int init_module(void)
+static int tms9914_init_module(void)
 {
 	return 0;
 }
 
-void cleanup_module(void)
+static void tms9914_exit_module(void)
 {
 }
 
-EXPORT_SYMBOL(tms9914_board_reset);
-EXPORT_SYMBOL(tms9914_online);
-EXPORT_SYMBOL(tms9914_ioport_read_byte);
-EXPORT_SYMBOL(tms9914_ioport_write_byte);
-EXPORT_SYMBOL(tms9914_iomem_read_byte);
-EXPORT_SYMBOL(tms9914_iomem_write_byte);
+module_init( tms9914_init_module );
+module_exit( tms9914_exit_module );
+
+EXPORT_SYMBOL_GPL(tms9914_board_reset);
+EXPORT_SYMBOL_GPL(tms9914_online);
+EXPORT_SYMBOL_GPL(tms9914_ioport_read_byte);
+EXPORT_SYMBOL_GPL(tms9914_ioport_write_byte);
+EXPORT_SYMBOL_GPL(tms9914_iomem_read_byte);
+EXPORT_SYMBOL_GPL(tms9914_iomem_write_byte);
 

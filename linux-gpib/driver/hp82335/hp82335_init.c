@@ -24,6 +24,7 @@
 #include <linux/pci.h>
 #include <linux/pci_ids.h>
 #include <linux/string.h>
+#include <linux/init.h>
 
 MODULE_LICENSE("GPL");
 
@@ -301,7 +302,7 @@ void hp82335_detach(gpib_board_t *board)
 }
 
 
-int init_module(void)
+static int hp82335_init_module( void )
 {
 	EXPORT_NO_SYMBOLS;
 
@@ -310,12 +311,13 @@ int init_module(void)
 	return 0;
 }
 
-void cleanup_module(void)
+static void hp82335_exit_module( void )
 {
 	gpib_unregister_driver(&hp82335_interface);
 }
 
-
+module_init( hp82335_init_module );
+module_exit( hp82335_exit_module );
 
 /*
  * GPIB interrupt service routines

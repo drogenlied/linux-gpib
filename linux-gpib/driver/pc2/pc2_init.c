@@ -25,6 +25,7 @@
 #include <asm/dma.h>
 #include <linux/pci.h>
 #include <linux/string.h>
+#include <linux/init.h>
 
 MODULE_LICENSE("GPL");
 
@@ -427,7 +428,7 @@ void pc2a_detach(gpib_board_t *board)
 
 }
 
-int init_module(void)
+static int pc2_init_module( void )
 {
 	EXPORT_NO_SYMBOLS;
 
@@ -437,13 +438,14 @@ int init_module(void)
 	return 0;
 }
 
-void cleanup_module(void)
+static void pc2_exit_module( void )
 {
 	gpib_unregister_driver(&pc2_interface);
 	gpib_unregister_driver(&pc2a_interface);
 }
 
-
+module_init( pc2_init_module );
+module_exit( pc2_exit_module );
 
 
 

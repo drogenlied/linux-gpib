@@ -29,6 +29,7 @@
 #include <linux/pci.h>
 #include <linux/pci_ids.h>
 #include <linux/string.h>
+#include <linux/init.h>
 
 MODULE_LICENSE("GPL");
 
@@ -281,7 +282,7 @@ void ni_pci_detach(gpib_board_t *board)
 }
 
 
-int init_module(void)
+static int tnt4882_tms_init_module(void)
 {
 	EXPORT_NO_SYMBOLS;
 
@@ -293,14 +294,15 @@ int init_module(void)
 	return 0;
 }
 
-void cleanup_module(void)
+static void tnt4882_tms_exit_module(void)
 {
 	gpib_unregister_driver(&ni_pci_interface);
 
 	mite_cleanup();
 }
 
-
+module_init( tnt4882_tms_init_module );
+module_exit( tnt4882_tms_exit_module );
 
 
 

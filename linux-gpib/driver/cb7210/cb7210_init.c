@@ -27,6 +27,7 @@
 #include <linux/pci.h>
 #include <linux/pci_ids.h>
 #include <linux/string.h>
+#include <linux/init.h>
 
 MODULE_LICENSE("GPL");
 
@@ -459,7 +460,7 @@ void cb_isa_detach(gpib_board_t *board)
 	cb7210_generic_detach(board);
 }
 
-int init_module(void)
+static int cb7210_init_module( void )
 {
 	int err = 0;
 
@@ -481,7 +482,7 @@ int init_module(void)
 	return 0;
 }
 
-void cleanup_module(void)
+static void cb7210_exit_module( void )
 {
 	gpib_unregister_driver(&cb_pci_interface);
 	gpib_unregister_driver(&cb_isa_interface);
@@ -494,7 +495,8 @@ void cleanup_module(void)
 #endif
 }
 
-
+module_init( cb7210_init_module );
+module_exit( cb7210_exit_module );
 
 
 

@@ -25,17 +25,9 @@
 #include <linux/fs.h>
 #include <linux/pci.h>
 #include <linux/devfs_fs_kernel.h>
+#include <linux/init.h>
 
 MODULE_LICENSE("GPL");
-
-/*******************************************************************************
-********
-
-   Init module functions
-
-
-********************************************************************************
-********/
 
 struct file_operations ib_fops =
 {
@@ -171,7 +163,7 @@ void init_gpib_device( gpib_device_t *device )
 	device->dropped_byte = 0;
 }
 
-int init_module(void)
+static int gpib_common_init_module( void )
 {
 	int i;
 
@@ -196,7 +188,7 @@ int init_module(void)
 	return 0;
 }
 
-void cleanup_module(void)
+static void gpib_common_exit_module( void )
 {
 	int i;
 
@@ -214,6 +206,9 @@ void cleanup_module(void)
 		printk("gpib: succesfully removed \n");
 	}
 }
+
+module_init( gpib_common_init_module );
+module_exit( gpib_common_exit_module );
 
 struct pci_dev* gpib_pci_find_device( const gpib_board_t *board, unsigned int vendor_id,
 	unsigned int device_id, const struct pci_dev *from)

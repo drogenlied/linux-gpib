@@ -27,6 +27,7 @@
 #include <linux/pci_ids.h>
 #include <linux/string.h>
 #include <linux/delay.h>
+#include <linux/init.h>
 
 MODULE_LICENSE("GPL");
 
@@ -529,7 +530,7 @@ void ni_isa_detach(gpib_board_t *board)
 	tnt4882_free_private(board);
 }
 
-int init_module(void)
+static int tnt4882_init_module( void )
 {
 	EXPORT_NO_SYMBOLS;
 
@@ -551,7 +552,7 @@ int init_module(void)
 	return 0;
 }
 
-void cleanup_module(void)
+static void tnt4882_exit_module( void )
 {
 	gpib_unregister_driver(&ni_isa_interface);
 	gpib_unregister_driver(&ni_isa_accel_interface);
@@ -566,7 +567,8 @@ void cleanup_module(void)
 	mite_cleanup();
 }
 
-
+module_init( tnt4882_init_module );
+module_exit( tnt4882_exit_module );
 
 
 
