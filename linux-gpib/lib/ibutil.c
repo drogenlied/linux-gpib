@@ -66,15 +66,11 @@ int init_yyparse_vars( void )
 		init_ibconf( &ibFindConfigs[ i ] );
 	}
 
-	// initialize line counter to 1 before calling yyparse
-	yylloc.first_line = 1;
-
 	return initIbBoardArray();
 }
 
 int ibParseConfigFile( void )
 {
-	extern FILE *gpib_yyin;
 	FILE *infile;
 	int stat = 0;
 	static int config_parsed = 0;
@@ -94,8 +90,7 @@ int ibParseConfigFile( void )
 	}
 
 	/*ibPutMsg("Parse Config %s",filename); */
-	gpib_yyin = infile;
-	gpib_yyrestart(gpib_yyin); /* Hmm ? */
+	gpib_yyrestart(infile);
 
 	stat = init_yyparse_vars();
 	if( gpib_yyparse() < 0 )

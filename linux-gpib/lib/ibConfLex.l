@@ -12,6 +12,10 @@
 
 %%
 
+%{
+	gpib_llocp->first_line = 1;
+%}
+
 <COMMENT,STRING,INITIAL>\n {gpib_llocp->first_line++;}
 
 "/*" { BEGIN(COMMENT); }
@@ -120,7 +124,7 @@ T1000s        { gpib_lvalp->ival=1000000000; return(T_TIVAL);}
 
 [a-zA-Z0-9_\-]+ {
 	gpib_lvalp->sval = gpib_yytext;
-	printf("<%s>\n", gpib_yytext);
+	/* printf("<%s>\n", gpib_yytext); */
 	return (T_STRING);
 }
 
