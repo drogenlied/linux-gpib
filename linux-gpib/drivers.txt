@@ -3,6 +3,7 @@ Board Type                Interface Name           Driver Module
 
 Capital Eq. Corp.:
   PCI-488                 cec_pci                  cec-gpib.o      
+  PC-488                  pcII                     pc2-gpib.o
 
 Ines:
   GPIB-PCI                ines_pci                 ines-gpib.o        
@@ -10,6 +11,7 @@ Ines:
 
 Keithley:
   KPCI-488                cec_pci                  cec-gpib.o
+  MBC-488                 pcII                     pc2-gpib.o
 
 Measurement Computing
 (Computer Boards):
