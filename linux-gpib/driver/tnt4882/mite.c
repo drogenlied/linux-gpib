@@ -98,7 +98,7 @@ int mite_setup(struct mite_struct *mite)
 		printk("error enabling mite\n");
 		return -EIO;
 	}
-//	pci_set_master(mite->pcidev);
+	pci_set_master(mite->pcidev);
 	addr=pci_resource_start(mite->pcidev, 0);
 	mite->mite_phys_addr=addr;
 	start = mite->mite_phys_addr & PCI_BASE_ADDRESS_MEM_MASK;
@@ -126,7 +126,8 @@ int mite_setup(struct mite_struct *mite)
 	}
 	request_mem_region(start, length, "mite (gpib)");
 	mite->daq_io_addr = ioremap(start, length);
-	printk("DAQ:0x%08lx mapped to %p, ",mite->daq_phys_addr,mite->daq_io_addr);
+	printk("DAQ:0x%08lx mapped to %p\n", mite->daq_phys_addr,
+		mite->daq_io_addr);
 
 	/* XXX don't know what the 0xc0 and 0x80 mean */
 	/* It must be here for the driver to work though */

@@ -28,6 +28,8 @@ void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
 	gpib_device_t *device = arg;
 	tnt4882_private_t *priv = device->private_data;
+printk("BSR 0x%x CSR 0x%x\n", readb(priv->nec7210_priv.iobase + 0x1f),
+	readb(priv->nec7210_priv.iobase + 0x17));
 
 	nec7210_interrupt(device, &priv->nec7210_priv);
 

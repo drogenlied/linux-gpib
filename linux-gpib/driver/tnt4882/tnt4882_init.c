@@ -223,15 +223,15 @@ int ni_pci_attach(gpib_device_t *device)
 
 	/* NAT 4882 reset */
 	udelay(1);
-	outb(SFTRST, nec_priv->iobase + CMDR);	/* Turbo488 software reset */
+	writeb(SFTRST, nec_priv->iobase + CMDR);	/* Turbo488 software reset */
 
 	nec7210_board_reset(nec_priv);
 
 	// enable passing of nec7210 interrupts
-	outb(0x2, nec_priv->iobase + IMR3);
+	writeb(0x2, nec_priv->iobase + IMR3);
 
 	// enable interrupt
-	outb(0x1, nec_priv->iobase + INTRT);
+	writeb(0x1, nec_priv->iobase + INTRT);
 
 	// enable nec7210 interrupts
 	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |

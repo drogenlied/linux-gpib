@@ -206,6 +206,8 @@ int cb_pci_attach(gpib_device_t *device)
 		return -1;
 	}
 
+	pci_set_master(cb_priv->pci_device);
+
 	if(pci_request_regions(cb_priv->pci_device, "pci-gpib"))
 		return -1;
 

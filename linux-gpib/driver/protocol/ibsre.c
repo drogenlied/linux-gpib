@@ -1,4 +1,5 @@
 #include <ibprot.h>
+#include <linux/delay.h>
 
 extern int drvstat,ib_opened;
 /*
@@ -8,9 +9,15 @@ extern int drvstat,ib_opened;
 IBLCL int ibsre(gpib_device_t *device, int enable)
 {
 	pgmstat |= PS_SAC;
-	device->interface->remote_enable(device, enable);	/* set or clear REN */
-	if( !enable ) drvstat &= ~DRV_REN;
-	else drvstat |= DRV_REN;
+	device->interface->remote_enable(device, enable);	/* clear REN */
+	if(enable)
+	{
+		drvstat |= DRV_REN;
+	}else
+	{
+		drvstat &= ~DRV_REN;
+		udelay(100);
+	}
 
 	return 0;
 }

@@ -23,6 +23,7 @@ ssize_t nec7210_command(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 {
 	size_t count = 0;
 	ssize_t retval = 0;
+	unsigned long flags;
 
 	// enable command out interrupt
 	priv->imr2_bits |= HR_COIE;
@@ -30,21 +31,30 @@ ssize_t nec7210_command(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 
 	while(count < length)
 	{
-		if(wait_event_interruptible(device->wait, test_and_clear_bit(COMMAND_READY_BN,
+		if(wait_event_interruptible(device->wait, test_bit(COMMAND_READY_BN,
  &priv->state) ||
 			test_bit(TIMO_NUM, &device->status)))
 		{
 			printk("gpib command wait interrupted\n");
-			retval = -EINTR;
 			break;
 		}
-		if(test_bit(TIMO_NUM, &device->status))
-		{
-			retval = -ETIMEDOUT;
-			break;
-		}
+		spin_lock_irqsave(&device->spinlock, flags);
+		clear_bit(COMMAND_READY_BN, &priv->state);
 		write_byte(priv, buffer[count], CDOR);
+		spin_unlock_irqrestore(&device->spinlock, flags);
+
 		count++;
+	}
+	// wait until last command byte is written
+	if(wait_event_interruptible(device->wait, test_bit(COMMAND_READY_BN,
+ &priv->state) ||
+		test_bit(TIMO_NUM, &device->status)))
+	{
+		retval = -EINTR;
+	}
+	if(test_bit(TIMO_NUM, &device->status))
+	{
+		retval = -ETIMEDOUT;
 	}
 
 	// disable command out interrupt

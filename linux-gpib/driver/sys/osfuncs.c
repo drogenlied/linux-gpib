@@ -44,6 +44,14 @@ if(device_array[minor] == NULL)
 		printk("gpib: could not allocate memory for device\n");
 		return -ENOMEM;
 	}
+	device_array[minor]->private_data = NULL;
+	device_array[minor]->status = 0;
+	device_array[minor]->ibbase = IBBASE;
+	device_array[minor]->ibirq = IBIRQ;
+	device_array[minor]->ibdma = IBDMA;
+	init_waitqueue_head(&device_array[minor]->wait);
+	init_MUTEX(&device_array[minor]->mutex);
+	spin_lock_init(&device_array[minor]->spinlock);
 	device_array[minor]->interface = NULL;
 	for(list_ptr = registered_drivers.next; list_ptr != &registered_drivers; list_ptr = list_ptr->next)
 	{
@@ -61,14 +69,6 @@ if(device_array[minor] == NULL)
 		printk("unable to find driver\n");
 		return -EINVAL;
 	}
-	device_array[minor]->private_data = NULL;
-	device_array[minor]->status = 0;
-	device_array[minor]->ibbase = IBBASE;
-	device_array[minor]->ibirq = IBIRQ;
-	device_array[minor]->ibdma = IBDMA;
-	init_waitqueue_head(&device_array[minor]->wait);
-	init_MUTEX(&device_array[minor]->mutex);
-	spin_lock_init(&device_array[minor]->spinlock);
 }
 
 	if ( filep->f_flags & O_EXCL )
