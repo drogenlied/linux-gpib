@@ -12,10 +12,11 @@ int ibParseConfigFile(char *filename)
 {
 	extern FILE *gpib_yyin;
 	FILE *infile;
-	int stat=1;
+	int stat = 0;
 
-	if ((infile=fopen(filename,"r"))==NULL)
+	if ((infile = fopen(filename, "r")) == NULL)
 	{
+		fprintf(stderr, "failed to open configuration file\n");
 		iberr = ECFG;
 		return -1;
 	}
@@ -29,8 +30,11 @@ int ibParseConfigFile(char *filename)
 	ibBoardDefaultValues();
 	// initialize variables used in yyparse() - see ibConfYacc.y
 	findIndex = 0;
-	if(gpib_yyparse() < 0) stat = -1 ;
-
+	if(gpib_yyparse() < 0)
+	{
+		fprintf(stderr, "failed to parse configuration file\n");
+		stat = -1 ;
+	}
 	fclose(infile);
 
 	return stat;

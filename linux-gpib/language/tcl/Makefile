@@ -19,6 +19,8 @@ MAKE = make -C
 #
 #
 
+ROOT = ../../
+
 SUBDIRS = examples 
 
 INSTALLDIR = /usr/local/lib
