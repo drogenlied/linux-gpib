@@ -30,4 +30,5 @@ specifying config file with gpib_config --file can cause problems,
 since library doesn't know anything about it unless IB_CONFIG
 is set in the environment as well.  Should warn about this somewhere.
 
+add links to web page (maybe comedi and vimms)
 
