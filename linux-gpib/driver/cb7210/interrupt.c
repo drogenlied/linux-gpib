@@ -66,7 +66,7 @@ void cb7210_internal_interrupt( gpib_board_t *board )
 
 	clear_bits = 0;
 
-	if( hs_status & HS_HALF_FULL)
+	if( hs_status & HS_HALF_FULL )
 	{
 		if( priv->hs_mode_bits & HS_TX_ENABLE )
 			priv->out_fifo_half_empty = 1;

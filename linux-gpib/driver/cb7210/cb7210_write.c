@@ -86,7 +86,7 @@ ssize_t fifo_write( gpib_board_t *board, uint8_t *buffer, size_t length )
 			output_fifo_empty( cb_priv ) ||
 			test_bit( TIMO_NUM, &board->status ) ) )
 		{
-			printk("gpib write interrupted\n");
+			printk("cb7210: fifo wait interrupted\n");
 			retval = -ERESTARTSYS;
 			break;
 		}
@@ -127,7 +127,7 @@ ssize_t fifo_write( gpib_board_t *board, uint8_t *buffer, size_t length )
 		output_fifo_empty( cb_priv ) ||
 		test_bit( TIMO_NUM, &board->status ) ) )
 	{
-		printk("gpib write interrupted\n");
+		printk("cb7210: wait for last byte interrupted\n");
 		retval = -ERESTARTSYS;
 	}
 	if( test_bit( TIMO_NUM, &board->status ) )
