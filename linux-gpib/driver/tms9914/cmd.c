@@ -27,14 +27,18 @@ void check_my_address_state( gpib_board_t *board, tms9914_private_t *priv, int c
 			( board->sad >= 0 && next_cmd_byte == MSA( board->sad ) ) )
 			// become active listener
 			write_byte(priv, AUX_LON | AUX_CS, AUXCR);
-	}
-
-	if( cmd_byte == MTA( board->pad ) )
+	}else if( cmd_byte == UNL )
+	{
+		write_byte(priv, AUX_LON, AUXCR);
+	}else if( cmd_byte == MTA( board->pad ) )
 	{
 		if( board->sad < 0 ||
 			( board->sad >= 0 && next_cmd_byte == MSA( board->sad ) ) )
 			//make active talker
 			write_byte(priv, AUX_TON | AUX_CS, AUXCR);
+	}else if( cmd_byte == UNT )
+	{
+		write_byte(priv, AUX_TON, AUXCR);
 	}
 }
 
