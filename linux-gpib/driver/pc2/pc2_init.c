@@ -31,9 +31,11 @@ MODULE_LICENSE("GPL");
 
 int pc2_attach(gpib_board_t *board);
 int pc2a_attach(gpib_board_t *board);
+int pc2_2a_attach(gpib_board_t *board);
 
 void pc2_detach(gpib_board_t *board);
 void pc2a_detach(gpib_board_t *board);
+void pc2_2a_detach(gpib_board_t *board);
 
 // wrappers for interface functions
 ssize_t pc2_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end)
@@ -195,6 +197,35 @@ gpib_interface_t pc2a_interface =
 	provider_module: &__this_module,
 };
 
+gpib_interface_t pc2_2a_interface =
+{
+	name:	"pcII_IIa",
+	attach:	pc2_2a_attach,
+	detach:	pc2_2a_detach,
+	read:	pc2_read,
+	write:	pc2_write,
+	command:	pc2_command,
+	take_control:	pc2_take_control,
+	go_to_standby:	pc2_go_to_standby,
+	request_system_control:	pc2_request_system_control,
+	interface_clear:	pc2_interface_clear,
+	remote_enable:	pc2_remote_enable,
+	enable_eos:	pc2_enable_eos,
+	disable_eos:	pc2_disable_eos,
+	parallel_poll:	pc2_parallel_poll,
+	parallel_poll_configure:	pc2_parallel_poll_configure,
+	parallel_poll_response:	pc2_parallel_poll_response,
+	line_status:	NULL,
+	update_status:	pc2_update_status,
+	primary_address:	pc2_primary_address,
+	secondary_address:	pc2_secondary_address,
+	serial_poll_response:	pc2_serial_poll_response,
+	serial_poll_status:	pc2_serial_poll_status,
+	t1_delay: pc2_t1_delay,
+	return_to_local: pc2_return_to_local,
+	provider_module: &__this_module,
+};
+
 static int allocate_private(gpib_board_t *board)
 {
 	board->private_data = kmalloc(sizeof(pc2_private_t), GFP_KERNEL);
@@ -242,7 +273,7 @@ int pc2_generic_attach(gpib_board_t *board)
 		}
 		nec_priv->dma_channel = board->ibdma;
 	}
-	
+
 	return 0;
 }
 
@@ -316,7 +347,7 @@ void pc2_detach(gpib_board_t *board)
 	free_private(board);
 }
 
-int pc2a_attach(gpib_board_t *board)
+int pc2a_common_attach( gpib_board_t *board, unsigned int num_registers )
 {
 	unsigned int i, err;
 	pc2_private_t *pc2_priv;
@@ -350,7 +381,7 @@ int pc2a_attach(gpib_board_t *board)
 	}
 
 	err = 0;
-	for(i = 0; i < nec7210_num_registers; i++)
+	for(i = 0; i < num_registers; i++)
 	{
 		if(check_region(board->ibbase + i * pc2a_reg_offset, 1))
 			err++;
@@ -364,15 +395,13 @@ int pc2a_attach(gpib_board_t *board)
 		printk("gpib: ioports are already in use");
 		return -1;
 	}
-	for(i = 0; i < nec7210_num_registers; i++)
+	for(i = 0; i < num_registers; i++)
 	{
 		request_region(board->ibbase + i * pc2a_reg_offset, 1, "pc2a");
 	}
 	nec_priv->iobase = board->ibbase;
 	request_region(pc2a_clear_intr_iobase + board->ibirq, 1, "pc2a");
 	pc2_priv->clear_intr_addr = pc2a_clear_intr_iobase + board->ibirq;
-
-	nec7210_board_reset( nec_priv, board );
 
 	if(request_irq(board->ibirq, pc2a_interrupt, SA_SHIRQ, "pc2a", board))
 	{
@@ -384,6 +413,8 @@ int pc2a_attach(gpib_board_t *board)
 	// make sure interrupt is clear
 	outb(0xff , CLEAR_INTR_REG(pc2_priv->irq));
 
+	nec7210_board_reset( nec_priv, board );
+
 	/* set internal counter register for 8 MHz input clock */
 	write_byte( nec_priv, ICR | 8, AUXMR );
 
@@ -392,7 +423,17 @@ int pc2a_attach(gpib_board_t *board)
 	return 0;
 }
 
-void pc2a_detach(gpib_board_t *board)
+int pc2a_attach( gpib_board_t *board )
+{
+	return pc2a_common_attach( board, pc2a_iosize );
+}
+
+int pc2_2a_attach( gpib_board_t *board )
+{
+	return pc2a_common_attach( board, pc2_2a_iosize );
+}
+
+void pc2a_common_detach( gpib_board_t *board, unsigned int num_registers )
 {
 	int i;
 	pc2_private_t *pc2_priv = board->private_data;
@@ -412,7 +453,7 @@ void pc2a_detach(gpib_board_t *board)
 		if(nec_priv->iobase)
 		{
 			nec7210_board_reset( nec_priv, board );
-			for(i = 0; i < nec7210_num_registers; i++)
+			for(i = 0; i < num_registers; i++)
 				release_region(nec_priv->iobase + i * pc2a_reg_offset, 1);
 		}
 		if(pc2_priv->clear_intr_addr)
@@ -428,12 +469,23 @@ void pc2a_detach(gpib_board_t *board)
 
 }
 
+void pc2a_detach( gpib_board_t *board )
+{
+	pc2a_common_detach( board, pc2a_iosize );
+}
+
+void pc2_2a_detach( gpib_board_t *board )
+{
+	pc2a_common_detach( board, pc2_2a_iosize );
+}
+
 static int pc2_init_module( void )
 {
 	EXPORT_NO_SYMBOLS;
 
 	gpib_register_driver(&pc2_interface);
 	gpib_register_driver(&pc2a_interface);
+	gpib_register_driver(&pc2_2a_interface);
 
 	return 0;
 }
@@ -442,6 +494,7 @@ static void pc2_exit_module( void )
 {
 	gpib_unregister_driver(&pc2_interface);
 	gpib_unregister_driver(&pc2a_interface);
+	gpib_unregister_driver(&pc2_2a_interface);
 }
 
 module_init( pc2_init_module );

@@ -1,28 +1,16 @@
 cleanup and improve organization of code - lots of work to do here
 
-add support for chip-specific enhancements to generic nec7210/tms9914 support
-
 generally make this software suck less
 
 fix crash on pcmcia card removal when program has board open
 
-fix reporting of read errors
-
-break up huge dependency files so make isn't so slow, convert
-#include <> to #include "" where necessary
+fix reporting of read/write errors and interruption of
+read/write on clears
 
 have library parse dmesg automatically on error
 
 report error when user tries to read/write to interface board which is
 bus master
-
-add send_eoi option for config file
-
-check that REN is asserted when it should be
-
-implement newer NI api
-
-fix setting of TIMO status
 
 a kcontrol module for configuring boards might be nice
 
@@ -37,15 +25,10 @@ possible problems when autopoll happens without remote enable
 online ioctl doesn't need to handle asserting IFC as there is a
 seperate ioctl for that, also IFC should happen after remote enable.
 
-fix ibonl( ud, 1 )
 timeouts on read/write should handle data that was able to be
 received/sent before timeout occurred.
 
 stuck SRQ handling
 
-request immediate rfd holdoff on read/write timeout on boards that support it
-
-catch nec7210 write errors
-
-allow device clear to interrupt cb7210 accel transfers and others
+add query to ibask() for support of IFC events
 

@@ -49,7 +49,7 @@ National Instruments:
                        ni_pci_accel                                        ?
   PCII                 pcII                             pc2-gpib.o         Y
   PCIIa                pcIIa                            pc2-gpib.o         Y
-  PCII/IIa           * pcII or pcIIa                    pc2-gpib.o         Y
+  PCII/IIa           * pcII or pcII_IIa                 pc2-gpib.o         Y
   PCMCIA-GPIB          ni_pcmcia                        tnt4882.o          Y
                        ni_pcmcia_accel                                     ?
 

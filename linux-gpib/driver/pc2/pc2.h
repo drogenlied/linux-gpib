@@ -37,6 +37,8 @@ extern gpib_interface_t pc2a_interface;
 
 // pc2 uses 8 consecutive io addresses
 static const int pc2_iosize = 8;
+static const int pc2a_iosize = 8;
+static const int pc2_2a_iosize = 16;
 
 // offset between io addresses of successive nec7210 registers
 static const int pc2a_reg_offset = 0x400;
