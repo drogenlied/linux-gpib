@@ -9,4 +9,6 @@
 
 SUBDIRS = cb7210 cec hp82335 ines nec7210 pc2 sys tms9914 tnt4882 tnt4882-tms include
 
+install-data-hook:
+	depmod -ae
 
