@@ -45,10 +45,9 @@ void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp)
 
 void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp )
 {
-	int bits, hs_status;
+	int bits;
 	gpib_device_t *device = arg;
 	cb7210_private_t *priv = device->private_data;
-	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 
 	// read incoming mailbox to clear mailbox full flag
 	inl(priv->amcc_iobase + INCOMING_MAILBOX_REG(3));
@@ -57,21 +56,22 @@ void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp )
 		INBOX_INTR_CS_BIT;
 	outl(bits, priv->amcc_iobase + INTCSR_REG );
 
-	if((hs_status = inb(nec_priv->iobase + HS_STATUS)))
-	{
-		outb(HS_CLR_SRQ_INT | HS_CLR_EOI_INT |
-			HS_CLR_EMPTY_INT | HS_CLR_HF_INT, nec_priv->iobase + HS_MODE);
-		printk("gpib: cbi488 interrupt? 0x%x\n", hs_status);
-	}
-
-	nec7210_interrupt(device, nec_priv);
+	cb7210_interrupt(irq, arg, registerp);
 }
 
 void cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 {
+	int hs_status;
 	gpib_device_t *device = arg;
 	cb7210_private_t *priv = device->private_data;
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
+
+	if((hs_status = inb(nec_priv->iobase + HS_STATUS)))
+	{
+		outb(HS_CLR_SRQ_INT | HS_CLR_EOI_INT |
+			HS_CLR_EMPTY_INT | HS_CLR_HF_INT, nec_priv->iobase + HS_MODE);
+// printk("gpib: cbi488 interrupt 0x%x\n", hs_status);
+	}
 
 	nec7210_interrupt(device, nec_priv);
 }
@@ -174,12 +174,16 @@ void nec7210_interrupt(gpib_device_t *device, nec7210_private_t *priv)
 			if(get_dma_residue(priv->dma_channel) == 0)
 			{
 				clear_bit(DMA_IN_PROGRESS_BN, &priv->state);
-				wake_up_interruptible(&device->wait); /* wake up sleeping process */
+				set_bit(WRITE_READY_BN, &priv->state);
+				wake_up_interruptible(&device->wait); 
 			}else
+			{
+				clear_bit(WRITE_READY_BN, &priv->state);
 				enable_dma(priv->dma_channel);
+			}
 			release_dma_lock(flags);
 		}else
-		{ // for writing data, pio mode
+		{
 			set_bit(WRITE_READY_BN, &priv->state);
 			wake_up_interruptible(&device->wait); 
 		}
@@ -204,8 +208,7 @@ void nec7210_interrupt(gpib_device_t *device, nec7210_private_t *priv)
 	{
 		printk("gpib output error\n");
 	}
-
-printk("isr1 0x%x, imr1 0x%x, isr2 0x%x, imr2 0x%x, status 0x%x\n", status1, priv->imr1_bits, status2, priv->imr2_bits, device->status);
+//printk("isr1 0x%x, imr1 0x%x, isr2 0x%x, imr2 0x%x, status 0x%x\n", status1, priv->imr1_bits, status2, priv->imr2_bits, device->status);
 }
 
 

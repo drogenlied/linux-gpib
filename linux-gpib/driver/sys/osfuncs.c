@@ -27,6 +27,7 @@ int ib_exclusive=0;
 
 IBLCL int ibopen(struct inode *inode, struct file *filep)
 {
+	unsigned int minor = MINOR(inode->i_rdev);
 	struct list_head *list_ptr;
 
 	if( ib_exclusive )
@@ -35,15 +36,15 @@ IBLCL int ibopen(struct inode *inode, struct file *filep)
 	}
 
 // this is a temporary hack to allocate the gpib0 device
-if(device_array[0] == NULL)
+if(device_array[minor] == NULL)
 {
-	device_array[0] = kmalloc(sizeof(gpib_device_t), GFP_KERNEL);
-	if(device_array[0] == NULL)
+	device_array[minor] = kmalloc(sizeof(gpib_device_t), GFP_KERNEL);
+	if(device_array[minor] == NULL)
 	{
 		printk("gpib: could not allocate memory for device\n");
 		return -ENOMEM;
 	}
-	device_array[0]->interface = NULL;
+	device_array[minor]->interface = NULL;
 	for(list_ptr = registered_drivers.next; list_ptr != &registered_drivers; list_ptr = list_ptr->next)
 	{
 		gpib_interface_t *interface;
@@ -51,19 +52,19 @@ if(device_array[0] == NULL)
 		interface = list_entry(list_ptr, gpib_interface_t, list);
 		if(strcmp(interface->name, BOARD_TYPE) == 0)
 		{
-			device_array[0]->interface = interface;
+			device_array[minor]->interface = interface;
 			break;
 		}
 	}
-	if(device_array[0]->interface == NULL)
+	if(device_array[minor]->interface == NULL)
 	{
 		printk("unable to find driver\n");
 		return -EINVAL;
 	}
-	device_array[0]->private_data = NULL;	
-	device_array[0]->status = 0;	
-	init_waitqueue_head(&device_array[0]->wait);
-	init_MUTEX(&device_array[0]->mutex);
+	device_array[minor]->private_data = NULL;	
+	device_array[minor]->status = 0;	
+	init_waitqueue_head(&device_array[minor]->wait);
+	init_MUTEX(&device_array[minor]->mutex);
 }
 
 	if ( filep->f_flags & O_EXCL )
@@ -84,10 +85,9 @@ if(device_array[0] == NULL)
 IBLCL int ibclose(struct inode *inode, struct file *file)
 {
 	unsigned int minor = MINOR(inode->i_rdev);
-	gpib_device_t *device = device_array[minor];
 
 	if ((pgmstat & PS_ONLINE) && ib_opened == 1 )
-		ibonl(device, 0);
+		ibonl(device_array[minor], 0);
 	ib_opened--;
 
 	if( ib_exclusive )
@@ -96,8 +96,8 @@ IBLCL int ibclose(struct inode *inode, struct file *file)
 	// temporary hack
 	if(ib_opened == 0)
 	{
-		kfree(device_array[0]);
-		device_array[0] = NULL;
+		kfree(device_array[minor]);
+		device_array[minor] = NULL;
 	}
 
 	return 0;
@@ -118,7 +118,7 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
 	unsigned int minor = MINOR(inode->i_rdev);
 	gpib_device_t *device;
 
-	if(minor > MAX_NUM_GPIB_DEVICES)
+	if(minor >= MAX_NUM_GPIB_DEVICES)
 	{
 		printk("gpib: invalid minor number of device file\n");
 		return -ENODEV;
@@ -130,7 +130,7 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
 		return -ENODEV;
 	}
 
-printk("ioclt %i\n", cmd);
+//printk("ioclt %i\n", cmd);
 
 	ibargp = (ibarg_t *) &m_ibarg;
 

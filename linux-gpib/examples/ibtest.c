@@ -13,7 +13,7 @@
 
 #define USE_SRQ 0
 #define READS 5
-#define WAIT 1
+#define WAIT 0
 
 
 #include <stdio.h>
@@ -99,7 +99,7 @@ int main(int argc,char **argv){
    */
 
   fprintf(stderr, "send nice string..\n");
-  strcpy(cmd,"D2INIT");
+  strcpy(cmd,"D2HELLO");
   if( ibwrt(dev,cmd,strlen(cmd)) & ERR ){
     gpiberr("wrt err");
     exit(1);
