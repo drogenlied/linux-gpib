@@ -222,8 +222,9 @@ int hp82335_attach( gpib_board_t *board )
 	if( request_mem_region( board->ibbase + hp82335_rom_size,
 		hp82335_iomem_size - hp82335_rom_size, "hp82335" ) == NULL )
 	{
-		printk( "hp82335: failed to allocate io memory region 0x%lx-0x%lx\n", board->ibbase,
-			board->ibbase + hp82335_iomem_size - 1 );
+		printk( "hp82335: failed to allocate io memory region 0x%lx-0x%lx\n",
+			board->ibbase + hp82335_rom_size,
+			board->ibbase + hp82335_iomem_size - hp82335_rom_size - 1 );
 		return -1;
 	}
 	hp_priv->raw_iobase = board->ibbase;
@@ -277,7 +278,8 @@ void hp82335_detach(gpib_board_t *board)
 			iounmap( ( void * ) tms_priv->iobase );
 		}
 		if( hp_priv->raw_iobase )
-			release_mem_region( hp_priv->raw_iobase, hp82335_iomem_size );
+			release_mem_region( hp_priv->raw_iobase + hp82335_rom_size,
+				hp82335_iomem_size - hp82335_rom_size );
 	}
 	hp82335_free_private( board );
 }
