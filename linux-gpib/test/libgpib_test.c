@@ -41,7 +41,6 @@ struct board_descriptors
 #define PRINT_FAILED() \
 	fprintf( stderr, "FAILED: %s line %i, ibsta 0x%x, iberr %i, ibcntl %li\n", \
 		__FILE__, __LINE__, ThreadIbsta(), ThreadIberr(), ThreadIbcntl() ); \
-	usleep(10000000);
 
 static int init_board( int board_desc )
 {
@@ -252,8 +251,13 @@ static int read_write_test( const struct board_descriptors *boards )
 		ibonl( ud, 0 );
 		return -1;
 	}
-	fprintf( stderr, "OK\n" );
 	ibonl( ud, 0 );
+	if( ThreadIbsta() & ERR )
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	fprintf( stderr, "OK\n" );
 	return 0;
 }
 
@@ -281,35 +285,44 @@ static int async_read_write_test( const struct board_descriptors *boards )
 		status = ibrda( boards->slave, buffer, sizeof( buffer ) );
 		if( status & ERR )
 		{
-			fprintf( stderr, "FAILED: read error %i\n", ThreadIberr() );
+			PRINT_FAILED();
+			fprintf( stderr, "read error %i\n", ThreadIberr() );
 			ibonl( ud, 0 );
 			return -1;
 		}
-		status = ibwait( ud, CMPL | TIMO );
-		if( ( status & ERR ) || !( status & CMPL ) )
+		status = ibwait(ud, CMPL | TIMO);
+		if((status & (ERR | TIMO)) || !(status & CMPL) )
 		{
-			fprintf( stderr, "FAILED: write status 0x%x, error %i\n", ThreadIbsta(),
+			PRINT_FAILED();
+			fprintf( stderr, "write status 0x%x, error %i\n", ThreadIbsta(),
 				ThreadIberr() );
 			ibonl( ud, 0 );
 			return -1;
 		}
 		status = ibwait( boards->slave, CMPL | TIMO );
-		if( ( status & ERR ) || !( status & CMPL ) )
+		if((status & (ERR | TIMO)) || !(status & CMPL))
 		{
-			fprintf( stderr, "FAILED: write status 0x%x, error %i\n", ThreadIbsta(),
+			PRINT_FAILED();
+			fprintf( stderr, "write status 0x%x, error %i\n", ThreadIbsta(),
 				ThreadIberr() );
 			ibonl( ud, 0 );
 			return -1;
 		}
 		if( strcmp( buffer, read_write_string1 ) )
 		{
-			fprintf( stderr, "FAILED: got bad data from ibrd\n" );
+			PRINT_FAILED();
+			fprintf( stderr, "got bad data from ibrd\n" );
 			fprintf( stderr, "received %i bytes:%s\n", ThreadIbcnt(), buffer );
 			ibonl( ud, 0 );
 			return -1;
 		}
 	}
 	ibonl( ud, 0 );
+	if( ThreadIbsta() & ERR )
+	{
+		PRINT_FAILED();
+		return -1;
+	}
 	fprintf( stderr, "OK\n" );
 	return 0;
 }
@@ -353,7 +366,7 @@ static int serial_poll_test( const struct board_descriptors *boards )
 	}
 
 	ibwait( ud, RQS | TIMO );
-	if( ( ThreadIbsta() & ERR ) || ( ThreadIbsta() & TIMO ) || !( ThreadIbsta() & RQS ) )
+	if((ThreadIbsta() & (ERR | TIMO)) || !(ThreadIbsta() & RQS))
 	{
 		PRINT_FAILED();
 		ibonl( ud, 0 );
@@ -393,6 +406,7 @@ static int parallel_poll_test( const struct board_descriptors *boards )
 	char result;
 	int line, sense;
 	int ist;
+
 	fprintf( stderr, "%s...", __FUNCTION__ );
 	ud = open_slave_device_descriptor( boards, T3s, 1, 0 );
 	if( ud < 0 )
@@ -421,6 +435,95 @@ static int parallel_poll_test( const struct board_descriptors *boards )
 		return -1;
 	}
 
+	ibonl( ud, 0 );
+	if( ThreadIbsta() & ERR )
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+
+	fprintf( stderr, "OK\n" );
+	return 0;
+}
+
+static int do_eos_pass(const struct board_descriptors *boards,
+	int eosmode, const char *test_message, const char *first_read_result,
+	const char *second_read_result)
+{
+	int ud;
+	char buffer[1024];
+	int status;
+
+	ud = open_slave_device_descriptor( boards, T3s, 0, eosmode );
+	if( ud < 0 )
+		return -1;
+	ibwrta(boards->slave, test_message, strlen(test_message));
+	if( ThreadIbsta() & ERR )
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	ibrd(ud, buffer, sizeof(buffer) - 1);
+	if( ThreadIbsta() & ERR )
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	buffer[ThreadIbcntl()] = '\0';
+	if(strcmp(buffer, first_read_result))
+	{
+		PRINT_FAILED();
+		fprintf(stderr, "first read got: '%s'\n"
+			"expected: '%s'\n", buffer, first_read_result);
+		return -1;
+	}
+	if(second_read_result != NULL)
+	{
+		ibrd(ud, buffer, sizeof(buffer) - 1);
+		if( ThreadIbsta() & ERR )
+		{
+			PRINT_FAILED();
+			return -1;
+		}
+		buffer[ThreadIbcntl()] = '\0';
+		if(strcmp(buffer, second_read_result))
+		{
+			PRINT_FAILED();
+			fprintf(stderr, "second read got: '%s'\n"
+				"expected: '%s'\n", buffer, second_read_result);
+			return -1;
+		}
+	}
+	status = ibwait(boards->slave, CMPL | TIMO);
+	if((status & (ERR | TIMO)) || !(status & CMPL))
+	{
+		PRINT_FAILED();
+		fprintf( stderr, "write status 0x%x, error %i\n", ThreadIbsta(),
+			ThreadIberr());
+		return -1;
+	}
+	ibonl( ud, 0 );
+	if( ThreadIbsta() & ERR )
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	return 0;
+}
+
+static int eos_test( const struct board_descriptors *boards )
+{
+	int retval;
+	fprintf( stderr, "%s...", __FUNCTION__ );
+
+	retval = do_eos_pass(boards, 'x' | REOS, "adfis\xf8gibblex",
+	"adfis\xf8", "gibblex");
+	if(retval < 0) return retval;
+
+	retval = do_eos_pass(boards, 'x' | REOS | BIN, "adfis\xf8gibblex",
+	"adfis\xf8gibblex", NULL);
+	if(retval < 0) return retval;
+
 	fprintf( stderr, "OK\n" );
 	return 0;
 }
@@ -443,6 +546,8 @@ int main( int argc, char *argv[] )
 	retval = serial_poll_test( &boards );
 	if( retval < 0 ) return retval;
 	retval = parallel_poll_test( &boards );
+	if( retval < 0 ) return retval;
+	retval = eos_test( &boards );
 	if( retval < 0 ) return retval;
 
 	return 0;
