@@ -139,9 +139,9 @@ int ibask( int ud, int option, int *value )
 	ibBoard_t *board;
 	int retval;
 
-	conf = enter_library( ud );
+	conf = general_enter_library( ud, 1, 0 );
 	if( conf == NULL )
-		return exit_library( ud, 1 );
+		return exit_library( ud, 1);
 
 	board = interfaceBoard( conf );
 
