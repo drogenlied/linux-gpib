@@ -27,7 +27,7 @@ static int setup_serial_poll( gpib_board_t *board, unsigned int usec_timeout )
 
 	GPIB_DPRINTK( "entering setup_serial_poll()\n" );
 
-	board->interface->take_control( board, 0 );
+	ibcac( board, 0 );
 
 	i = 0;
 	cmd_string[ i++ ] = UNL;
@@ -55,7 +55,7 @@ static int read_serial_poll_byte( gpib_board_t *board, unsigned int pad,
 
 	GPIB_DPRINTK( "entering read_serial_poll_byte(), pad=%i sad=%i\n", pad, sad );
 
-	board->interface->take_control(board, 0);
+	ibcac( board, 0);
 
 	i = 0;
 	// send talk address
@@ -69,7 +69,7 @@ static int read_serial_poll_byte( gpib_board_t *board, unsigned int pad,
 		return -EIO;
 	}
 
-	board->interface->go_to_standby( board );
+	ibgts( board );
 
 	// read poll result
 	ret = board->interface->read( board, result, 1, &end_flag );
@@ -88,7 +88,7 @@ static int cleanup_serial_poll( gpib_board_t *board, unsigned int usec_timeout )
 
 	GPIB_DPRINTK( "entering cleanup_serial_poll()\n" );
 
-	board->interface->take_control( board, 0 );
+	ibcac( board, 0 );
 
 	cmd_string[ 0 ] = SPD;	/* disable serial poll bytes */
 	cmd_string[ 1 ] = UNT;

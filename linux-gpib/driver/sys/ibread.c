@@ -37,12 +37,14 @@ ssize_t ibrd(gpib_board_t *board, uint8_t *buf, size_t length, int *end_flag)
 {
 	size_t count = 0;
 	ssize_t ret = 0;
+	int retval;
 
 	if(length == 0) return 0;
 
 	if( board->master )
 	{
-		board->interface->go_to_standby(board);
+		retval = ibgts( board );
+		if( retval < 0 ) return retval;
 	}
 	osStartTimer( board, board->usec_timeout );
 	// initialize status to END not yet received

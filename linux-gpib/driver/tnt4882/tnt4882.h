@@ -19,8 +19,8 @@
 #ifndef _TNT4882_H
 #define _TNT4882_H
 
-#include <nec7210.h>
-#include <gpibP.h>
+#include "nec7210.h"
+#include "gpibP.h"
 #include "mite.h"
 #include <linux/init.h>
 
@@ -97,6 +97,7 @@ enum
 	SWAPPED_AUXCR = 0xa,
 	HSSEL = 0xd,	// handshake select register
 	CFG = 0x10,
+	IMR0 = 0x1d,
 	IMR3 = 0x12,
 	CNT0 = 0x14,
 	CNT1 = 0x16,
@@ -109,6 +110,7 @@ enum
 
 	STS1 = 0x10,		/* T488 Status Register 1 */
 	STS2 = 0x1c,	        /* T488 Status Register 2 */
+	ISR0 = IMR0,
 	ISR3 = 0x1a,		/* T488 Interrupt Status Register 3 */
 	BCSR = 0x1f,		/* bus control/status register */
 };
@@ -118,54 +120,96 @@ enum
 /* TURBO-488 registers bit definitions */
 
 /* HSSEL -- handshake select register (write only) */
-#define NODMA 0x10
+enum hssel_bits
+{
+	NODMA = 0x10,
+};
 
 /* STS1 -- Status Register 1 (read only) */
-#define S_DONE          (0x80)	/* DMA done                           */
-#define S_SC            (0x40)	/* is system contoller                */
-#define S_IN            (0x20)	/* DMA in (to memory)                 */
-#define S_DRQ           (0x10)	/* DRQ line (for diagnostics)         */
-#define S_STOP          (0x08)	/* DMA stopped                        */
-#define S_NDAV          (0x04)	/* inverse of DAV                     */
-#define S_HALT          (0x02)	/* status of transfer machine         */
-#define S_GSYNC         (0x01)	/* indicates if GPIB is in sync w I/O */
+enum sts1_bits
+{
+	S_DONE = 0x80,	/* DMA done                           */
+	S_SC = 0x40,	/* is system contoller                */
+	S_IN = 0x20,	/* DMA in (to memory)                 */
+	S_DRQ = 0x10,	/* DRQ line (for diagnostics)         */
+	S_STOP = 0x08,	/* DMA stopped                        */
+	S_NDAV = 0x04,	/* inverse of DAV                     */
+	S_HALT = 0x02,	/* status of transfer machine         */
+	S_GSYNC = 0x01,	/* indicates if GPIB is in sync w I/O */
+};
 
 /* CFG -- Configuration Register (write only) */
-#define	C_CMD	        (1<<7)	/* FIFO 'bcmd' in progress            */
-#define	C_TLCH	     (1<<6)	/* halt DMA on TLC interrupt          */
-#define	C_IN	        (1<<5)	/* DMA is a GPIB read                 */
-#define	C_A_B	        (1<<4)	/* fifo order 1=motorola, 0=intel     */
-#define	C_CCEN	     (1<<3)	/* enable carry cycle                 */
-#define	C_TMOE	     (1<<2)	/* enable CPU bus time limit          */
-#define	C_T_B	        (1<<1)  	/* tmot reg is: 1=125ns clocks,       */
-						/* 0=num bytes                        */
-#define	C_B16	        (1<<0)  	/* 1=FIFO is 16-bit register, 0=8-bit */
+enum cfg_bits
+{
+	C_CMD = ( 1 << 7 ),	/* FIFO 'bcmd' in progress            */
+	C_TLCH = ( 1 << 6 ),	/* halt DMA on TLC interrupt          */
+	C_IN = ( 1 << 5 ),	/* DMA is a GPIB read                 */
+	C_A_B = ( 1 << 4 ),	/* fifo order 1=motorola, 0=intel     */
+	C_CCEN = ( 1 << 3 ),	/* enable carry cycle                 */
+	C_TMOE = ( 1 << 2 ),	/* enable CPU bus time limit          */
+	C_T_B = ( 1 << 1 ),	/* tmot reg is: 1=125ns clocks, 0=num bytes */
+	C_B16 = ( 1 << 0 ),	/* 1=FIFO is 16-bit register, 0=8-bit */
+};
 
-/* ISR3 -- Interrupt Status Register (read only) */
-#define	HR_INTR	        (1<<7)	/* 1=board is interrupting	*/
-#define	HR_SRQI_CIC      (1<<5)	/* SRQ asserted and we are CIC	*/
-#define	HR_STOP          (1<<4)	/* fifo empty or STOP command	*/
-						/* issued			*/
-#define	HR_NFF	        (1<<3)	/* NOT full fifo		*/
-#define	HR_NEF	        (1<<2)	/* NOT empty fifo		*/
-#define	HR_TLCI	        (1<<1)	/* TLC interrupt asserted	*/
-#define	HR_DONE          (1<<0)	/* DMA done			*/
+/* IMR0 -- Interrupt Mode Register 0 */
+enum imr0_bits
+{
+	TNT_SYNCIE_BIT = 0x1, /* handshake sync */
+	TNT_TOIE_BIT = 0x2, /* timeout */
+	TNT_ATNIE_BIT = 0x4, /* ATN interrupt */
+	TNT_IFCIE_BIT = 0x8,	/* interface clear interrupt */
+	TNT_BTO_BIT = 0x10, /* byte timeout */
+	TNT_NLEN_BIT = 0x20,	/* treat new line as EOS char */
+	TNT_STBOIE_BIT = 0x40,	/* status byte out  */
+	TNT_IMR0_ALWAYS_BITS = 0x80,	/* always set this bit on write */
+};
+
+/* ISR0 -- Interrupt Status Register 0 */
+enum isr0_bits
+{
+	TNT_SYNC_BIT = 0x1, /* handshake sync */
+	TNT_TO_BIT = 0x2, /* timeout */
+	TNT_ATNI_BIT = 0x4, /* ATN interrupt */
+	TNT_IFCI_BIT = 0x8,	/* interface clear interrupt */
+	TNT_EOS_BIT = 0x10, /* end of string */
+	TNT_NL_BIT = 0x20,	/* new line receive */
+	TNT_STBO_BIT = 0x40,	/* status byte out  */
+	TNT_NBA_BIT = 0x80,	/* new byte available */
+};
+
+/* ISR3 -- Interrupt Status Register 3 (read only) */
+enum isr3_bits
+{
+	HR_INTR = ( 1 << 7 ),	/* 1=board is interrupting */
+	HR_SRQI_CIC = ( 1 << 5 ),	/* SRQ asserted and we are CIC */
+	HR_STOP = ( 1 << 4 ),	/* fifo empty or STOP command issued */
+	HR_NFF = ( 1 << 3 ),	/* NOT full fifo */
+	HR_NEF = ( 1 << 2 ),	/* NOT empty fifo */
+	HR_TLCI = ( 1 << 1 ),	/* TLC interrupt asserted */
+	HR_DONE = ( 1 << 0 ),	/* DMA done */
+};
 
 /* CMDR -- Command Register */
-#define	CLRSC		(unsigned char)0x2	/* clear the SC bit 		*/
-#define	SETSC		(unsigned char)0x3	/* set the SC bit 		*/
-#define	GO		(unsigned char)(1<<2)	/* start DMA 			*/
-#define	STOP		(unsigned char)(1<<3)	/* stop DMA 			*/
-#define	RSTFIFO		(unsigned char)(1<<4)	/* reset the FIFO 		*/
-#define SFTRST		(unsigned char)(1<<5)	/* issue a software reset 	*/
-#define	DU_ADD		(unsigned char)(1<<6)	/* Motorola mode dual 	  	*/
-#define	DDU_ADD		(unsigned char)(1<<7)	/* Disable dual addressing 	*/
+enum cmdr_bits
+{
+	CLRSC = 0x2,	/* clear the SC bit */
+	SETSC = 0x3,	/* set the SC bit 		*/
+	GO = ( 1 << 2 ),	/* start DMA 			*/
+	STOP = ( 1 << 3 ),	/* stop DMA 			*/
+	RSTFIFO = ( 1 << 4 ),	/* reset the FIFO 		*/
+	SFTRST = ( 1 << 5 ),	/* issue a software reset 	*/
+	DU_ADD = ( 1 << 6 ),	/* Motorola mode dual 	  	*/
+	DDU_ADD = ( 1 << 7 ),	/* Disable dual addressing 	*/
+};
 
 /* STS2 -- Status Register 2 */
-#define AFFN		(1<<3)	/* "A full FIFO NOT"  (0=FIFO full)  */
-#define AEFN		(1<<2)	/* "A empty FIFO NOT" (0=FIFO empty) */
-#define BFFN		(1<<1)	/* "B full FIFO NOT"  (0=FIFO full)  */
-#define BEFN		(1<<0)	/* "B empty FIFO NOT" (0=FIFO empty) */
+enum sts2_bits
+{
+	AFFN = ( 1 << 3 ), 	/* "A full FIFO NOT"  (0=FIFO full)  */
+	AEFN = ( 1 << 2 ),	/* "A empty FIFO NOT" (0=FIFO empty) */
+	BFFN = ( 1 << 1 ),	/* "B full FIFO NOT"  (0=FIFO full)  */
+	BEFN = ( 1 << 0 ),	/* "B empty FIFO NOT" (0=FIFO empty) */
+};
 
 enum bus_control_status_bits
 {

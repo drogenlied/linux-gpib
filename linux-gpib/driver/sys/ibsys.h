@@ -7,7 +7,6 @@
 #include <linux/signal.h>
 #include <linux/errno.h>
 #include <linux/major.h>
-#define __NO_VERSION__
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/mm.h>
@@ -20,3 +19,5 @@
 #include <asm/uaccess.h>
 #include <asm/system.h>
 
+extern int gpib_allocate_board( gpib_board_t *board );
+extern void gpib_deallocate_board( gpib_board_t *board );

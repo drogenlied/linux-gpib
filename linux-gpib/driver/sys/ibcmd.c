@@ -1,3 +1,19 @@
+/***************************************************************************
+                              sys/ibcmd.c
+                             -------------------
+
+    copyright            : (C) 2001, 2002 by Frank Mori Hess
+    email                : fmhess@users.sourceforge.net
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
 
 #include "gpibP.h"
 
@@ -29,9 +45,8 @@ ssize_t ibcmd( gpib_board_t *board, uint8_t *buf, size_t length )
 
 	osStartTimer( board, board->usec_timeout );
 
-	if((ret = board->interface->take_control(board, 0)))
+	if( ( ret = ibcac( board, 0 ) ) )
 	{
-		printk("gpib error while becoming active controller\n");
 		ret = -1;
 	}else
 	{

@@ -15,33 +15,30 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "gpibP.h"
-#include <linux/kernel.h>
+#include "ibsys.h"
 #include <linux/vmalloc.h>
-#include <linux/module.h>
 
 int ibonline( gpib_board_t *board, gpib_file_private_t *priv,
 	int master )
 {
+	int retval;
+
 	if( !board->online )
 	{
-		/* XXX need to do more careful and complete cleanup
-		 * of board */
-		board->buffer_length = 0x1000;
-		board->buffer = vmalloc( board->buffer_length );
-		if(board->buffer == NULL)
-			return -ENOMEM;
+		retval = gpib_allocate_board( board );
+		if( retval < 0 ) return retval;
 
 		if( board->interface->attach( board ) < 0 )
 		{
 			board->interface->detach(board);
-			printk("GPIB Hardware Error! (Chip type not found or wrong Base Address?)\n");
+			printk("gpib: interface attach failed\n");
 			return -1;
 		}
 
 		if( master )
 		{
 			board->master = 1;
+			// XXX this should be done by library
 			ibsic( board, 100 );
 		}else
 		{
@@ -67,11 +64,7 @@ int iboffline( gpib_board_t *board, gpib_file_private_t *priv )
 	if( board->online == 1 )
 	{
 		board->interface->detach( board );
-		if( board->buffer )
-		{
-			vfree( board->buffer );
-			board->buffer = NULL;
-		}
+		gpib_deallocate_board( board );
 	}
 	__MOD_DEC_USE_COUNT( board->interface->provider_module );
 	board->online--;

@@ -62,7 +62,7 @@ int tms9914_go_to_standby(gpib_board_t *board, tms9914_private_t *priv)
 			break;
 		udelay(1);
 	}
-	
+
 	tms9914_update_status( board, priv );
 
 	if(i == timeout)

@@ -125,6 +125,34 @@ void init_gpib_board( gpib_board_t *board )
 	board->stuck_srq = 0;
 }
 
+int gpib_allocate_board( gpib_board_t *board )
+{
+	if( board->buffer == NULL )
+	{
+		board->buffer_length = 0x1000;
+		board->buffer = vmalloc( board->buffer_length );
+		if(board->buffer == NULL)
+			return -ENOMEM;
+	}
+	return 0;
+}
+
+void gpib_deallocate_board( gpib_board_t *board )
+{
+	short dummy;
+
+	if( board->buffer )
+	{
+		vfree( board->buffer );
+		board->buffer = NULL;
+		board->buffer_length = 0;
+	}
+
+	while( num_gpib_events( &board->event_queue ) )
+		pop_gpib_event( &board->event_queue, &dummy );
+
+}
+
 void init_board_array( gpib_board_t *board_array, unsigned int length )
 {
 	int i;

@@ -209,6 +209,8 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 	udelay(1);
 
 	nec7210_board_reset( &tnt_priv->nec7210_priv, board );
+	// read-clear isr0
+	tnt_priv->io_read( iobase + ISR0 );
 
 	// turn off one chip mode and dma
 	tnt_priv->io_write( NODMA , iobase + HSSEL);
@@ -220,6 +222,9 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 	tnt_priv->io_write(0x1, iobase + INTRT);
 
 	nec7210_board_online( &tnt_priv->nec7210_priv, board );
+	// enable interface clear interrupt for event queue
+	tnt_priv->io_write( TNT_IMR0_ALWAYS_BITS | TNT_IFCIE_BIT,
+		iobase + IMR3 );
 }
 
 int ni_pci_attach(gpib_board_t *board)
