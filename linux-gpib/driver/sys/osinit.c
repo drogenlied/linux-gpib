@@ -24,6 +24,7 @@
 #include <linux/list.h>
 #include <linux/fs.h>
 #include <linux/pci.h>
+#include <linux/devfs_fs_kernel.h>
 
 MODULE_LICENSE("GPL");
 
@@ -142,14 +143,25 @@ void init_gpib_device( gpib_device_t *device )
 
 int init_module(void)
 {
+	int i;
+
+	// XXX print gpib version
 	printk("Linux-GPIB Driver -- Kernel Release %s\n", UTS_RELEASE);
 
 	init_board_array(board_array, MAX_NUM_GPIB_BOARDS);
 
-	if(register_chrdev(IBMAJOR, "gpib", &ib_fops))
+	if( devfs_register_chrdev( IBMAJOR, "gpib", &ib_fops ) )
 	{
-		printk("can't get Major %d\n", IBMAJOR);
-		return(-EIO);
+		printk( "gpib: can't get major %d\n", IBMAJOR );
+		return -EIO;
+	}
+
+	for( i = 0; i < MAX_NUM_GPIB_BOARDS; i++ )
+	{
+		char name[20];
+		sprintf( name, "gpib%d", i );
+		devfs_register( NULL, name, DEVFS_FL_DEFAULT,
+			IBMAJOR, i, 0666 | S_IFCHR, &ib_fops, NULL );
 	}
 
 	return 0;
@@ -157,7 +169,17 @@ int init_module(void)
 
 void cleanup_module(void)
 {
-	if ( unregister_chrdev(IBMAJOR, "gpib") != 0 ) {
+	int i;
+
+	for( i = 0; i < MAX_NUM_GPIB_BOARDS; i++ )
+	{
+		char name[20];
+		sprintf( name, "gpib%d", i );
+		devfs_unregister( devfs_find_handle( NULL, name,
+			IBMAJOR, i, DEVFS_SPECIAL_CHR, 0 ) );
+	}
+
+	if ( devfs_unregister_chrdev( IBMAJOR, "gpib" ) != 0 ) {
 		printk("gpib: device busy or other module error \n");
 	} else {
 		printk("gpib: succesfully removed \n");
