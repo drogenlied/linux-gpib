@@ -34,14 +34,14 @@ ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int 
 	if(test_and_clear_bit(RFD_HOLDOFF_BN, &priv->state))
 	{
 		/* set HLDA in AUXRA to ensure FH works */
-		priv->write_byte(priv, auxa_bits | HR_HLDA, AUXMR);	//XXX
+		priv->write_byte(priv, priv->auxa_bits | HR_HLDA, AUXMR);	//XXX
 		priv->write_byte(priv, AUX_FH, AUXMR);
 	}
 	clear_bit(END_NUM, &driver->status);
 /*
  *	holdoff on END
  */
-	priv->write_byte(priv, auxa_bits | HR_HLDE, AUXMR);
+	priv->write_byte(priv, priv->auxa_bits | HR_HLDE, AUXMR);
 
 #if DMAOP		// ISA DMA transfer
 	flags = claim_dma_lock();

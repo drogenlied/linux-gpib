@@ -50,7 +50,6 @@ extern unsigned int ibdma ;      /* DMA channel                            */
 extern struct pci_dev *pci_dev_ptr;	// pci_dev for plug and play boards
 
 extern int          pgmstat;    /* Program state */
-extern int          auxa_bits;  /* static bits for AUXRA (EOS modes) */
 
 extern gpib_buffer_t *read_buffer, *write_buffer;
 

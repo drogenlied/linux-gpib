@@ -29,7 +29,7 @@ void nec7210_enable_eos(gpib_driver_t *driver, uint8_t eos_byte, int compare_8_b
 		priv->auxa_bits |= HR_BIN;
 	else
 		priv->auxa_bits &= ~HR_BIN;
-	priv->write_byte(priv, auxa_bits, AUXMR);
+	priv->write_byte(priv, priv->auxa_bits, AUXMR);
 }
 
 void nec7210_disable_eos(gpib_driver_t *driver)
@@ -37,7 +37,7 @@ void nec7210_disable_eos(gpib_driver_t *driver)
 	nec7210_private_t *priv = driver->private_data;
 
 	priv->auxa_bits &= ~HR_REOS;
-	priv->write_byte(priv, auxa_bits, AUXMR);
+	priv->write_byte(priv, priv->auxa_bits, AUXMR);
 }
 
 int nec7210_parallel_poll(gpib_driver_t *driver, uint8_t *result)
