@@ -7,6 +7,8 @@
 #
 #######################################################################
 
+-include $(ROOT)/util/.config
+
 CFLAGS= -I. -I../include -I ../driver/include -Wall -D_REENTRANT -ansi -pedantic
 ifdef GPIB_CONFIG_LIB_DEBUG
 CFLAGS += -g3 -O
