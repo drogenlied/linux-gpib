@@ -36,6 +36,6 @@ html: $(SGML)
 man: $(SGML)
 	{ $(JW_PATH) -f docbook -b man -o man linux-gpib.sgml && touch man; } || { $(RM) -r man; exit 1; }
 
-gpib_version.txt: Makefile
+gpib_version.txt: $(top_srcdir)/configure.ac
 	echo $(VERSION) > gpib_version.txt
 
