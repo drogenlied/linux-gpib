@@ -51,7 +51,7 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, uint8_t eos) // XXX eos bro
 	count += length - get_dma_residue(ibdma);
 	release_dma_lock(flags);
 
-	set_bit(END_NUM, &ibsta);
+	set_bit(END_NUM, &board.status);
 
 #else	// PIO transfer
 
@@ -75,7 +75,7 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, uint8_t eos) // XXX eos bro
 		buffer[count++] = data.value;
 		if(data.end)
 		{
-			set_bit(END_NUM, &ibsta);
+			set_bit(END_NUM, &board.status);
 			break;
 		}
 	}
@@ -92,7 +92,7 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, uint8_t eos) // XXX eos bro
 	if (!noTimo)
 	{
 		DBGprint(DBG_BRANCH, ("timeout  "));
-		ibsta |= (ERR | TIMO);
+		board.status |= (ERR | TIMO);
 		iberr = EABO;
 	}
 

@@ -32,33 +32,28 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	outb(0xff , CLEAR_INTR_REG(ibirq) );
 #endif
 
-	// record service request in ibsta
+	// record service request in status
 	if(status2 & HR_SRQI)
-		set_bit(SRQI_NUM, &ibsta);
+		set_bit(SRQI_NUM, &board.status);
 
-	// record address status change in ibsta
+	// record address status change in status
 	if(status2 & HR_ADSC)
 	{
 		address_status = GPIBin(ADSR);
 		// check if we are controller in charge
 		if(address_status & HR_CIC)
-			set_bit(CIC_NUM, &ibsta);
+			set_bit(CIC_NUM, &board.status);
 		else
-			clear_bit(CIC_NUM, &ibsta);
+			clear_bit(CIC_NUM, &board.status);
 		// check for talker/listener addressed
 		if(address_status & HR_TA)
-			set_bit(TACS_NUM, &ibsta);
+			set_bit(TACS_NUM, &board.status);
 		else
-			clear_bit(TACS_NUM, &ibsta);
+			clear_bit(TACS_NUM, &board.status);
 		if(address_status & HR_LA)
-			set_bit(LACS_NUM, &ibsta);
+			set_bit(LACS_NUM, &board.status);
 		else
-			clear_bit(LACS_NUM, &ibsta);
-		// check for ~attention
-		if(address_status & HR_NATN)
-			clear_bit(ATN_NUM, &ibsta);
-		else
-			set_bit(ATN_NUM, &ibsta);
+			clear_bit(LACS_NUM, &board.status);
 		wake_up_interruptible(&nec7210_status_wait); /* wake up sleeping process */
 	}
 
@@ -130,7 +125,7 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 		printk("gpib output error\n");
 	}
 
-//	printk("isr1 0x%x, isr2 0x%x, ibsta 0x%x\n", status1, status2, ibsta);
+	printk("isr1 0x%x, isr2 0x%x, status 0x%x\n", status1, status2, board.status);
 
 }
 

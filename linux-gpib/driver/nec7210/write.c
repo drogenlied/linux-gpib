@@ -103,7 +103,7 @@ ssize_t nec7210_write(uint8_t *buffer, size_t length, int send_eoi)
 	GPIBout(IMR1, imr1_bits);
 
 	if (!noTimo) {
-		ibsta |= (ERR | TIMO);
+		board.status |= (ERR | TIMO);
 		iberr = EABO;
 	}
 

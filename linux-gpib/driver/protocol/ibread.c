@@ -24,14 +24,12 @@ IBLCL int ibrd(uint8_t *buf, size_t cnt)
 	if (fnInit(HR_LA) & ERR) {
 		ibcnt = 0;
 		DBGout();
-		return ibsta;
+		return board.status;
 	}
-
-	DBGprint(DBG_BRANCH, ("go to standby  "));
 	board.go_to_standby();
 	osStartTimer(timeidx);
 	requested_cnt = cnt;
-	while ((cnt > 0) && !(ibsta & (ERR | TIMO | END))) {
+	while ((cnt > 0) && !(board.status & (ERR | TIMO | END))) {
 		ret = board.read(buf, cnt, 0);	// eos XXX
 		if(ret < 0)
 		{
@@ -45,9 +43,9 @@ IBLCL int ibrd(uint8_t *buf, size_t cnt)
 	ibcnt = requested_cnt - cnt;
 	osRemoveTimer();
 
-	if ((pgmstat & PS_NOEOSEND) && (ibsta & END)) {
+	if ((pgmstat & PS_NOEOSEND) && (board.status & END)) {
 		if (! bdCheckEOI() )
-			ibsta &= ~END;
+			board.status &= ~END;
 	}
 	ibstat();
 	DBGout();

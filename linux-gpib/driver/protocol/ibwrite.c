@@ -28,13 +28,12 @@ IBLCL int ibwrt(uint8_t *buf, size_t cnt, unsigned int more)
 	if (fnInit(HR_TA) & ERR) {
 		ibcnt = 0;
 		DBGout();
-		return ibsta;
+		return board.status;
 	}
-	osStartTimer(timeidx);
-	DBGprint(DBG_BRANCH, ("go to standby  "));
 	board.go_to_standby();
+	osStartTimer(timeidx);
 	requested_cnt = cnt;
-	while ((cnt > 0) && !(ibsta & (ERR | TIMO))) {
+	while ((cnt > 0) && !(board.status & (ERR | TIMO))) {
 		ret = board.write(buf, cnt, !more);
 		if(ret < 0)
 		{

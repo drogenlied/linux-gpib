@@ -8,14 +8,7 @@ int eosmodes = 0;
  */
 IBLCL int bdSRQstat(void)
 {
-	int result = 0;
-
-	DBGin("bdSRQstat");
-
-// SRQI bit of ibsta is set by interrupt handler
-
-	DBGout();
-	return result;
+	return board.status & SRQI;
 }
 
 

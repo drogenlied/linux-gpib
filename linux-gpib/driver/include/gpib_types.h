@@ -80,8 +80,9 @@ typedef struct
 	 * nonzero on error.
 	 */
 	int (*take_control)(int asyncronous);
-	/* De-assert ATN. */
-	void (*go_to_standby)(void);
+	/* De-assert ATN.  Returns zero on success, nonzer on error. 
+	 */
+	int (*go_to_standby)(void);
 	/* Asserts or de-asserts 'interface clear' (IFC) depending on
 	 * boolean value of 'assert'
 	 */
@@ -114,7 +115,7 @@ typedef struct
 	/* Stores information on the board's current status.  Usually
 	 * updated by the interrupt handler.  The meaning of the bits
 	 * is specified in gpib_user.h in the IBSTA section. */
-	int status;
+	volatile int status;
 	/* Holds error code for last error. */
 	int error;
 	/* 'private_data' can be used as seen fit by the driver to

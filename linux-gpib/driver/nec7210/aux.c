@@ -70,13 +70,31 @@ int nec7210_take_control(int syncronous)
 	else
 		GPIBout(AUXMR, AUX_TCA);
 	// wait until we have control
-	return wait_event_interruptible(nec7210_status_wait,
-		test_bit(ATN_NUM, &ibsta) && test_bit(CIC_NUM, &ibsta));
+	while(GPIBin(ADSR) & HR_NATN)
+	{
+		printk("waiting on ATN\n");
+		if(interruptible_sleep_on_timeout(&nec7210_status_wait, 100))
+		{
+			printk("error waiting for ATN\n");
+			return -1;
+		}
+	}
+	return 0;
 }
 
-void nec7210_go_to_standby(void)
+int nec7210_go_to_standby(void)
 {
 	GPIBout(AUXMR, AUX_GTS);
+	while((GPIBin(ADSR) & HR_NATN) == 0)
+	{
+		printk("waiting on NATN\n");
+		if(interruptible_sleep_on_timeout(&nec7210_status_wait, 100))
+		{
+			printk("error waiting for NATN\n");
+			return -1;
+		}
+	}
+	return 0;
 }
 
 void nec7210_interface_clear(int assert)

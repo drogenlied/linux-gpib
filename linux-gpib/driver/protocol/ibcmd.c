@@ -36,8 +36,8 @@ IBLCL int ibcmd(uint8_t *buf, size_t cnt)
 		return ibsta;
 	}
 	requested_cnt = cnt;
-	while ((cnt > 0) && !(ibsta & (ERR | TIMO))) {
-		ret = board.write(buf, cnt, 0);
+	while ((cnt > 0) && !(board.status & (ERR | TIMO))) {
+		ret = board.command(buf, cnt);
 		if(ret < 0)
 		{
 			printk("error writing gpib command bytes\n");
@@ -49,7 +49,10 @@ IBLCL int ibcmd(uint8_t *buf, size_t cnt)
 	}
 	ibcnt = requested_cnt - cnt;
 
-	board.go_to_standby();
+	if(board.go_to_standby())
+	{
+		printk("gpib error while going to standby\n");
+	}
 
 	osRemoveTimer();
 
