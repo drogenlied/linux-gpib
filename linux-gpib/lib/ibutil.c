@@ -73,14 +73,19 @@ void init_yyparse_vars( void )
 	ibBoardDefaultValues();
 }
 
-int ibParseConfigFile(char *filename)
+int ibParseConfigFile( void )
 {
 	extern FILE *gpib_yyin;
 	FILE *infile;
 	int stat = 0;
 	static int config_parsed = 0;
+	char *filename, *envptr;
 
 	if( config_parsed ) return 0;
+
+	envptr = getenv("IB_CONFIG");
+	if( envptr ) filename = envptr;
+	else filename = DEFAULT_CONFIG_FILE;
 
 	if ((infile = fopen(filename, "r")) == NULL)
 	{

@@ -21,8 +21,12 @@ static int serial_poll( ibBoard_t *board, unsigned int pad, int sad,
 			case ETIMEDOUT:
 				setIberr( EABO );
 				break;
+			case EPIPE:
+				setIberr( ESTB );
+				break;
 			default:
 				setIberr( EDVR );
+				setIbcnt( errno );
 				break;
 		}
 		return -1;

@@ -37,19 +37,19 @@ enum internal_gpib_addr
 
 extern void init_async_op( struct async_operation *async );
 extern int ibCheckDescriptor(int ud);
-extern  int ibBdChrConfig( ibBoard_t *board );
-extern  void ibBoardDefaultValues(void);
+extern int ibBdChrConfig( ibBoard_t *board );
+extern void ibBoardDefaultValues(void);
 extern int ibBoardOpen( ibBoard_t *board );
-extern  int ibBoardClose( ibBoard_t *board );
-extern  int ibGetNrBoards(void);
-extern  void yyerror(char *s);
-extern  int iblcleos( const ibConf_t *conf );
-extern  char *ibVerbCode(int code);
-extern  void ibPutMsg (char *format,...);
-extern  void ibPutErrlog(int ud,char *routine);
-extern  int ibParseConfigFile(char *filename);
-extern  int ibGetDescriptor(ibConf_t conf);
-extern  int ibFindDevIndex(char *name);
+extern int ibBoardClose( ibBoard_t *board );
+extern int ibGetNrBoards(void);
+extern void yyerror(char *s);
+extern int iblcleos( const ibConf_t *conf );
+extern char *ibVerbCode(int code);
+extern void ibPutMsg (char *format,...);
+extern void ibPutErrlog(int ud,char *routine);
+extern int ibParseConfigFile( void );
+extern int ibGetDescriptor(ibConf_t conf);
+extern int ibFindDevIndex(char *name);
 extern ssize_t my_ibcmd( ibConf_t *conf, uint8_t *buffer, size_t length);
 extern int send_setup_string( const ibConf_t *conf, uint8_t *cmdString );
 extern unsigned int create_send_setup( const ibBoard_t *board,

@@ -35,12 +35,21 @@ static int is_device_addr( int minor, int pad, int sad )
 
 int ibdev(int minor, int pad, int sad, int timo, int eot, int eos)
 {
-	if( is_device_addr( minor, pad, sad ) == 0 )
+	int retval;
+
+	retval = ibParseConfigFile();
+	if(retval < 0)
+	{
+		setIbsta( ERR );
+		return -1;
+	}
+
+	if( is_device_addr( minor, pad, sad - sad_offset ) == 0 )
 	{
 		setIberr( EARG );
 		setIbsta( ERR );
 		fprintf( stderr, "libgpib: ibdev gpib address already in use by\n"
-			"\tinterface board.  Use ibfind() to open boards.\n" );
+			"\tinterface board.  Use board index or ibfind() to open boards.\n" );
 		return -1;
 	}
 
@@ -50,23 +59,17 @@ int ibdev(int minor, int pad, int sad, int timo, int eot, int eos)
 
 int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_eoi, int eos, int eos_flags)
 {
-	char *envptr;
 	int retval;
 	int uDesc;
 	ibConf_t new_conf;
 	ibConf_t *conf;
 	ibBoard_t *board;
 
-	/* load config */
-
-	envptr = getenv("IB_CONFIG");
-	if(envptr)
-		retval = ibParseConfigFile(envptr);
-	else
-		retval = ibParseConfigFile(DEFAULT_CONFIG_FILE);
+	retval = ibParseConfigFile();
 	if(retval < 0)
 	{
 		setIbsta( ERR );
+		setIberr( EDVR );
 		return -1;
 	}
 

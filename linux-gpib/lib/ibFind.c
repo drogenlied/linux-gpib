@@ -7,19 +7,12 @@
 int ibfind(char *dev)
 {
 	int index;
-	char *envptr;
 	int retval;
 	int uDesc;
 	ibConf_t *conf;
 	int status;
 
-	/* load config */
-
-	envptr = getenv("IB_CONFIG");
-	if(envptr)
-		retval = ibParseConfigFile(envptr);
-	else
-		retval = ibParseConfigFile(DEFAULT_CONFIG_FILE);
+	retval = ibParseConfigFile();
 	if(retval < 0)
 	{
 		setIberr( EDVR );
