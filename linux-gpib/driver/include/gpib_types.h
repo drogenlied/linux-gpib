@@ -173,12 +173,12 @@ struct gpib_board_struct
 	uint8_t parallel_poll_configuration;
 	/* Count that keeps track of whether board is up and running or not */
 	unsigned int online;
+	// number of processes trying to autopoll
+	int autopollers;
 	/* Flag that indicates whether board is system controller of the bus */
 	unsigned master : 1;
 	/* Flag board has been opened for exclusive access */
 	unsigned exclusive : 1;
-	// enable auto serial polling or no
-	unsigned autopoll : 1;
 	// error dong autopoll
 	unsigned stuck_srq : 1;
 };

@@ -78,40 +78,49 @@ int board_ppc( ibConf_t *conf, int ppc_configuration )
 	return 0;
 }
 
-int ibppc( int ud, int v )
+int internal_ibppc( ibConf_t *conf, int v )
 {
-	ibConf_t *conf;
 	static const int ppc_mask = 0xe0;
-	static const int ppc_code = 0x60;
 	int retval;
 
-	if( v && ( v & ppc_mask ) != ppc_code )
+	if( v && ( v & ppc_mask ) != PPE )
 	{
 		fprintf( stderr, "libgpib: illegal parallel poll configuration\n" );
 		setIberr( EARG );
-		return exit_library( ud, 1 );
+		return -1;
 	}
 
 	if( !v || (v & PPC_DISABLE) )
 		v = PPE | PPC_DISABLE;
 
-	conf = enter_library( ud );
-	if( conf == NULL )
-		return exit_library( ud, 1 );
-
 	if( conf->is_interface )
 	{
 		retval = board_ppc( conf, v );
 		if( retval < 0 )
-			return exit_library( ud, 1 );
+			return retval;
 	}else
 	{
 		retval = device_ppc( conf, v );
-		if( retval < 0 ) return exit_library( ud, 1 );
+		if( retval < 0 ) return retval;
 	}
 
 	setIberr( conf->ppoll_config );
 	conf->ppoll_config = v;
+
+	return 0;
+}
+
+int ibppc( int ud, int v )
+{
+	ibConf_t *conf;
+	int retval;
+
+	conf = enter_library( ud );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
+
+	retval = internal_ibppc( conf, v );
+	if( retval < 0 ) return exit_library( ud, 1 );
 
 	return exit_library( ud, 0 );
 }

@@ -135,7 +135,7 @@ void init_gpib_board( gpib_board_t *board )
 	board->pad = 0;
 	board->sad = -1;
 	board->usec_timeout = 3000000;
-	board->autopoll = 1;
+	board->autopollers = 0;
 	board->stuck_srq = 0;
 }
 

@@ -66,7 +66,7 @@ void * run_autopoll( void *arg )
 	return NULL;
 }
 
-int create_autopoll_process( ibBoard_t *board )
+int create_autopoll_thread( ibBoard_t *board )
 {
 	int retval;
 
@@ -86,6 +86,31 @@ int create_autopoll_process( ibBoard_t *board )
 
 	return 0;
 }
+
+int destroy_autopoll_thread( ibBoard_t *board )
+{
+	int retval;
+	
+	if( board->autopoll_thread == NULL ) return 0;
+
+	retval = pthread_cancel( *board->autopoll_thread );
+	if( retval )
+	{
+		fprintf( stderr, "libgpib: failed to terminate autopoll thread\n" );
+		return -1;
+	}
+
+	return 0;
+}
+
+int configure_autopoll( ibConf_t *conf, int enable )
+{
+	if( enable )
+		return create_autopoll_thread( interfaceBoard( conf ) );
+	else
+		return destroy_autopoll_thread( interfaceBoard( conf ) );
+}
+
 
 /**********************/
 int ibBoardOpen( ibBoard_t *board )
@@ -112,7 +137,7 @@ int ibBoardOpen( ibBoard_t *board )
 		return -1;
 	}
 
-	if( create_autopoll_process( board ) < 0)
+	if( create_autopoll_thread( board ) < 0)
 	{
 		ibBoardClose( board );
 		return -1;
@@ -132,14 +157,10 @@ int ibBoardClose( ibBoard_t *board )
 		board->fileno = -1;
 	}
 
-	if( board->autopoll_thread )
+	retval = destroy_autopoll_thread( board );
+	if( retval < 0 )
 	{
-		retval = pthread_cancel( *board->autopoll_thread );
-		if( retval )
-		{
-			fprintf( stderr, "libgpib: failed to terminate autopoll thread\n" );
-			return -1;
-		}
+		return retval;
 	}
 
 	return 0;

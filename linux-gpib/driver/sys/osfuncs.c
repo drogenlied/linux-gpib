@@ -30,7 +30,6 @@ static int close_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned lo
 static int serial_poll_ioctl( gpib_board_t *board, unsigned long arg );
 static int wait_ioctl( gpib_board_t *board, unsigned long arg );
 static int parallel_poll_ioctl( gpib_board_t *board, unsigned long arg );
-static int auto_poll_enable_ioctl( gpib_board_t *board, unsigned long arg );
 static int online_ioctl( gpib_board_t *board, unsigned long arg );
 static int remote_enable_ioctl( gpib_board_t *board, unsigned long arg );
 static int take_control_ioctl( gpib_board_t *board, unsigned long arg );
@@ -47,9 +46,8 @@ static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 	unsigned long arg );
 static int timeout_ioctl( gpib_board_t *board, unsigned long arg );
 static int status_bytes_ioctl( gpib_board_t *board, unsigned long arg );
-static int query_ppc_ioctl( const gpib_board_t *board, unsigned long arg );
+static int board_info_ioctl( const gpib_board_t *board, unsigned long arg );
 static int ppc_ioctl( gpib_board_t *board, unsigned long arg );
-static int query_autopoll_ioctl( const gpib_board_t *board, unsigned long arg );
 static int query_board_rsv_ioctl( gpib_board_t *board, unsigned long arg );
 
 static int cleanup_open_devices( gpib_file_private_t *file_priv, gpib_board_t *board );
@@ -211,6 +209,9 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 
 	switch( cmd )
 	{
+		case IBBOARD_INFO:
+			return board_info_ioctl( board, arg );
+			break;
 		case IBCLOSEDEV:
 			return close_dev_ioctl( filep, board, arg );
 			break;
@@ -223,14 +224,8 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 		case IBPPC:
 			return ppc_ioctl( board, arg );
 			break;
-		case IBQUERY_AUTOPOLL:
-			return query_autopoll_ioctl( board, arg );
-			break;
-		case IBQUERY_BOARD_RSV:
+			case IBQUERY_BOARD_RSV:
 			return query_board_rsv_ioctl( board, arg );
-			break;
-		case IBQUERY_PPC:
-			return query_ppc_ioctl( board, arg );
 			break;
 		case IBRD:
 			return read_ioctl( board, arg );
@@ -255,9 +250,6 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			break;
 		case IBWAIT:
 			return wait_ioctl( board, arg );
-			break;
-		case IBAPE:
-			return auto_poll_enable_ioctl( board, arg );
 			break;
 		case IBSIC:
 			return ibsic( board );
@@ -670,23 +662,6 @@ static int parallel_poll_ioctl( gpib_board_t *board, unsigned long arg )
 	return 0;
 }
 
-static int auto_poll_enable_ioctl( gpib_board_t *board, unsigned long arg )
-{
-	int enable;
-	int retval;
-
-	retval = copy_from_user( &enable, ( void * ) arg, sizeof( enable ) );
-	if( retval )
-		return -EFAULT;
-
-	if( enable )
-		board->autopoll = 1;
-	else
-		board->autopoll = 0;
-
-	return 0;
-}
-
 static int online_ioctl( gpib_board_t *board, unsigned long arg )
 {
 	online_ioctl_t online_cmd;
@@ -844,11 +819,11 @@ static int autopoll_ioctl( gpib_board_t *board )
 	}
 
 	GPIB_DPRINTK( "entering autopoll loop\n" );
+	board->autopollers++;
 	while( 1 )
 	{
 		if( wait_event_interruptible( board->wait,
 			board->online &&
-			board->autopoll &&
 			board->stuck_srq == 0 &&
 			test_and_clear_bit( SRQI_NUM, &board->status) ) )
 		{
@@ -865,8 +840,12 @@ static int autopoll_ioctl( gpib_board_t *board )
 			break;
 		}
 	}
+	board->autopollers--;
+	if( board->autopollers < 0 )
+	{
+		printk( "gpib: bug! negative number of autopolling processes\n" );
+	}
 	GPIB_DPRINTK( "left autopoll loop\n" );
-
 	up( &board->autopoll_mutex );
 
 	return retval;
@@ -920,20 +899,6 @@ static int timeout_ioctl( gpib_board_t *board, unsigned long arg )
 	return 0;
 }
 
-static int query_ppc_ioctl( const gpib_board_t *board, unsigned long arg)
-{
-	int configuration;
-	int retval;
-
-	configuration = board->parallel_poll_configuration;
-
-	retval = copy_to_user( ( void * ) arg, &configuration, sizeof( configuration ) );
-	if( retval )
-		return -EFAULT;
-
-	return 0;
-}
-
 static int ppc_ioctl( gpib_board_t *board, unsigned long arg)
 {
 	int configuration;
@@ -945,20 +910,6 @@ static int ppc_ioctl( gpib_board_t *board, unsigned long arg)
 
 	return ibppc( board, configuration );
 
-}
-
-static int query_autopoll_ioctl( const gpib_board_t *board, unsigned long arg )
-{
-	int autopolling;
-	int retval;
-
-	autopolling = board->autopoll;
-
-	retval = copy_to_user( ( void * ) arg, &autopolling, sizeof( autopolling ) );
-	if( retval )
-		return -EFAULT;
-
-	return 0;
 }
 
 static int query_board_rsv_ioctl( gpib_board_t *board, unsigned long arg )
@@ -974,3 +925,24 @@ static int query_board_rsv_ioctl( gpib_board_t *board, unsigned long arg )
 
 	return 0;
 }
+
+static int board_info_ioctl( const gpib_board_t *board, unsigned long arg)
+{
+	board_info_ioctl_t info;
+	int retval;
+
+	info.pad = board->pad;
+	info.sad = board->sad;
+	info.parallel_poll_configuration = board->parallel_poll_configuration;
+	if( board->autopollers )
+		info.autopolling = 1;
+	else
+		info.autopolling = 0;
+
+	retval = copy_to_user( ( void * ) arg, &info, sizeof( info ) );
+	if( retval )
+		return -EFAULT;
+
+	return 0;
+}
+

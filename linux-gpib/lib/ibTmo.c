@@ -90,23 +90,33 @@ unsigned int usec_to_timeout( unsigned int usec )
 	return TNONE;
 }
 
-int ibtmo(int ud,int v)
+int internal_ibtmo( ibConf_t *conf, int timeout )
 {
-	ibConf_t *conf;
-
-	if( (v < TNONE) || (v > T1000s) )
+	if( timeout < TNONE || timeout > T1000s )
 	{
 		setIberr( EARG );
-		return exit_library( ud, 1 );
+		return -1;
 	}
+
+	conf->usec_timeout = timeout_to_usec( timeout );
+
+	return 0;
+}
+
+int ibtmo(int ud, int v )
+{
+	ibConf_t *conf;
+	int retval;
 
 	conf = general_enter_library( ud, 1, 0 );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 
-	conf->usec_timeout = timeout_to_usec( v );
-	// XXX this should be changed when ibconfig is implemented
-	conf->spoll_usec_timeout = timeout_to_usec( v );
+	retval = internal_ibtmo( conf, v );
+	if( retval < 0 )
+	{
+		return exit_library( ud, 1 );
+	}
 
 	return exit_library( ud, 0 );
 }

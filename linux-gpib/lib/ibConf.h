@@ -65,6 +65,7 @@ typedef struct ibConfStruct
 	unsigned local_lockout : 1;	// send local lockout when device is brought online
 	unsigned local_ppc : 1;	// enable local configuration of board's parallel poll response */
 	unsigned timed_out : 1;		/* io operation timed out */
+	unsigned readdr : 1;	/* useless, exists for compatibility only at present */
 } ibConf_t;
 
 /*---------------------------------------------------------------------- */

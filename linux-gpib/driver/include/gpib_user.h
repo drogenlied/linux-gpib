@@ -146,7 +146,8 @@ enum cmd_byte
 	UNL = 0x3F,	/* unlisten 			*/
 	TAD = 0x40,	/* value to be 'ored' in to obtain talk address   */
 	UNT = 0x5F,	/* untalk 			*/
-	PPE = 0x60	/* parallel poll enable (base)	*/
+	PPE = 0x60,	/* parallel poll enable (base)	*/
+	PPD = 0x70	/* parallel poll disable	*/
 };
 
 enum ppe_bits
@@ -220,5 +221,39 @@ enum ibask_option
 	IbaBNA = 0x200	/* device only */
 };
 
+enum ibconfig_option
+{
+	IbcPAD = 0x1,
+	IbcSAD = 0x2,
+	IbcTMO = 0x3,
+	IbcEOT = 0x4,
+	IbcPPC = 0x5,	/* board only */
+	IbcREADDR = 0x6,	/* device only */
+	IbcAUTOPOLL = 0x7,	/* board only */
+	IbcCICPROT = 0x8,	/* board only */
+	IbcIRQ = 0x9,	/* board only */
+	IbcSC = 0xa,	/* board only */
+	IbcSRE = 0xb,	/* board only */
+	IbcEOSrd = 0xc,
+	IbcEOSwrt = 0xd,
+	IbcEOScmp = 0xe,
+	IbcEOSchar = 0xf,
+	IbcPP2 = 0x10,	/* board only */
+	IbcTIMING = 0x11,	/* board only */
+	IbcDMA = 0x12,	/* board only */
+	IbcReadAdjust = 0x13,
+	IbcWriteAdjust = 0x14,
+	IbcEventQueue = 0x15,	/* board only */
+	IbcSPollBit = 0x16,	/* board only */
+	IbcSpollBit = 0x16,	/* board only */
+	IbcSendLLO = 0x17,	/* board only */
+	IbcSPollTime = 0x18,	/* device only */
+	IbcPPollTime = 0x19,	/* board only */
+	IbcEndBitIsNormal = 0x1a,
+	IbcUnAddr = 0x1b,	/* device only */
+	IbcHSCableLength = 0x1f,	/* board only */
+	IbcIst = 0x20,	/* board only */
+	IbcRsv = 0x21	/* board only */
+};
 
 #endif	/* _GPIB_USER_H */

@@ -76,6 +76,14 @@ typedef struct
 	int sad;
 } spoll_bytes_ioctl_t;
 
+typedef struct
+{
+	unsigned int pad;
+	int sad;
+	int parallel_poll_configuration;
+	int autopolling;
+} board_info_ioctl_t;
+
 /* Standard functions. */
 #define IBRD _IOWR( GPIB_CODE, 0, read_write_ioctl_t )
 #define IBWRT _IOWR( GPIB_CODE, 1, read_write_ioctl_t )
@@ -84,7 +92,7 @@ typedef struct
 #define IBCLOSEDEV _IOW( GPIB_CODE, 4, open_close_dev_ioctl_t )
 #define IBWAIT _IOW( GPIB_CODE, 5, wait_ioctl_t )
 #define IBRPP _IOWR( GPIB_CODE, 6, uint8_t )
-#define IBAPE _IOW( GPIB_CODE, 7, int )
+
 #define IBONL _IOW( GPIB_CODE, 8, online_ioctl_t )
 #define IBSIC _IO( GPIB_CODE, 9 )
 #define IBSRE _IOW( GPIB_CODE, 10, int )
@@ -106,8 +114,8 @@ typedef struct
 #define IBMUTEX _IOW( GPIB_CODE, 26, int )
 #define IBSPOLL_BYTES _IOWR( GPIB_CODE, 27, spoll_bytes_ioctl_t )
 #define IBPPC _IOW( GPIB_CODE, 28, int )
-#define IBQUERY_PPC _IOR( GPIB_CODE, 29, int )
-#define IBQUERY_AUTOPOLL _IOR( GPIB_CODE, 30, int )
+#define IBBOARD_INFO _IOR( GPIB_CODE, 29, board_info_ioctl_t )
+
 #define IBQUERY_BOARD_RSV _IOR( GPIB_CODE, 31, int )
 
 #endif	/* _GPIB_IOCTL_H */

@@ -180,7 +180,12 @@ int open_gpib_device( ibConf_t *conf )
 		open_cmd.pad = conf->pad;
 		open_cmd.sad = conf->sad;
 		retval = ioctl( board->fileno, IBOPENDEV, &open_cmd );
-		if( retval < 0 ) return retval;
+		if( retval < 0 )
+		{
+			setIberr( EDVR );
+			setIbcnt( errno );
+			return retval;
+		}
 	}
 
 	conf->is_open = 1;
@@ -203,7 +208,12 @@ int close_gpib_device( ibConf_t *conf )
 		close_cmd.pad = conf->pad;
 		close_cmd.sad = conf->sad;
 		retval = ioctl( board->fileno, IBCLOSEDEV, &close_cmd );
-		if( retval < 0 ) return retval;
+		if( retval < 0 )
+		{
+			setIberr( EDVR );
+			setIbcnt( errno );
+			return retval;
+		}
 	}
 
 	conf->is_open = 0;
@@ -223,13 +233,23 @@ int gpibi_change_address( ibConf_t *conf, unsigned int pad, int sad )
 		if( pad != conf->pad )
 		{
 			retval = ioctl( board->fileno, IBPAD, &pad );
-			if( retval < 0 ) return retval;
+			if( retval < 0 )
+			{
+				setIberr( EDVR );
+				setIbcnt( errno );
+				return retval;
+			}
 		}
 
 		if( sad != conf->sad )
 		{
 			retval = ioctl( board->fileno, IBSAD, &sad );
-			if( retval < 0 ) return retval;
+			if( retval < 0 )
+			{
+				setIberr( EDVR );
+				setIbcnt( errno );
+				return retval;
+			}
 		}
 	}
 
@@ -252,7 +272,12 @@ int lock_board_mutex( ibBoard_t *board )
 
 	retval = ioctl( board->fileno, IBMUTEX, &lock );
 	if( retval < 0 )
+	{
 		fprintf( stderr, "libgpib: error locking board mutex!\n");
+		setIberr( EDVR );
+		setIbcnt( errno );
+	}
+
 	return retval;
 }
 
@@ -263,7 +288,11 @@ int unlock_board_mutex( ibBoard_t *board )
 
 	retval = ioctl( board->fileno, IBMUTEX, &unlock );
 	if( retval < 0 )
+	{
 		fprintf( stderr, "libgpib: error unlocking board mutex!\n");
+		setIberr( EDVR );
+		setIbcnt( errno );
+	}
 	return retval;
 }
 

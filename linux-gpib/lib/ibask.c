@@ -21,9 +21,9 @@
 int query_ppc( const ibBoard_t *board )
 {
 	int retval;
-	int ppc;
+	board_info_ioctl_t info;
 
-	retval = ioctl( board->fileno, IBQUERY_PPC, &ppc );
+	retval = ioctl( board->fileno, IBBOARD_INFO, &info );
 	if( retval < 0 )
 	{
 		setIberr( EDVR );
@@ -31,15 +31,15 @@ int query_ppc( const ibBoard_t *board )
 		return retval;
 	}
 
-	return ppc;
+	return info.parallel_poll_configuration;
 }
 
 int query_autopoll( const ibBoard_t *board )
 {
 	int retval;
-	int autopolling;
+	board_info_ioctl_t info;
 
-	retval = ioctl( board->fileno, IBQUERY_AUTOPOLL, &autopolling );
+	retval = ioctl( board->fileno, IBBOARD_INFO, &info );
 	if( retval < 0 )
 	{
 		setIberr( EDVR );
@@ -47,7 +47,7 @@ int query_autopoll( const ibBoard_t *board )
 		return retval;
 	}
 
-	return autopolling;
+	return info.autopolling;
 }
 
 int query_board_rsv( const ibBoard_t *board )
@@ -217,11 +217,7 @@ int ibask( int ud, int option, int *value )
 		switch( option )
 		{
 			case IbaREADDR:
-				/* We always re-address.  To support only
-				 * readdressing when necessary would require
-				 * making the driver keep track of current addressing
-				 * state.  Maybe someday, but low priority. */
-				*value = 1;
+				*value = conf->readdr;
 				return exit_library( ud, 0 );
 				break;
 			case IbaSPollTime:
