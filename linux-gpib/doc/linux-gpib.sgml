@@ -49,11 +49,186 @@ A copy of the license is included in the section entitled
 	Reference for libgpib functions, macros, and constants.
 </para>
 <section>
+<title>Global Variables</title>
+
+<refentry ID="reference-globals-ibsta">
+<refmeta>
+	<refentrytitle>ibsta</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibsta</refname>
+	<refpurpose>holds status (device or board)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+<programlisting>
+#include &lt;gpib/ib.h&gt;
+
+volatile int ibsta;
+</programlisting>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibsta is set whenever a function from the 'traditional' or 'multidevice'
+	API is called.  Each of the bits in ibsta has a different meaning, summarized
+	in the following table:
+	</para>
+	<para>
+	<table COLSEP="1" ROWSEP="1" ORIENT="port" PGWIDE="1">
+	<title>ibsta Bits</title>
+	<tgroup COLS="4" ALIGN="left" >
+	<thead>
+	<row>
+	<entry>bit</entry>
+	<entry>value (hexadecimal)</entry>
+	<entry>meaning</entry>
+	<entry>used for board/device</entry>
+	</row>
+	</thead>
+	<tbody>
+	<row>
+	<entry>DCAS</entry>
+	<entry>0x1</entry>
+	<entry>DCAS is set when a board receives the device clear command
+	(that is, the
+	SDC or DCL <link LINKEND="reference-command-bytes">command byte</link>).
+	It is cleared on the next 'traditional' or
+	'multidevice' function call following ibwait(), or following a read
+	or write (ibrd(), ibwrt(), Receive(), etc.).</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>DTAS</entry>
+	<entry>0x2</entry>
+	<entry>DTAS is set when a board has received a device trigger command
+	(that is,
+	the GET <link LINKEND="reference-command-bytes">command byte</link>).
+	It is cleared on the next 'traditional' or
+	'multidevice' function call following ibwait(), or following a read
+	or write (ibrd(), ibwrt(), Receive(), etc.).</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>LACS</entry>
+	<entry>0x4</entry>
+	<entry>Board is currently addressed as a listener.</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>TACS</entry>
+	<entry>0x8</entry>
+	<entry>Board is currently addressed as talker.</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>ATN</entry>
+	<entry>0x10</entry>
+	<entry>The ATN line is asserted.</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>CIC</entry>
+	<entry>0x20</entry>
+	<entry>Board is controller-in-charge, so it is able to set the ATN line.</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>REM</entry>
+	<entry>0x40</entry>
+	<entry>Board is in 'remote' state.</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>LOK</entry>
+	<entry>0x80</entry>
+	<entry>Board is in 'lockout' state.</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>CMPL</entry>
+	<entry>0x100</entry>
+	<entry>I/O operation is complete.  Useful for determining when
+	an asynchronous io operation (ibrda(), ibwrta(), etc) has
+	completed.</entry>
+	<entry>board or device</entry>
+	</row>
+	<row>
+	<entry>EVENT</entry>
+	<entry>0x200</entry>
+	<entry>One or more clear, trigger, or interface clear events have been received,
+	and are available in the event queue (see ibevent()).</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>SPOLL</entry>
+	<entry>0x400</entry>
+	<entry>If this bit is enabled (see ibconfig()), it is set when the board is
+	serial polled.  The SPOLL bit is cleared when the board requests service
+	(see ibrsv()) or you call ibwait() on the board with SPOLL in the wait mask.
+	</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>RQS</entry>
+	<entry>0x800</entry>
+	<entry>RQS indicates that the device has requested service, and one
+	or more status bytes are available for reading with ibrsp().</entry>
+	<entry>device</entry>
+	</row>
+	<row>
+	<entry>SRQI</entry>
+	<entry>0x1000</entry>
+	<entry>SRQI indicates that a device connected to the board is asserting
+	the SRQ line.  It
+	is only set if the board is the controller-in-charge.  If
+	automatic serial polling is enabled, SRQI will generally be cleared,
+	since when a device requests service it will be automatically
+	polled and then unassert SRQ.</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>END</entry>
+	<entry>0x2000</entry>
+	<entry>END is set if the last io operation ended with the EOI
+	line asserted, and may be set on reception of the end-of-string character.
+	The
+	IbcEndBitIsNormal option of ibconfig() can be used to configure
+	whether or not END should be set on reception of the eos character.
+	</entry>
+	<entry>board or device</entry>
+	</row>
+	<row>
+	<entry>TIMO</entry>
+	<entry>0x4000</entry>
+	<entry>TIMO indicates that the last io operation or ibwait() timed out.</entry>
+	<entry>board or device</entry>
+	</row>
+	<row>
+	<entry>ERR</entry>
+	<entry>0x8000</entry>
+	<entry>ERR is set if the last 'traditional' or 'multidevice' function
+	call failed.  The global variable iberr will be set indicate the
+	cause of the error.</entry>
+	<entry>board or device</entry>
+	</row>
+	</tbody>
+	</tgroup>
+	</table>
+	</para>
+</refsect1>
+</refentry>
+
+</section>
+
+<section>
 <title>
-	Linux-GPIB Function Reference
+	'Traditional' API Functions
 </title>
 
-<refentry ID="function-reference-ibdev">
+<refentry ID="reference-function-ibdev">
 <refmeta>
 	<refentrytitle>ibdev</refentrytitle>
 	<manvolnum>3</manvolnum>
@@ -85,16 +260,16 @@ A copy of the license is included in the section entitled
 	other functions in the library.  The argument <parameter>board_index</parameter>
 	specifies which GPIB interface board the device is connected to.
 	The <parameter>pad</parameter> and <parameter>sad</parameter> arguments specify
-	the GPIB address of the device to be opened (see <link LINKEND="function-reference-ibpad">
-	ibpad()</link> and <link LINKEND="function-reference-ibsad">ibsad()</link>).
+	the GPIB address of the device to be opened (see <link LINKEND="reference-function-ibpad">
+	ibpad()</link> and <link LINKEND="reference-function-ibsad">ibsad()</link>).
 	The timeout for io operations is specified by <parameter> timeout </parameter>
-	(see <link LINKEND="function-reference-ibtmo">ibtmo()</link>). If
+	(see <link LINKEND="reference-function-ibtmo">ibtmo()</link>). If
 	<parameter>send_eoi</parameter> is nonzero, then the EOI
 	line will be asserted with the last byte sent during writes (see
-	<link LINKEND="function-reference-ibeot">ibeot()</link>).
+	<link LINKEND="reference-function-ibeot">ibeot()</link>).
 	Finally, the <parameter>eos</parameter>
 	argument specifies the end-of-string character and whether or not its
-	reception should terminate reads (see <link LINKEND="function-reference-ibeos">
+	reception should terminate reads (see <link LINKEND="reference-function-ibeos">
 	ibeos()</link>).
 	</para>
 </refsect1>
@@ -108,7 +283,7 @@ A copy of the license is included in the section entitled
 </refsect1>
 </refentry>
 
-<refentry ID="function-reference-ibeos">
+<refentry ID="reference-function-ibeos">
 <refmeta>
 	<refentrytitle>ibeos</refentrytitle>
 	<manvolnum>3</manvolnum>
@@ -175,12 +350,12 @@ A copy of the license is included in the section entitled
 	Return value
 	</title>
 	<para>
-		The value of ibsta is returned.
+		The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
 	</para>
 </refsect1>
 </refentry>
 
-<refentry ID="function-reference-ibeot">
+<refentry ID="reference-function-ibeot">
 <refmeta>
 	<refentrytitle>ibeot</refentrytitle>
 	<manvolnum>3</manvolnum>
@@ -206,7 +381,7 @@ A copy of the license is included in the section entitled
 	<para>
 	If <parameter>send_eoi</parameter> is non-zero, then the EOI
 	line will be asserted with the last byte sent by
-	calls to <link LINKEND="function-reference-ibwrt">ibwrt()</link>
+	calls to <link LINKEND="reference-function-ibwrt">ibwrt()</link>
 	and related functions.
 	</para>
 </refsect1>
@@ -215,12 +390,12 @@ A copy of the license is included in the section entitled
 	Return value
 	</title>
 	<para>
-	The value of ibsta is returned.
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
 	</para>
 </refsect1>
 </refentry>
 
-<refentry ID="function-reference-ibpad">
+<refentry ID="reference-function-ibpad">
 <refmeta>
 	<refentrytitle>ibpad</refentrytitle>
 	<manvolnum>3</manvolnum>
@@ -252,12 +427,12 @@ A copy of the license is included in the section entitled
 	Return value
 	</title>
 	<para>
-	The value of ibsta is returned.
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
 	</para>
 </refsect1>
 </refentry>
 
-<refentry ID="function-reference-ibrd">
+<refentry ID="reference-function-ibrd">
 <refmeta>
 	<refentrytitle>ibrd</refentrytitle>
 	<manvolnum>3</manvolnum>
@@ -290,8 +465,8 @@ A copy of the license is included in the section entitled
 	<parameter>num_bytes</parameter> bytes
 	are read into the user-supplied array <parameter>buffer</parameter>.  The
 	read may be terminated by an end-of-string character (see
-	<link LINKEND="function-reference-ibeos">ibeos()</link>), a
-	timeout (see <link LINKEND="function-reference-ibtmo">ibtmo()</link>),
+	<link LINKEND="reference-function-ibeos">ibeos()</link>), a
+	timeout (see <link LINKEND="reference-function-ibtmo">ibtmo()</link>),
 	or by the talker asserting the EOI line.
 	</para>
 	<para>
@@ -304,12 +479,12 @@ A copy of the license is included in the section entitled
 	Return value
 	</title>
 	<para>
-	The value of ibsta is returned.
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
 	</para>
 </refsect1>
 </refentry>
 
-<refentry ID="function-reference-ibsad">
+<refentry ID="reference-function-ibsad">
 <refmeta>
 	<refentrytitle>ibsad</refentrytitle>
 	<manvolnum>3</manvolnum>
@@ -341,12 +516,12 @@ A copy of the license is included in the section entitled
 	Return value
 	</title>
 	<para>
-	The value of ibsta is returned.
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
 	</para>
 </refsect1>
 </refentry>
 
-<refentry ID="function-reference-ibtmo">
+<refentry ID="reference-function-ibtmo">
 <refmeta>
 	<refentrytitle>ibtmo</refentrytitle>
 	<manvolnum>3</manvolnum>
@@ -378,12 +553,12 @@ A copy of the license is included in the section entitled
 	Return value
 	</title>
 	<para>
-	The value of ibsta is returned.
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
 	</para>
 </refsect1>
 </refentry>
 
-<refentry ID="function-reference-ibwrt">
+<refentry ID="reference-function-ibwrt">
 <refmeta>
 	<refentrytitle>ibwrt</refentrytitle>
 	<manvolnum>3</manvolnum>
@@ -416,10 +591,10 @@ A copy of the license is included in the section entitled
 	<parameter>num_bytes</parameter> bytes
 	are written from the user-supplied array <parameter>buffer</parameter>.
 	EOI may be asserted with the last byte sent or when the end-of-string
-	character is sent (see <link LINKEND="function-reference-ibeos">
-	ibeos()</link> and <link LINKEND="function-reference-ibeot">
+	character is sent (see <link LINKEND="reference-function-ibeos">
+	ibeos()</link> and <link LINKEND="reference-function-ibeot">
 	ibeot()</link>).  The write
-	may be interrupted by a timeout (see <link LINKEND="function-reference-ibtmo">
+	may be interrupted by a timeout (see <link LINKEND="reference-function-ibtmo">
 	ibtmo()</link>).
 	</para>
 	<para>
@@ -432,11 +607,49 @@ A copy of the license is included in the section entitled
 	Return value
 	</title>
 	<para>
-	The value of ibsta is returned.
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
 	</para>
 </refsect1>
 </refentry>
 
+</section>
+
+</section>
+
+<section>
+<title>GPIB protocol</title>
+
+<section ID="reference-command-bytes">
+	<title>GPIB command bytes</title>
+	<para>
+	The meaning and values of the possible GPIB command bytes
+	are as follows:
+	</para>
+	<para>
+	<table COLSEP="1" ROWSEP="1" ORIENT="port" PGWIDE="1">
+	<title>GPIB command bytes</title>
+	<tgroup COLS="3" ALIGN="left" >
+	<thead>
+	<row>
+	<entry>constant</entry>
+	<entry>value (hexadecimal)</entry>
+	<entry>description</entry>
+	</row>
+	</thead>
+	<tbody>
+	<row>
+	<entry></entry>
+	<entry></entry>
+	<entry></entry>
+	</tbody>
+	</tgroup>
+	</table>
+	</para>
+</section>
+
+<section>
+<title>GPIB bus lines</title>
+<para></para>
 </section>
 
 </section>
