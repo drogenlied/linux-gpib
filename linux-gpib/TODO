@@ -8,3 +8,9 @@ generally make this software suck less
 
 fix crash on ines-pcmcia card removal when program has board open
 
+fix reporting of read errors
+
+break up huge dependency files so make isn't so slow
+
+write a macro for printing debugging messages
+
