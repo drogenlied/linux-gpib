@@ -163,7 +163,7 @@ int do_serial_poll( int ud )
 		gpiberr("serial poll error");
 		return -1;
 	}
-	printf( "serial poll result: 0x%x\n", ( int ) result );
+	printf( "serial poll result: 0x%ux\n", ( unsigned int ) result );
 	return 0;
 }
 

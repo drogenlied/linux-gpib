@@ -39,6 +39,9 @@ int push_status_byte( gpib_device_t *device, uint8_t poll_byte )
 
 	device->num_status_bytes++;
 
+	GPIB_DPRINTK( "pushed status byte 0x%x, %i in queue\n",
+		(int) poll_byte, device->num_status_bytes );
+
 	return 0;
 }
 
@@ -60,6 +63,9 @@ int pop_status_byte( gpib_device_t *device, uint8_t *poll_byte )
 	kfree( status );
 
 	device->num_status_bytes--;
+
+	GPIB_DPRINTK( "popped status byte 0x%x, %i in queue\n",
+		(int) *poll_byte, device->num_status_bytes );
 
 	return 0;
 }
