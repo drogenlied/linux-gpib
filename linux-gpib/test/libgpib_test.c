@@ -38,6 +38,11 @@ struct board_descriptors
 	int slave;
 };
 
+#define PRINT_FAILED() \
+	fprintf( stderr, "FAILED: %s line %i, ibsta 0x%x, iberr %i, ibcntl %li\n", \
+		__FILE__, __LINE__, ThreadIbsta(), ThreadIberr(), ThreadIbcntl() ); \
+	usleep(10000000);
+
 static int init_board( int board_desc )
 {
 	int status;
@@ -45,26 +50,26 @@ static int init_board( int board_desc )
 	ibtmo( board_desc, T3s );
 	if( ThreadIbsta() & ERR )
 	{
-		fprintf( stderr, "FAILED: ibtmo() error in %s\n", __FUNCTION__ );
+		PRINT_FAILED();
 		return -1;
 	}
 
 	ibeot( board_desc, 1 );
 	if( ibsta & ERR )
 	{
-		fprintf( stderr, "FAILED: ibeot() error in %s\n", __FUNCTION__ );
+		PRINT_FAILED();
 		return -1;
 	}
 
 	status = ibeos( board_desc, 0 );
 	if( status & ERR )
 	{
-		fprintf( stderr, "FAILED: ibtmo() error in %s\n", __FUNCTION__ );
+		PRINT_FAILED();
 		return -1;
 	}
 	if( status != ThreadIbsta() || ThreadIbsta() != ibsta )
 	{
-		fprintf( stderr, "FAILED: status bits inconsistent in %s\n", __FUNCTION__ );
+		PRINT_FAILED();
 		return -1;
 	}
 
@@ -95,24 +100,23 @@ static int find_boards( struct board_descriptors *boards )
 	}
 	if( boards->master < 0 )
 	{
-		fprintf( stderr, "FAILED: could not find system controller board\n" );
+		PRINT_FAILED();
 		return -1;
 	}else if( boards->slave < 0 )
 	{
-		fprintf( stderr, "FAILED: could not find slave board\n" );
+		PRINT_FAILED();
 		return -1;
 	}
 	if( init_board( boards->master ) )
 	{
-		fprintf( stderr, "error initializing master\n" );
+		PRINT_FAILED();
 		return -1;
 	}
 	if( init_board( boards->slave ) )
 	{
-		fprintf( stderr, "error initializing slave\n" );
+		PRINT_FAILED();
 		return -1;
 	}
-
 	fprintf( stderr, "OK\n" );
 	return 0;
 }
@@ -127,19 +131,19 @@ static int open_slave_device_descriptor( const struct board_descriptors *boards,
 	status = ibask( boards->slave, IbaPAD, &pad );
 	if( status & ERR )
 	{
-		fprintf( stderr, "FAILED: could not query slave device pad\n" );
+		PRINT_FAILED();
 		return -1;
 	}
 	status = ibask( boards->slave, IbaSAD, &sad );
 	if( status & ERR )
 	{
-		fprintf( stderr, "FAILED: could not query slave device sad\n" );
+		PRINT_FAILED();
 		return -1;
 	}
 	ud = ibdev( boards->master, pad, sad, timeout, eot, eos );
 	if( ud < 0 )
 	{
-		fprintf( stderr, "FAILED: could not open slave device descriptor\n" );
+		PRINT_FAILED();
 	}
 	return ud;
 }
@@ -166,20 +170,20 @@ static void* read_write_slave_thread( void *arg )
 		status = ibrd( param->slave_board, buffer, sizeof( buffer ) );
 		if( status & ERR )
 		{
-			fprintf( stderr, "FAILED: slave thread got error from ibrd\n" );
+			PRINT_FAILED();
 			param->retval = -1;
 			return NULL;
 		}
 		if( strcmp( buffer, read_write_string1 ) )
 		{
-			fprintf( stderr, "FAILED: slave thread got bad data from ibrd\n" );
+			PRINT_FAILED();
 			param->retval = -1;
 			return NULL;
 		}
 		status = ibwrt( param->slave_board, read_write_string2, strlen( read_write_string2 ) + 1 );
 		if( status & ERR )
 		{
-			fprintf( stderr, "FAILED: slave thread got error from ibwrt\n" );
+			PRINT_FAILED();
 			param->retval = -1;
 			return NULL;
 		}
@@ -204,7 +208,7 @@ static int read_write_test( const struct board_descriptors *boards )
 	param.slave_board = boards->slave;
 	if( pthread_create( &slave_thread, NULL, read_write_slave_thread, (void*)&param ) )
 	{
-		fprintf( stderr, "FAILED: error creating slave thread\n" );
+		PRINT_FAILED();
 		ibonl( ud, 0 );
 		return -1;
 	}
@@ -213,8 +217,7 @@ static int read_write_test( const struct board_descriptors *boards )
 		status = ibwrt( ud, read_write_string1, strlen( read_write_string1 ) + 1 );
 		if( ( status & ERR ) || !( status & CMPL ) )
 		{
-			fprintf( stderr, "FAILED: write status 0x%x, error %i\n", ThreadIbsta(),
-				ThreadIberr() );
+			PRINT_FAILED();
 			pthread_join( slave_thread, NULL );
 			ibonl( ud, 0 );
 			return -1;
@@ -223,16 +226,15 @@ static int read_write_test( const struct board_descriptors *boards )
 		status = ibrd( ud, buffer, sizeof( buffer ) );
 		if( ( status & ERR ) || !( status & CMPL ) || !( status & END ) )
 		{
-			fprintf( stderr, "FAILED: read status 0x%x, error %i\n", ThreadIbsta(),
-				ThreadIberr() );
+			PRINT_FAILED();
 			pthread_join( slave_thread, NULL );
 			ibonl( ud, 0 );
 			return -1;
 		}
 		if( strcmp( buffer, read_write_string2 ) )
 		{
-			fprintf( stderr, "FAILED: got bad data from ibrd\n" );
-			fprintf( stderr, "received %i bytes:%s\n", ThreadIbcnt(), buffer );
+			PRINT_FAILED();
+			fprintf( stderr, "received bytes:%s\n", buffer );
 			pthread_join( slave_thread, NULL );
 			ibonl( ud, 0 );
 			return -1;
@@ -240,12 +242,13 @@ static int read_write_test( const struct board_descriptors *boards )
 	}
 	if( pthread_join( slave_thread, NULL ) )
 	{
-		fprintf( stderr, "FAILED: error joining slave thread\n" );
+		PRINT_FAILED();
 		ibonl( ud, 0 );
 		return -1;
 	}
 	if( param.retval < 0 )
 	{
+		PRINT_FAILED();
 		ibonl( ud, 0 );
 		return -1;
 	}
@@ -270,7 +273,7 @@ static int async_read_write_test( const struct board_descriptors *boards )
 		status = ibwrta( ud, read_write_string1, strlen( read_write_string1 ) + 1 );
 		if( status & ERR )
 		{
-			fprintf( stderr, "FAILED: write error %i\n", ThreadIberr() );
+			PRINT_FAILED();
 			ibonl( ud, 0 );
 			return -1;
 		}
@@ -328,7 +331,7 @@ static int serial_poll_test( const struct board_descriptors *boards )
 		ibrsp( ud, &result );
 		if( ThreadIbsta() & ERR )
 		{
-			fprintf( stderr, "FAILED: error emptying status queue\n" );
+			PRINT_FAILED();
 			ibonl( ud, 0 );
 			return -1;
 		}
@@ -336,7 +339,7 @@ static int serial_poll_test( const struct board_descriptors *boards )
 
 	if( ibconfig( boards->master, IbcAUTOPOLL, 1 ) & ERR )
 	{
-		fprintf( stderr, "FAILED: failed to enable autopolling\n" );
+		PRINT_FAILED();
 		ibonl( ud, 0 );
 		return -1;
 	}
@@ -344,7 +347,7 @@ static int serial_poll_test( const struct board_descriptors *boards )
 	ibrsv( boards->slave, status_byte );
 	if( ThreadIbsta() & ERR )
 	{
-		fprintf( stderr, "FAILED: failed to request service\n" );
+		PRINT_FAILED();
 		ibonl( ud, 0 );
 		return -1;
 	}
@@ -352,7 +355,7 @@ static int serial_poll_test( const struct board_descriptors *boards )
 	ibwait( ud, RQS | TIMO );
 	if( ( ThreadIbsta() & ERR ) || ( ThreadIbsta() & TIMO ) || !( ThreadIbsta() & RQS ) )
 	{
-		fprintf( stderr, "FAILED: did not receive service request\n" );
+		PRINT_FAILED();
 		ibonl( ud, 0 );
 		return -1;
 	}
@@ -360,14 +363,14 @@ static int serial_poll_test( const struct board_descriptors *boards )
 	ibrsp( ud, &result );
 	if( ThreadIbsta() & ERR )
 	{
-		fprintf( stderr, "FAILED: failed to read status byte\n" );
+		PRINT_FAILED();
 		ibonl( ud, 0 );
 		return -1;
 	}
 
 	if( ( result & 0xff ) != status_byte )
 	{
-		fprintf( stderr, "FAILED: status byte value is incorrect\n" );
+		PRINT_FAILED();
 		ibonl( ud, 0 );
 		return -1;
 	}
@@ -375,12 +378,50 @@ static int serial_poll_test( const struct board_descriptors *boards )
 	ibonl( ud, 0 );
 	if( ThreadIbsta() & ERR )
 	{
-		fprintf( stderr, "FAILED: failed to take descriptor offline\n" );
+		PRINT_FAILED();
 		return -1;
 	}
 
 	fprintf( stderr, "OK\n" );
 
+	return 0;
+}
+
+static int parallel_poll_test( const struct board_descriptors *boards )
+{
+	int ud;
+	char result;
+	int line, sense;
+	int ist;
+	fprintf( stderr, "%s...", __FUNCTION__ );
+	ud = open_slave_device_descriptor( boards, T3s, 1, 0 );
+	if( ud < 0 )
+		return -1;
+
+	ist = 1;
+	ibist( boards->slave, ist );
+
+	line = 2; sense = 1;
+	ibppc( ud, PPE_byte( line, sense ) );
+	if( ibsta & ERR )
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	ibrpp( boards->master, &result );
+	if( ThreadIbsta() & ERR )
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	if( ( result & ( 1 << ( line - 1 ) ) ) == 0 )
+	{
+		PRINT_FAILED();
+		fprintf( stderr, "parallel poll result: 0x%x\n", (unsigned int)result );
+		return -1;
+	}
+
+	fprintf( stderr, "OK\n" );
 	return 0;
 }
 
@@ -395,10 +436,14 @@ int main( int argc, char *argv[] )
 	retval = find_boards( &boards );
 	if( retval < 0 ) return retval;
 
-	read_write_test( &boards );
-
-	async_read_write_test( &boards );
-	serial_poll_test( &boards );
+	retval = read_write_test( &boards );
+	if( retval < 0 ) return retval;
+	retval = async_read_write_test( &boards );
+	if( retval < 0 ) return retval;
+	retval = serial_poll_test( &boards );
+	if( retval < 0 ) return retval;
+	retval = parallel_poll_test( &boards );
+	if( retval < 0 ) return retval;
 
 	return 0;
 }
