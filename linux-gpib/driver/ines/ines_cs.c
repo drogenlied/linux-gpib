@@ -37,7 +37,7 @@
 #include <pcmcia/cs.h>
 #include <pcmcia/cistpl.h>
 #include <pcmcia/ds.h>
-
+#include <pcmcia/cisreg.h>
 
 
 /*
@@ -310,7 +310,6 @@ static void gpib_config(dev_link_t *link)
     u_char buf[64];
     win_req_t req;
     memreq_t mem;
-    u_char *virt;
     handle = link->handle;
     dev = link->priv;
 
