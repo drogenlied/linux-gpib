@@ -19,12 +19,12 @@ AC_ENABLE_SHARED(yes)
 AC_ENABLE_STATIC(no)
 AC_ARG_ENABLE([pcmcia],[  --enable-pcmcia	Enable support for PCMCIA cards in GPIB kernel drivers],
 	[ENABLE_PCMCIA=$enableval],[ENABLE_PCMCIA="no"])
-if test $ENABLE_PCMCIA == yes ; then
+if test "$ENABLE_PCMCIA" == "yes" ; then
 	AC_DEFINE([GPIB_CONFIG_PCMCIA],[1],[Define to enable pcmcia support in drivers])
 fi
 AC_ARG_ENABLE([driver-debug],[  --enable-driver-debug	Enable debug spam to console in GPIB kernel drivers],
 	[ENABLE_DRIVER_SPAM=$enableval],[ENABLE_DRIVER_SPAM="no"])
-if test $ENABLE_DRIVER_SPAM == yes ; then
+if test "$ENABLE_DRIVER_SPAM" == "yes" ; then
 	AC_DEFINE([GPIB_CONFIG_KERNEL_DEBUG],[1],[Define to enable debug spam to console in drivers])
 fi
 AC_ARG_ENABLE([guile-binding],[  --disable-guile-binding	Disable Guile binding to libgpib],
@@ -44,7 +44,7 @@ dnl check kernel source directory
 AC_ARG_WITH(linux-srcdir,
 	[  --with-linux-srcdir=DIR	location of Linux kernel source directory [[DIR=/lib/modules/$(uname -r)/build/]]],
 	[LINUX_SRCDIR=$withval],[LINUX_SRCDIR=/lib/modules/$(uname -r)/build/])
-if test $LINUX_SRCDIR == no ; then
+if test "$LINUX_SRCDIR" == "no" ; then
 	AC_MSG_ERROR([A Linux kernel source directory is required to compile driver modules.  Use --with-linux-srcdir=DIR.])
 fi
 AC_SUBST(LINUX_SRCDIR)
@@ -76,7 +76,7 @@ AM_PROG_LEX
 AC_PROG_YACC
 AC_PROG_LIBTOOL
 AC_PATH_PROG(JW_PATH, jw, no)
-if test $JW_PATH == no ; then
+if test "$JW_PATH" == "no" ; then
 	AC_MSG_NOTICE([docbook-tools (jw) not found, disabling documentation])
 	BUILD_DOCS="no"
 fi
@@ -88,7 +88,7 @@ if (( $PYTHON_MAJOR_VERSION < 2 )); then
 	BIND_PYTHON="no"
 fi
 AC_PATH_PROG([PERL], [perl], [no], [])
-if test $PERL == "no"; then
+if test "$PERL" == "no"; then
 	AC_MSG_WARN([perl not found, disabling perl binding])
 	BIND_PERL="no"
 fi
@@ -100,7 +100,7 @@ else
 	SC_LOAD_TCLCONFIG
 fi
 AC_PATH_PROG([PHP_CONFIG], [php-config], [no],[])
-if test $PHP_CONFIG == "no"; then
+if test "$PHP_CONFIG" == "no"; then
 	AC_MSG_WARN([php-config not found, disabling PHP binding])
 	BIND_PHP="no"
 fi
@@ -115,11 +115,11 @@ AC_CHECK_HEADERS(unistd.h sys/param.h sys/time.h time.h sys/mkdev.h sys/sysmacro
 AM_CHECK_PYTHON_HEADERS([],[BIND_PYTHON=no;AC_MSG_WARN([python headers not found, disabling python binding])])
 AC_CHECK_HEADER([libguile.h],[],[BIND_GUILE="no";AC_MSG_WARN([libguile headers not found, disabling guile binding])])
 
-if test $BIND_TCL != "no"; then
+if test "$BIND_TCL" != "no"; then
 AC_CHECK_HEADER([$TCL_INC_DIR/tcl.h],[],[BIND_TCL="no";AC_MSG_WARN([TCL headers not found, disabling TCL binding])])
 fi
 
-if test $PHP_CONFIG != "no"; then
+if test "$PHP_CONFIG" != "no"; then
 SAVE_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $($PHP_CONFIG --includes)"
 AC_CHECK_HEADER([php.h],[],[BIND_PHP="no";AC_MSG_WARN([PHP headers not found, disabling TCL binding])])
