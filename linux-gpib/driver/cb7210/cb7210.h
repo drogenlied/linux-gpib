@@ -81,7 +81,7 @@ int cb7210_line_status( const gpib_board_t *board );
 // utility functions
 void cb7210_generic_detach(gpib_board_t *board);
 int cb7210_generic_attach(gpib_board_t *board);
-void cb7210_init( cb7210_private_t *priv, const gpib_board_t *board, int accel );
+void cb7210_init( cb7210_private_t *priv, const gpib_board_t *board );
 
 // pcmcia init/cleanup
 int cb_pcmcia_init_module(void);

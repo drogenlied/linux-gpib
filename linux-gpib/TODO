@@ -46,3 +46,6 @@ stuck SRQ handling
 request immediate rfd holdoff on read/write timeout on boards that support it
 
 catch nec7210 write errors
+
+allow device clear to interrupt cb7210 accel transfers and others
+

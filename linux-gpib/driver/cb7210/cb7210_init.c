@@ -160,6 +160,32 @@ gpib_interface_t cb_pci_interface =
 	provider_module: &__this_module,
 };
 
+gpib_interface_t cb_pci_accel_interface =
+{
+	name: "cbi_pci_accel",
+	attach: cb_pci_attach,
+	detach: cb_pci_detach,
+	read: cb7210_accel_read,
+	write: cb7210_accel_write,
+	command: cb7210_command,
+	take_control: cb7210_take_control,
+	go_to_standby: cb7210_go_to_standby,
+	request_system_control: cb7210_request_system_control,
+	interface_clear: cb7210_interface_clear,
+	remote_enable: cb7210_remote_enable,
+	enable_eos: cb7210_enable_eos,
+	disable_eos: cb7210_disable_eos,
+	parallel_poll: cb7210_parallel_poll,
+	parallel_poll_response: cb7210_parallel_poll_response,
+	line_status: NULL,	//XXX
+	update_status: cb7210_update_status,
+	primary_address: cb7210_primary_address,
+	secondary_address: cb7210_secondary_address,
+	serial_poll_response: cb7210_serial_poll_response,
+	serial_poll_status: cb7210_serial_poll_status,
+	provider_module: &__this_module,
+};
+
 gpib_interface_t cb_isa_interface =
 {
 	name: "cbi_isa",
@@ -167,6 +193,32 @@ gpib_interface_t cb_isa_interface =
 	detach: cb_isa_detach,
 	read: cb7210_read,
 	write: cb7210_write,
+	command: cb7210_command,
+	take_control: cb7210_take_control,
+	go_to_standby: cb7210_go_to_standby,
+	request_system_control: cb7210_request_system_control,
+	interface_clear: cb7210_interface_clear,
+	remote_enable: cb7210_remote_enable,
+	enable_eos: cb7210_enable_eos,
+	disable_eos: cb7210_disable_eos,
+	parallel_poll: cb7210_parallel_poll,
+	parallel_poll_response: cb7210_parallel_poll_response,
+	line_status: cb7210_line_status,
+	update_status: cb7210_update_status,
+	primary_address: cb7210_primary_address,
+	secondary_address: cb7210_secondary_address,
+	serial_poll_response: cb7210_serial_poll_response,
+	serial_poll_status: cb7210_serial_poll_status,
+	provider_module: &__this_module,
+};
+
+gpib_interface_t cb_isa_accel_interface =
+{
+	name: "cbi_isa_accel",
+	attach: cb_isa_attach,
+	detach: cb_isa_detach,
+	read: cb7210_accel_read,
+	write: cb7210_accel_write,
 	command: cb7210_command,
 	take_control: cb7210_take_control,
 	go_to_standby: cb7210_go_to_standby,
@@ -223,7 +275,7 @@ int cb7210_generic_attach(gpib_board_t *board)
 	return 0;
 }
 
-void cb7210_init( cb7210_private_t *cb_priv, const gpib_board_t *board, int accel )
+void cb7210_init( cb7210_private_t *cb_priv, const gpib_board_t *board )
 {
 	nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
 	unsigned long iobase = nec_priv->iobase;
@@ -235,14 +287,9 @@ void cb7210_init( cb7210_private_t *cb_priv, const gpib_board_t *board, int acce
 	outb( HS_TX_ENABLE | HS_RX_ENABLE | HS_CLR_SRQ_INT |
 		HS_CLR_EOI_EMPTY_INT | HS_CLR_HF_INT, iobase + HS_MODE );
 
-	if( accel )
-	{
-		cb_priv->hs_mode_bits = HS_HF_INT_EN;
-	} else
-	{
-		cb_priv->hs_mode_bits = 0;
-	}
+	cb_priv->hs_mode_bits = HS_HF_INT_EN;
 	outb( cb_priv->hs_mode_bits, iobase + HS_MODE );
+
 	/* set clock register for maximum (20 MHz) driving frequency
 	 * ICR should be set to clock in megahertz (1-15) and to zero
 	 * for clocks faster than 15 MHz (max 20MHz) */
@@ -300,7 +347,7 @@ int cb_pci_attach(gpib_board_t *board)
 		INBOX_INTR_CS_BIT;
 	outl(bits, cb_priv->amcc_iobase + INTCSR_REG );
 
-	cb7210_init( cb_priv, board, 0 );
+	cb7210_init( cb_priv, board );
 
 	return 0;
 }
@@ -360,7 +407,7 @@ int cb_isa_attach(gpib_board_t *board)
 	}
 	cb_priv->irq = board->ibirq;
 
-	cb7210_init( cb_priv, board, 0 );
+	cb7210_init( cb_priv, board );
 
 	return 0;
 }
@@ -394,6 +441,8 @@ int init_module(void)
 
 	gpib_register_driver(&cb_pci_interface);
 	gpib_register_driver(&cb_isa_interface);
+	gpib_register_driver(&cb_pci_accel_interface);
+	gpib_register_driver(&cb_isa_accel_interface);
 
 #if defined(GPIB_CONFIG_PCMCIA)
 	gpib_register_driver(&cb_pcmcia_interface);
@@ -410,6 +459,8 @@ void cleanup_module(void)
 {
 	gpib_unregister_driver(&cb_pci_interface);
 	gpib_unregister_driver(&cb_isa_interface);
+	gpib_unregister_driver(&cb_pci_accel_interface);
+	gpib_unregister_driver(&cb_isa_accel_interface);
 #if defined(GPIB_CONFIG_PCMCIA)
 	gpib_unregister_driver(&cb_pcmcia_interface);
 	gpib_unregister_driver(&cb_pcmcia_accel_interface);

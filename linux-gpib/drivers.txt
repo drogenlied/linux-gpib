@@ -25,9 +25,13 @@ Keithley:
 Measurement Computing
 (Computer Boards):
   ISA-GPIB            cbi_isa                           cb7210.o           ?
+                      cbi_isa_accel                                        ?
+  ISA-GPIB/LC         cbi_isa                                              ?
   ISA-GPIB-PC2A       pcIIa                             pc2-gpib.o         Y
   PCI-GPIB            cbi_pci                           cb7210.o           Y
+                      cbi_pci_accel                                        ?
   PCMCIA-GPIB         cbi_pcmcia                        cb7210.o           Y
+                      cbi_pcmcia_accel                                     Y
 
 National Instruments:
   AT-GPIB             ni_isa                            tnt4882.o          Y

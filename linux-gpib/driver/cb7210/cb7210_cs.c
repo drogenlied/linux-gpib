@@ -582,7 +582,6 @@ void cb_pcmcia_cleanup_module(void)
 }
 
 int cb_pcmcia_attach(gpib_board_t *board);
-int cb_pcmcia_accel_attach(gpib_board_t *board);
 void cb_pcmcia_detach(gpib_board_t *board);
 
 gpib_interface_t cb_pcmcia_interface =
@@ -614,7 +613,7 @@ gpib_interface_t cb_pcmcia_interface =
 gpib_interface_t cb_pcmcia_accel_interface =
 {
 	name: "cbi_pcmcia_accel",
-	attach: cb_pcmcia_accel_attach,
+	attach: cb_pcmcia_attach,
 	detach: cb_pcmcia_detach,
 	read: cb7210_accel_read,
 	write: cb7210_accel_write,
@@ -637,7 +636,7 @@ gpib_interface_t cb_pcmcia_accel_interface =
 	provider_module: &__this_module,
 };
 
-int cb_pcmcia_common_attach( gpib_board_t *board, int accel )
+int cb_pcmcia_attach( gpib_board_t *board )
 {
 	cb7210_private_t *cb_priv;
 	nec7210_private_t *nec_priv;
@@ -665,18 +664,9 @@ int cb_pcmcia_common_attach( gpib_board_t *board, int accel )
 	}
 	cb_priv->irq = dev_list->irq.AssignedIRQ;
 
-	cb7210_init( cb_priv, board, accel );
+	cb7210_init( cb_priv, board );
 
 	return 0;
-}
-
-int cb_pcmcia_attach( gpib_board_t *board )
-{
-	return cb_pcmcia_common_attach( board, 0 );
-}
-int cb_pcmcia_accel_attach(gpib_board_t *board)
-{
-	return cb_pcmcia_common_attach( board, 1 );
 }
 
 void cb_pcmcia_detach(gpib_board_t *board)

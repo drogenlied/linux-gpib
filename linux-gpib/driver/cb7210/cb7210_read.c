@@ -153,8 +153,8 @@ ssize_t cb7210_accel_read( gpib_board_t *board, uint8_t *buffer,
 	cb7210_private_t *cb_priv = board->private_data;
 	nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
 
-	//deal with limitations of fifo
-	if( length <= cb7210_fifo_size || ( nec_priv->auxa_bits & HR_REOS ) )
+	// deal with limitations of fifo
+	if( length < cb7210_fifo_size + 2 || ( nec_priv->auxa_bits & HR_REOS ) )
 	{
 		return cb7210_read( board, buffer, length, end );
 	}
