@@ -59,6 +59,7 @@ DBGout();
 IBLCL void bdWaitATN(void)
 {
 DBGin("bdWaitATN");
+// XXX should suspend until woken by interrupt
 while ((GPIBin(ADSR) & HR_NATN) && NotTimedOut());
 DBGout();
 }
