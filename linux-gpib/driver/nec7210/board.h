@@ -29,7 +29,6 @@
 #include "cb7210.h"
 
 extern unsigned long ibbase;	/* base addr of GPIB interface registers  */
-extern unsigned long remapped_ibbase;	// ioremapped memory io address
 extern unsigned int ibirq;	/* interrupt request line for GPIB (1-7)  */
 extern unsigned int ibdma ;      /* DMA channel                            */
 
