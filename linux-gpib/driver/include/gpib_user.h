@@ -204,6 +204,8 @@ static __inline__ int gpib_address_equal( unsigned int pad1, int sad1, unsigned 
 	return 0;
 }
 
+static const int gpib_addr_max = 30;	// max address for primary/secondary gpib addresses
+
 enum ibask_option
 {
 	IbaPAD = 0x1,

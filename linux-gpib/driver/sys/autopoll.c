@@ -18,6 +18,8 @@
 #include "ibsys.h"
 #include "autopoll.h"
 
+static const unsigned int serial_timeout = 1000000;
+
 unsigned int num_status_bytes( const gpib_device_t *dev )
 {
 	return dev->num_status_bytes;
@@ -28,6 +30,17 @@ int push_status_byte( gpib_device_t *device, uint8_t poll_byte )
 {
 	struct list_head *head = &device->status_bytes;
 	status_byte_t *status;
+	static const unsigned int max_num_status_bytes = 1024;
+	int retval;
+
+	if( num_status_bytes( device ) >= max_num_status_bytes )
+	{
+		uint8_t lost_byte;
+
+		device->dropped_byte = 1;
+		retval = pop_status_byte( device, &lost_byte );
+		if( retval < 0 ) return retval;
+	}
 
 	status = kmalloc( sizeof( status_byte_t ), GFP_KERNEL );
 	if( status == NULL ) return -ENOMEM;
@@ -103,64 +116,27 @@ int get_serial_poll_byte( gpib_board_t *board, unsigned int pad, int sad, unsign
 	}
 }
 
-int autopoll_device( gpib_board_t *board, gpib_device_t *device )
-{
-	static const unsigned int serial_timeout = 1000000;
-	static const unsigned int max_num_status_bytes = 1024;
-	uint8_t poll_byte;
-	int retval;
-	static const uint8_t request_service_bit = 0x40;
-
-	if( num_status_bytes( device ) >= max_num_status_bytes )
-	{
-		uint8_t lost_byte;
-
-		device->dropped_byte = 1;
-		retval = pop_status_byte( device, &lost_byte );
-		if( retval < 0 ) return retval;
-	}
-
-	retval = dvrsp( board, device->pad, device->sad, serial_timeout, &poll_byte );
-	if( retval < 0 ) return retval;
-
-	if( poll_byte & request_service_bit )
-	{
-		retval = push_status_byte( device, poll_byte );
-		if( retval < 0 ) return retval;
-	}
-
-	return 0;
-}
-
 int autopoll_all_devices( gpib_board_t *board )
 {
 	int retval;
-	struct list_head *cur;
-	const struct list_head *head = &board->device_list;
-	gpib_device_t *device;
 
-	for( cur = head->next; cur != head; cur = cur->next )
+	if( down_interruptible( &board->mutex ) )
 	{
-		if( down_interruptible( &board->mutex ) )
-		{
-			return -ERESTARTSYS;
-		}
-
-		device = list_entry( cur, gpib_device_t, list );
-		retval = autopoll_device( board, device );
-		if( retval < 0 )
-		{
-			up( &board->mutex );
-			return retval;
-		}
-
-		up( &board->mutex );
-		/* need to wake wait queue in case someone is
-		 * waiting on RQS */
-		wake_up_interruptible( &board->wait );
-		if( current->need_resched )
-			schedule();
+		return -ERESTARTSYS;
 	}
+
+	retval = serial_poll_all( board, serial_timeout );
+	if( retval < 0 )
+	{
+		up( &board->mutex );
+		return retval;
+	}
+
+	/* need to wake wait queue in case someone is
+	* waiting on RQS */
+	wake_up_interruptible( &board->wait );
+
+	up( &board->mutex );
 
 	return 0;
 }

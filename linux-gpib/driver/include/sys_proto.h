@@ -11,3 +11,4 @@ extern  void osSendEOI( void );
 extern  void osSendEOI( void );
 extern void init_gpib_board( gpib_board_t *board );
 extern unsigned int usec_to_jiffies( unsigned int usec );
+extern int serial_poll_all( gpib_board_t *board, unsigned int usec_timeout );

@@ -47,6 +47,7 @@ typedef struct
 	unsigned int pad;
 	int sad;
 	uint8_t status_byte;
+	unsigned int usec_timeout;
 } serial_poll_ioctl_t;
 
 typedef struct
@@ -103,7 +104,7 @@ typedef struct
 #define IBPAD _IOW( GPIB_CODE, 15, unsigned int )
 #define IBSAD _IOW( GPIB_CODE, 16, int )
 #define IBTMO _IOW( GPIB_CODE, 17, unsigned int )
-#define IBRSP		_IOWR( GPIB_CODE, 18, serial_poll_ioctl_t )
+#define IBRSP _IOWR( GPIB_CODE, 18, serial_poll_ioctl_t )
 #define IBEOS _IOW( GPIB_CODE, 19, eos_ioctl_t )
 #define IBRSV _IOW( GPIB_CODE, 20, uint8_t )
 #define CFCBASE _IOW( GPIB_CODE, 21, unsigned long )

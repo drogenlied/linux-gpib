@@ -224,7 +224,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 		case IBPPC:
 			return ppc_ioctl( board, arg );
 			break;
-			case IBQUERY_BOARD_RSV:
+		case IBQUERY_BOARD_RSV:
 			return query_board_rsv_ioctl( board, arg );
 			break;
 		case IBRD:
@@ -232,9 +232,6 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			break;
 		case IBRPP:
 			return parallel_poll_ioctl( board, arg );
-			break;
-		case IBRSP:
-			return serial_poll_ioctl( board, arg );
 			break;
 		case IBSPOLL_BYTES:
 			return status_bytes_ioctl( board, arg );
@@ -268,6 +265,9 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			break;
 		case IBEOS:
 			return eos_ioctl( board, arg );
+			break;
+		case IBRSP:
+			return serial_poll_ioctl( board, arg );
 			break;
 		case IBRSV:
 			return request_service_ioctl( board, arg );

@@ -35,7 +35,6 @@ extern ibConf_t ibFindConfigs[ FIND_CONFIGS_LENGTH ];
 #define NUM_CONFIGS 0x1000	// max number of device descriptors (length of ibConfigs array)
 
 static const int sad_offset = 0x60;
-static const int gpib_addr_max = 30;	// max address for primary/secondary gpib addresses
 
 /* deal with stupid pad/sad packing scheme */
 extern __inline__ int padsad(int pad, int sad)
