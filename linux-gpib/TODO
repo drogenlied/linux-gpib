@@ -2,8 +2,6 @@ cleanup and improve organization of code - lots of work to do here
 
 parallel polls (ibppc)
 
-fix sending of EOI so it is optional, with default = yes
-
 add support for chip-specific enhancements to generic nec7210/tms9914 support
 
 generally make this software suck less

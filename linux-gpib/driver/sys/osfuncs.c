@@ -186,12 +186,14 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
 			/* Write buffer loads till we empty the user supplied buffer */
 			userbuf = ibargp->ib_buf;
 			remain = ibargp->ib_cnt;
-			do
+			while(remain > 0)
 			{
+				int send_eoi;
+				send_eoi = device->buffer_length <= remain && device->send_eoi;
 				copy_from_user(device->buffer, userbuf, (device->buffer_length < remain) ?
 					device->buffer_length : remain );
 				ret = ibwrt(device, device->buffer, (device->buffer_length < remain) ?
-					device->buffer_length : remain, (device->buffer_length < remain));
+					device->buffer_length : remain, send_eoi);
 				if(ret < 0)
 				{
 					retval = -EIO;
@@ -199,7 +201,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
 				}
 				remain -= ret;
 				userbuf += ret;
-			}while (remain > 0);
+			};
 			ibargp->ib_ibcnt = ibargp->ib_cnt - remain;
 			break;
 		case IBCMD:
@@ -321,7 +323,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
 			/* Read buffer loads till we fill the user supplied buffer */
 			userbuf = ibargp->ib_buf;
 			remain = ibargp->ib_cnt;
-			do
+			while (remain > 0);	//!(ibstatus() & TIMO));
 			{
 				ret = ibrd(device, device->buffer, (device->buffer_length < remain) ?
 					device->buffer_length : remain, &end_flag);
@@ -333,7 +335,8 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
 				copy_to_user( userbuf, device->buffer, ret );
 				remain -= ret;
 				userbuf += ret;
-			}while (remain > 0  && end_flag == 0);	//!(ibstatus() & TIMO));
+				if(end_flag) break;
+			}
 			ibargp->ib_ibcnt = ibargp->ib_cnt - remain;
 			break;
 		case DVWRT:	// XXX unnecessary, should be in user space lib
@@ -348,10 +351,12 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
 			remain = ibargp->ib_cnt;
 			while (remain > 0  && !(ibstatus(device) & (TIMO)))
 			{
+				int send_eoi;
+				send_eoi = device->buffer_length <= remain && device->send_eoi;
 				copy_from_user(device->buffer, userbuf, (device->buffer_length < remain) ?
 					device->buffer_length : remain );
 				ret = dvwrt(device, ibargp->ib_arg, device->buffer, (device->buffer_length < remain) ?
-					device->buffer_length : remain );
+					device->buffer_length : remain, send_eoi);
 				if(ret < 0)
 				{
 					retval = -EIO;
@@ -415,6 +420,9 @@ int board_type_ioctl(unsigned int minor, unsigned long arg)
 	device->ibbase = 0;
 	device->ibirq = 0;
 	device->ibdma = 0;
+	device->send_eoi = 1;
+	device->master = 1;
+	device->online = 0;
 	init_waitqueue_head(&device->wait);
 	init_MUTEX(&device->mutex);
 	spin_lock_init(&device->spinlock);

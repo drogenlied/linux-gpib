@@ -21,11 +21,7 @@
 /*
  * IBWRT
  * Write cnt bytes of data from buf to the GPIB.  The write
- * operation terminates only on I/O complete.  By default,
- * EOI is always sent along with the last byte.  'more' is
- * a boolean value indicating that there remains more data
- * that will be written as a part of this output (so don't
- * send EOI/EOS).
+ * operation terminates only on I/O complete. 
  *
  * NOTE:
  *      1.  Prior to beginning the write, the interface is
@@ -34,7 +30,7 @@
  *          well as the interface board itself must be
  *          addressed by calling ibcmd.
  */
-ssize_t ibwrt(gpib_device_t *device, uint8_t *buf, size_t cnt, int more)
+ssize_t ibwrt(gpib_device_t *device, uint8_t *buf, size_t cnt, int send_eoi)
 {
 	size_t bytes_sent = 0;
 	ssize_t ret = 0;
@@ -47,7 +43,7 @@ ssize_t ibwrt(gpib_device_t *device, uint8_t *buf, size_t cnt, int more)
 	clear_bit(CMPL_NUM, &device->status);
 	osStartTimer(device, timeidx);
 
-	ret = device->interface->write(device, buf, cnt, !more);
+	ret = device->interface->write(device, buf, cnt, send_eoi);
 	if(ret < 0)
 	{
 		printk("gpib write error\n");

@@ -155,7 +155,7 @@ int dvrsp(gpib_device_t *device, int padsad, uint8_t *result)
  * listen and the GPIB interface is addressed to talk.  ibwrt is
  * then called to write cnt bytes to the device from buf.
  */
-ssize_t dvwrt(gpib_device_t *device, int padsad, uint8_t *buf, unsigned int cnt)
+ssize_t dvwrt(gpib_device_t *device, int padsad, uint8_t *buf, unsigned int cnt, int send_eoi)
 {
 	int status = ibstatus(device);
 	if((status & CIC) == 0)
@@ -165,8 +165,7 @@ ssize_t dvwrt(gpib_device_t *device, int padsad, uint8_t *buf, unsigned int cnt)
 	if (send_setup(device, padsad) < 0)
 		return -1;
 
-	// XXX assumes all the data is written in this call
-	return ibwrt(device, buf, cnt, 0);
+	return ibwrt(device, buf, cnt, send_eoi);
 }
 
 

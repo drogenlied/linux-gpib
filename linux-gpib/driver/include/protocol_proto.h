@@ -2,7 +2,7 @@
 extern  int dvtrg(gpib_device_t *device, int padsad);
 extern  int dvclr(gpib_device_t *device, int padsad);
 extern  int dvrsp(gpib_device_t *device, int padsad, uint8_t *result);
-extern  ssize_t dvwrt(gpib_device_t *device, int padsad, uint8_t *buf, unsigned int cnt);
+extern  ssize_t dvwrt(gpib_device_t *device, int padsad, uint8_t *buf, unsigned int cnt, int send_eoi);
 extern  int receive_setup(gpib_device_t *device, int padsad);
 extern  int send_setup(gpib_device_t *device, int padsad);
 extern  int ibAPWait(gpib_device_t *device, int pad);
