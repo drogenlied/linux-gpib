@@ -46,10 +46,25 @@ char cval;
 		;
 
 	interface: T_INTERFACE '{' minor parameter '}'
+			{
+				if(ibInstallConfigItem(&temp) < 0)
+				{
+					fprintf(stderr, "ibInstallConfigItem() failed\n");
+					return -1;
+				}
+				// reinit temp
+				temp.padsad=0;
+				temp.board=0;
+				temp.init_string[0]='\0';
+				temp.eos=0;
+				temp.eosflags=0;
+				temp.flags = 0;
+				temp.networkdb = NULL;
+			}
 		;
 
 	minor : T_MINOR '=' T_NUMBER {
-				bdid = $3;
+				bdid = $3; temp.board = $3;
 				if(bdid < MAX_BOARDS)  
 					sprintf(ibBoard[bdid].device,"/dev/gpib%i", bdid);
 				else
@@ -66,17 +81,17 @@ char cval;
 			}
 		;
 
-	statement: T_PAD '=' T_NUMBER      { ibBoard[bdid].padsad |=  $3; }
-		| T_SAD '=' T_NUMBER      { ibBoard[bdid].padsad |= ($3<<8); }
-                 | T_EOSBYTE '=' T_NUMBER  { ibBoard[bdid].eos = $3; }
-		| T_REOS T_BOOL           { ibBoard[bdid].eosflags |= $2 * REOS;}
-                 | T_BIN  T_BOOL           { ibBoard[bdid].eosflags |= $2 * BIN; }
-		| T_IFC  T_BOOL           { ibBoard[bdid].ifc = $2 ; }
+	statement: T_PAD '=' T_NUMBER      { ibBoard[bdid].padsad |=  $3; temp.padsad |= $3;}
+		| T_SAD '=' T_NUMBER      { ibBoard[bdid].padsad |= ($3<<8); temp.padsad |= ($3<<8);}
+                 | T_EOSBYTE '=' T_NUMBER  { ibBoard[bdid].eos = $3; temp.eos = $3;}
+		| T_REOS T_BOOL           { ibBoard[bdid].eosflags |= $2 * REOS; temp.eosflags |= $2 * REOS;}
+                 | T_BIN  T_BOOL           { ibBoard[bdid].eosflags |= $2 * BIN; temp.eosflags |= $2 * BIN;}
+		| T_IFC  T_BOOL           { ibBoard[bdid].ifc = $2 ; temp.flags |= CN_ISCNTL;}
 		| T_TIMO '=' T_TIVAL      { ibBoard[bdid].timeout = $3; }
 		| T_BASE '=' T_NUMBER     { ibBoard[bdid].base = $3; }
 		| T_IRQ  '=' T_NUMBER     { ibBoard[bdid].irq = $3; }
 		| T_DMA  '=' T_NUMBER     { ibBoard[bdid].dma = $3; }
-        	| T_NAME '=' T_STRING	{ strncpy(ibBoard[bdid].name,$3,30);}
+        	| T_NAME '=' T_STRING	{ strncpy(ibBoard[bdid].name,$3,30); strncpy(temp.name,$3,30);}
 		;
 
 	device: T_DEVICE '{' option '}'

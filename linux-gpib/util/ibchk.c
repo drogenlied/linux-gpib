@@ -69,8 +69,7 @@ Or check if '%s' exists!\n",str);
 
   /************/
   printf("**Check if Board present....                         ");
-       
-       if( ibBdChrConfig( ind, ibBoard[CONF(ind,board)].base, 
+       if(ibBdChrConfig(ind, ibBoard[CONF(ind,board)].base, 
 		          ibBoard[CONF(ind,board)].irq, 
                           ibBoard[CONF(ind,board)].dma ,ibBoard[CONF(ind,board)].dmabuf ) & ERR ) {
 	 printf("\n  Problems while setting up Base and Irq\n\

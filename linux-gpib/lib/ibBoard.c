@@ -40,35 +40,32 @@ for(i=0;i<MAX_BOARDS;i++){
 /**********************/
 PRIVATE int ibBoardOpen(int bd,int flags)
 {
+	int fd;
 
-int fd;
-
-if( ibBoard[bd].fileno == 0 ){
-
-printf("%s\n", ibBoard[bd].device);
-
-  if( ( fd = open( ibBoard[bd].device, O_RDWR | flags )) < 0 ){
-
-    ibsta =  ERR;
-    iberr = EDVR;
-    ibcnt = errno;
-    ibPutErrlog(-1,"ibBoardOpen");
-    return ERR;
-  }
-  ibBoard[bd].fileno = fd;
-}
-return 0;
+	if( ibBoard[bd].fileno == 0 )
+	{
+		if((fd = open(ibBoard[bd].device, O_RDWR | flags)) < 0 )
+		{
+			ibsta =  ERR;
+			iberr = EDVR;
+			ibcnt = errno;
+			ibPutErrlog(-1,"ibBoardOpen");
+			return ERR;
+		}
+		ibBoard[bd].fileno = fd;
+	}
+	return 0;
 }
 
 /**********************/
 PRIVATE int ibBoardClose(int bd)
 {
-
-if( ibBoard[bd].fileno > 0 ){
-  close( ibBoard[bd].fileno );
-  ibBoard[bd].fileno = 0; 
-}
-return 0;
+	if(ibBoard[bd].fileno > 0)
+	{
+		close(ibBoard[bd].fileno);
+		ibBoard[bd].fileno = 0; 
+	}
+	return 0;
 }
 
 /**********************/
