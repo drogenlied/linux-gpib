@@ -651,6 +651,277 @@ volatile int ibsta;
 	'Traditional API' Functions
 </title>
 
+<refentry ID="reference-function-ibask">
+<refmeta>
+	<refentrytitle>ibask</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibask</refname>
+	<refpurpose>query configuration (board or device)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibask</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>int <parameter>option</parameter></paramdef>
+		<paramdef>int *<parameter>result</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	Queries various configuration settings associated with the
+	board or device descriptor <parameter>ud</parameter>.  The
+	<parameter>option</parameter> argument specifies the particular
+	setting you wish to query.  The result of the query is written
+	to the location specified by <parameter>result</parameter>.
+	To change the descriptor's configuration, see
+	<link LINKEND="reference-function-ibconfig">ibconfig()</link>.
+	</para>
+	<para>
+	<table COLSEP="1" ROWSEP="1" ORIENT="port" PGWIDE="1">
+	<title>ibask options</title>
+	<tgroup COLS="3" ALIGN="left" >
+	<thead>
+	<row>
+	<entry>option</entry>
+	<entry>value (hexadecimal)</entry>
+	<entry>result of query</entry>
+	<entry>used for board/device</entry>
+	</row>
+	</thead>
+	<tbody>
+	<row>
+	<entry>IbaPAD</entry>
+	<entry>0x1</entry>
+	<entry>GPIB primary address</entry>
+	<entry>board or device</entry>
+	</row>
+	<row>
+	<entry>IbaSAD</entry>
+	<entry>0x2</entry>
+	<entry>GPIB secondary address (0 for none, 0x60 to 0x7e for secondary
+	addresses 0 to 30)</entry>
+	<entry>board or device</entry>
+	</row>
+	<row>
+	<entry>IbaTMO</entry>
+	<entry>0x3</entry>
+	<entry>Timeout setting for io operations (a number from 0 to 17).  See
+	<link LINKEND="reference-function-ibtmo">ibmto()</link>.
+	</entry>
+	<entry>board or device</entry>
+	</row>
+	<row>
+	<entry>IbaEOT</entry>
+	<entry>0x4</entry>
+	<entry>Nonzero if EOI is asserted with last byte on writes.
+	See <link LINKEND="reference-function-ibeot">ibeot()</link>.
+	</entry>
+	<entry></entry>
+	</row>
+	<row>
+	<entry>IbaPPC</entry>
+	<entry>0x5</entry>
+	<entry>Parallel poll configuration.  See
+	<link LINKEND="reference-function-ibppc">ibppc()</link>.
+	</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>IbaREADDR</entry>
+	<entry>0x6</entry>
+	<entry>Useless, included for compatibility only.</entry>
+	<entry>device</entry>
+	</row>
+	<row>
+	<entry>IbaAUTOPOLL</entry>
+	<entry>0x7</entry>
+	<entry>Nonzero if automatic serial polling is enabled.</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>IbaCICPROT</entry>
+	<entry>0x8</entry>
+	<entry>Useless, included for compatibility only.</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>IbaSC</entry>
+	<entry>0xa</entry>
+	<entry>Nonzero if board is system controller.</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>IbaSRE</entry>
+	<entry>0xb</entry>
+	<entry>Nonzero if board is asserting REN line.  See
+	<link LINKEND="reference-function-ibsre">ibsre()</link>.
+	</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>IbaEOSrd</entry>
+	<entry>0xc</entry>
+	<entry>Nonzero if termination of reads on reception of the end-of-string
+	character is enabled.  See <link LINKEND="reference-function-ibeos">ibeos()</link>,
+	in particular the REOS bit.
+	</entry>
+	<entry>board or device</entry>
+	</row>
+	<row>
+	<entry>IbaEOSwrt</entry>
+	<entry>0xd</entry>
+	<entry>Nonzero if EOI is asserted whenever end-of-string character is
+	sent.  See <link LINKEND="reference-function-ibeos">ibeos()</link>,
+	in particular the XEOS bit.</entry>
+	<entry>board or device</entry>
+	</row>
+	<row>
+	<entry>IbaEOScmp</entry>
+	<entry>0xe</entry>
+	<entry>Nonzero if all 8 bits are used to match end-of-string
+	character.  Zero if only least significant 7 bits are used.
+	See <link LINKEND="reference-function-ibeos">ibeos()</link>,
+	in particular the BIN bit.</entry>
+	<entry>board or device</entry>
+	</row>
+	<row>
+	<entry>IbaEOSchar</entry>
+	<entry>0xf</entry>
+	<entry>The end-of-string byte.</entry>
+	<entry>board or device</entry>
+	</row>
+	<row>
+	<entry>IbaPP2</entry>
+	<entry>0x10</entry>
+	<entry>Nonzero if in local parallel poll configure mode.  Zero
+	if in remote parallel poll configure mode.</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>IbaTiming</entry>
+	<entry>0x11</entry>
+	<entry>Number indicating T1 delay.  1 for 2 microseconds, 2 for 500
+	nanoseconds, 3 for 350 nanoseconds.  The values are declared in
+	the header files as the constants T1_DELAY_2000ns, T1_DELAY_500ns,
+	and T1_DELAY_350ns.
+	</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>IbaReadAdjust</entry>
+	<entry>0x13</entry>
+	<entry>Nonzero if byte pairs are automatically swapped during
+	reads.</entry>
+	<entry>board or device</entry>
+	</row>
+	<row>
+	<entry>IbaWriteAdjust</entry>
+	<entry>0x14</entry>
+	<entry>Nonzero if byte pairs are automatically swapped during
+	writes.</entry>
+	<entry>board or device</entry>
+	</row>
+	<row>
+	<entry>IbaEventQueue</entry>
+	<entry>0x15</entry>
+	<entry>Nonzero if event queue is enabled.</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>IbaSPollBit</entry>
+	<entry>0x16</entry>
+	<entry>Nonzero if the use of the SPOLL bit in ibsta is enabled.</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>IbaSendLLO</entry>
+	<entry>0x17</entry>
+	<entry>Nonzero if devices connected to this board are automatically
+	put into local lockout
+	mode when brought online with ibfind() or ibdev().</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>IbaSPollTime</entry>
+	<entry>0x18</entry>
+	<entry>Timeout for serial polls.  The value of the result
+	is between 0 and 17, and has the same meaning as in
+	<link LINKEND="reference-function-ibtmo">ibtmo()</link>.
+	</entry>
+	<entry>device</entry>
+	</row>
+	<row>
+	<entry>IbaPPollTime</entry>
+	<entry>0x18</entry>
+	<entry>Timeout for parallel polls.  The value of the result
+	is between 0 and 17, and has the same meaning as in
+	<link LINKEND="reference-function-ibtmo">ibtmo()</link>.
+	</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>IbaEndBitIsNormal</entry>
+	<entry>0x1a</entry>
+	<entry>Nonzero if END bit of ibsta is set on reception of end-of-string
+	character or EOI.  Zero if END bit is only set on EOI.</entry>
+	<entry>board or device</entry>
+	</row>
+	<row>
+	<entry>IbaUnAddr</entry>
+	<entry>0x1b</entry>
+	<entry>Nonzero if UNT (untalk) and UNL (unlisten) commands are automatically
+	sent after a completed io operation using this descriptor.</entry>
+	<entry>device</entry>
+	</row>
+	<row>
+	<entry>IbaHSCableLength</entry>
+	<entry>0x1f</entry>
+	<entry>Useless, included only for compatibility.</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>IbaIst</entry>
+	<entry>0x20</entry>
+	<entry>Individual status bit, a.k.a. 'ist'.</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>IbaRsv</entry>
+	<entry>0x21</entry>
+	<entry>The current status byte this board will use to respond to
+	serial polls.</entry>
+	<entry>board</entry>
+	</row>
+	<row>
+	<entry>IbaBNA</entry>
+	<entry>0x200</entry>
+	<entry>Board index (minor number) of interface board which is
+	the controller-in-charge of this device's GPIB bus.</entry>
+	<entry>device</entry>
+	</row>
+	</tbody>
+	</tgroup>
+	</table>
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
 <refentry ID="reference-function-ibclr">
 <refmeta>
 	<refentrytitle>ibclr</refentrytitle>
@@ -729,6 +1000,43 @@ volatile int ibsta;
 	<para>
 	It is generally not necessary to call ibcmd().  It is provided
 	for advanced users who want direct, low-level access to the GPIB bus.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-ibconfig">
+<refmeta>
+	<refentrytitle>ibconfig</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibconfig</refname>
+	<refpurpose>change configuration (board or device)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibconfig</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>int <parameter>option</parameter></paramdef>
+		<paramdef>int <parameter>value</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
 	</para>
 </refsect1>
 <refsect1>
@@ -995,6 +1303,42 @@ volatile int ibsta;
 </refsect1>
 </refentry>
 
+<refentry ID="reference-function-ibppc">
+<refmeta>
+	<refentrytitle>ibppc</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibppc</refname>
+	<refpurpose>parallel poll configure (board)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibppc</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>int <parameter>configuration</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
 <refentry ID="reference-function-ibrd">
 <refmeta>
 	<refentrytitle>ibrd</refentrytitle>
@@ -1177,6 +1521,42 @@ volatile int ibsta;
 	<parameter>sad</parameter> to 0 disables the use of secondary addressing.
 	Valid GPIB secondary addresses are in the range from 0 to 30 (which correspond
 	to <parameter>sad</parameter> values of 0x60 to 0x7e).
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-ibsre">
+<refmeta>
+	<refentrytitle>ibsre</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibsre</refname>
+	<refpurpose>set remote enable (board)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibsre</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>int <parameter>enable</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
 	</para>
 </refsect1>
 <refsect1>
