@@ -1,0 +1,62 @@
+#!/bin/sh
+
+PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin
+DATADIR=/usr/share
+FIRMWARE=
+SS_LOADER=
+FLAGS=
+FXLOAD=fxload
+
+
+# pre-renumeration device IDs
+case $PRODUCT in
+# ni-usb-b with firmware already loaded
+3923/702a/*)
+# you could execute gpib_config here 	
+	;;
+
+# ni-usb-b without firmware
+3923/702b/*)
+	FIRMWARE=$DATADIR/usb/ni_usb_gpib/niusbb_firmware.hex
+	SS_LOADER=$DATADIR/usb/ni_usb_gpib/niusbb_loader.hex
+	;;
+
+esac
+
+
+# quit unless we were called to download some firmware 
+if [ "$FIRMWARE" = "" ]; then
+    # OR:  restructure to do other things for
+    # specific post-renumeration devices
+    exit 0
+fi
+
+# missing firmware?
+if [ ! -r $FIRMWARE ]; then
+    if [ -x /usr/bin/logger ]; then
+	/usr/bin/logger -t $0 "missing $FIRMWARE for $PRODUCT ??"
+    fi
+    exit 1
+fi
+
+# missing second stage loader?
+if [ ! -r $SS_LOADER ]; then
+    if [ -x /usr/bin/logger ]; then
+	/usr/bin/logger -t $0 "missing $SS_LOADER for $PRODUCT ??"
+    fi
+    exit 1
+fi
+
+# missing fxload?
+if [ ! -x $FXLOAD ]; then
+    if [ -x /usr/bin/logger ]; then
+	/usr/bin/logger -t $0 "missing $FXLOAD ??"
+    fi
+    exit 1
+fi
+
+if [ -x /usr/bin/logger ]; then
+    /usr/bin/logger -t $0 "load $FIRMWARE for $PRODUCT to $DEVICE"
+fi
+
+$FXLOAD $FLAGS -I $FIRMWARE -s $SS_LOADER

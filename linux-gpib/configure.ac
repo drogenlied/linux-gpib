@@ -180,6 +180,8 @@ AC_OUTPUT([\
 	language/php/TESTS/Makefile \
 	language/python/Makefile \
 	language/tcl/Makefile \
+	usb/Makefile \
+	usb/ni_usb_gpib/Makefile \
 ]
 )
 
