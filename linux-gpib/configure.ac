@@ -140,7 +140,13 @@ AC_DEFINE([IBMAJOR],[160],[Major number of device files])
 
 echo
 echo Configuration:
-AM_CONDITIONAL(HAVE_DOCBOOK, [test "$JW_PATH" != no])
+AM_CONDITIONAL(HAVE_DOCBOOK, [test "$JW_PATH" != "no"])
+echo -n "Documentation: "
+if test $JW_PATH == "no"; then
+	echo no;
+else
+	echo yes;
+fi
 AM_CONDITIONAL(BIND_GUILE, [test "$BIND_GUILE" == "yes"])
 echo "Guile binding: $BIND_GUILE"
 AM_CONDITIONAL(BIND_PERL, [test "$BIND_PERL" == "yes"])
