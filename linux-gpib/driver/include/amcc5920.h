@@ -1,9 +1,9 @@
 /***************************************************************************
-                              ines/interrupt.c
+                          amcc5920.h  -  description
                              -------------------
+  Header for amcc5920 pci chip
 
-    begin                : Dec 2001
-    copyright            : (C) 2001, 2002 by Frank Mori Hess
+    copyright            : (C) 2002 by Frank Mori Hess
     email                : fmhess@users.sourceforge.net
  ***************************************************************************/
 
@@ -16,28 +16,21 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "ines.h"
-#include <asm/bitops.h>
-#include <asm/dma.h>
+#ifndef _AMCC5920_GPIB_H
+#define _AMCC5920_GPIB_H
 
-/*
- * GPIB interrupt service routines
- */
-
-void ines_interrupt(int irq, void *arg, struct pt_regs *registerp)
+// plx pci chip registers and bits
+enum amcc_registers
 {
-	gpib_board_t *board = arg;
-	ines_private_t *priv = board->private_data;
-	
-	if(priv->amcc_iobase)
-	{
-		if((inl(priv->amcc_iobase + AMCC_INTCS_REG) & AMCC_ADDON_INTR_ACTIVE_BIT))
-		{
-			// clear amcc interrupt
-			outl(AMCC_ADDON_INTR_ENABLE_BIT, priv->amcc_iobase + AMCC_INTCS_REG);
-		}
-	}
+	AMCC_INTCS_REG = 0x38,
+	AMCC_PASS_THRU_REG	= 0x60,
+};
 
-	nec7210_interrupt(board, &priv->nec7210_priv);
-}
+enum amcc_incsr_bits
+{
+	AMCC_ADDON_INTR_ENABLE_BIT = 0x2000,
+	AMCC_ADDON_INTR_ACTIVE_BIT = 0x400000,
+	AMCC_INTR_ACTIVE_BIT = 0x800000,
+};
 
+#endif	// _AMCC5920_GPIB_H

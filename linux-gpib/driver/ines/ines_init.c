@@ -27,15 +27,49 @@
 MODULE_LICENSE("GPL");
 #endif
 
-#define INES_VENDOR_ID 0x10b5
-#define INES_DEV_ID    0x9050
-#define INES_SUBID 0x107210b5L
-
 int ines_pci_attach(gpib_board_t *board);
 int ines_isa_attach(gpib_board_t *board);
 
 void ines_pci_detach(gpib_board_t *board);
 void ines_isa_detach(gpib_board_t *board);
+
+enum ines_pci_chip
+{
+	PCI_CHIP_PLX9050,
+	PCI_CHIP_AMCC5920,
+};
+
+typedef struct
+{
+	unsigned int vendor_id;
+	unsigned int device_id;
+	unsigned int subsystem_vendor_id;
+	unsigned int subsystem_device_id;
+	unsigned int gpib_region;
+	enum ines_pci_chip pci_chip_type;
+} ines_pci_id;
+
+ines_pci_id pci_ids[] =
+{
+	{
+		vendor_id: PCI_VENDOR_ID_PLX,
+		device_id: PCI_DEVICE_ID_PLX_9050,
+		subsystem_vendor_id: PCI_VENDOR_ID_PLX,
+		subsystem_device_id: 0x1072,
+		gpib_region: 2,
+		pci_chip_type: PCI_CHIP_PLX9050,
+	},
+	{
+		vendor_id: PCI_VENDOR_ID_AMCC,
+		device_id: 0x8507,
+		subsystem_vendor_id: PCI_VENDOR_ID_AMCC,
+		subsystem_device_id: 0x1072,
+		gpib_region: 1,
+		pci_chip_type: PCI_CHIP_AMCC5920,
+	},
+};
+
+static const int num_pci_chips = sizeof(pci_ids) / sizeof(pci_ids[0]);
 
 // wrappers for interface functions
 ssize_t ines_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end)
@@ -189,7 +223,9 @@ int ines_pci_attach(gpib_board_t *board)
 	nec7210_private_t *nec_priv;
 	int isr_flags = 0;
 	int retval;
-
+	ines_pci_id found_id;
+	unsigned int i;
+	
 	retval = ines_generic_attach(board);
 	if(retval) return retval;
 
@@ -198,11 +234,14 @@ int ines_pci_attach(gpib_board_t *board)
 
 	// find board
 	ines_priv->pci_device = NULL;
-	while((ines_priv->pci_device = pci_find_device(INES_VENDOR_ID, INES_DEV_ID, ines_priv->pci_device)))
+
+	for(i = 0; i < num_pci_chips; i++)
 	{
-		// check for board with PLX PCI controller but not ines GPIB PCI board
-		if(ines_priv->pci_device->subsystem_device == INES_SUBID)
+		ines_priv->pci_device = pci_find_subsys(pci_ids[i].vendor_id, pci_ids[i].device_id,
+			pci_ids[i].subsystem_vendor_id, pci_ids[i].subsystem_device_id, ines_priv->pci_device);
+		if(ines_priv->pci_device)
 		{
+			found_id = pci_ids[i];
 			break;
 		}
 	}
@@ -221,8 +260,21 @@ int ines_pci_attach(gpib_board_t *board)
 	if(pci_request_regions(ines_priv->pci_device, "ines-gpib"))
 		return -1;
 
-	ines_priv->plx_iobase = pci_resource_start(ines_priv->pci_device, 1) & PCI_BASE_ADDRESS_IO_MASK;
-	nec_priv->iobase = pci_resource_start(ines_priv->pci_device, 2) & PCI_BASE_ADDRESS_IO_MASK;
+	switch(found_id.pci_chip_type)
+	{
+		case PCI_CHIP_PLX9050:
+			ines_priv->plx_iobase = pci_resource_start(ines_priv->pci_device, 1);
+			break;
+		case PCI_CHIP_AMCC5920:
+			ines_priv->amcc_iobase = pci_resource_start(ines_priv->pci_device, 0);
+			break;
+		default:
+			printk("gpib: unknown chip type? (bug)\n");
+			pci_release_regions(ines_priv->pci_device);
+			return -1;
+			break;
+	}
+	nec_priv->iobase = pci_resource_start(ines_priv->pci_device, found_id.gpib_region);
 
 	isr_flags |= SA_SHIRQ;
 	if(request_irq(ines_priv->pci_device->irq, ines_interrupt, isr_flags, "pci-gpib", board))
@@ -232,10 +284,16 @@ int ines_pci_attach(gpib_board_t *board)
 	}
 	ines_priv->irq = ines_priv->pci_device->irq;
 
-	// enable interrupts on plx chip
-	outl(LINTR1_EN_BIT | LINTR1_POLARITY_BIT | PCI_INTR_EN_BIT,
-		ines_priv->plx_iobase + PLX_INTCSR_REG);
-
+	// enable interrupts on pci chip
+	if(ines_priv->plx_iobase)
+		outl(LINTR1_EN_BIT | LINTR1_POLARITY_BIT | PCI_INTR_EN_BIT,
+			ines_priv->plx_iobase + PLX_INTCSR_REG);
+	else if(ines_priv->amcc_iobase)
+	{
+		// disable endian conversion
+		outl(0, ines_priv->amcc_iobase + AMCC_PASS_THRU_REG);
+		outl(AMCC_ADDON_INTR_ENABLE_BIT, ines_priv->amcc_iobase + AMCC_INTCS_REG);
+	}
 	ines_init(ines_priv);
 
 	return 0;

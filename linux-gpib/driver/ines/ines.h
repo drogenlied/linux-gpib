@@ -22,6 +22,7 @@
 #include <nec7210.h>
 #include <gpibP.h>
 #include <plx9050.h>
+#include <amcc5920.h>
 #include <linux/config.h>
 
 typedef struct
@@ -30,6 +31,8 @@ typedef struct
 	struct pci_dev *pci_device;
 	// base address for plx9052 pci chip
 	unsigned long plx_iobase;
+	// base address for amcc5920 pci chip
+	unsigned long amcc_iobase;
 	unsigned int irq;
 } ines_private_t;
 

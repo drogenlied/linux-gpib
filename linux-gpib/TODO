@@ -8,6 +8,3 @@ generally make this software suck less
 
 fix crash on ines-pcmcia card removal when program has board open
 
-fix problem with kernels compiled with modular pcmcia support that doesn't
-actually exist
- 

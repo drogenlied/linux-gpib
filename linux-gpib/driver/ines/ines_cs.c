@@ -571,32 +571,34 @@ static int gpib_event(event_t event, int priority,
 
 int ines_pcmcia_init_module(void)
 {
-    servinfo_t serv;
+	servinfo_t serv;
 #ifdef PCMCIA_DEBUG
-    if (pc_debug)
-	printk(KERN_INFO "%s\n", version);
+	if (pc_debug)
+		printk(KERN_INFO "%s\n", version);
 #endif
-    CardServices(GetCardServicesInfo, &serv);
-    if (serv.Revision != CS_RELEASE_CODE) {
-	printk(KERN_NOTICE "gpib: Card Services release "
-	       "does not match!\n");
-	return -1;
-    }
-    register_pcmcia_driver(&dev_info, &gpib_attach, &gpib_detach);
-    return 0;
+	CardServices(GetCardServicesInfo, &serv);
+	if (serv.Revision != CS_RELEASE_CODE) 
+	{
+		printk(KERN_NOTICE "gpib: Card Services release "
+			"does not match!\n");
+		return -1;
+	}
+	register_pcmcia_driver(&dev_info, &gpib_attach, &gpib_detach);
+	return 0;
 }
 
 void ines_pcmcia_cleanup_module(void)
 {
 #ifdef PCMCIA_DEBUG
-    if (pc_debug)
-	printk(KERN_DEBUG "ines_cs: unloading\n");
+	if (pc_debug)
+		printk(KERN_DEBUG "ines_cs: unloading\n");
 #endif
-    unregister_pcmcia_driver(&dev_info);
-    while (dev_list != NULL) {
-	if (dev_list->state & DEV_CONFIG)
-	    gpib_release((u_long)dev_list);
-	gpib_detach(dev_list);
+	unregister_pcmcia_driver(&dev_info);
+	while (dev_list != NULL) 
+	{
+		if (dev_list->state & DEV_CONFIG)
+		    gpib_release((u_long)dev_list);
+		gpib_detach(dev_list);
     }
 }
 

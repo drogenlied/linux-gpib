@@ -171,7 +171,6 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 	}
 #endif
 
-//XXX a lot of the content of this switch should be split out into seperate functions
 	switch (cmd)
 	{
 		case IBWAIT:
@@ -285,12 +284,6 @@ int board_type_ioctl(gpib_board_t *board, unsigned long arg)
 	if(retval)
 	{
 		return retval;
-	}
-
-	if(strcmp(cmd.name, "") == 0)
-	{
-		board->interface = NULL;
-		return 0;
 	}
 
 	for(list_ptr = registered_drivers.next; list_ptr != &registered_drivers; list_ptr = list_ptr->next)
