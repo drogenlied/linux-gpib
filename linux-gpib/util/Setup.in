@@ -472,10 +472,11 @@ fi
 dialog --title "Driver Major Number Settings" \
        --menu "  Please Select one of the following MAJOR Numbers\n\
                  Or 'Custom' if you want to Specify Your Own Major" 17 70 5 \
-                 "31" "Default Major for GPIB Driver"\
-                 "29" "Alternate Major for GPIB Driver"\
-                 "19" "Alternate Major for GPIB Driver"\
-                 "Custom" "Specify Your Own Setting" 2>/tmp/reply
+                 "250" "Default Major for GPIB Driver"\
+                 "240" "Alternate Major for GPIB Driver"\
+                 "254" "Alternate Major for GPIB Driver"\
+                 "Custom" "Specify Your Own Setting (a number between 240 and 254 is recommended)" \
+                 2>/tmp/reply
 
 if [ $? = 0 ];then
 get_result 0
@@ -531,7 +532,7 @@ if [ ! -r /dev/gpib0/master ]; then
 		mknod /dev/gpib0/master c $IBMAJOR 0
 	fi
 else
-	ls -l /dev/gpib0/master | grep -q $IBMAJOR
+	ls -l /dev/gpib0/master | grep -q "$IBMAJOR",
 	if [ $? = 0 ]; then
 		dialog --infobox "Found /dev/gpib0/master !" 8 60
 	else
@@ -539,6 +540,7 @@ else
       Old /dev/gpib0/master has different Major\n
                Update ?" 8 60
 	        if [ $? = 0 ];then
+			rm -f /dev/gpib0/master
 			mknod /dev/gpib0/master c $IBMAJOR 0
 		fi
 	fi
