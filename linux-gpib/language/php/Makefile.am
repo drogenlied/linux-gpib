@@ -15,6 +15,6 @@ EXTENSIONDIR = $(shell php-config --extension-dir)
 PHP_INCLUDES = $(shell php-config --includes)
 
 gpib_php_la_CFLAGS = $(LIBGPIB_CFLAGS) -DUSE_LINUX_GPIB $(PHP_INCLUDES)
-gpib_php_la_LDFLAGS = -release $(VERSION) $(LIBGPIB_LDFLAGS) -module
+gpib_php_la_LDFLAGS = -release $(VERSION) $(LIBGPIB_LDFLAGS) -module -rdynamic
 libdir = $(EXTENSIONDIR)
 
