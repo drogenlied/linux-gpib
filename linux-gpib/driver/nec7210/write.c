@@ -24,7 +24,7 @@ ssize_t pio_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffe
 	ssize_t retval = 0;
 
 	init_gpib_buffer(&priv->buffer, buffer, length);
-	atomic_set(&priv->buffer.size, &length);
+	atomic_set(&priv->buffer.size, length);
 
 	set_bit(PIO_IN_PROGRESS_BN, &priv->state);
 
