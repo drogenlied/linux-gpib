@@ -85,7 +85,8 @@ void tms9914_online( gpib_board_t *board, tms9914_private_t *priv )
 	tms9914_secondary_address( board, priv, board->sad, board->sad >=0 );
 
 	// enable tms9914 interrupts
-	priv->imr0_bits |= HR_MACIE | HR_RLCIE | HR_ENDIE | HR_BOIE | HR_BIIE;
+	priv->imr0_bits |= HR_MACIE | HR_RLCIE | HR_ENDIE | HR_BOIE | HR_BIIE |
+		HR_SPASIE;
 	priv->imr1_bits |= HR_MAIE | HR_SRQIE | HR_UNCIE | HR_ERRIE | HR_IFCIE |
 		HR_GETIE| HR_DCASIE;
 	write_byte(priv, priv->imr0_bits, IMR0);

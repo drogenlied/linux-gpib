@@ -75,13 +75,24 @@ void tms9914_parallel_poll_response( gpib_board_t *board,
 
 void tms9914_serial_poll_response(gpib_board_t *board, tms9914_private_t *priv, uint8_t status)
 {
-	write_byte(priv, status, SPMR);	/* set new status to v */
+	unsigned long flags;
+	
+	spin_lock_irqsave( &board->spinlock, flags );
+	write_byte(priv, status, SPMR);
+	priv->spoll_status = status;
+	spin_unlock_irqrestore( &board->spinlock, flags );
 }
 
 uint8_t tms9914_serial_poll_status( gpib_board_t *board, tms9914_private_t *priv )
 {
-	// XXX
-	return 0;
+	uint8_t status;
+	unsigned long flags;
+
+	spin_lock_irqsave( &board->spinlock, flags );
+	status = priv->spoll_status;
+	spin_unlock_irqrestore( &board->spinlock, flags );
+
+	return status;
 }
 
 void tms9914_primary_address(gpib_board_t *board, tms9914_private_t *priv, unsigned int address)

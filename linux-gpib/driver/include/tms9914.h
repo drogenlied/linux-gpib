@@ -37,6 +37,7 @@ struct tms9914_private_struct
 	volatile int state;
 	uint8_t eos;	// eos character
 	short eos_flags;
+	volatile uint8_t spoll_status;
 	// wrappers for outb, inb, readb, or writeb
 	uint8_t (*read_byte)(tms9914_private_t *priv, unsigned int register_number);
 	void (*write_byte)(tms9914_private_t *priv, uint8_t byte, unsigned int

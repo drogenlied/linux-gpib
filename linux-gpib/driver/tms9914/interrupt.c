@@ -66,6 +66,11 @@ void tms9914_interrupt(gpib_board_t *board, tms9914_private_t *priv)
 		wake_up_interruptible(&board->wait);
 	}
 
+	if( status0 & HR_SPAS )
+	{
+		priv->spoll_status &= ~request_service_bit;
+	}
+
 	// record service request in status
 	if(status1 & HR_SRQ)
 	{
