@@ -19,6 +19,8 @@
 #ifndef _GPIB_USER_H
 #define _GPIB_USER_H
 
+typedef unsigned int Addr4882_t;
+
 /* IBSTA status bits (returned by all functions) */
 
 #define ERR_NUM	15
@@ -62,7 +64,6 @@ static const int board_status_mask = ERR | TIMO | END | CMPL | SPOLL |
 	EVENT | LOK | REM | CIC | ATN | TACS | LACS | DTAS | DCAS;
 
 /* IBERR error codes */
-
 enum iberr_code
 {
 	EDVR = 0,		/* system error */
@@ -183,7 +184,7 @@ extern __inline__ int gpib_address_equal( unsigned int pad1, int sad1, unsigned 
 	return 0;
 }
 
-#define NOADDR -1
+static const Addr4882_t NOADDR = -1;
 
 enum ibask_option
 {

@@ -56,4 +56,17 @@ int ibclr( int ud )
 	return exit_library( ud, 0 );
 }
 
+void DevClearList( int boardID, Addr4882_t addressList[] )
+{
 
+}
+
+void DevClear( int boardID, Addr4882_t address )
+{
+	Addr4882_t addressList[2];
+
+	addressList[0] = address;
+	addressList[1] = NOADDR;
+
+	DevClearList( boardID, addressList );
+}

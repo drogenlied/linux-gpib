@@ -19,8 +19,6 @@
 #include <ibP.h>
 #include <stdlib.h>
 
-int config_parsed = 0;
-
 static int is_device_addr( int minor, int pad, int sad )
 {
 	ibBoard_t *board;
@@ -60,19 +58,15 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 
 	/* load config */
 
-	if(config_parsed == 0)
+	envptr = getenv("IB_CONFIG");
+	if(envptr)
+		retval = ibParseConfigFile(envptr);
+	else
+		retval = ibParseConfigFile(DEFAULT_CONFIG_FILE);
+	if(retval < 0)
 	{
-		envptr = getenv("IB_CONFIG");
-		if(envptr)
-			retval = ibParseConfigFile(envptr);
-		else
-			retval = ibParseConfigFile(DEFAULT_CONFIG_FILE);
-		if(retval < 0)
-		{
-			setIbsta( ERR );
-			return -1;
-		}
-		config_parsed = 1;
+		setIbsta( ERR );
+		return -1;
 	}
 
 	init_ibconf( &conf );

@@ -15,20 +15,16 @@ int ibfind(char *dev)
 
 	/* load config */
 
-	if(config_parsed == 0)
+	envptr = getenv("IB_CONFIG");
+	if(envptr)
+		retval = ibParseConfigFile(envptr);
+	else
+		retval = ibParseConfigFile(DEFAULT_CONFIG_FILE);
+	if(retval < 0)
 	{
-		envptr = getenv("IB_CONFIG");
-		if(envptr)
-			retval = ibParseConfigFile(envptr);
-		else
-			retval = ibParseConfigFile(DEFAULT_CONFIG_FILE);
-		if(retval < 0)
-		{
-			setIberr( EDVR );
-			setIbsta( ERR );
-			return -1;
-		}
-		config_parsed = 1;
+		setIberr( EDVR );
+		setIbsta( ERR );
+		return -1;
 	}
 
 	if((index = ibFindDevIndex(dev)) < 0)

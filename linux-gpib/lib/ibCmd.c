@@ -62,6 +62,7 @@ int ibcmd(int ud, void *cmd_buffer, long cnt)
 	return exit_library( ud, 0 );
 }
 
+// XXX no timeout for asynchronous?
 int ibcmda( int ud, void *cmd_buffer, long cnt )
 {
 	ibConf_t *conf;

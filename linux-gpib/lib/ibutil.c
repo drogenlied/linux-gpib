@@ -25,11 +25,64 @@
 
 ibConf_t *ibConfigs[NUM_CONFIGS];
 
+int insert_descriptor( int ud, ibConf_t p )
+{
+	ibConf_t *conf;
+
+	if( ibConfigs[ ud ] != NULL )	return -1;
+
+	ibConfigs[ ud ] = malloc( sizeof( ibConf_t ) );
+	if( ibConfigs[ ud ] == NULL ) return -1;
+
+	conf = ibConfigs[ ud ];
+
+	init_async_op( &conf->async );
+
+	/* put entry to the table */
+	strncpy(conf->name, p.name, sizeof(conf->name) );
+	conf->board = p.board;
+	conf->pad = p.pad;
+	conf->sad = p.sad;
+	conf->flags = p.flags;
+	conf->eos = p.eos;
+	conf->eos_flags = p.eos_flags;
+	conf->usec_timeout = p.usec_timeout;
+	conf->spoll_usec_timeout = p.spoll_usec_timeout;
+	conf->ppoll_usec_timeout = p.ppoll_usec_timeout;
+	conf->send_eoi = p.send_eoi;
+	conf->is_interface = p.is_interface;
+	conf->is_open = p.is_open;
+	conf->has_lock = p.has_lock;
+	conf->ppoll_config = p.ppoll_config;
+	conf->local_lockout = p.local_lockout;
+	conf->timed_out = p.timed_out;
+
+	strncpy(conf->init_string, p.init_string, sizeof(conf->init_string));
+
+	return 0;
+}
+
+void setup_global_board_descriptors( void )
+{
+	int i;
+
+	for( i = 0; i < FIND_CONFIGS_LENGTH; i++ )
+	{
+		if( ibFindConfigs[ i ].is_interface )
+		{
+			insert_descriptor( ibFindConfigs[ i ].board, ibFindConfigs[ i ] );
+		}
+	}
+}
+
 int ibParseConfigFile(char *filename)
 {
 	extern FILE *gpib_yyin;
 	FILE *infile;
 	int stat = 0;
+	static int config_parsed = 0;
+
+	if( config_parsed ) return 0;
 
 	if ((infile = fopen(filename, "r")) == NULL)
 	{
@@ -54,6 +107,12 @@ int ibParseConfigFile(char *filename)
 	}
 	fclose(infile);
 
+	if( stat == 0 )
+	{
+		setup_global_board_descriptors();
+		config_parsed = 1;
+	}
+
 	return stat;
 }
 
@@ -61,22 +120,26 @@ int ibParseConfigFile(char *filename)
 
 int ibGetDescriptor(ibConf_t p)
 {
-	ibConf_t *conf;
 	int ib_ndev;
+	int retval;
 
 	/* check validity of values */
-	if( p.pad >= IB_MAXDEV )
+	if( p.pad >= gpib_addr_max || p.sad >= gpib_addr_max )
 	{
 		setIberr( ETAB );
 		return -1;
 	}
 	// search for an unused descriptor
-	for(ib_ndev = 0; ib_ndev < NUM_CONFIGS; ib_ndev++)
+	for( ib_ndev = MAX_BOARDS; ib_ndev < NUM_CONFIGS; ib_ndev++ )
 	{
 		if( ibConfigs[ ib_ndev ] == NULL )
 		{
-			ibConfigs[ ib_ndev ] = malloc( sizeof( ibConf_t ) );
-			init_async_op( &ibConfigs[ ib_ndev ]->async );
+			retval = insert_descriptor( ib_ndev, p );
+			if( retval < 0 )
+			{
+				setIberr( ETAB );
+				return retval;
+			}
 			break;
 		}
 	}
@@ -85,27 +148,7 @@ int ibGetDescriptor(ibConf_t p)
 		setIberr( ETAB );
 		return -1;
 	}
-	conf = ibConfigs[ ib_ndev ];
-	/* put entry to the table */
-	strncpy(conf->name, p.name, sizeof(conf->name) );
-	conf->board = p.board;
-	conf->pad = p.pad;
-	conf->sad = p.sad;
-	conf->flags = p.flags;
-	conf->eos = p.eos;
-	conf->eos_flags = p.eos_flags;
-	conf->usec_timeout = p.usec_timeout;
-	conf->spoll_usec_timeout = p.spoll_usec_timeout;
-	conf->ppoll_usec_timeout = p.ppoll_usec_timeout;
-	conf->send_eoi = p.send_eoi;
-	conf->is_interface = p.is_interface;
-	conf->is_open = p.is_open;
-	conf->has_lock = p.has_lock;
-	conf->ppoll_config = p.ppoll_config;
-	conf->local_lockout = p.local_lockout;
-	conf->timed_out = p.timed_out;
-	
-	strncpy(conf->init_string, p.init_string, sizeof(conf->init_string));
+
 	return ib_ndev;
 }
 

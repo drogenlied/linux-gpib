@@ -46,7 +46,6 @@ extern  int ibParseConfigFile(char *filename);
 extern  int ibGetDescriptor(ibConf_t conf);
 extern  int ibFindDevIndex(char *name);
 extern ssize_t my_ibcmd( ibConf_t *conf, uint8_t *buffer, size_t length);
-extern int config_parsed;
 extern int send_setup_string( const ibConf_t *conf, uint8_t *cmdString );
 extern int send_setup( ibConf_t *conf );
 extern void init_ibconf( ibConf_t *conf );
