@@ -49,8 +49,6 @@ environment Variable. Please check out if one exists or look for Syntax Errors.\
 
   printf("**Check Errlog...                                    ");
 
-  ibOpenErrlog( ibBoard[CONF(ind,board)].errlog );
-
   printf("OK\n");sleep(1);
 
   /****************/

@@ -14,7 +14,7 @@ extern ibarg_t ibarg;
 #define CONF(a,b) (((a) & UD_REMOTE) ? (a) : ibConfigs[a].b )
 #define BOARD(a)  (ibConfigs[a].board)
 
-#define MAX_BOARDS 4    /* maximal number of boards */
+#define MAX_BOARDS 16    /* maximal number of boards */
 #define IB_MAXDEV 30    /* maximal number of devices */
 
 

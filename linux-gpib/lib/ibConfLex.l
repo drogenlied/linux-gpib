@@ -15,7 +15,7 @@ NETD  [A-Za-z*_+-][A-Za-z0-9*_():.+-]*
 <COMMENT>"*"+[^*/]*
 <COMMENT>"*"+"/" BEGIN(INITIAL);
 
-config 	     { return (T_CONFIG);}
+interface 	     { return (T_INTERFACE);}
 
 base         { return (T_BASE);}
 irq          { return (T_IRQ);}
@@ -24,6 +24,7 @@ dma          { return (T_DMA);}
 device	     { return(T_DEVICE);}
 
 name         { return (T_NAME);}
+minor         { return (T_MINOR);}
 
 pad          { return(T_PAD);}
 sad          { return(T_SAD);}
@@ -34,7 +35,6 @@ timo	     { return(T_TIMO);}
 set-reos      { return T_REOS;}
 set-bin       { return T_BIN; }
 set-ifc       { return T_IFC; }
-
 
 init-string   { return T_INIT_S; }
 init-flags    { return T_INIT_F; }
@@ -48,13 +48,6 @@ controller    |
 master        { return T_MASTER; }
 
 autopoll      { return T_AUTOPOLL; }
-
-debug         { return T_DEBUG; }
-
-dma-bufsize  { return T_DMABUF; }    
-
-network       { return T_NETWORK; }
-server                 { return T_SERVER; }
 
 yes         { gpib_yylval.bval=1; return(T_BOOL);}
 no          { gpib_yylval.bval=0; return(T_BOOL);}
@@ -79,10 +72,6 @@ none         { gpib_yylval.ival=0 ; return(T_TIVAL);}
 300s         { gpib_yylval.ival=16; return(T_TIVAL);}
 1000s        { gpib_yylval.ival=17; return(T_TIVAL);}
 
-errlog       { return T_ERRLOG; }
-
-
-
 
 [0-9]+  { sscanf(gpib_yytext,"%d",&gpib_yylval.ival); 
 	  return( T_NUMBER );}
@@ -102,15 +91,5 @@ errlog       { return T_ERRLOG; }
 
 
 %%
-
-
-
-
-
-
-
-
-
-
 
 

@@ -7,33 +7,6 @@
 #include <stdarg.h>
 #include <string.h>
 
-FILE* errp=NULL;
-
-
-PRIVATE void ibOpenErrlog(char *name)
-{
-	if(name == NULL)
-	{
-		errp = stderr;
-		return;
-	}  
-  if(( errp=fopen(name,"w"))==NULL){
-    fprintf(stderr,"Warning: can't open Errlog: %s",name);
-    errp = stderr;
-  }
-  /*fprintf(stderr,"open %s",name);*/
-  ibPutErrlog(-1,"IbOpenErrlog");
-}
-
-
-PRIVATE void ibCloseErrlog(void)
-{
-  if( errp != stderr )
-    fclose(errp);
-
-}
-
-
 char *routptr[]= {
     "ibrd",
     "ibwrt",
@@ -67,8 +40,6 @@ char *routptr[]= {
     "unknown"
   };
 
-
-
 PRIVATE char *ibVerbCode(int code)
 {
 
@@ -91,12 +62,11 @@ va_list ap;
     time(&tm);
     strftime(strtime,59,"%c",gmtime(&tm));
 
-    fprintf(errp,"\n gpib-message   :[%s] ",strtime);
-    vfprintf(errp,format, ap);
+    fprintf(stderr,"\n gpib-message   :[%s] ",strtime);
+    vfprintf(stderr, format, ap);
     va_end(ap);
 
 }
-
 
 PRIVATE void ibPutErrlog(int ud,char *routine)
 {
@@ -108,52 +78,51 @@ char strtime[60];
     time(&tm);
     strftime(strtime,59,"%c",gmtime(&tm));
 
-    if(ud>=0) fprintf(errp,"\n %-15s:[%s](%s)< ",routine,strtime, ibConfigs[ud].name);
-    else      fprintf(errp,"\n %-15s:[%s](-)< " ,routine,strtime);
+    if(ud>=0) fprintf(stderr, "\n %-15s:[%s](%s)< ",routine,strtime, ibConfigs[ud].name);
+    else      fprintf(stderr, "\n %-15s:[%s](-)< " ,routine,strtime);
 
-    if ( ibsta & ERR )  fprintf(errp," ERR");
-    if ( ibsta & TIMO ) fprintf(errp," TIMO");
-    if ( ibsta & END )  fprintf(errp," END");
-    if ( ibsta & SRQI ) fprintf(errp," SRQI");
-    /*if ( ibsta & RQS )  fprintf(errp," RQS");*/
-    if ( ibsta & CMPL ) fprintf(errp," CMPL");
-    /*if ( ibsta & LOK )  fprintf(errp," LOK");*/
-    /*if ( ibsta & REM )  fprintf(errp," REM");*/
-    if ( ibsta & CIC )  fprintf(errp," CIC");
-    if ( ibsta & ATN )  fprintf(errp," ATM");
-    if ( ibsta & TACS ) fprintf(errp," TACS");
-    if ( ibsta & LACS ) fprintf(errp," LACS");
-    /*if ( ibsta & DTAS ) fprintf(errp," DATS");*/
-    /*if ( ibsta & DCAS ) fprintf(errp," DCTS");*/
+    if ( ibsta & ERR )  fprintf(stderr," ERR");
+    if ( ibsta & TIMO ) fprintf(stderr," TIMO");
+    if ( ibsta & END )  fprintf(stderr," END");
+    if ( ibsta & SRQI ) fprintf(stderr," SRQI");
+    /*if ( ibsta & RQS )  fprintf(stderr," RQS");*/
+    if ( ibsta & CMPL ) fprintf(stderr," CMPL");
+    /*if ( ibsta & LOK )  fprintf(stderr," LOK");*/
+    /*if ( ibsta & REM )  fprintf(stderr," REM");*/
+    if ( ibsta & CIC )  fprintf(stderr," CIC");
+    if ( ibsta & ATN )  fprintf(stderr," ATM");
+    if ( ibsta & TACS ) fprintf(stderr," TACS");
+    if ( ibsta & LACS ) fprintf(stderr," LACS");
+    /*if ( ibsta & DTAS ) fprintf(stderr," DATS");*/
+    /*if ( ibsta & DCAS ) fprintf(stderr," DCTS");*/
 
-    fprintf(errp,"> ");
+    fprintf(stderr,"> ");
 
-    if ( iberr == EDVR) fprintf(errp," EDVR <OS Error>\n");
-    if ( iberr == ECIC) fprintf(errp," ECIC <Not CIC>\n");
-    if ( iberr == ENOL) fprintf(errp," ENOL <No Listener>\n");
-    if ( iberr == EADR) fprintf(errp," EADR <Adress Error>\n");
-    if ( iberr == EARG) fprintf(errp," ECIC <Invalid Argument>\n");
-    if ( iberr == ESAC) fprintf(errp," ESAC <No Sys Ctrlr>\n");
-    if ( iberr == EABO) fprintf(errp," EABO <Operation Aborted>\n");
-    if ( iberr == ENEB) fprintf(errp," ENEB <No Gpib Board>\n");
-    if ( iberr == EOIP) fprintf(errp," EOIP <Async I/O in prg>\n");
-    if ( iberr == ECAP) fprintf(errp," ECAP <No Capability>\n");
-    if ( iberr == EFSO) fprintf(errp," EFSO <File sys. error>\n");
-    if ( iberr == EBUS) fprintf(errp," EBUS <Command error>\n");
-    if ( iberr == ESTB) fprintf(errp," ESTB <Status byte lost>\n");
-    if ( iberr == ESRQ) fprintf(errp," ESRQ <SRQ stuck on>\n");
-    if ( iberr == ETAB) fprintf(errp," ETAB <Table Overflow>\n");
-    if ( iberr == EPAR) fprintf(errp," EPAR <Parse Error in Config>\n");
-    if ( iberr == ECFG) fprintf(errp," ECFG <Can't open Config>\n");
-    if ( iberr == ETAB) fprintf(errp," ETAB <Device Table Overflow>\n");
-    if ( iberr == ENSD) fprintf(errp," ENSD <Configuration Error>\n");
-    if ( iberr == ENWE) fprintf(errp," ENWE <Network Errror>\n");
-    if ( iberr == ENTF) fprintf(errp," ENTF <Network Table Overflow>\n");
+    if ( iberr == EDVR) fprintf(stderr," EDVR <OS Error>\n");
+    if ( iberr == ECIC) fprintf(stderr," ECIC <Not CIC>\n");
+    if ( iberr == ENOL) fprintf(stderr," ENOL <No Listener>\n");
+    if ( iberr == EADR) fprintf(stderr," EADR <Adress Error>\n");
+    if ( iberr == EARG) fprintf(stderr," ECIC <Invalid Argument>\n");
+    if ( iberr == ESAC) fprintf(stderr," ESAC <No Sys Ctrlr>\n");
+    if ( iberr == EABO) fprintf(stderr," EABO <Operation Aborted>\n");
+    if ( iberr == ENEB) fprintf(stderr," ENEB <No Gpib Board>\n");
+    if ( iberr == EOIP) fprintf(stderr," EOIP <Async I/O in prg>\n");
+    if ( iberr == ECAP) fprintf(stderr," ECAP <No Capability>\n");
+    if ( iberr == EFSO) fprintf(stderr," EFSO <File sys. error>\n");
+    if ( iberr == EBUS) fprintf(stderr," EBUS <Command error>\n");
+    if ( iberr == ESTB) fprintf(stderr," ESTB <Status byte lost>\n");
+    if ( iberr == ESRQ) fprintf(stderr," ESRQ <SRQ stuck on>\n");
+    if ( iberr == ETAB) fprintf(stderr," ETAB <Table Overflow>\n");
+    if ( iberr == EPAR) fprintf(stderr," EPAR <Parse Error in Config>\n");
+    if ( iberr == ECFG) fprintf(stderr," ECFG <Can't open Config>\n");
+    if ( iberr == ETAB) fprintf(stderr," ETAB <Device Table Overflow>\n");
+    if ( iberr == ENSD) fprintf(stderr," ENSD <Configuration Error>\n");
+    if ( iberr == ENWE) fprintf(stderr," ENWE <Network Errror>\n");
+    if ( iberr == ENTF) fprintf(stderr," ENTF <Network Table Overflow>\n");
 
     if ( iberr == EDVR && ibcnt != 0) {
-      fprintf(errp,"               -- errno=%d (%s)\n",ibcnt,strerror(ibcnt));
+      fprintf(stderr,"               -- errno=%d (%s)\n",ibcnt,strerror(ibcnt));
     }
-    fflush(errp);
   }
 }
 

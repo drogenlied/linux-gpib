@@ -17,8 +17,6 @@ char *s;
 char server[60];
 char *device;
 
-	ibOpenErrlog(NULL);
-
    if(!ibfind_called){		/*if called first time load config*/
      if(( envptr = (char *) getenv("IB_CONFIG"))== (char *)0 ){
        if(ibParseConfigFile(DEFAULT_CONFIG_FILE) < 0  ) {
@@ -45,7 +43,6 @@ char *device;
 
    if(!ibfind_called){
 
-       ibOpenErrlog( ibBoard[CONF(ind,board)].errlog );
        ibPutMsg("Linux-GPIB-Library Initializing..");
 
        /*setup board characteristics*/

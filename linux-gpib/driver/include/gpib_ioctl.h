@@ -35,12 +35,12 @@
 #define CFCDMABUFFER	(CFCIO+3)
 
 #define IBSDBG          (CFCIO+4)
+#define CFCBOARDTYPE    (CFCIO+5)
 
 #define APIO            300
 #define IBAPWAIT        (APIO+0)
 #define IBAPRSP         (APIO+1)
 #define IBAPE           (APIO+2)
-
 
 
 

@@ -186,7 +186,7 @@ struct file_operations ib_fops =
 
 int ibmajor = IBMAJOR;   /* major number for dynamic configuration */
 
-gpib_device_t *device_array[MAX_NUM_GPIB_DEVICES] = {NULL};
+gpib_device_t device_array[MAX_NUM_GPIB_DEVICES];
 
 LIST_HEAD(registered_drivers);
 

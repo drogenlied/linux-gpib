@@ -20,6 +20,8 @@
 
 #include <linux/fcntl.h>
 
+int board_type_ioctl(unsigned int minor, unsigned long arg);
+
 #define GIVE_UP(a) {up(&device->mutex); return a;}
 
 int ib_opened=0;
@@ -28,48 +30,11 @@ int ib_exclusive=0;
 IBLCL int ibopen(struct inode *inode, struct file *filep)
 {
 	unsigned int minor = MINOR(inode->i_rdev);
-	struct list_head *list_ptr;
 
 	if( ib_exclusive )
 	{
 		return (-EBUSY);
 	}
-
-// this is a temporary hack to allocate the gpib0 device
-if(device_array[minor] == NULL)
-{
-	device_array[minor] = kmalloc(sizeof(gpib_device_t), GFP_KERNEL);
-	if(device_array[minor] == NULL)
-	{
-		printk("gpib: could not allocate memory for device\n");
-		return -ENOMEM;
-	}
-	device_array[minor]->private_data = NULL;
-	device_array[minor]->status = 0;
-	device_array[minor]->ibbase = IBBASE;
-	device_array[minor]->ibirq = IBIRQ;
-	device_array[minor]->ibdma = IBDMA;
-	init_waitqueue_head(&device_array[minor]->wait);
-	init_MUTEX(&device_array[minor]->mutex);
-	spin_lock_init(&device_array[minor]->spinlock);
-	device_array[minor]->interface = NULL;
-	for(list_ptr = registered_drivers.next; list_ptr != &registered_drivers; list_ptr = list_ptr->next)
-	{
-		gpib_interface_t *interface;
-
-		interface = list_entry(list_ptr, gpib_interface_t, list);
-		if(strcmp(interface->name, BOARD_TYPE) == 0)
-		{
-			device_array[minor]->interface = interface;
-			break;
-		}
-	}
-	if(device_array[minor]->interface == NULL)
-	{
-		printk("unable to find driver\n");
-		return -EINVAL;
-	}
-}
 
 	if ( filep->f_flags & O_EXCL )
 	{
@@ -91,18 +56,11 @@ IBLCL int ibclose(struct inode *inode, struct file *file)
 	unsigned int minor = MINOR(inode->i_rdev);
 
 	if ((pgmstat & PS_ONLINE) && ib_opened == 1 )
-		ibonl(device_array[minor], 0);
+		ibonl(&device_array[minor], 0);
 	ib_opened--;
 
 	if( ib_exclusive )
 		ib_exclusive = 0;
-
-	// temporary hack
-	if(ib_opened == 0)
-	{
-		kfree(device_array[minor]);
-		device_array[minor] = NULL;
-	}
 
 	return 0;
 }
@@ -127,10 +85,10 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
 		printk("gpib: invalid minor number of device file\n");
 		return -ENODEV;
 	}
-	device = device_array[minor];
-	if(device == NULL)
+	device = &device_array[minor];
+	if(device->interface == NULL && cmd != CFCBOARDTYPE)
 	{
-		printk("gpib: no device configured at minor number %i\n", minor);
+		printk("gpib: no device configured on /dev/gpib%i\n", minor);
 		return -ENODEV;
 	}
 
@@ -455,7 +413,8 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
 				printk("-- DMA Buffer Not Changed \n");
 			}
 			break;
-
+		case CFCBOARDTYPE:
+			return board_type_ioctl(minor, arg);
 		default:
 			retval = -ENOTTY;
 			break;
@@ -479,8 +438,34 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
 	GIVE_UP(retval);
 }
 
+int board_type_ioctl(unsigned int minor, unsigned long arg)
+{
+	struct list_head *list_ptr;
+	char *board_name = (char*) arg;
 
+	device_array[minor].private_data = NULL;
+	device_array[minor].status = 0;
+	device_array[minor].ibbase = IBBASE;
+	device_array[minor].ibirq = IBIRQ;
+	device_array[minor].ibdma = IBDMA;
+	init_waitqueue_head(&device_array[minor].wait);
+	init_MUTEX(&device_array[minor].mutex);
+	spin_lock_init(&device_array[minor].spinlock);
+	device_array[minor].interface = NULL;
+	for(list_ptr = registered_drivers.next; list_ptr != &registered_drivers; list_ptr = list_ptr->next)
+	{
+		gpib_interface_t *interface;
 
+		interface = list_entry(list_ptr, gpib_interface_t, list);
+		if(strcmp(interface->name, board_name) == 0)
+		{
+			device_array[minor].interface = interface;
+			return 0;
+		}
+	}
+
+	return -EINVAL;
+}
 
 
 
