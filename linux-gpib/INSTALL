@@ -104,4 +104,6 @@ D) Configuring the GPIB-Library
 	Edit /etc/gpib.conf to match your interface board, and any devices you wish
 	to open via ibfind().
 
+	You may find the examples/ibtest program useful as a starting point in trying
+	out your setup.
 
