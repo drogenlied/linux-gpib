@@ -213,7 +213,8 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 
 	if( !board->online )
 	{
-		printk( "gpib: invalid ioctl for offline board\n" );
+		printk( "gpib: ioctl %i invalid for offline board\n",
+			cmd & 0xff );
 		return -EINVAL;
 	}
 
@@ -243,7 +244,8 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 
 	if( current->pid != board->locking_pid )
 	{
-		printk( "gpib: need to hold board lock to perform this ioctl\n" );
+		printk( "gpib: need to hold board lock to perform ioctl %i\n",
+			cmd & 0xff );
 		return -EPERM;
 	}
 
@@ -902,9 +904,10 @@ static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 			printk("gpib: ioctl interrupted while waiting on lock\n");
 			return -ERESTARTSYS;
 		}
-		if( atomic_read( &board->mutex.count ) )
+		if( atomic_read( &board->mutex.count ) > 0 )
 		{
-			printk( "gpib: bug! board->mutex.count nonzero after lock!\n" );
+			printk( "gpib: bug! board->mutex.count %i after lock!\n",
+				atomic_read( &board->mutex.count ) );
 		}
 		board->locking_pid = current->pid;
 		file_priv->holding_mutex = 1;
@@ -912,11 +915,18 @@ static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 		GPIB_DPRINTK( "locked board mutex\n" );
 	}else
 	{
-		file_priv->holding_mutex = 0;
-		set_bit( CMPL_NUM, &board->status );
-		if( atomic_read( &board->mutex.count ) )
+		if( current->pid != board->locking_pid )
 		{
-			printk( "gpib: bug! board->mutex.count nonzero before releasing lock!\n" );
+			printk( "gpib: bug! pid %i tried to release mutex held by pid %i\n",
+				current->pid, board->locking_pid );
+		}
+		file_priv->holding_mutex = 0;
+		board->locking_pid = 0;
+		set_bit( CMPL_NUM, &board->status );
+		if( atomic_read( &board->mutex.count ) > 0 )
+		{
+			printk( "gpib: bug! board->mutex.count %i before releasing lock!\n",
+				atomic_read( &board->mutex.count ) );
 		}
 		up( &board->mutex );
 		GPIB_DPRINTK( "unlocked board mutex\n" );
