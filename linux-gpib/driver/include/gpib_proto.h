@@ -29,7 +29,7 @@ int ibgts(gpib_board_t *board);
 int ibonline( gpib_board_t *board );
 int iboffline( gpib_board_t *board );
 int iblines( const gpib_board_t *board, short *lines );
-ssize_t ibrd(gpib_board_t *board, uint8_t *buf, size_t length, int *end_flag);
+ssize_t ibrd(gpib_board_t *board, uint8_t *buf, size_t length, int *end_flag,int *nbytes);
 int ibrpp( gpib_board_t *board, uint8_t *buf );
 int ibrsv(gpib_board_t *board, uint8_t poll_status);
 void ibrsc( gpib_board_t *board, int request_control );

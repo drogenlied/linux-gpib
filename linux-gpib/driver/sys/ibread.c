@@ -3,7 +3,7 @@
                              -------------------
 
     begin                : Dec 2001
-    copyright            : (C) 2001, 2002 by Frank Mori Hess
+    copyright            : (C) 2001, 2002, 2004 by Frank Mori Hess
     email                : fmhess@users.sourceforge.net
  ***************************************************************************/
 
@@ -32,12 +32,14 @@
  *          calling ibcmd.
  */
 
-ssize_t ibrd( gpib_board_t *board, uint8_t *buf, size_t length, int *end_flag )
+ssize_t ibrd(gpib_board_t *board, uint8_t *buf, size_t length, int *end_flag, int *nbytes)
 {
-	size_t count = 0;
 	ssize_t ret = 0;
 	int retval;
+	int bytes_read;
 
+	*nbytes = 0;
+	*end_flag = 0;	
 	if( length == 0 )
 	{
 		printk( "gpib: ibrd() called with zero length?\n");
@@ -56,19 +58,17 @@ ssize_t ibrd( gpib_board_t *board, uint8_t *buf, size_t length, int *end_flag )
 
 	do
 	{
-		ret = board->interface->read(board, buf, length - count, end_flag);
+		ret = board->interface->read(board, buf, length - *nbytes, end_flag, &bytes_read);
 		if(ret < 0)
 		{
 			printk("gpib read error\n");
-		}else
-		{
-			buf += ret;
-			count += ret;
 		}
-	}while(ret > 0 && count < length && *end_flag == 0);
+		buf += bytes_read;
+		*nbytes += bytes_read;
+	}while(ret == 0 && *nbytes > 0 && *nbytes < length && *end_flag == 0);
 
 	osRemoveTimer(board);
 
-	return (ret < 0) ? ret : count;
+	return ret;
 }
 

@@ -38,10 +38,10 @@ void cb_pci_detach(gpib_board_t *board);
 void cb_isa_detach(gpib_board_t *board);
 
 // wrappers for interface functions
-ssize_t cb7210_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end)
+ssize_t cb7210_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes)
 {
 	cb7210_private_t *priv = board->private_data;
-	return nec7210_read(board, &priv->nec7210_priv, buffer, length, end);
+	return nec7210_read(board, &priv->nec7210_priv, buffer, length, end, nbytes);
 }
 ssize_t cb7210_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi)
 {

@@ -49,10 +49,11 @@ struct gpib_interface_struct
 	 * to be nonzero if the read was terminated by an END, otherwise 'end'
 	 * should be zero.
 	 * Ultimately, this will be changed into or replaced by an asynchronous
-	 * read.  Positive return value is number of bytes read, negative
+	 * read.  Zero return value for success, negative
 	 * return indicates error.
+         * nbytes returns number of bytes read
 	 */
-	ssize_t (*read)(gpib_board_t *board, uint8_t *buffer, size_t length, int *end);
+	ssize_t (*read)(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes);
 	/* write() should write 'length' bytes from buffer to the bus.
 	 * If the boolean value send_eoi is nonzero, then EOI should
 	 * be sent along with the last byte.  Returns number of bytes

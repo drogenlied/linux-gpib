@@ -407,7 +407,7 @@ int ni_usb_write_registers(ni_usb_private_t *ni_priv, const struct ni_usb_regist
 }
 
 // interface functions
-ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end)
+ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes)
 {
 	int retval;
 	ni_usb_private_t *ni_priv = board->private_data;
@@ -420,6 +420,7 @@ ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *en
 	static const int max_read_length = 0xffff;
 	struct ni_usb_register reg;
 	
+	*nbytes = 0;
 	if(length > max_read_length)
 	{
 		length = max_read_length;
@@ -484,7 +485,8 @@ ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *en
 	ni_usb_soft_update_status(board, status.ibsta, 0);
 	if(status.ibsta & END) *end = 1;
 	else *end = 0;
-	return length - status.count;
+	*nbytes = length - status.count;
+	return 0;
 }
 
 static ssize_t ni_usb_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi)

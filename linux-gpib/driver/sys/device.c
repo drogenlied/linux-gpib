@@ -55,6 +55,7 @@ static int read_serial_poll_byte( gpib_board_t *board, unsigned int pad,
 	int end_flag;
 	ssize_t ret;
 	int i;
+	int nbytes;
 
 	GPIB_DPRINTK( "entering read_serial_poll_byte(), pad=%i sad=%i\n", pad, sad );
 
@@ -77,8 +78,8 @@ static int read_serial_poll_byte( gpib_board_t *board, unsigned int pad,
 	ibgts( board );
 
 	// read poll result
-	ret = board->interface->read( board, result, 1, &end_flag );
-	if( ret < 1 )
+	ret = board->interface->read( board, result, 1, &end_flag ,&nbytes);
+	if( ret < 0 || nbytes < 1)
 	{
 		printk( "gpib: serial poll failed\n" );
 		osRemoveTimer( board );

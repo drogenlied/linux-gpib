@@ -101,10 +101,11 @@ int gpib_aio_launch( int ud, ibConf_t *conf, int gpib_aio_type,
 
 static void* do_aio( void *varg )
 {
-	long count;
+	size_t count;
 	struct gpib_aio_arg arg;
 	ibConf_t *conf;
-
+	int retval;
+	
 	arg = *((struct gpib_aio_arg*) varg);
 	free( varg ); varg = NULL;
 
@@ -127,23 +128,23 @@ static void* do_aio( void *varg )
 	switch( arg.gpib_aio_type )
 	{
 	case GPIB_AIO_COMMAND:
-		count = my_ibcmd( conf, conf->async.buffer, conf->async.buffer_length );
+		count = retval =my_ibcmd( conf, conf->async.buffer, conf->async.buffer_length );
 		break;
 	case GPIB_AIO_READ:
-		count = my_ibrd( conf, conf->async.buffer, conf->async.buffer_length );
+		retval = my_ibrd( conf, conf->async.buffer, conf->async.buffer_length, &count);
 		break;
 	case GPIB_AIO_WRITE:
-		count = my_ibwrt( conf, conf->async.buffer, conf->async.buffer_length );
+		count = retval = my_ibwrt( conf, conf->async.buffer, conf->async.buffer_length );
 		break;
 	default:
-		count = -1;
+		retval = -1;
 		fprintf( stderr, "libgpib: bug! in %s\n", __FUNCTION__ );
 		break;
 	}
 	pthread_setcancelstate( PTHREAD_CANCEL_DISABLE, NULL );
 
 	pthread_mutex_lock( &conf->async.lock );
-	if(count < 0)
+	if(retval < 0)
 	{
 		conf->async.ibcntl = 0;
 		conf->async.iberr = ThreadIberr();

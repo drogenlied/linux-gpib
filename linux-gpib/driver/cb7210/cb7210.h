@@ -60,9 +60,9 @@ irqreturn_t cb7210_internal_interrupt( gpib_board_t *board );
 
 // interface functions
 ssize_t cb7210_read( gpib_board_t *board, uint8_t *buffer, size_t length,
-	int *end );
+	int *end, int *nbytes);
 ssize_t cb7210_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
-	int *end );
+	int *end, int *nbytes);
 ssize_t cb7210_write( gpib_board_t *board, uint8_t *buffer, size_t length,
 	int send_eoi );
 ssize_t cb7210_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length,

@@ -36,10 +36,10 @@ int hp82335_attach( gpib_board_t *board );
 void hp82335_detach( gpib_board_t *board );
 
 // wrappers for interface functions
-ssize_t hp82335_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end )
+ssize_t hp82335_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes)
 {
 	hp82335_private_t *priv = board->private_data;
-	return tms9914_read( board, &priv->tms9914_priv, buffer, length, end );
+	return tms9914_read( board, &priv->tms9914_priv, buffer, length, end, nbytes);
 }
 ssize_t hp82335_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi )
 {

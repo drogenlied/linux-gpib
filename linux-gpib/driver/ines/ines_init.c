@@ -91,14 +91,14 @@ ines_pci_id pci_ids[] =
 static const int num_pci_chips = sizeof(pci_ids) / sizeof(pci_ids[0]);
 
 // wrappers for interface functions
-ssize_t ines_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end)
+ssize_t ines_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes)
 {
 	ines_private_t *priv = board->private_data;
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 	ssize_t retval;
 	int dummy;
 
-	retval = nec7210_read(board, &priv->nec7210_priv, buffer, length, end);
+	retval = nec7210_read(board, &priv->nec7210_priv, buffer, length, end, nbytes);
 	if( retval < 0 )
 	{
 		write_byte( nec_priv, INES_RFD_HLD_IMMEDIATE, AUXMR );

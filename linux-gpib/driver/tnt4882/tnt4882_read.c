@@ -92,7 +92,7 @@ static void tnt4882_release_holdoff(gpib_board_t *board, tnt4882_private_t *tnt_
 	}
 }
 
-ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end )
+ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end,int *nbytes)
 {
 	size_t count = 0;
 	ssize_t retval = 0;
@@ -207,8 +207,11 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 			buffer[ count++ ] = tnt_readb( tnt_priv, FIFOB );
 		}
 	}
-	tnt_writeb( tnt_priv, STOP, CMDR );
+	if(count < length)
+		tnt_writeb( tnt_priv, STOP, CMDR );
 	udelay(1);
+
+	if (!(tnt_readb( tnt_priv, STS1 ) & S_DONE)) printk("tnt4882: bug! Transfer not done!\n");
 
 	nec7210_set_reg_bits( nec_priv, IMR1, 0xff, imr1_bits );
 	nec7210_set_reg_bits( nec_priv, IMR2, 0xff, imr2_bits );
@@ -228,10 +231,10 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 		// force immediate holdoff
 		write_byte( nec_priv, AUX_HLDI, AUXMR );
 		set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
-		return retval;
 	}
+	*nbytes = count;
 
-	return count;
+	return retval;
 }
 
 

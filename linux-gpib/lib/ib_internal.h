@@ -47,7 +47,7 @@ int ibParseConfigFile( void );
 int ibGetDescriptor(ibConf_t conf);
 int ibFindDevIndex( const char *name );
 ssize_t my_ibcmd( ibConf_t *conf, const uint8_t *buffer, size_t length);
-ssize_t my_ibrd( ibConf_t *conf, uint8_t *buffer, size_t count );
+ssize_t my_ibrd( ibConf_t *conf, uint8_t *buffer, size_t count, size_t *bytes_read);
 ssize_t my_ibwrt( ibConf_t *conf, const uint8_t *buffer, size_t count );
 unsigned int send_setup_string( const ibConf_t *conf, uint8_t *cmdString );
 unsigned int create_send_setup( const ibBoard_t *board,

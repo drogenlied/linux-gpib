@@ -76,7 +76,7 @@ enum
 
 // interface functions
 ssize_t tms9914_read(gpib_board_t *board, tms9914_private_t *priv,
-	uint8_t *buffer, size_t length, int *end);
+	uint8_t *buffer, size_t length, int *end, int *nbytes);
 ssize_t tms9914_write(gpib_board_t *board, tms9914_private_t *priv,
 	uint8_t *buffer, size_t length, int send_eoi);
 ssize_t tms9914_command(gpib_board_t *board, tms9914_private_t *priv,

@@ -21,14 +21,14 @@
 #include <linux/spinlock.h>
 
 static ssize_t pio_read( gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer,
-	size_t length, int *end )
+	size_t length, int *end, int *nbytes)
 {
-	size_t count = 0;
 	ssize_t retval = 0;
 
+	*nbytes = 0;	
 	*end = 0;
 
-	while( count < length )
+	while( *nbytes < length )
 	{
 		if(wait_event_interruptible(board->wait,
 			test_bit(READ_READY_BN, &priv->state) ||
@@ -41,7 +41,7 @@ static ssize_t pio_read( gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 		}
 		if( test_bit(READ_READY_BN, &priv->state) )
 		{
-			buffer[ count++ ] = nec7210_read_data_in( board, priv, end );
+			buffer[ (*nbytes)++ ] = nec7210_read_data_in( board, priv, end );
 			if( *end )
 				break;
 		}
@@ -58,15 +58,15 @@ static ssize_t pio_read( gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 			break;
 		}
 
-		if( count < length )
+		if(*nbytes < length)
 			nec7210_release_rfd_holdoff( board, priv );
 
 		if(need_resched())
 			schedule();
 	}
-	return retval ? retval : count;
+	return retval;
 }
-
+#if 0
 static ssize_t __dma_read(gpib_board_t *board, nec7210_private_t *priv, size_t length)
 {
 	ssize_t retval = 0;
@@ -145,35 +145,25 @@ static ssize_t dma_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *b
 
 	return length - remain;
 }
-
+#endif
 ssize_t nec7210_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer,
-	size_t length, int *end)
+	size_t length, int *end, int *nbytes)
 {
-	size_t	count = 0;
 	ssize_t retval = 0;
-
-	if( length == 0 ) return 0;
-
+	
 	*end = 0;
+	*nbytes = 0;
+	
+	if( length == 0 ) return 0;
 
 	clear_bit( DEV_CLEAR_BN, &priv->state ); // XXX wrong
 
 	nec7210_set_handshake_mode( board, priv, HR_HLDA );
 	nec7210_release_rfd_holdoff( board, priv );
 
-	if( 0 /* priv->dma_channel */ )
-	{	// ISA DMA transfer
-//		retval = dma_read(board, priv, buffer, length);
-	}else
-	{	// PIO transfer
-		retval = pio_read( board, priv, buffer, length, end );
-	}
-	if(retval < 0)
-		return retval;
-	else
-		count += retval;
-
-	return count;
+	retval = pio_read(board, priv, buffer, length, end, nbytes);
+	
+	return retval;
 }
 
 EXPORT_SYMBOL(nec7210_read);

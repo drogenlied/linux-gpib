@@ -39,10 +39,10 @@ void pc2a_detach(gpib_board_t *board);
 void pc2_2a_detach(gpib_board_t *board);
 
 // wrappers for interface functions
-ssize_t pc2_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end)
+ssize_t pc2_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes)
 {
 	pc2_private_t *priv = board->private_data;
-	return nec7210_read(board, &priv->nec7210_priv, buffer, length, end);
+	return nec7210_read(board, &priv->nec7210_priv, buffer, length, end, nbytes);
 }
 ssize_t pc2_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi)
 {
