@@ -677,7 +677,7 @@ gpib_interface_t ni_pcmcia_interface =
 	provider_module: &__this_module,
 };
 
-gpib_interface_t ni_pcmcia_interface =
+gpib_interface_t ni_pcmcia_accel_interface =
 {
 	name: "ni_pcmcia_accel",
 	attach: ni_pcmcia_attach,
