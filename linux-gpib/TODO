@@ -42,5 +42,5 @@ remove devices that time out from autopoll list
 
 add depmod check to configure script
 
-better error on uknown board_type
+better error on unknown board_type
 
