@@ -344,7 +344,7 @@ static int serial_poll_test( const struct board_descriptors *boards )
 	ibwait( ud, RQS | TIMO );
 	if( ( ThreadIbsta() & ERR ) || ( ThreadIbsta() & TIMO ) || !( ThreadIbsta() & RQS ) )
 	{
-		fprintf( stderr, "FAILED: did not receivce service request\n" );
+		fprintf( stderr, "FAILED: did not receive service request\n" );
 		ibonl( ud, 0 );
 		return -1;
 	}
