@@ -63,7 +63,7 @@ void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv)
 	// record address status change in status
 	if(status2 & HR_ADSC)
 	{
-		nec7210_update_status( board, priv );
+		update_status_nolock( board, priv );
 		wake_up_interruptible(&board->wait); /* wake up sleeping process */
 	}
 
@@ -142,8 +142,13 @@ void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv)
 
 	if( status1 & HR_DEC )
 	{
+		push_gpib_event( &board->event_queue, EventDevClr );
 		// XXX should clear buffers, etc.
-		GPIB_DPRINTK(" gpib: received device clear command\n" );
+	}
+
+	if( status1 & HR_DET )
+	{
+		push_gpib_event( &board->event_queue, EventDevTrig );
 	}
 
 	spin_unlock(&board->spinlock);

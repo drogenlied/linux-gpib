@@ -101,14 +101,11 @@ void nec7210_secondary_address(const gpib_board_t *board, nec7210_private_t *pri
 	write_byte(priv, priv->admr_bits, ADMR);
 }
 
-unsigned int nec7210_update_status(gpib_board_t *board, nec7210_private_t *priv)
+unsigned int update_status_nolock( gpib_board_t *board, nec7210_private_t *priv )
 {
 	int address_status_bits;
-	unsigned long flags;
-	static spinlock_t lock = SPIN_LOCK_UNLOCKED;
-	if(priv == NULL) return 0;
 
-	spin_lock_irqsave( &lock, flags );
+	if(priv == NULL) return 0;
 
 	address_status_bits = read_byte(priv, ADSR);
 
@@ -134,12 +131,23 @@ unsigned int nec7210_update_status(gpib_board_t *board, nec7210_private_t *priv)
 		clear_bit(WRITE_READY_BN, &priv->state);
 		set_bit(ATN_NUM, &board->status);
 	}
-	spin_unlock_irqrestore( &lock, flags );
 
 	/* we rely on the interrupt handler to set the
 	 * rest of the status bits */
 
 	return board->status;
+}
+
+unsigned int nec7210_update_status(gpib_board_t *board, nec7210_private_t *priv)
+{
+	unsigned long flags;
+	unsigned int retval;
+
+	spin_lock_irqsave( &board->spinlock, flags );
+	retval = update_status_nolock( board, priv );
+	spin_unlock_irqrestore( &board->spinlock, flags );
+
+	return retval;
 }
 
 EXPORT_SYMBOL(nec7210_enable_eos);

@@ -120,6 +120,20 @@ struct gpib_interface_struct
 	struct module *provider_module;
 };
 
+typedef struct
+{
+	struct list_head event_head;
+	unsigned int num_events;
+	unsigned dropped_event : 1;
+} gpib_event_queue_t;
+
+static inline void init_event_queue( gpib_event_queue_t *queue )
+{
+	INIT_LIST_HEAD( &queue->event_head );
+	queue->num_events = 0;
+	queue->dropped_event = 0;
+}
+
 /* One gpib_board_t is allocated for each physical board in the computer.
  * It provides storage for variables local to each board, and interface
  * functions for performing operations on the board */
@@ -181,6 +195,8 @@ struct gpib_board_struct
 	unsigned int online;
 	// number of processes trying to autopoll
 	int autopollers;
+	// queue for recording received trigger/clear/ifc events
+	gpib_event_queue_t event_queue;
 	/* Flag that indicates whether board is system controller of the bus */
 	unsigned master : 1;
 	/* Flag board has been opened for exclusive access */
@@ -188,6 +204,13 @@ struct gpib_board_struct
 	// error dong autopoll
 	unsigned stuck_srq : 1;
 };
+
+/* element of event queue */
+typedef struct
+{
+	struct list_head list;
+	short event_type;
+} gpib_event_t;
 
 /* Each board has a list of gpib_device_t to keep track of all open devices
  * on the bus, so we know what address to poll when we get a service request */

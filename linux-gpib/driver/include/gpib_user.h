@@ -280,4 +280,12 @@ enum ibconfig_option
 
 static const int request_service_bit = 0x40;
 
+enum events
+{
+	EventNone = 0,
+	EventDevTrig = 1,
+	EventDevClr = 2,
+	EventIFC = 3
+};
+
 #endif	/* _GPIB_USER_H */

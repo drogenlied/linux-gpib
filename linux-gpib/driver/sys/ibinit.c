@@ -25,6 +25,8 @@ int ibonline( gpib_board_t *board, gpib_file_private_t *priv,
 {
 	if( !board->online )
 	{
+		/* XXX need to do more careful and complete cleanup
+		 * of board */
 		board->buffer_length = 0x1000;
 		board->buffer = vmalloc( board->buffer_length );
 		if(board->buffer == NULL)

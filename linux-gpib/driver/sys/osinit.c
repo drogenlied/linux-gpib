@@ -95,31 +95,33 @@ void gpib_unregister_driver(gpib_interface_t *interface)
 
 void init_gpib_board( gpib_board_t *board )
 {
-	board->private_data = NULL;
+	board->interface = NULL;
+	board->buffer = NULL;
+	board->buffer_length = 0;
 	board->status = 0;
-	board->ibbase = 0;
-	board->ibirq = 0;
-	board->ibdma = 0;
-	board->pci_bus = -1;
-	board->pci_slot = -1;
-	board->master = 1;
-	board->online = 0;
-	board->exclusive = 0;
-	board->open_count = 0;
 	init_waitqueue_head(&board->wait);
 	init_MUTEX(&board->mutex);
 	board->locking_pid = 0;
 	init_MUTEX(&board->autopoll_mutex);
 	spin_lock_init(&board->spinlock);
 	init_timer(&board->timer);
-	board->interface = NULL;
-	board->buffer_length = 0;
-	board->buffer = NULL;
+	board->ibbase = 0;
+	board->ibirq = 0;
+	board->ibdma = 0;
+	board->pci_bus = -1;
+	board->pci_slot = -1;
+	board->private_data = NULL;
+	board->open_count = 0;
 	INIT_LIST_HEAD( &board->device_list );
 	board->pad = 0;
 	board->sad = -1;
 	board->usec_timeout = 3000000;
+	board->parallel_poll_configuration = 0;
+	board->online = 0;
 	board->autopollers = 0;
+	init_event_queue( &board->event_queue );
+	board->master = 1;
+	board->exclusive = 0;
 	board->stuck_srq = 0;
 }
 

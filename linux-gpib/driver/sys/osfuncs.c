@@ -832,7 +832,7 @@ static int autopoll_ioctl( gpib_board_t *board )
 	while( 1 )
 	{
 		if( wait_event_interruptible( board->wait,
-			board->online &&
+			board->master && board->online &&
 			board->stuck_srq == 0 &&
 			test_and_clear_bit( SRQI_NUM, &board->status) ) )
 		{

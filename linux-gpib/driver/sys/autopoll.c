@@ -53,7 +53,7 @@ int push_status_byte( gpib_device_t *device, uint8_t poll_byte )
 	device->num_status_bytes++;
 
 	GPIB_DPRINTK( "pushed status byte 0x%x, %i in queue\n",
-		(int) poll_byte, device->num_status_bytes );
+		(int) poll_byte, num_status_bytes( device ) );
 
 	return 0;
 }
@@ -65,9 +65,15 @@ int pop_status_byte( gpib_device_t *device, uint8_t *poll_byte )
 	struct list_head *front = head->next;
 	status_byte_t *status;
 
-	if( device->num_status_bytes == 0 ) return -EIO;
+	if( num_status_bytes( device ) == 0 ) return -EIO;
 
 	if( front == head ) return -EIO;
+
+	if( device->dropped_byte )
+	{
+		device->dropped_byte = 0;
+		return -EPIPE;
+	}
 
 	status = list_entry( front, status_byte_t, list );
 	*poll_byte = status->poll_byte;
@@ -78,7 +84,7 @@ int pop_status_byte( gpib_device_t *device, uint8_t *poll_byte )
 	device->num_status_bytes--;
 
 	GPIB_DPRINTK( "popped status byte 0x%x, %i in queue\n",
-		(int) *poll_byte, device->num_status_bytes );
+		(int) *poll_byte, num_status_bytes( device ) );
 
 	return 0;
 }
@@ -116,10 +122,10 @@ int get_serial_poll_byte( gpib_board_t *board, unsigned int pad, int sad, unsign
 	}
 }
 
-// XXX need to add timeout, with our own wait queue (see ibwait)
 int autopoll_all_devices( gpib_board_t *board )
 {
 	int retval;
+	static const unsigned int autopoll_usec_timeout = 3000000;
 
 	GPIB_DPRINTK( "entered autopoll_all_devices()\n" );
 	if( down_interruptible( &board->mutex ) )
@@ -127,11 +133,14 @@ int autopoll_all_devices( gpib_board_t *board )
 		return -ERESTARTSYS;
 	}
 
+	osStartTimer( board, autopoll_usec_timeout );
+
 	GPIB_DPRINTK( "autopoll has board lock\n" );
 
 	retval = serial_poll_all( board, serial_timeout );
 	if( retval < 0 )
 	{
+		osRemoveTimer( board );
 		up( &board->mutex );
 		return retval;
 	}
@@ -141,6 +150,7 @@ int autopoll_all_devices( gpib_board_t *board )
 	* waiting on RQS */
 	wake_up_interruptible( &board->wait );
 
+	osRemoveTimer( board );
 	up( &board->mutex );
 
 	return 0;
