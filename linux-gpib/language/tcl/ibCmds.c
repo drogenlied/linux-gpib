@@ -106,7 +106,7 @@ int ibDev _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc, char
 
 	if( argc != 7 )
 	{
-		Tcl_SetResult(interp, "Error: ibdev <minor> <pad> <sad> <timo> <eot> <eosmode>", TCL_STATIC);
+		Tcl_SetResult(interp, "Error: dev <minor> <pad> <sad> <timo> <eot> <eosmode>", TCL_STATIC);
 		return TCL_ERROR;
 	}
 
@@ -117,7 +117,7 @@ int ibDev _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc, char
 	eot = strtol(argv[5], NULL, 0);
 	eos = strtol(argv[6], NULL, 0);
 
-	if(( dev = ibdev(minor, pad, sad, timo, eot, eos)) < 0);
+	if(( dev = ibdev(minor, pad, sad, timo, eot, eos)) < 0)
 	{
 		ib_CreateVerboseError(interp,"ibdev");
 		return TCL_ERROR;
@@ -137,7 +137,7 @@ int ibFind  _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,cha
 
 	if( argc != 2 )
 	{
-		Tcl_SetResult(interp, "Error: ibfind <string>", TCL_STATIC);
+		Tcl_SetResult(interp, "Error: find <string>", TCL_STATIC);
 		return TCL_ERROR;
 	}
 
@@ -173,7 +173,7 @@ int ibSre   _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,cha
 int ibSic   _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,char *argv[])){
 
   if( argc != 2 ){
-    Tcl_SetResult(interp, "Error: iclear <dev> ", TCL_STATIC);
+    Tcl_SetResult(interp, "Error: sic <dev> ", TCL_STATIC);
     return TCL_ERROR;
   }
 
@@ -381,43 +381,46 @@ int gpibCmd _ANSI_ARGS_(( ClientData clientData,
 			       ))
 {
 
-if( *argv[1]=='f' && !strcmp(argv[1],"find")){
+if( !strcmp(argv[1],"dev")){
+  return ibDev( clientData, interp, argc-1,argv+1 );
+}
+if( !strcmp(argv[1],"find")){
   return ibFind( clientData, interp, argc-1,argv+1 );
 }
-if( *argv[1]=='r' && !strcmp(argv[1],"read")){
+if( !strcmp(argv[1],"read")){
   return ibRead( clientData, interp, argc-1,argv+1 );
 }
-if( *argv[1]=='w' && !strcmp(argv[1],"write")){
+if( !strcmp(argv[1],"write")){
   return ibWrite( clientData, interp, argc-1,argv+1 );
 }
-if( *argv[1]=='o' && !strcmp(argv[1],"online")){
+if( !strcmp(argv[1],"online")){
   return ibOnl( clientData, interp, argc-1,argv+1 );
 }
-if( *argv[1]=='c' && !strcmp(argv[1],"clear")){
+if( !strcmp(argv[1],"clear")){
   return ibClr( clientData, interp, argc-1,argv+1 );
 }
-if( *argv[1]=='r' && !strcmp(argv[1],"ren")){
+if( !strcmp(argv[1],"ren")){
   return ibSre( clientData, interp, argc-1,argv+1 );
 }
-if( *argv[1]=='s' && !strcmp(argv[1],"sic")){
+if( !strcmp(argv[1],"sic")){
   return ibSic( clientData, interp, argc-1,argv+1 );
 }
-if( *argv[1]=='c' && !strcmp(argv[1],"cmd")){
+if( !strcmp(argv[1],"cmd")){
   return ibCmd( clientData, interp, argc-1,argv+1 );
 }
-if( *argv[1]=='w' && !strcmp(argv[1],"wait")){
+if( !strcmp(argv[1],"wait")){
   return ibWait( clientData, interp, argc-1,argv+1 );
 }
-if( *argv[1]=='c' && !strcmp(argv[1],"close")){
+if( !strcmp(argv[1],"close")){
   return ibClose( clientData, interp, argc-1,argv+1 );
 }
-if( *argv[1]=='r' && !strcmp(argv[1],"rsp")){
+if( !strcmp(argv[1],"rsp")){
   return ibRsp( clientData, interp, argc-1,argv+1 );
 }
-if( *argv[1]=='r' && !strcmp(argv[1],"rsv")){
+if( !strcmp(argv[1],"rsv")){
   return ibRsp( clientData, interp, argc-1,argv+1 );
 }
-if( *argv[1]=='t' && !strcmp(argv[1],"trg")){
+if( !strcmp(argv[1],"trg")){
   return ibTrg( clientData, interp, argc-1,argv+1 );
 }
 
