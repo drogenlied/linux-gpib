@@ -66,7 +66,7 @@ int cb7210_parallel_poll(gpib_board_t *board, uint8_t *result);
 int cb7210_serial_poll_response(gpib_board_t *board, uint8_t status);
 
 // utility functions
-void cb7210_free_private(gpib_board_t *board);
+void cb7210_generic_detach(gpib_board_t *board);
 int cb7210_generic_attach(gpib_board_t *board);
 void cb7210_init( cb7210_private_t *priv, const gpib_board_t *board );
 

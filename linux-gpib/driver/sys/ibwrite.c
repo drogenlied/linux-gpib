@@ -45,14 +45,26 @@ ssize_t ibwrt(gpib_board_t *board, uint8_t *buf, size_t cnt, int send_eoi)
 	clear_bit(CMPL_NUM, &board->status);
 	osStartTimer( board, board->usec_timeout );
 
-	ret = board->interface->write(board, buf, cnt, send_eoi);
-	if(ret < 0)
+	/* wait until board is addressed as talker and ATN is not asserted
+	 * (only matters when not busmaster) */
+	if( wait_event_interruptible( board->wait,
+		( test_bit( TACS_NUM, &board->status ) && test_bit( ATN_NUM, &board->status ) == 0 ) ||
+		test_bit( TIMO_NUM, &board->status ) ) )
 	{
-		printk("gpib write error\n");
+		ret = -ERESTARTSYS;
+		printk( "gpib: wait interrupted while waiting to be addressed as talker\n");
 	}else
 	{
-		buf += ret;
-		bytes_sent += ret;
+
+		ret = board->interface->write(board, buf, cnt, send_eoi);
+		if(ret < 0)
+		{
+			printk("gpib write error\n");
+		}else
+		{
+			buf += ret;
+			bytes_sent += ret;
+		}
 	}
 
 	if(ibstatus(board) & TIMO)
@@ -64,6 +76,6 @@ ssize_t ibwrt(gpib_board_t *board, uint8_t *buf, size_t cnt, int send_eoi)
 	set_bit(CMPL_NUM, &board->status);
 
 	if(ret < 0) return ret;
-	
+
 	return bytes_sent;
 }

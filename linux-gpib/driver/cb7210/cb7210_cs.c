@@ -649,7 +649,7 @@ void cb_pcmcia_detach(gpib_board_t *board)
 
 	if(priv && priv->irq)
 		free_irq(priv->irq, board);
-	cb7210_free_private(board);
+	cb7210_generic_detach(board);
 }
 
 #endif /* CONFIG_PCMCIA */

@@ -121,7 +121,7 @@ void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv)
 			{
 				clear_bit(DMA_IN_PROGRESS_BN, &priv->state);
 				set_bit(WRITE_READY_BN, &priv->state);
-				wake_up_interruptible(&board->wait); 
+				wake_up_interruptible(&board->wait);
 			}else
 			{
 				clear_bit(WRITE_READY_BN, &priv->state);
@@ -131,7 +131,7 @@ void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv)
 		}else
 		{
 			set_bit(WRITE_READY_BN, &priv->state);
-			wake_up_interruptible(&board->wait); 
+			wake_up_interruptible(&board->wait);
 		}
 	}
 
@@ -155,11 +155,17 @@ void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv)
 		printk("gpib output error\n");
 	}
 
+	if( status1 & HR_DEC )
+	{
+		// XXX should clear buffers, etc.
+		printk(" gpib: received device clear command\n" );
+	}
+
 	spin_unlock(&board->spinlock);
 
 	if( status1 | status2 )
 	{
-		GPIB_DPRINTK( "isr1 0x%x, imr1 0x%x, isr2 0x%x, imr2 0x%x, status 0x%x\n", 
+		GPIB_DPRINTK( "isr1 0x%x, imr1 0x%x, isr2 0x%x, imr2 0x%x, status 0x%x\n",
 			status1, priv->imr1_bits, status2, priv->imr2_bits, board->status);
 	}
 }

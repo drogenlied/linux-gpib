@@ -165,12 +165,14 @@ int cb7210_allocate_private(gpib_board_t *board)
 	return 0;
 }
 
-void cb7210_free_private(gpib_board_t *board)
+void cb7210_generic_detach(gpib_board_t *board)
 {
 	if(board->private_data)
 	{
 		kfree(board->private_data);
 		board->private_data = NULL;
+
+		MOD_DEC_USE_COUNT;
 	}
 }
 
@@ -189,6 +191,8 @@ int cb7210_generic_attach(gpib_board_t *board)
 	nec_priv->read_byte = nec7210_ioport_read_byte;
 	nec_priv->write_byte = nec7210_ioport_write_byte;
 	nec_priv->offset = cb7210_reg_offset;
+
+	MOD_INC_USE_COUNT;
 
 	return 0;
 }
@@ -291,7 +295,7 @@ void cb_pci_detach(gpib_board_t *board)
 			pci_release_regions(cb_priv->pci_device);
 		}
 	}
-	cb7210_free_private(board);
+	cb7210_generic_detach(board);
 }
 
 /* Returns bits to be sent to base+9 to configure irq level on isa-gpib.
@@ -382,7 +386,7 @@ void cb_isa_detach(gpib_board_t *board)
 			release_region(nec_priv->iobase, cb7210_iosize);
 		}
 	}
-	cb7210_free_private(board);
+	cb7210_generic_detach(board);
 }
 
 int init_module(void)
