@@ -39,19 +39,20 @@ static inline void input_fifo_enable( gpib_board_t *board, int enable )
 
 	if( enable )
 	{
+		cb_priv->in_fifo_half_full = 0;
 		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAI, 0 );
 
 		outb( HS_RX_ENABLE | HS_TX_ENABLE | HS_CLR_SRQ_INT |
-			HS_CLR_EOI_EMPTY_INT | HS_CLR_HF_INT, nec_priv->iobase + HS_MODE );
-		cb_priv->in_fifo_half_full = 0;
-
-		outb( cb_priv->hs_mode_bits & HS_SYS_CONTROL, nec_priv->iobase + HS_MODE );
+			HS_CLR_EOI_EMPTY_INT | HS_CLR_HF_INT | cb_priv->hs_mode_bits,
+			nec_priv->iobase + HS_MODE );
 
 		cb_priv->hs_mode_bits &= ~HS_ENABLE_MASK;
-		cb_priv->hs_mode_bits |= HS_RX_ENABLE;
 		outb( cb_priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
 
-		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAI, HR_DMAI );
+		outb( irq_bits( cb_priv->irq ), nec_priv->iobase + HS_INT_LEVEL );
+
+		cb_priv->hs_mode_bits |= HS_RX_ENABLE;
+		outb( cb_priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
 	}else
 	{
 		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAI, 0 );
@@ -100,9 +101,10 @@ static ssize_t fifo_read( gpib_board_t *board, cb7210_private_t *cb_priv, uint8_
 			nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAI, 0 );
 			break;
 		}
-		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAI, 0 );
 
 		spin_lock_irqsave( &board->spinlock, flags );
+
+		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAI, 0 );
 
 		while( have_fifo_word( cb_priv ) )
 		{
@@ -137,11 +139,25 @@ static ssize_t fifo_read( gpib_board_t *board, cb7210_private_t *cb_priv, uint8_
 		buffer[ count++ ] = word & 0xff;
 	}
 
-	nec7210_set_handshake_mode( board, nec_priv, HR_HLDA );
 	input_fifo_enable( board, 0 );
 
+	if( wait_event_interruptible( board->wait,
+		test_bit( READ_READY_BN, &nec_priv->state ) ||
+		test_bit( RECEIVED_END_BN, &nec_priv->state ) ||
+		test_bit( TIMO_NUM, &board->status ) ) )
+	{
+		printk("cb7210: fifo half full wait interrupted\n");
+		retval = -ERESTARTSYS;
+	}
+	if( test_bit( TIMO_NUM, &board->status ) )
+	{
+		retval = -ETIMEDOUT;
+	}
 	if( test_bit( READ_READY_BN, &nec_priv->state ) )
+	{
+		nec7210_set_handshake_mode( board, nec_priv, HR_HLDA );
 		buffer[ count++ ] = nec7210_read_data_in( board, nec_priv, end );
+	}
 
 	return retval ? retval : count;
 }

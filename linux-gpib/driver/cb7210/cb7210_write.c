@@ -42,7 +42,8 @@ static inline void output_fifo_enable( gpib_board_t *board, int enable )
 		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAO, HR_DMAO );
 
 		outb( HS_RX_ENABLE | HS_TX_ENABLE | HS_CLR_SRQ_INT |
-			HS_CLR_EOI_EMPTY_INT | HS_CLR_HF_INT, nec_priv->iobase + HS_MODE );
+			HS_CLR_EOI_EMPTY_INT | HS_CLR_HF_INT | cb_priv->hs_mode_bits,
+			nec_priv->iobase + HS_MODE );
 
 		cb_priv->hs_mode_bits &= ~HS_ENABLE_MASK;
 		cb_priv->hs_mode_bits |= HS_TX_ENABLE;
