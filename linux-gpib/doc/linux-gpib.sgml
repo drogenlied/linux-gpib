@@ -1299,10 +1299,7 @@ volatile int ibsta;
 	<entry>IbcReadAdjust</entry>
 	<entry>0x13</entry>
 	<entry>If setting is nonzero then byte pairs are automatically swapped
-	during reads.  Presently, this feature is only included for
-	compatibility with
-	NI's library.  The byte swapping is done entirely in software
-	so there is no advantage to be gained by using this feature.
+	during reads.  Presently, this feature is unimplemented.
 	</entry>
 	<entry>board or device</entry>
 	</row>
@@ -1310,10 +1307,7 @@ volatile int ibsta;
 	<entry>IbcWriteAdjust</entry>
 	<entry>0x14</entry>
 	<entry>If setting is nonzero then byte pairs are automatically swapped
-	during writes.  Presently, this feature is only included for
-	compatibility with
-	NI's library.  The byte swapping is done entirely in software
-	so there is no advantage to be gained by using this feature.
+	during writes.  Presently, this feature is unimplemented.
 	</entry>
 	<entry>board or device</entry>
 	</row>
