@@ -3,15 +3,16 @@ NBOLD		= ""
 
 ECHO		= /bin/echo
 
-COMPILE	= gcc
-DEPEND	= gcc
+CC	= gcc
+
+COMPILE	= $(CC)
+DEPEND	= $(CC)
 RLINK	= ld -r
-LINK	= gcc
+LINK	= $(CC)
 INSTALL	= install 
 YACC	= bison -d -y
 LEX	= flex 
 
-CC	= $(COMPILE)
 
 
 print_vars:
