@@ -33,6 +33,7 @@ ssize_t ibcmd(gpib_device_t *device, uint8_t *buf, size_t length)
 	if((ret = device->interface->take_control(device, 0)))
 	{
 		printk("gpib error while becoming active controller\n");
+		ret = -1;
 	}else
 	{
 		ret = device->interface->command(device, buf, length - count);
@@ -51,7 +52,7 @@ ssize_t ibcmd(gpib_device_t *device, uint8_t *buf, size_t length)
 	if(status & TIMO)
 		ret = -ETIMEDOUT;
 
-	return count ? count : ret;
+	return ret ? ret : count;
 }
 
 

@@ -38,6 +38,7 @@ ssize_t nec7210_command(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 			printk("gpib command wait interrupted\n");
 			break;
 		}
+		if(test_bit(TIMO_NUM, &device->status)) break;
 		spin_lock_irqsave(&device->spinlock, flags);
 		clear_bit(COMMAND_READY_BN, &priv->state);
 		write_byte(priv, buffer[count], CDOR);
@@ -61,7 +62,7 @@ ssize_t nec7210_command(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 	priv->imr2_bits |= HR_COIE;
 	write_byte(priv, priv->imr2_bits, IMR2);
 
-	return count ? count : retval;
+	return retval ? retval : count;
 }
 
 EXPORT_SYMBOL(nec7210_command);

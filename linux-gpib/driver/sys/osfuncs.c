@@ -106,7 +106,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
 		return -ENODEV;
 	}
 
-//printk("ioctl %i\n", cmd);
+printk("minor %i ioctl %i\n", minor, cmd);
 
 	ibargp = (ibarg_t *) &m_ibarg;
 
@@ -323,7 +323,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
 			/* Read buffer loads till we fill the user supplied buffer */
 			userbuf = ibargp->ib_buf;
 			remain = ibargp->ib_cnt;
-			while (remain > 0);	//!(ibstatus() & TIMO));
+			while (remain > 0)	//!(ibstatus() & TIMO));
 			{
 				ret = ibrd(device, device->buffer, (device->buffer_length < remain) ?
 					device->buffer_length : remain, &end_flag);

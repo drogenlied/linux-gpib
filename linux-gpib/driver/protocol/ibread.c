@@ -48,7 +48,7 @@ ssize_t ibrd(gpib_device_t *device, uint8_t *buf, size_t length, int *end_flag)
 	// initialize status to END not yet received
 	clear_bit(END_NUM, &device->status);
 
-	ret = device->interface->read(device, buf, length - count, end_flag);
+	ret = device->interface->read(device, buf, length, end_flag);
 	if(ret < 0)
 	{
 		printk("gpib read error\n");

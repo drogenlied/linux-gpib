@@ -200,7 +200,6 @@ int receive_setup(gpib_device_t *device, int padsad)
 	return 0;
 }
 
-
 int send_setup(gpib_device_t *device, int padsad)
 {
 	uint8_t pad, sad;
@@ -209,7 +208,8 @@ int send_setup(gpib_device_t *device, int padsad)
 
 	pad = padsad;
 	sad = padsad >> 8;
-	if ((pad > 0x1E) || (sad && ((sad < 0x60) || (sad > 0x7E)))) {
+	if ((pad > 0x1E) || (sad && ((sad < 0x60) || (sad > 0x7E)))) 
+	{
 		printk("gpib: bad addr\n");
 		return -1;
 	}
