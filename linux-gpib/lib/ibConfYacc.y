@@ -61,6 +61,7 @@ int parse_gpib_conf( const char *filename, ibConf_t *configs, unsigned int confi
 	{
 		fprintf(stderr, "failed to open configuration file\n");
 		setIberr( EDVR );
+		setIbcnt( errno );
 		return -1;
 	}
 
@@ -82,7 +83,8 @@ int parse_gpib_conf( const char *filename, ibConf_t *configs, unsigned int confi
 
 	if( gpib_yyparse( &priv ) < 0 )
 	{
-		fprintf(stderr, "failed to parse configuration file\n");
+		fprintf(stderr, "libgpib: failed to parse configuration file\n");
+//XXX setIberr()
 		retval = -1 ;
 	}
 	fclose(infile);

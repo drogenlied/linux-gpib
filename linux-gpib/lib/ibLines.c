@@ -24,7 +24,7 @@ int internal_iblines( ibConf_t *conf, short *line_status )
 
 	if( conf->is_interface == 0 )
 	{
-		setIberr( EDVR );
+		setIberr( EARG );
 		return -1;
 	}
 

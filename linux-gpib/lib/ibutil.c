@@ -39,7 +39,8 @@ int insert_descriptor( ibConf_t p, int ud )
 		}
 		if( i == GPIB_CONFIGS_LENGTH )
 		{
-			setIberr( ENEB );
+			fprintf( stderr, "libgpib: out of room in ibConfigs[]\n" );
+			setIberr( ENEB ); // ETAB?
 			return -1;
 		}
 		ud = i;
@@ -63,6 +64,7 @@ int insert_descriptor( ibConf_t p, int ud )
 	ibConfigs[ ud ] = malloc( sizeof( ibConf_t ) );
 	if( ibConfigs[ ud ] == NULL )
 	{
+		fprintf( stderr, "libgpib: out of memory\n" );
 		setIberr( EDVR );
 		setIbcnt( ENOMEM );
 		return -1;
@@ -87,7 +89,6 @@ int setup_global_board_descriptors( void )
 		{
 			if( insert_descriptor( ibFindConfigs[ i ], ibFindConfigs[ i ].settings.board ) < 0 )
 			{
-				fprintf( stderr, "libgpib: failed to insert board descriptor\n" );
 				retval = -1;
 			}
 		}
@@ -171,6 +172,8 @@ static int ibCheckDescriptor( int ud )
 	if( ud < 0 || ud >= GPIB_CONFIGS_LENGTH || ibConfigs[ud] == NULL )
 	{
 		fprintf( stderr, "libgpib: invalid descriptor\n" );
+		setIberr( EDVR );
+		setIbcnt( EINVAL );
 		return -1;
 	}
 
@@ -379,7 +382,6 @@ ibConf_t * general_enter_library( int ud, int no_lock_board, int ignore_eoip )
 
 	if( ibCheckDescriptor( ud ) < 0 )
 	{
-		setIberr( EDVR );
 		return NULL;
 	}
 	conf = ibConfigs[ ud ];
@@ -448,8 +450,6 @@ int general_exit_library( int ud, int error, int no_sync_globals, int no_update_
 
 	if( ibCheckDescriptor( ud ) < 0 )
 	{
-		setIberr( EDVR );
-//XXX		setIbcnt(  );
 		setIbsta( ERR );
 		if( no_sync_globals == 0 )
 			sync_globals();
