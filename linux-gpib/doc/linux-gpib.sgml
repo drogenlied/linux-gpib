@@ -51,6 +51,151 @@ A copy of the license is included in the section entitled
 <section>
 <title>Global Variables</title>
 
+<refentry ID="reference-globals-iberr">
+<refmeta>
+	<refentrytitle>iberr</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>iberr</refname>
+	<refpurpose>holds error code</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+<programlisting>
+#include &lt;gpib/ib.h&gt;
+
+volatile int iberr;
+</programlisting>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	iberr is set whenever a function from the 'traditional' or 'multidevice'
+	API fails with an error.  The meaning of each possible value of iberr
+	is summarized
+	in the following table:
+	</para>
+	<para>
+	<table COLSEP="1" ROWSEP="1" ORIENT="port" PGWIDE="1">
+	<title>ibsta Bits</title>
+	<tgroup COLS="3" ALIGN="left" >
+	<thead>
+	<row>
+	<entry>constant</entry>
+	<entry>value</entry>
+	<entry>meaning</entry>
+	</row>
+	</thead>
+	<tbody>
+	<row>
+	<entry>EDVR</entry>
+	<entry>0</entry>
+	<entry>A system call has failed.  ibcnt/ibcntl will be set to the
+	value of errno.</entry>
+	</row>
+	<row>
+	<entry>ECIC</entry>
+	<entry>1</entry>
+	<entry>Your interface board needs to be controller-in-charge, but
+	is not.</entry>
+	</row>
+	<row>
+	<entry>ENOL</entry>
+	<entry>2</entry>
+	<entry>You have attempted to write data or command bytes, but
+	there are no listeners currently addressed.</entry>
+	</row>
+	<row>
+	<entry>EADR</entry>
+	<entry>3</entry>
+	<entry>The interface board has failed to address itself properly
+	before starting an io operation.</entry>
+	</row>
+	<row>
+	<entry>EARG</entry>
+	<entry>4</entry>
+	<entry>One or more arguments to the function call were invalid.</entry>
+	</row>
+	<row>
+	<entry>ESAC</entry>
+	<entry>5</entry>
+	<entry>The interface board needs to be system controller, but is not.
+	</entry>
+	</row>
+	<row>
+	<entry>EABO</entry>
+	<entry>6</entry>
+	<entry>A read or write of data bytes has been aborted, possibly due
+	to a timeout or reception of a device clear command.</entry>
+	</row>
+	<row>
+	<entry>ENEB</entry>
+	<entry>7</entry>
+	<entry>The GPIB interface board does not exist, its driver is not
+	loaded, or it is not configured properly.</entry>
+	</row>
+	<row>
+	<entry>EDMA</entry>
+	<entry>8</entry>
+	<entry>Not used (DMA error), included for compatibility purposes.</entry>
+	</row>
+	<row>
+	<entry>EOIP</entry>
+	<entry>10</entry>
+	<entry>Function call can not proceed due to an asynchronous IO operation
+	(ibrda(), ibwrta(), or ibcmda()) in progress.</entry>
+	</row>
+	<row>
+	<entry>ECAP</entry>
+	<entry>11</entry>
+	<entry>Incapable of executing function call, due the GPIB board lacking
+	the capability, or
+	the capability being disabled in software.</entry>
+	</row>
+	<row>
+	<entry>EFSO</entry>
+	<entry>12</entry>
+	<entry>File system error.  ibcnt/ibcntl will be set to the value of errno.</entry>
+	</row>
+	<row>
+	<entry>EBUS</entry>
+	<entry>14</entry>
+	<entry>An attempt to write command bytes to the bus has timed out.</entry>
+	</row>
+	<row>
+	<entry>ESTB</entry>
+	<entry>15</entry>
+	<entry>One or more serial poll status bytes have been lost.  This can
+	occur due to
+	too many status bytes accumulating (through automatic serial polling)
+	without being read.</entry>
+	</row>
+	<row>
+	<entry>ESRQ</entry>
+	<entry>16</entry>
+	<entry>The serial poll request service line is stuck on.  This can occur
+	if a physical device on the bus requests service, but its GPIB address has
+	not been opened
+	(via ibdev() for example) by any process.  Thus the automatic serial
+	polling routines are unaware of the device's existence and will never
+	serial poll it.
+	</entry>
+	</row>
+	<row>
+	<entry>ETAB</entry>
+	<entry>20</entry>
+	<entry>This error can be returned by ibevent(), FindLstn(), or
+	FindRQS().  See their descriptions for more information.</entry>
+	</row>
+	</tbody>
+	</tgroup>
+	</table>
+	</para>
+</refsect1>
+</refentry>
+
 <refentry ID="reference-globals-ibsta">
 <refmeta>
 	<refentrytitle>ibsta</refentrytitle>
@@ -58,7 +203,7 @@ A copy of the license is included in the section entitled
 </refmeta>
 <refnamediv>
 	<refname>ibsta</refname>
-	<refpurpose>holds status (device or board)</refpurpose>
+	<refpurpose>holds status</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 <programlisting>
@@ -210,7 +355,8 @@ volatile int ibsta;
 	<entry>ERR</entry>
 	<entry>0x8000</entry>
 	<entry>ERR is set if the last 'traditional' or 'multidevice' function
-	call failed.  The global variable iberr will be set indicate the
+	call failed.  The global variable <link LINKEND="reference-globals-iberr">iberr</link>
+	 will be set indicate the
 	cause of the error.</entry>
 	<entry>board or device</entry>
 	</row>
