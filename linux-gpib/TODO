@@ -33,3 +33,7 @@ fix parallel poll timeouts
 build static version of library, link examples against it
 
 possible problems when autopoll happens without remote enable
+
+online ioctl doesn't need to handle asserting IFC as there is a
+seperate ioctl for that
+

@@ -123,10 +123,16 @@ int serial_poll_all( gpib_board_t *board, unsigned int usec_timeout )
 	const struct list_head *head = &board->device_list;
 	gpib_device_t *device;
 	uint8_t result;
+	unsigned int num_bytes;
 
 	GPIB_DPRINTK( "entering serial_poll_all()\n" );
+
+	if( head->next == head ) return 0;
+
 	retval = setup_serial_poll( board, usec_timeout );
 	if( retval < 0 ) return retval;
+
+	num_bytes = 0;
 
 	for( cur = head->next; cur != head; cur = cur->next )
 	{
@@ -138,13 +144,14 @@ int serial_poll_all( gpib_board_t *board, unsigned int usec_timeout )
 		{
 			retval = push_status_byte( device, result );
 			if( retval < 0 ) return retval;
+			num_bytes++;
 		}
 	}
 
 	retval = cleanup_serial_poll( board, usec_timeout );
 	if( retval < 0 ) return retval;
 
-	return 0;
+	return num_bytes;
 }
 
 /*

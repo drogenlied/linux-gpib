@@ -26,5 +26,7 @@
 
 #include <tms9914.h>
 
+unsigned int update_status_nolock( gpib_board_t *board, tms9914_private_t *priv );
+
 #endif	// _TMS9914_BOARD_H
 

@@ -20,15 +20,11 @@ int ibsic( gpib_board_t *board, unsigned int usec_duration )
 		printk( "gpib: warning, shortening long udelay\n");
 	}
 
-	if(!test_bit(CIC_NUM, &board->status))
-	{
-		GPIB_DPRINTK( "sending interface clear\n" );
-		board->master = 1;
-		/* set controller state */
-		board->interface->interface_clear(board, 1);                   /* assert IFC */
-		udelay( usec_duration );
-		board->interface->interface_clear(board, 0);                   /* clear IFC */
-	}
+	GPIB_DPRINTK( "sending interface clear\n" );
+	board->master = 1;
+	board->interface->interface_clear(board, 1);
+	udelay( usec_duration );
+	board->interface->interface_clear(board, 0);
 
 	return 0;
 }

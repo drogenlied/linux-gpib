@@ -88,7 +88,7 @@ extern void tms9914_parallel_poll_response( gpib_board_t *board,
 	tms9914_private_t *priv, uint8_t config );
 extern void tms9914_serial_poll_response(gpib_board_t *board, tms9914_private_t *priv, uint8_t status);
 extern uint8_t tms9914_serial_poll_status( gpib_board_t *board, tms9914_private_t *priv );
-extern int tms9914_line_status( gpib_board_t *board, tms9914_private_t *priv );
+extern int tms9914_line_status( const gpib_board_t *board, tms9914_private_t *priv );
 
 // utility functions
 extern void tms9914_board_reset(tms9914_private_t *priv);
@@ -220,7 +220,7 @@ enum bus_status_bits
 
 enum aux_cmd_bits
 {
-	AUX_CS = 0x80,	/* set bit instead of clearing it, used with commands marked 'd' above     */
+	AUX_CS = 0x80,	/* set bit instead of clearing it, used with commands marked 'd' below */
 	AUX_CR = 0x0,	/* d Chip reset                   */
 	AUX_DHDF = 0x1,	// release dac holdoff (nonvalid)
 	AUX_VAL = ( AUX_DHDF | AUX_CS ),	// release dac holdoff, valid

@@ -37,25 +37,11 @@ int tms9914_take_control(gpib_board_t *board, tms9914_private_t *priv, int syncr
 			break;
 		udelay(1);
 	}
-	// suspend if we still don't have ATN
-	if(i == timeout)
-	{
-		while((read_byte(priv, ADSR) & HR_ATN) == 0 &&
-			test_bit(TIMO_NUM, &board->status) == 0)
-		{
-			if(interruptible_sleep_on_timeout(&board->wait, 1))
-			{
-				printk("interupted for ATN\n");
-				return -EINTR;
-			}
-		}
-	}
 
-	if(test_bit(TIMO_NUM, &board->status))
-	{
-		printk("gpib: take control timed out\n");
+	tms9914_update_status( board, priv );
+
+	if( i == timeout )
 		return -ETIMEDOUT;
-	}
 
 	return 0;
 }

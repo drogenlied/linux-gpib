@@ -596,6 +596,10 @@ static int open_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned lon
 		return retval;
 	}
 
+	/* clear stuck srq state, since we may be able to find service request on
+	 * the new device */
+	board->stuck_srq = 0;
+
 	return 0;
 }
 
@@ -822,13 +826,15 @@ static int autopoll_ioctl( gpib_board_t *board )
 {
 	int retval = 0;
 
+	board->autopollers++;
+
 	if( down_interruptible( &board->autopoll_mutex ) )
 	{
+		board->autopollers--;
 		return -ERESTARTSYS;
 	}
 
 	GPIB_DPRINTK( "entering autopoll loop\n" );
-	board->autopollers++;
 	while( 1 )
 	{
 		if( wait_event_interruptible( board->wait,
@@ -841,10 +847,9 @@ static int autopoll_ioctl( gpib_board_t *board )
 		}
 
 		retval = autopoll_all_devices( board );
-		if( retval < 0 )
+		if( retval <= 0 )
 		{
-			if( retval == -ETIMEDOUT )
-				board->stuck_srq = 1;
+			board->stuck_srq = 1;	// XXX could be better
 			set_bit( SRQI_NUM, &board->status );
 			break;
 		}

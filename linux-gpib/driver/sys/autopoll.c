@@ -153,5 +153,5 @@ int autopoll_all_devices( gpib_board_t *board )
 	osRemoveTimer( board );
 	up( &board->mutex );
 
-	return 0;
+	return retval;
 }

@@ -26,7 +26,7 @@
 
 void tms9914_interrupt(gpib_board_t *board, tms9914_private_t *priv)
 {
-	int status0, status1, address_status;
+	int status0, status1;
 
 	spin_lock(&board->spinlock);
 
@@ -40,7 +40,7 @@ void tms9914_interrupt(gpib_board_t *board, tms9914_private_t *priv)
 		set_bit(SRQI_NUM, &board->status);
 		wake_up_interruptible(&board->wait);
 	}
-	
+
 	// have been addressed
 	if(status1 & HR_MA)
 	{
@@ -52,31 +52,7 @@ void tms9914_interrupt(gpib_board_t *board, tms9914_private_t *priv)
 	// record address status change
 	if(status0 & HR_RLC || status0 & HR_MAC)
 	{
-		address_status = read_byte(priv, ADSR);
-		// check for remote/local
-		if(address_status & HR_REM)
-			set_bit(REM_NUM, &board->status);
-		else
-			clear_bit(REM_NUM, &board->status);
-		// check for lockout
-		if(address_status & HR_LLO)
-			set_bit(LOK_NUM, &board->status);
-		else
-			clear_bit(LOK_NUM, &board->status);
-		// check for ATN
-		if(address_status & HR_ATN)
-			set_bit(ATN_NUM, &board->status);
-		else
-			clear_bit(ATN_NUM, &board->status);
-		// check for talker/listener addressed
-		if(address_status & HR_TA)
-			set_bit(TACS_NUM, &board->status);
-		else
-			clear_bit(TACS_NUM, &board->status);
-		if(address_status & HR_LA)
-			set_bit(LACS_NUM, &board->status);
-		else
-			clear_bit(LACS_NUM, &board->status);
+		update_status_nolock( board, priv );
 		wake_up_interruptible(&board->wait); /* wake up sleeping process */
 	}
 

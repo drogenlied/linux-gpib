@@ -112,7 +112,7 @@ uint8_t hp82335_serial_poll_status( gpib_board_t *board )
 	hp82335_private_t *priv = board->private_data;
 	return tms9914_serial_poll_status( board, &priv->tms9914_priv );
 }
-int hp82335_line_status( gpib_board_t *board )
+int hp82335_line_status( const gpib_board_t *board )
 {
 	hp82335_private_t *priv = board->private_data;
 	return tms9914_line_status( board, &priv->tms9914_priv );
@@ -133,7 +133,7 @@ gpib_interface_t hp82335_interface =
 	enable_eos: hp82335_enable_eos,
 	disable_eos: hp82335_disable_eos,
 	parallel_poll: hp82335_parallel_poll,
-	line_status: NULL,	//XXX
+	line_status: hp82335_line_status,
 	update_status: hp82335_update_status,
 	primary_address: hp82335_primary_address,
 	secondary_address: hp82335_secondary_address,

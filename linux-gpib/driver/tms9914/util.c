@@ -94,6 +94,18 @@ void tms9914_secondary_address(gpib_board_t *board, tms9914_private_t *priv, uns
 
 unsigned int tms9914_update_status(gpib_board_t *board, tms9914_private_t *priv)
 {
+	unsigned long flags;
+	unsigned int retval;
+
+	spin_lock_irqsave( &board->spinlock, flags );
+	retval = update_status_nolock( board, priv );
+	spin_unlock_irqrestore( &board->spinlock, flags );
+
+	return retval;
+}
+
+unsigned int update_status_nolock( gpib_board_t *board, tms9914_private_t *priv )
+{
 	int address_status;
 
 	address_status = read_byte(priv, ADSR);
@@ -110,9 +122,14 @@ unsigned int tms9914_update_status(gpib_board_t *board, tms9914_private_t *priv)
 		clear_bit(LOK_NUM, &board->status);
 	// check for ATN
 	if(address_status & HR_ATN)
-		set_bit(ATN_NUM, &board->status);
-	else
-		clear_bit(ATN_NUM, &board->status);
+	{
+		set_bit( ATN_NUM, &board->status );
+		clear_bit( WRITE_READY_BN, &priv->state );
+	}else
+	{
+		clear_bit( ATN_NUM, &board->status );
+		clear_bit( COMMAND_READY_BN, &priv->state );
+	}
 	// check for talker/listener addressed
 	if(address_status & HR_TA)
 		set_bit(TACS_NUM, &board->status);
@@ -126,7 +143,7 @@ unsigned int tms9914_update_status(gpib_board_t *board, tms9914_private_t *priv)
 	return board->status;
 }
 
-int tms9914_line_status(gpib_board_t *board, tms9914_private_t *priv)
+int tms9914_line_status( const gpib_board_t *board, tms9914_private_t *priv)
 {
 	int bsr_bits;
 	int status = ValidALL;
