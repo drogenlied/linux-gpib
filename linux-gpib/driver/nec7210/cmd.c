@@ -45,6 +45,9 @@ ssize_t nec7210_command(gpib_board_t *board, nec7210_private_t *priv, uint8_t
 		spin_unlock_irqrestore( &board->spinlock, flags );
 
 		count++;
+
+		if( current->need_resched )
+			schedule();
 	}
 	// wait for last byte to get sent
 	if(wait_event_interruptible(board->wait, test_bit(COMMAND_READY_BN, &priv->state) ||

@@ -48,6 +48,9 @@ static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 		clear_bit(WRITE_READY_BN, &priv->state);
 		write_byte(priv, buffer[ count++ ], CDOR);
 		spin_unlock_irqrestore(&board->spinlock, flags);
+
+		if( current->need_resched )
+			schedule();
 	}
 	// wait last byte has been sent
 	if( wait_event_interruptible( board->wait,
