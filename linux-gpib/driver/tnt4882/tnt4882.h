@@ -21,12 +21,18 @@
 
 #include <nec7210.h>
 #include <gpibP.h>
+#include "mite.h"
+
+enum
+{
+	PCI_DEVICE_ID_NI_GPIB = 0xc801,
+};
 
 // struct which defines private_data for tnt4882 devices
 typedef struct
 {
 	nec7210_private_t nec7210_priv;
-	struct pci_dev *pci_device;
+	struct mite_struct *mite;
 	unsigned int irq;
 } tnt4882_private_t;
 

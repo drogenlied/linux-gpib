@@ -1,5 +1,4 @@
 #include <ibsys.h>
-#include <board.h>
 
 struct timer_list ibtimer_list;
 

@@ -3,7 +3,7 @@
 #
 include $(ROOT)/util/.config
 
-SRCS =  tnt4882_init.c interrupt.c
+SRCS =  tnt4882_init.c mite.c interrupt.c
 
 OBJS =  $(SRCS:.c=.o)
 

@@ -34,8 +34,10 @@ MODULE_LICENSE("GPL");
 #endif
 
 int ni_isa_attach(gpib_device_t *device);
+int ni_pci_attach(gpib_device_t *device);
 
 void ni_isa_detach(gpib_device_t *device);
+void ni_pci_detach(gpib_device_t *device);
 
 // wrappers for interface functions
 ssize_t tnt4882_read(gpib_device_t *device, uint8_t *buffer, size_t length, int *end)
@@ -109,6 +111,28 @@ int tnt4882_serial_poll_response(gpib_device_t *device, uint8_t status)
 	return nec7210_serial_poll_response(device, &priv->nec7210_priv, status);
 }
 
+gpib_interface_t ni_pci_interface =
+{
+	name: "ni_pci",
+	attach: ni_pci_attach,
+	detach: ni_pci_detach,
+	read: tnt4882_read,
+	write: tnt4882_write,
+	command: tnt4882_command,
+	take_control: tnt4882_take_control,
+	go_to_standby: tnt4882_go_to_standby,
+	interface_clear: tnt4882_interface_clear,
+	remote_enable: tnt4882_remote_enable,
+	enable_eos: tnt4882_enable_eos,
+	disable_eos: tnt4882_disable_eos,
+	parallel_poll: tnt4882_parallel_poll,
+	line_status: NULL,	//XXX
+	update_status: tnt4882_update_status,
+	primary_address: tnt4882_primary_address,
+	secondary_address: tnt4882_secondary_address,
+	serial_poll_response: tnt4882_serial_poll_response,
+};
+
 gpib_interface_t ni_isa_interface =
 {
 	name: "atgpib",
@@ -147,6 +171,99 @@ void tnt4882_free_private(gpib_device_t *device)
 		kfree(device->private_data);
 		device->private_data = NULL;
 	}
+}
+
+int ni_pci_attach(gpib_device_t *device)
+{
+	tnt4882_private_t *tnt_priv;
+	nec7210_private_t *nec_priv;
+	int isr_flags = 0;
+
+	device->status = 0;
+
+	if(tnt4882_allocate_private(device))
+		return -ENOMEM;
+	tnt_priv = device->private_data;
+	nec_priv = &tnt_priv->nec7210_priv;
+	nec_priv->read_byte = nec7210_iomem_read_byte;
+	nec_priv->write_byte = nec7210_iomem_write_byte;
+	nec_priv->offset = atgpib_reg_offset;
+
+	if(mite_devices == NULL)
+	{
+		printk("no National Instruments PCI boards found\n");
+		return -1;
+	}
+
+	for(tnt_priv->mite = mite_devices; tnt_priv->mite; tnt_priv->mite = tnt_priv->mite->next)
+	{
+		if(mite_device_id(tnt_priv->mite) == PCI_DEVICE_ID_NI_GPIB) break;
+	}
+	if(tnt_priv->mite == NULL)
+	{
+		printk("no NI PCI-GPIB boards found\n");
+		return -1;
+	}
+
+	if(mite_setup(tnt_priv->mite))
+	{
+		return -1;
+	}
+
+	nec_priv->iobase = mite_iobase(tnt_priv->mite);
+
+	// get irq
+	if(request_irq(mite_irq(tnt_priv->mite), tnt4882_interrupt, isr_flags, "ni-pci-gpib", device))
+	{
+		printk("gpib: can't request IRQ %d\n", device->ibirq);
+		return -1;
+	}
+	tnt_priv->irq = mite_irq(tnt_priv->mite);
+
+	/* NAT 4882 reset */
+	udelay(1);
+	outb(SFTRST, nec_priv->iobase + CMDR);	/* Turbo488 software reset */
+
+	nec7210_board_reset(nec_priv);
+
+	// enable passing of nec7210 interrupts
+	outb(0x2, nec_priv->iobase + IMR3);
+
+	// enable interrupt
+	outb(0x1, nec_priv->iobase + INTRT);
+
+	// enable nec7210 interrupts
+	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
+		HR_DETIE | HR_APTIE | HR_CPTIE;
+	nec_priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
+	write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
+	write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
+
+	write_byte(nec_priv, AUX_PON, AUXMR);
+
+	return 0;
+}
+
+void ni_pci_detach(gpib_device_t *device)
+{
+	tnt4882_private_t *tnt_priv = device->private_data;
+	nec7210_private_t *nec_priv;
+
+	if(tnt_priv)
+	{
+		nec_priv = &tnt_priv->nec7210_priv;
+		if(tnt_priv->irq)
+		{
+			free_irq(tnt_priv->irq, device);
+		}
+		if(nec_priv->iobase)
+		{
+			nec7210_board_reset(nec_priv);
+		}
+		if(tnt_priv->mite)
+			mite_unsetup(tnt_priv->mite);
+	}
+	tnt4882_free_private(device);
 }
 
 int ni_isa_attach(gpib_device_t *device)
@@ -232,8 +349,13 @@ int init_module(void)
 	EXPORT_NO_SYMBOLS;
 
 	INIT_LIST_HEAD(&ni_isa_interface.list);
+	INIT_LIST_HEAD(&ni_pci_interface.list);
 
 	gpib_register_driver(&ni_isa_interface);
+	gpib_register_driver(&ni_pci_interface);
+
+	mite_init();
+	mite_list_devices();
 
 	return 0;
 }
@@ -241,6 +363,9 @@ int init_module(void)
 void cleanup_module(void)
 {
 	gpib_unregister_driver(&ni_isa_interface);
+	gpib_unregister_driver(&ni_pci_interface);
+
+	mite_cleanup();
 }
 
 

@@ -13,7 +13,7 @@
 
 #define USE_SRQ 0
 #define READS 5
-#define WAIT 0
+#define WAIT 1
 
 
 #include <stdio.h>
