@@ -1,6 +1,34 @@
 
-DUMMY_VERSION {
-	global: ibrd;
-	local: send_setup;
+GPIB_DUMMY_VERSION {
+	global:
+		ibcac;
+		ibclr;
+		ibcmd;
+		ibcnt;
+		ibconfig;
+		ibdev;
+		ibdma;
+		ibeot;
+		iberr;
+		ibevent;
+		ibfind;
+		ibgts;
+		iblines;
+		ibloc;
+		ibonl;
+		ibpad;
+		ibrd;
+		ibrpp;
+		ibrsp;
+		ibrsv;
+		ibsad;
+		ibsic;
+		ibsre;
+		ibsta;
+		ibtmo;
+		ibtrg;
+		ibwait;
+		ibwrt;
+	local: *;
 };
 

@@ -26,10 +26,9 @@ extern "C" {
 #include <gpib_user.h>
 
 extern int ibsta, ibcnt, iberr;
+#define ibcntl ibcnt
 
 /***** Public Functions ******/
-extern int ibAPwait(int ud, int mask);
-extern int ibape(int ud, int v);
 extern int ibcac(int ud, int v);
 extern int ibclr(int ud);
 extern int ibcmd(int ud, void *cmd, unsigned long cnt);
@@ -43,9 +42,6 @@ extern int ibgts(int ud, int v);
 extern int iblines( int ud, short *line_status );
 extern int ibloc(int ud);
 extern int ibonl(int ud, int onl);
-extern int ibchbase(int ud, int base);
-extern int ibchirq(int ud, int base);
-extern int ibchdma(int ud, int base);
 extern int ibpad(int ud, int v);
 extern int ibrd(int ud, void *rd, unsigned long cnt);
 extern int ibrpp(int ud, char *ppr);

@@ -35,15 +35,50 @@ int receive_setup( const ibBoard_t *board, const ibConf_t *conf )
 	return 0;
 }
 
+ssize_t my_ibrd( const ibBoard_t *board, const ibConf_t *conf, uint8_t *buffer, size_t count,
+	int *end )
+{
+	read_write_ioctl_t read_cmd;
+	int retval;
+
+	// set eos mode
+	iblcleos( conf );
+
+	if( conf->is_interface == 0 )
+	{
+		// set up addressing
+		if( receive_setup( board, conf ) < 0 )
+		{
+			return -1;
+		}
+	}
+
+	read_cmd.buffer = buffer;
+	read_cmd.count = count;
+
+	set_timeout( board, conf->usec_timeout );
+
+	retval = ioctl( board->fileno, IBRD, &read_cmd );
+	if( retval < 0 )
+	{
+		return retval;
+	}
+
+	*end = read_cmd.end;
+
+	return read_cmd.count;
+}
+
 int ibrd(int ud, void *rd, unsigned long cnt)
 {
 	ibConf_t *conf = ibConfigs[ud];
 	ibBoard_t *board;
-	read_write_ioctl_t read_cmd;
-	int retval;
+	int retval, status_ret = 0;
 	int status = ibsta & (RQS | CMPL);
+	ssize_t count;
+	int end;
 
-	if(ibCheckDescriptor(ud) < 0)
+	if( ibCheckDescriptor( ud ) < 0 )
 	{
 		iberr = EDVR;
 		status |= ERR;
@@ -53,30 +88,37 @@ int ibrd(int ud, void *rd, unsigned long cnt)
 
 	board = &ibBoard[conf->board];
 
-	// set eos mode
-	iblcleos( conf );
-
-	if(conf->is_interface == 0)
+	retval = lock_board_mutex( board );
+	if( retval < 0 )
 	{
-		// set up addressing
-		if( receive_setup( board, conf) < 0 )
-		{
-			iberr = EDVR;
-			status |= ERR;
-			ibsta = status;
-			return status;
-		}
+		status |= ERR;
+		iberr = EDVR;
+		ibsta = status;
+		return status;
 	}
 
-	read_cmd.buffer = rd;
-	read_cmd.count = cnt;
+	count = my_ibrd( board, conf, rd, cnt, &end );
 
-	set_timeout( board, conf->usec_timeout );
-
-	retval = ioctl(board->fileno, IBRD, &read_cmd);
-	if(retval < 0)
+	// get more status bits from interface board if appropriate
+	if( conf->is_interface )
 	{
-		switch(errno)
+		int board_status = 0;
+		status_ret = ioctl(board->fileno, IBSTATUS, &board_status);
+		status |= board_status & DRIVERBITS;
+	}
+
+	retval = unlock_board_mutex( board );
+	if( retval < 0 || status_ret < 0 )
+	{
+		status |= ERR;
+		iberr = EDVR;
+		ibsta = status;
+		return status;
+	}
+
+	if( count < 0 )
+	{
+		switch( errno )
 		{
 			case ETIMEDOUT:
 				status |= TIMO;
@@ -91,24 +133,9 @@ int ibrd(int ud, void *rd, unsigned long cnt)
 		return status;
 	}
 
-	// get more status bits from interface board if appropriate
-	if(conf->is_interface)
-	{
-		int board_status;
-		retval = ioctl(board->fileno, IBSTATUS, &board_status);
-		if(retval < 0)
-		{
-			status |= ERR;
-			iberr = EDVR;
-			ibsta = status;
-			return status;
-		}
-		status |= board_status & DRIVERBITS;
-	}
-
-	ibcnt = read_cmd.count;
+	ibcnt = count;
 	status |= CMPL;
-	if(read_cmd.end)
+	if( end )
 		status |= END;
 	ibsta = status;
 

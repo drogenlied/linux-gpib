@@ -8,6 +8,17 @@ ssize_t my_ibwrt( const ibBoard_t *board, const ibConf_t *conf,
 {
 	read_write_ioctl_t write_cmd;
 
+	iblcleos( conf );
+
+	if( conf->is_interface == 0 )
+	{
+		// set up addressing
+		if( send_setup( board, conf ) < 0 )
+		{
+			return -1;
+		}
+	}
+
 	write_cmd.buffer = buffer;
 	write_cmd.count = count;
 	write_cmd.end = conf->send_eoi;
@@ -27,9 +38,9 @@ int ibwrt(int ud, void *rd, unsigned long cnt)
 	ibBoard_t *board;
 	ssize_t count;
 	int status = ibsta & (RQS | CMPL);
-	int retval;
+	int retval, status_ret = 0;
 
-	if(ibCheckDescriptor(ud) < 0)
+	if( ibCheckDescriptor( ud ) < 0 )
 	{
 		iberr = EDVR;
 		status |= ERR;
@@ -39,25 +50,37 @@ int ibwrt(int ud, void *rd, unsigned long cnt)
 
 	board = &ibBoard[ conf->board ];
 
-	iblcleos( conf );
-
-	if(conf->is_interface == 0)
+	retval = lock_board_mutex( board );
+	if( retval < 0 )
 	{
-		// set up addressing
-		if(send_setup( board, conf ) < 0)
-		{
-			iberr = EDVR;
-			status |= ERR;
-			ibsta = status;
-			return status;
-		}
+		status |= ERR;
+		iberr = EDVR;
+		ibsta = status;
+		return status;
 	}
 
 	count = my_ibwrt( board, conf, rd, cnt );
 
-	if(count < 0)
+	// get more status bits from interface board if appropriate
+	if( conf->is_interface )
 	{
-		switch(errno)
+		int board_status = 0;
+		status_ret = ioctl( board->fileno, IBSTATUS, &board_status );
+		status |= board_status & DRIVERBITS;
+	}
+
+	retval = unlock_board_mutex( board );
+	if( retval < 0 || status_ret < 0 )
+	{
+		status |= ERR;
+		iberr = EDVR;
+		ibsta = status;
+		return status;
+	}
+
+	if( count < 0 )
+	{
+		switch( errno )
 		{
 			case ETIMEDOUT:
 				iberr = EABO;
@@ -76,21 +99,6 @@ int ibwrt(int ud, void *rd, unsigned long cnt)
 	{
 		iberr = EDVR;
 		status |= ERR;
-	}
-
-	// get more status bits from interface board if appropriate
-	if(conf->is_interface)
-	{
-		int board_status;
-		retval = ioctl(board->fileno, IBSTATUS, &board_status);
-		if(retval < 0)
-		{
-			status |= ERR;
-			iberr = EDVR;
-			ibsta = status;
-			return status;
-		}
-		status |= board_status & DRIVERBITS;
 	}
 
 	status |= CMPL;

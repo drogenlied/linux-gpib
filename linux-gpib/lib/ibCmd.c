@@ -8,7 +8,7 @@ int ibcmd(int ud, void *cmd, unsigned long cnt)
 	ibConf_t *conf = ibConfigs[ud];
 	ibBoard_t *board;
 	ssize_t count;
-	int retval;
+	int retval, status_ret = 0;
 	int status = ibsta & CMPL;
 	int board_status;
 
@@ -31,7 +31,29 @@ int ibcmd(int ud, void *cmd, unsigned long cnt)
 
 	board = &ibBoard[conf->board];
 
+	retval = lock_board_mutex( board );
+	if( retval < 0 )
+	{
+		status |= ERR;
+		iberr = EDVR;
+		ibsta = status;
+		return status;
+	}
+
 	count = my_ibcmd(board, conf, cmd, cnt);
+
+	// get more status bits from interface board
+	status_ret = ioctl( board->fileno, IBSTATUS, &board_status );
+	retval = unlock_board_mutex( board );
+	if( retval < 0 || status_ret < 0 )
+	{
+		status |= ERR;
+		iberr = EDVR;
+		ibsta = status;
+		return status;
+	}
+
+	status |= board_status & DRIVERBITS;
 
 	if(count < 0)
 	{
@@ -56,17 +78,6 @@ int ibcmd(int ud, void *cmd, unsigned long cnt)
 		ibsta = status;
 		return status;
 	}
-
-	// get more status bits from interface board
-	retval = ioctl(board->fileno, IBSTATUS, &board_status);
-	if(retval < 0)
-	{
-		status |= ERR;
-		iberr = EDVR;
-		ibsta = status;
-		return status;
-	}
-	status |= board_status & DRIVERBITS;
 
 	ibcnt = count;
 	ibsta = status;
