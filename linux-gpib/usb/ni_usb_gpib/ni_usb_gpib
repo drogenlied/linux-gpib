@@ -3,7 +3,7 @@
 GPIB_CONFIG_OPTIONS="--minor 0"
 DATADIR=/usr/share
 FXLOAD=fxload
-FXLOAD_OPTIONS=
+FXLOAD_OPTIONS="-t fx"
 
 PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin
 FIRMWARE=
