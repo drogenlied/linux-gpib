@@ -747,7 +747,7 @@ void ni_usb_request_system_control( gpib_board_t *board, int request_control )
 	{
 		writes[i].device = NIUSB_SUBDEV_TNT4882;
 		writes[i].address = CMDR;
-		writes[i].value = CLRSC;	// ni usb seems to reverse polarity of SC bit?
+		writes[i].value = SETSC;
 		i++;
 		writes[i].device = NIUSB_SUBDEV_TNT4882;
 		writes[i].address = nec7210_to_tnt4882_offset(AUXMR);
@@ -769,7 +769,7 @@ void ni_usb_request_system_control( gpib_board_t *board, int request_control )
 		i++;
 		writes[i].device = NIUSB_SUBDEV_TNT4882;
 		writes[i].address = CMDR;
-		writes[i].value = SETSC;	// ni usb seems to reverse polarity of SC bit?
+		writes[i].value = CLRSC;
 		i++;
 	}
 	retval = ni_usb_write_registers(ni_priv, writes, i, &ibsta);

@@ -86,8 +86,8 @@ enum cfg_bits
 /* CMDR -- Command Register */
 enum cmdr_bits
 {
-	SETSC = 0x2,	/* set the system controller bit */
-	CLRSC = 0x3,	/* clear the system controller bit */
+	CLRSC = 0x2,	/* clear the system controller bit */
+	SETSC = 0x3,	/* set the system controller bit */
 	GO = 0x4,	/* start fifos */
 	STOP = 0x8,	/* stop fifos */
 	RESET_FIFO = 0x10,	/* reset the FIFOs 		*/
