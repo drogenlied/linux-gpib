@@ -29,6 +29,7 @@
 #include <linux/vmalloc.h>
 
 MODULE_LICENSE("GPL");
+MODULE_VERSION("");
 
 struct file_operations ib_fops =
 {
