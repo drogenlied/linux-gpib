@@ -338,7 +338,7 @@ ibConf_t * enter_library( int ud )
 
 ibConf_t * general_enter_library( int ud, int no_lock_board, int ignore_eoip )
 {
-	ibConf_t *conf = ibConfigs[ ud ];
+	ibConf_t *conf;
 	ibBoard_t *board;
 	int retval;
 
@@ -347,6 +347,8 @@ ibConf_t * general_enter_library( int ud, int no_lock_board, int ignore_eoip )
 	{
 		return NULL;
 	}
+
+	conf = ibConfigs[ ud ];
 
 	if( ibCheckDescriptor( ud ) < 0 )
 	{
