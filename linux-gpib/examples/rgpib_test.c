@@ -70,10 +70,7 @@ char res[1024];
 
 
 
-gpiberr(char *msg) {
-
-
-
+void gpiberr(char *msg) {
 
 printf("%s\n",msg);
 
