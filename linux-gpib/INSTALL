@@ -11,8 +11,8 @@ See the file named drivers.txt
 
 Important Note:
 
-You'll need the 'dialog' package installed on your system to run the
-installation scripts correctly.
+You'll need the 'dialog' or 'whiptail' package installed on your system 
+to run the installation scripts correctly.
 
 -------------------------------------------------------------------------
 

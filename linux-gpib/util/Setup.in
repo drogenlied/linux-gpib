@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo DIALOG is $DIALOG !
+
 CONFIG=.tmpconfig
 CONFIG_H=.tmpconfig.h
 
@@ -29,7 +31,7 @@ DEFAULT=$1
 ##########
 
 
-dialog --clear --title "Linux-GPIB Configuration" --msgbox "\
+$DIALOG --clear --title "Linux-GPIB Configuration" --msgbox "\
 \n\
 Welcome to the Linux-GPIB configuration program\n\
 \n\
@@ -50,8 +52,8 @@ if [ -f ".config" ];then
 	source .config
 fi
 
-RESULT=$(dialog --title "Kernel Source Directory" --inputbox "Input path to linux \
-kernel source directory" 10 70 $LINUXDIR 2>&1 1>/dev/null)
+RESULT=$($DIALOG --title "Kernel Source Directory" --inputbox "Input path to linux \
+kernel source directory" 10 70 $LINUXDIR 2>&1 1>/dev/tty)
 
 set_svar LINUXDIR $RESULT
 
@@ -87,7 +89,7 @@ fi
 #
 ##########
 
-RESULT=$(dialog --title "Board Type Selection" \
+RESULT=$($DIALOG --title "Board Type Selection" \
 --checklist "Select desired drivers" \
 	17 76 10 \
 	"PC2"  "National Instruments PCII, PCIIa, and compatible" "on" \
@@ -96,7 +98,7 @@ RESULT=$(dialog --title "Board Type Selection" \
 	"INES" "Ines boards" "on" \
 	"CEC" "Captial Equipment Corporation / Keithley" "on" \
 	"TNT4882TMS" "NI PCI-GPIB in tms9914 mode (for testing only)" "off" \
-	2>&1 1>/dev/null)
+	2>&1 1>/dev/tty)
 
 if [ $? = 0 ]; then
 	for i in `echo $RESULT | sed 's!\"!!g' `; do
@@ -110,12 +112,12 @@ fi
 #
 ##########
 
-RESULT=$(dialog --title "Compilation options" \
+RESULT=$($DIALOG --title "Compilation options" \
 --checklist "Select compilation options" \
 	17 76 10 \
 	"GPIB_CONFIG_PCMCIA"  "Compile in support for PCMCIA boards" "off" \
 	"GPIB_CONFIG_VERBOSE_DEBUG" "Produce verbose debugging messages" "off" \
-	2>&1 1>/dev/null)
+	2>&1 1>/dev/tty)
 
 if [ $? = 0 ]; then
 	for i in `echo $RESULT | sed 's!\"!!g' `; do
@@ -152,7 +154,7 @@ mv .tmpconfig.h ../include/autoconf.h
 
 ######################################################################
 
-dialog --msgbox "
+$DIALOG --msgbox "
 \n\
             Configuration Finished ! \n\
 \n\

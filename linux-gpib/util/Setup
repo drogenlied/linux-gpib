@@ -10,15 +10,20 @@ set -f -h
 
 clear 
 
+DIALOG=0
 
-if [ ! -x /bin/dialog -a ! -x /usr/bin/dialog -a ! -x /usr/local/bin/dialog ] ; then
+if [ -x /bin/dialog -o -x /usr/bin/dialog -o -x /usr/local/bin/dialog ] ; then
+	DIALOG=dialog
+elif [ -x /bin/whiptail -o -x /usr/bin/whiptail -o /usr/local/bin/whiptail ] ; then
+	DIALOG=whiptail
+fi
+
+if [ $DIALOG == 0 ] ; then
   echo
-  echo "The dialog program is not installed correctly on your system"
-  echo "it should be in /bin/dialog, /usr/bin/dialog or /usr/local/bin/dialog,"
-  echo "please get the package from sunsite"
-  echo "or install it from your linux distribution."
+  echo "Could not find 'dialog' or 'whiptail' programs."
+  echo "Please install one of them."
   echo 
-  echo "please read the INSTALL and README files"
+  echo "See the INSTALL and README files."
   echo
 exit 1
 fi
