@@ -79,7 +79,7 @@ int ibsre(int ud, int v)
 	return exit_library( ud, 0 );
 }
 
-int InternalEnableRemote( ibConf_t *conf, Addr4882_t addressList[] )
+int InternalEnableRemote( ibConf_t *conf, const Addr4882_t addressList[] )
 {
 	int i;
 	ibBoard_t *board;
@@ -133,7 +133,7 @@ int InternalEnableRemote( ibConf_t *conf, Addr4882_t addressList[] )
 }
 
 
-void EnableRemote( int boardID, Addr4882_t addressList[] )
+void EnableRemote( int boardID, const Addr4882_t addressList[] )
 {
 	ibConf_t *conf;
 	int retval;

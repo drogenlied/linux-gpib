@@ -50,7 +50,7 @@ int ibloc(int ud)
 
 } /* ibloc */
 
-void EnableLocal( int boardID, Addr4882_t addressList[] )
+void EnableLocal( int boardID, const Addr4882_t addressList[] )
 {
 	int i;
 	ibConf_t *conf;

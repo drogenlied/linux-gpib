@@ -246,7 +246,7 @@ int ibBoardClose( ibBoard_t *board )
 	return 0;
 }
 
-int InternalResetSys( ibConf_t *conf, Addr4882_t addressList[] )
+int InternalResetSys( ibConf_t *conf, const Addr4882_t addressList[] )
 {
 	ibBoard_t *board;
 	int retval;
@@ -292,7 +292,7 @@ int InternalResetSys( ibConf_t *conf, Addr4882_t addressList[] )
 	return 0;
 }
 
-void ResetSys( int boardID, Addr4882_t addressList[] )
+void ResetSys( int boardID, const Addr4882_t addressList[] )
 {
 	ibConf_t *conf;
 	int retval;

@@ -18,7 +18,7 @@
 #include "ib_internal.h"
 #include <stdlib.h>
 
-int InternalTestSys( ibConf_t *conf, Addr4882_t addressList[], short resultList[] )
+int InternalTestSys( ibConf_t *conf, const Addr4882_t addressList[], short resultList[] )
 {
 	unsigned int failure_count = 0;
 	ibBoard_t *board;
@@ -74,7 +74,7 @@ int InternalTestSys( ibConf_t *conf, Addr4882_t addressList[], short resultList[
 }
 
 
-void TestSys( int boardID, Addr4882_t addressList[], short resultList[] )
+void TestSys( int boardID, const Addr4882_t addressList[], short resultList[] )
 {
 	ibConf_t *conf;
 	int retval;

@@ -81,7 +81,7 @@ int ibrsp(int ud, char *spr)
 	return exit_library( ud, 0 );
 }
 
-void AllSPoll( int boardID, Addr4882_t addressList[], short resultList[] )
+void AllSPoll( int boardID, const Addr4882_t addressList[], short resultList[] )
 {
 	int i;
 	ibConf_t *conf;
@@ -137,12 +137,12 @@ void AllSPoll( int boardID, Addr4882_t addressList[], short resultList[] )
 	else exit_library( boardID, 0 );
 }
 
-void AllSpoll( int boardID, Addr4882_t addressList[], short resultList[] )
+void AllSpoll( int boardID, const Addr4882_t addressList[], short resultList[] )
 {
 	AllSPoll( boardID, addressList, resultList );
 }
 
-void FindRQS( int boardID, Addr4882_t addressList[], short *result )
+void FindRQS( int boardID, const Addr4882_t addressList[], short *result )
 {
 	int i;
 	ibConf_t *conf;

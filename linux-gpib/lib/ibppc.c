@@ -19,7 +19,7 @@
 #include "ib_internal.h"
 #include <stdlib.h>
 
-int ppoll_configure_device( ibConf_t *conf, Addr4882_t addressList[],
+int ppoll_configure_device( ibConf_t *conf, const Addr4882_t addressList[],
 	int ppc_configuration )
 {
 	uint8_t *cmd;
@@ -191,7 +191,7 @@ void PPollConfig( int boardID, Addr4882_t address,
 	exit_library( boardID, 0 );
 }
 
-void PPollUnconfig( int boardID, Addr4882_t addressList[] )
+void PPollUnconfig( int boardID, const Addr4882_t addressList[] )
 {
 	ibConf_t *conf;
 	int retval;

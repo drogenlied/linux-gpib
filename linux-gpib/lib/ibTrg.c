@@ -18,7 +18,7 @@
 #include "ib_internal.h"
 #include <stdlib.h>
 
-int my_trigger( ibConf_t *conf, Addr4882_t addressList[] )
+int my_trigger( ibConf_t *conf, const Addr4882_t addressList[] )
 {
 	int i, retval;
 	uint8_t *cmd;
@@ -81,7 +81,7 @@ int ibtrg( int ud )
 	return exit_library( ud, 0 );
 }
 
-void TriggerList( int boardID, Addr4882_t addressList[] )
+void TriggerList( int boardID, const Addr4882_t addressList[] )
 {
 	ibConf_t *conf;
 	int retval;

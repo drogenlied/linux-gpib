@@ -52,7 +52,7 @@ int ibclr( int ud )
 }
 
 
-int InternalDevClearList( ibConf_t *conf, Addr4882_t addressList[] )
+int InternalDevClearList( ibConf_t *conf, const Addr4882_t addressList[] )
 {
 	int i;
 	ibBoard_t *board;
@@ -106,7 +106,7 @@ int InternalDevClearList( ibConf_t *conf, Addr4882_t addressList[] )
 	return 0;
 }
 
-void DevClearList( int boardID, Addr4882_t addressList[] )
+void DevClearList( int boardID, const Addr4882_t addressList[] )
 {
 	int retval;
 	ibConf_t *conf;

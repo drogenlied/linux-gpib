@@ -544,7 +544,7 @@ int addressIsValid( Addr4882_t address )
 	return 1;
 }
 
-int addressListIsValid( Addr4882_t addressList[] )
+int addressListIsValid( const Addr4882_t addressList[] )
 {
 	int i;
 
@@ -562,7 +562,7 @@ int addressListIsValid( Addr4882_t addressList[] )
 	return 1;
 }
 
-unsigned int numAddresses( Addr4882_t addressList[] )
+unsigned int numAddresses( const Addr4882_t addressList[] )
 {
 	unsigned int count;
 

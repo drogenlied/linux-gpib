@@ -17,7 +17,7 @@
 
 #include "ib_internal.h"
 
-static int local_lockout( ibConf_t *conf, Addr4882_t addressList[] )
+static int local_lockout( ibConf_t *conf, const Addr4882_t addressList[] )
 {
 	uint8_t cmd;
 	int retval;
@@ -54,7 +54,7 @@ void SendLLO( int boardID )
 	exit_library( boardID, 0 );
 }
 
-void SetRWLS( int boardID, Addr4882_t addressList[] )
+void SetRWLS( int boardID, const Addr4882_t addressList[] )
 {
 	ibConf_t *conf;
 	int retval;

@@ -19,7 +19,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-int listenerFound( ibConf_t *conf, Addr4882_t addressList[] )
+int listenerFound( ibConf_t *conf, const Addr4882_t addressList[] )
 {
 	uint8_t *cmd;
 	int i, j;
@@ -82,7 +82,7 @@ int secondaryListenerFound( ibConf_t *conf, unsigned int pad )
 	return listenerFound( conf, testAddress );
 }
 
-void FindLstn( int boardID, Addr4882_t padList[],
+void FindLstn( int boardID, const Addr4882_t padList[],
 	Addr4882_t resultList[], int maxNumResults )
 {
 	int i;

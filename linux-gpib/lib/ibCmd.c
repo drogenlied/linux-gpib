@@ -22,7 +22,7 @@
 
 void* start_async_cmd( void *arg );
 
-int ibcmd(int ud, void *cmd_buffer, long cnt)
+int ibcmd(int ud, const void *cmd_buffer, long cnt)
 {
 	ibConf_t *conf;
 	ssize_t count;
@@ -54,7 +54,7 @@ int ibcmd(int ud, void *cmd_buffer, long cnt)
 }
 
 // XXX no timeout for asynchronous?
-int ibcmda( int ud, void *cmd_buffer, long cnt )
+int ibcmda( int ud, const void *cmd_buffer, long cnt )
 {
 	ibConf_t *conf;
 	ibBoard_t *board;
@@ -81,7 +81,7 @@ int ibcmda( int ud, void *cmd_buffer, long cnt )
 
 	pthread_mutex_lock( &conf->async.lock );
 
-	conf->async.buffer = cmd_buffer;
+	conf->async.buffer = (void*)cmd_buffer;
 	conf->async.length = cnt;
 	conf->async.in_progress = 1;
 
@@ -129,7 +129,7 @@ void* start_async_cmd( void *arg )
 	return NULL;
 }
 
-ssize_t my_ibcmd( ibConf_t *conf, uint8_t *buffer, size_t count)
+ssize_t my_ibcmd( ibConf_t *conf, const uint8_t *buffer, size_t count)
 {
 	read_write_ioctl_t cmd;
 	int retval;
@@ -143,7 +143,7 @@ ssize_t my_ibcmd( ibConf_t *conf, uint8_t *buffer, size_t count)
 		return -1;
 	}
 
-	cmd.buffer = buffer;
+	cmd.buffer = (void*)buffer;
 	cmd.count = count;
 
 	set_timeout( board, conf->usec_timeout);
@@ -169,7 +169,7 @@ ssize_t my_ibcmd( ibConf_t *conf, uint8_t *buffer, size_t count)
 }
 
 unsigned int create_send_setup( const ibBoard_t *board,
-	Addr4882_t addressList[], uint8_t *cmdString )
+	const Addr4882_t addressList[], uint8_t *cmdString )
 {
 	unsigned int i, j;
 
@@ -232,7 +232,7 @@ int send_setup( ibConf_t *conf )
 	return 0;
 }
 
-int InternalSendSetup( ibConf_t *conf, Addr4882_t addressList[] )
+int InternalSendSetup( ibConf_t *conf, const Addr4882_t addressList[] )
 {
 	int i;
 	ibBoard_t *board;
@@ -284,7 +284,7 @@ int InternalSendSetup( ibConf_t *conf, Addr4882_t addressList[] )
 	return 0;
 }
 
-void SendSetup( int boardID, Addr4882_t addressList[] )
+void SendSetup( int boardID, const Addr4882_t addressList[] )
 {
 	int retval;
 	ibConf_t *conf;
@@ -306,7 +306,7 @@ void SendSetup( int boardID, Addr4882_t addressList[] )
 	exit_library( boardID, 0 );
 }
 
-void SendCmds( int boardID, void *buffer, long count )
+void SendCmds( int boardID, const void *buffer, long count )
 {
 	ibcmd( boardID, buffer, count );
 }

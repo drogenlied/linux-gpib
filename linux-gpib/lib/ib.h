@@ -47,52 +47,52 @@ enum send_eotmode
 volatile int ibsta, ibcnt, iberr;
 volatile long ibcntl;
 
-void AllSPoll( int board_desc, Addr4882_t addressList[], short resultList[] );
-void AllSpoll( int board_desc, Addr4882_t addressList[], short resultList[] );
+void AllSPoll( int board_desc, const Addr4882_t addressList[], short resultList[] );
+void AllSpoll( int board_desc, const Addr4882_t addressList[], short resultList[] );
 void DevClear( int board_desc, Addr4882_t address );
-void DevClearList( int board_desc, Addr4882_t addressList[] );
-void EnableLocal( int board_desc, Addr4882_t addressList[] );
-void EnableRemote( int board_desc, Addr4882_t addressList[] );
-void FindLstn( int board_desc, Addr4882_t padList[],
+void DevClearList( int board_desc, const Addr4882_t addressList[] );
+void EnableLocal( int board_desc, const Addr4882_t addressList[] );
+void EnableRemote( int board_desc, const Addr4882_t addressList[] );
+void FindLstn( int board_desc, const Addr4882_t padList[],
 	Addr4882_t resultList[], int maxNumResults );
-void FindRQS( int board_desc, Addr4882_t addressList[], short *result );
+void FindRQS( int board_desc, const Addr4882_t addressList[], short *result );
 void PassControl( int board_desc, Addr4882_t address );
 void PPoll( int board_desc, short *result );
 void PPollConfig( int board_desc, Addr4882_t address, int dataLine, int lineSense );
-void PPollUnconfig( int board_desc, Addr4882_t addressList[] );
+void PPollUnconfig( int board_desc, const Addr4882_t addressList[] );
 void RcvRespMsg( int board_desc, void *buffer, long count, int termination );
 void ReadStatusByte( int board_desc, Addr4882_t address, short *result );
 void Receive( int board_desc, Addr4882_t address,
 	void *buffer, long count, int termination );
 void ReceiveSetup( int board_desc, Addr4882_t address );
-void ResetSys( int board_desc, Addr4882_t addressList[] );
-void Send( int board_desc, Addr4882_t address, void *buffer,
+void ResetSys( int board_desc, const Addr4882_t addressList[] );
+void Send( int board_desc, Addr4882_t address, const void *buffer,
 	long count, int eotmode );
-void SendCmds( int board_desc, void *buffer, long count );
-void SendDataBytes( int board_desc, void *buffer,
+void SendCmds( int board_desc, const void *buffer, long count );
+void SendDataBytes( int board_desc, const void *buffer,
 	long count, int eotmode );
 void SendIFC( int board_desc );
 void SendLLO( int board_desc );
-void SendList( int board_desc, Addr4882_t addressList[], void *buffer,
+void SendList( int board_desc, const Addr4882_t addressList[], const void *buffer,
 	long count, int eotmode );
-void SendSetup( int board_desc, Addr4882_t addressList[] );
-void SetRWLS( int board_desc, Addr4882_t addressList[] );
+void SendSetup( int board_desc, const Addr4882_t addressList[] );
+void SetRWLS( int board_desc, const Addr4882_t addressList[] );
 void TestSRQ( int board_desc, short *result );
-void TestSys( int board_desc, Addr4882_t addressList[],
+void TestSys( int board_desc, const Addr4882_t addressList[],
 	short resultList[] );
 int ThreadIbsta( void );
 int ThreadIberr( void );
 int ThreadIbcnt( void );
 long ThreadIbcntl( void );
 void Trigger( int board_desc, Addr4882_t address );
-void TriggerList( int board_desc, Addr4882_t addressList[] );
+void TriggerList( int board_desc, const Addr4882_t addressList[] );
 void WaitSRQ( int board_desc, short *result );
 int ibask( int ud, int option, int *value );
 int ibbna( int ud, char *board_name );
 int ibcac( int ud, int v );
 int ibclr( int ud );
-int ibcmd( int ud, void *cmd, long cnt );
-int ibcmda( int ud, void *cmd, long cnt );
+int ibcmd( int ud, const void *cmd, long cnt );
+int ibcmda( int ud, const void *cmd, long cnt );
 int ibconfig( int ud, int option, int value );
 int ibdev( int board_index, int pad, int sad, int timo, int send_eoi, int eosmode );
 int ibdma( int ud, int v );
@@ -119,7 +119,7 @@ int ibsre( int ud, int v );
 int ibtmo( int ud, int v );
 int ibtrg( int ud );
 int ibwait( int ud, int mask );
-int ibwrt( int ud, void *buf, long count );
+int ibwrt( int ud, const void *buf, long count );
 int ibwrtf( int ud, const char *file_path );
 const char* gpib_error_string( int iberr );
 

@@ -48,10 +48,10 @@ extern void ibPutErrlog(int ud,char *routine);
 extern int ibParseConfigFile( void );
 extern int ibGetDescriptor(ibConf_t conf);
 extern int ibFindDevIndex( const char *name );
-extern ssize_t my_ibcmd( ibConf_t *conf, uint8_t *buffer, size_t length);
+extern ssize_t my_ibcmd( ibConf_t *conf, const uint8_t *buffer, size_t length);
 extern unsigned int send_setup_string( const ibConf_t *conf, uint8_t *cmdString );
 extern unsigned int create_send_setup( const ibBoard_t *board,
-	Addr4882_t addressList[], uint8_t *cmdString );
+	const Addr4882_t addressList[], uint8_t *cmdString );
 extern int send_setup( ibConf_t *conf );
 extern void init_ibconf( ibConf_t *conf );
 extern int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout,
@@ -83,8 +83,8 @@ extern int extractPAD( Addr4882_t address );
 extern int extractSAD( Addr4882_t address );
 extern Addr4882_t packAddress( unsigned int pad, int sad );
 extern int addressIsValid( Addr4882_t address );
-extern int addressListIsValid( Addr4882_t addressList[] );
-extern unsigned int numAddresses( Addr4882_t addressList[] );
+extern int addressListIsValid( const Addr4882_t addressList[] );
+extern unsigned int numAddresses( const Addr4882_t addressList[] );
 extern int remote_enable( const ibBoard_t *board, int enable );
 extern int config_read_eos( ibBoard_t *board, int use_eos_char,
 	int eos_char, int compare_8_bits );
@@ -107,12 +107,12 @@ extern int internal_iblines( ibConf_t *conf, short *line_status );
 extern int internal_ibgts( ibConf_t *conf, int shadow_handshake );
 extern int internal_ibrsc( ibConf_t *conf, int request_control );
 extern int internal_ibsic( ibConf_t *conf );
-extern int InternalDevClearList( ibConf_t *conf, Addr4882_t addressList[] );
+extern int InternalDevClearList( ibConf_t *conf, const Addr4882_t addressList[] );
 extern int InternalReceiveSetup( ibConf_t *conf, Addr4882_t address );
-extern int InternalSendSetup( ibConf_t *conf, Addr4882_t addressList[] );
-extern int InternalSendList( ibConf_t *conf, Addr4882_t addressList[],
-	void *buffer, long count, int eotmode );
-extern int InternalEnableRemote( ibConf_t *conf, Addr4882_t addressList[] );
+extern int InternalSendSetup( ibConf_t *conf, const Addr4882_t addressList[] );
+extern int InternalSendList( ibConf_t *conf, const Addr4882_t addressList[],
+	const void *buffer, long count, int eotmode );
+extern int InternalEnableRemote( ibConf_t *conf, const Addr4882_t addressList[] );
 extern int InternalReceive( ibConf_t *conf, Addr4882_t address,
 	void *buffer, long count, int termination );
 

@@ -22,7 +22,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-int find_eos( uint8_t *buffer, size_t length, int eos, int eos_flags )
+int find_eos( const uint8_t *buffer, size_t length, int eos, int eos_flags )
 {
 	unsigned int i;
 	unsigned int compare_mask;
@@ -39,7 +39,7 @@ int find_eos( uint8_t *buffer, size_t length, int eos, int eos_flags )
 	return -1;
 }
 
-long send_data( ibConf_t *conf, void *buffer, unsigned long count, int send_eoi )
+long send_data( ibConf_t *conf, const void *buffer, unsigned long count, int send_eoi )
 {
 	ibBoard_t *board;
 	read_write_ioctl_t write_cmd;
@@ -48,7 +48,7 @@ long send_data( ibConf_t *conf, void *buffer, unsigned long count, int send_eoi 
 
 	set_timeout( board, conf->usec_timeout );
 
-	write_cmd.buffer = buffer;
+	write_cmd.buffer = (void*) buffer;
 	write_cmd.count = count;
 	write_cmd.end = send_eoi;
 
@@ -73,7 +73,8 @@ long send_data( ibConf_t *conf, void *buffer, unsigned long count, int send_eoi 
 	return count;
 }
 
-long send_data_smart_eoi( ibConf_t *conf, void *buffer, unsigned long count, int force_eoi )
+long send_data_smart_eoi( ibConf_t *conf, const void *buffer, unsigned long count,
+	int force_eoi )
 {
 	int eoi_on_eos;
 	int eos_found = 0;
@@ -106,7 +107,7 @@ long send_data_smart_eoi( ibConf_t *conf, void *buffer, unsigned long count, int
 }
 
 ssize_t my_ibwrt( ibConf_t *conf,
-	uint8_t *buffer, size_t count )
+	const uint8_t *buffer, size_t count )
 {
 	ibBoard_t *board;
 	long block_size;
@@ -140,7 +141,7 @@ ssize_t my_ibwrt( ibConf_t *conf,
 	return bytes_sent;
 }
 
-int ibwrt( int ud, void *rd, long cnt )
+int ibwrt( int ud, const void *rd, long cnt )
 {
 	ibConf_t *conf;
 	ssize_t count;
@@ -257,7 +258,7 @@ int ibwrtf( int ud, const char *file_path )
 	return exit_library( ud, 0 );
 }
 
-int InternalSendDataBytes( ibConf_t *conf, void *buffer,
+int InternalSendDataBytes( ibConf_t *conf, const void *buffer,
 	long count, int eotmode )
 {
 	int retval;
@@ -298,7 +299,7 @@ int InternalSendDataBytes( ibConf_t *conf, void *buffer,
 	return 0;
 }
 
-void SendDataBytes( int boardID, void *buffer,
+void SendDataBytes( int boardID, const void *buffer,
 	long count, int eotmode )
 {
 	ibConf_t *conf;
@@ -321,8 +322,8 @@ void SendDataBytes( int boardID, void *buffer,
 	exit_library( boardID, 0 );
 }
 
-int InternalSendList( ibConf_t *conf, Addr4882_t addressList[],
-	void *buffer, long count, int eotmode )
+int InternalSendList( ibConf_t *conf, const Addr4882_t addressList[],
+	const void *buffer, long count, int eotmode )
 {
 	ibBoard_t *board;
 	int retval;
@@ -357,8 +358,8 @@ int InternalSendList( ibConf_t *conf, Addr4882_t addressList[],
 	return 0;
 }
 
-void SendList( int boardID, Addr4882_t addressList[], void *buffer, long count,
-	int eotmode )
+void SendList( int boardID, const Addr4882_t addressList[],
+	const void *buffer, long count, int eotmode )
 {
 	ibConf_t *conf;
 	int retval;
@@ -380,7 +381,7 @@ void SendList( int boardID, Addr4882_t addressList[], void *buffer, long count,
 	exit_library( boardID, 0 );
 }
 
-void Send( int boardID, Addr4882_t address, void *buffer, long count,
+void Send( int boardID, Addr4882_t address, const void *buffer, long count,
 	int eotmode )
 {
 	Addr4882_t addressList[ 2 ];
