@@ -19,7 +19,7 @@
 
 ssize_t agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes)
 {
-	agilent_82350b_private_t *priv = board->private_data;
+	agilent_82350b_private_t *a_priv = board->private_data;
 	tms9914_private_t *tms_priv = &a_priv->tms9914_priv;
 	int i;
 	int complement;
@@ -28,10 +28,10 @@ ssize_t agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t 
 	//hardware doesn't support checking for end-of-string character when using fifo
 	if(tms_priv->eos_flags & REOS) 
 	{
-		return tms9914_read( board, &priv->tms9914_priv, buffer, length, end, nbytes);
+		return tms9914_read( board, tms_priv, buffer, length, end, nbytes);
 	}
 printk("%s: using fifo\n", __FUNCTION__);
-	clear_bit( DEV_CLEAR_BN, &priv->state );
+	clear_bit( DEV_CLEAR_BN, &tms_priv->state );
 	read_and_clear_event_status(board);
 	*end = 0;
 	*nbytes = 0;
@@ -50,7 +50,7 @@ printk("%s: using fifo\n", __FUNCTION__);
 		if(readb(a_priv->gpib_base + STREAM_STATUS_REG) & HALTED_STATUS_BIT) 
 			writeb(RESTART_STREAM_BIT, a_priv->gpib_base + STREAM_STATUS_REG); 
 		if(wait_event_interruptible(board->wait, 
-			((event_status = read_and_clear_event_status(board)) & (TERM_COUNT_STATUS_BIT | BUFFER_END_STATUS_BIT) ||
+			((event_status = read_and_clear_event_status(board)) & (TERM_COUNT_STATUS_BIT | BUFFER_END_STATUS_BIT)) ||
 			test_bit(DEV_CLEAR_BN, &tms_priv->state) ||
 			test_bit(TIMO_NUM, &board->status)))
 		{
@@ -74,30 +74,31 @@ printk("%s: using fifo\n", __FUNCTION__);
 			retval = -EINTR;
 			break;
 		}
-		if(event_status & (BUFFER_END_STATUS_BIT | TERM_COUNT_STATUS))
+		if(event_status & (BUFFER_END_STATUS_BIT | TERM_COUNT_STATUS_BIT))
 		{
 			int j;
 			for(j = 0; j < agilent_82350b_fifo_size && i < length; ++j)
-				buffer[i++] = readb(buffer[i], a_priv->sram_base + j); 
+				buffer[i++] = readb(a_priv->sram_base + j); 
 		}
-		if(test_bit(RECEIVED_END_BN, &priv->state) == 0)
+		if(test_bit(RECEIVED_END_BN, &tms_priv->state) == 0)
 			break;
 	}
+	if(test_and_clear_bit(RECEIVED_END_BN, &tms_priv->state))
+		*end = 1;
 	//FIXME try to empty fifo before returning if we were interrupted
 	*nbytes = i;
 	if(retval < 0) return retval;
 	// read last byte if we havn't received an END yet
-	if(test_bit(RECEIVED_END_BN, &priv->state) == 0)
+	if(test_bit(RECEIVED_END_BN, &tms_priv->state) == 0)
 	{
+		int bytes_read;
 		// make sure we holdoff after last byte read
 		write_byte(tms_priv, AUX_HLDE, AUXCR);
 		write_byte(tms_priv, AUX_HLDA | AUX_CS, AUXCR);
-		retval = pio_read(board, priv, &buffer[*nbytes], 1, &bytes_read);
+		retval = tms9914_read(board, tms_priv, &buffer[*nbytes], 1, end, &bytes_read);
 		*nbytes += bytes_read;
 		if(retval < 0)
 			return retval;
 	}
-	if(test_and_clear_bit(RECEIVED_END_BN, &tms_priv->state))
-		*end = 1;
 	return 0;
 }
