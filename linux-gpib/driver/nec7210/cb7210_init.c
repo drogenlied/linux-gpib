@@ -226,6 +226,8 @@ int cb_pci_attach(gpib_device_t *device)
 	// XXX set clock register for 20MHz? driving frequency
 	nec_priv->write_byte(nec_priv, ICR | 8, AUXMR);
 
+	// make sure mailbox flags are clear
+	inl(cb_priv->amcc_iobase + INCOMING_MAILBOX_REG(3));
 	// enable interrupts on amccs5933 chip
 	bits = INBOX_FULL_INTR_BIT | INBOX_BYTE_BITS(3) | INBOX_SELECT_BITS(3) |
 		INBOX_INTR_CS_BIT;

@@ -76,6 +76,17 @@ void cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	nec7210_interrupt(device, nec_priv);
 }
 
+void ines_pci_interrupt(int irq, void *arg, struct pt_regs *registerp)
+{
+	gpib_device_t *device = arg;
+	ines_private_t *priv = device->private_data;
+
+	/* reset interrupt circuit */
+	outb(INTCSR_ENABLE_INTR, priv->plx_iobase + PLX_INTCSR_REG);
+
+	nec7210_interrupt(device, &priv->nec7210_priv);
+}
+
 void nec7210_interrupt(gpib_device_t *device, nec7210_private_t *priv)
 {
 	int status1, status2, address_status;

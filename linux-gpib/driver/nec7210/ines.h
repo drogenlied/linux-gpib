@@ -1,9 +1,9 @@
 /***************************************************************************
-                              nec7210/board.h
+                          nec7210/ines.h  -  description
                              -------------------
+  Header for ines GPIB boards
 
-    begin                : Dec 2001
-    copyright            : (C) 2001, 2002 by Frank Mori Hess
+    copyright            : (C) 2002 by Frank Mori Hess
     email                : fmhess@users.sourceforge.net
  ***************************************************************************/
 
@@ -16,17 +16,34 @@
  *                                                                         *
  ***************************************************************************/
 
+#ifndef _INES_GPIB_H
+#define _INES_GPIB_H
 
-#ifndef _GPIB_PCIIA_BOARD_H
-#define _GPIB_PCIIA_BOARD_H
+typedef struct
+{
+	nec7210_private_t nec7210_priv;
+	struct pci_dev *pci_device;
+	// base address for plx pci chip
+	unsigned long plx_iobase;
+	unsigned int irq;
+} ines_private_t;
 
-#include <gpibP.h>
-#include <asm/io.h>
+// interrupt service routines
+void ines_pci_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
-#include "nec7210.h"
-#include "pc2.h"
-#include "cb7210.h"
-#include "ines.h"
+// offset between consecutive nec7210 registers
+static const int ines_reg_offset = 1;
 
-#endif	//_GPIB_PCIIA_BOARD_H
+// plx pci chip registers and bits
+enum
+{
+	PLX_INTCSR_REG = 0x4c,
+};
 
+enum
+{
+	INTCSR_ENABLE_INTR = 0x63,
+	INTCSR_DISABLE_INTR = 0x62,
+};
+
+#endif _INES_GPIB_H
