@@ -117,7 +117,7 @@ guile_ibrd (SCM ud, SCM bytes)
 
   SCM_ASSERT_TYPE (SCM_EXACTP (ud), ud, 
 		   SCM_ARG1, FUNC_NAME, "exact");
-  SCM_ASSERT_TYPE (SCM_STRINGP (bytes), bytes, 
+  SCM_ASSERT_TYPE (SCM_EXACTP (bytes), bytes, 
 		   SCM_ARG2, FUNC_NAME, "exact");
   len = SCM_NUM2INT (SCM_ARG2, bytes);
 
