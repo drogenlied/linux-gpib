@@ -30,7 +30,7 @@ int ines_line_status( const gpib_board_t *board )
 	ines_priv = board->private_data;
 	nec_priv = &ines_priv->nec7210_priv;
 
-	bcm_bits = inb( ines_priv->nec7210_priv.iobase + BUS_CONTROL_MONITOR );
+	bcm_bits = ines_inb( ines_priv, BUS_CONTROL_MONITOR );
 
 	if( bcm_bits & BCM_REN_BIT )
 		status |= BusREN;
@@ -59,8 +59,8 @@ void ines_set_xfer_counter( ines_private_t *priv, unsigned int count )
 		printk("ines: bug! tried to set xfer counter > 0xffff\n" );
 		return;
 	}
-	outb( ( count >> 8 ) & 0xff, iobase( priv ) + XFER_COUNT_UPPER );
-	outb( count & 0xff, iobase( priv ) + XFER_COUNT_LOWER );
+	ines_outb( priv, ( count >> 8 ) & 0xff, XFER_COUNT_UPPER );
+	ines_outb( priv, count & 0xff, XFER_COUNT_LOWER );
 }
 
 unsigned int ines_t1_delay( gpib_board_t *board, unsigned int nano_sec )

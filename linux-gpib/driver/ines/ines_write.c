@@ -21,7 +21,7 @@ static const int out_fifo_size = 0xff;
 
 static inline unsigned short num_out_fifo_bytes( ines_private_t *ines_priv )
 {
-	return inb( iobase( ines_priv ) + OUT_FIFO_COUNT );
+	return ines_inb( ines_priv, OUT_FIFO_COUNT );
 }
 
 static int ines_write_wait( gpib_board_t *board, ines_private_t *ines_priv,
@@ -62,7 +62,7 @@ ssize_t ines_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length, i
 		ines_priv->extend_mode_bits |= LAST_BYTE_HANDLING_BIT;
 	else
 		ines_priv->extend_mode_bits &= ~LAST_BYTE_HANDLING_BIT;
-	outb( ines_priv->extend_mode_bits, iobase( ines_priv ) + EXTEND_MODE );
+	ines_outb( ines_priv, ines_priv->extend_mode_bits, EXTEND_MODE );
 	ines_set_xfer_counter( ines_priv, length );
 
 	while( count < length )

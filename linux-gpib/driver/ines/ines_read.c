@@ -18,7 +18,7 @@
 
 static inline unsigned short num_in_fifo_bytes( ines_private_t *ines_priv )
 {
-	return inb( iobase( ines_priv ) + IN_FIFO_COUNT );
+	return ines_inb( ines_priv, IN_FIFO_COUNT );
 }
 
 static ssize_t pio_read( gpib_board_t *board, ines_private_t *ines_priv, uint8_t *buffer, size_t length )
@@ -30,7 +30,7 @@ static ssize_t pio_read( gpib_board_t *board, ines_private_t *ines_priv, uint8_t
 
 	ines_priv->extend_mode_bits |= LAST_BYTE_HANDLING_BIT | XFER_COUNTER_ENABLE_BIT;
 	ines_priv->extend_mode_bits &= ~XFER_COUNTER_OUTPUT_BIT;
-	outb( ines_priv->extend_mode_bits, iobase( ines_priv ) + EXTEND_MODE );
+	ines_outb( ines_priv, ines_priv->extend_mode_bits, EXTEND_MODE );
 	ines_set_xfer_counter( ines_priv, length );
 
 	while( count < length )

@@ -35,8 +35,8 @@ void ines_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	spin_lock_irqsave( &board->spinlock, flags );
 
 	nec7210_interrupt( board, nec_priv );
-	isr3_bits = inb( nec_priv->iobase + ISR3 );
-	isr4_bits = inb( nec_priv->iobase + ISR4 );
+	isr3_bits = ines_inb( priv, ISR3 );
+	isr4_bits = ines_inb( priv, ISR4 );
 	if( isr3_bits & IFC_ACTIVE_BIT )
 	{
 		push_gpib_event( board, EventIFC );

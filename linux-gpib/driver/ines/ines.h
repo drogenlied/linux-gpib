@@ -76,10 +76,16 @@ void ines_free_private(gpib_board_t *board);
 int ines_generic_attach(gpib_board_t *board);
 void ines_online( ines_private_t *priv, const gpib_board_t *board, int use_accel );
 void ines_set_xfer_counter( ines_private_t *priv, unsigned int count );
-static inline unsigned long iobase( const ines_private_t *priv )
+
+/* inb/outb wrappers */
+static inline unsigned int ines_inb( ines_private_t *priv, unsigned int register_number )
 {
-	return priv->nec7210_priv.iobase;
-};
+	return inb( priv->nec7210_priv.iobase + register_number * priv->nec7210_priv.offset );
+}
+static inline void ines_outb( ines_private_t *priv, unsigned int value, unsigned int register_number )
+{
+	outb( value, priv->nec7210_priv.iobase + register_number * priv->nec7210_priv.offset );
+}
 
 // pcmcia init/cleanup
 int ines_pcmcia_init_module(void);

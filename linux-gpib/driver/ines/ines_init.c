@@ -41,7 +41,7 @@ enum ines_pci_chip
 {
 	PCI_CHIP_PLX9050,
 	PCI_CHIP_AMCC5920,
-	PCI_CHIP_UNKNOWN,
+	PCI_CHIP_QUANCOM,
 };
 
 typedef struct
@@ -51,6 +51,7 @@ typedef struct
 	int subsystem_vendor_id;
 	int subsystem_device_id;
 	unsigned int gpib_region;
+	unsigned int io_offset;
 	enum ines_pci_chip pci_chip_type;
 } ines_pci_id;
 
@@ -62,6 +63,7 @@ ines_pci_id pci_ids[] =
 		subsystem_vendor_id: PCI_VENDOR_ID_PLX,
 		subsystem_device_id: 0x1072,
 		gpib_region: 2,
+		io_offset: 1,
 		pci_chip_type: PCI_CHIP_PLX9050,
 	},
 	{
@@ -70,6 +72,7 @@ ines_pci_id pci_ids[] =
 		subsystem_vendor_id: PCI_VENDOR_ID_AMCC,
 		subsystem_device_id: 0x1072,
 		gpib_region: 1,
+		io_offset: 1,
 		pci_chip_type: PCI_CHIP_AMCC5920,
 	},
 	{
@@ -78,7 +81,8 @@ ines_pci_id pci_ids[] =
 		subsystem_vendor_id: -1,
 		subsystem_device_id: -1,
 		gpib_region: 0,
-		pci_chip_type: PCI_CHIP_UNKNOWN,
+		io_offset: 4,
+		pci_chip_type: PCI_CHIP_QUANCOM,
 	},
 };
 
@@ -303,24 +307,23 @@ void ines_online( ines_private_t *ines_priv, const gpib_board_t *board, int use_
 	write_byte( nec_priv, INES_RFD_HLD_IMMEDIATE, AUXMR );
 	set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
 	write_byte( nec_priv, INES_AUXD | 0, AUXMR );
-	outb( 0, nec_priv->iobase + XDMA_CONTROL );
+	ines_outb( ines_priv, 0, XDMA_CONTROL );
 	ines_priv->extend_mode_bits = 0;
-	outb( ines_priv->extend_mode_bits, nec_priv->iobase + EXTEND_MODE );
+	ines_outb( ines_priv, ines_priv->extend_mode_bits, EXTEND_MODE );
 	if( use_accel )
 	{
-		outb( 0x80, nec_priv->iobase + OUT_FIFO_WATERMARK );
-		outb( 0x80, nec_priv->iobase + IN_FIFO_WATERMARK );
-		outb( IFC_ACTIVE_BIT | FIFO_ERROR_BIT | XFER_COUNT_BIT,
-			nec_priv->iobase + IMR3 );
-		outb( IN_FIFO_WATERMARK_BIT | OUT_FIFO_WATERMARK_BIT |
-			OUT_FIFO_EMPTY_BIT, nec_priv->iobase + IMR4 );
+		ines_outb( ines_priv, 0x80, OUT_FIFO_WATERMARK );
+		ines_outb( ines_priv, 0x80, IN_FIFO_WATERMARK );
+		ines_outb( ines_priv, IFC_ACTIVE_BIT | FIFO_ERROR_BIT | XFER_COUNT_BIT, IMR3 );
+		ines_outb( ines_priv, IN_FIFO_WATERMARK_BIT | OUT_FIFO_WATERMARK_BIT |
+			OUT_FIFO_EMPTY_BIT, IMR4 );
 		nec7210_set_reg_bits( nec_priv, ADMR, IN_FIFO_ENABLE_BIT | OUT_FIFO_ENABLE_BIT,
 			IN_FIFO_ENABLE_BIT | OUT_FIFO_ENABLE_BIT );
 	}else
 	{
 		nec7210_set_reg_bits( nec_priv, ADMR, IN_FIFO_ENABLE_BIT | OUT_FIFO_ENABLE_BIT, 0 );
-		outb( IFC_ACTIVE_BIT | FIFO_ERROR_BIT, nec_priv->iobase + IMR3 );
-		outb( 0, nec_priv->iobase + IMR4 );
+		ines_outb( ines_priv, IFC_ACTIVE_BIT | FIFO_ERROR_BIT, IMR3 );
+		ines_outb( ines_priv, 0, IMR4 );
 	}
 
 	nec7210_board_online( nec_priv, board );
@@ -390,13 +393,7 @@ int ines_common_pci_attach( gpib_board_t *board )
 		case PCI_CHIP_AMCC5920:
 			ines_priv->amcc_iobase = pci_resource_start(ines_priv->pci_device, 0);
 			break;
-		case PCI_CHIP_UNKNOWN:
-			printk( "quancom register dump:\n" );
-			for( i = 0; i < 256; i++ )
-			{
-				printk( "0x%lx: 0x%x\n", nec_priv->iobase + i, inb( nec_priv->iobase + i ) );
-			}
-			return -1;
+		case PCI_CHIP_QUANCOM:
 			break;
 		default:
 			printk("gpib: unspecified chip type? (bug)\n");
@@ -405,6 +402,7 @@ int ines_common_pci_attach( gpib_board_t *board )
 			return -1;
 			break;
 	}
+	nec_priv->offset = found_id.io_offset;
 
 	nec7210_board_reset( nec_priv, board );
 
@@ -434,6 +432,12 @@ int ines_common_pci_attach( gpib_board_t *board )
 		outl(AMCC_ADDON_INTR_ENABLE_BIT, ines_priv->amcc_iobase + AMCC_INTCS_REG);
 	}
 	ines_online( ines_priv, board, 0 );
+
+	printk( "quancom register dump:\n" );
+	for( i = 0; i < 256; i += 4 )
+	{
+		printk( "0x%lx: 0x%x\n", nec_priv->iobase + i, inl( nec_priv->iobase + i ) );
+	}
 
 	return 0;
 }
