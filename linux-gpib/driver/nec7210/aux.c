@@ -29,9 +29,8 @@ int nec7210_take_control(gpib_board_t *board, nec7210_private_t *priv, int syncr
 
 	if(syncronous)
 	{
-		// make sure we aren't asserting rfd holdoff
-		write_byte(priv, priv->auxa_bits | HR_HLDA, AUXMR);
-		write_byte(priv, AUX_FH, AUXMR);
+		// XXX make sure we aren't asserting rfd holdoff
+//		write_byte(priv, AUX_FH, AUXMR);
 
 		write_byte(priv, AUX_TCS, AUXMR);
 	}else
