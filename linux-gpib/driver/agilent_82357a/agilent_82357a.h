@@ -159,6 +159,7 @@ enum firmware_registers
 	LED_CONTROL = 0xb,
 	RESET_TO_POWERUP = 0xc,
 	PROTOCOL_CONTROL = 0xd,
+	FAST_TALKER_T1 = 0xe
 };
 
 enum hardware_control_bits

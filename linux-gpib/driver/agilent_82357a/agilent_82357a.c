@@ -346,7 +346,7 @@ ssize_t agilent_82357a_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 		agilent_82357a_abort(a_priv, 1);
 		retval = agilent_82357a_receive_bulk_msg(a_priv, in_data + bytes_read, in_data_length - bytes_read, 
 			&extra_bytes_read, HZ / 10);
-		printk("%s: %s: agilent_82357a_receive_bulk_msg timed out, bytes_read=%i, extra_bytes_read=\n", 
+		printk("%s: %s: agilent_82357a_receive_bulk_msg timed out, bytes_read=%i, extra_bytes_read=%i\n", 
 			__FILE__, __FUNCTION__, bytes_read, extra_bytes_read);
 		bytes_read += extra_bytes_read;
 	}
@@ -380,7 +380,6 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 	int bytes_written;
 	int i = 0, j;
 	unsigned int bytes_completed;
-	unsigned long start_jiffies = jiffies;
 	long jiffie_timeout;
 	int write_aborted = 0;
 	
@@ -544,7 +543,6 @@ void agilent_82357a_request_system_control(gpib_board_t *board, int request_cont
 	}
 	return;// retval;
 }
-//FIXME maybe the interface should have a "pulse interface clear" function that can return an error?
 void agilent_82357a_interface_clear(gpib_board_t *board, int assert)
 {
 	agilent_82357a_private_t *a_priv = board->private_data;
@@ -657,26 +655,27 @@ int agilent_82357a_parallel_poll(gpib_board_t *board, uint8_t *result)
 }
 void agilent_82357a_parallel_poll_configure(gpib_board_t *board, uint8_t config)
 {
-	//FIXME: implement
+	//board can only be system controller
 	return;// 0;
 }
 void agilent_82357a_parallel_poll_response(gpib_board_t *board, int ist)
 {
-	//FIXME: implement
+	//board can only be system controller
 	return;// 0;
 }
 void agilent_82357a_serial_poll_response(gpib_board_t *board, uint8_t status)
 {
-	//FIXME: implement
+	//board can only be system controller
 	return;// 0;
 }
 uint8_t agilent_82357a_serial_poll_status( gpib_board_t *board )
 {
+	//board can only be system controller
 	return 0;
 }
 void agilent_82357a_return_to_local( gpib_board_t *board )
 {
-	//FIXME: implement
+	//board can only be system controller
 	return;// 0;
 }
 int agilent_82357a_line_status( const gpib_board_t *board )
@@ -711,10 +710,35 @@ int agilent_82357a_line_status( const gpib_board_t *board )
 		status |= BusATN;
 	return status;
 }
-unsigned int agilent_82357a_t1_delay( gpib_board_t *board, unsigned int nano_sec )
+
+static unsigned short nanosec_to_fast_talker_bits(unsigned int *nanosec)
 {
-	//FIXME: implement
-	return 0;
+	static const int nanosec_per_bit = 21;
+	static const int max_value = 0x72;
+	static const int min_value = 0x11;
+	unsigned short bits;
+	
+	bits = (*nanosec + nanosec_per_bit / 2) / nanosec_per_bit;
+	if(bits < min_value) bits = min_value;
+	if(bits > max_value) bits = max_value;
+	*nanosec = bits * nanosec_per_bit;
+	return bits;
+}
+
+unsigned int agilent_82357a_t1_delay( gpib_board_t *board, unsigned int nanosec )
+{
+	agilent_82357a_private_t *a_priv = board->private_data;
+	struct agilent_82357a_register_pairlet write;
+	int retval;
+	
+	write.address = FAST_TALKER_T1;
+	write.value = nanosec_to_fast_talker_bits(&nanosec);
+	retval = agilent_82357a_write_registers(a_priv, &write, 1);
+	if(retval)
+	{
+		printk("%s: %s: agilent_82357a_write_registers() returned error\n", __FILE__, __FUNCTION__);
+	}
+	return nanosec;
 }
 
 void agilent_82357a_interrupt_complete(struct urb *urb, struct pt_regs *regs)
@@ -819,10 +843,25 @@ static int agilent_82357a_init(gpib_board_t *board)
 {
 	agilent_82357a_private_t *a_priv = board->private_data;
 	struct agilent_82357a_register_pairlet hw_control;
-	struct agilent_82357a_register_pairlet writes[4];
+	struct agilent_82357a_register_pairlet writes[9];
 	int retval;
 	int i = 0;
+	unsigned int nanosec;
 	
+	writes[i].address = AUXCR;
+	writes[i].value = AUX_STDL;
+	++i;
+	writes[i].address = AUXCR;
+	writes[i].value = AUX_VSTDL;
+	++i;
+	writes[i].address = FAST_TALKER_T1;
+	nanosec = 800;
+	writes[i].value = nanosec_to_fast_talker_bits(&nanosec);
+	board->t1_nano_sec = nanosec;
+	++i;
+	writes[i].address = PROTOCOL_CONTROL;
+	writes[i].value = WRITE_COMPLETE_INTERRUPT_EN;
+	++i;
 	writes[i].address = PROTOCOL_CONTROL;
 	writes[i].value = WRITE_COMPLETE_INTERRUPT_EN;
 	++i;
@@ -834,12 +873,12 @@ static int agilent_82357a_init(gpib_board_t *board)
 	++i;
 	// turn off reset state
 	writes[i].address = AUXCR;
-	writes[i].value = AUX_CR;
+	writes[i].value = AUX_CHIP_RESET;
 	++i;
 	writes[i].address = LED_CONTROL;
 	writes[i].value = FIRMWARE_LED_CONTROL;
 	++i;
-	if(i > sizeof(writes))
+	if(i > sizeof(writes) / sizeof(writes[0]))
 	{
 		printk("%s: %s: bug! writes[] overflow\n", __FILE__, __FUNCTION__);
 	}
@@ -855,7 +894,6 @@ static int agilent_82357a_init(gpib_board_t *board)
 		printk("%s: %s: agilent_82357a_read_registers() returned error\n", __FILE__, __FUNCTION__);
 	}
 	a_priv->hw_control_bits = hw_control.value & 0x7;
-	//FIXME: implement
 	return 0;
 }
 int agilent_82357a_attach(gpib_board_t *board)
