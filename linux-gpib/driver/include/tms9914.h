@@ -219,9 +219,9 @@ enum adsr_bits
 enum adr_bits
 {
 	ADDRESS_MASK = 0x1f,	/* mask to specify lower 5 bits for ADR */
-	HR_DAT = ( 1 << 5 ),   /*        */
-	HR_DAL = ( 1 << 6 ),   /*        */
-	HR_EDPA = ( 1 << 7 ),   /*        */
+	HR_DAT = ( 1 << 5 ),   /* disable talker */
+	HR_DAL = ( 1 << 6 ),   /* disable listener */
+	HR_EDPA = ( 1 << 7 ),   /* enable dual primary addressing */
 };
 
 enum bus_status_bits
