@@ -65,8 +65,7 @@ static char *version =
 /* Parameters that can be set with 'insmod' */
 
 /* Bit map of interrupts to choose from */
-/* This means pick from 15, 14, 12, 11, 10, 9, 7, 5, 4, and 3 */
-static u_long irq_mask = 0xdeb8;
+static u_long irq_mask = 0x86bc;
 
 /*====================================================================*/
 
@@ -211,7 +210,7 @@ static dev_link_t *gpib_attach(void)
     link->irq.IRQInfo2 = irq_mask;
     link->irq.Handler = NULL;
     link->irq.Instance = NULL;
-    
+
     /* General socket configuration */
     link->conf.Attributes = CONF_ENABLE_IRQ;
     link->conf.Vcc = 50;
@@ -223,7 +222,7 @@ static dev_link_t *gpib_attach(void)
     local = kmalloc(sizeof(local_info_t), GFP_KERNEL);
     memset(local, 0, sizeof(local_info_t));
     link->priv = local;
-    
+
     /* Register with Card Services */
     link->next = dev_list;
     dev_list = link;
@@ -263,7 +262,7 @@ static void gpib_detach(dev_link_t *link)
     if (pc_debug)
 	printk(KERN_DEBUG "gpib_detach(0x%p)\n", link);
 #endif
-    
+
     /* Locate device structure */
     for (linkp = &dev_list; *linkp; linkp = &(*linkp)->next)
 	if (*linkp == link) break;
@@ -288,13 +287,13 @@ static void gpib_detach(dev_link_t *link)
     /* Break the link with Card Services */
     if (link->handle)
 	CardServices(DeregisterClient, link->handle);
-    
+
     /* Unlink device structure, free pieces */
     *linkp = link->next;
     if (link->priv) {
 	kfree(link->priv);
     }
-    
+
 } /* gpib_detach */
 
 /*======================================================================
@@ -302,7 +301,7 @@ static void gpib_detach(dev_link_t *link)
     gpib_config() is scheduled to run after a CARD_INSERTION event
     is received, to configure the PCMCIA socket, and to make the
     ethernet device available to the system.
-    
+
 ======================================================================*/
 /*@*/
 static void gpib_config(dev_link_t *link)
@@ -344,7 +343,7 @@ static void gpib_config(dev_link_t *link)
 	link->state &= ~DEV_CONFIG_PENDING;
 	return;
     }
-    
+
     /* Configure card */
     link->state |= DEV_CONFIG;
 
@@ -352,31 +351,31 @@ static void gpib_config(dev_link_t *link)
         /*
 	 * try to get manufacturer and card  ID
 	 */
-       
+
         tuple.DesiredTuple = CISTPL_MANFID;
         tuple.Attributes   = TUPLE_RETURN_COMMON;
         if( first_tuple(handle,&tuple,&parse) == CS_SUCCESS ) {
 	   dev->manfid = parse.manfid.manf;
-	   dev->cardid = parse.manfid.card; 
-#ifdef PCMCIA_DEBUG	   
+	   dev->cardid = parse.manfid.card;
+#ifdef PCMCIA_DEBUG
 	  printk(KERN_DEBUG "gpib_cs: manufacturer: 0x%x card: 0x%x\n",
 		 dev->manfid,dev->cardid);
-#endif       
+#endif
 	}
         /* try to get board information from CIS */
-       
+
          tuple.DesiredTuple = CISTPL_CFTABLE_ENTRY;
          tuple.Attributes = 0;
          if( first_tuple(handle,&tuple,&parse) == CS_SUCCESS ) {
 	    while(1) {
-	      /*if this tuple has an IRQ info, keep it for later use */ 
+	      /*if this tuple has an IRQ info, keep it for later use */
 	      if( parse.cftable_entry.irq.IRQInfo1 & IRQ_INFO2_VALID ) {
 		printk(KERN_DEBUG "gpib_cs: irqmask=0x%x\n",
 		       parse.cftable_entry.irq.IRQInfo2 );
 		link->irq.IRQInfo2 = parse.cftable_entry.irq.IRQInfo2;
 	      }
 
-	      if( parse.cftable_entry.io.nwin > 0) {   
+	      if( parse.cftable_entry.io.nwin > 0) {
 	         link->io.BasePort1 = parse.cftable_entry.io.win[0].base;
 	         link->io.NumPorts1 = parse.cftable_entry.io.win[0].len;
 	         link->io.BasePort2 = 0;
@@ -613,7 +612,6 @@ int cb_pcmcia_attach(gpib_board_t *board)
 {
 	cb7210_private_t *cb_priv;
 	nec7210_private_t *nec_priv;
-	int isr_flags = 0;
 	int retval;
 
 	if(dev_list == NULL)
@@ -635,7 +633,8 @@ int cb_pcmcia_attach(gpib_board_t *board)
 	write_byte(nec_priv, 0, HS_INT_LEVEL);
 	write_byte(nec_priv, 0, HS_MODE); /* disable system control */
 
-	if(request_irq(dev_list->irq.AssignedIRQ, cb7210_interrupt, isr_flags, "pcmcia-gpib", board))
+	if(request_irq(dev_list->irq.AssignedIRQ, cb7210_interrupt, SA_SHIRQ,
+		"pcmcia-gpib", board))
 	{
 		printk("gpib: can't request IRQ %d\n", dev_list->irq.AssignedIRQ);
 		return -1;
