@@ -82,21 +82,14 @@ int       espintcon = 0;		        /* ESP interrupt routine is "connected" */
 /*
  * Linux initialization functions
  */
-extern struct timer_list ibtimer_list;
 int osInit(void)
 {
-	int	s;
-
-	init_timer(&ibtimer_list);
-
-	pgmstat |= PS_SYSRDY;
 	return 1;
 }
 
 
 void osReset(void)
 {
-	pgmstat &= ~PS_SYSRDY;
 }
 
 

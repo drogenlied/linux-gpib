@@ -31,6 +31,12 @@ int ibopen(struct inode *inode, struct file *filep)
 {
 	unsigned int minor = MINOR(inode->i_rdev);
 
+	if(minor >= MAX_NUM_GPIB_DEVICES)
+	{
+		printk("gpib: invalid minor number of device file\n");
+		return -ENODEV;
+	}
+
 	if( ib_exclusive )
 	{
 		return (-EBUSY);
@@ -54,8 +60,16 @@ int ibopen(struct inode *inode, struct file *filep)
 int ibclose(struct inode *inode, struct file *file)
 {
 	unsigned int minor = MINOR(inode->i_rdev);
+	gpib_device_t *device;
 
-	if ((pgmstat & PS_ONLINE) && ib_opened == 1 )
+	if(minor >= MAX_NUM_GPIB_DEVICES)
+	{
+		printk("gpib: invalid minor number of device file\n");
+		return -ENODEV;
+	}
+	device = &device_array[minor];
+ 
+	if (device->online && ib_opened == 1 )
 		ibonl(&device_array[minor], 0);
 	ib_opened--;
 
@@ -404,6 +418,7 @@ int board_type_ioctl(unsigned int minor, unsigned long arg)
 	init_waitqueue_head(&device->wait);
 	init_MUTEX(&device->mutex);
 	spin_lock_init(&device->spinlock);
+	init_timer(&device->timer);
 	device->interface = NULL;
 
 	device->buffer_length = 0x1000;

@@ -1,6 +1,6 @@
 #include <ibsys.h>
 
-struct timer_list ibtimer_list;
+extern unsigned long timeTable[];
 
 /*
  * Timer functions
@@ -22,11 +22,10 @@ void osStartTimer(gpib_device_t *device, int v)
 
 	if (v > 0)
 	{
-		ibtimer_list.expires = jiffies + timeTable[v];   /* set number of ticks */
-		ibtimer_list.function = watchdog_timeout;
-		ibtimer_list.data = (unsigned long) device;
-		add_timer(&ibtimer_list);              /* add timer           */
-		pgmstat |= PS_TIMINST;                 /* mark watchdog installed */
+		device->timer.expires = jiffies + timeTable[v];   /* set number of ticks */
+		device->timer.function = watchdog_timeout;
+		device->timer.data = (unsigned long) device;
+		add_timer(&device->timer);              /* add timer           */
 	}
 }
 
@@ -34,10 +33,9 @@ void osStartTimer(gpib_device_t *device, int v)
 void osRemoveTimer(gpib_device_t *device)
 /* Removes the timeout task */
 {
-	if (pgmstat & PS_TIMINST)
+	if(timer_pending(&device->timer))
 	{
-		del_timer_sync(&ibtimer_list);
-		pgmstat &= ~PS_TIMINST;  /* unmark watchdog */
+		del_timer_sync(&device->timer);
 	}
 }
 

@@ -47,6 +47,7 @@ typedef struct {
  * This really should be in a different header file.
  */
 #include <linux/wait.h>
+#include <linux/timer.h>
 #include <asm/semaphore.h>
 
 typedef struct gpib_interface_struct gpib_interface_t;
@@ -156,6 +157,8 @@ struct gpib_device_struct
 	struct semaphore mutex;
 	/* Spin lock for dealing with races with the interrupt handler */
 	spinlock_t spinlock;
+	/* Watchdog timer to enable timeouts */
+	struct timer_list timer;
 	/* IO base address to use for non-pnp cards (set by core, driver should make local copy) */
 	unsigned long ibbase;
 	/* IRQ to use for non-pnp cards (set by core, driver should make local copy) */
