@@ -130,3 +130,4 @@ int ib_unlock_mutex( ibBoard_t *board )
 	int unlock = 0;
 	return ioctl( board->fileno, IBMUTEX, &unlock );
 }
+

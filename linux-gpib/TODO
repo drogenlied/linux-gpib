@@ -28,3 +28,5 @@ get rid of global timeout variable
 
 check that REN is asserted when it should be
 
+need to inc_use_count for driver modules used by gpib_common
+

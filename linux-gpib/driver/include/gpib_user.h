@@ -144,3 +144,13 @@ extern __inline__ uint8_t MSA( unsigned int addr )
 	return addr | 0x60;
 }
 
+extern __inline__ int gpib_address_equal( unsigned int pad1, int sad1, unsigned int pad2, int sad2 )
+{
+	if( pad1 == pad2 )
+	{
+		if( sad1 == sad2 ) return 1;
+		if( sad1 < 0 && sad2 < 0 ) return 1;
+	}
+
+	return 0;
+}

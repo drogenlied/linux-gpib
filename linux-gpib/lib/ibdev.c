@@ -69,7 +69,7 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 	conf.flags = 0;
 	// check if it is an interface board
 	board = &ibBoard[minor];
-	if(board->pad == conf.pad && board->sad == conf.sad)
+	if( gpib_address_equal( board->pad, board->sad, conf.pad, conf.sad ) )
 	{
 		conf.is_interface = 1;
 	}else

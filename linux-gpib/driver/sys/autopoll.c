@@ -73,7 +73,7 @@ gpib_device_t * get_gpib_device( gpib_board_t *board, unsigned int pad, int sad 
 	for( list_ptr = head->next; list_ptr != head; list_ptr = list_ptr->next )
 	{
 		device = list_entry( list_ptr, gpib_device_t, list );
-		if( device->pad == pad && device->sad == sad )
+		if( gpib_address_equal( device->pad, device->sad, pad, sad ) )
 			return device;
 	}
 

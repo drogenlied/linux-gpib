@@ -32,14 +32,15 @@ int ibonline( gpib_board_t *board, int master )
 		}
 		/* initialize system support functions */
 		board->online = 1;
-	}
-	if( master )
-	{
-		board->master = 1;
-		ibsic( board );
-	}else
-	{
-		board->master = 0;
+
+		if( master )
+		{
+			board->master = 1;
+			ibsic( board );
+		}else
+		{
+			board->master = 0;
+		}
 	}
 
 	return 0;
@@ -47,7 +48,7 @@ int ibonline( gpib_board_t *board, int master )
 
 int iboffline( gpib_board_t *board )
 {
-	if( board->open_count <= 1 )
+	if( board->open_count <= 1 && board->online )
 	{
 		board->interface->detach( board );
 		if( board->buffer )

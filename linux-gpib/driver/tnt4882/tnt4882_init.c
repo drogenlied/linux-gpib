@@ -291,6 +291,7 @@ void ni_pci_detach(gpib_board_t *board)
 			mite_unsetup(tnt_priv->mite);
 	}
 	tnt4882_free_private(board);
+	GPIB_DPRINTK( "ni_pci board offline\n" );
 }
 
 int ni_isa_attach(gpib_board_t *board)

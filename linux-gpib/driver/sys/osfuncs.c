@@ -421,8 +421,7 @@ int increment_open_device_count( struct list_head *head, unsigned int pad, int s
 	for( list_ptr = head->next; list_ptr != head; list_ptr = list_ptr->next )
 	{
 		device = list_entry( list_ptr, gpib_device_t, list );
-		if( device->pad == pad &&
-			( device->sad == sad ) )
+		if( gpib_address_equal( device->pad, device->sad, pad, sad ) )
 		{
 			GPIB_DPRINTK( "incrementing open count for pad %i, sad %i\n",
 				device->pad, device->sad );
