@@ -95,6 +95,14 @@ int main( int argc, char *argv[] )
 		return -1;
 	}
 
+	status = ibconfig( board, IbcTIMING, T1_DELAY_350ns );
+	if( status & ERR )
+	{
+		fprintf( stderr, "ibconfig() failed\n" );
+		fprintf( stderr, "%s\n", gpib_error_string( ThreadIberr() ) );
+		return -1;
+	}
+
 	status = ibwrt( board, buffer, buffer_length );
 	if( status & ERR )
 	{
