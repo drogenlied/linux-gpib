@@ -594,7 +594,15 @@ volatile int ibsta;
 	Description
 	</title>
 	<para>
-	ibpad()
+	ibpad() sets the GPIB primary address to <parameter>pad</parameter>
+	for the device or board specified by the descriptor <parameter>ud</parameter>.
+	If <parameter>ud</parameter> is a device descriptor, then the setting is
+	local to the descriptor (it does not affect the behaviour of calls using
+	other descriptors, even if they refer to the same physical device).  If
+	<parameter>ud</parameter> is a board descriptor, then the board's
+	primary address is changed immediately, which is a global change affecting
+	anything (even other processes) using the board.  Valid GPIB primary
+	addresses are in the range from 0 to 30.
 	</para>
 </refsect1>
 <refsect1>
@@ -683,7 +691,23 @@ volatile int ibsta;
 	Description
 	</title>
 	<para>
-	ibsad()
+	ibsad() sets the GPIB secondary address
+	of the device or board specified by the descriptor <parameter>ud</parameter>.
+	If <parameter>ud</parameter> is a device descriptor, then the setting is
+	local to the descriptor (it does not affect the behaviour of calls using
+	other descriptors, even if they refer to the same physical device).  If
+	<parameter>ud</parameter> is a board descriptor, then the board's
+	secondary address is changed immediately, which is a global change affecting
+	anything (even other processes) using the board.
+	</para>
+	<para>
+	This library follows NI's unfortunate convention of adding 0x60 hexadecimal (96
+	decimal) to
+	secondary addresses.  That is, if you wish to set the secondary address
+	to 3, you should set <parameter>sad</parameter> to 0x63.  Setting
+	<parameter>sad</parameter> to 0 disables the use of secondary addressing.
+	Valid GPIB secondary addresses are in the range from 0 to 30 (which correspond
+	to <parameter>sad</parameter> values of 0x60 to 0x7e).
 	</para>
 </refsect1>
 <refsect1>
@@ -826,7 +850,8 @@ volatile int ibsta;
 <section>
 <title>GPIB bus lines</title>
 <para>
-Physically, the GPIB bus consists of 16 bidirectional lines (and 8 ground
+Physically, the GPIB bus consists of 8 data lines, 3 handshaking
+lines, and 5 control lines (and 8 ground
 lines).  Brief descriptions
 of how they are used follow:
 </para>
