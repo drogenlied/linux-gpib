@@ -61,3 +61,4 @@ if [ -x /usr/bin/logger ]; then
 fi
 
 $FXLOAD $FXLOAD_OPTIONS -I $FIRMWARE -s $SS_LOADER
+

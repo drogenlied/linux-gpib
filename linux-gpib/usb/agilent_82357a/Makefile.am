@@ -14,6 +14,6 @@ USB_FIRMWARE_DIR=/usr/share/usb/
 
 install-data-local:
 	test -e $(HOTPLUG_USB_CONF_DIR)/agilent_82357a || $(INSTALL_SCRIPT) -D agilent_82357a $(HOTPLUG_USB_CONF_DIR)/agilent_82357a
-	test -e $(HOTPLUG_USB_CONF_DIR)/agilent_82357a.usermap || $(INSTALL_DATA) -D agilent_82357a.usermap $(HOTPLUG_USB_CONF_DIR)/agilent_82357a
+	test -e $(HOTPLUG_USB_CONF_DIR)/agilent_82357a.usermap || $(INSTALL_DATA) -D agilent_82357a.usermap $(HOTPLUG_USB_CONF_DIR)/agilent_82357a.usermap
 	$(INSTALL) -d $(USB_FIRMWARE_DIR)/agilent_82357a
 	

@@ -11,12 +11,12 @@ FIRMWARE=
 # pre-renumeration device IDs
 case $PRODUCT in
 # 82357a with firmware already loaded
-0957/0107/*)
+957/107/*)
 	gpib_config $GPIB_CONFIG_OPTIONS
 	;;
 
 # 82357a without firmware
-0957/0007/*)
+957/7/*)
 	FIRMWARE=$DATADIR/usb/agilent_82357a/82357a_fw.hex
 	;;
 
@@ -51,3 +51,4 @@ if [ -x /usr/bin/logger ]; then
 fi
 
 $FXLOAD $FXLOAD_OPTIONS -I $FIRMWARE
+
