@@ -228,6 +228,8 @@ int pc2_attach(gpib_board_t *board)
 	nec7210_private_t *nec_priv;
 	int retval;
 
+	MOD_INC_USE_COUNT;
+
 	retval = pc2_generic_attach(board);
 	if(retval) return retval;
 
@@ -284,6 +286,8 @@ void pc2_detach(gpib_board_t *board)
 		}
 	}
 	free_private(board);
+
+	MOD_DEC_USE_COUNT;
 }
 
 int pc2a_attach(gpib_board_t *board)
@@ -293,6 +297,8 @@ int pc2a_attach(gpib_board_t *board)
 	pc2_private_t *pc2_priv;
 	nec7210_private_t *nec_priv;
 	int retval;
+
+	MOD_INC_USE_COUNT;
 
 	retval = pc2_generic_attach(board);
 	if(retval) return retval;
@@ -391,6 +397,8 @@ void pc2a_detach(gpib_board_t *board)
 		}
 	}
 	free_private(board);
+
+	MOD_DEC_USE_COUNT;
 }
 
 int init_module(void)

@@ -90,6 +90,21 @@ void gpib_register_driver(gpib_interface_t *interface)
 
 void gpib_unregister_driver(gpib_interface_t *interface)
 {
+        int i;
+	for (i=0; i<MAX_NUM_GPIB_BOARDS; i++) {
+	  	gpib_board_t *board = &board_array[i];
+	  	if (board->interface == interface) {
+		  	if (board->open_count > 0)
+			  	printk("gpib: Warning:"
+				       " deregisted interface %s in use\n", 
+				       interface->name);
+		  	if (board->online > 0)
+			  	printk("gpib: This can\'t happen:"
+				       " deregisted interface %s is online\n", 
+				       interface->name);
+			board->interface = NULL;
+		}
+	}
 	list_del(&interface->list);
 	printk("gpib: unregistered %s interface\n", interface->name);
 }

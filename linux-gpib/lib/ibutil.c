@@ -163,7 +163,7 @@ int close_gpib_device( ibBoard_t *board, ibConf_t *conf )
 	{
 		close_cmd.pad = conf->pad;
 		close_cmd.sad = conf->sad;
-		retval = ioctl( board->fileno, IBOPENDEV, &close_cmd );
+		retval = ioctl( board->fileno, IBCLOSEDEV, &close_cmd );
 		if( retval < 0 ) return retval;
 	}
 
