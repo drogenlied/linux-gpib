@@ -89,40 +89,40 @@ if (( $PYTHON_MAJOR_VERSION < 2 )); then
 fi
 AC_PATH_PROG([PERL], [perl], [no], [])
 if test "$PERL" == "no"; then
-	AC_MSG_WARN([perl not found, disabling perl binding])
+	AC_MSG_NOTICE([perl not found, disabling perl binding])
 	BIND_PERL="no"
 fi
 SC_PATH_TCLCONFIG
 if [[ $no_tcl ]]; then
-	AC_MSG_WARN([disabling TCL binding])
+	AC_MSG_NOTICE([TCL config not found, disabling TCL binding])
 	BIND_TCL="no"
 else
 	SC_LOAD_TCLCONFIG
 fi
 AC_PATH_PROG([PHP_CONFIG], [php-config], [no],[])
 if test "$PHP_CONFIG" == "no"; then
-	AC_MSG_WARN([php-config not found, disabling PHP binding])
+	AC_MSG_NOTICE([php-config not found, disabling PHP binding])
 	BIND_PHP="no"
 fi
 
 dnl Checks for libraries.
 AC_CHECK_LIB([guile],[gh_define],[echo this prevents default actions from occurring > /dev/null],
-	[BIND_GUILE="no";AC_MSG_WARN([libguile not found, disabling guile binding])],[])
+	[BIND_GUILE="no";AC_MSG_NOTICE([libguile not found, disabling guile binding])],[])
 
 dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS(unistd.h sys/param.h sys/time.h time.h sys/mkdev.h sys/sysmacros.h string.h memory.h fcntl.h dirent.h sys/ndir.h ndir.h alloca.h locale.h )
-AM_CHECK_PYTHON_HEADERS([],[BIND_PYTHON=no;AC_MSG_WARN([python headers not found, disabling python binding])])
-AC_CHECK_HEADER([libguile.h],[],[BIND_GUILE="no";AC_MSG_WARN([libguile headers not found, disabling guile binding])])
+AM_CHECK_PYTHON_HEADERS([],[BIND_PYTHON=no;AC_MSG_NOTICE([python headers not found, disabling python binding])])
+AC_CHECK_HEADER([libguile.h],[],[BIND_GUILE="no";AC_MSG_NOTICE([libguile headers not found, disabling guile binding])])
 
 if test "$BIND_TCL" != "no"; then
-AC_CHECK_HEADER([$TCL_INC_DIR/tcl.h],[],[BIND_TCL="no";AC_MSG_WARN([TCL headers not found, disabling TCL binding])])
+AC_CHECK_HEADER([$TCL_INC_DIR/tcl.h],[],[BIND_TCL="no";AC_MSG_NOTICE([TCL headers not found, disabling TCL binding])])
 fi
 
 if test "$PHP_CONFIG" != "no"; then
 SAVE_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $($PHP_CONFIG --includes)"
-AC_CHECK_HEADER([php.h],[],[BIND_PHP="no";AC_MSG_WARN([PHP headers not found, disabling TCL binding])])
+AC_CHECK_HEADER([php.h],[],[BIND_PHP="no";AC_MSG_NOTICE([PHP headers not found, disabling PHP binding])])
 CPPFLAGS=$SAVE_CPPFLAGS
 fi
 
