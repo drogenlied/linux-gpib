@@ -48,11 +48,11 @@ libgpib.so: $(OBJS)
 	$(CC) -shared $(OBJS) $(LIBS) -o $@
 
 clean: 
-	-rm *.o *.so make.config
+	rm -f *.o *.so make.config
 	set -e;for i in $(SUBDIRS); do make -C $$i clean; done
 
 realclean: 
-	-rm *.o ibsh
+	rm -f *.o ibsh
 	set -e;for i in $(SUBDIRS) ./modules; do make -C $$i clean; done
 
 install:

@@ -1,6 +1,6 @@
 #######################################################################
 #
-#  Makefile for linux at-gpib driver Version 0.1
+#  Makefile for linux-gpib/driver 
 #  
 #   
 #
@@ -11,12 +11,11 @@
 # ~/linux/include/linux/majors.h
 #
 DRIVER_DEVICE_ID = 0
-#DRIVER_MAJOR = 31   no longer used
 
 DEBUG_LEVEL=0x3d
 export ROOT
 
-include $(ROOT)/util/.config
+-include $(ROOT)/util/.config
 
 
 ########################################################################
@@ -75,12 +74,11 @@ gpib$(DRIVER_DEVICE_ID).o: $(OBJS)
 	$(RLINK) -o gpib$(DRIVER_DEVICE_ID).o $(OBJS) 
 
 clean :
-	$(RM) *.o kernel_version.c $(EXP_INC)
+	rm -f *.o kernel_version.c $(EXP_INC) .proto_stamp
 	set -e; \
 	for i in $(SUBDIRS); do \
-		$(MAKE) $$i NODEPS=y clean ; \
+		test -d $$i && $(MAKE) $$i NODEPS=y clean ; \
 	done
-	rm .proto_stamp		
 
 
 depend :

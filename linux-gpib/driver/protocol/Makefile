@@ -2,7 +2,7 @@
 # Makefile for directory driver/protocol
 #
 
-include $(ROOT)/util/.config
+-include $(ROOT)/util/.config
 
 SRCS = ibcac.c ibcmd.c ibgts.c ibinit.c iblines.c ibread.c ibrpp.c ibrsv.c ibsic.c \
 	ibsre.c ibutil.c ibwait.c ibwrite.c device.c ibAutoSP.c
@@ -21,7 +21,7 @@ ieee488.o : $(OBJS)
 
 
 clean:
-	$(RM) *.o .depend
+	rm -f *.o .depend
 
 
 include $(ROOT)/makefile.inc

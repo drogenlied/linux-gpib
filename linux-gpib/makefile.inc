@@ -8,7 +8,6 @@ DEPEND	= gcc
 RLINK	= ld -r
 LINK	= gcc
 INSTALL	= $(ROOT)/util/Install.sh
-RM	= $(ROOT)/util/Remove.sh
 YACC	= bison -d -y
 LEX	= flex 
 

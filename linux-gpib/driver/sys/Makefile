@@ -2,7 +2,7 @@
 # Makefile for directory driver/sys
 #
 
-include $(ROOT)/util/.config
+-include $(ROOT)/util/.config
 
 SRCS =  osadjcnt.c osdma.c osfuncs.c  osinit.c  osinterrupt.c ostimer.c \
 	osutil.c oslock.c osmem.c
@@ -18,7 +18,7 @@ sys.o:  $(OBJS)
 	$(RLINK) -o sys.o $(OBJS)
 
 clean:
-	$(RM) *.o .depend
+	rm -f *.o .depend
 
 include $(ROOT)/makefile.inc
 

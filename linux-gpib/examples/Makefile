@@ -34,15 +34,15 @@ vfs_access: vfs_access.o
 	$(CC) -o vfs_access vfs_access.o
 
 clean: 
-	-rm *.o ibtest rgpib_test raw_access vfs_access .depend
+	rm -f *.o ibtest rgpib_test raw_access vfs_access .depend
 
-depend .depend : $(SRCS)
+depend : $(SRCS)
 	$(CPP) $(CFLAGS) -M $(SRCS)  >./.depend
 
 install:
 	@echo Install in examples
 
-include .depend
+-include .depend
 
 
 

@@ -32,7 +32,7 @@ clean:
 	for i in $(INCDIR) $(SUBDIRS); do \
 		$(MAKE) $$i NODEPS=y $@; \
 	done
-	$(RM) *.o .config.stat .test.stat
+	rm -f *.o .config.stat .test.stat
 
 rcsput rcsget:
 	set -e; \

@@ -36,7 +36,7 @@ ibdump: $(DUMP_OBJS) ../lib/libgpib.a
 	$(CC) -o ibdump $(CFLAGS) $(INCLUDES) $(DUMP_OBJS) $(LIBS) 
 
 clean: 
-	-rm *.o ibchk
+	rm -f *.o ibchk
 
 rcsput:
 	ci -u $(SRCS) *.h
