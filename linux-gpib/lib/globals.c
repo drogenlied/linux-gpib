@@ -69,9 +69,6 @@ static void global_keys_alloc()
 	if( retval ) fprintf( stderr, "libgpib: failed to allocate TSD key!\n" );
 	retval = pthread_key_create( &ibcntl_key, ibcntl_destroy );
 	if( retval ) fprintf( stderr, "libgpib: failed to allocate TSD key!\n" );
-	pthread_setspecific( ibsta_key, NULL );
-	pthread_setspecific( iberr_key, NULL );
-	pthread_setspecific( ibcntl_key, NULL );
 }
 
 void globals_alloc( void )
@@ -148,7 +145,6 @@ int ThreadIbsta( void )
 	globals_alloc();
 
 	thread_ibsta = pthread_getspecific( ibsta_key );
-
 	if( thread_ibsta == NULL )
 	{
 		fprintf( stderr, "libgpib: failed to get ibsta TSD\n" );
@@ -165,7 +161,6 @@ int ThreadIberr( void )
 	globals_alloc();
 
 	thread_iberr = pthread_getspecific( iberr_key );
-
 	if( thread_iberr == NULL )
 	{
 		fprintf( stderr, "libgpib: failed to get iberr TSD\n" );
@@ -185,7 +180,6 @@ long ThreadIbcntl( void )
 	int *thread_ibcntl;
 
 	globals_alloc();
-
 	thread_ibcntl = pthread_getspecific( ibcntl_key );
 	if( thread_ibcntl == NULL )
 	{

@@ -50,7 +50,6 @@ int conf_online( ibConf_t *conf, int online )
 	if( retval < 0 ) return retval;
 	if( online )
 	{
-
 		retval = open_gpib_handle( conf );
 	}else
 	{

@@ -35,11 +35,11 @@ void init_async_op( struct async_operation *async )
 	pthread_mutex_init( &async->join_lock, NULL );
 	async->buffer = NULL;
 	async->buffer_length = 0;
-	async->in_progress = 0;
-	async->abort = 0;
+	async->iberr = 0;
 	async->ibsta = 0;
 	async->ibcntl = 0;
-	async->iberr = 0;
+	async->in_progress = 0;
+	async->abort = 0;
 }
 
 static void cleanup_aio( void *varg )
@@ -102,9 +102,10 @@ int gpib_aio_launch( int ud, ibConf_t *conf, int gpib_aio_type,
 static void* do_aio( void *varg )
 {
 	long count;
-	struct gpib_aio_arg arg = *((struct gpib_aio_arg*) varg);
+	struct gpib_aio_arg arg;
 	ibConf_t *conf;
 
+	arg = *((struct gpib_aio_arg*) varg);
 	free( varg ); varg = NULL;
 
 	conf = general_enter_library( arg.ud, 0, 1 );

@@ -101,6 +101,7 @@ ssize_t my_ibcmd( ibConf_t *conf, const uint8_t *buffer, size_t count)
 	cmd.buffer = (void*)buffer;
 	cmd.count = count;
 	cmd.handle = conf->handle;
+	cmd.end = 0;
 	
 	set_timeout( board, conf->settings.usec_timeout);
 

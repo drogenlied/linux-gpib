@@ -74,7 +74,7 @@ int ibdev( int minor, int pad, int sad, int timo, int eot, int eosmode )
 		new_conf.settings.send_eoi = 0;
 	new_conf.defaults = new_conf.settings;
 	new_conf.is_interface = 0;
-
+	
 	return my_ibdev( new_conf );
 	// XXX check for address conflicts with boards
 }

@@ -28,7 +28,6 @@ ibConf_t ibFindConfigs[ FIND_CONFIGS_LENGTH ];
 
 int insert_descriptor( ibConf_t p, int ud )
 {
-	ibConf_t *conf;
 	int i;
 
 	if( ud < 0 )
@@ -69,11 +68,9 @@ int insert_descriptor( ibConf_t p, int ud )
 		setIbcnt( ENOMEM );
 		return -1;
 	}
-	conf = ibConfigs[ ud ];
-
+	init_ibconf(ibConfigs[ ud ]);
 	/* put entry to the table */
-	*conf = p;
-	init_async_op( &conf->async );
+	*ibConfigs[ud] = p;
 
 	return ud;
 }
@@ -94,6 +91,7 @@ int setup_global_board_descriptors( void )
 			}
 		}
 	}
+	/* boards use handle 0 */
 	for( i = 0; i < GPIB_MAX_NUM_BOARDS; i++ )
 		if( ibConfigs[ i ] )
 			ibConfigs[ i ]->handle = 0;
@@ -205,6 +203,8 @@ void init_ibconf( ibConf_t *conf )
 	init_descriptor_settings( &conf->settings );
 	conf->init_string[0] = 0;
 	conf->flags = 0;
+	init_async_op( &conf->async );
+	conf->end = 0;
 	conf->is_interface = 0;
 	conf->board_is_open = 0;
 	conf->has_lock = 0;
@@ -221,6 +221,7 @@ int open_gpib_handle( ibConf_t *conf )
 
 	board = interfaceBoard( conf );
 
+	open_cmd.handle = -1;
 	open_cmd.pad = conf->settings.pad;
 	open_cmd.sad = conf->settings.sad;
 	open_cmd.is_board = conf->is_interface;
@@ -386,7 +387,7 @@ ibConf_t * general_enter_library( int ud, int no_lock_board, int ignore_eoip )
 	}
 	conf = ibConfigs[ ud ];
 
-	retval = conf_online( ibConfigs[ ud ], 1 );
+	retval = conf_online( conf, 1 );
 	if( retval < 0 ) return NULL;
 
 	conf->timed_out = 0;
@@ -572,6 +573,7 @@ int is_cic( const ibBoard_t *board )
 	cmd.pad = NOADDR;
 	cmd.sad = NOADDR;
 	cmd.handle = 0;
+	cmd.ibsta = 0;
 	retval = ioctl( board->fileno, IBWAIT, &cmd );
 	if( retval < 0 )
 	{

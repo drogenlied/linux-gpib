@@ -60,6 +60,7 @@ int my_wait( ibConf_t *conf, int wait_mask, int clear_mask, int set_mask, int *s
 	cmd.clear_mask = clear_mask;
 	cmd.set_mask = set_mask;
 	cmd.set_mask = 0;
+	cmd.ibsta = 0;
 	fixup_status_bits( conf, &cmd.wait_mask );
 	if( conf->is_interface == 0 )
 	{
@@ -78,7 +79,7 @@ int my_wait( ibConf_t *conf, int wait_mask, int clear_mask, int set_mask, int *s
 		return -1;
 	}
 
-	retval = ioctl( board->fileno, IBWAIT, &cmd );
+	retval = ioctl(board->fileno, IBWAIT, &cmd);
 	if( retval < 0 )
 	{
 		setIberr( EDVR );

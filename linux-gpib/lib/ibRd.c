@@ -72,6 +72,7 @@ ssize_t read_data( ibConf_t *conf, uint8_t *buffer, size_t count )
 	read_cmd.buffer = buffer;
 	read_cmd.count = count;
 	read_cmd.handle = conf->handle;
+	read_cmd.end = 0;
 	
 	set_timeout( board, conf->settings.usec_timeout );
 
