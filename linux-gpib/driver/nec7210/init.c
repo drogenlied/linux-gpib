@@ -270,7 +270,7 @@ void pc2_detach(gpib_driver_t *driver)
 	}
 	if(irq_allocated)
 	{
-		free_irq(ibirq, &ibbase);
+		free_irq(ibirq, driver);
 		irq_allocated = 0;
 	}
 	if(ioports_allocated)
@@ -377,7 +377,7 @@ void pc2a_detach(gpib_driver_t *driver)
 	}
 	if(irq_allocated)
 	{
-		free_irq(ibirq, &ibbase);
+		free_irq(ibirq, driver);
 		irq_allocated = 0;
 	}
 	if(ioports_allocated)
@@ -496,7 +496,7 @@ void cb_pci_detach(gpib_driver_t *driver)
 	}
 	if(irq_allocated)
 	{
-		free_irq(ibirq, &ibbase);
+		free_irq(ibirq, driver);
 		irq_allocated = 0;
 	}
 	if(ioports_allocated)
