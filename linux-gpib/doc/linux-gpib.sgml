@@ -41,6 +41,203 @@ A copy of the license is included in the section entitled
 </para>
 </section>
 
+<section ID="configuration">
+<title>
+	Run-Time Configuration: gpib.conf
+</title>
+<para>
+The library reads its configuration information at run time from the
+file /etc/gpib.conf.  A different file path for the configuration file
+can be specified
+by setting the IB_CONFIG environment variable.  A template gpib.conf
+file can be found in the util/templates/ subdirectory of the linux-gpib
+package.
+</para>
+<para>
+The configuration file must contain one or more 'interface' sections.  Two
+example interface entries follow.
+</para>
+<programlisting>
+interface {
+	minor = 0
+	board_type = "ni_pci"
+	pad = 0
+	sad = 0
+	pci_bus = 0
+	pci_slot = 0x9
+	master = yes
+}
+
+interface {
+	minor = 1
+	board_type = "pcII"
+	name = "joe"
+	pad = 3
+	sad = 0x62
+	timeout = T3s
+	eos = 0x0d
+	set-reos = yes
+	set-bin = no
+	set-xeos = no
+	set-eot = yes
+	base = 0x300
+	irq  = 5
+	dma  = 0
+	master = no
+}
+</programlisting>
+<para>
+	<table COLSEP="1" ROWSEP="1" ORIENT="port" PGWIDE="1">
+	<title>configuration options</title>
+	<tgroup COLS="3" ALIGN="left" >
+	<thead>
+	<row>
+	<entry>option name</entry>
+	<entry>description</entry>
+	<entry>used by interface or device entries</entry>
+	<entry>required or optional</entry>
+	</row>
+	</thead>
+	<tbody>
+	<row>
+	<entry>board_type</entry>
+	<entry>Specifies the type of interface board.  See the drivers.txt
+	file for a list of possible board types, and the kernel driver
+	module that supports them.</entry>
+	<entry>interface</entry>
+	<entry>required</entry>
+	</row>
+	<row>
+	<entry>eos</entry>
+	<entry>Sets the end-of-string byte for board or device descriptors
+	obtained with ibfind().  See also the set-reos, set-bin, and set-xeos
+	options.</entry>
+	<entry>interface or device</entry>
+	<entry>optional</entry>
+	</row>
+	<row>
+	<entry>master</entry>
+	<entry>Set to 'yes' if you want the interface board to
+	be the system controller of the bus.</entry>
+	<entry>interface</entry>
+	<entry>required</entry>
+	</row>
+	<row>
+	<entry>minor</entry>
+	<entry>'minor' specifies the minor number of the device file this
+	interface board will use.  A 'minor' of 0 corresponds
+	to /dev/gpib0, 1 is /dev/gpib1, etc.  The minor number is also
+	equal to the 'board index' which can be used as a board descriptor,
+	and is passed as one of the arguments of <link LINKEND="reference-function-ibdev">
+	ibdev()</link>
+	</entry>
+	<entry>interface</entry>
+	<entry>required</entry>
+	</row>
+	<row>
+	<entry>name</entry>
+	<entry>The 'name' specifies the name which can be used with ibfind()
+	to get a descriptor for the board or device associated with this entry.</entry>
+	<entry>interface or device</entry>
+	<entry>optional</entry>
+	</row>
+	<row>
+	<entry>pad</entry>
+	<entry>Specifies the primary GPIB address (valid addresses are 0 to 30).
+	For interfaces, this is the primary address that the board will be
+	assigned when it is first brought online.  For devices, this is address
+	that will be used by device descriptors obtained with ibfind().</entry>
+	<entry>interface or device</entry>
+	<entry>required</entry>
+	</row>
+	<row>
+	<entry>pci_bus</entry>
+	<entry>Useful for distinguishing between multiple PCI cards.  If
+	you have more than one PCI card that with the same 'board_type', you can
+	use the 'pci_bus' and 'pci_slot' options to specify the particular
+	card you are interested in.  </entry>
+	<entry>interface</entry>
+	<entry>optional</entry>
+	</row>
+	<row>
+	<entry>pci_slot</entry>
+	<entry>Can be used in conjunction with 'pci_bus' to specify
+	a particular pci card.</entry>
+	<entry>interface</entry>
+	<entry>optional</entry>
+	</row>
+	<row>
+	<entry>sad</entry>
+	<entry>Specifies the secondary GPIB address.  Valid values are 0, or
+	0x60 to 0x7e hexadecimal (96 to 126 decimal).  A value of 0 means
+	secondary addressing is disabled (the default).  Secondary addresses
+	from 0 to 30
+	are specified by the library's convention of adding an offset of 0x60.
+	</entry>
+	<entry>interface or device</entry>
+	<entry>optional</entry>
+	</row>
+	<row>
+	<entry>set-bin</entry>
+	<entry>Enables 8-bit comparisons when matching the
+	end-of-string byte, instead of only comparing the
+	7 least significant bits.  Only affects descriptors
+	returned by ibfind(), and has same effect as setting
+	the BIN bit in a
+	<link LINKEND="reference-function-ibeos">ibeos()</link>
+	call.</entry>
+	<entry>interface or device</entry>
+	<entry>optional</entry>
+	</row>
+	<row>
+	<entry>set-eot</entry>
+	<entry>Enables assertion of the EOI line at the
+	end of writes, for descriptors
+	returned by ibfind().  See
+	<link LINKEND="reference-function-ibeot">ibeot()</link>.</entry>
+	<entry>interface or device</entry>
+	<entry>optional</entry>
+	</row>
+	<row>
+	<entry>set-reos</entry>
+	<entry>Enables the termination of reads on reception of the
+	end-of-string byte for descriptors returned by ibfind().
+	Same as setting the REOS bit in a
+	<link LINKEND="reference-function-ibeos">ibeos()</link>
+	call.</entry>
+	<entry>interface or device</entry>
+	<entry>optional</entry>
+	</row>
+	<row>
+	<entry>set-xeos</entry>
+	<entry>Enables the assertion of EOI on transmission of the
+	end-of-string byte for descriptors returned by ibfind().
+	Same as setting the XEOS bit in a
+	<link LINKEND="reference-function-ibeos">ibeos()</link>
+	call.</entry>
+	<entry>interface or device</entry>
+	<entry>optional</entry>
+	</row>
+	<row>
+	<entry>timeout</entry>
+	<entry>Sets the io timeout for a board or device descriptor opened through
+	ibfind().  The possible settings are the same as the constants
+	used by <link LINKEND="reference-function-ibtmo">ibtmo()</link>.</entry>
+	<entry>interface or device</entry>
+	<entry>optional</entry>
+	</row>
+	<row>
+	<entry></entry>
+	<entry></entry>
+	<entry></entry>
+	<entry></entry>
+	</row>
+	</tbody>
+	</tgroup>
+	</table>
+</para>
+</section>
+
 <section ID="reference">
 <title>
 	Linux-GPIB Reference
