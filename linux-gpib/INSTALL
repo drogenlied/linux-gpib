@@ -136,7 +136,7 @@ D) Loading the driver module
 E) Bindings for other languages
 -------------------------------
 
-	To compile and install bindings for Python or Tcl, enter the appropriate
-	subdirectory of the 'language' directory then 'make' and 'make install'.
+	To compile and install bindings for other languages, enter the appropriate
+	subdirectory of the 'language' directory and see the bindings' README.
 
 
