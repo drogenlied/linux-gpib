@@ -1086,6 +1086,48 @@ int agilent_82357a_attach(gpib_board_t *board)
 	return retval;
 }
 
+static int agilent_82357a_go_idle(gpib_board_t *board)
+{
+	agilent_82357a_private_t *a_priv = board->private_data;
+	struct agilent_82357a_register_pairlet writes[0x20];
+	int retval;
+	int i;
+	
+	i = 0;
+	// turn on tms9914 reset state
+	writes[i].address = AUXCR;
+	writes[i].value = AUX_CS | AUX_CHIP_RESET;
+	++i;
+	a_priv->hw_control_bits &= ~NOT_TI_RESET;
+	writes[i].address = HW_CONTROL;
+	writes[i].value = a_priv->hw_control_bits;
+	++i;
+	writes[i].address = PROTOCOL_CONTROL;
+	writes[i].value = 0;
+	++i;
+	writes[i].address = IMR0;
+	writes[i].value = 0;
+	++i;
+	writes[i].address = IMR1;
+	writes[i].value = 0;
+	++i;
+	writes[i].address = LED_CONTROL;
+	writes[i].value = 0;
+	++i;
+	if(i > sizeof(writes) / sizeof(writes[0]))
+	{
+		printk("%s: %s: bug! writes[] overflow\n", __FILE__, __FUNCTION__);
+		return -EFAULT;
+	}
+	retval = agilent_82357a_write_registers(a_priv, writes, i);
+	if(retval)
+	{
+		printk("%s: %s: agilent_82357a_write_registers() returned error\n", __FILE__, __FUNCTION__);
+		return -EIO;
+	}
+	return 0;
+}
+
 void agilent_82357a_detach(gpib_board_t *board)
 {
 	agilent_82357a_private_t *a_priv;
@@ -1097,6 +1139,7 @@ void agilent_82357a_detach(gpib_board_t *board)
 	{
 		if(a_priv->bus_interface)
 		{
+			agilent_82357a_go_idle(board);
 			usb_set_intfdata(a_priv->bus_interface, NULL);
 		}
 		down(&a_priv->bulk_transfer_lock);
