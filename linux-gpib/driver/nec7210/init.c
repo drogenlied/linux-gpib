@@ -66,9 +66,10 @@ void nec7210_board_reset( nec7210_private_t *priv, const gpib_board_t *board )
 
 	nec7210_secondary_address( board, priv, board->sad, board->sad >= 0 );
 
-	// holdoff on all data	XXX record current handshake state somewhere
+	// holdoff on all data
 	priv->auxa_bits = AUXRA;
 	write_byte(priv, priv->auxa_bits | HR_HLDA, AUXMR);
+	set_bit( RFD_HOLDOFF_BN, &priv->state );
 
 	/* set INT pin to active high */
 	priv->auxb_bits = AUXRB;
