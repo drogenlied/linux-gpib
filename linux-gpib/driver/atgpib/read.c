@@ -16,7 +16,7 @@ IBLCL void bdDMAread(ibio_op_t *rdop)
 	DBGin("bdread(dma)");
 	buf = rdop->io_vbuf;
 	cnt = rdop->io_cnt;
-	DBGprint(DBG_DATA, ("buf=0x%x cnt=%d  ", buf, cnt));
+	DBGprint(DBG_DATA, ("buf=0x%p cnt=%d  ", buf, cnt));
 
 	GPIBout(imr1, 0);
 	GPIBout(imr2, 0);		/* clear any previously arrived bits */

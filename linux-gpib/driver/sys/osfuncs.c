@@ -4,13 +4,11 @@
 
 #define GIVE_UP(a) { osUnlockMutex(); DBGout(); return (a); }
 
-#define LINUX_STD_PARAM  struct inode* inode,struct file* filep
-
 int ib_opened=0;
 int ib_exclusive=0;
 
 
-int ibopen(LINUX_STD_PARAM)
+IBLCL int ibopen(struct inode *inode, struct file *filep)
 {
 	DBGin("ibopen");
 
@@ -86,7 +84,7 @@ IBLCL int ibclose(struct inode *inode, struct file *file)
 }
 
 
-int ibioctl(LINUX_STD_PARAM,unsigned int cmd, unsigned long arg)
+IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned long arg)
 {
 	int	retval = OK;		/* assume everything OK for now */
         ibarg_t m_ibarg,*ibargp;
@@ -457,9 +455,9 @@ int ibioctl(LINUX_STD_PARAM,unsigned int cmd, unsigned long arg)
 
 /***********************************************************************/
 
-int ibVFSwrite( LINUX_STD_PARAM, char *buffer, int count)
+IBLCL int ibVFSwrite( struct file *filep, const char *buffer, size_t count, loff_t *offset)
   {
-    int minor = MINOR(inode->i_rdev);
+    int minor = MINOR(filep->f_dentry->d_inode->i_rdev);
     int retval = 0;
 	int	bufsize;
 	int	remain;
@@ -509,9 +507,9 @@ int ibVFSwrite( LINUX_STD_PARAM, char *buffer, int count)
 
 /*----------------------------------------------------------------------*/
 
-int ibVFSread( LINUX_STD_PARAM, char *buffer, int count)
+IBLCL int ibVFSread(struct file *filep, char *buffer, size_t count, loff_t *offset)
   {
-    int minor = MINOR(inode->i_rdev);
+    int minor = MINOR(filep->f_dentry->d_inode->i_rdev);
     int retval = 0;
 	int	bufsize;
 	int	remain;

@@ -14,7 +14,7 @@ IBLCL void bdcmd(ibio_op_t *cmdop)
 	DBGin("bdcmd");
 	buf = cmdop->io_vbuf;
 	cnt = cmdop->io_cnt;
-	DBGprint(DBG_DATA, ("buf=0x%x cnt=%d  ", buf, cnt));
+	DBGprint(DBG_DATA, ("buf=0x%p cnt=%d  ", buf, cnt));
 
 	GPIBout(imr1, 0);
 	GPIBout(imr2, 0);		/* clear any previously arrived bits */

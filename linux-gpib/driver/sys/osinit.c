@@ -1,8 +1,4 @@
-
 #include <ibsys.h>
-
-
-
 
 /* default debugging level */
 
@@ -101,7 +97,7 @@ extern  void ibintr(int irq, void *d, struct pt_regs *regs);
 	s = TICKSPERSEC;
 	DBGprint(DBG_DATA, ("ClkRate=%d  ", s));
 	if (s != timeTable[0]) {
-		DBGprint(DBG_BRANCH, ("adjusting timeTable  ", s));
+		DBGprint(DBG_BRANCH, ("adjusting timeTable %d", s));
 		timeTable[ 0] = s;			/* (New TMFAC)  */
 		timeTable[ 1] = TM(s,10,1000000L);	/*  1: T10us    */
 		timeTable[ 2] = TM(s,30,1000000L);	/*  2: T30us    */
@@ -130,7 +126,7 @@ extern  void ibintr(int irq, void *d, struct pt_regs *regs);
  #else
 	espsemid.count=0;
  #endif
-	DBGprint(DBG_DATA, ("espsemid=0x%x  ", espsemid.count));
+	DBGprint(DBG_DATA, ("espsemid=0x%x  ", atomic_read(&espsemid.count)));
 #endif
         /* avoid symbols to be exported (TB) */
 #if 0
@@ -199,11 +195,6 @@ IBLCL void osReset(void)
 
 
 ****************************************************************************************/
-
-//extern int  ibioctl    (struct inode *, struct file *, unsigned int, unsigned long);
-//extern int  ibopen     (struct inode *, struct file *);
-//extern int  ibVFSread  (struct file *, char *, size_t, loff_t * );
-//extern int  ibVFSwrite (struct file *, const char *, size_t, loff_t * );
 
 struct file_operations ib_fops = {
   owner: THIS_MODULE,

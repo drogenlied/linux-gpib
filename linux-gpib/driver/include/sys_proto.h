@@ -3,7 +3,11 @@
 extern  void osDMAAdjCnt(ibio_op_t *rwop);
 extern  void osPIOAdjCnt(ibio_op_t *rwop);
 extern  int osDoDMA(ibio_op_t *rwop);
-extern  int ibclose(struct inode *, struct file *);
+extern  int ibopen(struct inode *inode, struct file *filep);
+extern  int ibclose(struct inode *inode, struct file *file);
+extern  int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned long arg);
+extern  int ibVFSwrite( struct file *filep, const char *buffer, size_t count, loff_t *offset);
+extern  int ibVFSread(struct file *filep, char *buffer, size_t count, loff_t *offset);
 extern  int osInit(void);
 extern  void osReset(void);
 extern  void osWaitForInt( int imr3mask );

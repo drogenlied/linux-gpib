@@ -26,7 +26,7 @@ void AP_Lock (void)
 {
   DBGin("AP_Lock");
   down(&AutoP_mutex);
-  DBGprint(DBG_DATA,("AutoP_mutex=%d",AutoP_mutex.count));
+  DBGprint(DBG_DATA,("AutoP_mutex=%d",atomic_read(&AutoP_mutex.count)));
   DBGout();
 }
 
@@ -34,7 +34,7 @@ void AP_UnLock (void)
 {
   DBGin("AP_UnLock");
   up(&AutoP_mutex);
-  DBGprint(DBG_DATA,("AutoP_mutex=%d",AutoP_mutex.count));
+  DBGprint(DBG_DATA,("AutoP_mutex=%d",atomic_read(&AutoP_mutex.count)));
   DBGout();
 }
 
@@ -85,7 +85,7 @@ void AP_LocalLock(int pad)
 {
   DBGin("AP_LocalLock");
   down(&(AP_Vector[pad].lock));
-  DBGprint(DBG_DATA,("Vector[%d].lock=%d",pad,(AP_Vector[pad].lock).count));
+  DBGprint(DBG_DATA,("Vector[%d].lock=%d",pad,atomic_read(&(AP_Vector[pad].lock).count)));
   DBGout();
 }
 
@@ -93,7 +93,7 @@ void AP_LocalUnLock(int pad)
 {
   DBGin("AP_LocalUnLock");
   up(&(AP_Vector[pad].lock));
-  DBGprint(DBG_DATA,("Vector[%d].lock=%d",pad,(AP_Vector[pad].lock).count));
+  DBGprint(DBG_DATA,("Vector[%d].lock=%d",pad,atomic_read(&(AP_Vector[pad].lock).count)));
   DBGout();
 }
 
@@ -107,7 +107,6 @@ int AP_virgin = 1;
 IBLCL int ibAPWait(int pad)
 {
   int i;
-  char tspb[2];
 
   DBGin("ibAPWait");
   pad &=0xff;

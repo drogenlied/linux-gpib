@@ -8,9 +8,6 @@
 IBLCL int osDoDMA(ibio_op_t *rwop)
 {
 	int		resid;		/* residual transfer count */
-	int		cnt;		/* word transfer count */
-	char		lsb, msb, page;	/* physical address pieces */
-
 
 	DBGin("osDoDMA");
 
