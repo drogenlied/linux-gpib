@@ -20,6 +20,7 @@
 #define _NI_USB_GPIB_H
 
 #include <linux/usb.h>
+#include <linux/timer.h>
 #include "gpibP.h"
 
 enum 
@@ -61,6 +62,12 @@ typedef struct
 	struct semaphore control_transfer_lock;
 	struct semaphore interrupt_transfer_lock;
 } ni_usb_private_t;
+
+typedef struct
+{
+	struct semaphore complete;
+	unsigned timed_out : 1;
+} ni_usb_urb_context_t;
 
 struct ni_usb_status_block
 {

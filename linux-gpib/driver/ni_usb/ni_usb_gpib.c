@@ -66,22 +66,30 @@ static unsigned short ni_usb_timeout_code(unsigned int usec)
 	}
 };
 
-void ni_usb_bulk_complete(struct urb *urb, struct pt_regs *regs)
+static void ni_usb_bulk_complete(struct urb *urb, struct pt_regs *regs)
 {
-	struct semaphore *complete = urb->context;
+	ni_usb_urb_context_t *context = urb->context;
 	
 //	printk("debug: %s: %s: status=0x%x, error_count=%i, actual_length=%i\n", __FILE__, __FUNCTION__,
 //		urb->status, urb->error_count, urb->actual_length); 
-	up(complete);
+	up(&context->complete);
 }
+
+static void ni_usb_timeout_handler(unsigned long arg)
+{
+	ni_usb_urb_context_t *context = (ni_usb_urb_context_t *) arg;
+	context->timed_out = 1;
+	up(&context->complete);
+};
 
 int ni_usb_send_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_length, int *actual_data_length, int timeout_jiffies)
 {
 	struct usb_device *usb_dev;
 	int retval;
 	unsigned int out_pipe;
-	DECLARE_MUTEX_LOCKED(complete);
-
+	ni_usb_urb_context_t context;
+	struct timer_list timer;
+	
 	*actual_data_length = 0;
 	retval = down_interruptible(&ni_priv->bulk_transfer_lock);
 	if(retval) return retval;
@@ -103,9 +111,15 @@ int ni_usb_send_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_length,
 	}
 	usb_dev = interface_to_usbdev(ni_priv->bus_interface);
 	out_pipe = usb_sndbulkpipe(usb_dev, NIUSB_BULK_OUT_ENDPOINT);
+	init_MUTEX_LOCKED(&context.complete);
+	context.timed_out = 0;
 	usb_fill_bulk_urb(ni_priv->bulk_urb, usb_dev, out_pipe, data, data_length, 
-		ni_usb_bulk_complete, &complete);
-	ni_priv->bulk_urb->timeout = timeout_jiffies;
+		ni_usb_bulk_complete, &context);
+	init_timer(&timer);
+	timer.expires = jiffies + timeout_jiffies;
+	timer.function = ni_usb_timeout_handler;
+	timer.data = (unsigned long) &context;
+	add_timer(&timer);
 	//printk("%s: submitting urb\n", __FUNCTION__);
 	retval = usb_submit_urb(ni_priv->bulk_urb, GFP_KERNEL);
 	if(retval) 
@@ -117,7 +131,7 @@ int ni_usb_send_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_length,
 		return retval;
 	}
 	up(&ni_priv->bulk_transfer_lock);
-	if(down_interruptible(&complete))
+	if(down_interruptible(&context.complete))
 	{
 		printk("%s: %s: interrupted\n", __FILE__, __FUNCTION__);
 		usb_kill_urb(ni_priv->bulk_urb);
@@ -127,8 +141,15 @@ int ni_usb_send_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_length,
 		up(&ni_priv->bulk_transfer_lock);	
 		return -ERESTARTSYS;
 	}
+	if(context.timed_out) 
+	{
+		usb_kill_urb(ni_priv->bulk_urb);
+		retval = -ETIMEDOUT;
+	}else
+		retval = ni_priv->bulk_urb->status;
+	if(timer_pending(&timer))
+		del_timer_sync(&timer);
 	*actual_data_length = ni_priv->bulk_urb->actual_length;
-	retval = ni_priv->bulk_urb->status;
 	down(&ni_priv->bulk_transfer_lock);
 	usb_free_urb(ni_priv->bulk_urb);
 	ni_priv->bulk_urb = NULL;
@@ -141,7 +162,8 @@ int ni_usb_receive_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_leng
 	struct usb_device *usb_dev;
 	int retval;
 	unsigned int in_pipe;
-	DECLARE_MUTEX_LOCKED(complete);
+	ni_usb_urb_context_t context;
+	struct timer_list timer;
 
 	*actual_data_length = 0;
 	retval = down_interruptible(&ni_priv->bulk_transfer_lock);
@@ -164,9 +186,15 @@ int ni_usb_receive_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_leng
 	}
 	usb_dev = interface_to_usbdev(ni_priv->bus_interface);
 	in_pipe = usb_rcvbulkpipe(usb_dev, NIUSB_BULK_IN_ENDPOINT);
+	init_MUTEX_LOCKED(&context.complete);
+	context.timed_out = 0;
 	usb_fill_bulk_urb(ni_priv->bulk_urb, usb_dev, in_pipe, data, data_length, 
-		ni_usb_bulk_complete, &complete);
-	ni_priv->bulk_urb->timeout = timeout_jiffies;
+		ni_usb_bulk_complete, &context);
+	init_timer(&timer);
+	timer.expires = jiffies + timeout_jiffies;
+	timer.function = ni_usb_timeout_handler;
+	timer.data = (unsigned long) &context;
+	add_timer(&timer);
 	//printk("%s: submitting urb\n", __FUNCTION__);
 	retval = usb_submit_urb(ni_priv->bulk_urb, GFP_KERNEL);
 	if(retval) 
@@ -178,7 +206,7 @@ int ni_usb_receive_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_leng
 		return retval;
 	}
 	up(&ni_priv->bulk_transfer_lock);
-	if(down_interruptible(&complete))
+	if(down_interruptible(&context.complete))
 	{
 		printk("%s: %s: interrupted\n", __FILE__, __FUNCTION__);
 		usb_kill_urb(ni_priv->bulk_urb);
@@ -188,8 +216,15 @@ int ni_usb_receive_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_leng
 		up(&ni_priv->bulk_transfer_lock);	
 		return -ERESTARTSYS;
 	}
+	if(context.timed_out) 
+	{
+		usb_kill_urb(ni_priv->bulk_urb);
+		retval = -ETIMEDOUT;
+	}else
+		retval = ni_priv->bulk_urb->status;
+	if(timer_pending(&timer))
+		del_timer_sync(&timer);
 	*actual_data_length = ni_priv->bulk_urb->actual_length;
-	retval = ni_priv->bulk_urb->status;
 	down(&ni_priv->bulk_transfer_lock);
 	usb_free_urb(ni_priv->bulk_urb);
 	ni_priv->bulk_urb = NULL;

@@ -20,6 +20,7 @@
 #define _AGILENT_82357_H
 
 #include <linux/usb.h>
+#include <linux/timer.h>
 #include "gpibP.h"
 #include "tms9914.h"
 
@@ -146,6 +147,12 @@ typedef struct
 	struct semaphore interrupt_transfer_lock;
 	struct semaphore control_transfer_lock;
 } agilent_82357a_private_t;
+
+typedef struct
+{
+	struct semaphore complete;
+	unsigned timed_out : 1;
+} agilent_82357a_urb_context_t;
 
 struct agilent_82357a_register_pairlet
 {
