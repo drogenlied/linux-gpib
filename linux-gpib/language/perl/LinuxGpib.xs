@@ -136,9 +136,7 @@ ibrdi(ud, array, cnt)
 PREINIT:
 	int i;
 	char *buf;
-	SV *byte;
 CODE:
-	byte = newSViv( 0 );
 	av_clear( array );
 	buf = malloc( cnt );
 	if( buf == NULL )
@@ -148,8 +146,7 @@ CODE:
 	{
 		for( i = 0; i < ThreadIbcntl(); i++ )
 		{
-			sv_setuv( byte, (unsigned int) ( buf[ i ] & 0xff ) );
-			av_push( array, byte );
+			av_push( array, newSViv( buf[ i ] & 0xff ) );
 		}
 	}
 	free( buf );
