@@ -19,4 +19,10 @@ int ibtmo(int ud,int v)
 	return ibsta;
 }
 
+int __ibtmo(ibBoard_t *board, int timeout)
+{
+	//XXX
+	return 0;
+}
+
 

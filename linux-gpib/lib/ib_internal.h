@@ -4,11 +4,12 @@
 #include <gpib_types.h>
 #include <gpib_registers.h>
 #include <gpib_ioctl.h>
+#include <unistd.h>
 
 #include <ibConf.h>
 
 #define NOADDR -1
-#define IbcAUTOPOLL 0 
+#define IbcAUTOPOLL 0
 
 /***** Private Functions ******/
 extern int ibCheckDescriptor(int ud);
@@ -27,7 +28,8 @@ extern  void ibPutErrlog(int ud,char *routine);
 extern  int ibParseConfigFile(char *filename);
 extern  int ibGetDescriptor(ibConf_t conf);
 extern  int ibFindDevIndex(char *name);
-
+extern ssize_t __ibcmd(ibBoard_t *board, uint8_t *buffer, size_t length);
+extern int __ibtmo(ibBoard_t *board, int timeout);
 extern int config_parsed;
 
 #include <stdio.h>

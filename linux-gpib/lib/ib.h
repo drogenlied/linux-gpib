@@ -22,6 +22,7 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
 #include <gpib_user.h>
 
 extern int ibsta, ibcnt, iberr;

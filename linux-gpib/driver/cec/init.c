@@ -222,8 +222,8 @@ int cec_pci_attach(gpib_device_t *device)
 	if(pci_request_regions(cec_priv->pci_device, "cec-gpib"))
 		return -1;
 
-	cec_priv->plx_iobase = pci_resource_start(cec_priv->pci_device, 1) & PCI_BASE_ADDRESS_IO_MASK;
-	nec_priv->iobase = pci_resource_start(cec_priv->pci_device, 2) & PCI_BASE_ADDRESS_IO_MASK;
+	cec_priv->plx_iobase = pci_resource_start(cec_priv->pci_device, 1);
+	nec_priv->iobase = pci_resource_start(cec_priv->pci_device, 2);
 
 	isr_flags |= SA_SHIRQ;
 	if(request_irq(cec_priv->pci_device->irq, cec_interrupt, isr_flags, "pci-gpib", device))

@@ -19,7 +19,7 @@ int ibsad(int ud, int v)
 	else
 	{
 		/* enable ibsad also working on devices, not only on boards */
-		if ( ( v >= sad_offset && v <= sad_offset + sad_max ) ||  (v == 0x0))
+		if ( ( v >= sad_offset && v <= sad_offset + gpib_addr_max ) ||  (v == 0x0))
 		{
 			ibBoard[ud].sad = v - sad_offset;
 		}

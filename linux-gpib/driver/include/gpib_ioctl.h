@@ -1,8 +1,24 @@
 
+#include <asm/ioctl.h>
 
-#define IBRD		0		/* Standard functions. */
-#define IBWRT		1
-#define IBCMD		2
+#define GPIB_CODE 160
+
+typedef struct
+{
+	char name[100];
+} board_type_ioctl_t;
+
+// argument for read/write/command ioctls
+typedef struct
+{
+	uint8_t *buffer;
+	unsigned long count;
+} read_write_ioctl_t;
+
+/* Standard functions. */
+#define IBRD _IOWR(GPIB_CODE, 0, read_write_ioctl_t)
+#define IBWRT _IOWR(GPIB_CODE, 1, read_write_ioctl_t)
+#define IBCMD _IOWR(GPIB_CODE, 2, read_write_ioctl_t)
 #define IBWAIT		3
 #define IBRPP		4
 #define IBONL		5
@@ -41,10 +57,4 @@
 #define IBAPWAIT        (APIO+0)
 #define IBAPRSP         (APIO+1)
 #define IBAPE           (APIO+2)
-
-
-typedef struct
-{
-	char name[100];
-} board_type_ioctl_t;
 

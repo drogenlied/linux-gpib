@@ -20,7 +20,9 @@
 
 #include <linux/fcntl.h>
 
-int board_type_ioctl(unsigned int minor, unsigned long arg);
+int board_type_ioctl(gpib_device_t *device, unsigned long arg);
+int read_ioctl(gpib_device_t *device, unsigned long arg);
+int command_ioctl(gpib_device_t *device, unsigned long arg);
 
 #define GIVE_UP(a) {up(&device->mutex); return a;}
 
@@ -99,7 +101,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
 	}
 	device = &device_array[minor];
 	if(cmd == CFCBOARDTYPE)
-		return board_type_ioctl(minor, arg);
+		return board_type_ioctl(device, arg);
 	if(device->interface == NULL)
 	{
 		printk("gpib: no device configured on /dev/gpib%i\n", minor);
@@ -108,6 +110,15 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
 
 printk("minor %i ioctl %i\n", minor, cmd);
 
+	switch( cmd )
+	{
+		case IBRD:
+			return read_ioctl(device, arg);
+		case IBCMD:
+			return command_ioctl(device, arg);
+		default:
+			break;
+	}
 	ibargp = (ibarg_t *) &m_ibarg;
 
 	/* Check the arg buffer is readable & writable by the current process */
@@ -153,30 +164,6 @@ printk("minor %i ioctl %i\n", minor, cmd);
 //XXX a lot of the content of this switch should be split out into seperate functions
 	switch (cmd)
 	{
-		case IBRD:	// XXX read should not be an ioctl
-			/* Check write access to buffer */
-			retval = verify_area(VERIFY_WRITE, ibargp->ib_buf, ibargp->ib_cnt);
-			if (retval)
-				GIVE_UP (retval);
-
-			/* Read buffer loads till we fill the user supplied buffer */
-			userbuf = ibargp->ib_buf;
-			remain = ibargp->ib_cnt;
-			while(remain > 0 && end_flag == 0)
-			{
-				ret = ibrd(device, device->buffer, (device->buffer_length < remain) ? device->buffer_length :
-					remain, &end_flag);
-				if(ret < 0)
-				{
-					retval = -EIO;
-					break;
-				}
-				copy_to_user(userbuf, device->buffer, ret);
-				remain -= ret;
-				userbuf += ret;
-			}
-			ibargp->ib_ibcnt = ibargp->ib_cnt - remain;
-			break;
 		case IBWRT:	// XXX write should not be an ioclt
 
 			/* Check read access to buffer */
@@ -310,35 +297,6 @@ printk("minor %i ioctl %i\n", minor, cmd);
 			retval = ibAPrsp(device, ibargp->ib_arg, &c);
 			put_user( c, ibargp->ib_buf );
 			break;
-		case DVRD:	// XXX unnecessary, should be in user space lib
-			/* Check write access to buffer */
-			retval = verify_area(VERIFY_WRITE, ibargp->ib_buf, ibargp->ib_cnt);
-			if (retval)
-				GIVE_UP(retval);
-			if(receive_setup(device, ibargp->ib_arg))
-			{
-				retval = -EIO;
-				break;
-			}
-			/* Read buffer loads till we fill the user supplied buffer */
-			userbuf = ibargp->ib_buf;
-			remain = ibargp->ib_cnt;
-			while (remain > 0)	//!(ibstatus() & TIMO))
-			{
-				ret = ibrd(device, device->buffer, (device->buffer_length < remain) ?
-					device->buffer_length : remain, &end_flag);
-				if(ret < 0)
-				{
-					retval = -EIO;
-					break;
-				}
-				copy_to_user( userbuf, device->buffer, ret );
-				remain -= ret;
-				userbuf += ret;
-				if(end_flag) break;
-			}
-			ibargp->ib_ibcnt = ibargp->ib_cnt - remain;
-			break;
 		case DVWRT:	// XXX unnecessary, should be in user space lib
 
 			/* Check read access to buffer */
@@ -402,12 +360,11 @@ printk("minor %i ioctl %i\n", minor, cmd);
 	GIVE_UP(retval);
 }
 
-int board_type_ioctl(unsigned int minor, unsigned long arg)
+int board_type_ioctl(gpib_device_t *device, unsigned long arg)
 {
 	struct list_head *list_ptr;
 	board_type_ioctl_t board;
 	int retval;
-	gpib_device_t *device = &device_array[minor];
 
 	retval = copy_from_user(&board, (void*)arg, sizeof(board_type_ioctl_t));
 	if(retval)
@@ -451,8 +408,90 @@ int board_type_ioctl(unsigned int minor, unsigned long arg)
 	return -EINVAL;
 }
 
+int read_ioctl(gpib_device_t *device, unsigned long arg)
+{
+	read_write_ioctl_t read_cmd;
+	uint8_t *userbuf;
+	unsigned long remain;
+	int end_flag = 0;
+	int retval;
+	ssize_t ret;
 
+	retval = copy_from_user(&read_cmd, (void*) arg, sizeof(read_cmd));
+	if (retval)
+		return -EFAULT;
 
+	/* Check write access to buffer */
+	retval = verify_area(VERIFY_WRITE, read_cmd.buffer, read_cmd.count);
+	if (retval)
+		return -EFAULT;
+
+	/* Read buffer loads till we fill the user supplied buffer */
+	userbuf = read_cmd.buffer;
+	remain = read_cmd.count;
+	while(remain > 0 && end_flag == 0)
+	{
+		ret = ibrd(device, device->buffer, (device->buffer_length < remain) ? device->buffer_length :
+			remain, &end_flag);
+		if(ret < 0)
+		{
+			retval = -EIO;
+			break;
+		}
+		copy_to_user(userbuf, device->buffer, ret);
+		remain -= ret;
+		userbuf += ret;
+	}
+	read_cmd.count -= remain;
+
+	retval = copy_to_user((void*) arg, &read_cmd, sizeof(read_cmd));
+	if(retval) return -EFAULT;
+
+	return 0;
+}
+
+int command_ioctl(gpib_device_t *device, unsigned long arg)
+{
+	read_write_ioctl_t cmd;
+	uint8_t *userbuf;
+	unsigned long remain;
+	int retval;
+	ssize_t ret;
+
+	retval = copy_from_user(&cmd, (void*) arg, sizeof(cmd));
+	if (retval)
+		return -EFAULT;
+
+	/* Check read access to buffer */
+	retval = verify_area(VERIFY_READ, cmd.buffer, cmd.count);
+	if (retval)
+		return -EFAULT;
+
+	/* Write buffer loads till we empty the user supplied buffer */
+	userbuf = cmd.buffer;
+	remain = cmd.count;
+	while (remain > 0 && !(ibstatus(device) & (TIMO)))
+	{
+		copy_from_user(device->buffer, userbuf, (device->buffer_length < remain) ?
+			device->buffer_length : remain );
+		ret = ibcmd(device, device->buffer, (device->buffer_length < remain) ?
+			device->buffer_length : remain );
+		if(ret < 0)
+		{
+			retval = -EIO;
+			break;
+		}
+		remain -= ret;
+		userbuf += ret;
+	}
+
+	cmd.count -= remain;
+
+	retval = copy_to_user((void*) arg, &cmd, sizeof(cmd));
+	if(retval) return -EFAULT;
+
+	return 0;
+}
 
 
 

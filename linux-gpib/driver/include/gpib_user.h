@@ -46,7 +46,6 @@
 #define ENEB     7		/* non-existent board (GPIB interface offline) */
 #define EDMA     8		/* DMA hardware error detected */
 #define EBTO     9		/* DMA hardware uP bus timeout */
-// EIOP XXX ??
 #define EOIP    10		/* new I/O attempted with old I/O in progress  */
 #define ECAP    11		/* no capability for intended opeation */
 #define EFSO    12		/* file system operation error */
@@ -107,25 +106,39 @@
 
 /* Possible GPIB command messages */
 
-#define GTL	(unsigned char)0x1	/* go to local			*/
-#define SDC	(unsigned char)0x4	/* selected device clear 	*/
-#define PPC	(unsigned char)0x5	/* parallel poll configure	*/
-#define GET	(unsigned char)0x8	/* group execute trigger 	*/
-#define TCT	(unsigned char)0x9	/* take control 		*/
-#define LLO	(unsigned char)0x11	/* local lockout		*/
-#define DCL	(unsigned char)0x14	/* device clear 		*/
-#define PPU	(unsigned char)0x15	/* parallel poll unconfigure 	*/
-#define SPE	(unsigned char)0x18	/* serial poll enable 		*/
-#define SPD	(unsigned char)0x19	/* serial poll disable 		*/
-#define UNL	(unsigned char)0x3F	/* unlisten 			*/
-#define UNT	(unsigned char)0x5F	/* untalk 			*/
-#define PPE	(unsigned char)0x60	/* parallel poll enable (base)	*/
-#define S	(unsigned char)0x08	/* parallel poll sense bit	*/
+#define GTL	0x1	/* go to local			*/
+#define SDC	0x4	/* selected device clear 	*/
+#define PPC	0x5	/* parallel poll configure	*/
+#define GET	0x8	/* group execute trigger 	*/
+#define TCT	0x9	/* take control 		*/
+#define LLO	0x11	/* local lockout		*/
+#define DCL	0x14	/* device clear 		*/
+#define PPU	0x15	/* parallel poll unconfigure 	*/
+#define SPE	0x18	/* serial poll enable 		*/
+#define SPD	0x19	/* serial poll disable 		*/
+#define UNL	0x3F	/* unlisten 			*/
+#define UNT	0x5F	/* untalk 			*/
+#define PPE	0x60	/* parallel poll enable (base)	*/
+#define S	0x08	/* parallel poll sense bit	*/
 
 #define TRUE     1
 #define FALSE    0
 
-#define LAD (unsigned char)0x20 /* value to be 'ored' in to obtain listen address */
-#define TAD (unsigned char)0x40 /* value to be 'ored' in to obtain talk address   */
+#define LAD 0x20 /* value to be 'ored' in to obtain listen address */
+#define TAD 0x40 /* value to be 'ored' in to obtain talk address   */
 
+extern inline uint8_t MLA(unsigned int addr)
+{
+	return addr | 0x20;
+};
+
+extern inline uint8_t MTA(unsigned int addr)
+{
+	return addr | 0x40;
+};
+
+extern inline uint8_t MSA(unsigned int addr)
+{
+	return addr | 0x60;
+};
 

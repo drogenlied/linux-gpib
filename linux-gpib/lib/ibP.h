@@ -19,13 +19,13 @@ extern ibarg_t ibarg;
 #define NUM_CONFIGS 0x1000	// max number of device descriptors (length of ibConfigs array)
 
 static const int sad_offset = 0x60;
-static const int sad_max = 30;
+static const int gpib_addr_max = 30;	// max address for primary/secondary gpib addresses
 
 // deal with stupid pad/sad packing scheme
 extern inline int padsad(int pad, int sad)
 {
 	int padsad = pad & 0xff;
-	if(sad >= 0 && sad <= sad_max )
+	if(sad >= 0 && sad <= gpib_addr_max )
 		padsad |= (sad + sad_offset);
 	return padsad;
 }
