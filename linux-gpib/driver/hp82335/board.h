@@ -22,35 +22,27 @@ extern ibregs_t *ib;            /* Local pointer to IB registers */
 /*
  * Input a one-byte value from the specified I/O port
  */
-extern inline uint8 bdP8in(in_addr)
-faddr_t in_addr;
+extern inline uint8 bdP8in(faddr_t in_addr)
 {
-	uint8		retval;
 #if defined(HP82335)
-	retval = *in_addr;	//XXX crap is this an attempt to do memory mapped io?
+	return readb((unsigned int) in_addr);
 #endif
 #if defined(TMS9914)
-	retval = osP8in((unsigned int)in_addr);
+	return inb_p((unsigned int) in_addr);
 #endif
-
-	return retval;
 }
-
 
 /*
  * Output a one-byte value to the specified I/O port
  */
-extern inline void bdP8out(out_addr, out_value)
-faddr_t out_addr;
-uint8 out_value;
+extern inline void bdP8out(faddr_t out_addr, uint8 out_value)
 {
 #if defined(HP82335)
-	*out_addr = out_value;
+	writeb(out_value, (unsigned int out_addr);
 #endif
 #if defined(TMS9914)
-        osP8out((unsigned int)out_addr,out_value);
+        outb_p((unsigned int)out_addr,out_value);
 #endif
-
 }
 
 

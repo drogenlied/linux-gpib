@@ -66,30 +66,10 @@ IBLCL int bdonl(int v)
           DBGout(); return(0);
 	}
 
-
-	ib = (struct ibregs *) ( ibbase <<4 );          /* setting base address */
+	
+	ib = (struct ibregs *) ioremap(ibbase, sizeof(struct ibregs));          /* setting base address */
         /*printk("ib=0x%x\n",ib);*/
 
-#if 0
-        s = GPIBin( csr );
-        printk("csr(0x%lx)=0x%x\n",&IB->csr,s);
-
-        s = GPIBin( hpibsr );
-        printk("hpibsr(0x%lx)=0x%x\n",&IB->hpibsr,s);
-                /* clear registers by reading */
-
-        printk("testing for hp27209 \n");
-        GPIBout( ccr, 0 );                 
-        s = GPIBin( csr );
-        printk("csr(0x%lx)=0x%x\n",&IB->csr,s);
-
-	s = GPIBin(isr0);
-        printk("isr0(0x%lx)=0x%x\n",&IB->isr0,s);
-	s = GPIBin(isr1);
-        printk("isr1(0x%lx)=0x%x\n",&IB->isr1,s);
-	s = GPIBin(adsr);
-        printk("adsr(0x%lx)=0x%x\n",&IB->adsr,s);
-#endif
 #endif
 
 	GPIBout(auxcr, AUX_CR | AUX_CS);   /* enable 9914 chip reset state */
@@ -101,20 +81,10 @@ IBLCL int bdonl(int v)
 
 	GPIBout(adr,(PAD & LOMASK));                   /* set GPIB address; 
                                                           MTA=PAD|100, MLA=PAD|040*/
-#if 0
-#if (SAD)
-	GPIBout(adr, HR_EDPA | (SAD & LOMASK));        /* enable secondary addressing */
-#else
-	GPIBout(adr, HR_EDPA | HR_DAT | HR_DAL);       /* disable secondary addressing */
-#endif
-#endif
-
 	GPIBout(auxcr, AUX_CR );   /* release 9914 chip reset state */
 
-#if 1
 	GPIBin(dir);
 	GPIBout(auxcr, AUX_HLDA | AUX_CS); /* Holdoff on all data */
-#endif
 
 #if defined(HP82335)
 #if USEINTS
@@ -131,9 +101,15 @@ IBLCL int bdonl(int v)
 
 
 	DBGout();
-	return(1);
+	return 1;
 }
 
+IBLCL void bdDetach(void)
+{
+#if defined(HP82335)
+	iounmap(ib);
+#endif
+}
 
 
 

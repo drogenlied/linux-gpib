@@ -293,6 +293,9 @@ void cleanup_module(void)
 #ifdef MODBUS_PCI
   bdPCIDetach();
 #endif
+#ifdef HP82335
+	bdDetach();
+#endif
 
   DBGout();
 }
