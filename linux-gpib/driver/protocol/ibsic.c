@@ -12,9 +12,9 @@ extern int drvstat,ib_opened;
  *          ibcmd in order to initialize the bus and enable the
  *          interface to leave the controller idle state.
  */
-IBLCL int ibsic(gpib_device_t *device)
+int ibsic(gpib_device_t *device)
 {
-	if( !(drvstat & DRV_IFC) || (ib_opened <= 1))
+	if(!test_bit(CIC_NUM, &device->status))
 	{
 
 		pgmstat |= PS_SAC;
@@ -22,7 +22,6 @@ IBLCL int ibsic(gpib_device_t *device)
 		device->interface->interface_clear(device, 1);                   /* assert IFC */
 		udelay(100);
 		device->interface->interface_clear(device, 0);                   /* clear IFC */
-		drvstat |= DRV_IFC;
 	}
 // is CIC going to be set by core or driver? XXX
 	set_bit(CIC_NUM, &device->status);

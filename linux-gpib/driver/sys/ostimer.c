@@ -5,7 +5,7 @@ struct timer_list ibtimer_list;
 /*
  * Timer functions
  */
-IBLCL void watchdog_timeout(unsigned long arg)
+void watchdog_timeout(unsigned long arg)
 /* Watchdog timeout routine */
 {
 	gpib_device_t *device = (gpib_device_t*) arg;
@@ -14,7 +14,7 @@ IBLCL void watchdog_timeout(unsigned long arg)
 }
 
 /* install timer interrupt handler */
-IBLCL void osStartTimer(gpib_device_t *device, int v)
+void osStartTimer(gpib_device_t *device, int v)
 /* Starts the timeout task  */
 /* v = index into timeTable */
 {
@@ -31,7 +31,7 @@ IBLCL void osStartTimer(gpib_device_t *device, int v)
 }
 
 
-IBLCL void osRemoveTimer(gpib_device_t *device)
+void osRemoveTimer(gpib_device_t *device)
 /* Removes the timeout task */
 {
 	if (pgmstat & PS_TIMINST)

@@ -23,7 +23,6 @@
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <asm/dma.h>
-#include <gpib_buffer.h>
 #include <linux/pci.h>
 #include <linux/pci_ids.h>
 #include <linux/string.h>
@@ -58,8 +57,8 @@ void tms9914_board_reset(tms9914_private_t *priv)
 	/* parallel poll unconfigure */
 	write_byte(priv, 0, PPR);
 
-	/* set GPIB address; MTA=PAD|100, MLA=PAD|040 */
-	write_byte(priv, PAD & ADDRESS_MASK, ADR);
+	/* set GPIB address XXX */
+	write_byte(priv, 0 & ADDRESS_MASK, ADR);
 //	priv->admr_bits = HR_TRM0 | HR_TRM1;
 
 #if 0

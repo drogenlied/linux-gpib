@@ -33,7 +33,7 @@
  *          calling ibcmd.
  */
 
-IBLCL ssize_t ibrd(gpib_device_t *device, uint8_t *buf, size_t length, int *end_flag)
+ssize_t ibrd(gpib_device_t *device, uint8_t *buf, size_t length, int *end_flag)
 {
 	size_t count = 0;
 	ssize_t ret = 0;

@@ -2,17 +2,6 @@
 #ifndef _GPIB_REGISTERS_H
 #define _GPIB_REGISTERS_H
 
-#define GPIBpgin(x)	(GPIBout(AUXMR, AUX_PAGE), GPIBin(x))
-#define GPIBpgout(x,v)	(GPIBout(AUXMR, AUX_PAGE), GPIBout(x,v))
-
-
-/*
- * I/O operation parameters
- */
-#define	IO_READ		(1 << 0)	/* 1: I/O read; 0: I/O write	*/
-#define	IO_NOHLDA	(1 << 1)	/* don't do HLDA carry-cycle	*/
-#define	IO_NOEOI	(1 << 2)	/* don't send EOI w/last byte	*/
-#define	IO_LAST		(1 << 3)	/* last "chunk" in I/O transfer	*/
 
 #if defined(NIPCII) || defined(NIAT)
 
@@ -23,20 +12,6 @@
 
 #if defined(MODBUS_PCI)
 #define NEC7210_REG_OFFSET 0x2
-#endif
-
-/* NAT4882 "Paged In" read- and write-only registers (must use GPIBpg__ macros) */
-
-#if 0
-
-#define CSR		SPMR		/* Chip Signature Register */
-#define KEYR		SPMR		/* Key Register */
-#define SASR		AUXMR		/* Source/Acceptor Status Register */
-#define ISR0		ADR		/* Interrupt Status Register 0 */
-#define IMR0		ADR		/* Interrupt Mask Register 0 */
-#define BSR		EOSR		/* Bus Status Register */
-#define BCR		EOSR		/* Bus Control Register */
-
 #endif
 
 #define CR_EOI	(1<<7)	/* gpibc        */
@@ -88,23 +63,11 @@
 #define T1_500NS   1
 #define T1_350_NS  2
 
-
-
-/*============================================================*/
-
-/* TURBO-488 registers bit definitions */
-
-/* Miscellaneous Register Definitions */
-
-#define HR_INTEN	(1<<0)	/* INTRT */
-#define HR_DMAEN	(1<<0)	/* DMA   */
-
 #endif
 
 /*-================================================================================
 
 HP 82335 (memory mapped) or plain (TMS9914 i/o) register definitions
-
 
 ================================================================================*/
 
@@ -247,47 +210,6 @@ HP 82335 (memory mapped) or plain (TMS9914 i/o) register definitions
 
 #define LOMASK		0x1F			/* mask to specify lower 5 bits for ADR */
 
-/*---------------------------------------------------------*/
-/* TMS 9914 Auxiliary Commands                             */
-/*---------------------------------------------------------*/
-
-#define     AUX_CR       (unsigned char) 0     /* d Chip reset                   */
-#define     AUX_DACR     (unsigned char) 1     /* d Release ACDS holdoff         */
-#define     AUX_RHDF     (unsigned char) 2     /* X Release RFD holdoff          */
-#define     AUX_HLDA     (unsigned char) 3     /* d holdoff on all data          */
-#define     AUX_HLDE     (unsigned char) 4     /* d holdoff on EOI only          */
-#define     AUX_NBAF     (unsigned char) 5     /* X Set ne byte availiable false */
-#define     AUX_FGET     (unsigned char) 6     /* d force GET                    */
-#define     AUX_RTL      (unsigned char) 7     /* d return to local              */
-#define     AUX_SEOI     (unsigned char) 8     /* X send EOI with next byte      */
-#define     AUX_LON      (unsigned char) 9     /* d Listen only                  */
-#define     AUX_TON      (unsigned char) 10    /* d Talk only                    */
-#define     AUX_GTS      (unsigned char) 11    /* X goto standby                 */
-#define     AUX_TCA      (unsigned char) 12    /* X take control asynchronously  */
-#define     AUX_TCS      (unsigned char) 13    /* X take    "     synchronously  */
-#define     AUX_RPP      (unsigned char) 14    /* d Request parallel poll        */
-#define     AUX_SIC      (unsigned char) 15    /* d send interface clear         */
-#define     AUX_SRE      (unsigned char) 16    /* d send remote enable           */
-#define     AUX_RQC      (unsigned char) 17    /* d request control              */
-#define     AUX_RLC      (unsigned char) 18    /* d release control              */
-#define     AUX_DAI      (unsigned char) 19    /* d disable all interrupts       */
-#define     AUX_PTS      (unsigned char) 20    /* X pass through next secondary  */
-#define     AUX_STDL     (unsigned char) 21    /* d set T1 delay                 */
-#define     AUX_SHDW     (unsigned char) 22    /* d shadow handshake             */
-
-#define     AUX_CS       (unsigned char)(1<<7) /* C/S bit                      */
-
-/** additional 'AUX' commands combined with the C/S bit **/
-
-#define     AUX_SIFC      (AUX_SIC | AUX_CS)
-#define     AUX_CIFC      (AUX_SIC )
-#define     AUX_SREN      (AUX_SRE | AUX_CS)
-#define     AUX_CREN      (AUX_SRE )
-#define     AUX_FH        (AUX_RHDF)
-
-
-
-
 #endif /*HPIB*/
 
 /* PROGRAM STATUS codes (see int pgmstat) */
@@ -303,47 +225,6 @@ HP 82335 (memory mapped) or plain (TMS9914 i/o) register definitions
 #define PS_SILENT	(1 << 8)		/* Do NOT print any messages from ibpoke */
 
 #define PS_STATIC	(PS_SYSRDY | PS_NOINTS | PS_NOEOSEND | PS_SILENT)
-
-
-/* used for interrupts */
-
-#define USEINTS		(INTROP && SYSTIMO)	/* interrupts require SYSTIMO */
-
-#if USEINTS
-#define WaitingFor(i)	{if (!(pgmstat & PS_NOINTS)) osWaitForInt(i);}
-#else
-#define WaitingFor(i)
-#endif
-
-
-/* Timeout support macros */
-
-#if SYSTIMO
-#define TimedOut()	(!noTimo)		/* for testing within loops... */
-#define NotTimedOut()	(noTimo)
-
-#define TMFAC		HZ			/* timing factor for TM() macro */
-
-#else
-#define TimedOut()	((noTimo > 0) && !(--noTimo))
-#define NotTimedOut()	((noTimo < 0) || ((noTimo > 0) && --noTimo))
-
-#define TMFAC		(HZ * 1000)		/* timing factor for TM() macro */
-#endif						/* -- approximate and system dependent! */
-
-#define INITTIMO	(-1)			/* initial timeout setting */
-#define TM(f,n,d)	((((f)*(n))/(d))+1)	/* clock ticks or counts per timo value */
-
-
-
-
-/* driver states */
-
-
-#define DRV_ONLINE   (1<<0)
-#define DRV_IFC      (1<<1)
-#define DRV_REN      (1<<2)
-
 
 #endif	//_GPIB_REGISTERS_H
 

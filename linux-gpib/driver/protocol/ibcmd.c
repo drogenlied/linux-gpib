@@ -14,7 +14,7 @@
  *          must be called to initialize the GPIB and enable
  *          the interface to leave the controller idle state.
  */
-IBLCL ssize_t ibcmd(gpib_device_t *device, uint8_t *buf, size_t length)
+ssize_t ibcmd(gpib_device_t *device, uint8_t *buf, size_t length)
 {
 	size_t	count = 0;
 	ssize_t ret = 0;

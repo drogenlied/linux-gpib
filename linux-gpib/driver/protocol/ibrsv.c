@@ -6,7 +6,7 @@
  * Request service from the CIC and/or set the serial poll
  * status byte.
  */
-IBLCL int ibrsv(gpib_device_t *device, uint8_t poll_status)
+int ibrsv(gpib_device_t *device, uint8_t poll_status)
 {
 	int status = ibstatus(device);
 

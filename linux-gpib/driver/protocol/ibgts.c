@@ -7,7 +7,7 @@
  * active state, i.e., turn ATN off.
  */
 
-IBLCL int ibgts(gpib_device_t *device)
+int ibgts(gpib_device_t *device)
 {
 	int status = ibstatus(device);
 

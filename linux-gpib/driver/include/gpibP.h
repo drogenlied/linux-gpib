@@ -6,8 +6,6 @@
 
 #include <autoconf.h>
 
-#include <gpib_config.h>
-#include <gpib_debug.h>
 #include <gpib_types.h>
 
 #include <gpib_proto.h>

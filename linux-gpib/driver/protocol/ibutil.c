@@ -5,7 +5,7 @@
  * change the GPIB address of the interface board.  The address
  * must be 0 through 30.  ibonl resets the address to PAD.
  */
-IBLCL int ibpad(gpib_device_t *device, int v)
+int ibpad(gpib_device_t *device, int v)
 {
 	if ((v < 0) || (v > 30))
 	{
@@ -26,7 +26,7 @@ IBLCL int ibpad(gpib_device_t *device, int v)
  * The address must be 0x60 through 0x7E.  ibonl resets the
  * address to SAD.
  */
-IBLCL int ibsad(gpib_device_t *device, int v)
+int ibsad(gpib_device_t *device, int v)
 {
 	if (v && ((v < 0x60) || (v > 0x7F)))
 	{
@@ -55,7 +55,7 @@ IBLCL int ibsad(gpib_device_t *device, int v)
  * of v specifies an index into the array timeTable.
  * If v == 0 then timeouts are disabled.
  */
-IBLCL int ibtmo(gpib_device_t *device, int v)
+int ibtmo(gpib_device_t *device, int v)
 {
 	if ((v < TNONE) || (v > T1000s))
 	{
@@ -75,7 +75,7 @@ IBLCL int ibtmo(gpib_device_t *device, int v)
  * If v == 1 then send EOI with the last byte of each write.
  * If v == 0 then disable the sending of EOI.
  */
-IBLCL int ibeot(gpib_device_t *device, int send_eoi)
+int ibeot(gpib_device_t *device, int send_eoi)
 {
 	if(send_eoi)
 	{
@@ -92,7 +92,7 @@ IBLCL int ibeot(gpib_device_t *device, int send_eoi)
  * Set the end-of-string modes for I/O operations to v.
  *
  */
-IBLCL int ibeos(gpib_device_t *device, int v)
+int ibeos(gpib_device_t *device, int v)
 {
 	int ebyte, emodes;
 	ebyte = v & 0xFF;
@@ -112,7 +112,7 @@ IBLCL int ibeos(gpib_device_t *device, int v)
 	return 0;
 }
 
-IBLCL unsigned int ibstatus(gpib_device_t *device)
+unsigned int ibstatus(gpib_device_t *device)
 {
 	if(device->private_data == NULL)
 		return 0;

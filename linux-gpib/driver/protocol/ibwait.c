@@ -27,7 +27,7 @@
  * If the mask is 0 then
  * no condition is waited for.
  */
-IBLCL int ibwait(gpib_device_t *device, unsigned int mask)
+int ibwait(gpib_device_t *device, unsigned int mask)
 {
 	int retval = 0;
 

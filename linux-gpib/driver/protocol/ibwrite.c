@@ -34,7 +34,7 @@
  *          well as the interface board itself must be
  *          addressed by calling ibcmd.
  */
-IBLCL ssize_t ibwrt(gpib_device_t *device, uint8_t *buf, size_t cnt, int more)
+ssize_t ibwrt(gpib_device_t *device, uint8_t *buf, size_t cnt, int more)
 {
 	size_t bytes_sent = 0;
 	ssize_t ret = 0;

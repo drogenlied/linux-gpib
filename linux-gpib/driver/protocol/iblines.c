@@ -9,7 +9,7 @@
  * Next LSB (bits 8-15) - STATUS lines mask (lines that are currently set).
  *
  */
-IBLCL int iblines(gpib_device_t *device, int *buf)
+int iblines(gpib_device_t *device, int *buf)
 {
 	if(device->interface->line_status == NULL)
 	{

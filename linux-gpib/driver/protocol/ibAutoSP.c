@@ -24,18 +24,12 @@ DECLARE_MUTEX(AutoP_mutex);
 
 void AP_Lock (void)
 {
-  DBGin("AP_Lock");
   down(&AutoP_mutex);
-  DBGprint(DBG_DATA,("AutoP_mutex=%d",atomic_read(&AutoP_mutex.count)));
-  DBGout();
 }
 
 void AP_UnLock (void)
 {
-  DBGin("AP_UnLock");
   up(&AutoP_mutex);
-  DBGprint(DBG_DATA,("AutoP_mutex=%d",atomic_read(&AutoP_mutex.count)));
-  DBGout();
 }
 
 
@@ -67,14 +61,12 @@ struct AP_device AP_Vector[MAX_DEVICES];  /* The Poll Vector (only one entry per
 void AP_Init(void)
 {
   int i;
-  DBGin("AP_Init");
   for(i=0;i<MAX_DEVICES;i++) {
     init_MUTEX(&AP_Vector[i].lock);
    /*(AP_Vector[i].lock).count = 1;*/
     AP_Vector[i].flags= 0;
     AP_Vector[i].spb  = 0;
   }
-  DBGout();
 }
 
 /*
@@ -83,18 +75,12 @@ void AP_Init(void)
 
 void AP_LocalLock(int pad)
 {
-  DBGin("AP_LocalLock");
   down(&(AP_Vector[pad].lock));
-  DBGprint(DBG_DATA,("Vector[%d].lock=%d",pad,atomic_read(&(AP_Vector[pad].lock).count)));
-  DBGout();
 }
 
 void AP_LocalUnLock(int pad)
 {
-  DBGin("AP_LocalUnLock");
   up(&(AP_Vector[pad].lock));
-  DBGprint(DBG_DATA,("Vector[%d].lock=%d",pad,atomic_read(&(AP_Vector[pad].lock).count)));
-  DBGout();
 }
 
 /*
@@ -104,14 +90,11 @@ void AP_LocalUnLock(int pad)
 
 int AP_virgin = 1;
 
-IBLCL int ibAPWait(gpib_device_t *device, int pad)
+int ibAPWait(gpib_device_t *device, int pad)
 {
   int i;
 
-  DBGin("ibAPWait");
   pad &=0xff;
-
-  DBGprint(DBG_DATA,("Waiting on Device %d",pad));
 
   /* Init the poll vector if not done so */
      if( AP_virgin )
@@ -130,7 +113,6 @@ IBLCL int ibAPWait(gpib_device_t *device, int pad)
        AP_UnLock();
        AP_LocalUnLock(pad);
        /*FIXME: there is no state that can be returned here*/
-       DBGout();
        return ibstatus(device);
      }
 
@@ -138,7 +120,6 @@ IBLCL int ibAPWait(gpib_device_t *device, int pad)
      if( ibwait(device, SRQI) & ERR ){
        AP_UnLock();
        AP_LocalUnLock(pad);
-       DBGout();
        return ibstatus(device);
      }
 
@@ -152,7 +133,6 @@ IBLCL int ibAPWait(gpib_device_t *device, int pad)
 	 dvrsp(device, i,&(AP_Vector[i].spb ));
 	 AP_Vector[i].stat = ibstatus(device);
 	 AP_Vector[i].flags  |= AP_PENDING;
-         DBGprint(DBG_DATA,("device %d -> spb=0x%x",i,AP_Vector[i].spb));
        }
      }
      up(&device->mutex);
@@ -164,7 +144,6 @@ IBLCL int ibAPWait(gpib_device_t *device, int pad)
      AP_UnLock();
   /* Unlock device */
      AP_LocalUnLock(pad);
-     DBGout();
      return ibstatus(device);
 }
 
@@ -174,16 +153,14 @@ IBLCL int ibAPWait(gpib_device_t *device, int pad)
  *
  */
 
-IBLCL int ibAPrsp(gpib_device_t *device, int padsad, char *spb)
+int ibAPrsp(gpib_device_t *device, int padsad, char *spb)
 {
         int pad = padsad & 0xff;
 
-	DBGin("ibAPrsp");
         /* lock poll operation */
 	AP_Lock();
         if(!(AP_Vector[pad].flags & AP_PENDING) ) {
            printk("Device %d not in AP_PENDING state?\n",pad);
-	   DBGout();
            /* fall back to normal serial poll */
 	   return dvrsp(device, padsad,spb);
         }
@@ -193,7 +170,6 @@ IBLCL int ibAPrsp(gpib_device_t *device, int padsad, char *spb)
 //	device->status =  AP_Vector[pad].stat;
 
         AP_UnLock();
-	DBGout();
 
 	return ibstatus(device); 	/* 980728 TBg */
 }
@@ -206,16 +182,13 @@ IBLCL int ibAPrsp(gpib_device_t *device, int padsad, char *spb)
  *
  */
 
-IBLCL void ibAPE(gpib_device_t *device, int pad, int v)
+void ibAPE(gpib_device_t *device, int pad, int v)
 {
-  DBGin("ibAPE");
 
   pad &= 0xff;
-  DBGprint(DBG_DATA,("AP_POLL(%d)=%d",pad,v));
   if(v){
     AP_Vector[pad].flags |= AP_POLL;
   } else {
     AP_Vector[pad].flags &= ~AP_POLL;
   }
-  DBGout();
 }

@@ -27,7 +27,7 @@ int board_type_ioctl(unsigned int minor, unsigned long arg);
 int ib_opened=0;
 int ib_exclusive=0;
 
-IBLCL int ibopen(struct inode *inode, struct file *filep)
+int ibopen(struct inode *inode, struct file *filep)
 {
 	unsigned int minor = MINOR(inode->i_rdev);
 
@@ -51,7 +51,7 @@ IBLCL int ibopen(struct inode *inode, struct file *filep)
 }
 
 
-IBLCL int ibclose(struct inode *inode, struct file *file)
+int ibclose(struct inode *inode, struct file *file)
 {
 	unsigned int minor = MINOR(inode->i_rdev);
 
@@ -65,7 +65,7 @@ IBLCL int ibclose(struct inode *inode, struct file *file)
 	return 0;
 }
 
-IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
+int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
  unsigned long arg)
 {
 	int	retval = 0; 		/* assume everything OK for now */
@@ -215,7 +215,6 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
 
 			break;
 		case IBWAIT:
-			DBGprint(DBG_DATA,("**arg=%x",ibargp->ib_arg));
 			retval = ibwait(device, ibargp->ib_arg);
 			break;
 		case IBRPP:
@@ -399,9 +398,9 @@ int board_type_ioctl(unsigned int minor, unsigned long arg)
 
 	device->private_data = NULL;
 	device->status = 0;
-	device->ibbase = IBBASE;
-	device->ibirq = IBIRQ;
-	device->ibdma = IBDMA;
+	device->ibbase = 0;
+	device->ibirq = 0;
+	device->ibdma = 0;
 	init_waitqueue_head(&device->wait);
 	init_MUTEX(&device->mutex);
 	spin_lock_init(&device->spinlock);

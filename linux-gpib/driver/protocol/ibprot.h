@@ -9,4 +9,4 @@ extern int pollTimeidx;
 extern int myPAD;
 extern int mySAD;
 
-extern uint32_t timeTable[];
+extern unsigned long timeTable[];

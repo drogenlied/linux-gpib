@@ -20,12 +20,12 @@
 
 /*
  * DVTRG
- * Trigger the device with primary address pad and secondary 
+ * Trigger the device with primary address pad and secondary
  * address sad.  If the device has no secondary address, pass a
  * zero in for this argument.  This function sends the TAD of the
  * GPIB interface, UNL, the LAD of the device, and GET.
- */ 
-IBLCL int dvtrg(gpib_device_t *device, int padsad)
+ */
+int dvtrg(gpib_device_t *device, int padsad)
 {
 	uint8_t cmdString[2];
 	int status = ibstatus(device);
@@ -52,7 +52,7 @@ IBLCL int dvtrg(gpib_device_t *device, int padsad)
  * zero in for this argument.  This function sends the TAD of the
  * GPIB interface, UNL, the LAD of the device, and SDC.
  */
-IBLCL int dvclr(gpib_device_t *device, int padsad)
+int dvclr(gpib_device_t *device, int padsad)
 {
 	uint8_t cmdString[2];
 	int status = ibstatus(device);
@@ -84,7 +84,7 @@ IBLCL int dvclr(gpib_device_t *device, int padsad)
  */
 
 
-IBLCL int dvrsp(gpib_device_t *device, int padsad, uint8_t *result)
+int dvrsp(gpib_device_t *device, int padsad, uint8_t *result)
 {
 	uint8_t cmd_string[8];
 	int status = ibstatus(device);
@@ -155,7 +155,7 @@ IBLCL int dvrsp(gpib_device_t *device, int padsad, uint8_t *result)
  * listen and the GPIB interface is addressed to talk.  ibwrt is
  * then called to write cnt bytes to the device from buf.
  */
-IBLCL ssize_t dvwrt(gpib_device_t *device, int padsad, uint8_t *buf, unsigned int cnt)
+ssize_t dvwrt(gpib_device_t *device, int padsad, uint8_t *buf, unsigned int cnt)
 {
 	int status = ibstatus(device);
 	if((status & CIC) == 0)
@@ -173,7 +173,7 @@ IBLCL ssize_t dvwrt(gpib_device_t *device, int padsad, uint8_t *buf, unsigned in
 /*
  * 488.2 Controller sequences
  */
-IBLCL int receive_setup(gpib_device_t *device, int padsad)
+int receive_setup(gpib_device_t *device, int padsad)
 {
 	uint8_t pad, sad;
 	uint8_t cmdString[8];
@@ -202,7 +202,7 @@ IBLCL int receive_setup(gpib_device_t *device, int padsad)
 }
 
 
-IBLCL int send_setup(gpib_device_t *device, int padsad)
+int send_setup(gpib_device_t *device, int padsad)
 {
 	uint8_t pad, sad;
 	uint8_t cmdString[8];

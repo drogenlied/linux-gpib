@@ -23,7 +23,6 @@
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <asm/dma.h>
-#include <gpib_buffer.h>
 #include <linux/pci.h>
 #include <linux/pci_ids.h>
 #include <linux/string.h>
@@ -61,10 +60,10 @@ void nec7210_board_reset(nec7210_private_t *priv)
 	/* parallel poll unconfigure */
 	write_byte(priv, PPR | HR_PPU, AUXMR);
 
-	/* set GPIB address; MTA=PAD|100, MLA=PAD|040 */
-	write_byte(priv, PAD & ADDRESS_MASK, ADR);
+	/* set GPIB address */
+	write_byte(priv, 0 & ADDRESS_MASK, ADR); //XXX
 	priv->admr_bits = HR_TRM0 | HR_TRM1;
-#if (SAD)
+#if 0
 	/* enable secondary addressing */
 	write_byte(priv, HR_ARS | (SAD & ADDRESS_MASK), ADR);
 	priv->admr_bits |= HR_ADM1;

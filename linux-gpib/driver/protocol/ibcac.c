@@ -10,7 +10,7 @@
  * If v is non-zero, take control synchronously, if
  * possible.  Otherwise, take control asynchronously.
  */
-IBLCL int ibcac(gpib_device_t *device, int sync)
+int ibcac(gpib_device_t *device, int sync)
 {
 	int status = ibstatus(device);
 	if((status & CIC) == 0)
