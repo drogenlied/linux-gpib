@@ -166,7 +166,7 @@ IBLCL int dvwrt(int padsad,faddr_t buf,unsigned int cnt)
 		return ibsta;
 	}
 	if (!(send_setup(padsad) & ERR)){
-		ibwrt(buf, cnt);
+		ibwrt(buf, cnt, 0);	// XXX assumes all the data is written in this call
 	}
 	DBGout();
 	return ibsta;

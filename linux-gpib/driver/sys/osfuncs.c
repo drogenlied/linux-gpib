@@ -176,7 +176,7 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, uns
 			do
 			{
 				copy_from_user( buf, userbuf, (bufsize < remain) ? bufsize : remain );
-				ibwrt( buf, (bufsize < remain) ? bufsize : remain );
+				ibwrt( buf, (bufsize < remain) ? bufsize : remain, (bufsize < remain) );
 				remain -= ibcnt;
 				userbuf += ibcnt;
 			}while (remain > 0 && ibcnt > 0 && !(ibsta & (ERR | TIMO)));

@@ -5,7 +5,10 @@
  * IBWRT
  * Write cnt bytes of data from buf to the GPIB.  The write
  * operation terminates only on I/O complete.  By default,
- * EOI is always sent along with the last byte.
+ * EOI is always sent along with the last byte.  'more' is
+ * a boolean value indicating that there remains more data
+ * that will be written as a part of this output (so don't
+ * send EOI/EOS).
  *
  * NOTE:
  *      1.  Prior to beginning the write, the interface is
@@ -16,7 +19,7 @@
  *      3.  Be sure to type cast the buffer to (faddr_t) before
  *          calling this function.
  */
-IBLCL int ibwrt(faddr_t buf, unsigned int cnt)
+IBLCL int ibwrt(faddr_t buf, unsigned int cnt, unsigned int more)
 {
 	ibio_op_t	wrtop;
 	unsigned int	requested_cnt;
@@ -33,6 +36,7 @@ IBLCL int ibwrt(faddr_t buf, unsigned int cnt)
 	requested_cnt = cnt;
 	wrtop.io_vbuf = buf;
 	wrtop.io_flags = 0;
+	if(more == 0) wrtop.io_flags |= IO_LAST;
 	while ((cnt > 0) && !(ibsta & (ERR | TIMO))) {
 		ibcnt = 0;
 		wrtop.io_cnt = cnt;

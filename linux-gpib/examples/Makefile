@@ -16,7 +16,7 @@ OBJS = ibtest.o
 
 
 
-all:  depend ibtest raw_access vfs_access
+all:  depend ibtest raw_access
 
 
 ibtest:	$(LIBNAME) ibtest.o
