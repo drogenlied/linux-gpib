@@ -209,6 +209,7 @@ static dev_link_t *ni_gpib_attach(void)
     else
 	for (i = 0; i < 4; i++)
 	    link->irq.IRQInfo2 |= 1 << irq_list[i];
+	printk(KERN_DEBUG "tnt4882: irq_mask=0x%x\n", link->irq.IRQInfo2 );
     link->irq.Handler = NULL;
     
     /*
