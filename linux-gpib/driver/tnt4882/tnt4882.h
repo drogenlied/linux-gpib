@@ -290,7 +290,7 @@ static inline unsigned int tnt_paged_readb( tnt4882_private_t *priv, unsigned lo
 {
 	unsigned long iobase = priv->nec7210_priv.iobase;
 
-	priv->io_writeb(priv, AUX_PAGEIN, iobase + AUXMR * priv->nec7210_priv.offset);
+	priv->io_writeb(AUX_PAGEIN, iobase + AUXMR * priv->nec7210_priv.offset);
 	udelay(1);
 	return priv->io_readb(iobase + offset);
 }
@@ -298,7 +298,7 @@ static inline void tnt_paged_writeb(tnt4882_private_t *priv, unsigned int value,
 {
 	unsigned long iobase = priv->nec7210_priv.iobase;
 
-	priv->io_writeb(priv, AUX_PAGEIN, iobase + AUXMR * priv->nec7210_priv.offset);
+	priv->io_writeb(AUX_PAGEIN, iobase + AUXMR * priv->nec7210_priv.offset);
 	udelay(1);
 	priv->io_writeb(value, iobase + offset);
 }
