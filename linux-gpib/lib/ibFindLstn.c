@@ -132,7 +132,7 @@ void FindLstn( int boardID, const Addr4882_t padList[],
 		exit_library( boardID, 1 );
 		return;
 	}
-
+/* XXX check that padList doesn't contain secondary addresses */
 	resultIndex = 0;
 	for( i = 0; i < numAddresses( padList ); i++ )
 	{
@@ -151,13 +151,19 @@ void FindLstn( int boardID, const Addr4882_t padList[],
 		}
 		if( retval > 0 )
 		{
+			if( resultIndex >= maxNumResults )
+			{
+				setIberr( ETAB );
+				exit_library( boardID, 1 );
+				return;
+			}
 			resultList[ resultIndex++ ] = testAddress[ 0 ];
+			setIbcnt( resultIndex );
 		}else
 		{
 			retval = secondaryListenerFound( conf, pad );
 			if( retval < 0 )
 			{
-				// XXX status/error settings
 				exit_library( boardID, 1 );
 				return;
 			}
@@ -171,18 +177,23 @@ void FindLstn( int boardID, const Addr4882_t padList[],
 					retval = listenerFound( conf, testAddress );
 					if( retval < 0 )
 					{
-						// XXX status/error settings
 						exit_library( boardID, 1 );
 						return;
 					}
 					if( retval > 1 )
 					{
+						if( resultIndex >= maxNumResults )
+						{
+							setIberr( ETAB );
+							exit_library( boardID, 1 );
+							return;
+						}
 						resultList[ resultIndex++ ] = testAddress[ 0 ];
+						setIbcnt( resultIndex );
 					}
 				}
 			}
 		}
 	}
-	setIbcnt( resultIndex );
 	exit_library( boardID, 0 );
 } /* FindLstn */
