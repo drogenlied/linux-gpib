@@ -688,6 +688,23 @@ void ni_isa_detach(gpib_board_t *board)
 	tnt4882_free_private(board);
 }
 
+static struct pci_device_id tnt4882_pci_table[] __devinitdata = 
+{
+	{PCI_DEVICE(PCI_VENDOR_ID_NATINST, PCI_DEVICE_ID_NI_GPIB)},
+	{PCI_DEVICE(PCI_VENDOR_ID_NATINST, PCI_DEVICE_ID_NI_GPIB_PLUS)},
+	{PCI_DEVICE(PCI_VENDOR_ID_NATINST, PCI_DEVICE_ID_NI_PXIGPIB)},
+	{PCI_DEVICE(PCI_VENDOR_ID_NATINST, PCI_DEVICE_ID_NI_PMCGPIB)},
+	{ 0 }
+};
+MODULE_DEVICE_TABLE(pci, tnt4882_pci_table);
+
+static const struct pnp_device_id tnt4882_pnp_table[] __devinitdata = 
+{
+	{.id = "NICC601"},
+	{.id = ""}
+};
+MODULE_DEVICE_TABLE(pnp, tnt4882_pnp_table);
+
 static int tnt4882_init_module( void )
 {
 	gpib_register_driver(&ni_isa_interface, &__this_module);
@@ -732,10 +749,3 @@ static void tnt4882_exit_module( void )
 
 module_init( tnt4882_init_module );
 module_exit( tnt4882_exit_module );
-
-
-
-
-
-
-

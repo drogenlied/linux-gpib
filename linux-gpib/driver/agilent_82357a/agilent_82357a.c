@@ -1324,8 +1324,6 @@ static struct usb_device_id agilent_82357a_driver_device_table [] =
 	{USB_DEVICE(USB_VENDOR_ID_AGILENT, USB_DEVICE_ID_AGILENT_82357A)},
 	{} /* Terminating entry */
 };
-
-
 MODULE_DEVICE_TABLE(usb, agilent_82357a_driver_device_table);
 
 static int agilent_82357a_driver_probe(struct usb_interface *interface, 

@@ -303,6 +303,13 @@ void cec_pci_detach(gpib_board_t *board)
 	cec_free_private(board);
 }
 
+static struct pci_device_id cec_pci_table[] __devinitdata = 
+{
+	{CEC_VENDOR_ID, CEC_DEV_ID, PCI_ANY_ID, CEC_SUBID, 0, 0, 0 },
+	{0}
+};
+MODULE_DEVICE_TABLE(pci, cec_pci_table);
+
 int cec_init_module(void)
 {
 	gpib_register_driver(&cec_pci_interface, &__this_module);

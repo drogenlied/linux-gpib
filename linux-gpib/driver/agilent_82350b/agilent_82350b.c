@@ -294,6 +294,12 @@ void agilent_82350b_detach(gpib_board_t *board)
 	agilent_82350b_free_private( board );
 }
 
+static struct pci_device_id agilent_82350b_pci_table[] __devinitdata = 
+{
+	{ PCI_VENDOR_ID_AGILENT, PCI_DEVICE_ID_82350B, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ 0 }
+};
+MODULE_DEVICE_TABLE(pci, agilent_82350b_pci_table);
 
 static int agilent_82350b_init_module( void )
 {

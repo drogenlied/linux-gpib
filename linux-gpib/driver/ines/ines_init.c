@@ -37,6 +37,33 @@ int ines_isa_attach(gpib_board_t *board);
 void ines_pci_detach(gpib_board_t *board);
 void ines_isa_detach(gpib_board_t *board);
 
+enum ines_pci_vendor_ids
+{
+	PCI_VENDOR_ID_INES_QUICKLOGIC = 0x16da
+};
+
+enum ines_pci_device_ids
+{
+	PCI_DEVICE_ID_INES_GPIB_AMCC = 0x8507,
+	PCI_DEVICE_ID_INES_GPIB_QL5030 = 0x11,
+	PCI_DEVICE_ID_QUANCOM_GPIB = 0x3302
+};
+
+enum ines_pci_subdevice_ids
+{
+	PCI_SUBDEVICE_ID_INES_GPIB = 0x1072
+};
+
+static struct pci_device_id ines_pci_table[] __devinitdata = 
+{
+	{PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050, PCI_VENDOR_ID_PLX, PCI_SUBDEVICE_ID_INES_GPIB, 0, 0, 0},
+	{PCI_VENDOR_ID_AMCC, PCI_DEVICE_ID_INES_GPIB_AMCC, PCI_VENDOR_ID_AMCC, PCI_SUBDEVICE_ID_INES_GPIB, 0, 0, 0},
+	{PCI_VENDOR_ID_INES_QUICKLOGIC, PCI_DEVICE_ID_INES_GPIB_QL5030, PCI_VENDOR_ID_INES_QUICKLOGIC, PCI_DEVICE_ID_INES_GPIB_QL5030, 0, 0, 0},
+	{PCI_DEVICE(PCI_VENDOR_ID_QUANCOM, PCI_DEVICE_ID_QUANCOM_GPIB)},
+	{0}
+};
+MODULE_DEVICE_TABLE(pci, ines_pci_table);
+
 typedef struct
 {
 	unsigned int vendor_id;
@@ -54,32 +81,32 @@ ines_pci_id pci_ids[] =
 		vendor_id: PCI_VENDOR_ID_PLX,
 		device_id: PCI_DEVICE_ID_PLX_9050,
 		subsystem_vendor_id: PCI_VENDOR_ID_PLX,
-		subsystem_device_id: 0x1072,
+		subsystem_device_id: PCI_SUBDEVICE_ID_INES_GPIB,
 		gpib_region: 2,
 		io_offset: 1,
 		pci_chip_type: PCI_CHIP_PLX9050,
 	},
 	{
 		vendor_id: PCI_VENDOR_ID_AMCC,
-		device_id: 0x8507,
+		device_id: PCI_DEVICE_ID_INES_GPIB_AMCC,
 		subsystem_vendor_id: PCI_VENDOR_ID_AMCC,
-		subsystem_device_id: 0x1072,
+		subsystem_device_id: PCI_SUBDEVICE_ID_INES_GPIB,
 		gpib_region: 1,
 		io_offset: 1,
 		pci_chip_type: PCI_CHIP_AMCC5920,
 	},
 	{
-		vendor_id: 0x16da,
-		device_id: 0x0011,
-		subsystem_vendor_id: 0x16da,
-		subsystem_device_id: 0x0011,
+		vendor_id: PCI_VENDOR_ID_INES_QUICKLOGIC,
+		device_id: PCI_DEVICE_ID_INES_GPIB_QL5030,
+		subsystem_vendor_id: PCI_VENDOR_ID_INES_QUICKLOGIC,
+		subsystem_device_id: PCI_DEVICE_ID_INES_GPIB_QL5030,
 		gpib_region: 1,
 		io_offset: 1,
 		pci_chip_type: PCI_CHIP_QUICKLOGIC5030,
 	},
 	{
 		vendor_id: PCI_VENDOR_ID_QUANCOM,
-		device_id: 0x3302,
+		device_id: PCI_DEVICE_ID_QUANCOM_GPIB,
 		subsystem_vendor_id: -1,
 		subsystem_device_id: -1,
 		gpib_region: 0,
@@ -89,6 +116,7 @@ ines_pci_id pci_ids[] =
 };
 
 static const int num_pci_chips = sizeof(pci_ids) / sizeof(pci_ids[0]);
+
 
 // wrappers for interface functions
 ssize_t ines_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes)
@@ -524,7 +552,7 @@ void ines_pci_detach(gpib_board_t *board)
 	ines_free_private(board);
 }
 
-static int ines_init_module( void )
+static int __init ines_init_module( void )
 {
 	int err = 0;
 

@@ -1756,8 +1756,6 @@ static struct usb_device_id ni_usb_driver_device_table [] =
 	{USB_DEVICE(USB_VENDOR_ID_NI, USB_DEVICE_ID_NI_USB_B)},
 	{} /* Terminating entry */
 };
-
-
 MODULE_DEVICE_TABLE(usb, ni_usb_driver_device_table);
 
 static int ni_usb_driver_probe(struct usb_interface *interface, 
