@@ -54,11 +54,11 @@ if [[ ! -d "$LINUX_SRCDIR" ]];then
 fi
 if [[ ! -f "$LINUX_SRCDIR/.config" ]];then
 	AC_MSG_ERROR([Kernel source tree at $LINUX_SRCDIR is not configured.  Copy the
-	appropriate configuration file to $LINUX_SRCDIR/.config and then run \'make oldconfig\'
+	appropriate configuration file to $LINUX_SRCDIR/.config and then run 'make oldconfig'
 	in the kernel source directory.])
 fi
 if [[ ! -f "$LINUX_SRCDIR/.hdepend" ]];then
-	AC_MSG_ERROR([You need to run \'make dep\' on the kernel source before continuing.])
+	AC_MSG_ERROR([You need to run 'make dep' on the kernel source before continuing.])
 fi
 AC_MSG_RESULT([ok])
 dnl get compile flags for modules from linux kernel source tree
