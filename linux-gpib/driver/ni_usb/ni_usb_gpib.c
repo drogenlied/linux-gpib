@@ -1625,7 +1625,6 @@ gpib_interface_t ni_usb_gpib_interface =
 	serial_poll_status: ni_usb_serial_poll_status,
 	t1_delay: ni_usb_t1_delay,
 	return_to_local: ni_usb_return_to_local,
-	provider_module: &__this_module,
 };
 
 // Table with the USB-devices: just now only testing IDs
@@ -1738,7 +1737,7 @@ static int ni_usb_init_module(void)
 	for(i = 0; i < MAX_NUM_NI_USB_INTERFACES; i++)
 		ni_usb_driver_interfaces[i] = NULL;
 	usb_register(&ni_usb_bus_driver);
-	gpib_register_driver(&ni_usb_gpib_interface);
+	gpib_register_driver(&ni_usb_gpib_interface, &__this_module);
 
 	return 0;
 }

@@ -183,7 +183,6 @@ gpib_interface_t agilent_82350b_interface =
 	serial_poll_response: agilent_82350b_serial_poll_response,
 	t1_delay: agilent_82350b_t1_delay,
 	return_to_local: agilent_82350b_return_to_local,
-	provider_module: &__this_module,
 };
 
 int agilent_82350b_allocate_private( gpib_board_t *board )
@@ -298,7 +297,7 @@ void agilent_82350b_detach(gpib_board_t *board)
 
 static int agilent_82350b_init_module( void )
 {
-	gpib_register_driver(&agilent_82350b_interface);
+	gpib_register_driver(&agilent_82350b_interface, &__this_module);
 	return 0;
 }
 

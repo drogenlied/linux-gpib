@@ -166,7 +166,6 @@ gpib_interface_t pc2_interface =
 	serial_poll_status:	pc2_serial_poll_status,
 	t1_delay: pc2_t1_delay,
 	return_to_local: pc2_return_to_local,
-	provider_module: &__this_module,
 };
 
 gpib_interface_t pc2a_interface =
@@ -195,7 +194,6 @@ gpib_interface_t pc2a_interface =
 	serial_poll_status:	pc2_serial_poll_status,
 	t1_delay: pc2_t1_delay,
 	return_to_local: pc2_return_to_local,
-	provider_module: &__this_module,
 };
 
 gpib_interface_t pc2a_cb7210_interface =
@@ -224,7 +222,6 @@ gpib_interface_t pc2a_cb7210_interface =
 	serial_poll_status:	pc2_serial_poll_status,
 	t1_delay: pc2_t1_delay,
 	return_to_local: pc2_return_to_local,
-	provider_module: &__this_module,
 };
 
 gpib_interface_t pc2_2a_interface =
@@ -253,7 +250,6 @@ gpib_interface_t pc2_2a_interface =
 	serial_poll_status:	pc2_serial_poll_status,
 	t1_delay: pc2_t1_delay,
 	return_to_local: pc2_return_to_local,
-	provider_module: &__this_module,
 };
 
 static int allocate_private(gpib_board_t *board)
@@ -543,10 +539,10 @@ void pc2_2a_detach( gpib_board_t *board )
 
 static int pc2_init_module( void )
 {
-	gpib_register_driver(&pc2_interface);
-	gpib_register_driver(&pc2a_interface);
-	gpib_register_driver(&pc2a_cb7210_interface);
-	gpib_register_driver(&pc2_2a_interface);
+	gpib_register_driver(&pc2_interface, &__this_module);
+	gpib_register_driver(&pc2a_interface, &__this_module);
+	gpib_register_driver(&pc2a_cb7210_interface, &__this_module);
+	gpib_register_driver(&pc2_2a_interface, &__this_module);
 
 	return 0;
 }

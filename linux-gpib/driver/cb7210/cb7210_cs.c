@@ -619,7 +619,6 @@ gpib_interface_t cb_pcmcia_interface =
 	serial_poll_status: cb7210_serial_poll_status,
 	t1_delay: cb7210_t1_delay,
 	return_to_local: cb7210_return_to_local,
-	provider_module: &__this_module,
 };
 
 gpib_interface_t cb_pcmcia_accel_interface =
@@ -648,7 +647,6 @@ gpib_interface_t cb_pcmcia_accel_interface =
 	serial_poll_status: cb7210_serial_poll_status,
 	t1_delay: cb7210_t1_delay,
 	return_to_local: cb7210_return_to_local,
-	provider_module: &__this_module,
 };
 
 int cb_pcmcia_attach( gpib_board_t *board )

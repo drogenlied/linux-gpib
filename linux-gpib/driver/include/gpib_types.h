@@ -35,8 +35,6 @@ typedef struct gpib_board_struct gpib_board_t;
 
 struct gpib_interface_struct
 {
-	/* list_head so we can make a linked list of drivers */
-	struct list_head list;
 	/* name of board */
 	char *name;
 	/* attach() initializes board and allocates resources */
@@ -126,9 +124,6 @@ struct gpib_interface_struct
 	unsigned int ( *t1_delay )( gpib_board_t *board, unsigned int nano_sec );
 	/* go to local mode */
 	void ( *return_to_local )( gpib_board_t *board );
-	/* Pointer to module whose use count we should increment when this
-	 * interface is in use */
-	struct module *provider_module;
 };
 
 typedef struct
@@ -162,6 +157,14 @@ static inline void init_gpib_pseudo_irq( struct gpib_pseudo_irq *pseudo_irq)
 	pseudo_irq->active = 0;
 }
 
+/* list so we can make a linked list of drivers */
+typedef struct gpib_interface_list_struct
+{
+	struct list_head list;
+	gpib_interface_t *interface;
+	struct module *module;
+} gpib_interface_list_t;
+
 /* One gpib_board_t is allocated for each physical board in the computer.
  * It provides storage for variables local to each board, and interface
  * functions for performing operations on the board */
@@ -169,6 +172,9 @@ struct gpib_board_struct
 {
 	/* functions used by this board */
 	gpib_interface_t *interface;
+	/* Pointer to module whose use count we should increment when
+	 * interface is in use */
+	struct module *provider_module;
 	/* buffer used to store read/write data for this board */
 	uint8_t *buffer;
 	/* length of buffer */

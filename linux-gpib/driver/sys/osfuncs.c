@@ -138,7 +138,7 @@ int ibopen(struct inode *inode, struct file *filep)
 		}
 	}
 	if(board->interface)
-		if(!try_module_get(board->interface->provider_module))
+		if(!try_module_get(board->provider_module))
 			return -ENOSYS;
 	board->open_count++;
 	return 0;
@@ -173,11 +173,10 @@ int ibclose(struct inode *inode, struct file *filep)
 
 	board->open_count--;
 	if(board->interface)
-		module_put(board->interface->provider_module);
+		module_put(board->provider_module);
 
 	if( board->exclusive )
 		board->exclusive = 0;
-
 
 	return 0;
 }
@@ -370,21 +369,22 @@ static int board_type_ioctl(gpib_board_t *board, unsigned long arg)
 
 	for(list_ptr = registered_drivers.next; list_ptr != &registered_drivers; list_ptr = list_ptr->next)
 	{
-		gpib_interface_t *interface;
+		gpib_interface_list_t *entry;
 
-		interface = list_entry(list_ptr, gpib_interface_t, list);
-		if(strcmp(interface->name, cmd.name) == 0)
+		entry = list_entry(list_ptr, gpib_interface_list_t, list);
+		if(strcmp(entry->interface->name, cmd.name) == 0)
 		{
 			if(board->interface)
 			{
-				module_put(board->interface->provider_module);
+				module_put(board->provider_module);
 				board->interface = NULL;
 			}
-			if(!try_module_get(interface->provider_module))
+			if(!try_module_get(entry->module))
 			{
 				return -ENOSYS;
 			}
-			board->interface = interface;
+			board->interface = entry->interface;
+			board->provider_module = entry->module;
 			return 0;
 		}
 	}

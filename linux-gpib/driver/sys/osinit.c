@@ -48,9 +48,8 @@ struct file_operations ib_fops =
 	lock: NULL,
 	readv: NULL,
 	writev: NULL,
-// sendpage and get_unmapped_area were added in 2.4.4
-//	sendpage: NULL,
-//	get_unmapped_area: NULL,
+	sendpage: NULL,
+	get_unmapped_area: NULL,
 };
 
 gpib_board_t board_array[GPIB_MAX_NUM_BOARDS];
@@ -65,15 +64,26 @@ void init_gpib_descriptor( gpib_descriptor_t *desc )
 	desc->io_in_progress = 0;
 }
 
-void gpib_register_driver(gpib_interface_t *interface)
+void gpib_register_driver(gpib_interface_t *interface, struct module *provider_module)
 {
-	list_add(&interface->list, &registered_drivers);
+	struct gpib_interface_list_struct *entry;
+	
+	entry = kmalloc(sizeof(struct gpib_interface_list_struct), GFP_KERNEL);
+	if(entry == NULL)
+	{
+		printk("gpib: failed register %s interface, out of memory\n", interface->name);
+		return;
+	}
+	entry->interface = interface;
+	entry->module = provider_module;
+	list_add(&entry->list, &registered_drivers);
 	printk("gpib: registered %s interface\n", interface->name);
 }
 
 void gpib_unregister_driver(gpib_interface_t *interface)
 {
 	int i;
+	struct list_head *list_ptr;
 
 	for(i = 0; i < GPIB_MAX_NUM_BOARDS; i++)
 	{
@@ -88,13 +98,25 @@ void gpib_unregister_driver(gpib_interface_t *interface)
 			board->interface = NULL;
 		}
 	}
-	list_del(&interface->list);
+	for(list_ptr = registered_drivers.next; list_ptr != &registered_drivers;)
+	{
+		gpib_interface_list_t *entry;
+
+		entry = list_entry(list_ptr, gpib_interface_list_t, list);
+		list_ptr = list_ptr->next;
+		if(entry->interface == interface)
+		{
+			list_del(&entry->list);
+			kfree(entry);
+		}
+	}
 	printk("gpib: unregistered %s interface\n", interface->name);
 }
 
 void init_gpib_board( gpib_board_t *board )
 {
 	board->interface = NULL;
+	board->provider_module = NULL;
 	board->buffer = NULL;
 	board->buffer_length = 0;
 	board->status = 0;
@@ -120,7 +142,7 @@ void init_gpib_board( gpib_board_t *board )
 	board->autospollers = 0;
 	board->autospoll_pid = 0;
 	init_MUTEX_LOCKED(&board->autospoll_completion);
-	init_event_queue( &board->event_queue );
+	init_event_queue(&board->event_queue);
 	board->minor = -1;
 	init_gpib_pseudo_irq(&board->pseudo_irq);
 	board->master = 1;

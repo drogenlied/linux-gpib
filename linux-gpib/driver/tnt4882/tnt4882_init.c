@@ -186,7 +186,6 @@ gpib_interface_t ni_pci_interface =
 	serial_poll_status: tnt4882_serial_poll_status,
 	t1_delay: tnt4882_t1_delay,
 	return_to_local: tnt4882_return_to_local,
-	provider_module: &__this_module,
 };
 
 gpib_interface_t ni_pci_accel_interface =
@@ -215,7 +214,6 @@ gpib_interface_t ni_pci_accel_interface =
 	serial_poll_status: tnt4882_serial_poll_status,
 	t1_delay: tnt4882_t1_delay,
 	return_to_local: tnt4882_return_to_local,
-	provider_module: &__this_module,
 };
 
 gpib_interface_t ni_isa_interface =
@@ -244,7 +242,6 @@ gpib_interface_t ni_isa_interface =
 	serial_poll_status: tnt4882_serial_poll_status,
 	t1_delay: tnt4882_t1_delay,
 	return_to_local: tnt4882_return_to_local,
-	provider_module: &__this_module,
 };
 
 gpib_interface_t ni_nat4882_isa_interface =
@@ -273,7 +270,6 @@ gpib_interface_t ni_nat4882_isa_interface =
 	serial_poll_status: tnt4882_serial_poll_status,
 	t1_delay: tnt4882_t1_delay,
 	return_to_local: tnt4882_return_to_local,
-	provider_module: &__this_module,
 };
 
 gpib_interface_t ni_nec_isa_interface =
@@ -302,7 +298,6 @@ gpib_interface_t ni_nec_isa_interface =
 	serial_poll_status: tnt4882_serial_poll_status,
 	t1_delay: tnt4882_t1_delay,
 	return_to_local: tnt4882_return_to_local,
-	provider_module: &__this_module,
 };
 
 gpib_interface_t ni_isa_accel_interface =
@@ -331,7 +326,6 @@ gpib_interface_t ni_isa_accel_interface =
 	serial_poll_status: tnt4882_serial_poll_status,
 	t1_delay: tnt4882_t1_delay,
 	return_to_local: tnt4882_return_to_local,
-	provider_module: &__this_module,
 };
 
 gpib_interface_t ni_nat4882_isa_accel_interface =
@@ -360,7 +354,6 @@ gpib_interface_t ni_nat4882_isa_accel_interface =
 	serial_poll_status: tnt4882_serial_poll_status,
 	t1_delay: tnt4882_t1_delay,
 	return_to_local: tnt4882_return_to_local,
-	provider_module: &__this_module,
 };
 
 gpib_interface_t ni_nec_isa_accel_interface =
@@ -389,7 +382,6 @@ gpib_interface_t ni_nec_isa_accel_interface =
 	serial_poll_status: tnt4882_serial_poll_status,
 	t1_delay: tnt4882_t1_delay,
 	return_to_local: tnt4882_return_to_local,
-	provider_module: &__this_module,
 };
 
 void tnt4882_board_reset( tnt4882_private_t *tnt_priv, gpib_board_t *board )
@@ -698,17 +690,17 @@ void ni_isa_detach(gpib_board_t *board)
 
 static int tnt4882_init_module( void )
 {
-	gpib_register_driver(&ni_isa_interface);
-	gpib_register_driver(&ni_isa_accel_interface);
-	gpib_register_driver(&ni_nat4882_isa_interface);
-	gpib_register_driver(&ni_nat4882_isa_accel_interface);
-	gpib_register_driver(&ni_nec_isa_interface);
-	gpib_register_driver(&ni_nec_isa_accel_interface);
-	gpib_register_driver(&ni_pci_interface);
-	gpib_register_driver(&ni_pci_accel_interface);
+	gpib_register_driver(&ni_isa_interface, &__this_module);
+	gpib_register_driver(&ni_isa_accel_interface, &__this_module);
+	gpib_register_driver(&ni_nat4882_isa_interface, &__this_module);
+	gpib_register_driver(&ni_nat4882_isa_accel_interface, &__this_module);
+	gpib_register_driver(&ni_nec_isa_interface, &__this_module);
+	gpib_register_driver(&ni_nec_isa_accel_interface, &__this_module);
+	gpib_register_driver(&ni_pci_interface, &__this_module);
+	gpib_register_driver(&ni_pci_accel_interface, &__this_module);
 #if defined(GPIB_CONFIG_PCMCIA)
-	gpib_register_driver(&ni_pcmcia_interface);
-	gpib_register_driver(&ni_pcmcia_accel_interface);
+	gpib_register_driver(&ni_pcmcia_interface, &__this_module);
+	gpib_register_driver(&ni_pcmcia_accel_interface, &__this_module);
 	if( init_ni_gpib_cs() < 0 )
 		return -1;
 #endif

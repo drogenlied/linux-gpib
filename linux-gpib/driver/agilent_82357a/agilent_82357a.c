@@ -680,14 +680,16 @@ void agilent_82357a_secondary_address(gpib_board_t *board, unsigned int address,
 int agilent_82357a_parallel_poll(gpib_board_t *board, uint8_t *result)
 {
 	agilent_82357a_private_t *a_priv = board->private_data;
-	struct agilent_82357a_register_pairlet write;
+	struct agilent_82357a_register_pairlet writes[2];
 	struct agilent_82357a_register_pairlet read;
 	int retval;
 
 	// execute parallel poll
-	write.address = AUXCR;
-	write.value = AUX_CS | AUX_RPP;
-	retval = agilent_82357a_write_registers(a_priv, &write, 1);
+	writes[0].address = AUXCR;
+	writes[0].value = AUX_CS | AUX_RPP;
+	writes[1].address = HW_CONTROL;
+	writes[1].value = a_priv->hw_control_bits & ~NOT_PARALLEL_POLL;
+	retval = agilent_82357a_write_registers(a_priv, writes, 2);
 	if(retval)
 	{
 		printk("%s: %s: agilent_82357a_write_registers() returned error\n", __FILE__, __FUNCTION__);
@@ -703,9 +705,11 @@ int agilent_82357a_parallel_poll(gpib_board_t *board, uint8_t *result)
 	}
 	*result = read.value;
 	// clear parallel poll state
-	write.address = AUXCR;
-	write.value = AUX_RPP;
-	retval = agilent_82357a_write_registers(a_priv, &write, 1);
+	writes[0].address = HW_CONTROL;
+	writes[0].value = a_priv->hw_control_bits | NOT_PARALLEL_POLL;
+	writes[1].address = AUXCR;
+	writes[1].value = AUX_RPP;
+	retval = agilent_82357a_write_registers(a_priv, writes, 2);
 	if(retval)
 	{
 		printk("%s: %s: agilent_82357a_write_registers() returned error\n", __FILE__, __FUNCTION__);
@@ -872,6 +876,25 @@ static int agilent_82357a_setup_urbs(gpib_board_t *board)
 	return 0;
 }
 
+static int agilent_82357a_reset_usb_configuration(gpib_board_t *board)
+{
+	agilent_82357a_private_t *a_priv = board->private_data;
+	struct usb_device *usb_dev;
+	int retval;
+	
+	if(a_priv->bus_interface == NULL)
+	{
+		return -ENODEV;
+	}
+	usb_dev = interface_to_usbdev(a_priv->bus_interface);
+	retval = usb_reset_configuration(usb_dev);
+	if(retval)
+	{
+		printk("%s: %s: usb_reset_configuration() returned %i\n", __FILE__, __FUNCTION__, retval);
+	}
+	return retval;
+}
+
 static void agilent_82357a_cleanup_urbs(agilent_82357a_private_t *a_priv)
 {
 	if(a_priv && a_priv->interrupt_urb)
@@ -999,7 +1022,8 @@ static int agilent_82357a_init(gpib_board_t *board)
 		printk("%s: %s: agilent_82357a_read_registers() returned error\n", __FILE__, __FUNCTION__);
 		return -EIO;
 	}
-	a_priv->hw_control_bits = hw_control.value & 0x7;
+	a_priv->hw_control_bits = (hw_control.value & ~0x7) | NOT_TI_RESET | NOT_PARALLEL_POLL;
+;
 	return 0;
 }
 
@@ -1037,6 +1061,12 @@ int agilent_82357a_attach(gpib_board_t *board)
 		printk("No NI usb-b gpib adapters found, have you loaded its firmware?\n");
 		return -ENODEV;
 	}
+	retval = agilent_82357a_reset_usb_configuration(board);
+	if(retval < 0) 
+	{
+		up(&agilent_82357a_hotplug_lock);
+		return retval;
+	}	
 	retval = agilent_82357a_setup_urbs(board);
 	if(retval < 0) 
 	{
@@ -1074,11 +1104,10 @@ void agilent_82357a_detach(gpib_board_t *board)
 		down(&a_priv->interrupt_transfer_lock);
 		if(a_priv->bus_interface)
 			agilent_82357a_cleanup_urbs(a_priv);
-		agilent_82357a_free_private(a_priv);
-		
 		up(&a_priv->interrupt_transfer_lock);
 		up(&a_priv->control_transfer_lock);
 		up(&a_priv->bulk_transfer_lock);
+		agilent_82357a_free_private(a_priv);
 	}
 	printk("%s: detached\n", __FUNCTION__);
 	up(&agilent_82357a_hotplug_lock);
@@ -1110,7 +1139,6 @@ gpib_interface_t agilent_82357a_gpib_interface =
 	serial_poll_status: agilent_82357a_serial_poll_status,
 	t1_delay: agilent_82357a_t1_delay,
 	return_to_local: agilent_82357a_return_to_local,
-	provider_module: &__this_module,
 };
 
 // Table with the USB-devices: just now only testing IDs
@@ -1180,14 +1208,16 @@ static void agilent_82357a_driver_disconnect(struct usb_interface *interface)
 			if(board)
 			{
 				agilent_82357a_private_t *a_priv = board->private_data;
-				
-				down(&a_priv->bulk_transfer_lock);
-				down(&a_priv->control_transfer_lock);
-				down(&a_priv->interrupt_transfer_lock);
-				a_priv->bus_interface = NULL;
-				up(&a_priv->interrupt_transfer_lock);
-				up(&a_priv->control_transfer_lock);
-				up(&a_priv->bulk_transfer_lock);
+				if(a_priv)
+				{
+					down(&a_priv->bulk_transfer_lock);
+					down(&a_priv->control_transfer_lock);
+					down(&a_priv->interrupt_transfer_lock);
+					a_priv->bus_interface = NULL;
+					up(&a_priv->interrupt_transfer_lock);
+					up(&a_priv->control_transfer_lock);
+					up(&a_priv->bulk_transfer_lock);
+				}
 			}	
 //			printk("nulled agilent_82357a_driver_interfaces[%i]\n", i);
 			agilent_82357a_driver_interfaces[i] = NULL;
@@ -1199,7 +1229,7 @@ static void agilent_82357a_driver_disconnect(struct usb_interface *interface)
 		printk("unable to find interface in agilent_82357a_driver_interfaces[]? bug?\n");
 	}
 	usb_put_dev(interface_to_usbdev(interface));
-//	printk("%s: exit\n", __FUNCTION__);
+	printk("%s: exit\n", __FUNCTION__);
 	up(&agilent_82357a_hotplug_lock);
 }
 
@@ -1220,7 +1250,7 @@ static int agilent_82357a_init_module(void)
 	for(i = 0; i < MAX_NUM_82357A_INTERFACES; ++i)
 		agilent_82357a_driver_interfaces[i] = NULL;
 	usb_register(&agilent_82357a_bus_driver);
-	gpib_register_driver(&agilent_82357a_gpib_interface);
+	gpib_register_driver(&agilent_82357a_gpib_interface, &__this_module);
 
 	return 0;
 }

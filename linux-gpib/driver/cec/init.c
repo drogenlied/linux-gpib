@@ -160,7 +160,6 @@ gpib_interface_t cec_pci_interface =
 	serial_poll_status: cec_serial_poll_status,
 	t1_delay: cec_t1_delay,
 	return_to_local: cec_return_to_local,
-	provider_module: &__this_module,
 };
 
 int cec_allocate_private(gpib_board_t *board)
@@ -306,7 +305,7 @@ void cec_pci_detach(gpib_board_t *board)
 
 int cec_init_module(void)
 {
-	gpib_register_driver(&cec_pci_interface);
+	gpib_register_driver(&cec_pci_interface, &__this_module);
 
 	return 0;
 }

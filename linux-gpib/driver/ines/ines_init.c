@@ -224,7 +224,6 @@ gpib_interface_t ines_pci_interface =
 	serial_poll_status: ines_serial_poll_status,
 	t1_delay: ines_t1_delay,
 	return_to_local: ines_return_to_local,
-	provider_module: &__this_module,
 };
 
 gpib_interface_t ines_pci_accel_interface =
@@ -253,7 +252,6 @@ gpib_interface_t ines_pci_accel_interface =
 	serial_poll_status: ines_serial_poll_status,
 	t1_delay: ines_t1_delay,
 	return_to_local: ines_return_to_local,
-	provider_module: &__this_module,
 };
 
 int ines_allocate_private(gpib_board_t *board)
@@ -530,12 +528,12 @@ static int ines_init_module( void )
 {
 	int err = 0;
 
-	gpib_register_driver(&ines_pci_interface);
-	gpib_register_driver(&ines_pci_accel_interface);
+	gpib_register_driver(&ines_pci_interface, &__this_module);
+	gpib_register_driver(&ines_pci_accel_interface, &__this_module);
 
 #if defined(GPIB_CONFIG_PCMCIA)
-	gpib_register_driver(&ines_pcmcia_interface);
-	gpib_register_driver(&ines_pcmcia_accel_interface);
+	gpib_register_driver(&ines_pcmcia_interface, &__this_module);
+	gpib_register_driver(&ines_pcmcia_accel_interface, &__this_module);
 	err += ines_pcmcia_init_module();
 #endif
 	if(err)

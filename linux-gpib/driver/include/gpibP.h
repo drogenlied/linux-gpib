@@ -29,7 +29,7 @@
 #include <linux/fs.h>
 #include <linux/interrupt.h>
 
-void gpib_register_driver(gpib_interface_t *interface);
+void gpib_register_driver(gpib_interface_t *interface, struct module *mod);
 void gpib_unregister_driver(gpib_interface_t *interface);
 struct pci_dev* gpib_pci_find_device( const gpib_board_t *board, unsigned int vendor_id,
 	unsigned int device_id, const struct pci_dev *from);

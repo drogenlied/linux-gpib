@@ -167,7 +167,6 @@ gpib_interface_t hp82335_interface =
 	serial_poll_response: hp82335_serial_poll_response,
 	t1_delay: hp82335_t1_delay,
 	return_to_local: hp82335_return_to_local,
-	provider_module: &__this_module,
 };
 
 int hp82335_allocate_private( gpib_board_t *board )
@@ -307,7 +306,7 @@ void hp82335_detach(gpib_board_t *board)
 
 static int hp82335_init_module( void )
 {
-	gpib_register_driver(&hp82335_interface);
+	gpib_register_driver(&hp82335_interface, &__this_module);
 	return 0;
 }
 

@@ -169,7 +169,6 @@ gpib_interface_t cb_pci_interface =
 	serial_poll_status: cb7210_serial_poll_status,
 	t1_delay: cb7210_t1_delay,
 	return_to_local: cb7210_return_to_local,
-	provider_module: &__this_module,
 };
 
 gpib_interface_t cb_pci_accel_interface =
@@ -198,7 +197,6 @@ gpib_interface_t cb_pci_accel_interface =
 	serial_poll_status: cb7210_serial_poll_status,
 	t1_delay: cb7210_t1_delay,
 	return_to_local: cb7210_return_to_local,
-	provider_module: &__this_module,
 };
 
 gpib_interface_t cb_isa_interface =
@@ -227,7 +225,6 @@ gpib_interface_t cb_isa_interface =
 	serial_poll_status: cb7210_serial_poll_status,
 	t1_delay: cb7210_t1_delay,
 	return_to_local: cb7210_return_to_local,
-	provider_module: &__this_module,
 };
 
 gpib_interface_t cb_isa_accel_interface =
@@ -256,7 +253,6 @@ gpib_interface_t cb_isa_accel_interface =
 	serial_poll_status: cb7210_serial_poll_status,
 	t1_delay: cb7210_t1_delay,
 	return_to_local: cb7210_return_to_local,
-	provider_module: &__this_module,
 };
 
 int cb7210_allocate_private(gpib_board_t *board)
@@ -477,14 +473,14 @@ static int cb7210_init_module( void )
 {
 	int err = 0;
 
-	gpib_register_driver(&cb_pci_interface);
-	gpib_register_driver(&cb_isa_interface);
-	gpib_register_driver(&cb_pci_accel_interface);
-	gpib_register_driver(&cb_isa_accel_interface);
+	gpib_register_driver(&cb_pci_interface, &__this_module);
+	gpib_register_driver(&cb_isa_interface, &__this_module);
+	gpib_register_driver(&cb_pci_accel_interface, &__this_module);
+	gpib_register_driver(&cb_isa_accel_interface, &__this_module);
 
 #if defined(GPIB_CONFIG_PCMCIA)
-	gpib_register_driver(&cb_pcmcia_interface);
-	gpib_register_driver(&cb_pcmcia_accel_interface);
+	gpib_register_driver(&cb_pcmcia_interface, &__this_module);
+	gpib_register_driver(&cb_pcmcia_accel_interface, &__this_module);
 	err += cb_pcmcia_init_module();
 #endif
 	if(err)
