@@ -239,6 +239,10 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 		case IBLINES:
 			return line_status_ioctl( board, arg );
 			break;
+		case IBLOC:
+			board->interface->return_to_local( board );
+			return 0;
+			break;
 		default:
 			break;
 	}
@@ -1098,3 +1102,4 @@ static int t1_delay_ioctl( gpib_board_t *board, unsigned long arg )
 
 	return 0;
 }
+

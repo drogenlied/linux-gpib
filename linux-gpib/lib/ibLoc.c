@@ -26,30 +26,42 @@ int ibloc(int ud)
 	uint8_t cmd[32];
 	unsigned int i;
 	ssize_t count;
+	int retval;
 
 	conf = enter_library( ud );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 
-	// XXX need to fix board descriptor case
 	board = interfaceBoard( conf );
 
-	i = send_setup_string( conf, cmd );
-	if( i < 0 )
+	if( conf->is_interface )
 	{
-		setIberr( EDVR );
-		return exit_library( ud, 1 );
-	}
-	cmd[ i++ ] = GTL;
-	count = my_ibcmd( conf, cmd, i);
-	if(count != i)
+		retval = ioctl( board->fileno, IBLOC );
+		if( retval < 0 )
+		{
+			fprintf( stderr, "IBLOC ioctl failed\n" );
+			setIberr( EDVR );
+			setIbcnt( errno );
+			return exit_library( ud, 1 );
+		}
+	}else
 	{
-		return exit_library( ud, 1 );
+		i = send_setup_string( conf, cmd );
+		if( i < 0 )
+		{
+			setIberr( EDVR );
+			return exit_library( ud, 1 );
+		}
+		cmd[ i++ ] = GTL;
+		count = my_ibcmd( conf, cmd, i);
+		if(count != i)
+		{
+			return exit_library( ud, 1 );
+		}
 	}
 
 	return exit_library( ud, 0 );
-
-} /* ibloc */
+}
 
 void EnableLocal( int boardID, const Addr4882_t addressList[] )
 {

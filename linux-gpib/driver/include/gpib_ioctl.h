@@ -141,7 +141,8 @@ enum gpib_ioctl
 	IBSELECT_PCI = _IOWR( GPIB_CODE, 32, select_pci_ioctl_t ),
 	IBEVENT = _IOR( GPIB_CODE, 33, event_ioctl_t ),
 	IBRSC = _IOW( GPIB_CODE, 34, rsc_ioctl_t ),
-	IB_T1_DELAY = _IOW( GPIB_CODE, 35, t1_delay_ioctl_t )
+	IB_T1_DELAY = _IOW( GPIB_CODE, 35, t1_delay_ioctl_t ),
+	IBLOC = _IO( GPIB_CODE, 36 )
 };
 
 #endif	/* _GPIB_IOCTL_H */

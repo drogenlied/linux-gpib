@@ -136,4 +136,6 @@ EXPORT_SYMBOL_GPL( tms9914_take_control );
 EXPORT_SYMBOL_GPL( tms9914_go_to_standby );
 EXPORT_SYMBOL_GPL( tms9914_interface_clear );
 EXPORT_SYMBOL_GPL( tms9914_remote_enable );
+EXPORT_SYMBOL_GPL( tms9914_return_to_local );
+
 
