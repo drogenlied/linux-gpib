@@ -119,13 +119,13 @@ int ibclose(struct inode *inode, struct file *filep)
 		kfree( filep->private_data );
 	}
 
-	if( board->online && board->open_count == 1 )
-		iboffline( board );
-
 	board->open_count--;
 
 	if( board->exclusive )
 		board->exclusive = 0;
+
+	if( board->online && board->open_count == 0 )
+		iboffline( board );
 
 	return 0;
 }

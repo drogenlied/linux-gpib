@@ -54,10 +54,9 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 		config_parsed = 1;
 	}
 
-	conf.name[0] = 0;
+	init_ibconf( &conf );
 	conf.pad = pad;
 	conf.sad = sad - sad_offset;                        /* device address                   */
-	conf.init_string[0] = 0;               /* initialization string (optional) */
 	conf.board = minor;                         /* board number                     */
 	conf.eos = eos;                           /* local eos modes                  */
 	conf.eos_flags = eos_flags;
@@ -66,7 +65,6 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 		conf.send_eoi = 1;
 	else
 		conf.send_eoi = 0;
-	conf.flags = 0;
 	// check if it is an interface board
 	board = &ibBoard[minor];
 	if( gpib_address_equal( board->pad, board->sad, conf.pad, conf.sad ) )

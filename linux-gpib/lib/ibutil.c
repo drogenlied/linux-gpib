@@ -79,6 +79,7 @@ int ibGetDescriptor(ibConf_t p)
 	conf->usec_timeout = p.usec_timeout;
 	conf->send_eoi = p.send_eoi;
 	conf->is_interface = p.is_interface;
+	conf->is_open = p.is_open;
 
 	strncpy(conf->init_string, p.init_string, sizeof(conf->init_string));
 	return ib_ndev;
