@@ -20,6 +20,7 @@
 #include <ibsys.h>
 #include <linux/version.h>
 #include <linux/module.h>
+#include <linux/wait.h>
 
 // early 2.4.x kernels don't define MODULE_LICENSE
 #ifndef MODULE_LICENSE
@@ -200,51 +201,32 @@ int ibmajor = IBMAJOR;   /* major number for dynamic configuration */
 int init_module(void)
 {
 	EXPORT_NO_SYMBOLS;
-#if DEBUG
-	if(dbgMask != 0 )
-         	dbgMask |= DBG_1PPL;
-#endif
 
-        printk("Linux-GPIB Driver Board=%s -- Major=%d ",BOARD_TYPE,ibmajor);
-#if !defined(CBI_PCMCIA) && !defined(INES_PCMCIA)
-        printk("Base=0x%lx ",ibbase );
-#if USEINTS
-	printk("Irq=%d ",ibirq );
-#endif
-#endif
-#if DMAOP
-	printk("DMA=%d enabled\n",ibdma);
-#else
-	printk("DMA disabled\n");
-#endif
-#if DEBUG
-	printk("-- DebugMask = 0x%x\n",dbgMask);
-#endif
+	printk("Linux-GPIB Driver Board=%s -- Major=%d\n", BOARD_TYPE, ibmajor);
 	printk("-- Kernel Release %s\n", UTS_RELEASE);
 
-  	DBGin("ibinstall");
-	
-	if( register_chrdev(ibmajor,"gpib",&ib_fops)){
-	  printk("can't get Major %d\n",ibmajor);
-          DBGout();
-	  return(-EIO);
+	if(register_chrdev(ibmajor, "gpib", &ib_fops))
+	{
+		printk("can't get Major %d\n",ibmajor);
+		return(-EIO);
 	}
 	osMemInit();
-	DBGout();
-	return 0;
 
+	init_waitqueue_head(&driver->wait);
+
+	return 0;
 }
 
 void cleanup_module(void)
 {
 
-  osMemRelease();
+	osMemRelease();
 
-  if ( unregister_chrdev(ibmajor, "gpib") != 0 ) {
-    printk("gpib: device busy or other module error \n");
-  } else {
-    printk("gpib: succesfully removed \n");
-  }
+	if ( unregister_chrdev(ibmajor, "gpib") != 0 ) {
+		printk("gpib: device busy or other module error \n");
+	} else {
+		printk("gpib: succesfully removed \n");
+	}
 }
 
 

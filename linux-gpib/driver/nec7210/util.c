@@ -19,44 +19,45 @@
 #include "board.h"
 #include <linux/delay.h>
 
-int admr_bits = HR_TRM0 | HR_TRM1;
-
 void nec7210_enable_eos(gpib_driver_t *driver, uint8_t eos_byte, int compare_8_bits)
 {
-	DBGin("bdSetEOS");
-	GPIBout(EOSR, eos_byte);
-	auxa_bits |= HR_REOS;
+	nec7210_private_t *priv = driver->private_data;
+
+	priv->write_byte(priv, eos_byte, EOSR);
+	priv->auxa_bits |= HR_REOS;
 	if(compare_8_bits)
-		auxa_bits |= HR_BIN;
+		priv->auxa_bits |= HR_BIN;
 	else
-		auxa_bits &= ~HR_BIN;
-	GPIBout(AUXMR, auxa_bits);
-	DBGout();
+		priv->auxa_bits &= ~HR_BIN;
+	priv->write_byte(priv, auxa_bits, AUXMR);
 }
 
 void nec7210_disable_eos(gpib_driver_t *driver)
 {
-	auxa_bits &= ~HR_REOS;
-	GPIBout(AUXMR, auxa_bits);
+	nec7210_private_t *priv = driver->private_data;
+
+	priv->auxa_bits &= ~HR_REOS;
+	priv->write_byte(priv, auxa_bits, AUXMR);
 }
 
 int nec7210_parallel_poll(gpib_driver_t *driver, uint8_t *result)
 {
 	int ret;
+	nec7210_private_t *priv = driver->private_data;
 
 	// enable command out interrupts
-	imr2_bits |= HR_COIE;
-	GPIBout(IMR2, imr2_bits);
+	priv->imr2_bits |= HR_COIE;
+	priv->write_byte(priv, priv->imr2_bits, IMR2);
 
 	// execute parallel poll
-	GPIBout(AUXMR, AUX_EPP);
+	priv->write_byte(priv, AUX_EPP, AUXMR);
 
 	// wait for result
-	ret = wait_event_interruptible(nec7210_wait, test_bit(0, &command_out_ready));
+	ret = wait_event_interruptible(driver->wait, test_bit(COMMAND_READY_BN, &priv->state));
 
 	// disable command out interrupts
-	imr2_bits &= ~HR_COIE;
-	GPIBout(IMR2, imr2_bits);
+	priv->imr2_bits &= ~HR_COIE;
+	priv->write_byte(priv, priv->imr2_bits, IMR2);
 
 	if(ret)
 	{
@@ -64,49 +65,55 @@ int nec7210_parallel_poll(gpib_driver_t *driver, uint8_t *result)
 		return -1;
 	}
 
-	*result = GPIBin(CPTR);
+	*result = priv->read_byte(priv, CPTR);
 
 	return 0;
 }
 
 int nec7210_serial_poll_response(gpib_driver_t *driver, uint8_t status)
 {
-	GPIBout(SPMR, 0);		/* clear current serial poll status */
-	GPIBout(SPMR, status);		/* set new status to v */
+	nec7210_private_t *priv = driver->private_data;
+
+	priv->write_byte(priv, 0, SPMR);		/* clear current serial poll status */
+	priv->write_byte(priv, status, SPMR);		/* set new status to v */
 
 	return 0;
 }
 
 void nec7210_primary_address(gpib_driver_t *driver, unsigned int address)
 {
+	nec7210_private_t *priv = driver->private_data;
+
 	// put primary address in address0
-	GPIBout(ADR, (address & ADDRESS_MASK));
+	priv->write_byte(priv, address & ADDRESS_MASK, ADR);
 }
 
 void nec7210_secondary_address(gpib_driver_t *driver, unsigned int address, int enable)
 {
+	nec7210_private_t *priv = driver->private_data;
+
 	if(enable)
 	{
 		// put secondary address in address1
-		GPIBout(ADR, HR_ARS | (address & ADDRESS_MASK));
+		priv->write_byte(priv, HR_ARS | (address & ADDRESS_MASK), ADR);
 		// go to address mode 2
-		admr_bits &= ~HR_ADM0;
-		admr_bits |= HR_ADM1;
-		GPIBout(ADMR, admr_bits);
+		priv->admr_bits &= ~HR_ADM0;
+		priv->admr_bits |= HR_ADM1;
 	}else
 	{
 		// disable address1 register
-		GPIBout(ADR, HR_ARS | HR_DT | HR_DL);
+		priv->write_byte(priv, HR_ARS | HR_DT | HR_DL, ADR);
 		// go to address mode 1
-		admr_bits |= HR_ADM0;
-		admr_bits &= ~HR_ADM1;
-		GPIBout(ADMR, admr_bits);
+		priv->admr_bits |= HR_ADM0;
+		priv->admr_bits &= ~HR_ADM1;
 	}
+	priv->write_byte(priv, priv->admr_bits, ADMR);
 }
 
 unsigned int nec7210_update_status(gpib_driver_t *driver)
 {
-	int address_status_bits = GPIBin(ADSR);
+	nec7210_private_t *priv = driver->private_data;
+	int address_status_bits = priv->read_byte(priv, ADSR);
 
 	if(address_status_bits & HR_CIC)
 		set_bit(CIC_NUM, &driver->status);

@@ -20,11 +20,12 @@
 
 #include <linux/fcntl.h>
 
-#define GIVE_UP(a) {osUnlockMutex(); return a;}
+#define GIVE_UP(a) {up(&inode_mutex); return a;}
 
 int ib_opened=0;
 int ib_exclusive=0;
 
+DECLARE_MUTEX(inode_mutex);
 
 IBLCL int ibopen(struct inode *inode, struct file *filep)
 {
@@ -109,9 +110,13 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, uns
 	}
 #endif
 
-	// XXX make this interruptible
-	osLockMutex();        /* lock other processes from performing commands */
-                              /* quick & dirty hack (glenn will flame me :-)  */
+	/* lock other processes from performing commands */
+	retval = down_interruptible(&inode_mutex);
+	if(retval)
+	{
+		printk("gpib: ioctl interrupted while waiting on lock\n");
+		return -ERESTARTSYS;
+	}
 
 //XXX a lot of the content of this switch should be split out into seperate functions
 	switch (cmd)

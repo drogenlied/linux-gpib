@@ -57,22 +57,13 @@ extern gpib_buffer_t *read_buffer, *write_buffer;
 // interrupt service routine
 void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
-// boolean values that signal various conditions
-extern volatile int write_in_progress;	// data can be sent
-extern volatile int command_out_ready;	// command can be sent
-extern volatile int dma_transfer_complete;	// dma transfer is done
-
-extern wait_queue_head_t nec7210_wait;
-
-// software copies of bits written to interrupt mask registers
-extern volatile int imr1_bits, imr2_bits;
-extern int admr_bits;
-
 /* this routines are 'wrappers' for the outb() macros */
 
 /*
  * Input a one-byte value from the specified I/O port
  */
+
+#if 0
 
 extern inline uint8_t GPIBin(unsigned long in_addr)
 {
@@ -95,6 +86,8 @@ extern inline void GPIBout(unsigned long out_addr, uint8_t out_value)
 	outb(out_value, ibbase + out_addr);
 #endif
 }
+
+#endif
 
 /************************************************************************/
 

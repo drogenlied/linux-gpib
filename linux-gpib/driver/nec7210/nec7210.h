@@ -1,7 +1,90 @@
-//bit definitions common to nec-7210 compatible registers
+/***************************************************************************
+                                   nec7210.h
+                             -------------------
+    begin                : Jan 2002
+    copyright            : (C) 2002 by Frank Mori Hess
+    email                : fmhess@users.sourceforge.net
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
 
 #ifndef _NEC7210_H
 #define _NEC7210_H
+
+/* struct driver uses to store information in, pointed at by
+ *  gpib_driver_t.private_data */
+typedef struct nec7210_private_struct nec7210_private_t;
+struct nec7210_private_struct
+{
+	struct pci_dev *pci_device;
+	unsigned long iobase;
+	unsigned long remapped_iobase;
+	unsigned int offset;	// offset between successive nec7210 io addresses
+	unsigned int irq;
+	unsigned int dma_channel;
+	uint8_t *dma_buffer;
+	unsigned int dma_buffer_length;
+	// software copy of bits written to interrupt mask registers
+	volatile uint8_t imr1_bits, imr2_bits;
+	// bits written to address mode register
+	volatile uint8_t admr_bits;
+	volatile uint8_t auxa_bits;	// bits written to auxilliary register A
+	// used to keep track of board's state, bit definitions given below
+	volatile int state;
+	// wrappers for outb, inb, readb, or writeb
+	uint8_t (*read_byte)(nec7210_private_t *priv, unsigned int register_number);
+	void (*write_byte)(nec7210_private_t *priv, uint8_t byte, unsigned int register_number);
+};
+
+// nec7210_private_t.state bit numbers
+enum
+{
+	WRITING_BN,	// write in progress
+	READING_BN,	// read in progress
+	DMA_IN_PROGRESS_BN,	// dma transfer in progress
+	COMMAND_READY_BN,	// board is ready to send a command byte
+	RFD_HOLDOFF_BN,	// board is asserting a request for data holdoff
+};
+
+// nec7210 has 8 registers
+static const int nec7210_num_registers = 8;
+
+/* nec7210 register numbers (might need to be multiplied by
+ * a board-dependent offset to get actually io address offset)
+ */
+// write registers
+enum
+{
+	CDOR,	// command/data out
+	IMR1,	// interrupt mask 1
+	IMR2,	// interrupt mask 2
+	SPMR,	// serial poll mode
+	ADMR,	// address mode
+	AUXMR,	// auxilliary mode
+	ADR,	// address
+	EOSR,	// end-of-string
+};
+// read registers
+enum
+{
+	DIR,	// data in
+	ISR1,	// interrupt status 1
+	ISR2,	// interrupt status 2
+	SPSR,	// serial poll status
+	ADSR,	// address status
+	CPTR,	// command pass though
+	ADR0,	// address 1
+	ADR1,	// address 2
+};
+
+//bit definitions common to nec-7210 compatible registers
 
 // ISR1: interrupt status register 1
 #define HR_DI           (1<<0)

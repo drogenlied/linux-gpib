@@ -62,25 +62,6 @@
 #define NEC7210_REG_OFFSET 0x1
 #endif
 
-#define CDOR	(0x0 * NEC7210_REG_OFFSET)
-#define IMR1	(0x1 * NEC7210_REG_OFFSET)
-#define IMR2	(0x2 * NEC7210_REG_OFFSET)
-#define SPMR	(0x3 * NEC7210_REG_OFFSET)
-#define ADMR	(0x4 * NEC7210_REG_OFFSET)
-#define AUXMR	(0x5 * NEC7210_REG_OFFSET)
-#define ADR	(0x6 * NEC7210_REG_OFFSET)
-#define EOSR	(0x7 * NEC7210_REG_OFFSET)
-
-#define DIR	(0x0 * NEC7210_REG_OFFSET)
-#define ISR1	(0x1 * NEC7210_REG_OFFSET)
-#define ISR2	(0x2 * NEC7210_REG_OFFSET)
-#define SPSR	(0x3 * NEC7210_REG_OFFSET)
-#define ADSR	(0x4 * NEC7210_REG_OFFSET)
-#define CPTR	(0x5 * NEC7210_REG_OFFSET)
-#define ADR0	(0x6 * NEC7210_REG_OFFSET)
-#define ADR1	(0x7 * NEC7210_REG_OFFSET)
-
-
 /* NAT4882 "Paged In" read- and write-only registers (must use GPIBpg__ macros) */
 
 #define CSR		SPMR		/* Chip Signature Register */

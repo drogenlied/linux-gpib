@@ -24,18 +24,20 @@ ssize_t nec7210_write(gpib_driver_t *driver, uint8_t *buffer, size_t length, int
 	gpib_char_t data;
 	unsigned long flags;
 	size_t count = 0;
-	int retval = 0;
-
+	int err = 0;
+	nec7210_private_t *priv = driver->private_data;
+	
 	if(length == 0) return 0;
 
-	GPIBout(AUXMR, auxa_bits);	/* normal handshaking, XXX necessary?*/
+	/* normal handshaking, XXX necessary?*/
+	priv->write_byte(priv, priv->auxa_bits, AUXMR);
 
 	if(send_eoi)
 	{
 		length-- ; /* save the last byte for sending EOI */
 	}
 
-	if(test_and_set_bit(0, &write_in_progress))
+	if(test_and_set_bit(WRITING_BN, &priv->state))
 	{
 		printk("gpib: bug? write already in progress");
 		return -1;
@@ -46,34 +48,39 @@ ssize_t nec7210_write(gpib_driver_t *driver, uint8_t *buffer, size_t length, int
 	{
 		/* program dma controller */
 		flags = claim_dma_lock();
-		disable_dma(ibdma);
-		clear_dma_ff ( ibdma );
-		set_dma_count( ibdma, length );
-		set_dma_addr ( ibdma, virt_to_bus(buffer));
-		set_dma_mode( ibdma, DMA_MODE_WRITE );
-		enable_dma(ibdma);
+		disable_dma(priv->dma_channel);
+		clear_dma_ff(priv->dma_channel);
+		set_dma_count(priv->dma_channel, length );
+		set_dma_addr(priv->dma_channel, virt_to_bus(buffer));
+		set_dma_mode(priv->dma_channel, DMA_MODE_WRITE );
+		enable_dma(priv->dma_channel);
 		release_dma_lock(flags);
 
 		// enable board's dma for output
-		imr2_bits |= HR_DMAO;
-		GPIBout(IMR2, imr2_bits);
+		priv->imr2_bits |= HR_DMAO;
+		priv->write_byte(priv, imr2_bits, IMR2);
 
 		// enable 'data out' interrupts
 		imr1_bits |= HR_DOIE;
-		GPIBout(IMR1, imr1_bits);
+		priv->write_byte(priv, imr1_bits, IMR1);
 
 		// suspend until message is sent
-		if(wait_event_interruptible(nec7210_wait, test_bit(0, &write_in_progress) == 0))
+		if(wait_event_interruptible(driver->wait, test_bit(WRITING_BN, &priv->state) == 0 ||
+			test_bit(TIMO_NUM, &driver->status)))
 		{
 			printk("gpib write interrupted!\n");
-			retval = -1;
 		}
 
 		// disable board's dma
-		imr2_bits &= ~HR_DMAO;
-		GPIBout(IMR2, imr2_bits);
+		priv->imr2_bits &= ~HR_DMAO;
+		priv->write_byte(priv, imr2_bits, IMR2);
 
-		if(retval == 0) count += length;
+		if(test_and_clear_bit(WRITING_BN, &priv->state) == 0)
+			count += length;
+
+		flags = claim_dma_lock();
+		disable_dma(priv->dma_channel);
+		release_dma_lock(flags);
 	}
 
 #else	// PIO transfer
@@ -90,39 +97,43 @@ ssize_t nec7210_write(gpib_driver_t *driver, uint8_t *buffer, size_t length, int
 				printk("gpib: write buffer full!\n");
 				return -1;
 			}
-			count++;
 		}
 
 		// enable 'data out' interrupts
-		imr1_bits |= HR_DOIE;
-		GPIBout(IMR1, imr1_bits);
+		priv->imr1_bits |= HR_DOIE;
+		priv->write_byte(priv, priv->imr1_bits, IMR1);
 
 		// suspend until message is sent
-		if(wait_event_interruptible(nec7210_wait, test_bit(0, &write_in_progress) == 0))
+		if(wait_event_interruptible(driver->wait, test_bit(WRITING_BN, &priv->state) == 0 ||
+			test_bit(TIMO_NUM, &driver->status)))
 		{
 			printk("gpib write interrupted!\n");
-			retval = -1;
 		}
+
+		// XXX bug if write was interrupted, how is buffer cleaned up?
+		count += length - atomic_read(&write_buffer->size);
 	}
 
 #endif	// DMAOP
 
-	if(send_eoi && retval == 0)
+	if(send_eoi && err == 0)
 	{
 		/*send EOI */
 		if((pgmstat & PS_NOEOI) == 0)
-			GPIBout(AUXMR, AUX_SEOI);
-		set_bit(0, &write_in_progress);
-		GPIBout(CDOR, buffer[count]);
-		count++;
-		wait_event_interruptible(nec7210_wait, test_bit(0, &write_in_progress) == 0);
+			priv->write_byte(priv, AUX_SEOI, AUXMR);
+		set_bit(WRITING_BN, &priv->state);
+		priv->write_byte(priv, buffer[count], CDOR);
+		wait_event_interruptible(driver->wait, test_bit(WRITING_BN, &priv->state) == 0 ||
+			test_bit(TIMO_NUM, &driver->status));
+		if(test_and_clear_bit(WRITING_BN, &priv->state) == 0 &&
+			test_bit(TIMO_NUM, &driver->status) == 0)
+			count++;
 	}
 	// disable 'data out' interrupts
-	imr1_bits &= ~HR_DOIE;
-	GPIBout(IMR1, imr1_bits);
+	priv->imr1_bits &= ~HR_DOIE;
+	priv->write_byte(priv, priv->imr1_bits, IMR1);
 
-	if(retval < 0) return retval;
-	return count;
+	return count ? count : -1;
 }
 
 

@@ -1,5 +1,5 @@
 /***************************************************************************
-                              nec7210/interrupt.c  
+                              nec7210/interrupt.c
                              -------------------
 
     begin                : Dec 2001
@@ -20,10 +20,6 @@
 #include <asm/bitops.h>
 #include <asm/dma.h>
 
-volatile int write_in_progress = 0;
-volatile int command_out_ready = 0;
-volatile int dma_transfer_complete = 0;
-
 /*
  * GPIB interrupt service routines
  */
@@ -39,6 +35,8 @@ void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp)
 void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp )
 {
 	int bits, hs_status;
+	gpib_driver_t *driver = (gpib_driver_t*) arg;
+	nec7210_private_t *priv = driver->private_data;
 
 printk("ammc staus 0x%x\n", inl(amcc_iobase + INTCSR_REG));
 
@@ -49,10 +47,10 @@ printk("ammc staus 0x%x\n", inl(amcc_iobase + INTCSR_REG));
 		INBOX_INTR_CS_BIT;
 	outl(bits, amcc_iobase + INTCSR_REG );
 
-	if((hs_status = GPIBin(HS_STATUS)))
+	if((hs_status = inb(priv->iobase + HS_STATUS)))
 	{
-		GPIBout(HS_MODE, HS_CLR_SRQ_INT | HS_CLR_EOI_INT |
-			HS_CLR_EMPTY_INT | HS_CLR_HF_INT);
+		outb(HS_CLR_SRQ_INT | HS_CLR_EOI_INT |
+			HS_CLR_EMPTY_INT | HS_CLR_HF_INT, priv->iobase + HS_MODE);
 		printk("gpib: cbhs interrupt? 0x%x\n", hs_status);
 	}
 
@@ -66,17 +64,18 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	int ret;
 	unsigned long flags;
 	gpib_driver_t *driver = (gpib_driver_t*) arg;
+	nec7210_private_t *priv = driver->private_data;
 
 	// read interrupt status (also clears status)
 
-	status1 = GPIBin(ISR1);
-	status2 = GPIBin(ISR2);
+	status1 = priv->read_byte(priv, ISR1);
+	status2 = priv->read_byte(priv, ISR2);
 
 	// record service request in status
 	if(status2 & HR_SRQI)
 	{
 		set_bit(SRQI_NUM, &driver->status);
-		wake_up_interruptible(&nec7210_wait);
+		wake_up_interruptible(&driver->wait);
 	}
 
 	// change in lockout status
@@ -100,7 +99,7 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	// record address status change in status
 	if(status2 & HR_ADSC)
 	{
-		address_status = GPIBin(ADSR);
+		address_status = priv->read_byte(priv, ADSR);
 		// check if we are controller in charge
 		if(address_status & HR_CIC)
 			set_bit(CIC_NUM, &driver->status);
@@ -119,7 +118,7 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 			clear_bit(ATN_NUM, &driver->status);
 		else
 			set_bit(ATN_NUM, &driver->status);
-		wake_up_interruptible(&nec7210_wait); /* wake up sleeping process */
+		wake_up_interruptible(&driver->wait); /* wake up sleeping process */
 	}
 
 	// record reception of END
@@ -127,9 +126,9 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 		set_bit(END_NUM, &driver->status);
 
 	// get incoming data in PIO mode
-	if((status1 & HR_DI) & (imr1_bits & HR_DIIE))
+	if((status1 & HR_DI) & (priv->imr1_bits & HR_DIIE))
 	{
-		data.value = GPIBin(DIR);
+		data.value = priv->read_byte(priv, DIR);
 		if(status1 & HR_END)
 			data.end = 1;
 		else
@@ -137,49 +136,49 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 		ret = gpib_buffer_put(read_buffer, data);
 		if(ret)
 			printk("read buffer full\n");	//XXX
-		wake_up_interruptible(&nec7210_wait); /* wake up sleeping process */
+		wake_up_interruptible(&driver->wait); /* wake up sleeping process */
 	}
 
 	// check for dma read transfer complete
-	if(imr2_bits & HR_DMAI)
+	if(priv->imr2_bits & HR_DMAI)
 	{
 		flags = claim_dma_lock();
-		disable_dma(ibdma);
-		clear_dma_ff(ibdma);
-		if((status1 & HR_END) || get_dma_residue(ibdma) == 0)
+		disable_dma(priv->dma_channel);
+		clear_dma_ff(priv->dma_channel);
+		if((status1 & HR_END) || get_dma_residue(priv->dma_channel) == 0)
 		{
-			set_bit(0, &dma_transfer_complete);
-			wake_up_interruptible(&nec7210_wait); /* wake up sleeping process */
+			clear_bit(DMA_IN_PROGRESS_BN, &priv->state);
+			wake_up_interruptible(&driver->wait); /* wake up sleeping process */
 		}else
-			enable_dma(ibdma);
+			enable_dma(priv->dma_channel);
 		release_dma_lock(flags);
 	}
 
-	if((status1 & HR_DO) && test_bit(0, &write_in_progress))
+	if((status1 & HR_DO) && test_bit(WRITING_BN, &priv->state))
 	{
 		// write data, pio mode
-		if((imr2_bits & HR_DMAO) == 0)
+		if((priv->imr2_bits & HR_DMAO) == 0)
 		{
 			if(gpib_buffer_get(write_buffer, &data))
 			{	// no data left so we are done with write
-				clear_bit(0, &write_in_progress);
-				wake_up_interruptible(&nec7210_wait); /* wake up sleeping process */
+				clear_bit(WRITING_BN, &priv->state);
+				wake_up_interruptible(&driver->wait); /* wake up sleeping process */
 			}else	// else write data to output
 			{
-				GPIBout(CDOR, data.value);
+				priv->write_byte(priv, data.value, CDOR);
 			}
 		}else	// write data, isa dma mode
 		{
 			// check if dma transfer is complete
 			flags = claim_dma_lock();
-			disable_dma(ibdma);
-			clear_dma_ff(ibdma);
-			if(get_dma_residue(ibdma) == 0)
+			disable_dma(priv->dma_channel);
+			clear_dma_ff(priv->dma_channel);
+			if(get_dma_residue(priv->dma_channel) == 0)
 			{
-				clear_bit(0, &write_in_progress);
-				wake_up_interruptible(&nec7210_wait); /* wake up sleeping process */
+				clear_bit(WRITING_BN, &priv->state);
+				wake_up_interruptible(&driver->wait); /* wake up sleeping process */
 			}else
-				enable_dma(ibdma);
+				enable_dma(priv->dma_channel);
 			release_dma_lock(flags);
 		}
 	}
@@ -187,15 +186,15 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	// outgoing command can be sent
 	if(status2 & HR_CO)
 	{
-		set_bit(0, &command_out_ready);
-		wake_up_interruptible(&nec7210_wait); /* wake up sleeping process */
+		set_bit(COMMAND_READY_BN, &priv->state);
+		wake_up_interruptible(&driver->wait); /* wake up sleeping process */
 	}else
-		clear_bit(0, &command_out_ready);
+		clear_bit(COMMAND_READY_BN, &priv->state);
 
 	// command pass through received
 	if(status1 & HR_CPT)
 	{
-		printk("gpib command pass thru 0x%x\n", GPIBin(CPTR));
+		printk("gpib command pass thru 0x%x\n", priv->read_byte(priv, CPTR));
 	}
 
 	// output byte has been lost

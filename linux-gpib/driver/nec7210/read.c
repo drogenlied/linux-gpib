@@ -25,75 +25,79 @@ ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int 
 	gpib_char_t data;
 	int ret;
 	unsigned long flags;
+	nec7210_private_t *priv = driver->private_data;
 
 	*end = 0;
 
 	if(length == 0) return 0;
 
-	if (pgmstat & PS_HELD) {
-		GPIBout(AUXMR, auxa_bits | HR_HLDA);	//XXX
-		GPIBout(AUXMR, AUX_FH);	/* set HLDA in AUXRA to ensure FH works */
-		pgmstat &= ~PS_HELD;
+	if(test_and_clear_bit(RFD_HOLDOFF_BN, &priv->state))
+	{
+		/* set HLDA in AUXRA to ensure FH works */
+		priv->write_byte(priv, auxa_bits | HR_HLDA, AUXMR);	//XXX
+		priv->write_byte(priv, AUX_FH, AUXMR);
 	}
 	clear_bit(END_NUM, &driver->status);
 /*
  *	holdoff on END
  */
-	GPIBout(AUXMR, auxa_bits | HR_HLDE);
+	priv->write_byte(priv, auxa_bits | HR_HLDE, AUXMR);
 
 #if DMAOP		// ISA DMA transfer
 	flags = claim_dma_lock();
-	disable_dma(ibdma);
+	disable_dma(priv->dma_channel);
 
 	/* program dma controller */
-	clear_dma_ff ( ibdma );
-	set_dma_count( ibdma, length );
-	set_dma_addr ( ibdma, virt_to_bus(buffer));
-	set_dma_mode( ibdma, DMA_MODE_READ );
+	clear_dma_ff (priv->dma_channel);
+	set_dma_count(priv->dma_channel, length );
+	set_dma_addr (priv->dma_channel, virt_to_bus(buffer));
+	set_dma_mode(priv->dma_channel, DMA_MODE_READ );
 	release_dma_lock(flags);
 
-	enable_dma(ibdma);
-	
-	clear_bit(0, &dma_transfer_complete);
+	enable_dma(priv->dma_channel);
+
+	set_bit(DMA_IN_PROGRESS_BN, &priv->state);
 
 	// enable 'data in' interrupt
-	imr1_bits |= HR_DIIE;
-	GPIBout(IMR1, imr1_bits);
+	priv->imr1_bits |= HR_DIIE;
+	priv->write_byte(priv, priv->imr1_bits, IMR1);
 
 	// enable nec7210 dma
-	imr2_bits |= HR_DMAI;
-	GPIBout(IMR2, imr2_bits);
+	priv->imr2_bits |= HR_DMAI;
+	priv->write_byte(priv, priv->imr2_bits, IMR2);
 
 	// wait for data to transfer
-	if(wait_event_interruptible(nec7210_wait, test_bit(0, &dma_transfer_complete)))
+	if(wait_event_interruptible(nec7210_wait, test_bit(DMA_IN_PROGRESS_BN, &priv->state) == 0 ||
+		test_bit(TIMO_NUM, &driver->status)))
 	{
 		printk("read wait interrupted\n");
 		return -1;
 	}
 
 	// disable nec7210 dma
-	imr2_bits &= ~HR_DMAI;
-	GPIBout(IMR2, imr2_bits);
+	priv->imr2_bits &= ~HR_DMAI;
+	priv->write_byte(priv, priv->imr2_bits, IMR2);
 
 	// record how many bytes we transferred
 	flags = claim_dma_lock();
-	clear_dma_ff ( ibdma );
-	disable_dma(ibdma);
-	count += length - get_dma_residue(ibdma);
+	clear_dma_ff (priv->dma_channel);
+	disable_dma(priv->dma_channel);
+	count += length - get_dma_residue(priv->dma_channel);
 	release_dma_lock(flags);
 
 #else	// PIO transfer
 
 	// enable 'data in' interrupt
-	imr1_bits |= HR_DIIE;
-	GPIBout(IMR1, imr1_bits);
+	priv->imr1_bits |= HR_DIIE;
+	priv->write_byte(priv, priv->imr1_bits, IMR1);
 
-	while (count < length )
+	while (count < length && (driver->status & TIMO) == 0)
 	{
 		ret = gpib_buffer_get(read_buffer, &data);
 		if(ret < 0)
 		{
-			if(wait_event_interruptible(nec7210_wait, atomic_read(&read_buffer->size) > 0))
+			if(wait_event_interruptible(driver->wait, atomic_read(&read_buffer->size) > 0 ||
+				test_bit(TIMO_NUM, &driver->status)))
 			{
 				printk("wait failed\n");
 				// XXX
@@ -104,7 +108,6 @@ ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int 
 		buffer[count++] = data.value;
 		if(data.end)
 		{
-			set_bit(END_NUM, &driver->status);
 			break;
 		}
 	}
@@ -112,16 +115,17 @@ ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int 
 #endif
 
 	// disable 'data in' interrupt
-	imr1_bits &= ~HR_DIIE;
-	GPIBout(IMR1, imr1_bits);
-
-	pgmstat |= PS_HELD;
-	GPIBout(AUXMR, auxa_bits | HR_HLDA);
+	priv->imr1_bits &= ~HR_DIIE;
+	priv->write_byte(priv, priv->imr1_bits, IMR1);
 
 	if(test_bit(END_NUM, &driver->status))
+	{
 		*end = 1;
+		// XXX
+		set_bit(RFD_HOLDOFF_BN, &priv->state);
+	}
 
-	return count;
+	return count ? count : -1;
 }
 
 

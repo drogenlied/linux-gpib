@@ -1,5 +1,5 @@
 /***************************************************************************
-                                    nec7210/cmd.c 
+                                    nec7210/cmd.c
                              -------------------
 
     begin                : Dec 2001
@@ -22,27 +22,43 @@
 IBLCL ssize_t nec7210_command(gpib_driver_t *driver, uint8_t *buffer, size_t length)
 {
 	size_t count = 0;
+	const int timeout = 1000;
+	int i;
+	nec7210_private_t *priv = driver->private_data;
 
 	// enable command out interrupt
-	imr2_bits |= HR_COIE;
-	GPIBout(IMR2, imr2_bits);
+	priv->imr2_bits |= HR_COIE;
+	priv->write_byte(priv, priv->imr2_bits, IMR2);
 
-	while(count < length)
+	while(count < length && (driver->status & TIMO) == 0)
 	{
-		if(wait_event_interruptible(nec7210_wait, test_and_clear_bit(0, &command_out_ready)))
+		// try a busy wait first before we suspend
+		for(i = 0; i < timeout; i++)
 		{
-			printk("gpib command wait interrupted\n");
-			break;
+			if(test_and_clear_bit(COMMAND_READY_BN, &priv->state))
+				break;
 		}
-		GPIBout(CDOR, buffer[count]);
-		count++;
+		if(i == timeout)
+		{
+			if(wait_event_interruptible(driver->wait, test_and_clear_bit(COMMAND_READY_BN, &priv->state) ||
+				test_bit(TIMO_NUM, &driver->status)))
+			{
+				printk("gpib command wait interrupted\n");
+				break;
+			}
+		}
+		if(test_bit(TIMO_NUM, &driver->status))
+		{
+			priv->write_byte(priv, buffer[count], CDOR);
+			count++;
+		}
 	}
 
 	// disable command out interrupt
-	imr2_bits |= HR_COIE;
-	GPIBout(IMR2, imr2_bits);
+	priv->imr2_bits |= HR_COIE;
+	priv->write_byte(priv, priv->imr2_bits, IMR2);
 
-	return count;
+	return count ? count : -1;
 }
 
 

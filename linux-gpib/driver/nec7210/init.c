@@ -26,6 +26,7 @@
 #include <gpib_buffer.h>
 #include <linux/pci.h>
 #include <linux/pci_ids.h>
+#include <linux/string.h>
 
 #define PCI_DEVICE_ID_CBOARDS_PCI_GPIB 0x6
 
@@ -45,8 +46,6 @@ unsigned long remapped_ibbase = 0;
 unsigned long amcc_iobase = 0;
 
 struct pci_dev *pci_dev_ptr = NULL;
-
-DECLARE_WAIT_QUEUE_HEAD(nec7210_wait);
 
 gpib_driver_t pc2_driver =
 {
@@ -68,9 +67,6 @@ gpib_driver_t pc2_driver =
 	primary_address:	nec7210_primary_address,
 	secondary_address:	nec7210_secondary_address,
 	serial_poll_response:	nec7210_serial_poll_response,
-	status:	0,
-	wait:	&nec7210_wait,
-	private_data:	NULL,
 };
 
 gpib_driver_t pc2a_driver =
@@ -93,9 +89,6 @@ gpib_driver_t pc2a_driver =
 	primary_address:	nec7210_primary_address,
 	secondary_address:	nec7210_secondary_address,
 	serial_poll_response:	nec7210_serial_poll_response,
-	status:	0,
-	wait:	&nec7210_wait,
-	private_data:	NULL,
 };
 
 gpib_driver_t cb_pci_driver =
@@ -118,9 +111,6 @@ gpib_driver_t cb_pci_driver =
 	primary_address: nec7210_primary_address,
 	secondary_address: nec7210_secondary_address,
 	serial_poll_response: nec7210_serial_poll_response,
-	status: 0,
-	wait: &nec7210_wait,
-	private_data: NULL,
 };
 
 // this is a hack to set the driver pointer
@@ -148,60 +138,51 @@ MODULE_PARM_DESC(ibirq, "interrupt request line");
 MODULE_PARM(ibdma, "i");
 MODULE_PARM_DESC(ibdma, "dma channel");
 
-// flags to indicate if various resources have been allocated
-static unsigned int ioports_allocated = 0, iomem_allocated = 0,
-	irq_allocated = 0, dma_allocated = 0, pcmcia_initialized = 0;
-
-// bits written to interrupt mask registers
-volatile int imr1_bits, imr2_bits;
-/* bits written to auxillary register A, excluding handshaking bits.  Used to
- * hold EOS information */
-int auxa_bits = AUXRA;
-
-// nec7210 has 8 registers
-static const int nec7210_num_registers = 8;
 // size of modbus pci memory io region
 static const int iomem_size = 0x2000;
 
-void board_reset(void)
+void board_reset(nec7210_private_t *priv)
 {
 #ifdef MODBUS_PCI
 	GPIBout(0x20, 0xff); /* enable controller mode */
 #endif
 
-	GPIBout(AUXMR, AUX_CR);                     /* 7210 chip reset */
+	priv->write_byte(priv, AUX_CR, AUXMR);                     /* 7210 chip reset */
 
-	GPIBin(CPTR);                           /* clear registers by reading */
-	GPIBin(ISR1);
-	GPIBin(ISR2);
+	priv->read_byte(priv, CPTR);                           /* clear registers by reading */
+	priv->read_byte(priv, ISR1);
+	priv->read_byte(priv, ISR2);
 
-	GPIBout(IMR1, 0);                           /* disable all interrupts */
-	GPIBout(IMR2, 0);
-	GPIBout(SPMR, 0);
+	/* disable all interrupts */
+	priv->imr1_bits = 0;
+	priv->write_byte(priv, priv->imr1_bits, IMR1);
+	priv->imr2_bits = 0;
+	priv->write_byte(priv, priv->imr2_bits, IMR2);
+	priv->write_byte(priv, 0, SPMR);
 
-	GPIBout(EOSR, 0);
+	priv->write_byte(priv, 0, EOSR);
 	/* set internal counter register 8 for 8 MHz input clock */
-	GPIBout(AUXMR, ICR + 8);                    /* set internal counter register N= 8 */
-	GPIBout(AUXMR, PPR | HR_PPU);               /* parallel poll unconfigure */
+	priv->write_byte(priv, ICR + 8, AUXMR);                    /* set internal counter register N= 8 */
+	priv->write_byte(priv, PPR | HR_PPU, AUXMR);               /* parallel poll unconfigure */
 
-	GPIBout(ADR, (PAD & ADDRESS_MASK));                /* set GPIB address; MTA=PAD|100, MLA=PAD|040 */
-	admr_bits = HR_TRM0 | HR_TRM1;
+	priv->write_byte(priv, PAD & ADDRESS_MASK, ADR);                /* set GPIB address; MTA=PAD|100, MLA=PAD|040 */
+	priv->admr_bits = HR_TRM0 | HR_TRM1;
 #if (SAD)
-	GPIBout(ADR, HR_ARS | (SAD & ADDRESS_MASK));      /* enable secondary addressing */
-	admr_bits |= HR_ADM1;
-	GPIBout(ADMR, admr_bits);
+	priv->write_byte(priv, HR_ARS | (SAD & ADDRESS_MASK), ADR);      /* enable secondary addressing */
+	priv->admr_bits |= HR_ADM1;
+	priv->write_byte(priv, priv->admr_bits, ADMR);
 #else
-	GPIBout(ADR, HR_ARS | HR_DT | HR_DL);       /* disable secondary addressing */
-	admr_bits |= HR_ADM0;
-	GPIBout(ADMR, admr_bits);
+	priv->write_byte(priv, HR_ARS | HR_DT | HR_DL, ADR);       /* disable secondary addressing */
+	priv->admr_bits |= HR_ADM0;
+	priv->write_byte(priv, priv->admr_bits, ADMR);
 #endif
 
 	// holdoff on all data	XXX record current handshake state somewhere
-	auxa_bits = AUXRA;
-	GPIBout(AUXMR, auxa_bits | HR_HLDA);
+	priv->auxa_bits = AUXRA;
+	priv->write_byte(priv, priv->auxa_bits | HR_HLDA, AUXMR);
 
-	GPIBout(AUXMR, AUXRB);                  /* set INT pin to active high */
-	GPIBout(AUXMR, AUXRE);
+	priv->write_byte(priv, AUXRB, AUXMR);                  /* set INT pin to active high */
+	priv->write_byte(priv, AUXRE, AUXMR);
 }
 
 int allocate_buffers(void)
@@ -232,24 +213,67 @@ void free_buffers(void)
 	}
 }
 
+int allocate_private(gpib_driver_t *driver)
+{
+	driver->private_data = kmalloc(sizeof(nec7210_private_t), GFP_KERNEL);
+	if(driver->private_data == NULL)
+		return -1;
+	memset(driver->private_data, 0, sizeof(nec7210_private_t));
+	return 0;
+}
+
+void free_private(gpib_driver_t *driver)
+{
+	if(driver->private_data)
+	{
+		kfree(driver->private_data);
+		driver->private_data = NULL;
+	}
+}
+
+// wrapper for inb
+uint8_t ioport_read_byte(nec7210_private_t *priv, unsigned int register_num)
+{
+	return inb(priv->iobase + register_num * priv->offset);
+}
+// wrapper for outb
+void ioport_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num)
+{
+	outb(data, priv->iobase + register_num * priv->offset);
+}
+
+// wrapper for readb
+uint8_t iomem_read_byte(nec7210_private_t *priv, unsigned int register_num)
+{
+	return readb(priv->remapped_iobase + register_num * priv->offset);
+}
+// wrapper for writeb
+void iomem_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num)
+{
+	writeb(data, priv->remapped_iobase + register_num * priv->offset);
+}
+
 int pc2_attach(gpib_driver_t *driver)
 {
 	int isr_flags = 0;
-	const int iosize = 8;	// pc2 uses 8 ioports
+	nec7210_private_t *priv;
+	driver->status = 0;
 
-	// nothing is allocated yet
-	ioports_allocated = iomem_allocated = irq_allocated =
-		dma_allocated = pcmcia_initialized = 0;
+	if(allocate_private(driver))
+		return -ENOMEM;
+	priv = driver->private_data;
+	priv->offset = pc2_reg_offset;
+	priv->read_byte = ioport_read_byte;
 
 	if(allocate_buffers())
-		return -1;
+		return -ENOMEM;
 
-	if(request_region(ibbase, iosize, "pc2"));
+	if(request_region(ibbase, pc2_iosize, "pc2"));
 	{
 		printk("gpib: ioports are already in use");
 		return -1;
 	}
-	ioports_allocated = 1;
+	priv->iobase = ibbase;
 
 	// install interrupt handler
 	if( request_irq(ibirq, nec7210_interrupt, isr_flags, "pc2", driver))
@@ -257,7 +281,7 @@ int pc2_attach(gpib_driver_t *driver)
 		printk("gpib: can't request IRQ %d\n", ibirq);
 		return -1;
 	}
-	irq_allocated = 1;
+	priv->irq = ibirq;
 
 	// request isa dma channel
 #if DMAOP
@@ -266,54 +290,62 @@ int pc2_attach(gpib_driver_t *driver)
 		printk("gpib: can't request DMA %d\n",ibdma );
 		return -1;
 	}
-	dma_allocated = 1;
+	priv->dma_channel = ibdma;
 #endif
-	board_reset();
+	board_reset(priv);
 
 	// enable interrupts
-	imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
+	priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
 		HR_DETIE | HR_APTIE | HR_CPTIE;
-	imr2_bits = IMR2_ENABLE_INTR_MASK;
-	GPIBout(IMR1, imr1_bits);
-	GPIBout(IMR2, imr2_bits);
+	priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
+	priv->write_byte(priv, priv->imr1_bits, IMR1);
+	priv->write_byte(priv, priv->imr2_bits, IMR2);
 
-	GPIBout(AUXMR, AUX_PON);
+	priv->write_byte(priv, AUX_PON, AUXMR);
 
 	return 0;
 }
 
 void pc2_detach(gpib_driver_t *driver)
 {
-	if(dma_allocated)
+	nec7210_private_t *priv = driver->private_data;
+
+	if(priv)
 	{
-		free_dma(ibdma);
-		dma_allocated = 0;
-	}
-	if(irq_allocated)
-	{
-		free_irq(ibirq, driver);
-		irq_allocated = 0;
-	}
-	if(ioports_allocated)
-	{
-		board_reset();
-		release_region(ibbase, pc2_iosize);
-		ioports_allocated = 0;
+		if(priv->dma_channel)
+		{
+			free_dma(priv->dma_channel);
+		}
+		if(priv->irq)
+		{
+			free_irq(priv->irq, driver);
+		}
+		if(priv->iobase)
+		{
+			board_reset(priv);
+			release_region(priv->iobase, pc2_iosize);
+		}
 	}
 	free_buffers();
+	free_private(driver);
 }
 
 int pc2a_attach(gpib_driver_t *driver)
 {
 	unsigned int i, err;
 	int isr_flags = 0;
+	nec7210_private_t *priv;
 
-	// nothing is allocated yet
-	ioports_allocated = iomem_allocated = irq_allocated =
-		dma_allocated = pcmcia_initialized = 0;
+	driver->status = 0;
+
+	if(allocate_private(driver))
+		return -ENOMEM;
+	priv = driver->private_data;
+	priv->offset = pc2a_reg_offset;
+	priv->read_byte = ioport_read_byte;
 
 	if(allocate_buffers())
-		return -1;
+		return -ENOMEM;
 
 	switch( ibbase ){
 
@@ -354,36 +386,36 @@ int pc2a_attach(gpib_driver_t *driver)
 		request_region(ibbase + i * pc2a_reg_offset, 1, "pc2a");
 	}
 	request_region(pc2a_clear_intr_iobase, pc2a_clear_intr_iosize, "pc2a");
-	ioports_allocated = 1;
+	priv->iobase = ibbase;
 
-	if( request_irq(ibirq, pc2a_interrupt, isr_flags, "pc2a", driver))
+	if(request_irq(ibirq, pc2a_interrupt, isr_flags, "pc2a", driver))
 	{
 		printk("gpib: can't request IRQ %d\n", ibirq);
 		return -1;
 	}
-	irq_allocated = 1;
+	priv->irq = ibirq;
 	// request isa dma channel
 #if DMAOP
-	if( request_dma( ibdma, "pc2a" ) )
+	if(request_dma(ibdma, "pc2a"))
 	{
 		printk("gpib: can't request DMA %d\n",ibdma );
 		return -1;
 	}
-	dma_allocated = 1;
+	priv->dma_channel = ibdma;
 #endif
-	board_reset();
+	board_reset(priv);
 
 	// make sure interrupt is clear
 	outb(0xff , CLEAR_INTR_REG(ibirq));
 
 	// enable interrupts
-	imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
+	priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
 		HR_DETIE | HR_APTIE | HR_CPTIE;
-	imr2_bits = IMR2_ENABLE_INTR_MASK;
-	GPIBout(IMR1, imr1_bits);
-	GPIBout(IMR2, imr2_bits);
+	priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
+	priv->write_byte(priv, priv->imr1_bits, IMR1);
+	priv->write_byte(priv, priv->imr2_bits, IMR2);
 
-	GPIBout(AUXMR, AUX_PON);
+	priv->write_byte(priv, AUX_PON, AUXMR);
 
 	return 0;
 }
@@ -391,78 +423,82 @@ int pc2a_attach(gpib_driver_t *driver)
 void pc2a_detach(gpib_driver_t *driver)
 {
 	int i;
-	if(dma_allocated)
+	nec7210_private_t *priv = driver->private_data;
+
+	if(priv->dma_channel)
 	{
-		free_dma(ibdma);
-		dma_allocated = 0;
+		free_dma(priv->dma_channel);
 	}
-	if(irq_allocated)
+	if(priv->irq)
 	{
-		free_irq(ibirq, driver);
-		irq_allocated = 0;
+		free_irq(priv->irq, driver);
 	}
-	if(ioports_allocated)
+	if(priv->iobase)
 	{
-		board_reset();
+		board_reset(priv);
 		for(i = 0; i < nec7210_num_registers; i++)
-			release_region(ibbase + i * pc2a_reg_offset, 1);
+			release_region(priv->iobase + i * pc2a_reg_offset, 1);
 		release_region(pc2a_clear_intr_iobase, pc2a_clear_intr_iosize);
-		ioports_allocated = 0;
 	}
 	free_buffers();
+	free_private(driver);
 }
 
 int cb_pci_attach(gpib_driver_t *driver)
 {
+	nec7210_private_t *priv;
 	int isr_flags = 0;
 	int bits;
 
-	// nothing is allocated yet
-	ioports_allocated = iomem_allocated = irq_allocated =
-		dma_allocated = pcmcia_initialized = 0;
+	driver->status = 0;
+
+	if(allocate_private(driver))
+		return -ENOMEM;
+	priv = driver->private_data;
+	priv->read_byte = ioport_read_byte;
+	priv->offset = cb_pci_reg_offset;
+
+	if(allocate_buffers())
+		return -ENOMEM;
 
 	// find board
-	pci_dev_ptr = pci_find_device(PCI_VENDOR_ID_CBOARDS, PCI_DEVICE_ID_CBOARDS_PCI_GPIB, NULL);
-	if(pci_dev_ptr == NULL)
+	priv->pci_device = pci_find_device(PCI_VENDOR_ID_CBOARDS, PCI_DEVICE_ID_CBOARDS_PCI_GPIB, NULL);
+	if(priv->pci_device == NULL)
 	{
 		printk("GPIB: no PCI-GPIB board found\n");
 		return -1;
 	}
 
-	if(pci_enable_device(pci_dev_ptr))
+	if(pci_enable_device(priv->pci_device))
 	{
 		printk("error enabling pci device\n");
 		return -1;
 	}
 
+	if(pci_request_regions(priv->pci_device, "pci-gpib"))
+		return -1;
+
+	//XXX global
 	amcc_iobase = pci_resource_start(pci_dev_ptr, 0) & PCI_BASE_ADDRESS_IO_MASK;
-	ibbase = pci_resource_start(pci_dev_ptr, 1) & PCI_BASE_ADDRESS_IO_MASK;
-	ibirq = pci_dev_ptr->irq;
-
-	if(allocate_buffers())
-		return -1;
-
-	if(pci_request_regions(pci_dev_ptr, "pci-gpib"))
-		return -1;
-	ioports_allocated = 1;
+	priv->iobase = pci_resource_start(pci_dev_ptr, 1) & PCI_BASE_ADDRESS_IO_MASK;
 
 	/* CBI 4882 reset */
-	GPIBout(HS_INT_LEVEL, HS_RESET7210 );
-	GPIBout(HS_INT_LEVEL, 0 );
-	GPIBout(HS_MODE, 0); /* disable system control */
-
-	// XXX set clock register for 20MHz? driving frequency
-	GPIBout(AUXMR, ICR | 8);
+	priv->write_byte(priv, HS_RESET7210, HS_INT_LEVEL);
+	priv->write_byte(priv, 0, HS_INT_LEVEL);
+	priv->write_byte(priv, 0, HS_MODE); /* disable system control */
 
 	isr_flags |= SA_SHIRQ;
-	if(request_irq(ibirq, cb_pci_interrupt, isr_flags, "pci-gpib", driver))
+	if(request_irq(priv->pci_device->irq, cb_pci_interrupt, isr_flags, "pci-gpib", driver))
 	{
 		printk("gpib: can't request IRQ %d\n", ibirq);
 		return -1;
 	}
-	irq_allocated = 1;
+	priv->irq = priv->pci_device->irq;
 
-	board_reset();
+	board_reset(priv);
+
+	// XXX set clock register for 20MHz? driving frequency
+	priv->write_byte(priv, ICR | 8, AUXMR);
 
 	// enable interrupts on amccs5933 chip
 	bits = INBOX_FULL_INTR_BIT | INBOX_BYTE_BITS(3) | INBOX_SELECT_BITS(3) |
@@ -470,40 +506,40 @@ int cb_pci_attach(gpib_driver_t *driver)
 	outl(bits, amcc_iobase + INTCSR_REG );
 
 	// enable interrupts for cb7210
-	imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
+	priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
 		HR_DETIE | HR_APTIE | HR_CPTIE;
-	imr2_bits = IMR2_ENABLE_INTR_MASK;
-	GPIBout(IMR1, imr1_bits);
-	GPIBout(IMR2, imr2_bits);
+	priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
+	priv->write_byte(priv, priv->imr1_bits, IMR1);
+	priv->write_byte(priv, priv->imr2_bits, IMR2);
 
-	GPIBout(AUXMR, AUX_PON);
+	priv->write_byte(priv, AUX_PON, AUXMR);
 
 	return 0;
 }
 
 void cb_pci_detach(gpib_driver_t *driver)
 {
-	if(ioports_allocated)
+	nec7210_private_t *priv = driver->private_data;
+	if(priv)
 	{
-		// disable amcc interrupts
-		outl(0, amcc_iobase + INTCSR_REG );
-	}
-	if(irq_allocated)
-	{
-		free_irq(ibirq, driver);
-		irq_allocated = 0;
-	}
-	if(ioports_allocated)
-	{
-		board_reset();
-		pci_release_regions(pci_dev_ptr);
-		ioports_allocated = 0;
+		if(priv->irq)
+		{
+			// disable amcc interrupts
+			outl(0, amcc_iobase + INTCSR_REG );
+			free_irq(priv->irq, driver);
+		}
+		if(priv->iobase)
+		{
+			board_reset(priv);
+			pci_release_regions(priv->pci_device);
+		}
 	}
 	free_buffers();
+	free_private(driver);
 }
 
 // old functions
-#if 0 
+#if 0
 int board_attach(void)
 {
 	unsigned int i, err;

@@ -130,7 +130,7 @@ struct gpib_driver_struct
 	 * core will wake this queue and set the TIMO bit in 'status' when the
 	 * watchdog timer times out.
 	 */
-	wait_queue_head_t *wait;
+	wait_queue_head_t wait;
 	/* 'private_data' can be used as seen fit by the driver to
 	 * store additional variables for this board */
 	void *private_data;

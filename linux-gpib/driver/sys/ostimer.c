@@ -11,7 +11,7 @@ IBLCL void watchdog_timeout(unsigned long arg)
 {
 	gpib_driver_t *driver = (gpib_driver_t*) arg;
 	set_bit(TIMO_NUM, &driver->status);
-	wake_up(driver->wait);
+	wake_up(&driver->wait);
 }
 
 /* install timer interrupt handler */
