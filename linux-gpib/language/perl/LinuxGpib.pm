@@ -45,6 +45,7 @@ our %EXPORT_TAGS = ( 'all' => [ qw(
 	ibtrg
 	ibwait
 	ibwrt
+	ibwrti
 ) ] );
 
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );

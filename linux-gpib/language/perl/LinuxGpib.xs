@@ -201,3 +201,28 @@ ibwrt(ud, rd, cnt)
 	int	ud
 	char *	rd
 	unsigned long	cnt
+
+int
+ibwrti(ud, array, cnt)
+	int	ud
+	AV  *array
+	unsigned long	cnt
+PREINIT:
+	int i;
+	char *buf;
+	SV **sv_ptr;
+CODE:
+	buf = malloc( cnt );
+	if( buf == NULL )
+		croak( "malloc() returned NULL in ibwrti()\n" );
+	for( i = 0; i < cnt; i++ )
+	{
+		sv_ptr = av_fetch( array, i, 0 );
+		if( sv_ptr == NULL )
+			croak( "av_fetch returned NULL in ibwrti()\nn" );
+		buf[ i ] = SvIV(*sv_ptr);
+	}
+	RETVAL = ibwrt(ud, buf, cnt);
+	free( buf );
+OUTPUT:
+	RETVAL
