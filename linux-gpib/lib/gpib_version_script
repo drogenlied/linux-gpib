@@ -25,10 +25,14 @@ GPIB_DUMMY_VERSION {
 		SendLLO;
 		SendSetup;
 		SetRWLS;
+		TestSRQ;
+		TestSys;
 		ThreadIbsta;
 		ThreadIberr;
 		ThreadIbcnt;
 		ThreadIbcntl;
+		Trigger;
+		TriggerList;
 		ibask;
 		ibbna;
 		ibcac;

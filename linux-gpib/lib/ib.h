@@ -76,10 +76,15 @@ extern void SendList( int boardID, Addr4882_t addressList[], void *buffer,
 	long count, int eotmode );
 extern void SendSetup( int boardID, Addr4882_t addressList[] );
 extern void SetRWLS( int boardID, Addr4882_t addressList[] );
+extern void TestSRQ( int boardID, short *result );
+extern void TestSys( int boardID, Addr4882_t addressList[],
+	short resultList[] );
 extern int ThreadIbsta( void );
 extern int ThreadIberr( void );
 extern int ThreadIbcnt( void );
 extern long ThreadIbcntl( void );
+extern void Trigger( int boardID, Addr4882_t address );
+extern void TriggerList( int boardID, Addr4882_t addressList[] );
 extern int ibask(int ud, int option, int *value );
 extern int ibbna( int ud, char *board_name );
 extern int ibcac(int ud, int v);

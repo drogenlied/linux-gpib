@@ -108,6 +108,8 @@ extern int InternalSendSetup( ibConf_t *conf, Addr4882_t addressList[] );
 extern int InternalSendList( ibConf_t *conf, Addr4882_t addressList[],
 	void *buffer, long count, int eotmode );
 extern int InternalEnableRemote( ibConf_t *conf, Addr4882_t addressList[] );
+extern int InternalReceive( ibConf_t *conf, Addr4882_t address,
+	void *buffer, long count, int termination );
 
 static __inline__ ibBoard_t* interfaceBoard( const ibConf_t *conf )
 {

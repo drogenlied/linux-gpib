@@ -160,6 +160,8 @@ int InternalRcvRespMsg( ibConf_t *conf, void *buffer, long count, int terminatio
 		return -1;
 	}
 
+	setIbcnt( count );
+
 	return 0;
 }
 
@@ -207,6 +209,20 @@ void ReceiveSetup( int boardID, Addr4882_t address )
 	exit_library( boardID, 0 );
 }
 
+int InternalReceive( ibConf_t *conf, Addr4882_t address,
+	void *buffer, long count, int termination )
+{
+	int retval;
+
+	retval = InternalReceiveSetup( conf, address );
+	if( retval < 0 ) return retval;
+
+	retval = InternalRcvRespMsg( conf, buffer, count, termination );
+	if( retval < 0 )return retval;
+
+	return 0;
+}
+
 void Receive( int boardID, Addr4882_t address,
 	void *buffer, long count, int termination )
 {
@@ -220,14 +236,7 @@ void Receive( int boardID, Addr4882_t address,
 		return;
 	}
 
-	retval = InternalReceiveSetup( conf, address );
-	if( retval < 0 )
-	{
-		exit_library( boardID, 1 );
-		return;
-	}
-
-	retval = InternalRcvRespMsg( conf, buffer, count, termination );
+	retval = InternalReceive( conf, address, buffer, count, termination );
 	if( retval < 0 )
 	{
 		exit_library( boardID, 1 );

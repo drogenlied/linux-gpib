@@ -123,6 +123,7 @@ int ibclose(struct inode *inode, struct file *filep)
 		if( priv->holding_mutex )
 			up( &board->mutex );
 		kfree( filep->private_data );
+		filep->private_data = NULL;
 	}
 
 	board->open_count--;
@@ -518,8 +519,7 @@ static int subtract_open_device_count( struct list_head *head, unsigned int pad,
 	for( list_ptr = head->next; list_ptr != head; list_ptr = list_ptr->next )
 	{
 		device = list_entry( list_ptr, gpib_device_t, list );
-		if( device->pad == pad &&
-			device->sad == sad )
+		if( gpib_address_equal( device->pad, device->sad, pad, sad ) )
 		{
 			GPIB_DPRINTK( "decrementing open count for pad %i, sad %i\n",
 				device->pad, device->sad );
@@ -550,7 +550,7 @@ static inline int decrement_open_device_count( struct list_head *head, unsigned 
 
 static int cleanup_open_devices( gpib_file_private_t *file_priv, gpib_board_t *board )
 {
-	struct list_head *list_ptr, *head = &file_priv->device_list;
+	struct list_head *list_ptr, *old_list, *head = &file_priv->device_list;
 	gpib_device_t *device;
 	int retval = 0;
 
@@ -561,8 +561,9 @@ static int cleanup_open_devices( gpib_file_private_t *file_priv, gpib_board_t *b
 		retval = subtract_open_device_count( &board->device_list, device->pad, device->sad,
 			device->reference_count );
 		if( retval < 0 ) break;
-		list_del( list_ptr );
-		list_ptr = list_ptr->next;
+		old_list = list_ptr;
+		list_ptr = old_list->next;
+		list_del( old_list );
 		kfree( device );
 	}
 
