@@ -22,6 +22,7 @@
 
 int board_type_ioctl(gpib_device_t *device, unsigned long arg);
 int read_ioctl(gpib_device_t *device, unsigned long arg);
+int write_ioctl(gpib_device_t *device, unsigned long arg);
 int command_ioctl(gpib_device_t *device, unsigned long arg);
 
 #define GIVE_UP(a) {up(&device->mutex); return a;}
@@ -114,11 +115,25 @@ printk("minor %i ioctl %i\n", minor, cmd);
 	{
 		case IBRD:
 			return read_ioctl(device, arg);
+			break;
+		case IBWRT:
+			return write_ioctl(device, arg);
+			break;
 		case IBCMD:
 			return command_ioctl(device, arg);
+			break;
 		default:
 			break;
 	}
+
+	/* XXX lock other processes from performing commands */
+	retval = down_interruptible(&device->mutex);
+	if(retval)
+	{
+		printk("gpib: ioctl interrupted while waiting on lock\n");
+		return -ERESTARTSYS;
+	}
+
 	ibargp = (ibarg_t *) &m_ibarg;
 
 	/* Check the arg buffer is readable & writable by the current process */
@@ -153,70 +168,9 @@ printk("minor %i ioctl %i\n", minor, cmd);
 	}
 #endif
 
-	/* lock other processes from performing commands */
-	retval = down_interruptible(&device->mutex);
-	if(retval)
-	{
-		printk("gpib: ioctl interrupted while waiting on lock\n");
-		return -ERESTARTSYS;
-	}
-
 //XXX a lot of the content of this switch should be split out into seperate functions
 	switch (cmd)
 	{
-		case IBWRT:	// XXX write should not be an ioclt
-
-			/* Check read access to buffer */
-			retval = verify_area(VERIFY_READ, ibargp->ib_buf, ibargp->ib_cnt);
-			if (retval)
-				GIVE_UP(retval);
-			/* Write buffer loads till we empty the user supplied buffer */
-			userbuf = ibargp->ib_buf;
-			remain = ibargp->ib_cnt;
-			while(remain > 0)
-			{
-				int send_eoi;
-				send_eoi = device->buffer_length <= remain && device->send_eoi;
-				copy_from_user(device->buffer, userbuf, (device->buffer_length < remain) ?
-					device->buffer_length : remain );
-				ret = ibwrt(device, device->buffer, (device->buffer_length < remain) ?
-					device->buffer_length : remain, send_eoi);
-				if(ret < 0)
-				{
-					retval = -EIO;
-					break;
-				}
-				remain -= ret;
-				userbuf += ret;
-			};
-			ibargp->ib_ibcnt = ibargp->ib_cnt - remain;
-			break;
-		case IBCMD:
-			/* Check read access to buffer */
-			retval = verify_area(VERIFY_READ, ibargp->ib_buf, ibargp->ib_cnt);
-			if (retval)
-				GIVE_UP(retval);
-
-			/* Write buffer loads till we empty the user supplied buffer */
-			userbuf = ibargp->ib_buf;
-			remain = ibargp->ib_cnt;
-			while (remain > 0 && !(ibstatus(device) & (TIMO)))
-			{
-				copy_from_user(device->buffer, userbuf, (device->buffer_length < remain) ?
-					device->buffer_length : remain );
-				ret = ibcmd(device, device->buffer, (device->buffer_length < remain) ?
-					device->buffer_length : remain );
-				if(ret < 0)
-				{
-					retval = -EIO;
-					break;
-				}
-				remain -= ret;
-				userbuf += ret;
-			}
-			ibargp->ib_ibcnt = ibargp->ib_cnt - remain;
-
-			break;
 		case IBWAIT:
 			retval = ibwait(device, ibargp->ib_arg);
 			break;
@@ -493,9 +447,50 @@ int command_ioctl(gpib_device_t *device, unsigned long arg)
 	return 0;
 }
 
+int write_ioctl(gpib_device_t *device, unsigned long arg)
+{
+	read_write_ioctl_t write_cmd;
+	uint8_t *userbuf;
+	unsigned long remain;
+	int retval;
+	ssize_t ret;
 
+	retval = copy_from_user(&write_cmd, (void*) arg, sizeof(write_cmd));
+	if (retval)
+		return -EFAULT;
 
+	/* Check read access to buffer */
+	retval = verify_area(VERIFY_READ, write_cmd.buffer, write_cmd.count);
+	if (retval)
+		return -EFAULT;
 
+	/* Write buffer loads till we empty the user supplied buffer */
+	userbuf = write_cmd.buffer;
+	remain = write_cmd.count;
+	while(remain > 0)
+	{
+		int send_eoi;
+		send_eoi = device->buffer_length <= remain && device->send_eoi;
+		copy_from_user(device->buffer, userbuf, (device->buffer_length < remain) ?
+			device->buffer_length : remain );
+		ret = ibwrt(device, device->buffer, (device->buffer_length < remain) ?
+			device->buffer_length : remain, send_eoi);
+		if(ret < 0)
+		{
+			retval = -EIO;
+			break;
+		}
+		remain -= ret;
+		userbuf += ret;
+	}
+
+	write_cmd.count -= remain;
+
+	retval = copy_to_user((void*) arg, &write_cmd, sizeof(write_cmd));
+	if(retval) return -EFAULT;
+
+	return 0;
+}
 
 
 

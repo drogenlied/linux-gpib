@@ -10,7 +10,7 @@ int receive_setup(ibBoard_t *board, int pad, int sad)
 	uint8_t cmdString[8];
 	unsigned int i = 0;
 
-	if( pad > gpib_addr_max || sad > gpib_addr_max)
+	if( pad < 0 || pad > gpib_addr_max || sad > gpib_addr_max)
 	{
 		fprintf(stderr, "bad gpib address\n");
 		return -1;
@@ -74,6 +74,8 @@ int ibrd(int ud, void *rd, unsigned long cnt)
 		}
 		return ibsta | ERR;
 	}
+
+	ibcnt = read_cmd.count;
 
 	return ibsta;
 }
