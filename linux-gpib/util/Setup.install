@@ -37,7 +37,8 @@ if [ ! -c /dev/gpib0 ]; then
 		exit 1
 	fi
 
-	groupadd gpib
+	groupadd gpib || echo "gpib group already exists"
+
 	for i in $(seq 0 15);
 	do
 		mknod --mode u=rw,g=rw,o= /dev/gpib${i} c $IBMAJOR ${i} || exit 1
