@@ -26,7 +26,7 @@ clean:
 	rm -f *.o ibtest master_write_from_file slave_read_to_file .depend
 
 .depend : $(SRCS)
-	$(CPP) $(CFLAGS) -M $(SRCS)  >./.depend
+	$(CPP) $(CFLAGS) -MM $(SRCS)  >./.depend
 
 install:
 	@echo Install in examples

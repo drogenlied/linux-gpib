@@ -47,6 +47,15 @@ int main( int argc, char *argv[] )
 		return -1;
 	}
 
+	status = ibtmo( board, TNONE );
+	if( status & ERR )
+	{
+		fprintf( stderr, "ibeos() failed\n" );
+		gpib_error_string( ThreadIberr(), buffer, sizeof( buffer ) );
+		fprintf( stderr, "%s\n", buffer );
+		return -1;
+	}
+
 	status = ibrdf( board, file_path );
 	if( status & ERR )
 	{
