@@ -440,6 +440,12 @@ Default is <option>--sre</option>.</para>
 	</thead>
 	<tbody>
 	<row>
+	<entry>Agilent</entry>
+	<entry>82357A</entry>
+	<entry>agilent_82357a.ko</entry>
+	<entry>agilent_82357a</entry>
+	</row>
+	<row>
 	<entry>Capital Equipment Corporation</entry>
 	<entry>PC-488</entry>
 	<entry>pc2_gpib.ko</entry>
