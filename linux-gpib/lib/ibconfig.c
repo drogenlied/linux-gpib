@@ -287,10 +287,9 @@ int ibconfig( int ud, int option, int value )
 					return exit_library( ud, 0 );
 				break;
 			case IbcIst:
-				// XXX
-				fprintf( stderr, "libgpib: ibist not implemented\n");
-				setIberr( ECAP );
-				return exit_library( ud, 1 );
+				retval = internal_ibist( conf, value );
+				if( retval < 0 ) return exit_library( ud, 1 );
+				else return exit_library( ud, 0 );
 				break;
 			case IbcRsv:
 				retval = internal_ibrsv( conf, value );

@@ -51,6 +51,7 @@ GPIB_DUMMY_VERSION {
 		ibevent;
 		ibfind;
 		ibgts;
+		ibist;
 		iblines;
 		ibloc;
 		ibonl;

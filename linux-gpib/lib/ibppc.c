@@ -236,3 +236,51 @@ void PPollUnconfig( int boardID, const Addr4882_t addressList[] )
 
 	exit_library( boardID, 0 );
 }
+
+int internal_ibist( ibConf_t *conf, int ist )
+{
+	int retval;
+	ppoll_config_ioctl_t cmd;
+
+	if( conf->is_interface == 0 )
+	{
+		setIberr( EARG );
+		return -1;
+	}
+
+	retval = query_ist( interfaceBoard( conf ) );
+	if( retval < 0 ) return retval;
+	setIberr( retval );	// set iberr to old ist value
+
+	cmd.config = 0;
+	cmd.set_ist = 0;
+	cmd.clear_ist = 0;
+	if( ist )
+		cmd.set_ist = 1;
+	else
+		cmd.clear_ist = 1;
+	retval = ioctl( interfaceBoard( conf )->fileno, IBPPC, &cmd );
+	if( retval < 0 )
+	{
+		setIberr( EDVR );
+		setIbcnt( errno );
+		return -1;
+	}
+
+	return 0;
+}
+
+int ibist( int ud, int ist )
+{
+	ibConf_t *conf;
+	int retval;
+
+	conf = enter_library( ud );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
+
+	retval = internal_ibist( conf, ist );
+	if( retval < 0 ) return exit_library( ud, 1 );
+
+	return exit_library( ud, 0 );
+}

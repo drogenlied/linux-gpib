@@ -1548,6 +1548,10 @@ volatile int ibsta;
 	bit is cleared.  The individual status bit is sent by the board in response
 	to parallel polls.
 	</para>
+	<para>
+	On success, <link LINKEND="reference-globals-iberr">iberr</link> is set
+	to the previous ist value.
+	</para>
 </refsect1>
 <refsect1>
 	<title>

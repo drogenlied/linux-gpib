@@ -101,6 +101,7 @@ int ibeos( int ud, int v );
 int ibevent( int ud, short *event );
 int ibfind( const char *dev );
 int ibgts(int ud, int v);
+int ibist( int ud, int ist );
 int iblines( int ud, short *line_status );
 int ibloc( int ud );
 int ibonl( int ud, int onl );

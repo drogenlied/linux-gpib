@@ -33,87 +33,89 @@ enum internal_gpib_addr
 	ADDR_INVALID = -2
 };
 
-extern void init_async_op( struct async_operation *async );
-extern int ibCheckDescriptor(int ud);
-extern int ibBdChrConfig( ibBoard_t *board );
-extern int initIbBoardArray( void );
-extern int ibBoardOpen( ibBoard_t *board );
-extern int ibBoardClose( ibBoard_t *board );
-extern int ibGetNrBoards(void);
-extern void yyerror(char *s);
-extern int iblcleos( const ibConf_t *conf );
-extern char *ibVerbCode(int code);
-extern void ibPutMsg (char *format,...);
-extern void ibPutErrlog(int ud,char *routine);
-extern int ibParseConfigFile( void );
-extern int ibGetDescriptor(ibConf_t conf);
-extern int ibFindDevIndex( const char *name );
-extern ssize_t my_ibcmd( ibConf_t *conf, const uint8_t *buffer, size_t length);
-extern unsigned int send_setup_string( const ibConf_t *conf, uint8_t *cmdString );
-extern unsigned int create_send_setup( const ibBoard_t *board,
+void init_async_op( struct async_operation *async );
+int ibCheckDescriptor(int ud);
+int ibBdChrConfig( ibBoard_t *board );
+int initIbBoardArray( void );
+int ibBoardOpen( ibBoard_t *board );
+int ibBoardClose( ibBoard_t *board );
+int ibGetNrBoards(void);
+void yyerror(char *s);
+int iblcleos( const ibConf_t *conf );
+char *ibVerbCode(int code);
+void ibPutMsg (char *format,...);
+void ibPutErrlog(int ud,char *routine);
+int ibParseConfigFile( void );
+int ibGetDescriptor(ibConf_t conf);
+int ibFindDevIndex( const char *name );
+ssize_t my_ibcmd( ibConf_t *conf, const uint8_t *buffer, size_t length);
+unsigned int send_setup_string( const ibConf_t *conf, uint8_t *cmdString );
+unsigned int create_send_setup( const ibBoard_t *board,
 	const Addr4882_t addressList[], uint8_t *cmdString );
-extern int send_setup( ibConf_t *conf );
-extern void init_ibconf( ibConf_t *conf );
-extern int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout,
+int send_setup( ibConf_t *conf );
+void init_ibconf( ibConf_t *conf );
+int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout,
 	int send_eoi, int eos, int eosflags);
-extern unsigned int timeout_to_usec( enum gpib_timeout timeout );
-extern unsigned int ppoll_timeout_to_usec( unsigned int timeout );
-extern unsigned int usec_to_ppoll_timeout( unsigned int usec );
-extern int set_timeout( const ibBoard_t *board, unsigned int usec_timeout );
-extern int close_gpib_device( ibConf_t *conf );
-extern int open_gpib_device( ibConf_t *conf );
-extern int gpibi_change_address( ibConf_t *conf,
+unsigned int timeout_to_usec( enum gpib_timeout timeout );
+unsigned int ppoll_timeout_to_usec( unsigned int timeout );
+unsigned int usec_to_ppoll_timeout( unsigned int usec );
+int set_timeout( const ibBoard_t *board, unsigned int usec_timeout );
+int close_gpib_device( ibConf_t *conf );
+int open_gpib_device( ibConf_t *conf );
+int gpibi_change_address( ibConf_t *conf,
 	unsigned int pad, int sad );
-extern int lock_board_mutex( ibBoard_t *board );
-extern int unlock_board_mutex( ibBoard_t *board );
-extern int conf_lock_board( ibConf_t *conf );
-extern int conf_unlock_board( ibConf_t *conf );
-extern int exit_library( int ud, int error );
-extern int general_exit_library( int ud, int error, int keep_lock );
-extern ibConf_t * enter_library( int ud );
-extern ibConf_t * general_enter_library( int ud, int no_lock_board, int ignore_eoip );
-extern void setIbsta( int status );
-extern void setIberr( int error );
-extern void setIbcnt( long count );
-extern unsigned int usec_to_timeout( unsigned int usec );
-extern int query_ppc( const ibBoard_t *board );
-extern int conf_online( ibConf_t *conf, int online );
-extern int configure_autopoll( ibConf_t *conf, int enable );
-extern int extractPAD( Addr4882_t address );
-extern int extractSAD( Addr4882_t address );
-extern Addr4882_t packAddress( unsigned int pad, int sad );
-extern int addressIsValid( Addr4882_t address );
-extern int addressListIsValid( const Addr4882_t addressList[] );
-extern unsigned int numAddresses( const Addr4882_t addressList[] );
-extern int remote_enable( const ibBoard_t *board, int enable );
-extern int config_read_eos( ibBoard_t *board, int use_eos_char,
+int lock_board_mutex( ibBoard_t *board );
+int unlock_board_mutex( ibBoard_t *board );
+int conf_lock_board( ibConf_t *conf );
+int conf_unlock_board( ibConf_t *conf );
+int exit_library( int ud, int error );
+int general_exit_library( int ud, int error, int keep_lock );
+ibConf_t * enter_library( int ud );
+ibConf_t * general_enter_library( int ud, int no_lock_board, int ignore_eoip );
+void setIbsta( int status );
+void setIberr( int error );
+void setIbcnt( long count );
+unsigned int usec_to_timeout( unsigned int usec );
+int query_ppc( const ibBoard_t *board );
+int query_ist( const ibBoard_t *board );
+int conf_online( ibConf_t *conf, int online );
+int configure_autopoll( ibConf_t *conf, int enable );
+int extractPAD( Addr4882_t address );
+int extractSAD( Addr4882_t address );
+Addr4882_t packAddress( unsigned int pad, int sad );
+int addressIsValid( Addr4882_t address );
+int addressListIsValid( const Addr4882_t addressList[] );
+unsigned int numAddresses( const Addr4882_t addressList[] );
+int remote_enable( const ibBoard_t *board, int enable );
+int config_read_eos( ibBoard_t *board, int use_eos_char,
 	int eos_char, int compare_8_bits );
-extern void sync_globals( void );
-extern int create_autopoll_thread( ibBoard_t *board );
-extern int destroy_autopoll_thread( ibBoard_t *board );
-extern int is_system_controller( const ibBoard_t *board );
-extern int is_cic( const ibBoard_t *board );
-extern int assert_ifc( ibBoard_t *board, unsigned int usec );
-extern int request_system_control( ibBoard_t *board, int request_control );
+void sync_globals( void );
+int create_autopoll_thread( ibBoard_t *board );
+int destroy_autopoll_thread( ibBoard_t *board );
+int is_system_controller( const ibBoard_t *board );
+int is_cic( const ibBoard_t *board );
+int assert_ifc( ibBoard_t *board, unsigned int usec );
+int request_system_control( ibBoard_t *board, int request_control );
 
-extern int internal_ibpad( ibConf_t *conf, unsigned int address );
-extern int internal_ibsad( ibConf_t *conf, int address );
-extern int internal_ibtmo( ibConf_t *conf, int timeout );
-extern void internal_ibeot( ibConf_t *conf, int send_eoi );
-extern int internal_ibppc( ibConf_t *conf, int v );
-extern int internal_ibsre( ibConf_t *conf, int v );
-extern int internal_ibrsv( ibConf_t *conf, int v );
-extern int internal_iblines( ibConf_t *conf, short *line_status );
-extern int internal_ibgts( ibConf_t *conf, int shadow_handshake );
-extern int internal_ibrsc( ibConf_t *conf, int request_control );
-extern int internal_ibsic( ibConf_t *conf );
-extern int InternalDevClearList( ibConf_t *conf, const Addr4882_t addressList[] );
-extern int InternalReceiveSetup( ibConf_t *conf, Addr4882_t address );
-extern int InternalSendSetup( ibConf_t *conf, const Addr4882_t addressList[] );
-extern int InternalSendList( ibConf_t *conf, const Addr4882_t addressList[],
+int internal_ibpad( ibConf_t *conf, unsigned int address );
+int internal_ibsad( ibConf_t *conf, int address );
+int internal_ibtmo( ibConf_t *conf, int timeout );
+void internal_ibeot( ibConf_t *conf, int send_eoi );
+int internal_ibist( ibConf_t *conf, int ist );
+int internal_ibppc( ibConf_t *conf, int v );
+int internal_ibsre( ibConf_t *conf, int v );
+int internal_ibrsv( ibConf_t *conf, int v );
+int internal_iblines( ibConf_t *conf, short *line_status );
+int internal_ibgts( ibConf_t *conf, int shadow_handshake );
+int internal_ibrsc( ibConf_t *conf, int request_control );
+int internal_ibsic( ibConf_t *conf );
+int InternalDevClearList( ibConf_t *conf, const Addr4882_t addressList[] );
+int InternalReceiveSetup( ibConf_t *conf, Addr4882_t address );
+int InternalSendSetup( ibConf_t *conf, const Addr4882_t addressList[] );
+int InternalSendList( ibConf_t *conf, const Addr4882_t addressList[],
 	const void *buffer, long count, int eotmode );
-extern int InternalEnableRemote( ibConf_t *conf, const Addr4882_t addressList[] );
-extern int InternalReceive( ibConf_t *conf, Addr4882_t address,
+int InternalEnableRemote( ibConf_t *conf, const Addr4882_t addressList[] );
+int InternalReceive( ibConf_t *conf, Addr4882_t address,
 	void *buffer, long count, int termination );
 
 static __inline__ ibBoard_t* interfaceBoard( const ibConf_t *conf )
