@@ -18,7 +18,7 @@ source .config
 ##########
 
 if [ ! -r /etc/gpib.conf ]; then
-	dialog --yesno "
+	$DIALOG --yesno "
 	/etc/gpib.conf not found\n
 	Create?" 8 60 && \
 	install --mode u=rw,g=r,o=r ./templates/gpib.conf /etc/gpib.conf

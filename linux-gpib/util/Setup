@@ -28,7 +28,6 @@ if [ $DIALOG == 0 ] ; then
 exit 1
 fi
 
-
 function set_var() {
 	echo "$1=$2" >>$CONFIG
 	echo "#define $1 ($2)" >>$CONFIG_H

@@ -23,6 +23,7 @@ echo " */" >> $CONFIG_H
 
 DEFAULT=$1
 
+set_svar DIALOG $DIALOG
 
 ##########
 #
