@@ -76,8 +76,11 @@ void cb7210_internal_interrupt( gpib_board_t *board )
 	}
 
 	if( hs_status & HS_SRQ_INT )
+	{
+		set_bit(SRQI_NUM, &board->status);
 		clear_bits |= HS_CLR_SRQ_INT;
-
+	}
+	
 	if( ( hs_status & HS_EOI_INT ) )
 	{
 		clear_bits |= HS_CLR_EOI_EMPTY_INT;
