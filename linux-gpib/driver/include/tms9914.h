@@ -112,6 +112,7 @@ void tms9914_return_to_local( const gpib_board_t *board, tms9914_private_t *priv
 // utility functions
 void tms9914_board_reset(tms9914_private_t *priv);
 void tms9914_online( gpib_board_t *board, tms9914_private_t *priv );
+int tms9914_need_release_holdoff(gpib_board_t *board, tms9914_private_t *priv);
 
 // wrappers for io functions
 uint8_t tms9914_ioport_read_byte(tms9914_private_t *priv, unsigned int register_num);
