@@ -132,7 +132,9 @@ set_svar BOARD_TYPE $REPLY
 
          dmasupport=off
 	 auto_recog=off
-
+	IBBASE = 0
+	IBIRQ = 0
+	IBDMA = 0
          case $BOARD_TYPE in 
 	
 	       ni_pci) auto_recog=on
