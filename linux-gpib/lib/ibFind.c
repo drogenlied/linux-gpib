@@ -82,11 +82,11 @@ int ibfind(char *dev)
 					if(ibclr(ind) & ERR ) return -1;
 				}
 				ibPutMsg("INIT: ");
-				if(ibConfigs[ind].init_string !='\0')
+				if(ibConfigs[ind]->init_string !='\0')
 				{
-					if( ibwrt(ind, ibConfigs[ind].init_string,
-						strlen( ibConfigs[ind].init_string)) & ERR ) return -1;
-					ibPutMsg(ibConfigs[ind].init_string);
+					if( ibwrt(ind, ibConfigs[ind]->init_string,
+						strlen( ibConfigs[ind]->init_string)) & ERR ) return -1;
+					ibPutMsg(ibConfigs[ind]->init_string);
 				}
 			}
 		}

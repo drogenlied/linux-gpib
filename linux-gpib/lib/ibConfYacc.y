@@ -10,7 +10,7 @@
 
 static ibConf_t temp;
 
-ibConf_t  ibConfigs[IB_MAXDEV];
+ibConf_t *ibConfigs[NUM_CONFIGS];
 int bdid = 0;
 %}
 

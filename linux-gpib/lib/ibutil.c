@@ -2,8 +2,11 @@
 #include <ib.h>
 #include <ibP.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "parse.h"
 
+static int num_devices = 0;
 
 int ibParseConfigFile(char *filename)
 {
@@ -31,43 +34,52 @@ int ibParseConfigFile(char *filename)
 
 /**********************************************************************/
 
-
-int ib_ndev=0;
-
 int ibInstallConfigItem(ibConf_t *p)
 {
+	ibConf_t *conf;
+	int ib_ndev;
+
 	/* check validity of values */
-	if( (p->padsad & 0xff) > IB_MAXDEV )
+	if( (p->padsad & 0xff) >= IB_MAXDEV )
 	{
 		iberr = ETAB;
-		return(ERR);
+		return -1;
 	}
-
-	if( ib_ndev >= IB_MAXDEV )
+	// search for an unused descriptor
+	for(ib_ndev = 0; ib_ndev < IB_MAXDEV * MAX_BOARDS; ib_ndev++)
+	{
+		if(check_descriptor(ib_ndev) == 0)
+		{
+			ibConfigs[ib_ndev] = malloc(sizeof(ibConf_t));
+			break;
+		}
+	}
+	if( ib_ndev == IB_MAXDEV * MAX_BOARDS)
 	{
 		iberr = ETAB;
-		return(ERR);
+		return -1;
 	}
-
+	conf = ibConfigs[ib_ndev];
 	/* put entry to the table */
+fprintf(stderr, "size of conf->name is %i\n", sizeof(conf->name));
+	strncpy(conf->name, p->name, sizeof(conf->name) );
+	conf->board = p->board;
+	conf->padsad = p->padsad;
+	conf->flags = p->flags;
+	conf->eos = p->eos;
+	conf->eosflags = p->eosflags;
+	conf->tmo = p->tmo;
 
-	strcpy( ibConfigs[ib_ndev].name, p->name );
-	ibConfigs[ib_ndev].board = p->board;
-	ibConfigs[ib_ndev].padsad = p->padsad;
-	ibConfigs[ib_ndev].flags = p->flags;
-	ibConfigs[ib_ndev].eos = p->eos;
-	ibConfigs[ib_ndev].eosflags = p->eosflags;
-	ibConfigs[ib_ndev].tmo = p->tmo;
-
-	strcpy(ibConfigs[ib_ndev].init_string, p->init_string );
-
-	ib_ndev++;
-	return (ib_ndev);
+fprintf(stderr, "size of conf->init_string is %i\n", sizeof(conf->init_string));
+	strncpy(conf->init_string, p->init_string, sizeof(conf->init_string));
+fprintf(stderr, "ib_ndev is %i\n", ib_ndev);
+	num_devices++;
+	return ib_ndev;
 }
 
 int ibGetNrDev(void)
 {
-return ib_ndev;
+return num_devices;
 }
 
 /**********************************************************************/
@@ -75,15 +87,33 @@ int ibFindDevIndex(char *name)
 {
 	int i;
 
-	for(i = 0; i < IB_MAXDEV; i++)
+	for(i = 0; i < NUM_CONFIGS; i++)
 	{
-		if(!strcmp(ibConfigs[i].name, name)) return i;
+		if(check_descriptor(i) < 0) continue;
+		if(!strcmp(ibConfigs[i]->name, name)) return i;
 	}
 
 	return -1;
 }
 
+int check_descriptor(int ud)
+{
+	int fd;
+	ibConf_t *conf = ibConfigs[ud];
 
+	if(ud >= NUM_CONFIGS) return -1;
+
+	if(conf == NULL) return -1;
+	fd = ibBoard[conf->board].fileno;
+	if(fcntl(fd, F_GETFD) < 0)
+	{
+		free(conf);
+		ibConfigs[ud] = NULL;
+		num_devices--;
+		return -1;
+	}
+	return 0;
+}
 
 
 

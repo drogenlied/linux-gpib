@@ -18,10 +18,9 @@ int ibpad(int ud, int v)
       }
       else
       {
-         /* remove network information of ud ???? */
-         ud &= 0x0ff ;  
-         ibConfigs[ud].padsad &= 0xffffff00 ;
-         ibConfigs[ud].padsad |= v ;
+         ud &= 0x0ff ;
+         ibConfigs[ud]->padsad &= 0xffffff00 ;
+         ibConfigs[ud]->padsad |= v ;
       }
    }
 	return 0;	//XXX

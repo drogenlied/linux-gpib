@@ -73,6 +73,13 @@ int ibBoardFunc (int bd, int code, ...)
 	static char *buf;
 	static int cnt;
 
+	if(check_descriptor(bd) < 0)
+	{
+		fprintf(stderr, "bad gpib descriptor\n");
+		ibsta |= ERR;
+		iberr = ENEB;
+		return ibsta;
+	}
 	switch (code)
 	{
 		case IBRD:
