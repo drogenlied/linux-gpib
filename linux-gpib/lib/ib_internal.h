@@ -25,8 +25,10 @@ extern  char *ibVerbCode(int code);
 extern  void ibPutMsg (char *format,...);
 extern  void ibPutErrlog(int ud,char *routine);
 extern  int ibParseConfigFile(char *filename);
-extern  int ibGetDescriptor(ibConf_t *p);
+extern  int ibGetDescriptor(ibConf_t conf);
 extern  int ibFindDevIndex(char *name);
+
+extern int config_parsed;
 
 #include <stdio.h>
 int gpib_yyparse(void);

@@ -5,8 +5,6 @@
 int ibsad(int ud, int v)
 {
 	ibConf_t *conf = ibConfigs[ud];
-	const sad_offset = 0x60;
-	const sad_max = 30;
 
 	ibsta &= ~ERR;
 	

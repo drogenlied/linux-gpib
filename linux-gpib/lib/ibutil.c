@@ -38,13 +38,13 @@ int ibParseConfigFile(char *filename)
 
 /**********************************************************************/
 
-int ibGetDescriptor(ibConf_t *p)
+int ibGetDescriptor(ibConf_t p)
 {
 	ibConf_t *conf;
 	int ib_ndev;
 
 	/* check validity of values */
-	if( p->pad >= IB_MAXDEV )
+	if( p.pad >= IB_MAXDEV )
 	{
 		iberr = ETAB;
 		return -1;
@@ -65,16 +65,16 @@ int ibGetDescriptor(ibConf_t *p)
 	}
 	conf = ibConfigs[ib_ndev];
 	/* put entry to the table */
-	strncpy(conf->name, p->name, sizeof(conf->name) );
-	conf->board = p->board;
-	conf->pad = p->pad;
-	conf->sad = p->sad;
-	conf->flags = p->flags;
-	conf->eos = p->eos;
-	conf->eosflags = p->eosflags;
-	conf->tmo = p->tmo;
+	strncpy(conf->name, p.name, sizeof(conf->name) );
+	conf->board = p.board;
+	conf->pad = p.pad;
+	conf->sad = p.sad;
+	conf->flags = p.flags;
+	conf->eos = p.eos;
+	conf->eosflags = p.eosflags;
+	conf->tmo = p.tmo;
 
-	strncpy(conf->init_string, p->init_string, sizeof(conf->init_string));
+	strncpy(conf->init_string, p.init_string, sizeof(conf->init_string));
 	return ib_ndev;
 }
 

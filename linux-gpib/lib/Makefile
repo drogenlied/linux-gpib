@@ -36,8 +36,8 @@ SRCS =  ibCac.c ibClr.c ibCmd.c ibConfYacc.c ibConfLex.c  ibEos.c ibEot.c \
 	ibFind.c ibLines.c ibOnl.c ibPad.c ibRd.c ibRpp.c ibRsp.c ibRsv.c \
 	ibSad.c ibSic.c ibSre.c ibTmo.c ibTrg.c ibWait.c ibWrt.c ibBdChrConfig.c\
 	ibOpt.c ibGts.c ibBoard.c ibError.c ibutil.c ibAPE.c \
-	ibFlags.c ibLoc.c ibDma.c ibConfig.c \
-	#ibEvent.c ibdev.c
+	ibFlags.c ibLoc.c ibDma.c ibConfig.c ibdev.c \
+	#ibEvent.c
 
 
 OBJS =  $(SRCS:.c=.o) 

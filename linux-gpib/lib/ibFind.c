@@ -14,16 +14,20 @@ int ibfind(char *dev)
 
 	/* load config */
 
-	envptr = getenv("IB_CONFIG");
-	if(envptr)
-		retval = ibParseConfigFile(envptr);
-	else
-		retval = ibParseConfigFile(DEFAULT_CONFIG_FILE);
-	if(retval < 0)
+	if(config_parsed == 0)
 	{
-		ibsta |= ERR;
-		ibPutErrlog(-1,"ibParseConfig");
-		return -1;
+		envptr = getenv("IB_CONFIG");
+		if(envptr)
+			retval = ibParseConfigFile(envptr);
+		else
+			retval = ibParseConfigFile(DEFAULT_CONFIG_FILE);
+		if(retval < 0)
+		{
+			ibsta |= ERR;
+			ibPutErrlog(-1,"ibParseConfig");
+			return -1;
+		}
+		config_parsed = 1;
 	}
 
 	if((index = ibFindDevIndex(dev)) < 0)
@@ -34,24 +38,16 @@ int ibfind(char *dev)
 		return -1;
 	}
 
-	uDesc = ibGetDescriptor(&ibFindConfigs[index]);
+	conf = &ibFindConfigs[index];
+
+	uDesc = ibdev(conf->board, conf->pad, conf->sad, conf->tmo,
+		conf->send_eoi, conf->eos | (conf->eosflags << 8));
 	if(uDesc < 0)
 	{
 		fprintf(stderr, "ibfind failed to get descriptor\n");
 		return -1;
 	}
 	conf = ibConfigs[uDesc];
-
-	if(ibBdChrConfig(uDesc) & ERR)
-		return -1;
-
-	if(ibonl(uDesc, 1) & ERR)
-	{
-		fprintf(stderr, "failed to bring device online\n");
-		return -1;
-	}
-
-	if(ibsre(uDesc,1) & ERR ) return -1;
 
 	if(conf->flags & CN_SDCL)
 	{
@@ -66,6 +62,7 @@ int ibfind(char *dev)
 			return -1;
 		ibPutMsg(conf->init_string);
 	}
+
 	return uDesc;
 }
 

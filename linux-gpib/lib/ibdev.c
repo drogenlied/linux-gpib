@@ -17,17 +17,17 @@
 
 #include "ib_internal.h"
 #include <ibP.h>
+#include <stdlib.h>
 
-static int config_parsed = 0;
+int config_parsed = 0;
 
 int ibdev(int minor, int pad, int sad, int timo, int eot, int eos)
 {
-	int descriptor;
-	int index;
 	char *envptr;
 	int retval;
 	int uDesc;
 	ibConf_t conf;
+	ibBoard_t *board;
 
 	/* load config */
 
@@ -47,14 +47,34 @@ int ibdev(int minor, int pad, int sad, int timo, int eot, int eos)
 		config_parsed = 1;
 	}
 
-	conf.
-	uDesc = ibGetDescriptor(&ibFindConfigs[index]);
+	conf.pad = pad;
+	conf.sad = sad - sad_offset;                        /* device address                   */
+	conf.init_string[0] = 0;               /* initialization string (optional) */
+	conf.board = minor;                         /* board number                     */
+	conf.eos = eos & 0xff;                           /* local eos modes                  */
+	conf.eosflags = (eos >> 8) & 0xff;
+	conf.tmo = timo;
+	if(eot)
+		conf.send_eoi = 1;
+	else
+		conf.send_eoi = 0;
+	conf.flags = 0;
+	// check if it is an interface board
+	board = &ibBoard[minor];
+	if(board->pad == conf.pad && board->sad == conf.sad)
+	{
+		conf.is_interface = 1;
+		if(board->ifc)
+			conf.flags |= CN_ISCNTL;
+	}else
+		conf.is_interface = 0;
+
+	uDesc = ibGetDescriptor(conf);
 	if(uDesc < 0)
 	{
-		fprintf(stderr, "ibfind failed to get descriptor\n");
+		fprintf(stderr, "ibdev failed to get descriptor\n");
 		return -1;
 	}
-	conf = ibConfigs[uDesc];
 
 	if(ibBdChrConfig(uDesc) & ERR)
 		return -1;
@@ -65,20 +85,7 @@ int ibdev(int minor, int pad, int sad, int timo, int eot, int eos)
 		return -1;
 	}
 
-	if(ibsre(uDesc,1) & ERR ) return -1;
+	if(ibsre(uDesc, 1) & ERR ) return -1;
 
-	if(conf->flags & CN_SDCL)
-	{
-		ibPutMsg("CLR ");
-		if(ibclr(uDesc) & ERR ) return -1;
-	}
-
-	ibPutMsg("INIT: ");
-	if(strcmp(conf->init_string, ""))
-	{
-		if(ibwrt(uDesc, conf->init_string, strlen(conf->init_string)) & ERR )
-			return -1;
-		ibPutMsg(conf->init_string);
-	}
 	return uDesc;
 }
