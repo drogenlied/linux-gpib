@@ -19,10 +19,10 @@
  *      3.  Be sure to type cast the buffer to (faddr_t) before
  *          calling this function.
  */
-IBLCL int ibwrt(faddr_t buf, unsigned int cnt, unsigned int more)
+IBLCL int ibwrt(uint8_t *buf, size_t cnt, unsigned int more)
 {
-	ibio_op_t	wrtop;
 	unsigned int	requested_cnt;
+	ssize_t ret;
 
 	DBGin("ibwrt");
 	if (fnInit(HR_TA) & ERR) {
@@ -32,17 +32,16 @@ IBLCL int ibwrt(faddr_t buf, unsigned int cnt, unsigned int more)
 	}
 	osStartTimer(timeidx);
 	DBGprint(DBG_BRANCH, ("go to standby  "));
-	bdSendAuxCmd(AUX_GTS);	/* if CAC, go to standby */
-	requested_cnt = cnt;
-	wrtop.io_vbuf = buf;
-	wrtop.io_flags = 0;
-	if(more == 0) wrtop.io_flags |= IO_LAST;
+	board.go_to_standby();
 	while ((cnt > 0) && !(ibsta & (ERR | TIMO))) {
-		ibcnt = 0;
-		wrtop.io_cnt = cnt;
-		bdwrt(&wrtop);
-		wrtop.io_vbuf += ibcnt;
-		cnt -= ibcnt;
+		ret = board.write(buf, cnt, !more);
+		if(ret < 0)
+		{
+			printk("gpib write error\n");
+			break;
+		}
+		buf += ret;
+		cnt -= ret;
 	}
 	ibcnt = requested_cnt - cnt;
 	osRemoveTimer();

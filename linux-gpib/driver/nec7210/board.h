@@ -6,6 +6,14 @@
 #include <asm/io.h>
 #include <gpib_buffer.h>
 
+extern ssize_t nec7210_read(uint8_t *buffer, size_t length, uint8_t eos);
+extern ssize_t nec7210_write(uint8_t *buffer, size_t length, int send_eoi);
+extern ssize_t nec7210_command(uint8_t *buffer, size_t length);
+extern void nec7210_take_control(int syncronous);
+extern void nec7210_go_to_standby(void);
+extern void nec7210_interface_clear(int assert);
+extern unsigned int nec7210_wait(unsigned int status_mask);
+
 extern unsigned long ibbase;	/* base addr of GPIB interface registers  */
 extern unsigned long remapped_ibbase;	// ioremapped memory io address
 

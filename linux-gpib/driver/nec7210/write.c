@@ -1,34 +1,19 @@
 #include "board.h"
 #include <asm/dma.h>
 
-/*
- *  BDWRT 
- *  This function performs a single Programmed I/O write operation.
- *  Returns negative value on error, or number of bytes written on success 
- */
-IBLCL int bdwrt( ibio_op_t *wrtop)
+ssize_t nec7210_write(uint8_t *buffer, size_t length, int send_eoi)
 {
-	faddr_t		buf;
-	unsigned	cnt;
 	gpib_char_t data;
 	unsigned long flags;
-//	int ibcnt = 0; //ibcnt is currently a global variable (ugh) but will be fixed eventually
+	size_t count = 0;
 
-	DBGin("bdwrt");
+	if(length == 0) return 0;
 
-	buf = wrtop->io_vbuf;
-	cnt = wrtop->io_cnt;
-	if(cnt == 0) return 0;
+	GPIBout(AUXMR, auxrabits);	/* normal handshaking, XXX necessary?*/
 
-	DBGprint(DBG_DATA, ("buf=0x%p cnt=%d  ", buf, cnt));
-
-	GPIBout(AUXMR, auxrabits);	/* normal handshaking */
-
-	DBGprint(DBG_BRANCH, ("begin PIO loop  "));
-
-	if(wrtop->io_flags & IO_LAST)
+	if(send_eoi)
 	{
-		cnt-- ; /* save the last byte for sending EOI */
+		length-- ; /* save the last byte for sending EOI */
 	}
 
 	if(test_and_set_bit(0, &write_in_progress))
@@ -38,16 +23,14 @@ IBLCL int bdwrt( ibio_op_t *wrtop)
 	}
 
 #if DMAOP	// isa dma transfer
-	if(ibcnt < cnt)
+	if(length > 0)
 	{
 		/* program dma controller */
 		flags = claim_dma_lock();
 		disable_dma(ibdma);
-		wrtop->io_pbuf = virt_to_bus(wrtop->io_vbuf);
 		clear_dma_ff ( ibdma );
-		// XXX what if io_cnt is too big?
-		set_dma_count( ibdma, cnt );
-		set_dma_addr ( ibdma, wrtop->io_pbuf);
+		set_dma_count( ibdma, length );
+		set_dma_addr ( ibdma, virt_to_bus(buffer));
 		set_dma_mode( ibdma, DMA_MODE_WRITE );
 		enable_dma(ibdma);
 		release_dma_lock(flags);
@@ -64,10 +47,9 @@ IBLCL int bdwrt( ibio_op_t *wrtop)
 		if(wait_event_interruptible(nec7210_write_wait, test_bit(0, &write_in_progress) == 0))
 		{
 			printk("gpib write interrupted!\n");
-			// XXX
 		}
 
-		ibcnt += cnt;
+		count += length;
 
 		// disable board's dma
 		imr2_bits &= ~HR_DMAO;
@@ -77,19 +59,19 @@ IBLCL int bdwrt( ibio_op_t *wrtop)
 #else	// PIO transfer
 
 	data.end = 0;
-	if(ibcnt < cnt)
+	if(length > 0)
 	{
 		// load message into buffer
-		while (ibcnt < cnt)
+		while (count < length)
 		{
-			data.value = buf[ibcnt];
+			data.value = buffer[count];
 			if(gpib_buffer_put(write_buffer, data))
 			{
 				printk("gpib: write buffer full!\n");
 				// XXX
 				break;
 			}
-			ibcnt++;
+			count++;
 		}
 
 		// enable 'data out' interrupts
@@ -106,31 +88,26 @@ IBLCL int bdwrt( ibio_op_t *wrtop)
 
 #endif	// DMAOP
 
-	if(wrtop->io_flags & IO_LAST)
+	if(send_eoi)
 	{
 		/*send EOI */
 		if((pgmstat & PS_NOEOI) == 0)
 			bdSendAuxCmd(AUX_SEOI);
 		set_bit(0, &write_in_progress);
-		GPIBout(CDOR, buf[ibcnt]);
-		ibcnt++;
+		GPIBout(CDOR, buffer[count]);
+		count++;
 		wait_event_interruptible(nec7210_write_wait, test_bit(0, &write_in_progress) == 0);
 	}
 	// disable 'data out' interrupts
 	imr1_bits &= ~HR_DOIE;
 	GPIBout(IMR1, imr1_bits);
 
-	DBGprint(DBG_BRANCH, ("done  "));
-
 	if (!noTimo) {
-		DBGprint(DBG_BRANCH, ("timeout  "));
 		ibsta |= (ERR | TIMO);
 		iberr = EABO;
 	}
 
-	DBGout();
-
-	return ibcnt;
+	return count;
 }
 
 

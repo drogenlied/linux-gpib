@@ -117,14 +117,14 @@ IBLCL int ibeot(int v)
 	return ibsta;
 }
 
-
 /*
  * IBEOS
  * Set the end-of-string modes for I/O operations to v.
- * 
+ *
  */
 IBLCL int ibeos(int v)
 {
+#if 0
 	int ebyte, emodes;
 #if defined(HP82335) || defined(NIPCII) || defined(TMS9914)
 	extern int eosmodes;
@@ -154,12 +154,13 @@ IBLCL int ibeos(int v)
 	}
 	ibstat();
 	DBGout();
+#endif
 	return ibsta;
 }
 
 
 
-IBLCL int ibstat(void)			
+IBLCL int ibstat(void)
 /* update the GPIB status information */
 {
 	register int brdstat;

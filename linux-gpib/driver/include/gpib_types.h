@@ -48,6 +48,8 @@ typedef struct {
 /* gpib_board_t is filled out by driver.  It is the interface
  * between the board-specific details dealt with in the drivers
  * and generic interface provided by gpib-common.
+ *
+ * need to add EOS manipulation functions, perhaps more queries
  */
 typedef struct
 {
@@ -61,7 +63,7 @@ typedef struct
 	 * read.  Positive return value is number of bytes read, negative
 	 * return indicates error.
 	 */
-	ssize_t (*read)(uint8_t *buffer, size_t length, char eos);
+	ssize_t (*read)(uint8_t *buffer, size_t length, uint8_t eos);
 	/* write() should write 'length' bytes from buffer to the bus.
 	 * If the boolean value send_eoi is nonzero, then EOI should
 	 * be sent along with the last byte.  Returns number of bytes
@@ -82,10 +84,12 @@ typedef struct
 	 * boolean value of 'assert'
 	 */
 	void (*interface_clear)(int assert);
-	/* suspend until one of the conditions specified by 'event_mask' is
-	 * true.  The meaning of the bits in the 'event_mask' is the same
-	 * as the meaning of the bits in the 'status' variable below. */
-	int (*wait)(int event_mask);
+	/* suspend until one of the conditions specified by 'status_mask' is
+	 * true.  The meaning of the bits in the 'status_mask' is the same
+	 * as the meaning of the bits in the 'status' variable below.
+	 * returns board's status.
+	 */
+	unsigned int (*wait)(unsigned int status_mask);
 	/* TODO: conduct serial poll */
 	void (*serial_poll)(void);
 	/* TODO: conduct parallel poll */

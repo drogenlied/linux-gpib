@@ -1,47 +1,33 @@
 #include "board.h"
 #include <asm/dma.h>
 
-/*
- *  BDREAD 
- *  This function performs a single Programmed I/O read operation.
- *  Note that the hand-shake is held off at the end of every read.
- */
-IBLCL void bdread(ibio_op_t *rdop)
+ssize_t nec7210_read(uint8_t *buffer, size_t length, uint8_t eos) // XXX eos broken
 {
-	faddr_t		buf;
-	unsigned	cnt;
+	size_t	count = 0;
 	gpib_char_t data;
 	int ret;
 	unsigned long flags;
 
-	DBGin("bdread");
+	if(length == 0) return 0;
 
-	buf = rdop->io_vbuf;
-	cnt = rdop->io_cnt;
-	if(cnt == 0) return;
-	DBGprint(DBG_DATA, ("bdread: buf=0x%p cnt=%d  ", buf, cnt));
 	if (pgmstat & PS_HELD) {
-		DBGprint(DBG_BRANCH, ("finish handshake  "));
 		GPIBout(AUXMR, auxrabits | HR_HLDA);
 		GPIBout(AUXMR, AUX_FH);	/* set HLDA in AUXRA to ensure FH works */
 		pgmstat &= ~PS_HELD;
 	}
-	DBGprint(DBG_BRANCH, ("set-up EOS modes  "));
 /*
- *	Set EOS modes, holdoff on END, and holdoff on all carry cycle...
+ *	holdoff on END
  */
 	GPIBout(AUXMR, auxrabits | HR_HLDE );
 
 #if DMAOP		// ISA DMA transfer
 	flags = claim_dma_lock();
 	disable_dma(ibdma);
-	rdop->io_pbuf = virt_to_bus(rdop->io_vbuf);
 
 	/* program dma controller */
 	clear_dma_ff ( ibdma );
-	// XXX what if io_cnt is too big?
-	set_dma_count( ibdma, rdop->io_cnt );
-	set_dma_addr ( ibdma, rdop->io_pbuf);
+	set_dma_count( ibdma, length );
+	set_dma_addr ( ibdma, virt_to_bus(buffer));
 	set_dma_mode( ibdma, DMA_MODE_READ );
 	release_dma_lock(flags);
 
@@ -62,20 +48,18 @@ IBLCL void bdread(ibio_op_t *rdop)
 	flags = claim_dma_lock();
 	clear_dma_ff ( ibdma );
 	disable_dma(ibdma);
-	ibcnt += rdop->io_cnt - get_dma_residue(ibdma);
+	count += length - get_dma_residue(ibdma);
 	release_dma_lock(flags);
 
 	set_bit(END_NUM, &ibsta);
 
 #else	// PIO transfer
 
-	DBGprint(DBG_BRANCH, ("begin PIO loop  "));
-
 	// enable 'data in' interrupt
 	imr1_bits |= HR_DIIE;
 	GPIBout(IMR1, imr1_bits);
 
-	while (ibcnt < cnt )
+	while (count < length )
 	{
 		ret = gpib_buffer_get(read_buffer, &data);
 		if(ret < 0)
@@ -88,7 +72,7 @@ IBLCL void bdread(ibio_op_t *rdop)
 			};
 			continue;
 		}
-		buf[ibcnt++] = data.value;
+		buf[count++] = data.value;
 		if(data.end)
 		{
 			set_bit(END_NUM, &ibsta);
@@ -100,7 +84,6 @@ IBLCL void bdread(ibio_op_t *rdop)
 	imr1_bits &= ~HR_DIIE;
 	GPIBout(IMR1, imr1_bits);
 
-	DBGprint(DBG_BRANCH, ("done  "));
 #endif
 
 	pgmstat |= PS_HELD;
@@ -112,7 +95,8 @@ IBLCL void bdread(ibio_op_t *rdop)
 		ibsta |= (ERR | TIMO);
 		iberr = EABO;
 	}
-	DBGout();
+
+	return count;
 }
 
 

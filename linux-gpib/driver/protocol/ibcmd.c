@@ -16,10 +16,11 @@
  *      3.  Be sure to type cast the buffer to (faddr_t) before
  *          calling this function.
  */
-IBLCL int ibcmd(faddr_t buf, unsigned int cnt)
+IBLCL int ibcmd(uint8_t *buf, size_t cnt)
 {
 	ibio_op_t	cmdop;
 	unsigned int	requested_cnt;
+	ssize_t ret;
 
 	DBGin("ibcmd");
 	if (fnInit(HR_CIC) & ERR) {
@@ -35,19 +36,21 @@ IBLCL int ibcmd(faddr_t buf, unsigned int cnt)
 #endif
 
 		DBGprint(DBG_BRANCH, ("take control  "));
-		bdSendAuxCmd(AUX_TCA);
-		bdWaitOut();
+		board.take_control(0);
+//		bdWaitOut();	XXX
 		/* so Turbo488 boards won't jump the gun */
 	}
 	requested_cnt = cnt;
-	cmdop.io_vbuf = buf;
-	cmdop.io_flags = 0;
 	while ((cnt > 0) && !(ibsta & (ERR | TIMO))) {
-		ibcnt = 0;
-		cmdop.io_cnt = cnt;
-		bdcmd(&cmdop);
-		cmdop.io_vbuf += ibcnt;
-		cnt -= ibcnt;
+		ret = board.command(buf, cnt);
+		if(ret < 0)
+		{
+			printk("error writing gpib command bytes\n");
+			break;
+			// XXX
+		}
+		buf += ret;
+		cnt -= ret;
 	}
 	ibcnt = requested_cnt - cnt;
 

@@ -70,6 +70,7 @@ IBLCL int dvclr(int padsad)
 
 IBLCL int dvrsp(int padsad,char *spb)
 {
+#if 0
 	char spdString[3];
 	uint8_t isreg1;
 	int sp_noTimo;
@@ -89,7 +90,7 @@ IBLCL int dvrsp(int padsad,char *spb)
 			bdSendAuxCmd(AUX_FH);
 			pgmstat &= ~PS_HELD;
 		}
-		bdSendAuxCmd(AUX_GTS);
+		board.go_to_standby();
 	
 		osStartTimer(pollTimeidx);
 		DBGprint(DBG_BRANCH, ("wait for spoll byte  "));
@@ -119,6 +120,7 @@ IBLCL int dvrsp(int padsad,char *spb)
 
 	}
 	DBGout();
+#endif
 	return ibsta;
 }
 

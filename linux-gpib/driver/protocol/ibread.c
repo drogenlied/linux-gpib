@@ -15,10 +15,11 @@
  *          calling ibcmd.
  */
 
-IBLCL int ibrd(faddr_t buf, unsigned int cnt)
+IBLCL int ibrd(uint8_t *buf, unsigned int cnt)
 {
 	ibio_op_t	rdop;
 	unsigned int	requested_cnt;
+	ssize_t ret;
 
 	DBGin("ibrd");
 	if (fnInit(HR_LA) & ERR) {
@@ -28,17 +29,19 @@ IBLCL int ibrd(faddr_t buf, unsigned int cnt)
 	}
 
 	DBGprint(DBG_BRANCH, ("go to standby  "));
-	bdSendAuxCmd(AUX_GTS);	/* if CAC, go to standby */
+	board.go_to_standby();
 	osStartTimer(timeidx);
 	requested_cnt = cnt;
-	rdop.io_vbuf = buf;
-	rdop.io_flags = IO_READ;
 	while ((cnt > 0) && !(ibsta & (ERR | TIMO | END))) {
-		ibcnt = 0;
-		rdop.io_cnt = cnt;
-		bdread(&rdop);
-		rdop.io_vbuf += ibcnt;
-		cnt -= ibcnt;
+		ret = board.read(buf, cnt, 0);	// eos XXX
+		if(ret < 0)
+		{
+			printk("gpib read error\n");
+			break;
+			// XXX
+		}
+		buf += ret;
+		cnt -= ret;
 	}
 	ibcnt = requested_cnt - cnt;
 	osRemoveTimer();

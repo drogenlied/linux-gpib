@@ -1,10 +1,5 @@
 
-
-#include <board.h>
-
-
-
-
+#include "board.h"
 
 /* -- bdSendAuxCmd(int cmd)
  * Performs single auxiliary commands (nec7210)
@@ -12,7 +7,7 @@
  *
  */
 
-IBLCL void bdSendAuxCmd(int cmd)
+void bdSendAuxCmd(int cmd)
 {
   DBGin("bdSendAuxCmd");
   switch(cmd){
@@ -43,11 +38,11 @@ IBLCL void bdSendAuxCmd(int cmd)
     break;
   case AUX_CREN:
     DBGprint(DBG_BRANCH,("Aux Send unset REM"));
-    GPIBout(AUXMR,AUX_CREN); 
+    GPIBout(AUXMR,AUX_CREN);
     break;
   case AUX_CIFC:
     DBGprint(DBG_BRANCH,("Aux Send unset IFC"));
-    GPIBout(AUXMR,AUX_CIFC); 
+    GPIBout(AUXMR,AUX_CIFC);
     break;
   case AUX_FH:
     DBGprint(DBG_BRANCH,("Aux Send FH"));
@@ -56,7 +51,7 @@ IBLCL void bdSendAuxCmd(int cmd)
   case AUX_SEOI:
     DBGprint(DBG_BRANCH,("Aux Send EOI"));
     GPIBout(AUXMR, AUX_SEOI);
-    break;  
+    break;
   default:
     DBGprint(DBG_BRANCH,(" warning: illegal auxiliary command"));
     GPIBout(AUXMR,cmd);
@@ -66,22 +61,23 @@ IBLCL void bdSendAuxCmd(int cmd)
   DBGout();
 }
 
-
-
-/* -- bdSendAuxACmd(int cmd)
- * Set Auxiliary A Register
- *
- *
- */
-
-IBLCL void bdSendAuxACmd(int cmd)
+void nec7210_take_control(int syncronous)
 {
-  DBGin("bdSendAuxACmd");
-  DBGprint(DBG_BRANCH,("Aux Send=0x%x",cmd));
-
-  GPIBout(AUXMR, auxrabits | cmd);
-  DBGout();
+	if(syncronous)
+		bdSendAuxCmd(AUX_TCS);
+	else
+		bdSendAuxCmd(AUX_TCA);
 }
 
+void nec7210_go_to_standby(void)
+{
+	bdSendAuxCmd(AUX_GTS);
+}
 
-
+void nec7210_interface_clear(int assert)
+{
+	if(assert)
+		bdSendAuxCmd(AUX_SIFC);
+	else
+		bdSendAuxCmd(AUX_CIFC);
+}

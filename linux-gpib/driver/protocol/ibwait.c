@@ -33,7 +33,7 @@ IBLCL int ibwait(unsigned int mask)
 		return ibsta;
 	}
 	osStartTimer(timeidx);
-	bdwait(mask | TIMO);
+	board.wait(mask | TIMO);
 	if (!noTimo)
 		ibsta |= TIMO;
 	osRemoveTimer();

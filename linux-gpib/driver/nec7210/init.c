@@ -30,6 +30,24 @@ unsigned int ibirq = IBIRQ;
 unsigned int ibdma = IBDMA;
 unsigned long remapped_ibbase = 0;
 
+gpib_board_t board =
+{
+	name:	"nec7210",	//XXX
+	read:	nec7210_read,
+	write:	nec7210_write,
+	command:	nec7210_command,
+	take_control:	nec7210_take_control,
+	go_to_standby:	nec7210_go_to_standby,
+	interface_clear:	nec7210_interface_clear,
+	wait:	nec7210_wait,
+	serial_poll:	NULL,	// XXX
+	parallel_poll:	NULL,	// XXX
+	line_status:	NULL,
+	status:	0,
+	error:	0,
+	private_data:	NULL,
+};
+
 gpib_buffer_t *read_buffer = NULL, *write_buffer = NULL;
 
 MODULE_PARM(ibbase, "l");
