@@ -53,7 +53,8 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 	char *envptr;
 	int retval;
 	int uDesc;
-	ibConf_t conf;
+	ibConf_t new_conf;
+	ibConf_t *conf;
 	ibBoard_t *board;
 
 	/* load config */
@@ -69,26 +70,26 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 		return -1;
 	}
 
-	init_ibconf( &conf );
-	conf.pad = pad;
-	conf.sad = sad - sad_offset;                        /* device address                   */
-	conf.board = minor;                         /* board number                     */
-	conf.eos = eos;                           /* local eos modes                  */
-	conf.eos_flags = eos_flags;
-	conf.usec_timeout = usec_timeout;
+	init_ibconf( &new_conf );
+	new_conf.pad = pad;
+	new_conf.sad = sad - sad_offset;                        /* device address                   */
+	new_conf.board = minor;                         /* board number                     */
+	new_conf.eos = eos;                           /* local eos modes                  */
+	new_conf.eos_flags = eos_flags;
+	new_conf.usec_timeout = usec_timeout;
 	if( send_eoi )
-		conf.send_eoi = 1;
+		new_conf.send_eoi = 1;
 	else
-		conf.send_eoi = 0;
+		new_conf.send_eoi = 0;
 	// check if it is an interface board
 	board = &ibBoard[ minor ];
-	if( gpib_address_equal( board->pad, board->sad, conf.pad, conf.sad ) )
+	if( gpib_address_equal( board->pad, board->sad, new_conf.pad, new_conf.sad ) )
 	{
-		conf.is_interface = 1;
+		new_conf.is_interface = 1;
 	}else
-		conf.is_interface = 0;
+		new_conf.is_interface = 0;
 
-	uDesc = ibGetDescriptor(conf);
+	uDesc = ibGetDescriptor(new_conf);
 	if(uDesc < 0)
 	{
 		fprintf(stderr, "libgpib: ibdev failed to get descriptor\n");
@@ -96,7 +97,14 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 		return -1;
 	}
 
+	conf = enter_library( uDesc );
+	if( conf == NULL )
+	{
+		exit_library( uDesc, 1 );
+		return -1;
+	}
 	// XXX do local lockout if appropriate
 
+	exit_library( uDesc, 0 );
 	return uDesc;
 }

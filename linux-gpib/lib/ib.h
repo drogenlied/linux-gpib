@@ -28,6 +28,9 @@ extern "C" {
 typedef uint16_t Addr4882_t;
 static const Addr4882_t NOADDR = -1;
 
+/* tells RcvRespMsg() to stop on EOI */
+static const int STOPend = 0x100;
+
 enum sad_special_address
 {
 	NO_SAD = 0,
@@ -49,6 +52,7 @@ extern void FindRQS( int boardID, Addr4882_t addressList[], short *result );
 extern void PPoll( int boardID, short *result );
 extern void PPollConfig( int boardID, Addr4882_t address, int dataLine, int lineSense );
 extern void PPollUnconfig( int boardID, Addr4882_t addressList[] );
+extern void RcvRespMsg( int boardID, void *buffer, long count, int termination );
 extern void SendSetup( int boardID, Addr4882_t addressList[] );
 extern int ThreadIbsta( void );
 extern int ThreadIberr( void );

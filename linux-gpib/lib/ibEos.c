@@ -25,11 +25,44 @@ int ibeos(int ud, int v)
 
 int iblcleos( const ibConf_t *conf )
 {
-	eos_ioctl_t eos_cmd;
+	int use_eos, compare8;
 
-	eos_cmd.eos = conf->eos;
-	eos_cmd.eos_flags = conf->eos_flags;
+	use_eos = conf->eos_flags & REOS;
+	compare8 = conf->eos_flags & BIN;
 
-	return ioctl( interfaceBoard( conf )->fileno, IBEOS, &eos_cmd );
+	return config_read_eos( interfaceBoard( conf ), use_eos, conf->eos, compare8 ) ;
 }
 
+int config_read_eos( ibBoard_t *board, int use_eos_char, int eos_char,
+	int compare_8_bits )
+{
+	eos_ioctl_t eos_cmd;
+	int retval;
+
+	eos_cmd.eos_flags = 0;
+	if( use_eos_char )
+		eos_cmd.eos_flags |= REOS;
+	if( compare_8_bits )
+		eos_cmd.eos_flags |= BIN;
+
+	eos_cmd.eos = 0;
+	if( use_eos_char )
+	{
+		eos_cmd.eos = eos_char;
+		eos_cmd.eos &= 0xff;
+		if( eos_cmd.eos != eos_char )
+		{
+			setIberr( EARG );
+			return -1;
+		}
+	}
+
+	retval = ioctl( board->fileno, IBEOS, &eos_cmd );
+	if( retval < 0 )
+	{
+		setIberr( EDVR );
+		setIbcnt( errno );
+	}
+
+	return retval;
+}

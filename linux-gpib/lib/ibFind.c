@@ -40,7 +40,7 @@ int ibfind(char *dev)
 		conf->send_eoi, conf->eos, conf->eos_flags );
 	if(uDesc < 0)
 	{
-		fprintf(stderr, "ibfind failed to get descriptor\n");
+		fprintf(stderr, "libgpib: ibfind failed to get descriptor\n");
 		return -1;
 	}
 	conf = general_enter_library( uDesc, 1, 0 );

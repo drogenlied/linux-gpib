@@ -89,6 +89,8 @@ extern int addressIsValid( Addr4882_t address );
 extern int addressListIsValid( Addr4882_t addressList[] );
 extern unsigned int numAddresses( Addr4882_t addressList[] );
 extern int remote_enable( const ibBoard_t *board, int enable );
+extern int config_read_eos( ibBoard_t *board, int use_eos_char,
+	int eos_char, int compare_8_bits );
 
 extern int internal_ibpad( ibConf_t *conf, unsigned int address );
 extern int internal_ibsad( ibConf_t *conf, int address );
