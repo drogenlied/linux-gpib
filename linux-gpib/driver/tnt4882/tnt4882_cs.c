@@ -56,8 +56,7 @@ MODULE_PARM(irq_list, "1-4i");
 INT_MODULE_PARM(free_ports, 0);
 
 /* The old way: bit map of interrupts to choose from */
-/* This means pick from 15, 14, 12, 11, 10, 9, 7, 5, 4, and 3 */
-INT_MODULE_PARM(irq_mask, 0xdeb8);
+INT_MODULE_PARM(irq_mask, 0xffff);
 
 /*
    All the PCMCIA modules use PCMCIA_DEBUG to control debugging.  If
@@ -741,7 +740,7 @@ int ni_pcmcia_attach(gpib_board_t *board)
 	// get irq
 	if( request_irq( dev_list->irq.AssignedIRQ, tnt4882_interrupt, isr_flags, "tnt4882", board))
 	{
-		printk("gpib: can't request IRQ %d\n", board->ibirq);
+		printk("gpib: can't request IRQ %d\n", dev_list->irq.AssignedIRQ);
 		return -1;
 	}
 	tnt_priv->irq = dev_list->irq.AssignedIRQ;
