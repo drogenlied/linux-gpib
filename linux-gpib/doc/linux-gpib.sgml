@@ -3359,7 +3359,7 @@ volatile int ibsta;
 		<paramdef>int <parameter>board_desc</parameter></paramdef>
 		<paramdef>void *<parameter>buffer</parameter></paramdef>
 		<paramdef>long <parameter>count</parameter></paramdef>
-		<paramdef>long <parameter>termination</parameter></paramdef>
+		<paramdef>int <parameter>termination</parameter></paramdef>
 	</funcprototype>
 	</funcsynopsis>
 </refsynopsisdiv>
@@ -3369,7 +3369,7 @@ volatile int ibsta;
 	</title>
 	<para>
 	RcvRespMsg() reads data from the bus.
-	A device must already have been addressed as talker (and the
+	A device must have already been addressed as talker (and the
 	board as listener) before calling this function.  Addressing may
 	be accomplished with the
 	<link LINKEND="reference-function-receivesetup">ReceiveSetup()</link>
@@ -3378,7 +3378,8 @@ volatile int ibsta;
 	<para>
 	Up to <parameter>count</parameter> bytes are read into the array
 	specified by <parameter>buffer</parameter>.  The <parameter>termination</parameter>
-	argument specifies the 8-bit end-of-string character whose
+	argument specifies the 8-bit end-of-string character (which must
+	be a value from 0 to 255) whose
 	reception will terminate a read.  <parameter>termination</parameter>
 	can also be set to the 'STOPend' constant, in which case no
 	end-of-string character will be used.  Assertion of the EOI line
@@ -3438,7 +3439,7 @@ volatile int ibsta;
 </refmeta>
 <refnamediv>
 	<refname>Receive</refname>
-	<refpurpose>perform addressing and read data</refpurpose>
+	<refpurpose>perform receive addressing and read data</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
@@ -3449,7 +3450,7 @@ volatile int ibsta;
 		<paramdef>Addr4882_t <parameter>address</parameter></paramdef>
 		<paramdef>void *<parameter>buffer</parameter></paramdef>
 		<paramdef>long <parameter>count</parameter></paramdef>
-		<paramdef>long <parameter>termination</parameter></paramdef>
+		<paramdef>int <parameter>termination</parameter></paramdef>
 	</funcprototype>
 	</funcsynopsis>
 </refsynopsisdiv>
@@ -3476,7 +3477,7 @@ volatile int ibsta;
 </refmeta>
 <refnamediv>
 	<refname>ReceiveSetup</refname>
-	<refpurpose>perform addressing for a read</refpurpose>
+	<refpurpose>perform receive addressing</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
@@ -3503,6 +3504,292 @@ volatile int ibsta;
 	<link LINKEND="reference-function-receive">Receive()</link>, since
 	it does not require
 	addressing and reading of data to be performed separately.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-resetsys">
+<refmeta>
+	<refentrytitle>ResetSys</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ResetSys</refname>
+	<refpurpose>reset system</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>ResetSys</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>Addr4882_t <parameter>addressList[]</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ResetSys() has the following effects:
+	<itemizedlist>
+	<listitem>
+	<para>
+	The remote enable bus line is asserted.
+	</para>
+	</listitem>
+	<listitem>
+	<para>
+	An interface clear is performed (the interface clear bus line is asserted
+	for at least 100 microseconds).
+	</para>
+	</listitem>
+	<listitem>
+	<para>
+	The device clear command is sent to all the devices on the bus.
+	</para>
+	</listitem>
+	<listitem>
+	<para>
+	The *RST message is sent to every device specified in the <parameter>addressList</parameter>.
+	</para>
+	</listitem>
+	</itemizedlist>
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-send">
+<refmeta>
+	<refentrytitle>Send</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>Send</refname>
+	<refpurpose>perform send addressing and write data</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>Send</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>Addr4882_t <parameter>address</parameter></paramdef>
+		<paramdef>const void *<parameter>data</parameter></paramdef>
+		<paramdef>long <parameter>count</parameter></paramdef>
+		<paramdef>int <parameter>eot_mode</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	Send() addresses the device specified by <parameter>address</parameter>
+	as listener, then writes data onto the bus.
+	It is equivalent to a
+	<link LINKEND="reference-function-sendlist">SendList()</link>
+	except it only uses a single GPIB address to specify the listener
+	instead of allowing an array of listeners.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-sendcmds">
+<refmeta>
+	<refentrytitle>SendCmds</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>SendCmds</refname>
+	<refpurpose>write command bytes onto bus</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>SendCmds</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>Addr4882_t <parameter>address</parameter></paramdef>
+		<paramdef>const void *<parameter>cmds</parameter></paramdef>
+		<paramdef>long <parameter>count</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	SendCmds() writes <parameter>count</parameter>
+	<link LINKEND="reference-command-bytes">command byte</link>
+	onto the
+	the GPIB bus from the array <parameter>cmds</parameter>.
+	</para>
+	<para>
+	It is generally not necessary to call SendCmds().  It is provided
+	for advanced users who want direct, low-level access to the GPIB bus.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-senddatabytes">
+<refmeta>
+	<refentrytitle>SendDataBytes</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>SendDataBytes</refname>
+	<refpurpose>write data</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>SendDataBytes</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>const void *<parameter>data</parameter></paramdef>
+		<paramdef>long <parameter>count</parameter></paramdef>
+		<paramdef>int <parameter>eot_mode</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	SendDataBytes() writes data to the bus.
+	One or more devices must have already been addressed as listener (and the
+	board as talker) before calling this function.  Addressing may
+	be accomplished with the
+	<link LINKEND="reference-function-sendsetup">SendSetup()</link>
+	function.
+	</para>
+	<para>
+	<parameter>count</parameter> bytes are written from the array
+	specified by <parameter>data</parameter>.  The <parameter>eot_mode</parameter>
+	argument specifies how the message should be terminated, and may be any of
+	the following values:
+	</para>
+	<para>
+	<table COLSEP="1" ROWSEP="1" ORIENT="port" PGWIDE="0">
+	<title>eot modes</title>
+	<tgroup COLS="3" ALIGN="left" >
+	<thead>
+	<row>
+	<entry>constant</entry>
+	<entry>value</entry>
+	<entry>description</entry>
+	</row>
+	</thead>
+	<tbody>
+	<row>
+	<entry>NULLend</entry>
+	<entry>0</entry>
+	<entry>Do not assert EOI or add a newline at the end of the write.</entry>
+	</row>
+	<row>
+	<entry>DABend</entry>
+	<entry>1</entry>
+	<entry>Assert EOI with the last byte of the write.</entry>
+	</row>
+	<row>
+	<entry>NLend</entry>
+	<entry>2</entry>
+	<entry>Append a newline, and assert EOI with the newline at the end of the write.</entry>
+	</row>
+	</tbody>
+	</tgroup>
+	</table>
+	</para>
+	<para>
+	You may find it simpler to use the slightly higher level functions
+	<link LINKEND="reference-function-send">Send()</link> or
+	<link LINKEND="reference-function-sendlist">SendList()</link>, since
+	they does not require
+	addressing and writing of data to be performed separately.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-sendlist">
+<refmeta>
+	<refentrytitle>SendList</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>SendList</refname>
+	<refpurpose>write data to multiple devices</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>SendList</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>Addr4882_t <parameter>addressList[]</parameter></paramdef>
+		<paramdef>const void *<parameter>data</parameter></paramdef>
+		<paramdef>long <parameter>count</parameter></paramdef>
+		<paramdef>int <parameter>eot_mode</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	SendList() addresses the devices in <parameter>addressList</parameter>
+	as listeners, then writes the contents of the array <parameter>data</parameter>
+	to them.
+	It is equivalent to a
+	<link LINKEND="reference-function-sendsetup">SendSetup()</link>
+	call followed by a
+	<link LINKEND="reference-function-senddatabytes">SendDataBytes()</link>
+	call.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-sendsetup">
+<refmeta>
+	<refentrytitle>SendSetup</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>SendSetup</refname>
+	<refpurpose>perform send addressing</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>SendSetup</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>Addr4882_t <parameter>addressList[]</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	SendSetup() addresses the devices in <parameter>addressList</parameter>
+	as listeners, and addresses the interface board as talker.
+  A subsequent
+	<link LINKEND="reference-function-senddatabytes">SendDataBytes()</link> call
+	will write data to the devices.
+	</para>
+	<para>
+	You may find it simpler to use the slightly higher level functions
+	<link LINKEND="reference-function-send">Send()</link> or
+	<link LINKEND="reference-function-sendlist">SendList()</link>, since
+	they does not require
+	addressing and writing of data to be performed separately.
 	</para>
 </refsect1>
 </refentry>
