@@ -931,9 +931,52 @@ int ni_usb_parallel_poll(gpib_board_t *board, uint8_t *result)
 }
 void ni_usb_parallel_poll_configure(gpib_board_t *board, uint8_t config)
 {
+	int retval;
+	ni_usb_private_t *ni_priv = board->private_data;
+	struct usb_device *usb_dev;
+	int i = 0;
+	struct ni_usb_register writes[1];
+	unsigned int ibsta;
+			
+	writes[i].device = NIUSB_SUBDEV_TNT4882;
+	writes[i].address = nec7210_to_tnt4882_offset(AUXMR);
+	writes[i].value = PPR | config;
+	i++;
+	usb_dev = interface_to_usbdev(ni_priv->bus_interface);
+	retval = ni_usb_write_registers(usb_dev, writes, i, &ibsta);
+	if(retval < 0) 
+	{
+		printk("%s: %s: register write failed, retval=%i\n", __FILE__, __FUNCTION__, retval);		
+		return;// retval;
+	}
+	ni_usb_soft_update_status(board, ibsta, 0);
+	return;// 0;
 }
 void ni_usb_parallel_poll_response(gpib_board_t *board, int ist)
 {
+	int retval;
+	ni_usb_private_t *ni_priv = board->private_data;
+	struct usb_device *usb_dev;
+	int i = 0;
+	struct ni_usb_register writes[1];
+	unsigned int ibsta;
+			
+	writes[i].device = NIUSB_SUBDEV_TNT4882;
+	writes[i].address = nec7210_to_tnt4882_offset(AUXMR);
+	if(ist)
+		writes[i].value = AUX_SPPF;
+	else
+		writes[i].value = AUX_CPPF;
+	i++;
+	usb_dev = interface_to_usbdev(ni_priv->bus_interface);
+	retval = ni_usb_write_registers(usb_dev, writes, i, &ibsta);
+	if(retval < 0) 
+	{
+		printk("%s: %s: register write failed, retval=%i\n", __FILE__, __FUNCTION__, retval);		
+		return;// retval;
+	}
+	ni_usb_soft_update_status(board, ibsta, 0);
+	return;// 0;
 }
 void ni_usb_serial_poll_response(gpib_board_t *board, uint8_t status)
 {
