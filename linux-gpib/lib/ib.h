@@ -110,6 +110,7 @@ int ibpad( int ud, int v );
 int ibpct( int ud );
 int ibppc( int ud, int v );
 int ibrd( int ud, void *buf, long count );
+int ibrda( int ud, void *buf, long count );
 int ibrdf( int ud, const char *file_path );
 int ibrpp( int ud, char *ppr );
 int ibrsc( int ud, int v );
@@ -122,6 +123,7 @@ int ibtmo( int ud, int v );
 int ibtrg( int ud );
 int ibwait( int ud, int mask );
 int ibwrt( int ud, const void *buf, long count );
+int ibwrta( int ud, const void *buf, long count );
 int ibwrtf( int ud, const char *file_path );
 const char* gpib_error_string( int iberr );
 

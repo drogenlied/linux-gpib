@@ -69,7 +69,7 @@ int unlock_board_mutex( ibBoard_t *board );
 int conf_lock_board( ibConf_t *conf );
 int conf_unlock_board( ibConf_t *conf );
 int exit_library( int ud, int error );
-int general_exit_library( int ud, int error, int keep_lock, int status_clear_mask );
+int general_exit_library( int ud, int error, int no_sync_globals, int status_clear_mask );
 ibConf_t * enter_library( int ud );
 ibConf_t * general_enter_library( int ud, int no_lock_board, int ignore_eoip );
 void setIbsta( int status );

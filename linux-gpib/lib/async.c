@@ -23,7 +23,9 @@ void init_async_op( struct async_operation *async )
 {
 	pthread_mutex_init( &async->lock, NULL );
 	async->buffer = NULL;
-	async->length = 0;
-	async->error = 0;
+	async->buffer_length = 0;
 	async->in_progress = 0;
+	async->ibsta = 0;
+	async->ibcntl = 0;
+	async->iberr = 0;
 }

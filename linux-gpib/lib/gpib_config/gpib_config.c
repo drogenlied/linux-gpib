@@ -46,10 +46,12 @@ static void help( void )
 		"\t\tSpecify isa dma channel NUM for boards without plug-and-play cabability.\n");
 	printf("\t-i, --irq NUM\n"
 		"\t\tSpecify irq line NUM for boards without plug-and-play cabability.\n");
-	printf("\t-f, --file STRING\n"
+	printf("\t-f, --file FILEPATH\n"
 		"\t\tSpecify file path for configuration file.  The values in the configuration\n"
 		"\t\tfile will be used as defaults for unspecified options.  The default configuration\n"
 		"\t\tfile is /etc/gpib.conf\n");
+	printf("\t-h, --help\n"
+		"\t\tPrint this help and exit.\n");
 	printf("\t-l, --pci-slot NUM\n"
 		"\t\tSpecify pci slot NUM to select a specific pci board.\n"
 		"\t\tIf used, you must also specify the pci bus with --pci-bus.\n");
@@ -59,12 +61,12 @@ static void help( void )
 		"\t\tSpecify primary gpib address.  NUM should be in the range 0 through 30.\n");
 	printf("\t-s, --sad NUM\n"
 		"\t\tSpecify secondary gpib address.  NUM should be 0 (disabled) or in the range\n"
-		"\t\t0x60 through 0x78.\n");
-	printf("\t-t, --board-type STRING\n"
-		"\t\tSet board type to STRING\n");
+		"\t\t96 through 126 (0x60 through 0x7e hexadecimal).\n");
+	printf("\t-t, --board-type BOARD_TYPE\n"
+		"\t\tSet board type to BOARD_TYPE.\n");
 	printf("\t-u, --pci-bus NUM\n"
 		"\t\tSpecify pci bus NUM to select a specific pci board.\n"
-		"\t\tIf used, you must also specify pci slot with --pci-slot.\n");
+		"\t\tIf used, you must also specify the pci slot with --pci-slot.\n");
 }
 
 static void parse_options( int argc, char *argv[], parsed_options_t *settings )

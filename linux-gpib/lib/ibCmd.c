@@ -20,7 +20,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 
-void* start_async_cmd( void *arg );
+static void* start_async_cmd( void *arg );
 
 int ibcmd(int ud, const void *cmd_buffer, long cnt)
 {
@@ -53,14 +53,14 @@ int ibcmd(int ud, const void *cmd_buffer, long cnt)
 	return exit_library( ud, 0 );
 }
 
-// XXX no timeout for asynchronous?
 int ibcmda( int ud, const void *cmd_buffer, long cnt )
 {
 	ibConf_t *conf;
 	ibBoard_t *board;
 	int retval;
+	int *desc;
 
-	conf = enter_library( ud );
+	conf = general_enter_library( ud, 1, 0 );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 
@@ -80,52 +80,68 @@ int ibcmda( int ud, const void *cmd_buffer, long cnt )
 	}
 
 	pthread_mutex_lock( &conf->async.lock );
-
-	conf->async.buffer = (void*)cmd_buffer;
-	conf->async.length = cnt;
+	if( conf->async.in_progress )
+	{
+		pthread_mutex_unlock( &conf->async.lock );
+		setIberr( EOIP );
+		return exit_library( ud, 1 );
+	}
 	conf->async.in_progress = 1;
+	conf->async.ibsta = 0;
+	conf->async.ibcntl = 0;
+	conf->async.iberr = 0;
+	conf->async.buffer = (void*)cmd_buffer;
+	conf->async.buffer_length = cnt;
+	pthread_mutex_unlock( &conf->async.lock );
 
-	retval = pthread_create( &conf->async.thread,
-		NULL, start_async_cmd, conf );
-	if( retval )
+	desc = malloc( sizeof( *desc) );
+	if( desc == NULL )
 	{
 		setIberr( EDVR );
+		setIbcnt( ENOMEM );
+		return exit_library( ud, 1 );
+	}
+	*desc = ud;
+	retval = pthread_create( &conf->async.thread,
+		NULL, start_async_cmd, desc );
+	if( retval )
+	{
+		free( desc ); desc = NULL;
+		setIberr( EDVR );
 		setIbcnt( retval );
-
 		return exit_library( ud, 1 );
 	}
 	pthread_detach( conf->async.thread );
 
-	return general_exit_library( ud, 0, 1, 0 );
+	return exit_library( ud, 0 );
 }
 
-void* start_async_cmd( void *arg )
+static void* start_async_cmd( void *desc )
 {
 	long count;
 	ibConf_t *conf;
-	int retval;
+	int ud = *((int *) desc );
 
-	conf = arg;
+	free( desc ); desc = NULL;
 
-	// XXX my_ibcmd fiddles with iberr
-	count = my_ibcmd( conf, conf->async.buffer, conf->async.length );
+	conf = enter_library( ud );
+
+	count = my_ibcmd( conf, conf->async.buffer, conf->async.buffer_length );
+	pthread_mutex_lock( &conf->async.lock );
 	if(count < 0)
 	{
-		conf->async.length = 0;
+		conf->async.ibcntl = 0;
+		conf->async.iberr = ThreadIberr();
+		conf->async.ibsta = CMPL | ERR;
 	}else
 	{
-		conf->async.length = count;
+		conf->async.ibcntl = count;
+		conf->async.iberr = 0;
+		conf->async.ibsta = CMPL;
 	}
-
-	retval = conf_unlock_board( conf );
-	if( retval < 0 )
-	{
-		conf->async.length = 0;
-		conf->async.error = EDVR;
-	}
-
 	pthread_mutex_unlock( &conf->async.lock );
 
+	general_exit_library( ud, 0, 1, 0 );
 	return NULL;
 }
 

@@ -60,6 +60,7 @@ GPIB_DUMMY_VERSION {
 		ibpct;
 		ibppc;
 		ibrd;
+		ibrda;
 		ibrdf;
 		ibrpp;
 		ibrsc;
@@ -73,6 +74,7 @@ GPIB_DUMMY_VERSION {
 		ibtrg;
 		ibwait;
 		ibwrt;
+		ibwrta;
 		ibwrtf;
 		gpib_error_string;
 		parse_gpib_conf;

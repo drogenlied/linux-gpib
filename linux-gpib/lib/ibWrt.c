@@ -18,9 +18,12 @@
 #include "ib_internal.h"
 #include <sys/ioctl.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+static void* start_async_write( void *desc );
 
 int find_eos( const uint8_t *buffer, size_t length, int eos, int eos_flags )
 {
@@ -173,6 +176,85 @@ int ibwrt( int ud, const void *rd, long cnt )
 	}
 
 	return general_exit_library( ud, 0, 0, DCAS );
+}
+
+int ibwrta( int ud, const void *buffer, long cnt )
+{
+	ibConf_t *conf;
+	ibBoard_t *board;
+	int retval;
+	int *desc;
+
+	conf = general_enter_library( ud, 1, 0 );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
+
+	board = interfaceBoard( conf );
+
+	pthread_mutex_lock( &conf->async.lock );
+	if( conf->async.in_progress )
+	{
+		pthread_mutex_unlock( &conf->async.lock );
+		setIberr( EOIP );
+		return exit_library( ud, 1 );
+	}
+	conf->async.in_progress = 1;
+	conf->async.ibsta = 0;
+	conf->async.ibcntl = 0;
+	conf->async.iberr = 0;
+	conf->async.buffer = (void*) buffer;
+	conf->async.buffer_length = cnt;
+	pthread_mutex_unlock( &conf->async.lock );
+
+	desc = malloc( sizeof( *desc) );
+	if( desc == NULL )
+	{
+		setIberr( EDVR );
+		setIbcnt( ENOMEM );
+		return exit_library( ud, 1 );
+	}
+	*desc = ud;
+	retval = pthread_create( &conf->async.thread,
+		NULL, start_async_write, desc );
+	if( retval )
+	{
+		free( desc ); desc = NULL;
+		setIberr( EDVR );
+		setIbcnt( retval );
+		return exit_library( ud, 1 );
+	}
+	pthread_detach( conf->async.thread );
+
+	return exit_library( ud, 0 );
+}
+
+static void* start_async_write( void *desc )
+{
+	long count;
+	ibConf_t *conf;
+	int ud = *((int *) desc );
+
+	free( desc ); desc = NULL;
+
+	conf = enter_library( ud );
+
+	count = my_ibwrt( conf, conf->async.buffer, conf->async.buffer_length );
+	pthread_mutex_lock( &conf->async.lock );
+	if(count < 0)
+	{
+		conf->async.ibcntl = 0;
+		conf->async.iberr = ThreadIberr();
+		conf->async.ibsta = CMPL | ERR;
+	}else
+	{
+		conf->async.ibcntl = count;
+		conf->async.iberr = 0;
+		conf->async.ibsta = CMPL;
+	}
+	pthread_mutex_unlock( &conf->async.lock );
+
+	general_exit_library( ud, 0, 1, 0 );
+	return NULL;
 }
 
 ssize_t my_ibwrtf( ibConf_t *conf, const char *file_path )

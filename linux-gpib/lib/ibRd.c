@@ -16,7 +16,11 @@
  ***************************************************************************/
 
 #include <stdio.h>
+#include <pthread.h>
+#include <stdlib.h>
 #include "ib_internal.h"
+
+static void* start_async_read( void *desc );
 
 // sets up bus to receive data from device with address pad/sad
 int InternalReceiveSetup( ibConf_t *conf, Addr4882_t address )
@@ -96,7 +100,6 @@ ssize_t read_data( ibConf_t *conf, uint8_t *buffer, size_t count )
 
 ssize_t my_ibrd( ibConf_t *conf, uint8_t *buffer, size_t count )
 {
-
 	// set eos mode
 	iblcleos( conf );
 
@@ -130,6 +133,85 @@ int ibrd(int ud, void *rd, long cnt)
 	setIbcnt( count );
 
 	return general_exit_library( ud, 0, 0, DCAS );
+}
+
+int ibrda( int ud, void *buffer, long cnt )
+{
+	ibConf_t *conf;
+	ibBoard_t *board;
+	int retval;
+	int *desc;
+
+	conf = general_enter_library( ud, 1, 0 );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
+
+	board = interfaceBoard( conf );
+
+	pthread_mutex_lock( &conf->async.lock );
+	if( conf->async.in_progress )
+	{
+		pthread_mutex_unlock( &conf->async.lock );
+		setIberr( EOIP );
+		return exit_library( ud, 1 );
+	}
+	conf->async.in_progress = 1;
+	conf->async.ibsta = 0;
+	conf->async.ibcntl = 0;
+	conf->async.iberr = 0;
+	conf->async.buffer = buffer;
+	conf->async.buffer_length = cnt;
+	pthread_mutex_unlock( &conf->async.lock );
+
+	desc = malloc( sizeof( *desc) );
+	if( desc == NULL )
+	{
+		setIberr( EDVR );
+		setIbcnt( ENOMEM );
+		return exit_library( ud, 1 );
+	}
+	*desc = ud;
+	retval = pthread_create( &conf->async.thread,
+		NULL, start_async_read, desc );
+	if( retval )
+	{
+		free( desc ); desc = NULL;
+		setIberr( EDVR );
+		setIbcnt( retval );
+		return exit_library( ud, 1 );
+	}
+	pthread_detach( conf->async.thread );
+
+	return exit_library( ud, 0 );
+}
+
+static void* start_async_read( void *desc )
+{
+	long count;
+	ibConf_t *conf;
+	int ud = *((int *) desc );
+
+	free( desc ); desc = NULL;
+
+	conf = enter_library( ud );
+
+	count = my_ibrd( conf, conf->async.buffer, conf->async.buffer_length );
+	pthread_mutex_lock( &conf->async.lock );
+	if(count < 0)
+	{
+		conf->async.ibcntl = 0;
+		conf->async.iberr = ThreadIberr();
+		conf->async.ibsta = CMPL | ERR;
+	}else
+	{
+		conf->async.ibcntl = count;
+		conf->async.iberr = 0;
+		conf->async.ibsta = CMPL;
+	}
+	pthread_mutex_unlock( &conf->async.lock );
+
+	general_exit_library( ud, 0, 1, 0 );
+	return NULL;
 }
 
 int ibrdf(int ud, const char *file_path )

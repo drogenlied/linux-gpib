@@ -387,11 +387,14 @@ ibConf_t * general_enter_library( int ud, int no_lock_board, int ignore_eoip )
 	{
 		if( ignore_eoip == 0 )
 		{
+			pthread_mutex_lock( &conf->async.lock );
 			if( conf->async.in_progress )
 			{
+				pthread_mutex_unlock( &conf->async.lock );
 				setIberr( EOIP );
 				return NULL;
 			}
+			pthread_mutex_unlock( &conf->async.lock );
 		}
 
 		retval = conf_lock_board( conf );
@@ -445,8 +448,12 @@ int ibstatus( ibConf_t *conf, int error, int clear_mask )
 		}
 	}
 
-	// XXX
-	status |= CMPL;
+	pthread_mutex_lock( &conf->async.lock );
+	if( conf->async.in_progress == 0 )
+	{
+		status |= CMPL;
+	}
+	pthread_mutex_unlock( &conf->async.lock );
 	if( error ) status |= ERR;
 	if( conf->timed_out )
 		status |= TIMO;
@@ -463,7 +470,7 @@ int exit_library( int ud, int error )
 	return general_exit_library( ud, error, 0, 0 );
 }
 
-int general_exit_library( int ud, int error, int keep_lock, int status_clear_mask )
+int general_exit_library( int ud, int error, int no_sync_globals, int status_clear_mask )
 {
 	ibConf_t *conf = ibConfigs[ ud ];
 	ibBoard_t *board;
@@ -482,18 +489,16 @@ int general_exit_library( int ud, int error, int keep_lock, int status_clear_mas
 
 	status = ibstatus( conf, error, status_clear_mask );
 
-	if( !keep_lock )
+	retval = conf_unlock_board( conf );
+	if( retval < 0 )
 	{
-		retval = conf_unlock_board( conf );
-		if( retval < 0 )
-		{
-			setIberr( EDVR );
-			status |= ERR;
-			setIbsta( status );
-		}
+		setIberr( EDVR );
+		status |= ERR;
+		setIbsta( status );
 	}
 
-	sync_globals();
+	if( no_sync_globals == 0 )
+		sync_globals();
 
 	return status;
 }

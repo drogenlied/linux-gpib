@@ -82,6 +82,7 @@ int ibwait( int ud, int mask )
 	ibConf_t *conf;
 	int retval;
 	int status;
+	int error = 0;
 
 	conf = general_enter_library( ud, 1, 0 );
 	if( conf == NULL )
@@ -91,15 +92,19 @@ int ibwait( int ud, int mask )
 	if( retval < 0 )
 		return exit_library( ud, 1 );
 
-	status = general_exit_library( ud, 0, 0, mask & ( DTAS | DCAS ) );
-
-	if( conf->async.in_progress && ( status & CMPL ) )
+	if( conf->async.in_progress && ( mask & CMPL ) )
 	{
 		pthread_mutex_lock( &conf->async.lock );
-		conf->async.in_progress = 0;
-		setIbcnt( conf->async.length );
+		if( conf->async.ibsta & CMPL )
+			conf->async.in_progress = 0;
+		setIbcnt( conf->async.ibcntl );
+		setIberr( conf->async.iberr );
+		if( conf->async.ibsta & ERR )
+			error++;
 		pthread_mutex_unlock( &conf->async.lock );
 	}
+
+	status = general_exit_library( ud, error, 0, mask & ( DTAS | DCAS ) );
 
 	return status;
 }
