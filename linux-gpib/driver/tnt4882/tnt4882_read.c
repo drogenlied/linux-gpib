@@ -211,8 +211,6 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 		tnt_writeb( tnt_priv, STOP, CMDR );
 	udelay(1);
 
-	if (!(tnt_readb( tnt_priv, STS1 ) & S_DONE)) printk("tnt4882: bug! Transfer not done!\n");
-
 	nec7210_set_reg_bits( nec_priv, IMR1, 0xff, imr1_bits );
 	nec7210_set_reg_bits( nec_priv, IMR2, 0xff, imr2_bits );
 	tnt_priv->imr0_bits = imr0_bits;
