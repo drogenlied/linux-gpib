@@ -52,11 +52,8 @@
 #ifdef PCMCIA_DEBUG
 static int pc_debug = PCMCIA_DEBUG;
 static char *version =
-"ines_cs.c 0.10 1997/07/01 19:30:58 (Claus Schroeter)";
+"ines_cs.c 0.11";
 #endif
-
-
-#define GPIB_MAJOR 31
 
 /*====================================================================*/
 
@@ -160,9 +157,10 @@ typedef struct local_info_t {
 
 /*====================================================================*/
 
-static void cs_error(int func, int ret)
+static void cs_error(client_handle_t handle, int func, int ret)
 {
-    CardServices(ReportError, dev_info, (void *)func, (void *)ret);
+    error_info_t err = { func, ret };
+    CardServices(ReportError, handle, &err);
 }
 
 /*======================================================================
@@ -233,8 +231,8 @@ static dev_link_t *gpib_attach(void)
     client_reg.Version = 0x0210;
     client_reg.event_callback_args.client_data = link;
     ret = CardServices(RegisterClient, &link->handle, &client_reg);
-    if (ret != 0) {
-	cs_error(RegisterClient, ret);
+    if (ret != CS_SUCCESS) { 
+	cs_error(link->handle, RegisterClient, ret);
 	gpib_detach(link);
 	return NULL;
     }
@@ -338,7 +336,7 @@ static void gpib_config(dev_link_t *link)
 	link->conf.ConfigBase = parse.config.base;
     } while (0);
     if (i != CS_SUCCESS) {
-	cs_error(ParseTuple, i);
+	cs_error(link->handle, ParseTuple, i);
 	link->state &= ~DEV_CONFIG_PENDING;
 	return;
     }
@@ -393,7 +391,7 @@ static void gpib_config(dev_link_t *link)
 	    }
 
 	  if (i != CS_SUCCESS) {
-	      cs_error(RequestIO, i);
+	      cs_error(link->handle, RequestIO, i);
 	  }
 	 } else {
 	    printk("ines_cs: can't get card information\n");
@@ -405,7 +403,7 @@ static void gpib_config(dev_link_t *link)
 	*/
 	i = CardServices(RequestIRQ, link->handle, &link->irq);
 	if (i != CS_SUCCESS) {
-	    cs_error(RequestIRQ, i);
+	    cs_error(link->handle, RequestIRQ, i);
 	    break;
 	}
         printk(KERN_DEBUG "ines_cs: IRQ_Line=%d\n",link->irq.AssignedIRQ);
@@ -416,7 +414,7 @@ static void gpib_config(dev_link_t *link)
 	*/
 	i = CardServices(RequestConfiguration, link->handle, &link->conf);
 	if (i != CS_SUCCESS) {
-	    cs_error(RequestConfiguration, i);
+	    cs_error(link->handle, RequestConfiguration, i);
 	    break;
 	}
         /*  for the ines card we have to setup the configuration registers in
@@ -428,14 +426,14 @@ static void gpib_config(dev_link_t *link)
         req.AccessSpeed=2; 
         i= CardServices(RequestWindow,&handle,&req);
 	if (i != CS_SUCCESS) {
-	    cs_error(RequestWindow, i);
+	    cs_error(link->handle, RequestWindow, i);
 	    break;
         }
         mem.CardOffset=0;
         mem.Page=0;
         i= CardServices(MapMemPage,handle,&mem);
 	if (i != CS_SUCCESS) {
-	    cs_error(MapMemPage, i);
+	    cs_error(link->handle, MapMemPage, i);
 	    break;
         }
         virt=ioremap(req.Base,0x800);
@@ -448,8 +446,8 @@ static void gpib_config(dev_link_t *link)
 
     /* At this point, the dev_node_t structure(s) should be
        initialized and arranged in a linked list at link->dev. */
-    sprintf(dev->node.dev_name, "gpib0");
-    dev->node.major = GPIB_MAJOR;
+    sprintf(dev->node.dev_name, "ines_cs");
+    dev->node.major = 0;
     dev->node.minor = 0;
     link->dev = &dev->node;
 
