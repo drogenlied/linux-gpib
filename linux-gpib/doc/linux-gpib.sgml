@@ -445,15 +445,15 @@ Default is <option>--sre</option>.</para>
 	<tbody>
 	<row>
 	<entry>Agilent</entry>
-	<entry>	<link LINKEND="agilent-82357a">82357A</link></entry>
-	<entry>agilent_82357a.ko</entry>
-	<entry>agilent_82357a</entry>
+	<entry><link LINKEND="agilent-82350b">82350B</link></entry>
+	<entry>agilent_82350b.ko</entry>
+	<entry>agilent_82350b</entry>
 	</row>
 	<row>
 	<entry>Agilent</entry>
-	<entry>82350B</entry>
-	<entry>agilent_82350b.ko</entry>
-	<entry>agilent_82350b</entry>
+	<entry><link LINKEND="agilent-82357a">82357A</link></entry>
+	<entry>agilent_82357a.ko</entry>
+	<entry>agilent_82357a</entry>
 	</row>
 	<row>
 	<entry>Capital Equipment Corporation</entry>
@@ -648,6 +648,18 @@ Default is <option>--sre</option>.</para>
 </section>
 <section ID="board-specific-notes">
 <title>Board-Specific Notes</title>
+<section ID="agilent-82350b">
+<title>Agilent 82350B</title>
+<para>
+The Agilent 82350B does not support detection of an end-of-string character
+in hardware, it only automatically detects the when the EOI 
+line is asserted.  Thus if you use the REOS 
+flag for a read, the board's fifos will
+not be used for the transfer.  This will greatly reduce the maximum transfer
+rate for your board (which may or may not be noticeable depending on the
+device you are reading from).
+</para>
+</section>
 <section ID="agilent-82357a">
 <title>Agilent 82357A</title>
 <para>
