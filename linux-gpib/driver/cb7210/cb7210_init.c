@@ -28,8 +28,6 @@
 #include <linux/pci_ids.h>
 #include <linux/string.h>
 
-#define PCI_DEVICE_ID_CBOARDS_PCI_GPIB 0x6
-
 MODULE_LICENSE("GPL");
 
 int cb_pci_attach(gpib_board_t *board);
@@ -339,13 +337,18 @@ int cb_pci_attach(gpib_board_t *board)
 		PCI_DEVICE_ID_CBOARDS_PCI_GPIB, NULL);
 	if(cb_priv->pci_device == NULL)
 	{
-		printk("GPIB: no PCI-GPIB board found\n");
+		cb_priv->pci_device = gpib_pci_find_device( board, PCI_VENDOR_ID_CBOARDS,
+			PCI_DEVICE_ID_CBOARDS_CPCI_GPIB, NULL);
+	}
+	if(cb_priv->pci_device == NULL)
+	{
+		printk( "cb7210: no PCI-GPIB or CPCI-GPIB board found\n" );
 		return -1;
 	}
 
 	if(pci_enable_device(cb_priv->pci_device))
 	{
-		printk("error enabling pci device\n");
+		printk( "cb7210: error enabling pci device\n" );
 		return -1;
 	}
 
@@ -358,7 +361,7 @@ int cb_pci_attach(gpib_board_t *board)
 	isr_flags |= SA_SHIRQ;
 	if(request_irq(cb_priv->pci_device->irq, cb_pci_interrupt, isr_flags, "pci-gpib", board))
 	{
-		printk("gpib: can't request IRQ %d\n",cb_priv->pci_device->irq);
+		printk( "cb7210: can't request IRQ %d\n",cb_priv->pci_device->irq );
 		return -1;
 	}
 	cb_priv->irq = cb_priv->pci_device->irq;

@@ -24,7 +24,11 @@
 #include "gpibP.h"
 #include "amccs5933.h"
 
-#define PCI_DEVICE_ID_CBOARDS_PCI_GPIB 0x6
+enum
+{
+	PCI_DEVICE_ID_CBOARDS_PCI_GPIB = 0x6,
+	PCI_DEVICE_ID_CBOARDS_CPCI_GPIB = 0xe,
+};
 
 // struct which defines private_data for cb7210 boards
 typedef struct

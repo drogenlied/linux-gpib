@@ -33,6 +33,8 @@ Measurement Computing
   PCI-GPIB/300k        cbi_pci                          cb7210.o           Y
   PCI-GPIB/1M          cbi_pci                          cb7210.o           ?
                        cbi_pci_accel                                       ?
+  CPCI-GPIB            cbi_pci                          cb7210.o           ?
+                       cbi_pci_accel                                       ?
   PCMCIA-GPIB          cbi_pcmcia                       cb7210.o           Y
                        cbi_pcmcia_accel                                    ?
 
