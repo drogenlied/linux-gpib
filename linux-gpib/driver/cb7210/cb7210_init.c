@@ -70,10 +70,12 @@ void cb7210_request_system_control( gpib_board_t *board, int request_control )
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 
 	if( request_control )
-		write_byte( nec_priv, HS_SYS_CONTROL, HS_MODE );
-	else
-		write_byte( nec_priv, 0, HS_MODE );
+	{
+		priv->hs_mode_bits |= HS_SYS_CONTROL;
+	}else
+		priv->hs_mode_bits &= ~HS_SYS_CONTROL;
 
+	outb( priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
 	nec7210_request_system_control( board, &priv->nec7210_priv, request_control );
 }
 void cb7210_interface_clear(gpib_board_t *board, int assert)
@@ -186,10 +188,14 @@ gpib_interface_t cb_isa_interface =
 
 int cb7210_allocate_private(gpib_board_t *board)
 {
+	cb7210_private_t *cb_priv;
+
 	board->private_data = kmalloc(sizeof(cb7210_private_t), GFP_KERNEL);
 	if(board->private_data == NULL)
 		return -1;
 	memset(board->private_data, 0, sizeof(cb7210_private_t));
+	cb_priv = board->private_data;
+	init_nec7210_private( &cb_priv->nec7210_priv );
 	return 0;
 }
 
@@ -221,22 +227,60 @@ int cb7210_generic_attach(gpib_board_t *board)
 	return 0;
 }
 
-void cb7210_init(cb7210_private_t *cb_priv, const gpib_board_t *board )
+/* Returns bits to be sent to base+9 to configure irq level on isa-gpib.
+ * Returns zero on failure.
+ */
+unsigned int intr_level_bits(unsigned int irq)
+{
+	switch(irq)
+	{
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+			return irq - 1;
+			break;
+		case 7:
+			return 0x5;
+			break;
+		case 10:
+			return 0x6;
+			break;
+		case 11:
+			return 0x7;
+			break;
+		default:
+			return 0;
+			break;
+	}
+}
+
+void cb7210_init( cb7210_private_t *cb_priv, const gpib_board_t *board, int accel )
 {
 	nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
+	unsigned long iobase = nec_priv->iobase;
 
-	// put in nec7210 compatibility mode and configure board irq
-	write_byte(nec_priv, HS_RESET7210, HS_INT_LEVEL);
-	write_byte(nec_priv, 0, HS_INT_LEVEL);
+	outb( HS_RESET7210, iobase + HS_INT_LEVEL );
+	outb( intr_level_bits( board->ibirq ), iobase + HS_INT_LEVEL );
 
+	outb( HS_TX_ENABLE | HS_RX_ENABLE, iobase + HS_MODE );
 	nec7210_board_reset( nec_priv, board );
 
+	if( accel )
+	{
+		cb_priv->hs_mode_bits = HS_HF_INT_EN;
+	} else
+	{
+		cb_priv->hs_mode_bits = 0;
+	}
+	outb( cb_priv->hs_mode_bits, iobase + HS_MODE );
 	/* set clock register for maximum (20 MHz) driving frequency
 	 * ICR should be set to clock in megahertz (1-15) and to zero
 	 * for clocks faster than 15 MHz (max 20MHz) */
 	write_byte(nec_priv, ICR | 0, AUXMR);
 
 	nec7210_board_online( nec_priv, board );
+	outb( cb_priv->hs_mode_bits, iobase + HS_MODE );
 }
 
 int cb_pci_attach(gpib_board_t *board)
@@ -252,7 +296,7 @@ int cb_pci_attach(gpib_board_t *board)
 
 	cb_priv = board->private_data;
 	nec_priv = &cb_priv->nec7210_priv;
-	
+
 	cb_priv->pci_device = gpib_pci_find_device( board, PCI_VENDOR_ID_CBOARDS,
 		PCI_DEVICE_ID_CBOARDS_PCI_GPIB, NULL);
 	if(cb_priv->pci_device == NULL)
@@ -288,7 +332,7 @@ int cb_pci_attach(gpib_board_t *board)
 		INBOX_INTR_CS_BIT;
 	outl(bits, cb_priv->amcc_iobase + INTCSR_REG );
 
-	cb7210_init( cb_priv, board );
+	cb7210_init( cb_priv, board, 0 );
 
 	return 0;
 }
@@ -314,34 +358,6 @@ void cb_pci_detach(gpib_board_t *board)
 		}
 	}
 	cb7210_generic_detach(board);
-}
-
-/* Returns bits to be sent to base+9 to configure irq level on isa-gpib.
- * Returns zero on failure.
- */
-unsigned int intr_level_bits(unsigned int irq)
-{
-	switch(irq)
-	{
-		case 2:
-		case 3:
-		case 4:
-		case 5:
-			return irq - 1;
-			break;
-		case 7:
-			return 0x5;
-			break;
-		case 10:
-			return 0x6;
-			break;
-		case 11:
-			return 0x7;
-			break;
-		default:
-			return 0;
-			break;
-	}
 }
 
 int cb_isa_attach(gpib_board_t *board)
@@ -376,7 +392,7 @@ int cb_isa_attach(gpib_board_t *board)
 	}
 	cb_priv->irq = board->ibirq;
 
-	cb7210_init( cb_priv, board );
+	cb7210_init( cb_priv, board, 0 );
 
 	return 0;
 }
@@ -412,8 +428,8 @@ int init_module(void)
 	gpib_register_driver(&cb_isa_interface);
 
 #if defined(GPIB_CONFIG_PCMCIA)
-
 	gpib_register_driver(&cb_pcmcia_interface);
+	gpib_register_driver(&cb_pcmcia_accel_interface);
 	err += cb_pcmcia_init_module();
 #endif
 	if(err)
@@ -428,6 +444,7 @@ void cleanup_module(void)
 	gpib_unregister_driver(&cb_isa_interface);
 #if defined(GPIB_CONFIG_PCMCIA)
 	gpib_unregister_driver(&cb_pcmcia_interface);
+	gpib_unregister_driver(&cb_pcmcia_accel_interface);
 	cb_pcmcia_cleanup_module();
 #endif
 }

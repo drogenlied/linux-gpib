@@ -37,9 +37,9 @@ void nec7210_interrupt( gpib_board_t *board, nec7210_private_t *priv )
 void nec7210_interrupt_have_status( gpib_board_t *board,
 	nec7210_private_t *priv, int status1, int status2 )
 {
-	unsigned long flags;
+	unsigned long flags, dma_flags;
 
-	spin_lock(&board->spinlock);
+	spin_lock_irqsave( &priv->lock, flags );
 
 	// record service request in status
 	if(status2 & HR_SRQI)
@@ -86,7 +86,7 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 	// check for dma read transfer complete
 	if(test_bit(DMA_READ_IN_PROGRESS_BN, &priv->state))
 	{
-		flags = claim_dma_lock();
+		dma_flags = claim_dma_lock();
 		disable_dma(priv->dma_channel);
 		clear_dma_ff(priv->dma_channel);
 		if((status1 & HR_END) || get_dma_residue(priv->dma_channel) == 0)
@@ -94,7 +94,7 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 			clear_bit(DMA_READ_IN_PROGRESS_BN, &priv->state);
 		}else
 			enable_dma(priv->dma_channel);
-		release_dma_lock(flags);
+		release_dma_lock( dma_flags );
 	}
 
 	if((status1 & HR_DO))
@@ -103,7 +103,7 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 		if(test_bit(DMA_WRITE_IN_PROGRESS_BN, &priv->state))	// write data, isa dma mode
 		{
 			// check if dma transfer is complete
-			flags = claim_dma_lock();
+			dma_flags = claim_dma_lock();
 			disable_dma(priv->dma_channel);
 			clear_dma_ff(priv->dma_channel);
 			if(get_dma_residue(priv->dma_channel) == 0)
@@ -114,7 +114,7 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 				clear_bit(WRITE_READY_BN, &priv->state);
 				enable_dma(priv->dma_channel);
 			}
-			release_dma_lock(flags);
+			release_dma_lock( dma_flags );
 		}else
 		{
 		}
@@ -153,12 +153,12 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 		push_gpib_event( &board->event_queue, EventDevTrg );
 	}
 
-	spin_unlock(&board->spinlock);
+	spin_unlock_irqrestore( &priv->lock, flags );
 
-	if( ( status1 & priv->imr1_bits ) || ( status2 & priv->imr2_bits ) )
+	if( ( status1 & priv->reg_bits[ IMR1 ] ) || ( status2 & priv->reg_bits[ IMR2 ] ) )
 	{
 		GPIB_DPRINTK( "isr1 0x%x, imr1 0x%x, isr2 0x%x, imr2 0x%x, status 0x%x\n",
-			status1, priv->imr1_bits, status2, priv->imr2_bits, board->status);
+			status1, priv->reg_bits[ IMR1 ], status2, priv->reg_bits[ IMR2 ], board->status);
 		wake_up_interruptible( &board->wait ); /* wake up sleeping process */
 	}
 }

@@ -42,17 +42,32 @@ void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp )
 
 void cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 {
-	int hs_status;
+	int hs_status, status1, status2;
 	gpib_board_t *board = arg;
 	cb7210_private_t *priv = board->private_data;
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 
-	if((hs_status = inb(nec_priv->iobase + HS_STATUS)))
+	if( ( hs_status = inb( nec_priv->iobase + HS_STATUS ) ) )
 	{
-		outb(HS_CLR_SRQ_INT | HS_CLR_EOI_INT |
-			HS_CLR_EMPTY_INT | HS_CLR_HF_INT, nec_priv->iobase + HS_MODE);
-// printk("gpib: cbi488 interrupt 0x%x\n", hs_status);
-	}
+		GPIB_DPRINTK( "cb7210: cbi488 interrupt 0x%x\n", hs_status );
 
-	nec7210_interrupt(board, nec_priv);
+		outb( priv->hs_mode_bits | HS_CLR_SRQ_INT | HS_CLR_EOI_EMPTY_INT | HS_CLR_HF_INT,
+			nec_priv->iobase + HS_MODE );
+		if( ( hs_status & ( HS_HALF_FULL | HS_EOI_INT | HS_TX_MSB_EMPTY | HS_TX_LSB_EMPTY ) ) )
+			wake_up_interruptible( &board->wait );
+	}
+	GPIB_DPRINTK( " hs mode bits 0x%x\n", priv->hs_mode_bits );
+	if( hs_status & HS_HALF_FULL)
+	{
+		if( priv->hs_mode_bits & HS_TX_ENABLE )
+			priv->out_fifo_half_empty = 1;
+		if( priv->hs_mode_bits & HS_RX_ENABLE )
+			priv->in_fifo_half_full = 1;
+	}
+	if( ( priv->hs_mode_bits & HS_ENABLE_MASK ) == 0 )
+		status1 = read_byte( nec_priv, ISR1 );
+	else
+		status1 = 0;
+	status2 = read_byte( nec_priv, ISR2 );
+	nec7210_interrupt_have_status( board, nec_priv, status1, status2 );
 }

@@ -87,17 +87,17 @@ void nec7210_secondary_address(const gpib_board_t *board, nec7210_private_t *pri
 		// put secondary address in address1
 		write_byte(priv, HR_ARS | (address & ADDRESS_MASK), ADR);
 		// go to address mode 2
-		priv->admr_bits &= ~HR_ADM0;
-		priv->admr_bits |= HR_ADM1;
+		priv->reg_bits[ ADMR ] &= ~HR_ADM0;
+		priv->reg_bits[ ADMR ] |= HR_ADM1;
 	}else
 	{
 		// disable address1 register
 		write_byte(priv, HR_ARS | HR_DT | HR_DL, ADR);
 		// go to address mode 1
-		priv->admr_bits |= HR_ADM0;
-		priv->admr_bits &= ~HR_ADM1;
+		priv->reg_bits[ ADMR ] |= HR_ADM0;
+		priv->reg_bits[ ADMR ] &= ~HR_ADM1;
 	}
-	write_byte(priv, priv->admr_bits, ADMR);
+	write_byte( priv, priv->reg_bits[ ADMR ], ADMR );
 }
 
 unsigned int update_status_nolock( gpib_board_t *board, nec7210_private_t *priv )
@@ -146,22 +146,22 @@ unsigned int nec7210_update_status(gpib_board_t *board, nec7210_private_t *priv)
 	unsigned long flags;
 	unsigned int retval;
 
-	spin_lock_irqsave( &board->spinlock, flags );
+	spin_lock_irqsave( &priv->lock, flags );
 	retval = update_status_nolock( board, priv );
-	spin_unlock_irqrestore( &board->spinlock, flags );
+	spin_unlock_irqrestore( &priv->lock, flags );
 
 	return retval;
 }
 
-unsigned int nec7210_set_admr_bits( nec7210_private_t *priv, unsigned int mask, int set )
+unsigned int nec7210_set_reg_bits( nec7210_private_t *priv, unsigned int reg,
+	unsigned int mask, int set )
 {
 	if( set )
-		priv->admr_bits |= mask;
+		priv->reg_bits[ reg ] |= mask;
 	else
-		priv->admr_bits &= ~mask;
-	write_byte( priv, priv->admr_bits, ADMR );
-
-	return priv->admr_bits;
+		priv->reg_bits[ reg ] &= ~mask;
+	write_byte( priv, priv->reg_bits[ reg ], reg );
+	return priv->reg_bits[ reg ];
 }
 
 unsigned int nec7210_set_auxa_bits( nec7210_private_t *priv, unsigned int mask, int set )
@@ -184,6 +184,6 @@ EXPORT_SYMBOL( nec7210_parallel_poll );
 EXPORT_SYMBOL( nec7210_primary_address );
 EXPORT_SYMBOL( nec7210_secondary_address );
 EXPORT_SYMBOL( nec7210_update_status );
-EXPORT_SYMBOL( nec7210_set_admr_bits );
+EXPORT_SYMBOL( nec7210_set_reg_bits );
 EXPORT_SYMBOL( nec7210_set_auxa_bits );
 

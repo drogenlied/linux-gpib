@@ -34,35 +34,43 @@ typedef struct
 	// base address of amccs5933 pci chip
 	unsigned long amcc_iobase;
 	unsigned int irq;
+	volatile uint8_t hs_mode_bits;
+	volatile unsigned out_fifo_half_empty : 1;
+	volatile unsigned in_fifo_half_full : 1;
 } cb7210_private_t;
 
 // interfaces
 extern gpib_interface_t cb_pci_interface;
 extern gpib_interface_t cb_isa_interface;
 extern gpib_interface_t cb_pcmcia_interface;
+extern gpib_interface_t cb_pcmcia_accel_interface;
 
 // interrupt service routines
 void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp);
 void cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
 // interface functions
-ssize_t cb7210_read(gpib_board_t *board, uint8_t *buffer, size_t length, int
- *end);
-ssize_t cb7210_write(gpib_board_t *board, uint8_t *buffer, size_t length, int
- send_eoi);
+ssize_t cb7210_read( gpib_board_t *board, uint8_t *buffer, size_t length,
+	int *end );
+ssize_t cb7210_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
+	int *end );
+ssize_t cb7210_write( gpib_board_t *board, uint8_t *buffer, size_t length,
+	int send_eoi );
+ssize_t cb7210_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length,
+	int send_eoi );
 ssize_t cb7210_command(gpib_board_t *board, uint8_t *buffer, size_t length);
 int cb7210_take_control(gpib_board_t *board, int synchronous);
 int cb7210_go_to_standby(gpib_board_t *board);
 void cb7210_request_system_control( gpib_board_t *board, int request_control );
 void cb7210_interface_clear(gpib_board_t *board, int assert);
 void cb7210_remote_enable(gpib_board_t *board, int enable);
-void cb7210_enable_eos(gpib_board_t *board, uint8_t eos_byte, int
- compare_8_bits);
+void cb7210_enable_eos(gpib_board_t *board, uint8_t eos_byte,
+	int compare_8_bits);
 void cb7210_disable_eos(gpib_board_t *board);
 unsigned int cb7210_update_status(gpib_board_t *board);
 void cb7210_primary_address(gpib_board_t *board, unsigned int address);
-void cb7210_secondary_address(gpib_board_t *board, unsigned int address, int
- enable);
+void cb7210_secondary_address(gpib_board_t *board, unsigned int address,
+	int enable);
 int cb7210_parallel_poll(gpib_board_t *board, uint8_t *result);
 void cb7210_serial_poll_response(gpib_board_t *board, uint8_t status);
 uint8_t cb7210_serial_poll_status( gpib_board_t *board );
@@ -72,7 +80,7 @@ int cb7210_line_status( const gpib_board_t *board );
 // utility functions
 void cb7210_generic_detach(gpib_board_t *board);
 int cb7210_generic_attach(gpib_board_t *board);
-void cb7210_init( cb7210_private_t *priv, const gpib_board_t *board );
+void cb7210_init( cb7210_private_t *priv, const gpib_board_t *board, int accel );
 
 // pcmcia init/cleanup
 int cb_pcmcia_init_module(void);
@@ -83,6 +91,9 @@ static const int cb7210_reg_offset = 1;
 
 // uses 10 ioports
 static const int cb7210_iosize = 10;
+
+// fifo size in bytes
+static const int cb7210_fifo_size = 2048;
 
 // cb7210 specific registers and bits
 enum cb7210_regs
@@ -131,12 +142,12 @@ enum bus_status_bits
  */
 enum hs_mode_bits
 {
+	HS_ENABLE_MASK = 0x3,
 	HS_TX_ENABLE = ( 1 << 0 ),
 	HS_RX_ENABLE = ( 1 << 1 ),
 	HS_HF_INT_EN = ( 1 << 3 ),
 	HS_CLR_SRQ_INT = ( 1 << 4 ),
-	HS_CLR_EOI_INT = ( 1 << 5 ), /* RX enabled */
-	HS_CLR_EMPTY_INT = ( 1 << 5 ), /* TX enabled */
+	HS_CLR_EOI_EMPTY_INT = ( 1 << 5 ),
 	HS_CLR_HF_INT = ( 1 << 6 ),
 	HS_SYS_CONTROL = ( 1 << 7 ),
 };
@@ -148,9 +159,9 @@ enum hs_status_bits
 	HS_HALF_FULL = ( 1 << 1 ),
 	HS_SRQ_INT = ( 1 << 2 ),
 	HS_EOI_INT = ( 1 << 3 ),
-	HS_TX_MSB_NOT_EMPTY = ( 1 << 4 ),
+	HS_TX_MSB_EMPTY = ( 1 << 4 ),
 	HS_RX_MSB_NOT_EMPTY = ( 1 << 5 ),
-	HS_TX_LSB_NOT_EMPTY = ( 1 << 6 ),
+	HS_TX_LSB_EMPTY = ( 1 << 6 ),
 	HS_RX_LSB_NOT_EMPTY = ( 1 << 7 ),
 };
 

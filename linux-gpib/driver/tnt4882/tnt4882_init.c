@@ -178,10 +178,14 @@ gpib_interface_t ni_isa_interface =
 
 int tnt4882_allocate_private(gpib_board_t *board)
 {
+	tnt4882_private_t *tnt_priv;
+
 	board->private_data = kmalloc(sizeof(tnt4882_private_t), GFP_KERNEL);
 	if(board->private_data == NULL)
 		return -1;
 	memset(board->private_data, 0, sizeof(tnt4882_private_t));
+	tnt_priv = board->private_data;
+	init_nec7210_private( &tnt_priv->nec7210_priv );
 	return 0;
 }
 

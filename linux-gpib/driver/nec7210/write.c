@@ -44,10 +44,10 @@ static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 			break;
 		}
 
-		spin_lock_irqsave(&board->spinlock, flags);
+		spin_lock_irqsave(&priv->lock, flags);
 		clear_bit(WRITE_READY_BN, &priv->state);
 		write_byte(priv, buffer[ count++ ], CDOR);
-		spin_unlock_irqrestore(&board->spinlock, flags);
+		spin_unlock_irqrestore(&priv->lock, flags);
 	}
 	// wait last byte has been sent
 	if( wait_event_interruptible( board->wait,
@@ -74,7 +74,7 @@ static ssize_t __dma_write(gpib_board_t *board, nec7210_private_t *priv, dma_add
 	int residue = 0;
 	int retval = 0;
 
-	spin_lock_irqsave(&board->spinlock, flags);
+	spin_lock_irqsave(&priv->lock, flags);
 
 	/* program dma controller */
 	dma_irq_flags = claim_dma_lock();
@@ -87,13 +87,12 @@ static ssize_t __dma_write(gpib_board_t *board, nec7210_private_t *priv, dma_add
 	release_dma_lock(dma_irq_flags);
 
 	// enable board's dma for output
-	priv->imr2_bits |= HR_DMAO;
-	write_byte(priv, priv->imr2_bits, IMR2);
+	nec7210_set_reg_bits( priv, IMR2, HR_DMAO, 1 );
 
 	clear_bit(WRITE_READY_BN, &priv->state);
 	set_bit(DMA_WRITE_IN_PROGRESS_BN, &priv->state);
 
-	spin_unlock_irqrestore(&board->spinlock, flags);
+	spin_unlock_irqrestore(&priv->lock, flags);
 
 	// suspend until message is sent
 	if(wait_event_interruptible(board->wait, test_bit(DMA_WRITE_IN_PROGRESS_BN, &priv->state) == 0 ||
@@ -107,8 +106,7 @@ static ssize_t __dma_write(gpib_board_t *board, nec7210_private_t *priv, dma_add
 	clear_bit(DMA_WRITE_IN_PROGRESS_BN, &priv->state);
 
 	// disable board's dma
-	priv->imr2_bits &= ~HR_DMAO;
-	write_byte(priv, priv->imr2_bits, IMR2);
+	nec7210_set_reg_bits( priv, IMR2, HR_DMAO, 0 );
 
 	dma_irq_flags = claim_dma_lock();
 	clear_dma_ff(priv->dma_channel);

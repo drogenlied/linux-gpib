@@ -35,10 +35,10 @@ void nec7210_board_reset( nec7210_private_t *priv, const gpib_board_t *board )
 	write_byte(priv, AUX_CR, AUXMR);
 
 	/* disable all interrupts */
-	priv->imr1_bits = 0;
-	write_byte(priv, priv->imr1_bits, IMR1);
-	priv->imr2_bits = 0;
-	write_byte(priv, priv->imr2_bits, IMR2);
+	priv->reg_bits[ IMR1 ] = 0;
+	write_byte(priv, priv->reg_bits[ IMR1 ], IMR1);
+	priv->reg_bits[ IMR2 ] = 0;
+	write_byte(priv, priv->reg_bits[ IMR2 ], IMR2);
 	write_byte(priv, 0, SPMR);
 
 	/* clear registers by reading */
@@ -49,7 +49,7 @@ void nec7210_board_reset( nec7210_private_t *priv, const gpib_board_t *board )
 	/* parallel poll unconfigure */
 	write_byte(priv, PPR | HR_PPU, AUXMR);
 
-	priv->admr_bits = HR_TRM0 | HR_TRM1;
+	priv->reg_bits[ ADMR ] = HR_TRM0 | HR_TRM1;
 
 	// holdoff on all data
 	priv->auxa_bits = AUXRA | HR_HLDA;
@@ -70,11 +70,11 @@ void nec7210_board_online( nec7210_private_t *priv, const gpib_board_t *board )
 	nec7210_secondary_address( board, priv, board->sad, board->sad >= 0 );
 
 	// enable interrupts
-	priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
+	priv->reg_bits[ IMR1 ] = HR_ERRIE | HR_DECIE | HR_ENDIE |
 		HR_DETIE | HR_CPTIE | HR_DOIE | HR_DIIE;
-	priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
-	write_byte( priv, priv->imr1_bits, IMR1);
-	write_byte( priv, priv->imr2_bits, IMR2);
+	priv->reg_bits[ IMR2 ] = IMR2_ENABLE_INTR_MASK;
+	write_byte( priv, priv->reg_bits[ IMR1 ], IMR1);
+	write_byte( priv, priv->reg_bits[ IMR2 ], IMR2);
 
 	write_byte( priv, AUX_PON, AUXMR);
 }

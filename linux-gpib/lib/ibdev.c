@@ -60,7 +60,6 @@ int ibdev(int minor, int pad, int sad, int timo, int eot, int eos)
 
 int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_eoi, int eos, int eos_flags)
 {
-	int retval;
 	int uDesc;
 	ibConf_t new_conf;
 	ibConf_t *conf;

@@ -199,10 +199,10 @@ static dev_link_t *gpib_attach(void)
 
     /* The io structure describes IO port mapping */
     link->io.NumPorts1 = 16;
-    link->io.Attributes1 = IO_DATA_PATH_WIDTH_8;
+    link->io.Attributes1 = IO_DATA_PATH_WIDTH_AUTO;
     link->io.NumPorts2 = 16;
     link->io.Attributes2 = IO_DATA_PATH_WIDTH_16;
-    link->io.IOAddrLines = 5;
+    link->io.IOAddrLines = 10;
 
     /* Interrupt setup */
     link->irq.Attributes = IRQ_TYPE_EXCLUSIVE;
@@ -380,6 +380,7 @@ static void gpib_config(dev_link_t *link)
 	         link->io.NumPorts1 = parse.cftable_entry.io.win[0].len;
 	         link->io.BasePort2 = 0;
 	         link->io.NumPorts2 = 0;
+	link->conf.ConfigIndex = parse.cftable_entry.index;
 	         i = CardServices(RequestIO, link->handle, &link->io);
 	         if (i == CS_SUCCESS) {
 		     printk( KERN_DEBUG "gpib_cs: base=0x%x len=%d registered\n",
@@ -581,6 +582,7 @@ void cb_pcmcia_cleanup_module(void)
 }
 
 int cb_pcmcia_attach(gpib_board_t *board);
+int cb_pcmcia_accel_attach(gpib_board_t *board);
 void cb_pcmcia_detach(gpib_board_t *board);
 
 gpib_interface_t cb_pcmcia_interface =
@@ -609,7 +611,33 @@ gpib_interface_t cb_pcmcia_interface =
 	provider_module: &__this_module,
 };
 
-int cb_pcmcia_attach(gpib_board_t *board)
+gpib_interface_t cb_pcmcia_accel_interface =
+{
+	name: "cbi_pcmcia_accel",
+	attach: cb_pcmcia_accel_attach,
+	detach: cb_pcmcia_detach,
+	read: cb7210_accel_read,
+	write: cb7210_accel_write,
+	command: cb7210_command,
+	take_control: cb7210_take_control,
+	go_to_standby: cb7210_go_to_standby,
+	request_system_control: cb7210_request_system_control,
+	interface_clear: cb7210_interface_clear,
+	remote_enable: cb7210_remote_enable,
+	enable_eos: cb7210_enable_eos,
+	disable_eos: cb7210_disable_eos,
+	parallel_poll: cb7210_parallel_poll,
+	parallel_poll_response: cb7210_parallel_poll_response,
+	line_status: cb7210_line_status,
+	update_status: cb7210_update_status,
+	primary_address: cb7210_primary_address,
+	secondary_address: cb7210_secondary_address,
+	serial_poll_response: cb7210_serial_poll_response,
+	serial_poll_status: cb7210_serial_poll_status,
+	provider_module: &__this_module,
+};
+
+int cb_pcmcia_common_attach( gpib_board_t *board, int accel )
 {
 	cb7210_private_t *cb_priv;
 	nec7210_private_t *nec_priv;
@@ -637,9 +665,18 @@ int cb_pcmcia_attach(gpib_board_t *board)
 	}
 	cb_priv->irq = dev_list->irq.AssignedIRQ;
 
-	cb7210_init( cb_priv, board );
+	cb7210_init( cb_priv, board, accel );
 
 	return 0;
+}
+
+int cb_pcmcia_attach( gpib_board_t *board )
+{
+	return cb_pcmcia_common_attach( board, 0 );
+}
+int cb_pcmcia_accel_attach(gpib_board_t *board)
+{
+	return cb_pcmcia_common_attach( board, 1 );
 }
 
 void cb_pcmcia_detach(gpib_board_t *board)

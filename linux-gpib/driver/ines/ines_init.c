@@ -211,10 +211,14 @@ gpib_interface_t ines_pci_accel_interface =
 
 int ines_allocate_private(gpib_board_t *board)
 {
+	ines_private_t *ines_priv;
+
 	board->private_data = kmalloc(sizeof(ines_private_t), GFP_KERNEL);
 	if(board->private_data == NULL)
 		return -1;
 	memset(board->private_data, 0, sizeof(ines_private_t));
+	ines_priv = board->private_data;
+	init_nec7210_private( &ines_priv->nec7210_priv );
 	return 0;
 }
 
@@ -267,10 +271,10 @@ void ines_online( ines_private_t *ines_priv, const gpib_board_t *board, int use_
 			nec_priv->iobase + IMR3 );
 		outb( IN_FIFO_WATERMARK_BIT | OUT_FIFO_WATERMARK_BIT |
 			OUT_FIFO_EMPTY_BIT, nec_priv->iobase + IMR4 );
-		nec7210_set_admr_bits( nec_priv, IN_FIFO_ENABLE_BIT | OUT_FIFO_ENABLE_BIT, 1 );
+		nec7210_set_reg_bits( nec_priv, ADMR, IN_FIFO_ENABLE_BIT | OUT_FIFO_ENABLE_BIT, 1 );
 	}else
 	{
-		nec7210_set_admr_bits( nec_priv, IN_FIFO_ENABLE_BIT | OUT_FIFO_ENABLE_BIT, 0 );
+		nec7210_set_reg_bits( nec_priv, ADMR, IN_FIFO_ENABLE_BIT | OUT_FIFO_ENABLE_BIT, 0 );
 		outb( IFC_ACTIVE_BIT | FIFO_ERROR_BIT, nec_priv->iobase + IMR3 );
 		outb( 0, nec_priv->iobase + IMR4 );
 	}

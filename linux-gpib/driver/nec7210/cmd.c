@@ -39,10 +39,10 @@ ssize_t nec7210_command(gpib_board_t *board, nec7210_private_t *priv, uint8_t
 			break;
 		}
 
-		spin_lock_irqsave(&board->spinlock, flags);
-		clear_bit(COMMAND_READY_BN, &priv->state);
-		write_byte(priv, buffer[count], CDOR);
-		spin_unlock_irqrestore(&board->spinlock, flags);
+		spin_lock_irqsave( &priv->lock, flags );
+		clear_bit( COMMAND_READY_BN, &priv->state );
+		write_byte( priv, buffer[count], CDOR );
+		spin_unlock_irqrestore( &priv->lock, flags );
 
 		count++;
 	}
