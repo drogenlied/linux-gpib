@@ -19,6 +19,9 @@
 #ifndef _GPIB_USER_H
 #define _GPIB_USER_H
 
+#define GPIB_MAX_NUM_BOARDS 16
+#define GPIB_MAX_NUM_DESCRIPTORS 0x1000
+
 enum ibsta_bit_numbers
 {
 	DCAS_NUM = 0,
@@ -162,7 +165,9 @@ enum cmd_byte
 {
 	GTL = 0x1,	/* go to local			*/
 	SDC = 0x4,	/* selected device clear 	*/
+#ifndef PPC
 	PPC = 0x5,	/* parallel poll configure	*/
+#endif
 	GET = 0x8,	/* group execute trigger 	*/
 	TCT = 0x9,	/* take control 		*/
 	LLO = 0x11,	/* local lockout		*/
