@@ -85,7 +85,7 @@ static ssize_t __dma_read(gpib_board_t *board, nec7210_private_t *priv, size_t l
 	clear_bit(READ_READY_BN, &priv->state);
 
 	// enable nec7210 dma
-	nec7210_set_reg_bits( priv, IMR2, HR_DMAI, 1 );
+	nec7210_set_reg_bits( priv, IMR2, HR_DMAI, HR_DMAI );
 
 	spin_unlock_irqrestore(&board->spinlock, flags);
 

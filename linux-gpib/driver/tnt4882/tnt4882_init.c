@@ -175,7 +175,7 @@ gpib_interface_t ni_pci_accel_interface =
 	name: "ni_pci_accel",
 	attach: ni_pci_attach,
 	detach: ni_pci_detach,
-	read: tnt4882_read,
+	read: tnt4882_accel_read,
 	write: tnt4882_accel_write,
 	command: tnt4882_command,
 	take_control: tnt4882_take_control,

@@ -102,7 +102,7 @@ extern unsigned int nec7210_t1_delay( gpib_board_t *board,
 extern void nec7210_board_reset( nec7210_private_t *priv, const gpib_board_t *board );
 extern void nec7210_board_online( nec7210_private_t *priv, const gpib_board_t *board );
 extern unsigned int nec7210_set_reg_bits( nec7210_private_t *priv, unsigned int reg,
-	unsigned int mask, int set );
+	unsigned int mask, unsigned int bits );
 extern void nec7210_set_handshake_mode( gpib_board_t *board, nec7210_private_t *priv, int mode );
 extern void nec7210_release_rfd_holdoff( gpib_board_t *board, nec7210_private_t *priv );
 extern uint8_t nec7210_read_data_in( gpib_board_t *board, nec7210_private_t *priv, int *end );
@@ -125,7 +125,7 @@ static const int nec7210_num_registers = 8;
  * a board-dependent offset to get actually io address offset)
  */
 // write registers
-enum
+enum nec7210_write_regs
 {
 	CDOR,	// command/data out
 	IMR1,	// interrupt mask 1
@@ -137,7 +137,7 @@ enum
 	EOSR,	// end-of-string
 };
 // read registers
-enum
+enum nec7210_read_regs
 {
 	DIR,	// data in
 	ISR1,	// interrupt status 1

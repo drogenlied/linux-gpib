@@ -51,7 +51,7 @@ static inline void input_fifo_enable( gpib_board_t *board, int enable )
 		cb_priv->hs_mode_bits |= HS_RX_ENABLE;
 		outb( cb_priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
 
-		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAI, 1 );
+		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAI, HR_DMAI );
 	}else
 	{
 		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAI, 0 );
@@ -88,7 +88,7 @@ static ssize_t fifo_read( gpib_board_t *board, cb7210_private_t *cb_priv, uint8_
 
 	while( count + cb7210_fifo_size < length )
 	{
-		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAI, 1 );
+		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAI, HR_DMAI );
 
 		if( wait_event_interruptible( board->wait,
 			( cb_priv->in_fifo_half_full && have_fifo_word( cb_priv ) ) ||

@@ -90,7 +90,7 @@ static ssize_t __dma_write(gpib_board_t *board, nec7210_private_t *priv, dma_add
 	release_dma_lock(dma_irq_flags);
 
 	// enable board's dma for output
-	nec7210_set_reg_bits( priv, IMR2, HR_DMAO, 1 );
+	nec7210_set_reg_bits( priv, IMR2, HR_DMAO, HR_DMAO );
 
 	clear_bit(WRITE_READY_BN, &priv->state);
 	set_bit(DMA_WRITE_IN_PROGRESS_BN, &priv->state);

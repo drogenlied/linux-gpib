@@ -57,7 +57,7 @@ static inline void output_fifo_enable( gpib_board_t *board, int enable )
 		cb_priv->hs_mode_bits &= ~HS_ENABLE_MASK;
 		outb( cb_priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
 
-		nec7210_set_reg_bits( nec_priv, IMR1, HR_DOIE, 1 );
+		nec7210_set_reg_bits( nec_priv, IMR1, HR_DOIE, HR_DOIE );
 	}
 
 	spin_unlock_irqrestore( &board->spinlock, flags );
@@ -115,7 +115,7 @@ ssize_t fifo_write( gpib_board_t *board, uint8_t *buffer, size_t length )
 			outw( word, iobase + CDOR );
 		}
 		cb_priv->out_fifo_half_empty = 0;
-		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAO, 1 );
+		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAO, HR_DMAO );
 		spin_unlock_irqrestore( &board->spinlock, flags );
 	}
 	// wait last byte has been sent

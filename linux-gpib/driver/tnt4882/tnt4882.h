@@ -49,6 +49,8 @@ extern gpib_interface_t ni_pcmcia_interface;
 // interface functions
 ssize_t tnt4882_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 	int *end);
+ssize_t tnt4882_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length,
+	int *end);
 ssize_t tnt4882_write(gpib_board_t *board, uint8_t *buffer, size_t length,
 	int send_eoi);
 ssize_t tnt4882_accel_write(gpib_board_t *board, uint8_t *buffer, size_t length,

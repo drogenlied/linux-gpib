@@ -112,7 +112,7 @@ void nec7210_release_rfd_holdoff( gpib_board_t *board, nec7210_private_t *priv )
 	spin_unlock_irqrestore( &board->spinlock, flags );
 }
 
-unsigned int nec720_t1_delay( gpib_board_t *board, nec7210_private_t *priv,
+unsigned int nec7210_t1_delay( gpib_board_t *board, nec7210_private_t *priv,
 	unsigned int nano_sec )
 {
 	unsigned int retval;

@@ -156,12 +156,10 @@ unsigned int nec7210_update_status(gpib_board_t *board, nec7210_private_t *priv)
 }
 
 unsigned int nec7210_set_reg_bits( nec7210_private_t *priv, unsigned int reg,
-	unsigned int mask, int set )
+	unsigned int mask, unsigned int bits )
 {
-	if( set )
-		priv->reg_bits[ reg ] |= mask;
-	else
-		priv->reg_bits[ reg ] &= ~mask;
+	priv->reg_bits[ reg ] &= ~mask;
+	priv->reg_bits[ reg ] |= mask & bits;
 	write_byte( priv, priv->reg_bits[ reg ], reg );
 	return priv->reg_bits[ reg ];
 }
