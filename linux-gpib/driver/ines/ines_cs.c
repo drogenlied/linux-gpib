@@ -407,10 +407,7 @@ static void gpib_config(dev_link_t *link)
 		}
 		virt = ( unsigned long ) ioremap( req.Base, req.Size );
 		writeb( ( link->io.BasePort1 >> 2 ) & 0xff, virt + 0xf0 ); // IOWindow base
-//		writeb(COR_LEVEL_REQ | 0x30, virt + 0x100 );                  // LevlIrq, 32 byte IOWindow
-//		writeb(CCSR_IOIS8, virt + 0x102 );                  // IOis8
 		iounmap( ( void* ) virt );
-//		CardServices(ReleaseWindow,handle);
 
 	} while (0);
 
