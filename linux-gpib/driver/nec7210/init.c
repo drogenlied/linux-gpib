@@ -84,6 +84,7 @@ int board_attach(void)
 	unsigned int i, err;
 	int isr_flags = 0;
 
+printk("use ints %i\n", USEINTS);
 	// nothing is allocated yet
 	ioports_allocated = iomem_allocated = irq_allocated = 
 		dma_allocated = pcmcia_initialized = 0;
@@ -150,7 +151,7 @@ int board_attach(void)
 #if defined(MODBUS_PCI) || defined(INES_PCI)
 	isr_flags |= SA_SHIRQ;
 #endif
-	if( request_irq(ibirq, ibintr, isr_flags, "gpib", NULL))
+	if( request_irq(ibirq, nec7210_interrupt, isr_flags, "gpib", NULL))
 	{
 		printk("gpib: can't request IRQ %d\n", ibirq);
 		return -1;
@@ -170,6 +171,10 @@ int board_attach(void)
 	dma_allocated = 1;
 #endif
 	board_reset();
+
+	// enable interrupts
+	GPIBout(IMR1, IMR1_ENABLE_INTR_MASK);
+	GPIBout(IMR2, IMR2_ENABLE_INTR_MASK);
 
 	GPIBout(AUXMR, AUX_PON);
 

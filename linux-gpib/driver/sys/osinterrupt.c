@@ -32,10 +32,7 @@ IBLCL void ibintr(int irq, void *arg, struct pt_regs *registerp )
 {
 
 /*printk("***IRQ %ld! st=0x%x \n",serial++,GPIBin(hs_status));*/
-#if DEBUG
-	if (dbgMask & DBG_INTR)
 	        printk("GPIB INTERRUPT! semaphore id = %d\n", atomic_read(&espsemid.count));
-#endif
 
 #ifdef NIAT
 	GPIBout(IMR3, 0);		                /* disable interrupts */

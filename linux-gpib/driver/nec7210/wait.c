@@ -1,4 +1,5 @@
 #include "board.h"
+#include <linux/sched.h>
 
 /*
  * BDWAIT
@@ -6,21 +7,15 @@
  */
 IBLCL void bdwait(unsigned int mask)
 {
-	uint8 s1, s2 = 0, imr2mask = 0;
+	uint8_t imr2mask = 0;
 
 	DBGin("bdwait");
 
 #if USEINTS
-	if (!(pgmstat & PS_NOINTS)) {
+	if (!(pgmstat & PS_NOINTS))
+	{
 		DBGprint(DBG_BRANCH, ("use ints  "));
-		s1 = GPIBin(ISR1)  ;           /* clear ISRs by reading */
-		s2 = GPIBin(ISR2)  ;
 
-		GPIBout(IMR2, 0);   /* clear IMR2 IE bits */
-#ifdef NIPCIIa
-		/* clear interrupt logic */
-		outb(0xff, CLEAR_INTR_REG(ibirq));
-#endif
 		imr2mask = 0;
 		if (mask & SRQI)
 			imr2mask |= HR_SRQIE;
@@ -28,24 +23,15 @@ IBLCL void bdwait(unsigned int mask)
 			imr2mask |= HR_ACIE;
 		DBGprint(DBG_DATA, ("imr2mask=0x%x  ", imr2mask));
 
-		while (!(s2 & imr2mask) && NotTimedOut())
-		{
-			/* was ibstat() & mask */
-			ibsta = CMPL;
-			osWaitForInt(imr2mask);
-                           /* the imr3mask is imr2 for PCII */
-			s2 = GPIBin(ISR2);
-			DBGprint(DBG_DATA, ("***ISR2=0x%x ", s2));
-			s1 = GPIBin(ISR1);   /* clear ISR2 status bits */
-			DBGprint(DBG_DATA, ("***ISR1=0x%x ", s1));
-			GPIBout(IMR1, 0);   /* clear IMR1 IE bits */
-			GPIBout(IMR2, 0);   /* clear IMR2 IE bits */
-		}
+		ibsta = CMPL;
+		printk("sleep on\n");
+		// XXX test for failure
+		interruptible_sleep_on(&nec7210_wait);
+		printk("woke\n");
 	}
 	else
 #endif
-		while (!(s2 & imr2mask) && NotTimedOut())
-			ibsta = CMPL;
+		ibsta = CMPL;
 
 	DBGout();
 }

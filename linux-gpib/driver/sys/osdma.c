@@ -8,6 +8,7 @@
 
 IBLCL int osDoDMA(ibio_op_t *rwop)
 {
+	unsigned long flags;
 	int		resid;		/* residual transfer count */
 
 	DBGin("osDoDMA");
@@ -19,7 +20,7 @@ IBLCL int osDoDMA(ibio_op_t *rwop)
 
 	/* program dma controller */
 
-	cli();
+	flags = claim_dma_lock();
         disable_dma( ibdma );
 	clear_dma_ff ( ibdma );
 	set_dma_count( ibdma, rwop->io_cnt );
@@ -39,7 +40,7 @@ IBLCL int osDoDMA(ibio_op_t *rwop)
 #endif
 
 	enable_dma( ibdma );/* enable Host side DMA transfers */
-	sti();
+	release_dma_lock(flags);
 
 	bdDMAstart(rwop);
 	bdDMAwait(rwop, 0);

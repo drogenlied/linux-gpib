@@ -1,10 +1,6 @@
-
-#include <board.h>
-
-
+#include "board.h"
 
 int eosmodes = 0;
-
 
 /*
  * BDSRQSTAT
@@ -12,16 +8,12 @@ int eosmodes = 0;
  */
 IBLCL int bdSRQstat(void)
 {
-	int	result;
+	int result = 0;
 
 	DBGin("bdSRQstat");
-#if 0
-	result = (GPIBin(isr3) & HR_SRQI_CIC) ? SRQI : 0;
-#endif
-/*@@*/
-	result = (GPIBin(ISR2) & HR_SRQI) ? SRQI : 0;
-        /*result=0;*/       
-         /* quick and dirty hack */
+
+	// XXX
+	
 	DBGout();
 	return result;
 }

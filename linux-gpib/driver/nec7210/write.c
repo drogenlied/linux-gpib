@@ -15,9 +15,8 @@ IBLCL void bdDMAwrt(ibio_op_t *wrtop)
 
 	faddr_t		buf;
 	unsigned	cnt;
-	uint8		s1, s2;		/* software copies of HW status regs */
 
-        int bytes=0;
+	int bytes=0;
 
 	DBGin("bdwrt(dma)");
 
@@ -25,15 +24,6 @@ IBLCL void bdDMAwrt(ibio_op_t *wrtop)
 	cnt = wrtop->io_cnt;
 
 	DBGprint(DBG_DATA, ("buf=0x%p cnt=%d  ", buf, cnt));
-
-	GPIBout(IMR1, 0);
-	GPIBout(IMR2, 0);		/* clear any previously arrived bits */
-
-	s2 = GPIBin(ISR2);		/* clear the status registers... */
-	s1 = GPIBin(ISR1);
-
-	DBGprint(DBG_DATA, ("ISR1=0x%x ISR2=0x%x  ", s1, s2));
-
 	GPIBout(AUXMR, auxrabits);	/* send EOI w/EOS if requested */
 
         if( cnt == 1 ) { /* use PIO transfer */
@@ -64,7 +54,6 @@ IBLCL void bdDMAwrt(ibio_op_t *wrtop)
 	bdWaitOut();
 
 	DBGprint(DBG_BRANCH, ("done  "));
-	GPIBout(IMR1, 0);		/* clear ERRIE if set */
 
 	if (GPIBin(ISR1) & HR_ERR) {
 		DBGprint(DBG_BRANCH, ("no listeners  "));
@@ -95,7 +84,6 @@ IBLCL void bdPIOwrt( ibio_op_t *wrtop)
 { 
 	faddr_t		buf;
 	unsigned	cnt;
-	uint8		s1, s2;		/* software copies of HW status regs... */
 extern int eosmodes;
         int bytes=0;
 
@@ -105,14 +93,6 @@ extern int eosmodes;
 	cnt = wrtop->io_cnt;
 
 	DBGprint(DBG_DATA, ("buf=0x%p cnt=%d  ", buf, cnt));
-
-	GPIBout(IMR1, 0);
-	GPIBout(IMR2, 0);		/* clear any previously arrived bits */
-
-	s2 = GPIBin(ISR2);		/* clear the status registers... */
-	s1 = GPIBin(ISR1);
-
-	DBGprint(DBG_DATA, ("ISR1=0x%x ISR2=0x%x  ", s1, s2));
 
 	GPIBout(AUXMR, auxrabits);	/* send EOI w/EOS if requested */
 
@@ -159,7 +139,6 @@ extern int eosmodes;
 
 
 	DBGprint(DBG_BRANCH, ("done  "));
-	GPIBout(IMR1, 0);		/* clear ERRIE if set */
 
 	if (GPIBin(ISR1) & HR_ERR) {
 		DBGprint(DBG_BRANCH, ("no listeners  "));

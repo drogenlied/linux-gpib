@@ -16,10 +16,10 @@ extern volatile int noTimo;     /* timeout flag */
 extern int          pgmstat;    /* Program state */
 extern int          auxrabits;  /* static bits for AUXRA (EOS modes) */
 
-extern void *ib;            /* Local pointer to IB registers */
-
 // interrupt service routine
 void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp);
+
+extern wait_queue_head_t nec7210_wait;
 
 #define LOW_PORT 0x2e1
 
