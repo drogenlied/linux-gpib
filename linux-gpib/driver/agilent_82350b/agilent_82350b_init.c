@@ -294,6 +294,9 @@ int agilent_82350b_generic_attach(gpib_board_t *board, int use_fifos)
 			a_priv->gpib_base + EVENT_ENABLE_REG);
 		writeb(ENABLE_TERM_COUNT_INTERRUPT_BIT | ENABLE_BUFFER_END_INTERRUPT_BIT | ENABLE_TMS9914_INTERRUPTS_BIT, 
 			a_priv->gpib_base + INTERRUPT_ENABLE_REG); 
+		//write-clear event status bits
+		writeb(BUFFER_END_STATUS_BIT | TERM_COUNT_STATUS_BIT, 
+			a_priv->gpib_base + EVENT_STATUS_REG);
 	}else
 	{
 		writeb(0, a_priv->gpib_base + EVENT_ENABLE_REG);
