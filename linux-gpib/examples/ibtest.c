@@ -366,6 +366,20 @@ int prompt_for_wait( int ud )
 	return 0;
 }
 
+void printf_line_status( const char *name, int line_status,
+	int valid_bit, int bus_bit )
+{
+	printf( "%s ", name );
+	if( line_status & valid_bit )
+	{
+		if( line_status & bus_bit )
+			printf( "on\n" );
+		else
+			printf( "off\n" );
+	}else
+		printf( "unknown\n" );
+}
+
 int get_lines( int ud )
 {
 	short line_status;
@@ -373,7 +387,14 @@ int get_lines( int ud )
 	if( iblines( ud, &line_status ) & ERR )
 		return -1;
 
-	printf( "Line status word is 0x%x\n", line_status & 0xffff );
+	printf_line_status( "DAV", line_status, ValidDAV, BusDAV );
+	printf_line_status( "NDAC", line_status, ValidNDAC, BusNDAC );
+	printf_line_status( "NRFD", line_status, ValidNRFD, BusNRFD );
+	printf_line_status( "IFC", line_status, ValidIFC, BusIFC );
+	printf_line_status( "REN", line_status, ValidREN, BusREN );
+	printf_line_status( "SRQ", line_status, ValidSRQ, BusSRQ );
+	printf_line_status( "ATN", line_status, ValidATN, BusATN );
+	printf_line_status( "EOI", line_status, ValidEOI, BusEOI );
 
 	return 0;
 }
