@@ -1,5 +1,12 @@
 Linux GPIB Package changelog
 
+3.2.02: Some cleanups to automake files (Robert Jordens).
+New drivers for Agilent 82357A (usb) and 82350B (pci).
+Fixed problem in ni_usb_gpib driver with reads when the number of
+bytes read is close to the size of the read buffer.  Added support
+for udev.  Fixed problems that occurred when path to Linux
+directory contained underscores.  Etc.
+
 3.2.01: New driver for NI USB-B.  Fixed support for Measurement Computing
 PCI-GPIB/1M (Marco Prevedelli).  Fixed inability to read/write after 
 receiving device clear when using tnt4882 fifos.  Fixed bogus rejection 
