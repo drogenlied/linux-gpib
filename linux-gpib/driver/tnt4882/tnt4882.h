@@ -22,6 +22,7 @@
 #include <nec7210.h>
 #include <gpibP.h>
 #include "mite.h"
+#include <linux/init.h>
 
 enum
 {
