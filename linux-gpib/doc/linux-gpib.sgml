@@ -51,6 +51,35 @@ A copy of the license is included in the section entitled
 <section>
 <title>Global Variables</title>
 
+<refentry ID="reference-globals-ibcnt">
+<refmeta>
+	<refentrytitle>ibcnt and ibcntl</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibcnt and ibcntl</refname>
+	<refpurpose>hold number of bytes transferred, or errno</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+<programlisting>
+#include &lt;gpib/ib.h&gt;
+
+volatile int ibcnt;
+volatile long ibcntl;
+</programlisting>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibcnt and ibcntl are set after IO operations to the the the number of
+	bytes sent or received.  They are also set to the value of errno after
+	EDVR or EFSO errors.
+	</para>
+</refsect1>
+</refentry>
+
 <refentry ID="reference-globals-iberr">
 <refmeta>
 	<refentrytitle>iberr</refentrytitle>
