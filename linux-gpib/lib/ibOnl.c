@@ -10,6 +10,7 @@ int ibonl( int ud, int onl )
 	int retval;
 	ibBoard_t *board;
 	int status = ibsta & CMPL;
+	online_ioctl_t online_cmd;
 
 	if( ibCheckDescriptor( ud ) < 0 )
 	{
@@ -34,7 +35,9 @@ int ibonl( int ud, int onl )
 		return status;
 	}
 
-	retval = ioctl( board->fileno, IBONL, &onl );
+	online_cmd.master = board->is_system_controller;
+	online_cmd.online = onl;
+	retval = ioctl( board->fileno, IBONL, &online_cmd );
 	if( retval < 0 )
 	{
 		switch( errno )
