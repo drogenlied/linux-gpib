@@ -129,7 +129,7 @@ Free Documentation License".
 	If <parameter>ud</parameter> is a device descriptor, then the library
 	automatically handles addressing the device as talker and the interface
 	board as listener before performing the read.  Up to
-	<parameter>num_bytes</parameter>
+	<parameter>num_bytes</parameter> bytes
 	are read into the user-supplied array <parameter>buffer</parameter>.  The
 	read may be terminated by an end-of-string character (see ibeos()), a
 	timeout (see ibtmo()), or by the talker asserting the EOI line.
@@ -137,6 +137,56 @@ Free Documentation License".
 	<para>
 	After the ibrd() call, ibcnt and ibcntl are set to the number of bytes
 	read.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of ibsta is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry id="function-reference-ibwrt">
+<refmeta>
+	<refentrytitle>ibwrt</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibwrt</refname>
+	<refpurpose>write data bytes (board or device)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibwrt</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>void* <parameter>buffer</parameter></paramdef>
+		<paramdef>long <parameter>num_bytes</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibwrt() is used to write data bytes to a device or board.  The argument
+	<parameter>ud</parameter> can be either a device or board descriptor.
+	If <parameter>ud</parameter> is a device descriptor, then the library
+	automatically handles addressing the device as listener and the interface
+	board as talker before performing the write.
+	<parameter>num_bytes</parameter> bytes
+	are written from the user-supplied array <parameter>buffer</parameter>.
+	EOI may be asserted with the last byte sent (see ibeot()).  The write
+	may be interrupted by a timeout (see ibtmo()).
+	</para>
+	<para>
+	After the ibwrt() call, ibcnt and ibcntl are set to the number of bytes
+	written.
 	</para>
 </refsect1>
 <refsect1>
