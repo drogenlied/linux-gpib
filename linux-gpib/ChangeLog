@@ -1,5 +1,9 @@
 Linux GPIB Package changelog
 
+3.1.99: Fixed possible oops on module removal, while attempting to
+kill auto serial poll thread.  Fixed various bugs in tnt4882
+driver.  Random bugfixes.
+
 3.1.98: Fixed possible failures to completely empty
 input fifo suring reads with NI boards.  Fixed
 brokenness when 'name' entry is left out for
