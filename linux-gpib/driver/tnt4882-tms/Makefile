@@ -9,7 +9,7 @@ OBJS =  $(SRCS:.c=.o)
 all: tnt4882-tms.o
 
 tnt4882-tms.o: $(OBJS)
-	$(RLINK) -o tnt4882-tms.o $(OBJS)
+	$(LD) -r -o tnt4882-tms.o $(OBJS)
 
 clean:
 	$(RM) *.o .depend

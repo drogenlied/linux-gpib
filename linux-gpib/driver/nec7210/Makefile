@@ -12,7 +12,7 @@ CFLAGS += -DEXPORT_SYMTAB
 all: nec7210.o
 
 nec7210.o: $(OBJS)
-	$(RLINK) -o nec7210.o $(OBJS)
+	$(LD) -r -o nec7210.o $(OBJS)
 
 clean:
 	$(RM) *.o .depend

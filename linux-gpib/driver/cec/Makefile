@@ -10,7 +10,7 @@ OBJS =  $(SRCS:.c=.o)
 all: cec-gpib.o
 
 cec-gpib.o: $(OBJS)
-	$(RLINK) -o cec-gpib.o $(OBJS)
+	$(LD) -r -o cec-gpib.o $(OBJS)
 
 
 clean:

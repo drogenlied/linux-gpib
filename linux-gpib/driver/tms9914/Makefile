@@ -13,7 +13,7 @@ all: tms9914.o
 
 
 tms9914.o: $(OBJS)
-	$(RLINK) -o tms9914.o $(OBJS)
+	$(LD) -r -o tms9914.o $(OBJS)
 
 
 clean:

@@ -9,7 +9,7 @@ OBJS =  $(SRCS:.c=.o)
 all: ines-gpib.o
 
 ines-gpib.o: $(OBJS)
-	$(RLINK) -o ines-gpib.o $(OBJS)
+	$(LD) -r -o ines-gpib.o $(OBJS)
 
 clean:
 	$(RM) *.o .depend

@@ -10,7 +10,7 @@ all: cb7210.o
 
 
 cb7210.o: $(OBJS)
-	$(RLINK) -o cb7210.o $(OBJS)
+	$(LD) -r -o cb7210.o $(OBJS)
 
 
 clean:

@@ -10,7 +10,7 @@ all: hp82335.o
 
 
 hp82335.o: $(OBJS)
-	$(RLINK) -o hp82335.o $(OBJS)
+	$(LD) -r -o hp82335.o $(OBJS)
 
 
 clean:

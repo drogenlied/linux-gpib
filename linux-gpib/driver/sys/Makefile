@@ -13,7 +13,7 @@ CFLAGS += -DEXPORT_SYMTAB
 all: gpib-common.o
 
 gpib-common.o:  $(OBJS)
-	$(RLINK) -o gpib-common.o $(OBJS)
+	$(LD) -r -o gpib-common.o $(OBJS)
 
 clean:
 	rm -f *.o .depend
