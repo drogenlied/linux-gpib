@@ -206,6 +206,8 @@ static dev_link_t *gpib_attach(void)
 	else
 		for(i = 0; i < 4; i++)
 			link->irq.IRQInfo2 |= 1 << irq_list[i];
+	printk(KERN_DEBUG "ines_cs: irq_mask=0x%x\n",
+		link->irq.IRQInfo2);
 	link->irq.Handler = NULL;
 
 	/* General socket configuration */
@@ -365,12 +367,6 @@ static void gpib_config(dev_link_t *link)
 		tuple.Attributes = 0;
 		if( first_tuple(handle,&tuple,&parse) == CS_SUCCESS ) {
 			while(1) {
-				/*if this tuple has an IRQ info, keep it for later use */
-				if( parse.cftable_entry.irq.IRQInfo1 & IRQ_INFO2_VALID ) {
-					printk(KERN_DEBUG "ines_cs: irqmask=0x%x\n",
-					parse.cftable_entry.irq.IRQInfo2 );
-					link->irq.IRQInfo2 = parse.cftable_entry.irq.IRQInfo2;
-				}
 				if( parse.cftable_entry.io.nwin > 0) {
 					link->io.BasePort1 = parse.cftable_entry.io.win[0].base;
 					link->io.NumPorts1 = 32;
