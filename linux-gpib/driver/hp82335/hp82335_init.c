@@ -311,8 +311,8 @@ void hp82335_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	gpib_board_t *board = arg;
 	hp82335_private_t *priv = board->private_data;
 
-	hp82335_clear_interrupt( priv );
-
 	tms9914_interrupt(board, &priv->tms9914_priv);
+
+	hp82335_clear_interrupt( priv );
 }
 
