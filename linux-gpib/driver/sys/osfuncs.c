@@ -2,7 +2,6 @@
                                sys/osfuncs.c
                              -------------------
 
-    begin                : Dec 2001
     copyright            : (C) 2001, 2002 by Frank Mori Hess
     email                : fmhess@users.sourceforge.net
  ***************************************************************************/
@@ -25,43 +24,13 @@ int read_ioctl(gpib_board_t *board, unsigned long arg);
 int write_ioctl(gpib_board_t *board, unsigned long arg);
 int command_ioctl(gpib_board_t *board, unsigned long arg);
 int status_ioctl(gpib_board_t *board, unsigned long arg);
+int open_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned long arg );
+int close_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned long arg );
+int cleanup_open_devices( struct file *filep, gpib_board_t *board );
 
 #define GIVE_UP(a) {up(&board->mutex); return a;}
 
-int ib_opened=0;
-int ib_exclusive=0;
-
 int ibopen(struct inode *inode, struct file *filep)
-{
-	unsigned int minor = MINOR(inode->i_rdev);
-
-	if(minor >= MAX_NUM_GPIB_BOARDS)
-	{
-		printk("gpib: invalid minor number of device file\n");
-		return -ENODEV;
-	}
-
-	if( ib_exclusive )
-	{
-		return (-EBUSY);
-	}
-
-	if ( filep->f_flags & O_EXCL )
-	{
-		if (ib_opened)
-		{
-			return (-EBUSY);
-		}
-		ib_exclusive=1;
-	}
-
-	ib_opened++;
-
-	return 0;
-}
-
-
-int ibclose(struct inode *inode, struct file *file)
 {
 	unsigned int minor = MINOR(inode->i_rdev);
 	gpib_board_t *board;
@@ -71,14 +40,62 @@ int ibclose(struct inode *inode, struct file *file)
 		printk("gpib: invalid minor number of device file\n");
 		return -ENODEV;
 	}
-	board = &board_array[minor];
- 
-	if (board->online && ib_opened == 1 )
-		ibonl(&board_array[minor], 0);
-	ib_opened--;
 
-	if( ib_exclusive )
-		ib_exclusive = 0;
+	board = &board_array[minor];
+
+	filep->private_data = kmalloc( sizeof( struct list_head ), GFP_KERNEL );
+	if( filep->private_data == NULL )
+	{
+		return -ENOMEM;
+	}
+	INIT_LIST_HEAD( ( struct list_head * ) filep->private_data );
+
+	if( board->exclusive )
+	{
+		return -EBUSY;
+	}
+
+	if ( filep->f_flags & O_EXCL )
+	{
+		if ( board->open_count )
+		{
+			return -EBUSY;
+		}
+		board->exclusive = 1;
+	}
+
+	board->open_count++;
+
+	return 0;
+}
+
+
+int ibclose(struct inode *inode, struct file *filep)
+{
+	unsigned int minor = MINOR(inode->i_rdev);
+	gpib_board_t *board;
+
+	if(minor >= MAX_NUM_GPIB_BOARDS)
+	{
+		printk("gpib: invalid minor number of device file\n");
+		return -ENODEV;
+	}
+
+	board = &board_array[minor];
+
+	if( board->online && board->open_count == 1 )
+		ibonl( board, 0 );
+
+	board->open_count--;
+
+	if( board->exclusive )
+		board->exclusive = 0;
+
+	if( filep->private_data )
+	{
+		cleanup_open_devices( filep, board );
+		kfree( filep->private_data );
+	}
 
 	return 0;
 }
@@ -124,23 +141,31 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 	switch( cmd )
 	{
 		case IBRD:
-			retval = read_ioctl(board, arg);
+			retval = read_ioctl( board, arg );
 			GIVE_UP( retval );
 			break;
 		case IBWRT:
-			retval = write_ioctl(board, arg);
+			retval = write_ioctl( board, arg );
 			GIVE_UP( retval );
 			break;
 		case IBCMD:
-			retval = command_ioctl(board, arg);
+			retval = command_ioctl( board, arg );
 			GIVE_UP( retval );
 			break;
 		case IBSTATUS:
-			retval = status_ioctl(board, arg);
+			retval = status_ioctl( board, arg );
 			GIVE_UP( retval );
 			break;
 		case IBTMO:
-			retval = ibtmo(board, arg);
+			retval = ibtmo( board, arg );
+			GIVE_UP( retval );
+			break;
+		case IBOPENDEV:
+			retval = open_dev_ioctl( filep, board, arg );
+			GIVE_UP( retval );
+			break;
+		case IBCLOSEDEV:
+			retval = close_dev_ioctl( filep, board, arg );
 			GIVE_UP( retval );
 			break;
 		default:
@@ -448,16 +473,147 @@ int status_ioctl(gpib_board_t *board, unsigned long arg)
 
 	status = ibstatus(board);
 
-	retval = put_user(status, (int *) arg);
+	retval = put_user( status, (int *) arg );
 	if (retval)
 		return -EFAULT;
 
 	return 0;
 }
 
+int increment_open_device_count( struct list_head *head, unsigned int pad, int sad )
+{
+	struct list_head *list_ptr;
+	gpib_device_t *device;
 
+	/* first see if address has already been opened, then increment
+	 * open count */
+	for( list_ptr = head->next; list_ptr != head; list_ptr = list_ptr->next )
+	{
+		device = list_entry( list_ptr, gpib_device_t, list );
+		if( device->pad == pad &&
+			( device->sad == sad ) )
+		{
+			GPIB_DPRINTK( "incrementing open count for pad %i, sad %i\n",
+				device->pad, device->sad );
+			device->reference_count++;
+			return 0;
+		}
+	}
 
+	/* otherwise we need to allocate a new gpib_device_t */
+	device = kmalloc( sizeof( gpib_device_t ), GFP_KERNEL );
+	if( device == NULL )
+		return -ENOMEM;
+	init_gpib_device( device );
+	device->pad = pad;
+	device->sad = sad;
+	device->reference_count = 1;
 
+	list_add( &device->list, head );
 
+	GPIB_DPRINTK( "opened pad %i, sad %i\n",
+		device->pad, device->sad );
 
+	return 0;
+}
+
+int subtract_open_device_count( struct list_head *head, unsigned int pad, int sad, unsigned int count )
+{
+	gpib_device_t *device;
+	struct list_head *list_ptr;
+
+	for( list_ptr = head->next; list_ptr != head; list_ptr = list_ptr->next )
+	{
+		device = list_entry( list_ptr, gpib_device_t, list );
+		if( device->pad == pad &&
+			device->sad == sad )
+		{
+			GPIB_DPRINTK( "decrementing open count for pad %i, sad %i\n",
+				device->pad, device->sad );
+			if( count > device->reference_count )
+			{
+				printk( "gpib: bug! in subtract_open_device_count()\n" );
+				return -EINVAL;
+			}
+			device->reference_count -= count;
+			if( device->reference_count == 0 )
+			{
+				GPIB_DPRINTK( "closing pad %i, sad %i\n",
+					device->pad, device->sad );
+				list_del( list_ptr );
+				kfree( device );
+			}
+			return 0;
+		}
+	}
+	printk( "gpib: bug! tried to close address that was never opened!\n" );
+	return -EINVAL;
+}
+
+inline int decrement_open_device_count( struct list_head *head, unsigned int pad, int sad )
+{
+	return subtract_open_device_count( head, pad, sad, 1 );
+}
+
+int cleanup_open_devices( struct file *filep, gpib_board_t *board )
+{
+	struct list_head *list_ptr, *head = filep->private_data;
+	gpib_device_t *device;
+	int retval = 0;
+
+	list_ptr = head->next;
+	while( list_ptr != head )
+	{
+		device = list_entry( list_ptr, gpib_device_t, list );
+		retval = subtract_open_device_count( &board->device_list, device->pad, device->sad,
+			device->reference_count );
+		if( retval < 0 ) break;
+		list_del( list_ptr );
+		list_ptr = list_ptr->next;
+		kfree( device );
+	}
+
+	return retval;
+}
+
+int open_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned long arg )
+{
+	open_close_dev_ioctl_t open_dev_cmd;
+	int retval;
+	struct list_head *list_ptr = filep->private_data;
+
+	retval = copy_from_user( &open_dev_cmd, ( void* ) arg, sizeof( open_dev_cmd ) );
+	if (retval)
+		return -EFAULT;
+
+	retval = increment_open_device_count( list_ptr, open_dev_cmd.pad, open_dev_cmd.sad );
+	if( retval < 0 )
+		return retval;
+	retval = increment_open_device_count( &board->device_list, open_dev_cmd.pad, open_dev_cmd.sad );
+	if( retval < 0 )
+	{
+		decrement_open_device_count( list_ptr, open_dev_cmd.pad, open_dev_cmd.sad );
+		return retval;
+	}
+
+	return 0;
+}
+
+int close_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned long arg )
+{
+	open_close_dev_ioctl_t close_dev_cmd;
+	struct list_head *list_ptr = filep->private_data;
+	int retval;
+
+	retval = copy_from_user( &close_dev_cmd, ( void* ) arg, sizeof( close_dev_cmd ) );
+	if (retval)
+		return -EFAULT;
+
+	retval = decrement_open_device_count( list_ptr, close_dev_cmd.pad, close_dev_cmd.sad );
+	if( retval < 0 ) return retval;
+	retval = decrement_open_device_count( &board->device_list, close_dev_cmd.pad, close_dev_cmd.sad );
+	if( retval < 0 ) return retval;
+
+	return 0;
+}
 

@@ -391,14 +391,10 @@ int init_module(void)
 
 	EXPORT_NO_SYMBOLS;
 
-	INIT_LIST_HEAD(&cb_pci_interface.list);
-	INIT_LIST_HEAD(&cb_isa_interface.list);
-
 	gpib_register_driver(&cb_pci_interface);
 	gpib_register_driver(&cb_isa_interface);
 
 #if defined(GPIB_CONFIG_PCMCIA)
-	INIT_LIST_HEAD(&cb_pcmcia_interface.list);
 
 	gpib_register_driver(&cb_pcmcia_interface);
 	err += cb_pcmcia_init_module();

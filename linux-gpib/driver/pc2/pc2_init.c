@@ -397,9 +397,6 @@ int init_module(void)
 {
 	EXPORT_NO_SYMBOLS;
 
-	INIT_LIST_HEAD(&pc2_interface.list);
-	INIT_LIST_HEAD(&pc2a_interface.list);
-
 	gpib_register_driver(&pc2_interface);
 	gpib_register_driver(&pc2a_interface);
 

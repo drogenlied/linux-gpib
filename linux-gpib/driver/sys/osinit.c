@@ -143,26 +143,41 @@ void gpib_unregister_driver(gpib_interface_t *interface)
 	printk("gpib: unregistered %s interface\n", interface->name);
 }
 
-void init_board_array(gpib_board_t *board_array, unsigned int length)
+void init_gpib_board( gpib_board_t *board )
+{
+	board->private_data = NULL;
+	board->status = 0;
+	board->ibbase = 0;
+	board->ibirq = 0;
+	board->ibdma = 0;
+	board->master = 1;
+	board->online = 0;
+	board->exclusive = 0;
+	board->open_count = 0;
+	init_waitqueue_head(&board->wait);
+	init_MUTEX(&board->mutex);
+	spin_lock_init(&board->spinlock);
+	init_timer(&board->timer);
+	board->interface = NULL;
+	board->buffer_length = 0;
+	board->buffer = NULL;
+	INIT_LIST_HEAD( &board->device_list );
+}
+
+void init_board_array( gpib_board_t *board_array, unsigned int length )
 {
 	int i;
 	for( i = 0; i < length; i++)
 	{
-		board_array[i].private_data = NULL;
-		board_array[i].status = 0;
-		board_array[i].ibbase = 0;
-		board_array[i].ibirq = 0;
-		board_array[i].ibdma = 0;
-		board_array[i].master = 1;
-		board_array[i].online = 0;
-		init_waitqueue_head(&board_array[i].wait);
-		init_MUTEX(&board_array[i].mutex);
-		spin_lock_init(&board_array[i].spinlock);
-		init_timer(&board_array[i].timer);
-		board_array[i].interface = NULL;
-		board_array[i].buffer_length = 0;
-		board_array[i].buffer = NULL;
+		init_gpib_board( &board_array[i] );
 	}
+}
+
+void init_gpib_device( gpib_device_t *device )
+{
+	INIT_LIST_HEAD( &device->list );
+	INIT_LIST_HEAD( &device->serial_poll_bytes );
+	device->reference_count = 0;
 }
 
 int init_module(void)

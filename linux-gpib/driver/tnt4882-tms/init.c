@@ -274,8 +274,6 @@ int init_module(void)
 {
 	EXPORT_NO_SYMBOLS;
 
-	INIT_LIST_HEAD(&ni_pci_interface.list);
-
 	gpib_register_driver(&ni_pci_interface);
 
 	mite_init();

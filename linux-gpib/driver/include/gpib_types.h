@@ -169,29 +169,33 @@ struct gpib_board_struct
 	 * store additional variables for this board */
 	void *private_data;
 	/* Flag that indicates whether board is up and running or not */
-	unsigned int online : 1;
+	unsigned online : 1;
 	/* Flag that indicates whether board is system controller of the bus */
-	unsigned int master : 1;
+	unsigned master : 1;
+	/* Flag board has been opened for exclusive access */
+	unsigned exclusive : 1;
+	/* Number of open file descriptors for this board */
+	unsigned int open_count;
 	/* list of open devices connected to this board */
 	struct list_head device_list;
+
 };
 
 /* Each board has a list of gpib_device_t to keep track of all open devices
  * on the bus, so we know what address to poll when we get a service request */
-#define STATUS_FIFO_LENGTH 100
 typedef struct
 {
 	// list_head so we can make a linked list of devices
 	struct list_head list;
-	int pad;	// primary gpib address
+	unsigned int pad;	// primary gpib address
 	int sad;	// secondary gpib address (negative means disabled)
-	// stores serial poll bytes
-	uint8_t status_fifo[STATUS_FIFO_LENGTH];
-	// pointers to front and back of status_fifo
-	uint8_t *fifo_front, *fifo_back;
-	// number of elements written to/read from status_fifo
-	volatile unsigned int push_count, pop_count;
+	// stores serial poll bytes for this device
+	struct list_head serial_poll_bytes;
+	// number of times this address is opened
+	unsigned int reference_count;
 } gpib_device_t;
+
+void init_gpib_device( gpib_device_t *device );
 
 #endif	// __KERNEL__
 

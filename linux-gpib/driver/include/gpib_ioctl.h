@@ -16,10 +16,18 @@ typedef struct
 	int end;
 } read_write_ioctl_t;
 
+typedef struct
+{
+	unsigned int pad;
+	int sad;
+} open_close_dev_ioctl_t;
+
 /* Standard functions. */
-#define IBRD _IOWR(GPIB_CODE, 0, read_write_ioctl_t)
-#define IBWRT _IOWR(GPIB_CODE, 1, read_write_ioctl_t)
-#define IBCMD _IOWR(GPIB_CODE, 2, read_write_ioctl_t)
+#define IBRD _IOWR( GPIB_CODE, 0, read_write_ioctl_t )
+#define IBWRT _IOWR( GPIB_CODE, 1, read_write_ioctl_t )
+#define IBCMD _IOWR( GPIB_CODE, 2, read_write_ioctl_t )
+#define IBOPENDEV _IOW( GPIB_CODE, 3, open_close_dev_ioctl_t )
+#define IBCLOSEDEV _IOW( GPIB_CODE, 4, open_close_dev_ioctl_t )
 #define IBWAIT		3
 #define IBRPP		4
 #define IBONL		5
@@ -36,6 +44,7 @@ typedef struct
 #define IBTMO _IO(GPIB_CODE, 14)
 #define IBEOS		16
 #define IBRSV		17
+
 
 #define DEVFCN		100
 

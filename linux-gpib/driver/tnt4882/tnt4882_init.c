@@ -357,15 +357,10 @@ int init_module(void)
 {
 	EXPORT_NO_SYMBOLS;
 
-	INIT_LIST_HEAD(&ni_isa_interface.list);
-	INIT_LIST_HEAD(&ni_pci_interface.list);
-
 	gpib_register_driver(&ni_isa_interface);
 	gpib_register_driver(&ni_pci_interface);
 
 #if defined(GPIB_CONFIG_PCMCIA)
-	INIT_LIST_HEAD(&ni_pcmcia_interface.list);
-
 	gpib_register_driver(&ni_pcmcia_interface);
 	if( init_ni_gpib_cs() < 0 )
 		return -1;
