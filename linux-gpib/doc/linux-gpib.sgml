@@ -1158,7 +1158,7 @@ volatile int ibsta;
 	<entry>board</entry>
 	</row>
 	<row>
-	<entry>IbaTiming</entry>
+	<entry>IbaTIMING</entry>
 	<entry>0x11</entry>
 	<entry>Number indicating T1 delay.  1 for 2 microseconds, 2 for 500
 	nanoseconds, 3 for 350 nanoseconds.  The values are declared in
@@ -1691,7 +1691,7 @@ volatile int ibsta;
 	<entry>board</entry>
 	</row>
 	<row>
-	<entry>IbcTiming</entry>
+	<entry>IbcTIMING</entry>
 	<entry>0x11</entry>
 	<entry>Sets the T1 delay.  Use setting of 1 for 2 microseconds, 2 for 500
 	nanoseconds, or 3 for 350 nanoseconds.  These values are declared in
