@@ -682,8 +682,12 @@ void cb_pcmcia_detach(gpib_board_t *board)
 {
 	cb7210_private_t *priv = board->private_data;
 
-	if(priv && priv->irq)
-		free_irq(priv->irq, board);
+	if(priv)
+	{
+		gpib_free_pseudo_irq(board);
+		if(priv->irq)
+			free_irq(priv->irq, board);
+	}
 	cb7210_generic_detach(board);
 }
 

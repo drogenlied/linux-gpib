@@ -455,6 +455,7 @@ void cb_isa_detach(gpib_board_t *board)
 
 	if(cb_priv)
 	{
+		gpib_free_pseudo_irq(board);
 		nec_priv = &cb_priv->nec7210_priv;
 		if(cb_priv->irq)
 		{
