@@ -180,6 +180,9 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 		case IBONL:
 			return online_ioctl( board, arg );
 			break;
+		case IBAUTOPOLL:
+			return autopoll_ioctl( board );
+			break;
 		default:
 			break;
 	}
@@ -251,9 +254,6 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			break;
 		case IBRSV:
 			return request_service_ioctl( board, arg );
-			break;
-		case IBAUTOPOLL:
-			return autopoll_ioctl( board );
 			break;
 		default:
 			return -ENOTTY;

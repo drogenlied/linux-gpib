@@ -46,6 +46,7 @@ int ibonline( gpib_board_t *board, int master )
 	return 0;
 }
 
+// XXX need to make sure autopoll is not in progress
 int iboffline( gpib_board_t *board )
 {
 	if( board->open_count <= 1 && board->online )
