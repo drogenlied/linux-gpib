@@ -66,19 +66,6 @@ int ibtmo(gpib_board_t *board, unsigned int timeout)
 	return 0;
 }
 
-
-/*
- * IBEOT
- * Set the end-of-transmission mode for I/O operations to v.
- * If v == 1 then send EOI with the last byte of each write.
- * If v == 0 then disable the sending of EOI.
- */
-int ibeot(gpib_board_t *board, int send_eoi)
-{
-	board->send_eoi = send_eoi;
-	return 0;
-}
-
 /*
  * IBEOS
  * Set the end-of-string modes for I/O operations to v.

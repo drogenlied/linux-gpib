@@ -172,9 +172,26 @@ struct gpib_board_struct
 	unsigned int online : 1;
 	/* Flag that indicates whether board is system controller of the bus */
 	unsigned int master : 1;
-	/* Flag to send EOI at end of writes */
-	unsigned int send_eoi : 1;
+	/* list of open devices connected to this board */
+	struct list_head device_list;
 };
+
+/* Each board has a list of gpib_device_t to keep track of all open devices
+ * on the bus, so we know what address to poll when we get a service request */
+#define STATUS_FIFO_LENGTH 100
+typedef struct
+{
+	// list_head so we can make a linked list of devices
+	struct list_head list;
+	int pad;	// primary gpib address
+	int sad;	// secondary gpib address (negative means disabled)
+	// stores serial poll bytes
+	uint8_t status_fifo[STATUS_FIFO_LENGTH];
+	// pointers to front and back of status_fifo
+	uint8_t *fifo_front, *fifo_back;
+	// number of elements written to/read from status_fifo
+	volatile unsigned int push_count, pop_count;
+} gpib_device_t;
 
 #endif	// __KERNEL__
 

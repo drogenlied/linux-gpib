@@ -16,7 +16,6 @@ extern  int ibsre(gpib_board_t *board, int enable);
 extern  int ibpad(gpib_board_t *board, int v);
 extern  int ibsad(gpib_board_t *board, int v);
 extern  int ibtmo(gpib_board_t *board, unsigned int v);
-extern  int ibeot(gpib_board_t *board, int send_eoi);
 extern  int ibeos(gpib_board_t *board, int v);
 extern  int ibwait(gpib_board_t *board, unsigned int mask);
 extern  ssize_t ibwrt(gpib_board_t *board, uint8_t *buf, size_t cnt, int more);

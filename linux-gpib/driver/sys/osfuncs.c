@@ -292,7 +292,6 @@ int board_type_ioctl(gpib_board_t *board, unsigned long arg)
 	board->ibbase = 0;
 	board->ibirq = 0;
 	board->ibdma = 0;
-	board->send_eoi = 1;
 	board->master = 1;
 	board->online = 0;
 	init_waitqueue_head(&board->wait);
