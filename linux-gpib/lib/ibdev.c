@@ -21,9 +21,31 @@
 
 int config_parsed = 0;
 
+static int is_device_addr( int minor, int pad, int sad )
+{
+	ibBoard_t *board;
+
+	board = &ibBoard[ minor ];
+
+	if( gpib_address_equal( board->pad, board->sad, pad, sad ) == 0 )
+	{
+		return 1;
+	}
+
+	return 0;
+}
 
 int ibdev(int minor, int pad, int sad, int timo, int eot, int eos)
 {
+	if( is_device_addr( minor, pad, sad ) == 0 )
+	{
+		setIberr( EARG );
+		setIbsta( ERR );
+		fprintf( stderr, "libgpib: ibdev gpib address already in use by\n"
+			"\tinterface board.  Use ibfind() to open boards.\n" );
+		return -1;
+	}
+
 	return my_ibdev( minor, pad, sad, timeout_to_usec( timo ),
 		eot, eos & 0xff, ( eos >> 8 ) & 0xff );
 }
@@ -76,6 +98,7 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 	if(uDesc < 0)
 	{
 		fprintf(stderr, "libgpib: ibdev failed to get descriptor\n");
+		setIbsta( ERR );
 		return -1;
 	}
 
@@ -83,6 +106,7 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 	{
 		fprintf(stderr, "libgpib: failed to bring device online\n");
 		// XXX free descriptors resources
+		setIbsta( ERR );
 		return -1;
 	}
 
@@ -90,6 +114,7 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 	{
 		// XXX free descriptors resources
 		if( ibsre( uDesc, 1 ) & ERR ) return -1;
+		setIbsta( ERR );
 	}
 
 	// XXX do local lockout if appropriate

@@ -74,6 +74,7 @@ void nec7210_parallel_poll_response( gpib_board_t *board,
 void nec7210_serial_poll_response(gpib_board_t *board, nec7210_private_t *priv, uint8_t status)
 {
 //	write_byte(priv, 0, SPMR);		/* clear current serial poll status */
+	// XXX check pend bit before writing?
 	write_byte(priv, status, SPMR);		/* set new status to v */
 }
 

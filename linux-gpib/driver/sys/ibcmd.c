@@ -48,7 +48,7 @@ ssize_t ibcmd( gpib_board_t *board, uint8_t *buf, size_t length )
 
 	osRemoveTimer(board);
 
-	if(status & TIMO)
+	if( io_timed_out( board ) )
 		ret = -ETIMEDOUT;
 
 	return ret ? ret : count;

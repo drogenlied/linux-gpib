@@ -77,7 +77,7 @@ ssize_t ibwrt(gpib_board_t *board, uint8_t *buf, size_t cnt, int send_eoi)
 		}
 	}
 
-	if(ibstatus(board) & TIMO)
+	if( io_timed_out( board ) )
 		ret = -ETIMEDOUT;
 
 	osRemoveTimer(board);

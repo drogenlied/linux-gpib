@@ -858,8 +858,8 @@ static int autopoll_ioctl( gpib_board_t *board )
 		retval = autopoll_all_devices( board );
 		if( retval < 0 )
 		{
-			// XXX srq may not necessarily be stuck
-			board->stuck_srq = 1;
+			if( retval == -ETIMEDOUT )
+				board->stuck_srq = 1;
 			set_bit( SRQI_NUM, &board->status );
 			break;
 		}

@@ -24,6 +24,15 @@ int ibwait( int ud, int mask )
 	retval = ioctl( board->fileno, IBWAIT, &cmd );
 	if( retval < 0 )
 	{
+		switch( errno )
+		{
+			case ETIMEDOUT:
+				conf->timed_out = 1;
+				return exit_library( ud, 0 );
+				break;
+			default:
+				break;
+		}
 		setIberr( EDVR );
 		return exit_library( ud, 1 );
 	}

@@ -2,7 +2,8 @@
                                  ibtest.c
                              -------------------
 
-Example program which uses gpib c library, good for initial test of library.
+Example program which uses gpib c library.  More complex than an example
+program needs to be really, but useful for testing library functions.
 
     copyright            : (C) 2002 by Frank Mori Hess
     email                : fmhess@users.sourceforge.net
@@ -26,7 +27,7 @@ Example program which uses gpib c library, good for initial test of library.
 
 uint8_t buffer[1024];
 
-void gpiberr(char *msga);
+void fprint_status( FILE* filep, char *msg  );
 
 enum Action
 {
@@ -38,6 +39,45 @@ enum Action
 	GPIB_WAIT,
 	GPIB_WRITE,
 };
+
+void descriptor_type( int ud, int *is_board, int *is_master )
+{
+	int master;
+	int status;
+
+	status = ibask( ud, IbaSC, &master );
+
+	if( status & ERR )
+	{
+		if( ThreadIberr() != EARG )
+		{
+			fprint_status( stderr, "ibask error" );
+			abort();
+		}
+		*is_board = 0;
+		*is_master = 0;
+	}else
+	{
+		*is_board = 1;
+		*is_master = master;
+	}
+}
+
+int descriptor_is_board( int ud )
+{
+	int is_board;
+	int is_master;
+	descriptor_type( ud, &is_board, &is_master );
+	return is_board;
+}
+
+int descriptor_is_master( int ud )
+{
+	int is_board;
+	int is_master;
+	descriptor_type( ud, &is_board, &is_master );
+	return is_board && is_master;
+}
 
 // returns a device descriptor after prompting user for primary address
 int prompt_for_device(void)
@@ -52,7 +92,7 @@ int prompt_for_device(void)
 
 	while(1)
 	{
-		printf("enter primary address for device (not interface board) [0-30]: ");
+		printf("enter primary gpib address for device you wish to open [0-30]: ");
 		fgets(input, sizeof(input), stdin);
 		pad = strtol(input, NULL, 0);
 		if(pad < 0 || pad > 30)
@@ -64,10 +104,63 @@ int prompt_for_device(void)
 	ud = ibdev(minor, pad, sad, timeout, send_eoi, eos_mode);
 	if(ud < 0)
 	{
-		printf("failed to get descriptor\n");
+		fprintf( stderr, "failed to get descriptor\n" );
+		abort();
 	}
 
 	return ud;
+}
+
+// returns a device descriptor after prompting user for primary address
+int prompt_for_board( void )
+{
+	int ud;
+	char board_name[100];
+
+	do
+	{
+		int length;
+		printf("enter name of interface board (or device) you wish to open: ");
+		fgets( board_name, sizeof( board_name ), stdin);
+		length = strlen( board_name );
+		if( board_name[ length - 1 ] == '\n' )
+			board_name[ length - 1 ] = 0;
+		printf( "trying to open board named '%s'\n", board_name );
+		ud = ibfind( board_name );
+		if(ud < 0)
+		{
+			fprintf( stderr, "failed to open board\n" );
+		}
+	}while( ud < 0 );
+
+	return ud;
+}
+
+int prompt_for_descriptor( void )
+{
+	char input[100];
+
+	do
+	{
+		printf( "Do you wish to open a (d)evice or an interface (b)oard?\n"
+			"\t(you probably want to open a device): ");
+		fgets( input, sizeof( input ), stdin );
+		switch( input[0] )
+		{
+			case 'd':
+			case 'D':
+				return prompt_for_device();
+				break;
+			case 'b':
+			case 'B':
+				return prompt_for_board();
+				break;
+			default:
+				break;
+		}
+	} while( 1 );
+
+	return -1;
 }
 
 // asks user what they want to do next
@@ -79,12 +172,12 @@ int prompt_for_action(void)
 		printf("You can:\n"
 			"\tw(a)it for an event\n"
  			"\t(q)uit\n"
-			"\t(r)ead string from device\n"
-			"\tperform (s)erial poll\n"
+			"\t(r)ead string\n"
+			"\tperform (s)erial poll (device only)\n"
 			"\tchange (t)imeout on io operations\n"
-			"\trequest ser(v)ice\n"
-			"\t(w)rite string to device\n"
-			);
+			"\trequest ser(v)ice (board only)\n"
+			"\t(w)rite string\n"
+			": " );
 		do fgets( input, sizeof( input ), stdin );
 		while( input[0] == '\n' );
 
@@ -135,7 +228,6 @@ int perform_read(int ud)
 
 	if( ibrd(ud, buffer, sizeof(buffer) - 1) & ERR)
 	{
-		gpiberr("read error");
 		return -1;
 	}
 	// make sure string is null-terminated
@@ -155,7 +247,6 @@ int prompt_for_write(int ud)
 	printf("sending string: %s\n", buffer);
 	if( ibwrt(ud, buffer, strlen(buffer)) & ERR )
 	{
-		gpiberr("write error");
 		return -1;
 	}
 	return 0;
@@ -166,13 +257,20 @@ int do_serial_poll( int ud )
 	char result;
 	int status;
 
+	if( descriptor_is_board( ud ) != 0 )
+	{
+		fprintf( stderr, "You have a board open (as opposed to a device).\n"
+			"\tYou cannot perform a serial poll.\n" );
+		return -1;
+	}
+
 	status = ibrsp( ud, &result );
 	if( status & ERR )
 	{
-		gpiberr("serial poll error");
 		return -1;
 	}
-	printf( "serial poll result: 0x%x\n", ( unsigned int ) result );
+
+	printf( "serial poll result: 0x%x\n", ( (unsigned int) result ) & 0xff );
 	return 0;
 }
 
@@ -181,6 +279,13 @@ int request_service( int ud )
 	int status_byte;
 	int status;
 
+	if( descriptor_is_board( ud ) == 0 )
+	{
+		fprintf( stderr, "You have a device open (as opposed to a board).\n"
+			"\tYou cannot request service.\n" );
+		return -1;
+	}
+
 	printf( "enter new status byte (bit 0x40 requests service): " );
 	scanf( "%i", &status_byte );
 
@@ -188,7 +293,6 @@ int request_service( int ud )
 
 	if( status & ERR )
 	{
-		gpiberr("request service error");
 		return -1;
 	}
 
@@ -242,7 +346,6 @@ int prompt_for_wait( int ud )
 	scanf( "%i", &wait_mask );
 
 	status = ibwait( ud, wait_mask );
-	gpiberr( "ibwait return status" );
 
 	return 0;
 }
@@ -252,8 +355,7 @@ int main(int argc,char **argv)
 	int dev;
 	enum Action act;
 
-	dev = prompt_for_device();
-	if(dev < 0) exit(1);
+	dev = prompt_for_descriptor();
 
 	/*
 	* send device reset
@@ -263,19 +365,19 @@ int main(int argc,char **argv)
 	printf("clearing device..\n");
 	if( (ibclr(dev) & ERR ) && iberr != EARG )
 	{
-		gpiberr("gpib clear error");
+		fprint_status( stderr, "gpib clear error");
 		ibonl(dev, 0);
-		exit(1);
+		abort();
 	}
 
 	do
 	{
 		act = prompt_for_action();
 
+		if( act == GPIB_QUIT ) break;
+
 		switch( act )
 		{
-			case GPIB_QUIT:
-				break;
 			case GPIB_READ:
 				perform_read( dev );
 				break;
@@ -298,6 +400,8 @@ int main(int argc,char **argv)
 				fprintf( stderr, "bug, unknown selection\n");
 				break;
 		}
+		fprint_status( stdout, "gpib status is: " );
+
 	}while( act != GPIB_QUIT );
 
 	ibonl(dev, 0);
@@ -309,45 +413,44 @@ int main(int argc,char **argv)
 *
 */
 
-
-void gpiberr(char *msg)
+void fprint_status( FILE* filep, char *msg )
 {
+	fprintf( filep, "%s\n", msg);
 
-	fprintf(stderr, "%s\n", msg);
+	fprintf( filep, "ibsta = 0x%x  <", ibsta);
 
-	fprintf(stderr, "ibsta = 0x%x  <", ibsta);
+	if ( ibsta & ERR )  fprintf( filep," ERR");
+	if ( ibsta & TIMO ) fprintf( filep," TIMO");
+	if ( ibsta & END )  fprintf( filep," END");
+	if ( ibsta & SRQI ) fprintf( filep," SRQI");
+	if ( ibsta & RQS ) fprintf( filep," RQS");
+	if ( ibsta & CMPL ) fprintf( filep," CMPL");
+	if ( ibsta & CIC )  fprintf( filep," CIC");
+	if ( ibsta & ATN )  fprintf( filep," ATM");
+	if ( ibsta & TACS ) fprintf( filep," TACS");
+	if ( ibsta & LACS ) fprintf( filep," LACS");
 
-	if ( ibsta & ERR )  fprintf( stderr," ERR");
-	if ( ibsta & TIMO ) fprintf( stderr," TIMO");
-	if ( ibsta & END )  fprintf( stderr," END");
-	if ( ibsta & SRQI ) fprintf( stderr," SRQI");
-	if ( ibsta & RQS ) fprintf( stderr," RQS");
-	if ( ibsta & CMPL ) fprintf( stderr," CMPL");
-	if ( ibsta & CIC )  fprintf( stderr," CIC");
-	if ( ibsta & ATN )  fprintf( stderr," ATM");
-	if ( ibsta & TACS ) fprintf( stderr," TACS");
-	if ( ibsta & LACS ) fprintf( stderr," LACS");
+	fprintf( filep, " >\n" );
 
-	fprintf( stderr," >\n");
+	fprintf( filep,"iberr= %d", iberr);
+	if( ( ibsta & ERR ) == 0 ) fprintf( filep, "\n" );
+	else if ( iberr == EDVR) fprintf( filep," EDVR <OS Error>\n");
+	else if ( iberr == ECIC) fprintf( filep," ECIC <Not CIC>\n");
+	else if ( iberr == ENOL) fprintf( filep," ENOL <No Listener>\n");
+	else if ( iberr == EADR) fprintf( filep," EADR <Adress Error>\n");
+	else if ( iberr == EARG) fprintf( filep," ECIC <Board not CIC>\n");
+	else if ( iberr == ESAC) fprintf( filep," ESAC <No Sys Ctrlr>\n");
+	else if ( iberr == EABO) fprintf( filep," EABO <Operation Aborted>\n");
+	else if ( iberr == ENEB) fprintf( filep," ENEB <No Gpib Board>\n");
+	else if ( iberr == EOIP) fprintf( filep," EOIP <Async I/O in prg>\n");
+	else if ( iberr == ECAP) fprintf( filep," ECAP <No Capability>\n");
+	else if ( iberr == EFSO) fprintf( filep," EFSO <File sys. error>\n");
+	else if ( iberr == EBUS) fprintf( filep," EBUS <Command error>\n");
+	else if ( iberr == ESTB) fprintf( filep," ESTB <Status byte lost>\n");
+	else if ( iberr == ESRQ) fprintf( filep," ESRQ <SRQ stuck on>\n");
+	else if ( iberr == ETAB) fprintf( filep," ETAB <Table Overflow>\n");
+	else if ( iberr == ETAB) fprintf( filep," ETAB <Device Table Overflow>\n");
 
-	fprintf( stderr,"iberr= %d", iberr);
-	if ( iberr == EDVR) fprintf( stderr," EDVR <OS Error>\n");
-	if ( iberr == ECIC) fprintf( stderr," ECIC <Not CIC>\n");
-	if ( iberr == ENOL) fprintf( stderr," ENOL <No Listener>\n");
-	if ( iberr == EADR) fprintf( stderr," EADR <Adress Error>\n");
-	if ( iberr == EARG) fprintf( stderr," ECIC <Invalid Argument>\n");
-	if ( iberr == ESAC) fprintf( stderr," ESAC <No Sys Ctrlr>\n");
-	if ( iberr == EABO) fprintf( stderr," EABO <Operation Aborted>\n");
-	if ( iberr == ENEB) fprintf( stderr," ENEB <No Gpib Board>\n");
-	if ( iberr == EOIP) fprintf( stderr," EOIP <Async I/O in prg>\n");
-	if ( iberr == ECAP) fprintf( stderr," ECAP <No Capability>\n");
-	if ( iberr == EFSO) fprintf( stderr," EFSO <File sys. error>\n");
-	if ( iberr == EBUS) fprintf( stderr," EBUS <Command error>\n");
-	if ( iberr == ESTB) fprintf( stderr," ESTB <Status byte lost>\n");
-	if ( iberr == ESRQ) fprintf( stderr," ESRQ <SRQ stuck on>\n");
-	if ( iberr == ETAB) fprintf( stderr," ETAB <Table Overflow>\n");
-	if ( iberr == ETAB) fprintf( stderr," ETAB <Device Table Overflow>\n");
-
-	fprintf(stderr, "ibcnt = %d\n", ibcnt );
+	fprintf( filep, "ibcnt = %d\n", ibcnt );
 }
 

@@ -112,6 +112,8 @@ int ibFindDevIndex(char *name)
 {
 	int i;
 
+	if( strcmp( "", name ) == 0 ) return -1;
+
 	for(i = 0; i < FIND_CONFIGS_LENGTH; i++)
 	{
 		if(!strcmp(ibFindConfigs[i].name, name)) return i;

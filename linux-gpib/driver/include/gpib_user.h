@@ -182,7 +182,8 @@ enum ibask_option
 	IbaReadAdjust = 0x13,
 	IbaWriteAdjust = 0x14,
 	IbaEventQueue = 0x15,	/* board only */
-	IbaSPollBit = 0x16,	/* board only XXX capitalization? */
+	IbaSPollBit = 0x16,	/* board only */
+	IbaSpollBit = 0x16,	/* board only */
 	IbaSendLLO = 0x17,	/* board only */
 	IbaSPollTime = 0x18,	/* device only */
 	IbaPPollTime = 0x19,	/* board only */
@@ -193,7 +194,4 @@ enum ibask_option
 	IbaRsv = 0x21,	/* board only */
 	IbaBNA = 0x200	/* device only */
 };
-enum ibask_option_alias
-{
-	IbaSpollBit = IbaSPollBit
-};
+

@@ -1,6 +1,5 @@
 
 #include "gpibP.h"
-
 /*
  * IBCAC
  * Return to the controller active state from the

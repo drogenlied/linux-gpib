@@ -52,9 +52,9 @@ int pop_status_byte( gpib_device_t *device, uint8_t *poll_byte )
 	struct list_head *front = head->next;
 	status_byte_t *status;
 
-	if( device->num_status_bytes == 0 ) return -1;
+	if( device->num_status_bytes == 0 ) return -EIO;
 
-	if( front == head ) return -1;
+	if( front == head ) return -EIO;
 
 	status = list_entry( front, status_byte_t, list );
 	*poll_byte = status->poll_byte;

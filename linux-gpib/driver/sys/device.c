@@ -17,6 +17,7 @@
  ***************************************************************************/
 
 #include "gpibP.h"
+#include <linux/delay.h>
 
 /*
  * DVRSP
@@ -67,7 +68,8 @@ int dvrsp( gpib_board_t *board, unsigned int pad, int sad,
 	{
 		printk("gpib: failed to setup serial poll\n");
 		osRemoveTimer( board );
-		return -1;
+		if( io_timed_out( board ) ) return -ETIMEDOUT;
+		return -EIO;
 	}
 
 	board->interface->go_to_standby( board );
@@ -78,10 +80,15 @@ int dvrsp( gpib_board_t *board, unsigned int pad, int sad,
 	{
 		printk( "gpib: serial poll failed\n" );
 		osRemoveTimer( board );
-		return -1;
+		if( io_timed_out( board ) ) return -ETIMEDOUT;
+		return -EIO;
 	}
 
 	board->interface->take_control( board, 0 );
+
+	/* we need this delay here to prevent bus errors from
+	 * occuring, but I don't know why */
+	udelay( 2 );
 
 	cmd_string[0] = SPD;	/* disable serial poll bytes */
 	cmd_string[1] = UNT;
@@ -89,7 +96,8 @@ int dvrsp( gpib_board_t *board, unsigned int pad, int sad,
 	{
 		printk( "gpib: failed to disable serial poll\n" );
 		osRemoveTimer( board );
-		return -1;
+		if( io_timed_out( board ) ) return -ETIMEDOUT;
+		return -EIO;
 	}
 	osRemoveTimer( board );
 

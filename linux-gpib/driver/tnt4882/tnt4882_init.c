@@ -109,6 +109,7 @@ void tnt4882_parallel_poll_response(gpib_board_t *board, uint8_t config )
 	tnt4882_private_t *priv = board->private_data;
 	nec7210_parallel_poll_response( board, &priv->nec7210_priv, config );
 }
+// XXX tnt4882 has fancier serial poll capability, should send reqt AUX command
 void tnt4882_serial_poll_response(gpib_board_t *board, uint8_t status)
 {
 	tnt4882_private_t *priv = board->private_data;
