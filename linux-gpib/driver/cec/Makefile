@@ -7,11 +7,7 @@ SRCS =  init.c interrupt.c
 
 OBJS =  $(SRCS:.c=.o)
 
-INCLUDES = -I. -I../include -I../../include
-CFLAGS += $(INCLUDES) $(OPTIONS)
-
 all: cec-gpib.o
-
 
 cec-gpib.o: $(OBJS)
 	$(RLINK) -o cec-gpib.o $(OBJS)

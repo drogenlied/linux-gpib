@@ -55,7 +55,8 @@ extern inline void write_byte(tms9914_private_t *priv, uint8_t byte, unsigned in
 enum
 {
 	PIO_IN_PROGRESS_BN,	// pio transfer in progress
-	DMA_IN_PROGRESS_BN,	// dma transfer in progress
+	DMA_READ_IN_PROGRESS_BN,	// dma read transfer in progress
+	DMA_WRITE_IN_PROGRESS_BN,	// dma write transfer in progress
 	READ_READY_BN,	// board has data byte available to read
 	WRITE_READY_BN,	// board is ready to send a data byte
 	COMMAND_READY_BN,	// board is ready to send a command byte

@@ -8,34 +8,15 @@
 #
 ########################################################################
 
-DEBUG_LEVEL=0x3d
-
 export 
 
 -include $(ROOT)/util/.config
 -include $(ROOT)/util/linux_flags/flags
 
-########################################################################
-#
-#  Configuration Options
-#
-#  -DSLOW_IO if  you need to slow down bus i/o
-#  -DREALLY_SLOW_IO (in addition to SLOW_IO) makes i/o slower
-#
-#  -DBUILD_DEBUG build version with built in debugging code that
-#                helps to trace errors (the size of the module grows up to
-#                7 pages)
-#
-#  -DUSE_DMA to enable DMA Transfer Mode
-#######################################################################
-#
-#  Do not Edit below
-#
-
 EXPORTED_INCLUDES = gpib_types.h gpib_registers.h gpib_ioctl.h gpib_user.h 
 EXP_INC = $(EXPORTED_INCLUDES:%=$(ROOT)/include/%)
 CWD := `pwd`
-
+CFLAGS := -I $(ROOT)/driver/include -I $(ROOT)/include $(CFLAGS)
 MAKE = make OPTIONS="$(OPTIONS) " -C
 
 SUBDIRS = nec7210 tms9914 sys
@@ -56,6 +37,9 @@ SUBDIRS += tnt4882-tms
 endif
 ifdef CEC
 SUBDIRS += cec
+endif
+ifdef HP82335
+SUBDIRS += hp82335
 endif
 
 all : $(EXP_INC) subdirs 

@@ -95,14 +95,14 @@ void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv)
 	}
 
 	// check for dma read transfer complete
-	if(test_bit(DMA_IN_PROGRESS_BN, &priv->state))
+	if(test_bit(DMA_READ_IN_PROGRESS_BN, &priv->state))
 	{
 		flags = claim_dma_lock();
 		disable_dma(priv->dma_channel);
 		clear_dma_ff(priv->dma_channel);
 		if((status1 & HR_END) || get_dma_residue(priv->dma_channel) == 0)
 		{
-			clear_bit(DMA_IN_PROGRESS_BN, &priv->state);
+			clear_bit(DMA_READ_IN_PROGRESS_BN, &priv->state);
 			wake_up_interruptible(&board->wait); /* wake up sleeping process */
 		}else
 			enable_dma(priv->dma_channel);
@@ -112,7 +112,7 @@ void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv)
 	if((status1 & HR_DO))
 	{
 		set_bit(WRITE_READY_BN, &priv->state);
-		if(test_bit(DMA_IN_PROGRESS_BN, &priv->state))	// write data, isa dma mode
+		if(test_bit(DMA_WRITE_IN_PROGRESS_BN, &priv->state))	// write data, isa dma mode
 		{
 			// check if dma transfer is complete
 			flags = claim_dma_lock();
@@ -120,7 +120,7 @@ void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv)
 			clear_dma_ff(priv->dma_channel);
 			if(get_dma_residue(priv->dma_channel) == 0)
 			{
-				clear_bit(DMA_IN_PROGRESS_BN, &priv->state);
+				clear_bit(DMA_WRITE_IN_PROGRESS_BN, &priv->state);
 				wake_up_interruptible(&board->wait);
 			}else
 			{

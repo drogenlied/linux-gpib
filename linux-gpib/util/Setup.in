@@ -96,6 +96,7 @@ RESULT=$($DIALOG --title "Board Type Selection" \
 	"CB7210" "Measurement Computing (Computer Boards) boards" "on" \
 	"INES" "Ines boards" "on" \
 	"CEC" "Captial Equipment Corporation / Keithley" "on" \
+	"HP82335" "HP82335 and compatibles" "on" \
 	"TNT4882TMS" "NI PCI-GPIB in tms9914 mode (for testing only)" "off" \
 	2>&1 1>/dev/tty)
 

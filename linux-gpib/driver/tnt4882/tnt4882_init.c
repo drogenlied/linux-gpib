@@ -28,9 +28,7 @@
 #include <linux/pci_ids.h>
 #include <linux/string.h>
 
-#ifdef MODULE_LICENSE
 MODULE_LICENSE("GPL");
-#endif
 
 int ni_isa_attach(gpib_board_t *board);
 int ni_pci_attach(gpib_board_t *board);

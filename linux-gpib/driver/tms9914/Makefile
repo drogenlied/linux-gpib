@@ -8,8 +8,7 @@ SRCS =  cmd.c init.c read.c util.c \
 
 OBJS =  $(SRCS:.c=.o)
 
-INCLUDES = -I. -I../include -I../../include
-CFLAGS += $(INCLUDES) $(OPTIONS) -DEXPORT_SYMTAB
+CFLAGS += -DEXPORT_SYMTAB
 
 all: tms9914.o
 

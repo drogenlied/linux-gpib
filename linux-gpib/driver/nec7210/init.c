@@ -27,9 +27,7 @@
 #include <linux/pci_ids.h>
 #include <linux/string.h>
 
-#ifdef MODULE_LICENSE
 MODULE_LICENSE("GPL");
-#endif
 
 // size of modbus pci memory io region
 static const int iomem_size = 0x2000;

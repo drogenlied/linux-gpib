@@ -1,5 +1,5 @@
 
-#include <ibsys.h>
+#include "ibsys.h"
 #include <asm/io.h>
 
 void writeb_wrapper( unsigned int value, unsigned long address )

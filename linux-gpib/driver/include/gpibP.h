@@ -10,7 +10,6 @@
 
 #include <gpib_proto.h>
 
-#include <gpib_registers.h>
 #include <gpib_ioctl.h>
 #include <gpib_user.h>
 

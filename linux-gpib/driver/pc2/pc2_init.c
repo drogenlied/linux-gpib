@@ -26,9 +26,7 @@
 #include <linux/pci.h>
 #include <linux/string.h>
 
-#ifdef MODULE_LICENSE
 MODULE_LICENSE("GPL");
-#endif
 
 int pc2_attach(gpib_board_t *board);
 int pc2a_attach(gpib_board_t *board);

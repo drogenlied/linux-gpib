@@ -23,9 +23,7 @@
 #include <asm/io.h>
 #include <linux/module.h>
 
-#ifdef MODULE_LICENSE
 MODULE_LICENSE("GPL");
-#endif
 
 int ines_pci_attach(gpib_board_t *board);
 int ines_isa_attach(gpib_board_t *board);

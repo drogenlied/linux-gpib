@@ -30,9 +30,7 @@
 
 #define PCI_DEVICE_ID_CBOARDS_PCI_GPIB 0x6
 
-#ifdef MODULE_LICENSE
 MODULE_LICENSE("GPL");
-#endif
 
 int cb_pci_attach(gpib_board_t *board);
 int cb_isa_attach(gpib_board_t *board);

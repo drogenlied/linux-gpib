@@ -17,19 +17,14 @@
  ***************************************************************************/
 
 
-#include <ibsys.h>
+#include "ibsys.h"
 #include <linux/version.h>
 #include <linux/module.h>
 #include <linux/wait.h>
 #include <linux/list.h>
 #include <linux/fs.h>
 
-// early 2.4.x kernels don't define MODULE_LICENSE
-#ifndef MODULE_LICENSE
-#define MODULE_LICENSE(x)
-#endif
 MODULE_LICENSE("GPL");
-
 
 /*
  * Linux initialization functions

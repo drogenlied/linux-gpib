@@ -30,9 +30,7 @@
 #include <linux/pci_ids.h>
 #include <linux/string.h>
 
-#ifdef MODULE_LICENSE
 MODULE_LICENSE("GPL");
-#endif
 
 int ni_pci_attach(gpib_board_t *board);
 
@@ -204,7 +202,7 @@ int ni_pci_attach(gpib_board_t *board)
 	// get irq
 	if(request_irq(mite_irq(tnt_priv->mite), tnt4882_interrupt, isr_flags, "ni-pci-gpib", board))
 	{
-		printk("gpib: can't request IRQ %d\n", board->ibirq);
+		printk("gpib: can't request IRQ %d\n", mite_irq( tnt_priv->mite ) );
 		return -1;
 	}
 	tnt_priv->irq = mite_irq(tnt_priv->mite);

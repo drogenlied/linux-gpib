@@ -77,7 +77,7 @@ static ssize_t __dma_read(gpib_board_t *board, nec7210_private_t *priv, size_t l
 
 	enable_dma(priv->dma_channel);
 
-	set_bit(DMA_IN_PROGRESS_BN, &priv->state);
+	set_bit(DMA_READ_IN_PROGRESS_BN, &priv->state);
 	clear_bit(READ_READY_BN, &priv->state);
 
 	// enable nec7210 dma
@@ -87,7 +87,7 @@ static ssize_t __dma_read(gpib_board_t *board, nec7210_private_t *priv, size_t l
 	spin_unlock_irqrestore(&board->spinlock, flags);
 
 	// wait for data to transfer
-	if(wait_event_interruptible(board->wait, test_bit(DMA_IN_PROGRESS_BN, &priv->state) == 0 ||
+	if(wait_event_interruptible(board->wait, test_bit(DMA_READ_IN_PROGRESS_BN, &priv->state) == 0 ||
 		test_bit(TIMO_NUM, &board->status)))
 	{
 		printk("gpib: dma read wait interrupted\n");

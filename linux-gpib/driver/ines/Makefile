@@ -7,15 +7,10 @@ SRCS =  ines_init.c ines_cs.c interrupt.c
 
 OBJS =  $(SRCS:.c=.o)
 
-INCLUDES = -I. -I../include -I../../include
-CFLAGS += $(INCLUDES) $(OPTIONS)
-
 all: ines-gpib.o
-
 
 ines-gpib.o: $(OBJS)
 	$(RLINK) -o ines-gpib.o $(OBJS)
-
 
 clean:
 	$(RM) *.o .depend

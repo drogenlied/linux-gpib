@@ -22,9 +22,7 @@
 #include <asm/io.h>
 #include <linux/module.h>
 
-#ifdef MODULE_LICENSE
 MODULE_LICENSE("GPL");
-#endif
 
 #define CEC_VENDOR_ID 0x12fc
 #define CEC_DEV_ID    0x5cec
