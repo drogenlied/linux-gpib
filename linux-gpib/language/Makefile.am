@@ -1,4 +1,4 @@
-# Makefile.am
+# language/Makefile.am
 # copyright (C) 2003 by Frank Mori Hess
 # email : fmhess@users.sourceforge.net
 #
@@ -7,7 +7,13 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
-SUBDIRS = include lib examples test driver doc language
+CLEANDIRS = perl python tcl guile php
 
-EXTRA_DIST = etc driver util
+EXTRA_DIST = $(CLEANDIRS)
 
+all-local:
+
+clean-local:
+	-for i in $(CLEANDIRS); do \
+		$(MAKE) -C $$i clean; \
+	done

@@ -1,0 +1,5 @@
+'make' to compile, 'make install' to install.  The binding
+can be loaded with the tcl command
+
+	load <path>/libgpib_tcl.so
+

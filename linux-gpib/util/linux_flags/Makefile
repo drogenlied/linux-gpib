@@ -16,6 +16,7 @@ modules:
 	echo LD_LINUX="$(LD)" >>flags
 	echo AS_LINUX="$(AS)" >>flags
 	echo MODLIB_LINUX="$(MODLIB)" >>flags
+	echo MODFLAGS_LINUX="$(MODFLAGS)" >> flags
 	echo >> flags
 	
 clean:

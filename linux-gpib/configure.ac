@@ -92,6 +92,9 @@ LIBGPIB_CFLAGS="-I\$(top_srcdir)/include -Wall -D_REENTRANT"
 LIBGPIB_LDFLAGS="\$(top_srcdir)/lib/libgpib.la -lpthread"
 AC_SUBST(LIBGPIB_CFLAGS)
 AC_SUBST(LIBGPIB_LDFLAGS)
+IBMAJOR=160
+AC_SUBST(IBMAJOR)
+AC_DEFINE([IBMAJOR],[160],[Major number of device files])
 
 AC_OUTPUT([\
 	Makefile \
@@ -114,6 +117,7 @@ AC_OUTPUT([\
 	driver//Makefile \
 	doc/Makefile \
 	include/Makefile \
+	language/Makefile \
 	language/guile/Makefile \
 	language/python/Makefile \
 	language/tcl/Makefile \

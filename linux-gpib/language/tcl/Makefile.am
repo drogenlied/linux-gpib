@@ -11,6 +11,11 @@ lib_LTLIBRARIES = libgpib_tcl.la
 
 libgpib_tcl_la_SOURCES = ibCmds.c
 
-libgpib_tcl_la_CFLAGS = $(LIBGPIB_CFLAGS) -I/usr/include/tcl8.3
-libgpib_tcl_la_LDFLAGS = -release $(VERSION) $(LIBGPIB_LDFLAGS)
+TCL_LIBRARY = $(shell echo 'puts $$tcl_library' | tclsh)
+
+include $(TCL_LIBRARY)/tclConfig.sh
+
+#fix tcl directory for version independence
+libgpib_tcl_la_CFLAGS = $(LIBGPIB_CFLAGS) -I$(TCL_INC_DIR)
+libgpib_tcl_la_LDFLAGS = -release $(VERSION) $(LIBGPIB_LDFLAGS) $(TCL_LIB_SPEC)
 

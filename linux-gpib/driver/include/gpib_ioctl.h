@@ -20,8 +20,7 @@
 #define _GPIB_IOCTL_H
 
 #include <asm/ioctl.h>
-
-#define IBMAJOR 160
+#include "config.h"
 
 typedef struct
 {
