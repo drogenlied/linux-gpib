@@ -11,5 +11,3 @@ export-objs := $(gpib_common-objs)
 
 gpib_common.o: $(gpib_common-objs)
 	$(LD) -r -o gpib_common.o $(gpib_common-objs)
-
-include $(TOPDIR)/Rules.make

@@ -57,13 +57,11 @@ if [[ ! -f "$LINUX_SRCDIR/.config" ]]; then
 	appropriate configuration file to $LINUX_SRCDIR/.config and then run 'make oldconfig'
 	in the kernel source directory.])
 fi
-if [[ ! -f "$LINUX_SRCDIR/.hdepend" ]];then
-	AC_MSG_ERROR([You need to run 'make dep' on the kernel source before continuing.])
-fi
 AC_MSG_RESULT([ok])
 dnl get compile flags for modules from linux kernel source tree
 AC_MSG_CHECKING([Linux kernel compile flags])
-(cd util/linux_flags/ && make --quiet LINUXDIR=$LINUX_SRCDIR)
+FLAGDIR=$(pwd)/util/linux_flags 
+make -C ${LINUX_SRCDIR} V=1 SUBDIRS=${FLAGDIR} LINUXDIR=${LINUX_SRCDIR} MODVERDIR=${FLAGDIR} modules 
 if [[ $? != 0 ]]; then
 	AC_MSG_ERROR([Failed to get compile flags from Linux kernel directory.])
 fi

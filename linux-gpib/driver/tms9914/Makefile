@@ -10,4 +10,3 @@ export-objs := $(tms9914-objs)
 tms9914.o: $(tms9914-objs)
 	$(LD) -r -o tms9914.o $(tms9914-objs)
 
-include $(TOPDIR)/Rules.make

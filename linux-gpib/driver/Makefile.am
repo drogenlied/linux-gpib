@@ -21,7 +21,7 @@ SUBDIRS = include
 
 all-local:
 	$(MAKE) -C $(LINUX_SRCDIR) modules V=1 \
-		CC="$(CC_LINUX) -I@abs_top_srcdir@ -I@abs_top_srcdir@/driver/include -I@abs_top_srcdir@/include" \
+		CC="$(LINUX_CC) -I@abs_top_srcdir@ -I@abs_top_srcdir@/driver/include -I@abs_top_srcdir@/include" \
 		SUBDIRS="$(GPIB_ABS_MODULE_SUBDIRS)"
 
 clean-local:
@@ -30,7 +30,7 @@ clean-local:
 
 install-data-hook: device-file-check /etc/gpib.conf
 	for module in $(GPIB_MODULES) ; do \
-		$(INSTALL_DATA) -D $$module $(MODLIB_LINUX)/gpib/$$(basename $$module) ; \
+		$(INSTALL_DATA) -D $$module $(LINUX_MODLIB)/gpib/$$(basename $$module) ; \
 	done
 	$(DEPMOD) -ae
 
