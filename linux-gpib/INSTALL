@@ -92,7 +92,14 @@ o) cd to your linux-gpib directory and type 'make config'.  If you
 	permissions on the device files /dev/gpib[0-15] to something you like
 	better, using 'chmod' (or editing devfsd.conf if you are using devfs).
 
-C) Loading the driver module
+C) Configuring the GPIB-Library
+-------------------------------
+
+	Edit /etc/gpib.conf to match your interface board, and any devices you wish
+	to open via ibfind().  See the documentation in doc/html or doc/pdf for
+	more information.
+
+D) Loading the driver module
 -----------------------------
 
 	You can load the driver module by typing
@@ -112,17 +119,10 @@ C) Loading the driver module
 	something like
 
 	alias char-major-160 tnt4882
-	post-install tnt4882 gpib_config --minor 0
+	post-install tnt4882 export PATH=/sbin:/usr/sbin:/usr/local/sbin:$PATH;gpib_config --minor 0
 
 	to /etc/modules.conf, which would autoload the tnt4882.o module when
 	the library is used.
-
-D) Configuring the GPIB-Library
--------------------------------
-
-	Edit /etc/gpib.conf to match your interface board, and any devices you wish
-	to open via ibfind().  See the documentation in doc/html or doc/pdf for
-	more information.
 
 	You may find the examples/ibtest program useful as a starting point in trying
 	out your setup.
