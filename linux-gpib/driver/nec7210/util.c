@@ -19,10 +19,8 @@
 #include "board.h"
 #include <linux/delay.h>
 
-void nec7210_enable_eos(gpib_driver_t *driver, uint8_t eos_byte, int compare_8_bits)
+void nec7210_enable_eos(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t eos_byte, int compare_8_bits)
 {
-	nec7210_private_t *priv = driver->private_data;
-
 	priv->write_byte(priv, eos_byte, EOSR);
 	priv->auxa_bits |= HR_REOS;
 	if(compare_8_bits)
@@ -32,18 +30,15 @@ void nec7210_enable_eos(gpib_driver_t *driver, uint8_t eos_byte, int compare_8_b
 	priv->write_byte(priv, priv->auxa_bits, AUXMR);
 }
 
-void nec7210_disable_eos(gpib_driver_t *driver)
+void nec7210_disable_eos(gpib_driver_t *driver, nec7210_private_t *priv)
 {
-	nec7210_private_t *priv = driver->private_data;
-
 	priv->auxa_bits &= ~HR_REOS;
 	priv->write_byte(priv, priv->auxa_bits, AUXMR);
 }
 
-int nec7210_parallel_poll(gpib_driver_t *driver, uint8_t *result)
+int nec7210_parallel_poll(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *result)
 {
 	int ret;
-	nec7210_private_t *priv = driver->private_data;
 
 	// enable command out interrupts
 	priv->imr2_bits |= HR_COIE;
@@ -70,28 +65,22 @@ int nec7210_parallel_poll(gpib_driver_t *driver, uint8_t *result)
 	return 0;
 }
 
-int nec7210_serial_poll_response(gpib_driver_t *driver, uint8_t status)
+int nec7210_serial_poll_response(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t status)
 {
-	nec7210_private_t *priv = driver->private_data;
-
 	priv->write_byte(priv, 0, SPMR);		/* clear current serial poll status */
 	priv->write_byte(priv, status, SPMR);		/* set new status to v */
 
 	return 0;
 }
 
-void nec7210_primary_address(gpib_driver_t *driver, unsigned int address)
+void nec7210_primary_address(gpib_driver_t *driver, nec7210_private_t *priv, unsigned int address)
 {
-	nec7210_private_t *priv = driver->private_data;
-
 	// put primary address in address0
 	priv->write_byte(priv, address & ADDRESS_MASK, ADR);
 }
 
-void nec7210_secondary_address(gpib_driver_t *driver, unsigned int address, int enable)
+void nec7210_secondary_address(gpib_driver_t *driver, nec7210_private_t *priv, unsigned int address, int enable)
 {
-	nec7210_private_t *priv = driver->private_data;
-
 	if(enable)
 	{
 		// put secondary address in address1
@@ -110,9 +99,8 @@ void nec7210_secondary_address(gpib_driver_t *driver, unsigned int address, int 
 	priv->write_byte(priv, priv->admr_bits, ADMR);
 }
 
-unsigned int nec7210_update_status(gpib_driver_t *driver)
+unsigned int nec7210_update_status(gpib_driver_t *driver, nec7210_private_t *priv)
 {
-	nec7210_private_t *priv = driver->private_data;
 	int address_status_bits;
 
 	if(priv == NULL) return 0;

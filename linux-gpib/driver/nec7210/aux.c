@@ -20,11 +20,10 @@
 #include <linux/delay.h>
 #include <asm/bitops.h>
 
-int nec7210_take_control(gpib_driver_t *driver, int syncronous)
+int nec7210_take_control(gpib_driver_t *driver, nec7210_private_t *priv, int syncronous)
 {
 	int i;
 	const int timeout = 1000;
-	nec7210_private_t *priv = driver->private_data;
 
 	if(syncronous)
 	{
@@ -66,11 +65,10 @@ int nec7210_take_control(gpib_driver_t *driver, int syncronous)
 	return 0;
 }
 
-int nec7210_go_to_standby(gpib_driver_t *driver)
+int nec7210_go_to_standby(gpib_driver_t *driver, nec7210_private_t *priv)
 {
 	int i;
 	const int timeout = 1000;
-	nec7210_private_t *priv = driver->private_data;
 
 	priv->write_byte(priv, AUX_GTS, AUXMR);
 	// busy wait until ATN is released
@@ -88,20 +86,16 @@ int nec7210_go_to_standby(gpib_driver_t *driver)
 	return 0;
 }
 
-void nec7210_interface_clear(gpib_driver_t *driver, int assert)
+void nec7210_interface_clear(gpib_driver_t *driver, nec7210_private_t *priv, int assert)
 {
-	nec7210_private_t *priv = driver->private_data;
-
 	if(assert)
 		priv->write_byte(priv, AUX_SIFC, AUXMR);
 	else
 		priv->write_byte(priv, AUX_CIFC, AUXMR);
 }
 
-void nec7210_remote_enable(gpib_driver_t *driver, int enable)
+void nec7210_remote_enable(gpib_driver_t *driver, nec7210_private_t *priv, int enable)
 {
-	nec7210_private_t *priv = driver->private_data;
-	
 	if(enable)
 		priv->write_byte(priv, AUX_SREN, AUXMR);
 	else

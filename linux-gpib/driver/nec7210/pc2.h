@@ -19,6 +19,13 @@
 #ifndef _PC2_H
 #define _PC2_H
 
+// struct which defines private_data for pc2 driver
+typedef struct
+{
+	nec7210_private_t nec7210_priv;
+	unsigned int irq;
+} pc2_private_t;
+
 // pc2 uses 8 consecutive io addresses
 static const int pc2_iosize = 8;
 
@@ -27,6 +34,7 @@ static const int pc2a_reg_offset = 0x400;
 static const int pc2_reg_offset = 1;
 
 //interrupt service routine
+void pc2_interrupt(int irq, void *arg, struct pt_regs *registerp);
 void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
 // pc2 specific registers and bits

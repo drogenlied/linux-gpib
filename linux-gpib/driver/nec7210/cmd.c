@@ -18,12 +18,11 @@
 
 #include "board.h"
 
-IBLCL ssize_t nec7210_command(gpib_driver_t *driver, uint8_t *buffer, size_t length)
+ssize_t nec7210_command(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length)
 {
 	size_t count = 0;
 	const int timeout = 1000;
 	int i;
-	nec7210_private_t *priv = driver->private_data;
 	ssize_t retval = 0;
 
 	// enable command out interrupt

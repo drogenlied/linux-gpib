@@ -25,11 +25,20 @@
 #error pci-gpib does not support ISA DMA, run make config again
 #endif
 
+#define PCI_DEVICE_ID_CBOARDS_PCI_GPIB 0x6
+
+// struct which defines private_data for cb7210 drivers
+typedef struct
+{
+	nec7210_private_t nec7210_priv;
+	struct pci_dev *pci_device;
+	// base address of amccs5933 pci chip
+	unsigned long amcc_iobase;
+	unsigned int irq;
+} cb7210_private_t;
+
 // interrupt service routine
 void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp);
-
-// base address of amccs5933 pci chip
-extern unsigned long amcc_iobase;
 
 // pci-gpib register offset
 static const int cb_pci_reg_offset = 1;

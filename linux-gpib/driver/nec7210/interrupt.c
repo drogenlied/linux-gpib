@@ -24,46 +24,54 @@
  * GPIB interrupt service routines
  */
 
+void pc2_interrupt(int irq, void *arg, struct pt_regs *registerp)
+{
+	gpib_driver_t *driver = (gpib_driver_t*) arg;
+	pc2_private_t *priv = driver->private_data;
+
+	nec7210_interrupt(driver, &priv->nec7210_priv);
+}
+
 void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
-	nec7210_interrupt(irq, arg, registerp);
+	gpib_driver_t *driver = (gpib_driver_t*) arg;
+	pc2_private_t *priv = driver->private_data;
+
+	nec7210_interrupt(driver, &priv->nec7210_priv);
 
 	/* clear interrupt circuit */
-	outb(0xff , CLEAR_INTR_REG(ibirq) );
+	outb(0xff , CLEAR_INTR_REG(priv->irq) );
 }
 
 void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp )
 {
 	int bits, hs_status;
 	gpib_driver_t *driver = (gpib_driver_t*) arg;
-	nec7210_private_t *priv = driver->private_data;
-
-printk("ammc status 0x%x\n", inl(amcc_iobase + INTCSR_REG));
+	cb7210_private_t *priv = driver->private_data;
+	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 
 	// read incoming mailbox to clear mailbox full flag
-	inl(amcc_iobase + INCOMING_MAILBOX_REG(3));
+	inl(priv->amcc_iobase + INCOMING_MAILBOX_REG(3));
 	// clear amccs5933 interrupt
 	bits = INBOX_FULL_INTR_BIT | INBOX_BYTE_BITS(3) | INBOX_SELECT_BITS(3) |
 		INBOX_INTR_CS_BIT;
-	outl(bits, amcc_iobase + INTCSR_REG );
+	outl(bits, priv->amcc_iobase + INTCSR_REG );
 
-	if((hs_status = inb(priv->iobase + HS_STATUS)))
+	if((hs_status = inb(nec_priv->iobase + HS_STATUS)))
 	{
 		outb(HS_CLR_SRQ_INT | HS_CLR_EOI_INT |
-			HS_CLR_EMPTY_INT | HS_CLR_HF_INT, priv->iobase + HS_MODE);
+			HS_CLR_EMPTY_INT | HS_CLR_HF_INT, nec_priv->iobase + HS_MODE);
 		printk("gpib: cbi488 interrupt? 0x%x\n", hs_status);
 	}
 
-	nec7210_interrupt(irq, arg, registerp);
+	nec7210_interrupt(driver, nec_priv);
 }
 
-void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
+void nec7210_interrupt(gpib_driver_t *driver, nec7210_private_t *priv)
 {
 	int status1, status2, address_status;
 	unsigned long flags;
-	gpib_driver_t *driver = (gpib_driver_t*) arg;
-	nec7210_private_t *priv = driver->private_data;
-	
+
 	/* interrupt should also update RDF_HOLDOFF in state
 	 * by checking auxa_bits and END, but I need to make
 	 * auxa_bits store handshaking bits first */

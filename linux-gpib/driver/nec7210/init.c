@@ -28,92 +28,13 @@
 #include <linux/pci_ids.h>
 #include <linux/string.h>
 
-#define PCI_DEVICE_ID_CBOARDS_PCI_GPIB 0x6
-
-int pc2_attach(gpib_driver_t *driver);
-int pc2a_attach(gpib_driver_t *driver);
-int pnp_attach(gpib_driver_t *driver);
-int cb_pci_attach(gpib_driver_t *driver);
-
-void pc2_detach(gpib_driver_t *driver);
-void pc2a_detach(gpib_driver_t *driver);
-void cb_pci_detach(gpib_driver_t *driver);
-
 unsigned long ibbase = IBBASE;
 unsigned int ibirq = IBIRQ;
 unsigned int ibdma = IBDMA;
 unsigned long remapped_ibbase = 0;
 unsigned long amcc_iobase = 0;
 
-struct pci_dev *pci_dev_ptr = NULL;
-
-gpib_driver_t pc2_driver =
-{
-	name:	"nec7210",
-	attach:	pc2_attach,
-	detach:	pc2_detach,
-	read:	nec7210_read,
-	write:	nec7210_write,
-	command:	nec7210_command,
-	take_control:	nec7210_take_control,
-	go_to_standby:	nec7210_go_to_standby,
-	interface_clear:	nec7210_interface_clear,
-	remote_enable:	nec7210_remote_enable,
-	enable_eos:	nec7210_enable_eos,
-	disable_eos:	nec7210_disable_eos,
-	parallel_poll:	nec7210_parallel_poll,
-	line_status:	NULL,
-	update_status:	nec7210_update_status,
-	primary_address:	nec7210_primary_address,
-	secondary_address:	nec7210_secondary_address,
-	serial_poll_response:	nec7210_serial_poll_response,
-};
-
-gpib_driver_t pc2a_driver =
-{
-	name:	"nec7210",
-	attach:	pc2a_attach,
-	detach:	pc2a_detach,
-	read:	nec7210_read,
-	write:	nec7210_write,
-	command:	nec7210_command,
-	take_control:	nec7210_take_control,
-	go_to_standby:	nec7210_go_to_standby,
-	interface_clear:	nec7210_interface_clear,
-	remote_enable:	nec7210_remote_enable,
-	enable_eos:	nec7210_enable_eos,
-	disable_eos:	nec7210_disable_eos,
-	parallel_poll:	nec7210_parallel_poll,
-	line_status:	NULL,
-	update_status:	nec7210_update_status,
-	primary_address:	nec7210_primary_address,
-	secondary_address:	nec7210_secondary_address,
-	serial_poll_response:	nec7210_serial_poll_response,
-};
-
-gpib_driver_t cb_pci_driver =
-{
-	name: "nec7210",
-	attach: cb_pci_attach,
-	detach: cb_pci_detach,
-	read: nec7210_read,
-	write: nec7210_write,
-	command: nec7210_command,
-	take_control: nec7210_take_control,
-	go_to_standby: nec7210_go_to_standby,
-	interface_clear: nec7210_interface_clear,
-	remote_enable: nec7210_remote_enable,
-	enable_eos: nec7210_enable_eos,
-	disable_eos: nec7210_disable_eos,
-	parallel_poll: nec7210_parallel_poll,
-	line_status: NULL,	//XXX
-	update_status: nec7210_update_status,
-	primary_address: nec7210_primary_address,
-	secondary_address: nec7210_secondary_address,
-	serial_poll_response: nec7210_serial_poll_response,
-};
-
-// this is a hack to set the driver pointer
+// this is a temporary hack to set the driver pointer
 #ifdef NIPCIIa
 gpib_driver_t *driver = &pc2a_driver;
 #warning using pc2a driver
@@ -129,8 +50,6 @@ gpib_driver_t *driver = &pc2_driver;
 #warning usin pc2 driver
 #endif
 
-gpib_buffer_t *read_buffer = NULL, *write_buffer = NULL;
-
 MODULE_PARM(ibbase, "l");
 MODULE_PARM_DESC(ibbase, "base io address");
 MODULE_PARM(ibirq, "i");
@@ -141,7 +60,7 @@ MODULE_PARM_DESC(ibdma, "dma channel");
 // size of modbus pci memory io region
 static const int iomem_size = 0x2000;
 
-void board_reset(nec7210_private_t *priv)
+void nec7210_board_reset(nec7210_private_t *priv)
 {
 #ifdef MODBUS_PCI
 	GPIBout(0x20, 0xff); /* enable controller mode */
@@ -185,24 +104,6 @@ void board_reset(nec7210_private_t *priv)
 	priv->write_byte(priv, AUXRE, AUXMR);
 }
 
-int allocate_private(gpib_driver_t *driver)
-{
-	driver->private_data = kmalloc(sizeof(nec7210_private_t), GFP_KERNEL);
-	if(driver->private_data == NULL)
-		return -1;
-	memset(driver->private_data, 0, sizeof(nec7210_private_t));
-	return 0;
-}
-
-void free_private(gpib_driver_t *driver)
-{
-	if(driver->private_data)
-	{
-		kfree(driver->private_data);
-		driver->private_data = NULL;
-	}
-}
-
 // wrapper for inb
 uint8_t ioport_read_byte(nec7210_private_t *priv, unsigned int register_num)
 {
@@ -217,288 +118,12 @@ void ioport_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int regis
 // wrapper for readb
 uint8_t iomem_read_byte(nec7210_private_t *priv, unsigned int register_num)
 {
-	return readb(priv->remapped_iobase + register_num * priv->offset);
+	return readb(priv->iobase + register_num * priv->offset);
 }
 // wrapper for writeb
 void iomem_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num)
 {
-	writeb(data, priv->remapped_iobase + register_num * priv->offset);
-}
-
-int pc2_attach(gpib_driver_t *driver)
-{
-	int isr_flags = 0;
-	nec7210_private_t *priv;
-	driver->status = 0;
-
-	if(allocate_private(driver))
-		return -ENOMEM;
-	priv = driver->private_data;
-	priv->offset = pc2_reg_offset;
-	priv->read_byte = ioport_read_byte;
-	priv->write_byte = ioport_write_byte;
-
-	if(request_region(ibbase, pc2_iosize, "pc2"));
-	{
-		printk("gpib: ioports are already in use");
-		return -1;
-	}
-	priv->iobase = ibbase;
-
-	// install interrupt handler
-	if( request_irq(ibirq, nec7210_interrupt, isr_flags, "pc2", driver))
-	{
-		printk("gpib: can't request IRQ %d\n", ibirq);
-		return -1;
-	}
-	priv->irq = ibirq;
-
-	// request isa dma channel
-#if DMAOP
-	if( request_dma( ibdma, "pc2" ) )
-	{
-		printk("gpib: can't request DMA %d\n",ibdma );
-		return -1;
-	}
-	priv->dma_channel = ibdma;
-#endif
-	board_reset(priv);
-
-	// enable interrupts
-	priv->imr1_bits = HR_ERRIE | HR_DECIE | 
-		HR_DETIE | HR_APTIE | HR_CPTIE;
-	priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
-	priv->write_byte(priv, priv->imr1_bits, IMR1);
-	priv->write_byte(priv, priv->imr2_bits, IMR2);
-
-	priv->write_byte(priv, AUX_PON, AUXMR);
-
-	return 0;
-}
-
-void pc2_detach(gpib_driver_t *driver)
-{
-	nec7210_private_t *priv = driver->private_data;
-
-	if(priv)
-	{
-		if(priv->dma_channel)
-		{
-			free_dma(priv->dma_channel);
-		}
-		if(priv->irq)
-		{
-			free_irq(priv->irq, driver);
-		}
-		if(priv->iobase)
-		{
-			board_reset(priv);
-			release_region(priv->iobase, pc2_iosize);
-		}
-	}
-	free_private(driver);
-}
-
-int pc2a_attach(gpib_driver_t *driver)
-{
-	unsigned int i, err;
-	int isr_flags = 0;
-	nec7210_private_t *priv;
-
-	driver->status = 0;
-
-	if(allocate_private(driver))
-		return -ENOMEM;
-	priv = driver->private_data;
-	priv->offset = pc2a_reg_offset;
-	priv->read_byte = ioport_read_byte;
-	priv->write_byte = ioport_write_byte;
-
-	switch( ibbase ){
-
-		case 0x02e1:
-		case 0x22e1:
-		case 0x42e1:
-		case 0x62e1:
-			break;
-		default:
-			printk("PCIIa base range invalid, must be one of [0246]2e1 is %lx \n", ibbase);
-			return -1;
-			break;
-	}
-
-	if( ibirq < 2 || ibirq > 7 )
-	{
-		printk("Illegal Interrupt Level \n");
-		return -1;
-	}
-
-	err = 0;
-	for(i = 0; i < nec7210_num_registers; i++)
-	{
-		if(check_region(ibbase + i * pc2a_reg_offset, 1))
-			err++;
-	}
-	if(check_region(pc2a_clear_intr_iobase, pc2a_clear_intr_iosize))
-	{
-		err++;
-	}
-	if(err)
-	{
-		printk("gpib: ioports are already in use");
-		return -1;
-	}
-	for(i = 0; i < nec7210_num_registers; i++)
-	{
-		request_region(ibbase + i * pc2a_reg_offset, 1, "pc2a");
-	}
-	request_region(pc2a_clear_intr_iobase, pc2a_clear_intr_iosize, "pc2a");
-	priv->iobase = ibbase;
-
-	if(request_irq(ibirq, pc2a_interrupt, isr_flags, "pc2a", driver))
-	{
-		printk("gpib: can't request IRQ %d\n", ibirq);
-		return -1;
-	}
-	priv->irq = ibirq;
-	// request isa dma channel
-#if DMAOP
-	if(request_dma(ibdma, "pc2a"))
-	{
-		printk("gpib: can't request DMA %d\n",ibdma );
-		return -1;
-	}
-	priv->dma_channel = ibdma;
-#endif
-	board_reset(priv);
-
-	// make sure interrupt is clear
-	outb(0xff , CLEAR_INTR_REG(ibirq));
-
-	// enable interrupts
-	priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
-		HR_DETIE | HR_APTIE | HR_CPTIE;
-	priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
-	priv->write_byte(priv, priv->imr1_bits, IMR1);
-	priv->write_byte(priv, priv->imr2_bits, IMR2);
-
-	priv->write_byte(priv, AUX_PON, AUXMR);
-
-	return 0;
-}
-
-void pc2a_detach(gpib_driver_t *driver)
-{
-	int i;
-	nec7210_private_t *priv = driver->private_data;
-
-	if(priv->dma_channel)
-	{
-		free_dma(priv->dma_channel);
-	}
-	if(priv->irq)
-	{
-		free_irq(priv->irq, driver);
-	}
-	if(priv->iobase)
-	{
-		board_reset(priv);
-		for(i = 0; i < nec7210_num_registers; i++)
-			release_region(priv->iobase + i * pc2a_reg_offset, 1);
-		release_region(pc2a_clear_intr_iobase, pc2a_clear_intr_iosize);
-	}
-	free_private(driver);
-}
-
-int cb_pci_attach(gpib_driver_t *driver)
-{
-	nec7210_private_t *priv;
-	int isr_flags = 0;
-	int bits;
-
-	driver->status = 0;
-
-	if(allocate_private(driver))
-		return -ENOMEM;
-	priv = driver->private_data;
-	priv->read_byte = ioport_read_byte;
-	priv->write_byte = ioport_write_byte;
-	priv->offset = cb_pci_reg_offset;
-
-	// find board
-	priv->pci_device = pci_find_device(PCI_VENDOR_ID_CBOARDS, PCI_DEVICE_ID_CBOARDS_PCI_GPIB, NULL);
-	if(priv->pci_device == NULL)
-	{
-		printk("GPIB: no PCI-GPIB board found\n");
-		return -1;
-	}
-
-	if(pci_enable_device(priv->pci_device))
-	{
-		printk("error enabling pci device\n");
-		return -1;
-	}
-
-	if(pci_request_regions(priv->pci_device, "pci-gpib"))
-		return -1;
-
-	//XXX global
-	amcc_iobase = pci_resource_start(pci_dev_ptr, 0) & PCI_BASE_ADDRESS_IO_MASK;
-	priv->iobase = pci_resource_start(pci_dev_ptr, 1) & PCI_BASE_ADDRESS_IO_MASK;
-
-	/* CBI 4882 reset */
-	priv->write_byte(priv, HS_RESET7210, HS_INT_LEVEL);
-	priv->write_byte(priv, 0, HS_INT_LEVEL);
-	priv->write_byte(priv, 0, HS_MODE); /* disable system control */
-
-	isr_flags |= SA_SHIRQ;
-	if(request_irq(priv->pci_device->irq, cb_pci_interrupt, isr_flags, "pci-gpib", driver))
-	{
-		printk("gpib: can't request IRQ %d\n", priv->pci_device->irq);
-		return -1;
-	}
-	priv->irq = priv->pci_device->irq;
-
-	board_reset(priv);
-
-	// XXX set clock register for 20MHz? driving frequency
-	priv->write_byte(priv, ICR | 8, AUXMR);
-
-	// enable interrupts on amccs5933 chip
-	bits = INBOX_FULL_INTR_BIT | INBOX_BYTE_BITS(3) | INBOX_SELECT_BITS(3) |
-		INBOX_INTR_CS_BIT;
-	outl(bits, amcc_iobase + INTCSR_REG );
-
-	// enable interrupts for cb7210
-	priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
-		HR_DETIE | HR_APTIE | HR_CPTIE;
-	priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
-	priv->write_byte(priv, priv->imr1_bits, IMR1);
-	priv->write_byte(priv, priv->imr2_bits, IMR2);
-
-	priv->write_byte(priv, AUX_PON, AUXMR);
-
-	return 0;
-}
-
-void cb_pci_detach(gpib_driver_t *driver)
-{
-	nec7210_private_t *priv = driver->private_data;
-	if(priv)
-	{
-		if(priv->irq)
-		{
-			// disable amcc interrupts
-			outl(0, amcc_iobase + INTCSR_REG );
-			free_irq(priv->irq, driver);
-		}
-		if(priv->iobase)
-		{
-			board_reset(priv);
-			pci_release_regions(priv->pci_device);
-		}
-	}
-	free_private(driver);
+	writeb(data, priv->iobase + register_num * priv->offset);
 }
 
 // old functions

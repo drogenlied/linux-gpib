@@ -19,7 +19,7 @@
 #include "board.h"
 #include <asm/dma.h>
 
-ssize_t pio_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length)
+static ssize_t pio_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length)
 {
 	size_t count = 0;
 	ssize_t retval = 0;
@@ -54,7 +54,7 @@ ssize_t pio_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer
 	return retval ? retval : count;
 }
 
-ssize_t dma_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length)
+static ssize_t dma_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length)
 {
 	ssize_t retval = 0;
 	size_t count = 0;
@@ -110,11 +110,10 @@ ssize_t dma_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer
 	return retval ? retval : count;
 }
 
-ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int *end)
+ssize_t nec7210_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length, int *end)
 {
 	size_t	count = 0;
 	ssize_t retval = 0;
-	nec7210_private_t *priv = driver->private_data;
 	*end = 0;
 
 	if(length == 0) return 0;

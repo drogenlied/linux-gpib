@@ -18,18 +18,13 @@
 #ifndef _NEC7210_H
 #define _NEC7210_H
 
-/* struct driver uses to store information in, pointed at by
- *  gpib_driver_t.private_data */
+/* struct used to provide variables local to a nec7210 chip */
 typedef struct nec7210_private_struct nec7210_private_t;
 struct nec7210_private_struct
 {
-	struct pci_dev *pci_device;
 	unsigned long iobase;
-	unsigned long remapped_iobase;
 	unsigned int offset;	// offset between successive nec7210 io addresses
-	unsigned int irq;
 	unsigned int dma_channel;
-	gpib_buffer_t buffer;
 	// software copy of bits written to interrupt mask registers
 	volatile uint8_t imr1_bits, imr2_bits;
 	// bits written to address mode register
@@ -52,6 +47,39 @@ enum
 	COMMAND_READY_BN,	// board is ready to send a command byte
 	RFD_HOLDOFF_BN,	// board is asserting a request for data holdoff
 };
+
+// interface functions
+extern ssize_t nec7210_read(gpib_driver_t *driver, nec7210_private_t *priv,
+	uint8_t *buffer, size_t length, int *end);
+extern ssize_t nec7210_write(gpib_driver_t *driver, nec7210_private_t *priv,
+	uint8_t *buffer, size_t length, int send_eoi);
+extern ssize_t nec7210_command(gpib_driver_t *driver, nec7210_private_t *priv,
+	uint8_t *buffer, size_t length);
+extern int nec7210_take_control(gpib_driver_t *driver, nec7210_private_t *priv, int syncronous);
+extern int nec7210_go_to_standby(gpib_driver_t *driver, nec7210_private_t *priv);
+extern void nec7210_interface_clear(gpib_driver_t *driver, nec7210_private_t *priv, int assert);
+extern void nec7210_remote_enable(gpib_driver_t *driver, nec7210_private_t *priv, int enable);
+extern void nec7210_enable_eos(gpib_driver_t *driver, nec7210_private_t *priv,
+	uint8_t eos_bytes, int compare_8_bits);
+extern void nec7210_disable_eos(gpib_driver_t *driver, nec7210_private_t *priv);
+extern unsigned int nec7210_update_status(gpib_driver_t *driver, nec7210_private_t *priv);
+extern void nec7210_primary_address(gpib_driver_t *driver, nec7210_private_t *priv, unsigned int address);
+extern void nec7210_secondary_address(gpib_driver_t *driver, nec7210_private_t *priv,
+	unsigned int address, int enable);
+extern int nec7210_parallel_poll(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *result);
+extern int nec7210_serial_poll_response(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t status);
+
+// utility function
+extern void nec7210_board_reset(nec7210_private_t *priv);
+
+// wrappers for io functions
+extern uint8_t ioport_read_byte(nec7210_private_t *priv, unsigned int register_num);
+extern void ioport_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num);
+extern uint8_t iomem_read_byte(nec7210_private_t *priv, unsigned int register_num);
+extern void iomem_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num);
+
+// interrupt service routine
+void nec7210_interrupt(gpib_driver_t *driver, nec7210_private_t *priv);
 
 // nec7210 has 8 registers
 static const int nec7210_num_registers = 8;

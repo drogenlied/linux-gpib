@@ -19,12 +19,10 @@
 #include "board.h"
 #include <asm/dma.h>
 
-ssize_t pio_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length)
+static ssize_t pio_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length)
 {
 	size_t count = 0;
 	ssize_t retval = 0;
-
-printk("pio write %p %i\n", buffer, length);
 
 	// enable 'data out' interrupts
 	priv->imr1_bits |= HR_DOIE;
@@ -60,12 +58,10 @@ printk("pio write %p %i\n", buffer, length);
 	return length;
 }
 
-ssize_t dma_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length)
+static ssize_t dma_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length)
 {
 	unsigned long flags;
 	int residue = 0;
-
-printk("dma write %p %i\n", buffer, length);
 
 	/* program dma controller */
 	flags = claim_dma_lock();
@@ -114,11 +110,10 @@ printk("dma write %p %i\n", buffer, length);
 	return length;
 }
 
-ssize_t nec7210_write(gpib_driver_t *driver, uint8_t *buffer, size_t length, int send_eoi)
+ssize_t nec7210_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length, int send_eoi)
 {
 	size_t count = 0;
 	ssize_t retval = 0;
-	nec7210_private_t *priv = driver->private_data;
 
 	if(length == 0) return 0;
 
