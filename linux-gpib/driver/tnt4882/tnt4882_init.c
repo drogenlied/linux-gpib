@@ -583,6 +583,7 @@ int ni_isa_attach_common( gpib_board_t *board, ni_chipset_t chipset )
 	tnt4882_private_t *tnt_priv;
 	nec7210_private_t *nec_priv;
 	int isr_flags = 0;
+	unsigned long iobase;
 
 	board->status = 0;
 
@@ -608,17 +609,18 @@ int ni_isa_attach_common( gpib_board_t *board, ni_chipset_t chipset )
 		retval = ni_isapnp_find( &dev );
 		if( retval < 0 ) return retval;
 		tnt_priv->isapnp_dev = dev;
-		board->ibbase = dev->resource[ 0 ].start;
+		iobase = dev->resource[ 0 ].start;
 		board->ibirq = dev->irq_resource[ 0 ].start;
-	}
+	}else
+		iobase = board->ibbase;
 
 	// allocate ioports
-	if( request_region(board->ibbase, atgpib_iosize, "atgpib") == NULL )
+	if( request_region( iobase, atgpib_iosize, "atgpib") == NULL )
 	{
 		printk("tnt4882: failed to allocate ioports\n");
 		return -1;
 	}
-	nec_priv->iobase = board->ibbase;
+	nec_priv->iobase = iobase;
 
 	// get irq
 	if(request_irq(board->ibirq, tnt4882_interrupt, isr_flags, "atgpib", board))
