@@ -143,11 +143,14 @@ unsigned int agilent_82350b_t1_delay( gpib_board_t *board, unsigned int nanosec 
 {
 	agilent_82350b_private_t *a_priv = board->private_data;
 	static const int nanosec_per_clock = 30;
-	unsigned value = (nanosec + nanosec_per_clock - 1) / nanosec_per_clock;
+	unsigned value;
+	
+	tms9914_t1_delay(board, &a_priv->tms9914_priv, nanosec);
+
+	value = (nanosec + nanosec_per_clock - 1) / nanosec_per_clock;
 	if(value > 0xff) value = 0xff;
 	writeb(value, a_priv->gpib_base + T1_DELAY_REG);
 	return value * nanosec_per_clock;
-//	return tms9914_t1_delay( board, &priv->tms9914_priv, nano_sec );
 }
 void agilent_82350b_return_to_local( gpib_board_t *board )
 {
