@@ -10,8 +10,10 @@ HP:
   HP27209             hp82335                           hp82335.o          Y
 
 Ines:
-  GPIB-PCI            ines_pci or ines_pci_accel        ines-gpib.o        Y
-  GPIB for PCMCIA     ines_pcmcia or ines_pcmcia_accel  ines-gpib.o        Y
+  GPIB-PCI            ines_pci                          ines-gpib.o        Y
+                      ines_pci_accel                                       ?
+  GPIB for PCMCIA     ines_pcmcia                       ines-gpib.o        Y
+                      ines_pcmcia_accel                                    ?
 
 Iotech:
   GP488B              pcIIa                             pc2-gpib.o         Y

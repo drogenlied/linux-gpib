@@ -249,7 +249,6 @@ void ines_online( ines_private_t *ines_priv, const gpib_board_t *board, int use_
 	write_byte( nec_priv, INES_AUX_CLR_IN_FIFO, AUXMR );
 	write_byte( nec_priv, INES_AUX_CLR_OUT_FIFO, AUXMR );
 	write_byte( nec_priv, INES_AUXD | 0, AUXMR );
-	outb( IFC_ACTIVE_BIT | FIFO_ERROR_BIT, nec_priv->iobase + IMR3 );
 	outb( 0, nec_priv->iobase + XDMA_CONTROL );
 	ines_priv->extend_mode_bits = 0;
 	outb( ines_priv->extend_mode_bits, nec_priv->iobase + EXTEND_MODE );
@@ -257,12 +256,15 @@ void ines_online( ines_private_t *ines_priv, const gpib_board_t *board, int use_
 	{
 		outb( 0x80, nec_priv->iobase + OUT_FIFO_WATERMARK );
 		outb( 0x80, nec_priv->iobase + IN_FIFO_WATERMARK );
+		outb( IFC_ACTIVE_BIT | FIFO_ERROR_BIT | XFER_COUNT_BIT,
+			nec_priv->iobase + IMR3 );
 		outb( IN_FIFO_WATERMARK_BIT | OUT_FIFO_WATERMARK_BIT |
 			OUT_FIFO_EMPTY_BIT, nec_priv->iobase + IMR4 );
 		nec7210_set_admr_bits( nec_priv, IN_FIFO_ENABLE_BIT | OUT_FIFO_ENABLE_BIT, 1 );
 	}else
 	{
 		nec7210_set_admr_bits( nec_priv, IN_FIFO_ENABLE_BIT | OUT_FIFO_ENABLE_BIT, 0 );
+		outb( IFC_ACTIVE_BIT | FIFO_ERROR_BIT, nec_priv->iobase + IMR3 );
 		outb( 0, nec_priv->iobase + IMR4 );
 	}
 

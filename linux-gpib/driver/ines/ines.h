@@ -110,6 +110,7 @@ enum ines_regs
 
 enum isr3_imr3_bits
 {
+	HW_TIMEOUT_BIT = 0x1,
 	XFER_COUNT_BIT = 0x2,
 	CMD_RECEIVED_BIT = 0x4,
 	TCT_RECEIVED_BIT = 0x8,

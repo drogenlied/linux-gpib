@@ -43,6 +43,8 @@ void ines_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	}
 	if( isr3_bits & FIFO_ERROR_BIT )
 		printk( "ines gpib: fifo error\n" );
+	if( isr3_bits & XFER_COUNT_BIT )
+		wake_up_interruptible( &board->wait );
 
 	if( isr4_bits & ( IN_FIFO_WATERMARK_BIT | OUT_FIFO_WATERMARK_BIT | OUT_FIFO_EMPTY_BIT ) )
 		wake_up_interruptible( &board->wait );
