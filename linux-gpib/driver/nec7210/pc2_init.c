@@ -108,7 +108,7 @@ int pc2_serial_poll_response(gpib_device_t *device, uint8_t status)
 
 gpib_interface_t pc2_interface =
 {
-	name:	"nec7210",
+	name:	"pcII",
 	attach:	pc2_attach,
 	detach:	pc2_detach,
 	read:	pc2_read,
@@ -130,7 +130,7 @@ gpib_interface_t pc2_interface =
 
 gpib_interface_t pc2a_interface =
 {
-	name:	"nec7210",
+	name:	"pcIIa",
 	attach:	pc2a_attach,
 	detach:	pc2a_detach,
 	read:	pc2_read,

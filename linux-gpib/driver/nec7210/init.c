@@ -28,18 +28,9 @@
 #include <linux/pci_ids.h>
 #include <linux/string.h>
 
-unsigned long ibbase = IBBASE;
-unsigned int ibirq = IBIRQ;
-unsigned int ibdma = IBDMA;
-unsigned long remapped_ibbase = 0;
-unsigned long amcc_iobase = 0;
-
-MODULE_PARM(ibbase, "l");
-MODULE_PARM_DESC(ibbase, "base io address");
-MODULE_PARM(ibirq, "i");
-MODULE_PARM_DESC(ibirq, "interrupt request line");
-MODULE_PARM(ibdma, "i");
-MODULE_PARM_DESC(ibdma, "dma channel");
+#ifdef MODULE_LICENSE
+MODULE_LICENSE("GPL");
+#endif
 
 // size of modbus pci memory io region
 static const int iomem_size = 0x2000;

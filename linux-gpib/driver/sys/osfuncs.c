@@ -27,11 +27,44 @@ int ib_exclusive=0;
 
 IBLCL int ibopen(struct inode *inode, struct file *filep)
 {
+	struct list_head *list_ptr;
+
 	if( ib_exclusive )
 	{
 		return (-EBUSY);
 	}
 
+// this is a temporary hack to allocate the gpib0 device
+if(device_array[0] == NULL)
+{
+	device_array[0] = kmalloc(sizeof(gpib_device_t), GFP_KERNEL);
+	if(device_array[0] == NULL)
+	{
+		printk("gpib: could not allocate memory for device\n");
+		return -ENOMEM;
+	}
+	device_array[0]->interface = NULL;
+	for(list_ptr = registered_drivers.next; list_ptr != &registered_drivers; list_ptr = list_ptr->next)
+	{
+		gpib_interface_t *interface;
+
+		interface = list_entry(list_ptr, gpib_interface_t, list);
+		if(strcmp(interface->name, BOARD_TYPE) == 0)
+		{
+			device_array[0]->interface = interface;
+			break;
+		}
+	}
+	if(device_array[0]->interface == NULL)
+	{
+		printk("unable to find driver\n");
+		return -EINVAL;
+	}
+	device_array[0]->private_data = NULL;	
+	device_array[0]->status = 0;	
+	init_waitqueue_head(&device_array[0]->wait);
+	init_MUTEX(&device_array[0]->mutex);
+}
 
 	if ( filep->f_flags & O_EXCL )
 	{
@@ -42,34 +75,6 @@ IBLCL int ibopen(struct inode *inode, struct file *filep)
 		ib_exclusive=1;
 	}
 
-// this is a temporary hack to allocate the gpib0 device
-if(device_array[0] == NULL)
-{
-	device_array[0] = kmalloc(sizeof(gpib_device_t), GFP_KERNEL);
-
-#ifdef NIPCIIa
-	device_array[0]->interface = &pc2a_interface;
-#warning using pc2a driver
-#endif
-
-#ifdef CBI_PCI
-	device_array[0]->interface = &cb_pci_interface;
-#warning using cb_pci driver
-#endif
-
-#ifdef CBI_PCMCIA
-	device_array[0]->interface = &cb_pcmcia_interface;
-#warning using cb_pcmcia driver
-#endif
-
-#if !defined(NIPCIIa) && !defined(CBI_4882)
-	device_array[0]->interface = &pc2_interface;
-#warning using pc2 driver
-#endif
-
-	init_waitqueue_head(&device_array[0]->wait);
-}
-
 	ib_opened++;
 
 	return 0;
@@ -79,7 +84,7 @@ if(device_array[0] == NULL)
 IBLCL int ibclose(struct inode *inode, struct file *file)
 {
 	unsigned int minor = MINOR(inode->i_rdev);
-	gpib_device_t *device = device_array[minor - 1];
+	gpib_device_t *device = device_array[minor];
 
 	if ((pgmstat & PS_ONLINE) && ib_opened == 1 )
 		ibonl(device, 0);
@@ -118,7 +123,7 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
 		printk("gpib: invalid minor number of device file\n");
 		return -ENODEV;
 	}
-	device = device_array[minor - 1];
+	device = device_array[minor];
 	if(device == NULL)
 	{
 		printk("gpib: no device configured at minor number %i\n", minor);

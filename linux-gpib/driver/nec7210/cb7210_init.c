@@ -109,7 +109,7 @@ int cb7210_serial_poll_response(gpib_device_t *device, uint8_t status)
 
 gpib_interface_t cb_pci_interface =
 {
-	name: "nec7210",
+	name: "cbi_pci",
 	attach: cb_pci_attach,
 	detach: cb_pci_detach,
 	read: cb7210_read,

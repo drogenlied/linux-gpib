@@ -57,7 +57,7 @@ subdirs:
 gpib$(DRIVER_DEVICE_ID).o: $(OBJS)
 	$(RLINK) -o gpib$(DRIVER_DEVICE_ID).o $(OBJS) 
 
-gpib-common.o:
+gpib-common.o: ./sys/sys.o ./protocol/ieee488.o
 	$(RLINK) -o gpib-common.o ./sys/sys.o ./protocol/ieee488.o
 
 clean :

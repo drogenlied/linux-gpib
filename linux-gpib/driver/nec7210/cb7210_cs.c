@@ -589,7 +589,7 @@ void cb_pcmcia_detach(gpib_driver_t *driver);
 
 gpib_driver_t cb_pcmcia_driver =
 {
-	name: "nec7210",
+	name: "cbi_pcmcia",
 	attach: cb_pcmcia_attach,
 	detach: cb_pcmcia_detach,
 	read: cb7210_read,
