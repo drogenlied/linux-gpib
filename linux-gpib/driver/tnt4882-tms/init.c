@@ -113,7 +113,7 @@ int tnt4882_serial_poll_response(gpib_device_t *device, uint8_t status)
 
 gpib_interface_t ni_pci_interface =
 {
-	name: "ni_pci_9914",
+	name: "ni_pci",
 	attach: ni_pci_attach,
 	detach: ni_pci_detach,
 	read: tnt4882_read,
