@@ -143,7 +143,7 @@ unsigned int agilent_82350b_t1_delay( gpib_board_t *board, unsigned int nanosec 
 {
 	agilent_82350b_private_t *a_priv = board->private_data;
 	static const int nanosec_per_clock = 30;
-	unsigned value = (nanosec + nanosec_per_clock / 2) / nanosec_per_clock;
+	unsigned value = (nanosec + nanosec_per_clock - 1) / nanosec_per_clock;
 	if(value > 0xff) value = 0xff;
 	writeb(value, a_priv->gpib_base + T1_DELAY_REG);
 	return value * nanosec_per_clock;
@@ -259,6 +259,7 @@ int agilent_82350b_attach( gpib_board_t *board )
 	a_priv->card_mode_bits = ENABLE_PCI_IRQ_BIT;
 	writeb(a_priv->card_mode_bits, a_priv->gpib_base + CARD_MODE_REG); 
 	writeb(ENABLE_TMS9914_INTERRUPTS_BIT, a_priv->gpib_base + INTERRUPT_ENABLE_REG); 
+	board->t1_nano_sec = agilent_82350b_t1_delay(board, 2000);
 	
 	tms9914_board_reset(tms_priv);
 
