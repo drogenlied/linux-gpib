@@ -376,10 +376,15 @@ static int board_type_ioctl(gpib_board_t *board, unsigned long arg)
 		if(strcmp(interface->name, cmd.name) == 0)
 		{
 			if(board->interface)
-				if(try_module_get(board->interface->provider_module))
-					return -ENOSYS;
+			{
+				module_put(board->interface->provider_module);
+				board->interface = NULL;
+			}
+			if(!try_module_get(interface->provider_module))
+			{
+				return -ENOSYS;
+			}
 			board->interface = interface;
-			module_put(board->interface->provider_module);
 			return 0;
 		}
 	}
