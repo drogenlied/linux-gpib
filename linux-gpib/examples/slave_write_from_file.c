@@ -30,7 +30,7 @@ to separate gpib transfer speed and disk io speed in my benchmarking.
 #include <unistd.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <gpib/ib.h>
+#include "gpib/ib.h"
 
 int main( int argc, char *argv[] )
 {

@@ -20,7 +20,7 @@ slave_read_to_file in order to test read/write speed between two boards.
 
 #include <stdio.h>
 #include <sys/time.h>
-#include <gpib/ib.h>
+#include "gpib/ib.h"
 
 int main( int argc, char *argv[] )
 {
