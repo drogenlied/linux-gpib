@@ -14,7 +14,7 @@ lib_LTLIBRARIES = libgpib.la
 noinst_HEADERS = ibConf.h ib_internal.h
 
 BUILT_SOURCES = ibConfLex.c ibConfYacc.c ibConfYacc.h
-CLEANFILES = ibConfLex.c ibConfYacc.c ibConfYacc.h
+MAINTAINERCLEANFILES = ibConfLex.c ibConfYacc.c ibConfYacc.h
 
 EXTRA_DIST = ibConfLex.l ibConfYacc.y gpib_version_script
 
