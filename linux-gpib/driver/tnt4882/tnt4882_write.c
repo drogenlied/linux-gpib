@@ -118,6 +118,8 @@ ssize_t tnt4882_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length
 		tnt_priv->io_write( tnt_priv->imr3_bits, iobase + IMR3 );
 		spin_unlock_irqrestore( &board->spinlock, flags );
 
+		if( current->need_resched )
+			schedule();
 	}
 	// wait last byte has been sent
 	if( wait_event_interruptible( board->wait,

@@ -77,9 +77,9 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 	tnt_priv->io_write( RESET_FIFO, iobase + CMDR );
 	udelay(1);
 
+	tnt_priv->io_write( nec_priv->auxa_bits | HR_HLDA, iobase + CCR );
 	bits = TNT_TLCHE | TNT_B_16BIT | TNT_IN | TNT_CCEN;
 	tnt_priv->io_write( bits, iobase + CFG );
-	tnt_priv->io_write( nec_priv->auxa_bits | HR_HLDA, iobase + CCR );
 
 	// load 2's complement of count into hardware counters
 	hw_count = -length;
@@ -96,7 +96,8 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 	tnt_priv->io_write( tnt_priv->imr3_bits, iobase + IMR3 );
 	spin_unlock_irqrestore( &board->spinlock, flags );
 
-	while( count + 1 < length )
+	while( count + 1 < length &&
+		test_bit( RECEIVED_END_BN, &nec_priv->state ) == 0 )
 	{
 		// wait until byte is ready
 		if( wait_event_interruptible( board->wait,
@@ -128,6 +129,9 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 		tnt_priv->imr3_bits |= HR_NEF;
 		tnt_priv->io_write( tnt_priv->imr3_bits, iobase + IMR3 );
 		spin_unlock_irqrestore( &board->spinlock, flags );
+
+		if( current->need_resched )
+			schedule();
 	}
 	// wait for last byte
 	if( count < length )
@@ -149,6 +153,10 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 		{
 			buffer[ count++ ] = tnt_priv->io_read( iobase + FIFOB );
 		}
+	}
+	if( test_and_clear_bit( RECEIVED_END_BN, &nec_priv->state ) )
+	{
+		*end = 1;
 	}
 
 	tnt_priv->io_write( STOP, iobase + CMDR );

@@ -198,13 +198,13 @@ enum isr0_bits
 /* ISR3 -- Interrupt Status Register 3 (read only) */
 enum isr3_bits
 {
-	HR_INTR = ( 1 << 7 ),	/* 1=board is interrupting */
-	HR_SRQI_CIC = ( 1 << 5 ),	/* SRQ asserted and we are CIC */
-	HR_STOP = ( 1 << 4 ),	/* fifo empty or STOP command issued */
-	HR_NFF = ( 1 << 3 ),	/* NOT full fifo */
-	HR_NEF = ( 1 << 2 ),	/* NOT empty fifo */
-	HR_TLCI = ( 1 << 1 ),	/* TLC interrupt asserted */
 	HR_DONE = ( 1 << 0 ),	/* transfer done */
+	HR_TLCI = ( 1 << 1 ),	/* TLC interrupt asserted */
+	HR_NEF = ( 1 << 2 ),	/* NOT empty fifo */
+	HR_NFF = ( 1 << 3 ),	/* NOT full fifo */
+	HR_STOP = ( 1 << 4 ),	/* fifo empty or STOP command issued */
+	HR_SRQI_CIC = ( 1 << 5 ),	/* SRQ asserted and we are CIC */
+	HR_INTR = ( 1 << 7 ),	/* 1=board is interrupting */
 };
 
 enum keyreg_bits
