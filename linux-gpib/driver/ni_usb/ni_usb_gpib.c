@@ -255,7 +255,7 @@ int ni_usb_parse_termination_block(const uint8_t *buffer)
 };
 
 int parse_board_ibrd_readback(const uint8_t *raw_data, struct ni_usb_status_block *status, 
-	uint8_t *parsed_data, int parsed_data_length)
+	uint8_t *parsed_data, int parsed_data_length, int *actual_bytes_read)
 {
 	static const int ibrd_data_block_length = 15;
 	int i = 0;
@@ -267,17 +267,16 @@ int parse_board_ibrd_readback(const uint8_t *raw_data, struct ni_usb_status_bloc
 	
 	while(raw_data[i] == NIUSB_IBRD_DATA_ID)
 	{
-		if(parsed_data_length < j + ibrd_data_block_length)
-		{
-			printk("%s: bug: buffer too small\n", __FILE__);
-			return -EIO;
-		}
 		i++;
 		for(k = 0; k < ibrd_data_block_length; k++)
 		{
-			parsed_data[j++] = raw_data[i++];
+			if(j < parsed_data_length)
+				parsed_data[j++] = raw_data[i++];
+			else
+				++i;
 		}
 	}
+	*actual_bytes_read = j;
 	i += ni_usb_parse_status_block(&raw_data[i], status);
 	if(status->id != NIUSB_IBRD_STATUS_ID)
 	{
@@ -416,6 +415,7 @@ ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *en
 	int bytes_written, bytes_read;
 	int i = 0;
 	int complement_count;
+	int actual_length;
 	struct ni_usb_status_block status;
 	static const int max_read_length = 0xffff;
 	struct ni_usb_register reg;
@@ -433,7 +433,6 @@ ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *en
 	out_data[i++] = ni_priv->eos_mode >> 8;
 	out_data[i++] = ni_priv->eos_char;
 	out_data[i++] = ni_usb_timeout_code(board->usec_timeout);
-	complement_count = length;
 	complement_count = length - 1;
 	complement_count = ~complement_count;
 	out_data[i++] = complement_count & 0xff;
@@ -467,12 +466,17 @@ ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *en
 		kfree(in_data);
 		return -EIO;
 	}
-	retval = parse_board_ibrd_readback(in_data, &status, buffer, length);
+	retval = parse_board_ibrd_readback(in_data, &status, buffer, length, &actual_length);
 	if(retval != bytes_read)
 	{
-		printk("%s: %s: parsed %i bytes out of %i\n", __FILE__, __FUNCTION__, retval, bytes_read);
+		printk("%s: %s: retval=%i bytes_read=%i\n", __FILE__, __FUNCTION__, retval, bytes_read);
 	}
 	kfree(in_data);
+	if(actual_length != length - status.count)
+	{
+		printk("%s: %s: actual_length=%i expected=%i\n", __FILE__, __FUNCTION__, actual_length, length - status.count);
+		ni_usb_dump_raw_block(in_data, bytes_read);
+	}
 	switch(status.error_code)
 	{
 		case 0:
@@ -485,7 +489,7 @@ ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *en
 	ni_usb_soft_update_status(board, status.ibsta, 0);
 	if(status.ibsta & END) *end = 1;
 	else *end = 0;
-	*nbytes = length - status.count;
+	*nbytes = actual_length;
 	return 0;
 }
 
