@@ -138,9 +138,6 @@ ssize_t nec7210_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buff
 	*end = 0;
 
 	/* release rfd holdoff */
-	priv->auxa_bits &= ~HR_HANDSHAKE_MASK;
-	priv->auxa_bits |= HR_HLDA;
-	write_byte(priv, priv->auxa_bits, AUXMR);
 	write_byte(priv, AUX_FH, AUXMR);
 
 	// transfer data (except for last byte)
