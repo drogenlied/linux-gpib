@@ -205,8 +205,9 @@ int ni_pci_attach(gpib_device_t *device)
 		return -1;
 	}
 
-	if(mite_setup(tnt_priv->mite))
+	if(mite_setup(tnt_priv->mite) < 0)
 	{
+		printk("error setting up mite");
 		return -1;
 	}
 

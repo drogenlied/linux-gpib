@@ -136,6 +136,7 @@ set_svar BOARD_TYPE $REPLY
          case $BOARD_TYPE in 
 	
 	       ni_pci) echo "#define NIAT " >>../driver/include/gpib_board.h 
+			auto_recog=on
                        ;;
 	       atgpib) echo "#define NIAT " >>../driver/include/gpib_board.h 
 		       IBBASE=0x2c0

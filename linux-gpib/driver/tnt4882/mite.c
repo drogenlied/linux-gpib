@@ -91,20 +91,19 @@ void mite_init(void)
 
 int mite_setup(struct mite_struct *mite)
 {
-	unsigned long			offset, start, length;
+	unsigned long			start, length;
 	u32				addr;
-	int i;
 
 	if(pci_enable_device(mite->pcidev)){
 		printk("error enabling mite\n");
 		return -EIO;
 	}
-	pci_set_master(mite->pcidev);
+//	pci_set_master(mite->pcidev);
 	addr=pci_resource_start(mite->pcidev, 0);
 	mite->mite_phys_addr=addr;
-	offset = mite->mite_phys_addr & ~PAGE_MASK;
-	start = mite->mite_phys_addr & PAGE_MASK;
-	length = PCI_MITE_SIZE + offset;
+	start = mite->mite_phys_addr & PCI_BASE_ADDRESS_MEM_MASK;
+	length = pci_resource_len(mite->pcidev, 0);
+// kernel automatically allocates regions for PCI-GPIB for some reason
 	// check and request io memory region
 	if(check_mem_region(start, length)){
 
@@ -112,38 +111,30 @@ int mite_setup(struct mite_struct *mite)
 		return -EIO;
 	}
 	request_mem_region(start, length, "mite");
-	mite->mite_io_addr = ioremap(start, length) + offset;
+	mite->mite_io_addr = ioremap(start, length);
 	printk("MITE:0x%08lx mapped to %p ",mite->mite_phys_addr,mite->mite_io_addr);
 
 	addr=pci_resource_start(mite->pcidev, 1);
 	mite->daq_phys_addr=addr;
-	offset = mite->daq_phys_addr & ~PAGE_MASK;
-	start = mite->daq_phys_addr & PAGE_MASK;
-	length = PCI_DAQ_SIZE + offset;
+	start = mite->daq_phys_addr & PCI_BASE_ADDRESS_MEM_MASK;
+	length = pci_resource_len(mite->pcidev, 1);
 	// check and request io memory region
 	if(check_mem_region(start, length)){
 
 		printk("io memory region already in use\n");
 		return -EIO;
 	}
-	request_mem_region(start, length, "mite (daq)");
-	mite->daq_io_addr = ioremap(start, length) + offset;
+	request_mem_region(start, length, "mite (gpib)");
+	mite->daq_io_addr = ioremap(start, length);
 	printk("DAQ:0x%08lx mapped to %p, ",mite->daq_phys_addr,mite->daq_io_addr);
 
 	/* XXX don't know what the 0xc0 and 0x80 mean */
 	/* It must be here for the driver to work though */
 	writel(mite->daq_phys_addr | 0x80 , mite->mite_io_addr + 0xc0 );
 
-	/* DMA setup */
-	for(i=0;i<MITE_RING_SIZE-1;i++){
-		mite->ring[i].next=virt_to_bus(mite->ring+i+1);
-
-	}
-	mite->ring[i].next=0;
-
 	mite->used = 1;
 
-	return (int) mite->daq_io_addr;
+	return 0;
 }
 
 
@@ -159,7 +150,7 @@ void mite_cleanup(void)
 
 void mite_unsetup(struct mite_struct *mite)
 {
-	unsigned long offset, start, length;
+	unsigned long start, length;
 
 	if(!mite)return;
 
@@ -167,18 +158,16 @@ void mite_unsetup(struct mite_struct *mite)
 		iounmap(mite->mite_io_addr);
 		mite->mite_io_addr=NULL;
 		// release io memory region
-		offset = mite->mite_phys_addr & ~PAGE_MASK;
-		start = mite->mite_phys_addr & PAGE_MASK;
-		length = PCI_MITE_SIZE + offset;
+		start = mite->mite_phys_addr & PCI_BASE_ADDRESS_MEM_MASK;
+		length = pci_resource_len(mite->pcidev, 0);
 		release_mem_region(start, length);
 	}
 	if(mite->daq_io_addr){
 		iounmap(mite->daq_io_addr);
 		mite->daq_io_addr=NULL;
 		// release io memory region
-		offset = mite->daq_phys_addr & ~PAGE_MASK;
-		start = mite->daq_phys_addr & PAGE_MASK;
-		length = PCI_DAQ_SIZE + offset;
+		start = mite->daq_phys_addr & PCI_BASE_ADDRESS_MEM_MASK;
+		length = pci_resource_len(mite->pcidev, 1);
 		release_mem_region(start, length);
 	}
 
