@@ -91,7 +91,7 @@ extern void nec7210_secondary_address( const gpib_board_t *board, nec7210_privat
 	unsigned int address, int enable);
 extern int nec7210_parallel_poll(gpib_board_t *board, nec7210_private_t *priv, uint8_t *result);
 extern void nec7210_serial_poll_response(gpib_board_t *board, nec7210_private_t *priv, uint8_t status);
-extern void nec7210_parallel_poll_response( gpib_board_t *board,
+extern void nec7210_parallel_poll_configure( gpib_board_t *board,
 	nec7210_private_t *priv, unsigned int configuration );
 extern uint8_t nec7210_serial_poll_status( gpib_board_t *board,
 	nec7210_private_t *priv );

@@ -53,7 +53,7 @@ int tms9914_parallel_poll(gpib_board_t *board, tms9914_private_t *priv, uint8_t 
 	return 0;
 }
 
-void tms9914_parallel_poll_response( gpib_board_t *board,
+void tms9914_parallel_poll_configure( gpib_board_t *board,
 	tms9914_private_t *priv, uint8_t config )
 {
 	uint8_t dio_byte;
@@ -200,7 +200,7 @@ EXPORT_SYMBOL(tms9914_disable_eos);
 EXPORT_SYMBOL(tms9914_serial_poll_response);
 EXPORT_SYMBOL(tms9914_serial_poll_status);
 EXPORT_SYMBOL(tms9914_parallel_poll);
-EXPORT_SYMBOL(tms9914_parallel_poll_response);
+EXPORT_SYMBOL(tms9914_parallel_poll_configure);
 EXPORT_SYMBOL(tms9914_primary_address);
 EXPORT_SYMBOL(tms9914_secondary_address);
 EXPORT_SYMBOL(tms9914_update_status);

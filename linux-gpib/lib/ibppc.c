@@ -173,10 +173,7 @@ void PPollConfig( int boardID, Addr4882_t address,
 		return;
 	}
 
-	ppoll_config = PPE;
-	ppoll_config |= ( dataLine - 1 ) & 0x7;
-	if( lineSense )
-		ppoll_config |= PPC_SENSE;
+	ppoll_config = PPE_byte( dataLine, lineSense );
 
 	addressList[ 0 ] = address;
 	addressList[ 1 ]= NOADDR;

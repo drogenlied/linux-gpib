@@ -89,7 +89,7 @@ extern void tms9914_primary_address(gpib_board_t *board,
 extern void tms9914_secondary_address(gpib_board_t *board, tms9914_private_t *priv,
 	unsigned int address, int enable);
 extern int tms9914_parallel_poll(gpib_board_t *board, tms9914_private_t *priv, uint8_t *result);
-extern void tms9914_parallel_poll_response( gpib_board_t *board,
+extern void tms9914_parallel_poll_configure( gpib_board_t *board,
 	tms9914_private_t *priv, uint8_t config );
 extern void tms9914_serial_poll_response(gpib_board_t *board, tms9914_private_t *priv, uint8_t status);
 extern uint8_t tms9914_serial_poll_status( gpib_board_t *board, tms9914_private_t *priv );

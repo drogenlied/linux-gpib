@@ -89,9 +89,11 @@ struct gpib_interface_struct
 	/* disable END on eos byte (END on EOI only)*/
 	void (*disable_eos)(gpib_board_t *board);
 	/* configure parallel poll */
-	void (*parallel_poll_response)( gpib_board_t *board, uint8_t configuration );
+	void (*parallel_poll_configure)( gpib_board_t *board, uint8_t configuration );
 	/* conduct parallel poll */
 	int (*parallel_poll)(gpib_board_t *board, uint8_t *result);
+	/* set/clear ist (individual status bit) */
+	void (*parallel_poll_response)( gpib_board_t *board, int ist );
 	/* Returns current status of the bus lines.  Should be set to
 	 * NULL if your board does not have the ability to query the
 	 * state of the bus lines. */
@@ -211,6 +213,8 @@ struct gpib_board_struct
 	unsigned exclusive : 1;
 	/* error dong autopoll */
 	unsigned stuck_srq : 1;
+	/* individual status bit */
+	unsigned ist : 1;
 };
 
 /* element of event queue */

@@ -60,7 +60,7 @@ unsigned int ines_update_status(gpib_board_t *board);
 void ines_primary_address(gpib_board_t *board, unsigned int address);
 void ines_secondary_address(gpib_board_t *board, unsigned int address, int enable);
 int ines_parallel_poll(gpib_board_t *board, uint8_t *result);
-void ines_parallel_poll_response( gpib_board_t *board, uint8_t config );
+void ines_parallel_poll_configure( gpib_board_t *board, uint8_t config );
 void ines_serial_poll_response(gpib_board_t *board, uint8_t status);
 uint8_t ines_serial_poll_status( gpib_board_t *board );
 int ines_line_status( const gpib_board_t *board );

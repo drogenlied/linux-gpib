@@ -56,7 +56,7 @@ int nec7210_parallel_poll(gpib_board_t *board, nec7210_private_t *priv, uint8_t 
 	return 0;
 }
 
-void nec7210_parallel_poll_response( gpib_board_t *board,
+void nec7210_parallel_poll_configure( gpib_board_t *board,
 	nec7210_private_t *priv, unsigned int configuration )
 {
 	write_byte( priv, PPR | configuration , AUXMR );
@@ -196,7 +196,7 @@ EXPORT_SYMBOL( nec7210_enable_eos );
 EXPORT_SYMBOL( nec7210_disable_eos );
 EXPORT_SYMBOL( nec7210_serial_poll_response );
 EXPORT_SYMBOL( nec7210_serial_poll_status );
-EXPORT_SYMBOL( nec7210_parallel_poll_response );
+EXPORT_SYMBOL( nec7210_parallel_poll_configure );
 EXPORT_SYMBOL( nec7210_parallel_poll );
 EXPORT_SYMBOL( nec7210_primary_address );
 EXPORT_SYMBOL( nec7210_secondary_address );

@@ -105,10 +105,10 @@ int pc2_parallel_poll(gpib_board_t *board, uint8_t *result)
 	pc2_private_t *priv = board->private_data;
 	return nec7210_parallel_poll(board, &priv->nec7210_priv, result);
 }
-void pc2_parallel_poll_response(gpib_board_t *board, uint8_t config )
+void pc2_parallel_poll_configure(gpib_board_t *board, uint8_t config )
 {
 	pc2_private_t *priv = board->private_data;
-	nec7210_parallel_poll_response(board, &priv->nec7210_priv, config );
+	nec7210_parallel_poll_configure(board, &priv->nec7210_priv, config );
 }
 void pc2_serial_poll_response(gpib_board_t *board, uint8_t status)
 {
@@ -142,7 +142,7 @@ gpib_interface_t pc2_interface =
 	enable_eos:	pc2_enable_eos,
 	disable_eos:	pc2_disable_eos,
 	parallel_poll:	pc2_parallel_poll,
-	parallel_poll_response:	pc2_parallel_poll_response,
+	parallel_poll_configure:	pc2_parallel_poll_configure,
 	line_status:	NULL,
 	update_status:	pc2_update_status,
 	primary_address:	pc2_primary_address,
@@ -169,7 +169,7 @@ gpib_interface_t pc2a_interface =
 	enable_eos:	pc2_enable_eos,
 	disable_eos:	pc2_disable_eos,
 	parallel_poll:	pc2_parallel_poll,
-	parallel_poll_response:	pc2_parallel_poll_response,
+	parallel_poll_configure:	pc2_parallel_poll_configure,
 	line_status:	NULL,
 	update_status:	pc2_update_status,
 	primary_address:	pc2_primary_address,

@@ -46,7 +46,7 @@ int ibppc( gpib_board_t *board, uint8_t configuration )
 {
 
 	configuration &= 0x1f;
-	board->interface->parallel_poll_response( board, configuration );
+	board->interface->parallel_poll_configure( board, configuration );
 	board->parallel_poll_configuration = configuration;
 	
 	return 0;

@@ -75,7 +75,7 @@ int ibsre(int ud, int v)
 		fprintf( stderr, "libgpib: ibsre error\n");
 		return exit_library( ud, 1 );
 	}
-
+//XXX supposed to set iberr to old REN setting
 	return exit_library( ud, 0 );
 }
 

@@ -52,7 +52,7 @@ unsigned int cec_update_status(gpib_board_t *board);
 void cec_primary_address(gpib_board_t *board, unsigned int address);
 void cec_secondary_address(gpib_board_t *board, unsigned int address, int enable);
 int cec_parallel_poll(gpib_board_t *board, uint8_t *result);
-void cec_parallel_poll_response( gpib_board_t *board, uint8_t configuration );
+void cec_parallel_poll_configure( gpib_board_t *board, uint8_t configuration );
 void cec_serial_poll_response(gpib_board_t *board, uint8_t status);
 
 // interrupt service routines

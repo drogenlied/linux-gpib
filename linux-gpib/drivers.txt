@@ -12,7 +12,7 @@ HP:
 Ines:
   GPIB for PCI         ines_pci                         ines-gpib.o        Y
                        ines_pci_accel                                      ?
-  GPIB for Compact PCI ines_pci                         ines-gpib.o        ?
+  GPIB for Compact PCI ines_pci                         ines-gpib.o        Y
                        ines_pci_accel                                      ?
   GPIB for PCMCIA      ines_pcmcia                      ines-gpib.o        Y
                        ines_pcmcia_accel                                   ?
