@@ -17,7 +17,7 @@ int ibonl( int ud, int onl )
 
 	board = interfaceBoard( conf );
 
-	if( ibBoardOpen( conf ) < 0 )
+	if( ibBoardOpen( board ) < 0 )
 	{
 		return exit_library( ud, 1 );
 	}
@@ -61,7 +61,7 @@ int ibonl( int ud, int onl )
 	}else
 	{
 		if( conf->is_interface )
-			ibBoardClose( conf->board );
+			ibBoardClose( board );
 		free( ibConfigs[ ud ] );
 		ibConfigs[ ud ] = NULL;
 		setIbsta( 0 );
