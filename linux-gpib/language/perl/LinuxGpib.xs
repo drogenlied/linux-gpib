@@ -2,7 +2,7 @@
 #include "perl.h"
 #include "XSUB.h"
 
-#include </usr/local/include/gpib/ib.h>
+#include <ib.h>
 
 static int
 not_here(char *s)
