@@ -1394,6 +1394,7 @@ then reads back: 34 01 0a c3 34 e2 0a c3 35 01 00 00 04 00 00 00
 		return -EINVAL;
 	}
 	retval = ni_usb_write_registers(ni_priv, writes, i, &ibsta);
+	kfree(writes);
 	if(retval)
 	{
 		printk("%s: %s: register write failed, retval=%i\n", __FILE__, __FUNCTION__, retval);
