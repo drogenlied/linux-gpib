@@ -27,14 +27,6 @@ int board_online( ibBoard_t *board, int online )
 	{
 		if( ibBoardOpen( board ) < 0 )
 			return -1;
-		if( ibBdChrConfig( board ) < 0 )
-		{
-			setIberr( EDVR );
-			setIbcnt( errno );
-			fprintf( stderr, "libgpib: failed to configure board\n" );
-			ibBoardClose( board );
-			return -1;
-		}
 	}else
 	{
 		retval = destroy_autopoll_thread( board );
