@@ -90,39 +90,45 @@ typedef struct
 	int pci_slot;
 } select_pci_ioctl_t;
 
+typedef short event_ioctl_t;
+
 /* Standard functions. */
-#define IBRD _IOWR( GPIB_CODE, 0, read_write_ioctl_t )
-#define IBWRT _IOWR( GPIB_CODE, 1, read_write_ioctl_t )
-#define IBCMD _IOWR( GPIB_CODE, 2, read_write_ioctl_t )
-#define IBOPENDEV _IOW( GPIB_CODE, 3, open_close_dev_ioctl_t )
-#define IBCLOSEDEV _IOW( GPIB_CODE, 4, open_close_dev_ioctl_t )
-#define IBWAIT _IOW( GPIB_CODE, 5, wait_ioctl_t )
-#define IBRPP _IOWR( GPIB_CODE, 6, uint8_t )
+enum gpib_ioctl
+{
+	IBRD = _IOWR( GPIB_CODE, 0, read_write_ioctl_t ),
+	IBWRT = _IOWR( GPIB_CODE, 1, read_write_ioctl_t ),
+	IBCMD = _IOWR( GPIB_CODE, 2, read_write_ioctl_t ),
+	IBOPENDEV = _IOW( GPIB_CODE, 3, open_close_dev_ioctl_t ),
+	IBCLOSEDEV = _IOW( GPIB_CODE, 4, open_close_dev_ioctl_t ),
+	IBWAIT = _IOW( GPIB_CODE, 5, wait_ioctl_t ),
+	IBRPP = _IOWR( GPIB_CODE, 6, uint8_t ),
 
-#define IBONL _IOW( GPIB_CODE, 8, online_ioctl_t )
-#define IBSIC _IOW( GPIB_CODE, 9, unsigned int )
-#define IBSRE _IOW( GPIB_CODE, 10, int )
-#define IBGTS _IO( GPIB_CODE, 11 )
-#define IBCAC _IOW( GPIB_CODE, 12, int )
-#define IBSTATUS _IOR( GPIB_CODE, 13, int )
-#define IBLINES _IOR( GPIB_CODE, 14, short )
-#define IBPAD _IOW( GPIB_CODE, 15, unsigned int )
-#define IBSAD _IOW( GPIB_CODE, 16, int )
-#define IBTMO _IOW( GPIB_CODE, 17, unsigned int )
-#define IBRSP _IOWR( GPIB_CODE, 18, serial_poll_ioctl_t )
-#define IBEOS _IOW( GPIB_CODE, 19, eos_ioctl_t )
-#define IBRSV _IOW( GPIB_CODE, 20, uint8_t )
-#define CFCBASE _IOW( GPIB_CODE, 21, unsigned long )
-#define CFCIRQ _IOW( GPIB_CODE, 22, unsigned int )
-#define CFCDMA _IOW( GPIB_CODE, 23, unsigned int )
-#define CFCBOARDTYPE _IOW( GPIB_CODE, 24, board_type_ioctl_t )
-#define IBAUTOPOLL _IO( GPIB_CODE, 25 )
-#define IBMUTEX _IOW( GPIB_CODE, 26, int )
-#define IBSPOLL_BYTES _IOWR( GPIB_CODE, 27, spoll_bytes_ioctl_t )
-#define IBPPC _IOW( GPIB_CODE, 28, int )
-#define IBBOARD_INFO _IOR( GPIB_CODE, 29, board_info_ioctl_t )
+	IBONL = _IOW( GPIB_CODE, 8, online_ioctl_t ),
+	IBSIC = _IOW( GPIB_CODE, 9, unsigned int ),
+	IBSRE = _IOW( GPIB_CODE, 10, int ),
+	IBGTS = _IO( GPIB_CODE, 11 ),
+	IBCAC = _IOW( GPIB_CODE, 12, int ),
+	IBSTATUS = _IOR( GPIB_CODE, 13, int ),
+	IBLINES = _IOR( GPIB_CODE, 14, short ),
+	IBPAD = _IOW( GPIB_CODE, 15, unsigned int ),
+	IBSAD = _IOW( GPIB_CODE, 16, int ),
+	IBTMO = _IOW( GPIB_CODE, 17, unsigned int ),
+	IBRSP = _IOWR( GPIB_CODE, 18, serial_poll_ioctl_t ),
+	IBEOS = _IOW( GPIB_CODE, 19, eos_ioctl_t ),
+	IBRSV = _IOW( GPIB_CODE, 20, uint8_t ),
+	CFCBASE = _IOW( GPIB_CODE, 21, unsigned long ),
+	CFCIRQ = _IOW( GPIB_CODE, 22, unsigned int ),
+	CFCDMA = _IOW( GPIB_CODE, 23, unsigned int ),
+	CFCBOARDTYPE = _IOW( GPIB_CODE, 24, board_type_ioctl_t ),
+	IBAUTOPOLL = _IO( GPIB_CODE, 25 ),
+	IBMUTEX = _IOW( GPIB_CODE, 26, int ),
+	IBSPOLL_BYTES = _IOWR( GPIB_CODE, 27, spoll_bytes_ioctl_t ),
+	IBPPC = _IOW( GPIB_CODE, 28, int ),
+	IBBOARD_INFO = _IOR( GPIB_CODE, 29, board_info_ioctl_t ),
 
-#define IBQUERY_BOARD_RSV _IOR( GPIB_CODE, 31, int )
-#define IBSELECT_PCI _IOWR( GPIB_CODE, 32, select_pci_ioctl_t )
+	IBQUERY_BOARD_RSV = _IOR( GPIB_CODE, 31, int ),
+	IBSELECT_PCI = _IOWR( GPIB_CODE, 32, select_pci_ioctl_t ),
+	IBEVENT = _IOR( GPIB_CODE, 33, event_ioctl_t )
+};
 
 #endif	/* _GPIB_IOCTL_H */
