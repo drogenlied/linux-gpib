@@ -31,8 +31,9 @@ static ssize_t pio_read( gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 	while( count < length )
 	{
 		if(wait_event_interruptible(board->wait,
-			test_bit(READ_READY_BN, &priv->state) ||
-			test_bit(TIMO_NUM, &board->status)))
+			test_bit( READ_READY_BN, &priv->state ) ||
+			test_bit( DEV_CLEAR_BN, &priv->state ) ||
+			test_bit( TIMO_NUM, &board->status ) ) )
 		{
 			printk("nec7210: pio read wait interrupted\n");
 			retval = -ERESTARTSYS;
@@ -44,9 +45,14 @@ static ssize_t pio_read( gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 			if( *end )
 				break;
 		}
-		if(test_bit(TIMO_NUM, &board->status))
+		if( test_bit( TIMO_NUM, &board->status ) )
 		{
 			retval = -ETIMEDOUT;
+			break;
+		}
+		if( test_bit( DEV_CLEAR_BN, &priv->state) )
+		{
+			retval = -EINTR;
 			break;
 		}
 
@@ -90,14 +96,18 @@ static ssize_t __dma_read(gpib_board_t *board, nec7210_private_t *priv, size_t l
 	spin_unlock_irqrestore(&board->spinlock, flags);
 
 	// wait for data to transfer
-	if(wait_event_interruptible(board->wait, test_bit(DMA_READ_IN_PROGRESS_BN, &priv->state) == 0 ||
-		test_bit(TIMO_NUM, &board->status)))
+	if(wait_event_interruptible(board->wait,
+		test_bit( DMA_READ_IN_PROGRESS_BN, &priv->state ) == 0 ||
+		test_bit( DEV_CLEAR_BN, &priv->state ) ||
+		test_bit( TIMO_NUM, &board->status ) ) )
 	{
 		printk("nec7210: dma read wait interrupted\n");
 		retval = -ERESTARTSYS;
 	}
-	if(test_bit(TIMO_NUM, &board->status))
+	if( test_bit( TIMO_NUM, &board->status ) )
 		retval = -ETIMEDOUT;
+	if( test_bit( DEV_CLEAR_BN, &priv->state ) )
+		retval = -EINTR;
 
 	// disable nec7210 dma
 	nec7210_set_reg_bits( priv, IMR2, HR_DMAI, 0 );
@@ -143,6 +153,8 @@ ssize_t nec7210_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buff
 	if( length == 0 ) return 0;
 
 	*end = 0;
+
+	clear_bit( DEV_CLEAR_BN, &priv->state );
 
 	nec7210_set_handshake_mode( board, priv, HR_HLDA );
 	nec7210_release_rfd_holdoff( board, priv );

@@ -37,14 +37,16 @@ static ssize_t pio_read( gpib_board_t *board, ines_private_t *ines_priv, uint8_t
 	{
 		if( wait_event_interruptible( board->wait,
 			num_in_fifo_bytes( ines_priv ) ||
+			test_bit( DEV_CLEAR_BN, &nec_priv->state ) ||
 			test_bit( TIMO_NUM, &board->status ) ) )
 		{
 			printk("gpib: pio read wait interrupted\n");
-			retval = -ERESTARTSYS;
-			break;
+			return -ERESTARTSYS;
 		};
 		if( test_bit( TIMO_NUM, &board->status ) )
-			break;
+			return -ETIMEDOUT;
+		if( test_bit( DEV_CLEAR_BN, &nec_priv->state ) )
+			return -EINTR;
 
 		num_bytes = num_in_fifo_bytes( ines_priv );
 		if( num_bytes + count > length )
@@ -63,8 +65,6 @@ static ssize_t pio_read( gpib_board_t *board, ines_private_t *ines_priv, uint8_t
 			break;
 		}
 	}
-	if( test_bit( TIMO_NUM, &board->status ) )
-		retval = -ETIMEDOUT;
 
 	return retval ? retval : count;
 }
@@ -77,6 +77,8 @@ ssize_t ines_accel_read( gpib_board_t *board, uint8_t *buffer,
 	nec7210_private_t *nec_priv = &ines_priv->nec7210_priv;
 
 	*end = 0;
+
+	clear_bit( DEV_CLEAR_BN, &nec_priv->state );
 
 	// holdoff on END
 	nec7210_set_handshake_mode( board, nec_priv, HR_HLDE );

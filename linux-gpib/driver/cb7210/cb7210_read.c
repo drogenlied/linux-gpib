@@ -94,6 +94,7 @@ static ssize_t fifo_read( gpib_board_t *board, cb7210_private_t *cb_priv, uint8_
 		if( wait_event_interruptible( board->wait,
 			( cb_priv->in_fifo_half_full && have_fifo_word( cb_priv ) ) ||
 			test_bit( RECEIVED_END_BN, &nec_priv->state ) ||
+			test_bit( DEV_CLEAR_BN, &nec_priv->state ) ||
 			test_bit( TIMO_NUM, &board->status ) ) )
 		{
 			printk("cb7210: fifo half full wait interrupted\n");
@@ -131,6 +132,11 @@ static ssize_t fifo_read( gpib_board_t *board, cb7210_private_t *cb_priv, uint8_
 			retval = -ETIMEDOUT;
 			break;
 		}
+		if( test_bit( DEV_CLEAR_BN, &nec_priv->state ) )
+		{
+			retval = -EINTR;
+			break;
+		}
 	}
 	hs_status = inb( nec_priv->iobase + HS_STATUS );
 	if( hs_status & HS_RX_LSB_NOT_EMPTY )
@@ -144,6 +150,7 @@ static ssize_t fifo_read( gpib_board_t *board, cb7210_private_t *cb_priv, uint8_
 	if( wait_event_interruptible( board->wait,
 		test_bit( READ_READY_BN, &nec_priv->state ) ||
 		test_bit( RECEIVED_END_BN, &nec_priv->state ) ||
+		test_bit( DEV_CLEAR_BN, &nec_priv->state ) ||
 		test_bit( TIMO_NUM, &board->status ) ) )
 	{
 		printk("cb7210: fifo half full wait interrupted\n");
@@ -152,6 +159,10 @@ static ssize_t fifo_read( gpib_board_t *board, cb7210_private_t *cb_priv, uint8_
 	if( test_bit( TIMO_NUM, &board->status ) )
 	{
 		retval = -ETIMEDOUT;
+	}
+	if( test_bit( DEV_CLEAR_BN, &nec_priv->state ) )
+	{
+		retval = -EINTR;
 	}
 	if( test_bit( READ_READY_BN, &nec_priv->state ) )
 	{
@@ -181,6 +192,7 @@ ssize_t cb7210_accel_read( gpib_board_t *board, uint8_t *buffer,
 
 	if( wait_event_interruptible( board->wait,
 		test_bit( READ_READY_BN, &nec_priv->state ) ||
+		test_bit( DEV_CLEAR_BN, &nec_priv->state ) ||
 		test_bit( TIMO_NUM, &board->status ) ) )
 	{
 		printk("cb7210: read ready wait interrupted\n");
@@ -188,6 +200,8 @@ ssize_t cb7210_accel_read( gpib_board_t *board, uint8_t *buffer,
 	}
 	if( test_bit( TIMO_NUM, &board->status ) )
 		return -ETIMEDOUT;
+	if( test_bit( DEV_CLEAR_BN, &nec_priv->state ) )
+		return -EINTR;
 
 	buffer[ count++ ] = nec7210_read_data_in( board, nec_priv, end );
 	if( *end ) return count;

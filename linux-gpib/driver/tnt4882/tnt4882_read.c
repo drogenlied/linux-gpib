@@ -104,6 +104,7 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 			fifo_word_available( tnt_priv ) ||
 			fifo_xfer_done( tnt_priv ) ||
 			test_bit( RECEIVED_END_BN, &nec_priv->state ) ||
+			test_bit( DEV_CLEAR_BN, &nec_priv->state ) ||
 			test_bit( TIMO_NUM, &board->status ) ) )
 		{
 			printk("gpib write interrupted\n");
@@ -113,6 +114,11 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 		if( test_bit( TIMO_NUM, &board->status ) )
 		{
 			retval = -ETIMEDOUT;
+			break;
+		}
+		if( test_bit( DEV_CLEAR_BN, &nec_priv->state ) )
+		{
+			retval = -EINTR;
 			break;
 		}
 
@@ -139,6 +145,7 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 			fifo_byte_available( tnt_priv ) ||
 			fifo_xfer_done( tnt_priv ) ||
 			test_bit( RECEIVED_END_BN, &nec_priv->state ) ||
+			test_bit( DEV_CLEAR_BN, &nec_priv->state ) ||
 			test_bit( TIMO_NUM, &board->status ) ) )
 		{
 			printk("gpib write interrupted\n");
@@ -147,6 +154,10 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 		if( test_bit( TIMO_NUM, &board->status ) )
 		{
 			retval = -ETIMEDOUT;
+		}
+		if( test_bit( DEV_CLEAR_BN, &nec_priv->state ) )
+		{
+			retval = -EINTR;
 		}
 		if( fifo_byte_available( tnt_priv ) )
 		{
