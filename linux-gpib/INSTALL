@@ -49,12 +49,12 @@ o) Unpacking the Software:
 		directory the first time you run 'make config' in your
 		linux-gpib directory (see below), so it might be easiest to unpack
 		the kernel source into a user-owned directory. 
-	2) run 'make oldconfig' in your kernel source directory.
-	3) You might need to edit the file 'Makefile' in the kernel source.
+	2) You might need to edit the file 'Makefile' in the kernel source.
 		At the top of the Makefile, the variable EXTRAVERSION is defined.
 		If necessary, change it to match your kernel (for example, if the command
 		'uname -r' produces "2.4.16-386" then your EXTRAVERSION should be
 		set as 'EXTRAVERSION=-386'.
+	3) run 'make oldconfig' in your kernel source directory.
 	4) run 'make dep' in the kernel source directory.
 
 o) Installing additional Software:
