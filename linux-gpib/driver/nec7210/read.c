@@ -72,7 +72,7 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, uint8_t eos) // XXX eos bro
 			};
 			continue;
 		}
-		buf[count++] = data.value;
+		buffer[count++] = data.value;
 		if(data.end)
 		{
 			set_bit(END_NUM, &ibsta);

@@ -33,6 +33,7 @@ IBLCL int ibwrt(uint8_t *buf, size_t cnt, unsigned int more)
 	osStartTimer(timeidx);
 	DBGprint(DBG_BRANCH, ("go to standby  "));
 	board.go_to_standby();
+	requested_cnt = cnt;
 	while ((cnt > 0) && !(ibsta & (ERR | TIMO))) {
 		ret = board.write(buf, cnt, !more);
 		if(ret < 0)

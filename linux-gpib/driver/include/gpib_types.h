@@ -49,7 +49,8 @@ typedef struct {
  * between the board-specific details dealt with in the drivers
  * and generic interface provided by gpib-common.
  *
- * need to add EOS manipulation functions, perhaps more queries
+ * need to add EOS manipulation functions, perhaps more queries,
+ * and remote enable set/clear
  */
 typedef struct
 {
