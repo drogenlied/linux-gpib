@@ -28,22 +28,27 @@ typedef struct
 	unsigned int minor;
 	char *board_type;
 	int irq;
-	int iobase;
+	long iobase;
 	int dma;
 	int pci_bus;
 	int pci_slot;
 	int pad;
 	int sad;
+	int assert_ifc;
+	int assert_remote_enable;
+	int offline;
+	int is_system_controller;
 } parsed_options_t;
-
 
 static void help( void )
 {
 	printf("gpib_config [options] - configures a GPIB interface board\n");
-	printf("\t-b, --iobase NUM\n"
-		"\t\tSet io base address to NUM for boards without plug-and-play cabability.\n");
+	printf("\t-t, --board-type BOARD_TYPE\n"
+		"\t\tSet board type to BOARD_TYPE.\n");
 	printf("\t-d, --dma NUM\n"
 		"\t\tSpecify isa dma channel NUM for boards without plug-and-play cabability.\n");
+	printf("\t-b, --iobase NUM\n"
+		"\t\tSet io base address to NUM for boards without plug-and-play cabability.\n");
 	printf("\t-i, --irq NUM\n"
 		"\t\tSpecify irq line NUM for boards without plug-and-play cabability.\n");
 	printf("\t-f, --file FILEPATH\n"
@@ -52,39 +57,53 @@ static void help( void )
 		"\t\tfile is /etc/gpib.conf\n");
 	printf("\t-h, --help\n"
 		"\t\tPrint this help and exit.\n");
-	printf("\t-l, --pci-slot NUM\n"
-		"\t\tSpecify pci slot NUM to select a specific pci board.\n"
-		"\t\tIf used, you must also specify the pci bus with --pci-bus.\n");
 	printf("\t-m, --minor NUM\n"
 		"\t\tConfigure gpib device file with minor number NUM (default 0).\n");
+	printf("\t--[no-]ifc\n"
+		"\t\tPerform (or not) interface clear after bringing board online.  Default is --ifc.\n");
+	printf("\t--[no-]sre\n"
+		"\t\tAssert (or not) remote enable line after bringing board online.  Default is --sre.\n");
+	printf("\t--[no-]system-controller\n"
+		"\t\tConfigure board as system controller (or not).\n");
+	printf("\t-o, --offline\n"
+		"\t\tDon't bring board online.\n");
 	printf("\t-p, --pad NUM\n"
 		"\t\tSpecify primary gpib address.  NUM should be in the range 0 through 30.\n");
-	printf("\t-s, --sad NUM\n"
-		"\t\tSpecify secondary gpib address.  NUM should be 0 (disabled) or in the range\n"
-		"\t\t96 through 126 (0x60 through 0x7e hexadecimal).\n");
-	printf("\t-t, --board-type BOARD_TYPE\n"
-		"\t\tSet board type to BOARD_TYPE.\n");
 	printf("\t-u, --pci-bus NUM\n"
 		"\t\tSpecify pci bus NUM to select a specific pci board.\n"
 		"\t\tIf used, you must also specify the pci slot with --pci-slot.\n");
+	printf("\t-l, --pci-slot NUM\n"
+		"\t\tSpecify pci slot NUM to select a specific pci board.\n"
+		"\t\tIf used, you must also specify the pci bus with --pci-bus.\n");
+	printf("\t-s, --sad NUM\n"
+		"\t\tSpecify secondary gpib address.  NUM should be 0 (disabled) or in the range\n"
+		"\t\t96 through 126 (0x60 through 0x7e hexadecimal).\n");
 }
 
 static void parse_options( int argc, char *argv[], parsed_options_t *settings )
 {
 	int c, index;
 
-	struct option options[] = {
-		{ "minor", 1, 0, 'm' },
-		{ "board-type", 1, 0, 't' },
-		{ "irq", 1, 0, 'i' },
-		{ "iobase", 1, 0, 'b' },
-		{ "dma", 1, 0, 'd' },
-		{ "pci-bus", 1, 0, 'u' },
-		{ "pci-slot", 1, 0, 'l' },
-		{ "pad", 1, 0, 'p' },
-		{ "sad", 1, 0, 's' },
-		{ "file", 1, 0, 'f' },
-		{ "help", 1, 0, 'h' },
+	struct option options[] =
+	{
+		{ "iobase", required_argument, NULL, 'b' },
+		{ "dma", required_argument, NULL, 'd' },
+		{ "file", required_argument, NULL, 'f' },
+		{ "help", no_argument, NULL, 'h' },
+		{ "irq", required_argument, NULL, 'i' },
+		{ "pci-slot", required_argument, NULL, 'l' },
+		{ "minor", required_argument, NULL, 'm' },
+		{ "offline", no_argument, NULL, 'o' },
+		{ "pad", required_argument, NULL, 'p' },
+		{ "sad", required_argument, NULL, 's' },
+		{ "board-type", required_argument, NULL, 't' },
+		{ "pci-bus", required_argument, NULL, 'u' },
+		{ "no-ifc", no_argument, &settings->assert_ifc, 0 },
+		{ "ifc", no_argument, &settings->assert_ifc, 1 },
+		{ "no-sre", no_argument, &settings->assert_remote_enable, 0 },
+		{ "sre", no_argument, &settings->assert_remote_enable, 1 },
+		{ "no-system-controller", no_argument, &settings->is_system_controller, 0 },
+		{ "system-controller", no_argument, &settings->is_system_controller, 1 },
 		{ 0 },
 	};
 
@@ -98,10 +117,14 @@ static void parse_options( int argc, char *argv[], parsed_options_t *settings )
 	settings->pci_slot = -1;
 	settings->pad = -1;
 	settings->sad = -1;
+	settings->assert_ifc = 1;
+	settings->assert_remote_enable = 1;
+	settings->offline = 0;
+	settings->is_system_controller = -1;
 
 	while( 1 )
 	{
-		c = getopt_long(argc, argv, "b:d:f:h:i:l:m:p:s:t:u:", options, &index);
+		c = getopt_long(argc, argv, "ab:cd:f:hi:l:m:op:s:t:u:", options, &index);
 		if( c == -1 ) break;
 		switch( c )
 		{
@@ -129,11 +152,15 @@ static void parse_options( int argc, char *argv[], parsed_options_t *settings )
 		case 'm':
 			settings->minor = strtol( optarg, NULL, 0 );
 			break;
+		case 'o':
+			settings->offline = 1;
+			break;
 		case 'p':
 			settings->pad = strtol( optarg, NULL, 0 );
 			break;
 		case 's':
 			settings->sad = strtol( optarg, NULL, 0 );
+			settings->sad -= sad_offset;
 			break;
 		case 't':
 			settings->board_type = strdup( optarg );
@@ -148,7 +175,7 @@ static void parse_options( int argc, char *argv[], parsed_options_t *settings )
 	}
 }
 
-static int configure_board( ibBoard_t *board, unsigned int minor, unsigned int pad, int sad )
+static int configure_board( int fileno, const parsed_options_t *options )
 {
 	board_type_ioctl_t boardtype;
 	select_pci_ioctl_t pci_selection;
@@ -157,66 +184,74 @@ static int configure_board( ibBoard_t *board, unsigned int minor, unsigned int p
 	online_ioctl_t online_cmd;
 	int retval;
 
-	strncpy( boardtype.name, board->board_type, sizeof( boardtype.name ) );
-	retval = ioctl( board->fileno, CFCBOARDTYPE, &boardtype );
+	strncpy( boardtype.name, options->board_type, sizeof( boardtype.name ) );
+	retval = ioctl( fileno, CFCBOARDTYPE, &boardtype );
 	if( retval < 0 ) return retval;
-	retval = ioctl( board->fileno, CFCBASE, &board->base );
+	retval = ioctl( fileno, CFCBASE, &options->iobase );
 	if( retval < 0 ) return retval;
-	retval = ioctl( board->fileno, CFCIRQ, &board->irq );
+	retval = ioctl( fileno, CFCIRQ, &options->irq );
 	if( retval < 0 ) return retval;
-	retval = ioctl( board->fileno, CFCDMA, &board->dma );
+	retval = ioctl( fileno, CFCDMA, &options->dma );
 	if( retval < 0 ) return retval;
 
 	pad_cmd.handle = 0;
-	pad_cmd.pad = pad;
-	retval = ioctl( board->fileno, IBPAD, &pad_cmd );
+	pad_cmd.pad = options->pad;
+	retval = ioctl( fileno, IBPAD, &pad_cmd );
 	if( retval < 0 ) return retval;
 
 	sad_cmd.handle = 0;
-	sad_cmd.sad = sad;
-	retval = ioctl( board->fileno, IBSAD, &sad_cmd );
+	sad_cmd.sad = options->sad;
+	retval = ioctl( fileno, IBSAD, &sad_cmd );
 	if( retval < 0 ) return retval;
 
-	pci_selection.pci_bus = board->pci_bus;
-	pci_selection.pci_slot = board->pci_slot;
-	retval = ioctl( board->fileno, IBSELECT_PCI, &pci_selection );
+	pci_selection.pci_bus = options->pci_bus;
+	pci_selection.pci_slot = options->pci_slot;
+	retval = ioctl( fileno, IBSELECT_PCI, &pci_selection );
 	if( retval < 0 ) return retval;
 
 	online_cmd.online = 0;
-	retval = ioctl( board->fileno, IBONL, &online_cmd );
+	retval = ioctl( fileno, IBONL, &online_cmd );
 	if( retval < 0 )
 	{
 		fprintf( stderr, "failed to bring board offline\n" );
 		return retval;
 	}
+	if( options->offline != 0 )
+		return 0;
+
 	online_cmd.online = 1;
-	retval = ioctl( board->fileno, IBONL, &online_cmd );
+	retval = ioctl( fileno, IBONL, &online_cmd );
 	if( retval < 0 )
 	{
 		fprintf( stderr, "failed to bring board online\n" );
 		return retval;
 	}
 
-	retval = ibrsc( minor, board->is_system_controller );
+	retval = ibrsc( options->minor, options->is_system_controller );
 	if( retval & ERR )
 	{
 		fprintf( stderr, "failed to request/release system control\n" );
 		return -1;
 	}
-	if( board->is_system_controller )
+	if( options->is_system_controller )
 	{
-		// these should be optional XXX
-		retval = ibsre( minor, 1 );
-		if( retval & ERR )
+		if( options->assert_ifc )
 		{
-			fprintf( stderr, "failed to assert remote enable\n" );
-			return -1;
+			retval = ibsic( options->minor );
+			if( retval & ERR )
+			{
+				fprintf( stderr, "failed to assert interface clear\n" );
+				return -1;
+			}
 		}
-		retval = ibsic( minor );
-		if( retval & ERR )
+		if( options->assert_remote_enable )
 		{
-			fprintf( stderr, "failed to assert interface clear\n" );
-			return -1;
+			retval = ibsre( options->minor, 1 );
+			if( retval & ERR )
+			{
+				fprintf( stderr, "failed to assert remote enable\n" );
+				return -1;
+			}
 		}
 	}
 
@@ -232,8 +267,6 @@ int main( int argc, char *argv[] )
 	parsed_options_t options;
 	ibBoard_t *board;
 	ibConf_t *conf = NULL;
-	unsigned int pad = 0;
-	int sad = -1;
 	int i;
 
 	parse_options( argc, argv, &options );
@@ -262,8 +295,6 @@ int main( int argc, char *argv[] )
 		if( configs[ i ].is_interface == 0 ) continue;
 		if( configs[ i ].settings.board != options.minor ) continue;
 		conf = &configs[ i ];
-		pad = conf->settings.pad;
-		sad = conf->settings.sad;
 		break;
 	}
 
@@ -275,23 +306,36 @@ int main( int argc, char *argv[] )
 		perror( __FUNCTION__ );
 		return -1;
 	}
-	if( options.board_type )
-		strncpy( board->board_type, options.board_type, sizeof( board->board_type ) );
-	if( options.irq >= 0 )
-		board->irq = options.irq;
-	if( options.iobase >= 0 )
-		board->base = options.iobase;
-	if( options.dma >= 0 )
-		board->dma = options.dma;
-	if( options.pci_bus >= 0 )
-		board->pci_bus = options.pci_bus;
-	if( options.pci_slot >= 0 )
-		board->pci_slot = options.pci_slot;
-	if( options.pad >= 0 )
-		pad = options.pad;
-	if( options.sad >= 0 )
-		sad = options.sad - sad_offset;
-
+	if( options.board_type == NULL )
+	{
+		options.board_type = strdup( board->board_type );
+		if( options.board_type == NULL )
+			abort();
+	}
+	if( options.irq < 0 )
+		options.irq = board->irq;
+	if( options.iobase < 0 )
+		options.iobase = board->base;
+	if( options.dma < 0 )
+		options.dma = board->dma;
+	if( options.pci_bus < 0 )
+		options.pci_bus = board->pci_bus;
+	if( options.pci_slot < 0 )
+		options.pci_slot = board->pci_slot;
+	if( options.pad < 0 )
+	{
+		if( conf != NULL )
+			options.pad = conf->settings.pad;
+		else
+			options.pad = 0;
+	}
+	if( options.sad < 0 )
+	{
+		if( conf != NULL )
+			options.sad = conf->settings.sad;
+		else
+			options.sad = -1;
+	}
 	board->fileno = open( devicefile, O_RDWR );
 	if( board->fileno < 0 )
 	{
@@ -299,7 +343,7 @@ int main( int argc, char *argv[] )
 		perror( __FUNCTION__ );
 		return board->fileno;
 	}
-	retval = configure_board( board, options.minor, pad, sad );
+	retval = configure_board( board->fileno, &options );
 	if( retval < 0 )
 	{
 		fprintf( stderr, "failed to configure board\n" );
