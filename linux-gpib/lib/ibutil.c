@@ -50,17 +50,23 @@ int insert_descriptor( int ud, ibConf_t p )
 	return 0;
 }
 
-void setup_global_board_descriptors( void )
+int setup_global_board_descriptors( void )
 {
 	int i;
+	int retval = 0;
 
 	for( i = 0; i < FIND_CONFIGS_LENGTH && strlen( ibFindConfigs[ i ].name ); i++ )
 	{
 		if( ibFindConfigs[ i ].is_interface )
 		{
-			insert_descriptor( ibFindConfigs[ i ].settings.board, ibFindConfigs[ i ] );
+			if( insert_descriptor( ibFindConfigs[ i ].settings.board, ibFindConfigs[ i ] ) < 0 )
+			{
+				fprintf( stderr, "libgpib: failed to insert board descriptor\n" );
+				retval = -1;
+			}
 		}
 	}
+	return retval;
 }
 
 int ibParseConfigFile( void )
@@ -89,7 +95,7 @@ int ibParseConfigFile( void )
 		return retval;
 	}
 	initIbBoardAtFork();
-	setup_global_board_descriptors();
+	retval = setup_global_board_descriptors();
 
 	config_parsed = 1;
 	pthread_mutex_unlock( &config_lock );
