@@ -5,6 +5,10 @@ Capital Eq. Corp.:
   PCI-488                 cec_pci                     cec-gpib.o          Y
   PC-488                  pcII                        pc2-gpib.o          ?
 
+HP:                      
+  HP82335                 hp82335                     hp82335.o           ?
+  HP27209                 hp82335                     hp82335.o           ?
+
 Ines:
   GPIB-PCI                ines_pci                    ines-gpib.o         Y
   GPIB for PCMCIA         ines_pcmcia                 ines-gpib.o         Y
