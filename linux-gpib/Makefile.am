@@ -14,4 +14,4 @@ EXTRA_DIST = etc util m4 README.HAMEG README.hp82335 bootstrap
 ACLOCAL_AMFLAGS = -I m4
 
 dist-hook:
-	rm -rf `find $(distdir) -name CVS`
+	rm -rf `find $(distdir) -name CVS  -o -name '*~' -o -name '.#*'` util/linux_flags/fake.* util/linux_flags/.*.cmd

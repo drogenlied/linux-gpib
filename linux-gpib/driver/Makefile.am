@@ -27,7 +27,7 @@ all-local:
 		MODVERDIR="$(GPIB_MODVERDIR)"
 
 clean-local:
-	find $(srcdir) \( -name '*.[oas]' -o -name '*.ko' -o -name core -o -name '.*.flags' \) -type f \
+	find $(srcdir) \( -name '*.[oas]' -o -name '*.ko' -o -name core -o -name '.*.cmd' \) -type f \
 		-exec $(RM) {} \;
 
 install-data-hook: device-file-check /etc/gpib.conf
@@ -64,7 +64,7 @@ device-file-check: /dev/gpib0
 /etc/gpib.conf:
 	$(INSTALL_DATA) -D $(top_srcdir)/util/templates/gpib.conf /etc/gpib.conf
 
-#make sure compiled files don't make it into distribution tarballs
+#make sure compiled files, etc don't make it into distribution tarballs
 dist-hook:
-	find $(distdir) \( -name '*.[oas]' -o -name core -o -name '.*.flags' \) -type f \
+	find $(distdir) \( -name '*.[oas]' -o -name '*.ko' -o -name core -o -name '.*.cmd' \) -type f \
 		-exec $(RM) {} \;
