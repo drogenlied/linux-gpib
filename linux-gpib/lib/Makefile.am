@@ -25,7 +25,8 @@ libgpib_la_SOURCES = \
 	ibSad.c ibSic.c ibSre.c ibTmo.c ibTrg.c ibWait.c ibWrt.c \
 	ibGts.c ibBoard.c ibError.c ibutil.c globals.c ibask.c ibppc.c \
 	ibLoc.c ibDma.c ibdev.c ibbna.c async.c ibconfig.c ibFindLstn.c \
-	ibEvent.c local_lockout.c self_test.c pass_control.c ibstop.c
+	ibEvent.c local_lockout.c self_test.c pass_control.c ibstop.c \
+	ibConfLex.c ibConfYacc.c ibConfYacc.h
 
 libgpib_la_CFLAGS = $(LIBGPIB_CFLAGS) -DDEFAULT_CONFIG_FILE=\"/etc/gpib.conf\"
 libgpib_la_LDFLAGS = -release $(VERSION) --version-script=$(srcdir)/gpib_version_script -lpthread
@@ -38,4 +39,5 @@ ibConfYacc.c + ibConfYacc.h: $(srcdir)/ibConfYacc.y
 
 install-data-local:
 	$(INSTALL_HEADER) -D ib.h $(includedir)/gpib/ib.h
+
 

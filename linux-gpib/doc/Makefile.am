@@ -8,7 +8,7 @@
 #   (at your option) any later version.
 
 SGML = linux-gpib.sgml gpib_version.txt
-EXTRA_DIST = linux-gpib.sgml fdl.xml
+EXTRA_DIST = linux-gpib.sgml fdl.xml html linux-gpib.pdf gpib_version.txt #man
 
 if HAVE_DOCBOOK
 all-local: html linux-gpib.pdf #man
@@ -19,11 +19,13 @@ install-data-local:
 	$(INSTALL) -d $(pkgdatadir)/html
 	$(INSTALL_DATA) html/* $(pkgdatadir)/html
 else
+all-local:
+install-data-local:
 endif
 
-clean-local:
-	rm -f linux-gpib.pdf gpib_version.txt
+maintainer-clean-local:
 	rm -rf html man
+	rm -f linux-gpib.pdf gpib_version.txt
 
 linux-gpib.pdf: $(SGML)
 	$(JW_PATH) -f docbook -b pdf linux-gpib.sgml
@@ -36,3 +38,4 @@ man: $(SGML)
 
 gpib_version.txt:
 	echo $(VERSION) > gpib_version.txt
+
