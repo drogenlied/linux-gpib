@@ -29,8 +29,6 @@ int ibonline( gpib_board_t *board, int master )
 			printk("GPIB Hardware Error! (Chip type not found or wrong Base Address?)\n");
 			return -1;
 		}
-		__MOD_INC_USE_COUNT( board->interface->provider_module );
-		board->online = 1;
 
 		if( master )
 		{
@@ -42,23 +40,32 @@ int ibonline( gpib_board_t *board, int master )
 		}
 	}
 
+	__MOD_INC_USE_COUNT( board->interface->provider_module );
+	board->online++;
+
 	return 0;
 }
 
 // XXX need to make sure autopoll is not in progress
 int iboffline( gpib_board_t *board )
 {
-	if( board->open_count <= 1 && board->online )
+	if( board->online == 0 )
+	{
+		return 0;
+	}
+
+	if( board->online == 1 )
 	{
 		board->interface->detach( board );
-		__MOD_DEC_USE_COUNT( board->interface->provider_module );
-		board->online = 0;
 		if( board->buffer )
 		{
 			vfree( board->buffer );
 			board->buffer = NULL;
 		}
 	}
+	__MOD_DEC_USE_COUNT( board->interface->provider_module );
+	board->online--;
+
 	return 0;
 }
 
