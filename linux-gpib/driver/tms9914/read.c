@@ -121,7 +121,7 @@ IBLCL void bdPIOread(ibio_op_t *rdop)
 {
 	faddr_t		buf;
 	unsigned	cnt;
-	int8		s1;		/* software copies of HW status regs */
+	int8_t		s1;		/* software copies of HW status regs */
         uint8_t           eos;
 
 

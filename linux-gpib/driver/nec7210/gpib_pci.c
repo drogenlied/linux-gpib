@@ -72,25 +72,28 @@ IBLCL void bd_PCIInfo(void)
 }
 
 /* enable or disable PCI interrupt on AMCC PCI controller */
-
-IBLCL void pci_EnableIRQ(void)
+void pci_EnableIRQ ()
 {
-DBGin("pci_EnableIRQ");
-DBGout();
+/*
+	outl( BMCSR_DWORD,  pci_config_reg + BMCSR_REG );
+	outl( INTCSR_DWORD, pci_config_reg + INTCSR_REG );
+*/
 }
 
-IBLCL void pci_ResetIRQ (void)
-{
-  /*DBGin("pci_ResetIRQ");*/
-  /*DBGout();*/
+void pci_ResetIRQ () {
+/*
+	outl( BMCSR_DWORD,  pci_config_reg + BMCSR_REG );
+	outl( INTCSR_DWORD, pci_config_reg + INTCSR_REG );
+*/
 }
 
 
 
-IBLCL void pci_DisableIRQ (void)
-{
-DBGin("pci_DisableIRQ");
-DBGout();
+void pci_DisableIRQ () {
+/*
+	outl( 0x00ff0000 , pci_config_reg + INTCSR_REG );
+	outl( BMCSR_DWORD,  pci_config_reg + BMCSR_REG );
+*/
 }
 
 #endif

@@ -1,4 +1,3 @@
-//#include <ibsys.h>
 #include "board.h"
 #include <linux/wait.h>
 #include <asm/bitops.h>

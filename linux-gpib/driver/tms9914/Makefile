@@ -5,10 +5,10 @@
 #include $(ROOT)/util/.config
 
 SRCS =  adjcount.c cmd.c dma.c init.c lines.c read.c util.c \
-	wait.c write.c aux.c 
+	wait.c write.c aux.c interrupt.c 
 OBJS =  $(SRCS:.c=.o)
 
-INCLUDES = -I. -I../include -I../../include
+INCLUDES = -I. -I../include -I../../include -I ../sys
 CFLAGS += $(INCLUDES)
 
 

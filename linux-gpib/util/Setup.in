@@ -99,13 +99,13 @@ dialog --clear --title "Board Type Selection" \
        "pcIIa"  "National Instruments PCIIa Board (8bit)   " \
        "pcII"   "National Instruments PCII  Board (8bit)   " \
        "hp82335" "Hewlett Packard HP82335 and HP27209 boards " \
-       "ziatech" "Ziatech ZT1444A or ZT1488A (untested alpha) " \
        "cbi4882" "ComputerBoards Inc CBI-GPIB CBI-GPIB/LC " \
        "cbi_pci" "ComputerBoards Inc CBI-GPIB PCI " \
-       "modbus_pci" "Janz VMOD-GPIB on MODBUS PCI " \
        "cbi_pcmcia" "ComputerBoards Inc CBI-PCMCIA " \
        "ines_pcmcia" "ines GPIB PCMCIA Board" \
        "ines_pci"    "ines GPIB PCI Board" 2>/tmp/reply
+#       "ziatech" "Ziatech ZT1444A or ZT1488A (untested alpha) " \
+#       "modbus_pci" "Janz VMOD-GPIB on MODBUS PCI " \
 
 get_reply $?
 set_svar BOARD_TYPE $REPLY

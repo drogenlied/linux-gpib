@@ -19,7 +19,7 @@ IBLCL void bdcmd(ibio_op_t *cmdop)
 {
 	faddr_t		buf;
 	unsigned	cnt;
-	uint8		s1, s2;		/* software copies of HW status regs */
+	uint8_t		s1, s2;		/* software copies of HW status regs */
 	int             bytes=0;
 	extern  int             myPAD;
 

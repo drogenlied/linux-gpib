@@ -1,11 +1,6 @@
 
-
-The version of the pcIIa board support is included in this
+Support for the pcIIa board is included in this
 package.
-
-****************************************************************
-******** THIS CODE IS ALPHA CODE *******************************
-****************************************************************
 
 Configuring your card:
 ------------------------
@@ -42,8 +37,6 @@ Answering the Config Questions:
 
 Select your board type pcII or pcIIa.
 Select if you want to use DMA-Transfer or not.
-If you use kernels > 1.3.0 you should enable the LINUX1_3 Option
-
 
 -----------------
 Acknowledgements:
