@@ -182,8 +182,7 @@ int ibask( int ud, int option, int *value )
 				return exit_library( ud, 0 );
 				break;
 			case IbaEventQueue:
-				// XXX no event queue yet
-				*value = 0;
+				*value = 1;	// event queue is always enabled
 				return exit_library( ud, 0 );
 			case IbaSPollBit:
 				// XXX no support for SPOLL status yet
