@@ -119,10 +119,10 @@ static const int atgpib_iosize = 32;
 // tnt4882 register offsets
 enum
 {
-	ACCWR = 0x5,	//tnt4882-only register
+	ACCWR = 0x5,
 	// offset of auxilliary command register in 9914 mode
 	AUXCR = 0x6,
-	INTRT = 0x7,	//tnt4882-only register
+	INTRT = 0x7,
 	// register number for auxilliary command register when swap bit is set (9914 mode)
 	SWAPPED_AUXCR = 0xa,
 	HSSEL = 0xd,	// handshake select register
@@ -365,17 +365,6 @@ static inline void tnt_writeb( tnt4882_private_t *priv, unsigned short value, un
 			break;
 		default:
 			printk( "tnt4882: bug! unsupported ni_chipset\n" );
-			break;
-		}
-		break;
-	case ACCWR:
-	case INTRT:
-		switch( priv->chipset )
-		{
-		case TNT4882:
-			priv->io_writeb( value, address );
-			break;
-		default:
 			break;
 		}
 		break;
