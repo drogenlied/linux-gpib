@@ -121,6 +121,7 @@ extern int ibtrg( int ud );
 extern int ibwait( int ud, int mask );
 extern int ibwrt( int ud, void *rd, long count );
 extern int ibwrtf( int ud, const char *file_path );
+extern void gpib_error_string( int iberr, char *buffer, unsigned int buffer_length );
 
 static __inline__ Addr4882_t MakeAddr( unsigned int pad, unsigned int sad )
 {

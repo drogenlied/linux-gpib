@@ -423,40 +423,31 @@ int main(int argc,char **argv)
 
 void fprint_status( FILE* filep, char *msg )
 {
+	char buffer[ 100 ];
+
 	fprintf( filep, "%s\n", msg);
 
-	fprintf( filep, "ibsta = 0x%x  <", ibsta);
-
-	if ( ibsta & ERR )  fprintf( filep," ERR");
-	if ( ibsta & TIMO ) fprintf( filep," TIMO");
-	if ( ibsta & END )  fprintf( filep," END");
-	if ( ibsta & SRQI ) fprintf( filep," SRQI");
-	if ( ibsta & RQS ) fprintf( filep," RQS");
-	if ( ibsta & CMPL ) fprintf( filep," CMPL");
-	if ( ibsta & CIC )  fprintf( filep," CIC");
-	if ( ibsta & ATN )  fprintf( filep," ATN");
-	if ( ibsta & TACS ) fprintf( filep," TACS");
-	if ( ibsta & LACS ) fprintf( filep," LACS");
-
-	fprintf( filep, " >\n" );
+	fprintf( filep, "ibsta = 0x%x  < ", ThreadIbsta() );
+	if ( ThreadIbsta() & ERR )  fprintf( filep, "ERR " );
+	if ( ThreadIbsta() & TIMO ) fprintf( filep, "TIMO " );
+	if ( ThreadIbsta() & END )  fprintf( filep, "END " );
+	if ( ThreadIbsta() & SRQI ) fprintf( filep, "SRQI " );
+	if ( ThreadIbsta() & RQS ) fprintf( filep, "RQS " );
+	if ( ThreadIbsta() & CMPL ) fprintf( filep, "CMPL " );
+	if ( ThreadIbsta() & CIC )  fprintf( filep, "CIC " );
+	if ( ThreadIbsta() & ATN )  fprintf( filep, "ATN " );
+	if ( ThreadIbsta() & TACS ) fprintf( filep, "TACS " );
+	if ( ThreadIbsta() & LACS ) fprintf( filep, "LACS " );
+	fprintf( filep, ">\n" );
 
 	fprintf( filep,"iberr= %d", iberr);
-	if( ( ibsta & ERR ) == 0 ) fprintf( filep, "\n" );
-	else if ( iberr == EDVR) fprintf( filep," EDVR <OS Error>\n");
-	else if ( iberr == ECIC) fprintf( filep," ECIC <Not CIC>\n");
-	else if ( iberr == ENOL) fprintf( filep," ENOL <No Listener>\n");
-	else if ( iberr == EADR) fprintf( filep," EADR <Adress Error>\n");
-	else if ( iberr == EARG) fprintf( filep," EARG <Invalid argument>\n");
-	else if ( iberr == ESAC) fprintf( filep," ESAC <No Sys Ctrlr>\n");
-	else if ( iberr == EABO) fprintf( filep," EABO <Operation Aborted>\n");
-	else if ( iberr == ENEB) fprintf( filep," ENEB <No Gpib Board>\n");
-	else if ( iberr == EOIP) fprintf( filep," EOIP <Async I/O in prg>\n");
-	else if ( iberr == ECAP) fprintf( filep," ECAP <No Capability>\n");
-	else if ( iberr == EFSO) fprintf( filep," EFSO <File sys. error>\n");
-	else if ( iberr == EBUS) fprintf( filep," EBUS <Command error>\n");
-	else if ( iberr == ESTB) fprintf( filep," ESTB <Status byte lost>\n");
-	else if ( iberr == ESRQ) fprintf( filep," ESRQ <SRQ stuck on>\n");
-	else if ( iberr == ETAB) fprintf( filep," ETAB <Device Table Overflow>\n");
+	if( ( ThreadIbsta() & ERR ) )
+	{
+		gpib_error_string( ThreadIberr(), buffer, sizeof( buffer ) );
+		fprintf( filep, "%s\n", buffer );
+	}
+
+	fprintf( filep, "\n" );
 
 	fprintf( filep, "ibcnt = %d\n", ibcnt );
 }

@@ -72,6 +72,7 @@ GPIB_DUMMY_VERSION {
 		ibwait;
 		ibwrt;
 		ibwrtf;
+		gpib_error_string;
 	local: *;
 };
 

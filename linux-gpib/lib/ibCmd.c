@@ -156,7 +156,7 @@ ssize_t my_ibcmd( ibConf_t *conf, uint8_t *buffer, size_t count)
 		switch( errno )
 		{
 			case ETIMEDOUT:
-				setIberr( EABO );
+				setIberr( EBUS );
 				conf->timed_out = 1;
 				break;
 			default:

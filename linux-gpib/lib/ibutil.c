@@ -580,3 +580,61 @@ int is_system_controller( const ibBoard_t *board )
 
 	return info.is_system_controller;
 }
+
+void gpib_error_string( int error, char *buffer, unsigned int buffer_length )
+{
+	switch( error )
+	{
+		case EDVR:
+			strncpy( buffer, "EDVR: OS error", buffer_length );
+			break;
+		case ECIC:
+			strncpy( buffer, "ECIC: Board not controller in charge", buffer_length );
+			break;
+		case ENOL:
+			strncpy( buffer, "ENOL: No listeners", buffer_length );
+			break;
+		case EADR:
+			strncpy( buffer, "EADR: Improper addressing", buffer_length );
+			break;
+		case EARG:
+			strncpy( buffer, "EARG: Bad argument", buffer_length );
+			break;
+		case ESAC:
+			strncpy( buffer, "ESAC: Board not system controller", buffer_length );
+			break;
+		case EABO:
+			strncpy( buffer, "EABO: Operation aborted", buffer_length );
+			break;
+		case ENEB:
+			strncpy( buffer, "ENEB: Non-existant board", buffer_length );
+			break;
+		case EDMA:
+			strncpy( buffer, "EDMA: DMA error", buffer_length );
+			break;
+		case EOIP:
+			strncpy( buffer, "EOIP: IO operation in progress", buffer_length );
+			break;
+		case ECAP:
+			strncpy( buffer, "ECAP: Capability does not exist", buffer_length );
+			break;
+		case EFSO:
+			strncpy( buffer, "EFSO: File system error", buffer_length );
+			break;
+		case EBUS:
+			strncpy( buffer, "EBUS: Bus error", buffer_length );
+			break;
+		case ESTB:
+			strncpy( buffer, "ESTB: Lost status byte", buffer_length );
+			break;
+		case ESRQ:
+			strncpy( buffer, "ESRQ: Stuck service request", buffer_length );
+			break;
+		case ETAB:
+			strncpy( buffer, "ETAB: Table problem", buffer_length );
+			break;
+		default:
+			strncpy( buffer, "Unrecognized/invalid error code", buffer_length );
+			break;
+	};
+}
