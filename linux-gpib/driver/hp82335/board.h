@@ -26,8 +26,7 @@ extern inline uint8 bdP8in(faddr_t in_addr)
 {
 #if defined(HP82335)
 	return readb((unsigned int) in_addr);
-#endif
-#if defined(TMS9914)
+#else
 	return inb_p((unsigned int) in_addr);
 #endif
 }
@@ -39,8 +38,7 @@ extern inline void bdP8out(faddr_t out_addr, uint8 out_value)
 {
 #if defined(HP82335)
 	writeb(out_value, (unsigned int out_addr);
-#endif
-#if defined(TMS9914)
+#else
         outb_p((unsigned int)out_addr,out_value);
 #endif
 }
