@@ -37,7 +37,40 @@ struct board_descriptors
 	int slave;
 };
 
-int find_boards( struct board_descriptors *boards )
+static int init_board( int board_desc )
+{
+	int status;
+
+	ibtmo( board_desc, T3s );
+	if( ThreadIbsta() & ERR )
+	{
+		fprintf( stderr, "FAILED: ibtmo() error in %s\n", __FUNCTION__ );
+		return -1;
+	}
+
+	ibeot( board_desc, 1 );
+	if( ibsta & ERR )
+	{
+		fprintf( stderr, "FAILED: ibeot() error in %s\n", __FUNCTION__ );
+		return -1;
+	}
+
+	status = ibeos( board_desc, 0 );
+	if( status & ERR )
+	{
+		fprintf( stderr, "FAILED: ibtmo() error in %s\n", __FUNCTION__ );
+		return -1;
+	}
+	if( status != ThreadIbsta() || ThreadIbsta() != ibsta )
+	{
+		fprintf( stderr, "FAILED: status bits inconsistent in %s\n", __FUNCTION__ );
+		return -1;
+	}
+
+	return 0;
+}
+
+static int find_boards( struct board_descriptors *boards )
 {
 	int i;
 	int status, result;
@@ -67,14 +100,23 @@ int find_boards( struct board_descriptors *boards )
 	{
 		fprintf( stderr, "FAILED: could not find slave board\n" );
 		return -1;
-	}else
-	{
-		fprintf( stderr, "OK\n" );
-		return 0;
 	}
+	if( init_board( boards->master ) )
+	{
+		fprintf( stderr, "error initializing master\n" );
+		return -1;
+	}
+	if( init_board( boards->slave ) )
+	{
+		fprintf( stderr, "error initializing slave\n" );
+		return -1;
+	}
+
+	fprintf( stderr, "OK\n" );
+	return 0;
 }
 
-int open_slave_device_descriptor( const struct board_descriptors *boards,
+static int open_slave_device_descriptor( const struct board_descriptors *boards,
 	int timeout, int eot, int eos )
 {
 	int pad, sad;
@@ -83,16 +125,26 @@ int open_slave_device_descriptor( const struct board_descriptors *boards,
 
 	status = ibask( boards->slave, IbaPAD, &pad );
 	if( status & ERR )
+	{
+		fprintf( stderr, "FAILED: could not query slave device pad\n" );
 		return -1;
+	}
 	status = ibask( boards->slave, IbaSAD, &sad );
 	if( status & ERR )
+	{
+		fprintf( stderr, "FAILED: could not query slave device sad\n" );
 		return -1;
+	}
 	ud = ibdev( boards->master, pad, sad, timeout, eot, eos );
+	if( ud < 0 )
+	{
+		fprintf( stderr, "FAILED: could not open slave device descriptor\n" );
+	}
 	return ud;
 }
 
-const char read_write_string1[] = "dig8esdfas sdf\n";
-const char read_write_string2[] = "DFLIJFES8F3	";
+static const char read_write_string1[] = "dig8esdfas sdf\n";
+static const char read_write_string2[] = "DFLIJFES8F3	";
 
 struct read_write_slave_parameters
 {
@@ -100,7 +152,7 @@ struct read_write_slave_parameters
 	int retval;
 };
 
-void* read_write_slave_thread( void *arg )
+static void* read_write_slave_thread( void *arg )
 {
 	volatile struct read_write_slave_parameters *param = arg;
 	char buffer[ 1000 ];
@@ -135,7 +187,7 @@ void* read_write_slave_thread( void *arg )
 	return NULL;
 }
 
-int read_write_test( const struct board_descriptors *boards )
+static int read_write_test( const struct board_descriptors *boards )
 {
 	int ud;
 	pthread_t slave_thread;
@@ -145,12 +197,9 @@ int read_write_test( const struct board_descriptors *boards )
 	int i;
 
 	fprintf( stderr, "%s...", __FUNCTION__ );
-	ud = open_slave_device_descriptor( boards, T1s, 1, 0 );
+	ud = open_slave_device_descriptor( boards, T3s, 1, 0 );
 	if( ud < 0 )
-	{
-		fprintf( stderr, "FAILED: could not open slave device descriptor\n" );
 		return -1;
-	}
 	param.slave_board = boards->slave;
 	if( pthread_create( &slave_thread, NULL, read_write_slave_thread, (void*)&param ) )
 	{
@@ -204,20 +253,17 @@ int read_write_test( const struct board_descriptors *boards )
 	return 0;
 }
 
-int async_read_write_test( const struct board_descriptors *boards )
+static int async_read_write_test( const struct board_descriptors *boards )
 {
 	int ud;
 	char buffer[ 1000 ];
 	int i;
 	int status;
-	
+
 	fprintf( stderr, "%s...", __FUNCTION__ );
-	ud = open_slave_device_descriptor( boards, T1s, 1, 0 );
+	ud = open_slave_device_descriptor( boards, T3s, 1, 0 );
 	if( ud < 0 )
-	{
-		fprintf( stderr, "FAILED: could not open device descriptor\n" );
 		return -1;
-	}
 	for( i = 0; i < 2; i++ )
 	{
 		status = ibwrta( ud, read_write_string1, strlen( read_write_string1 ) + 1 );
@@ -235,7 +281,7 @@ int async_read_write_test( const struct board_descriptors *boards )
 			ibonl( ud, 0 );
 			return -1;
 		}
-		status = ibwait( ud, CMPL );
+		status = ibwait( ud, CMPL | TIMO );
 		if( ( status & ERR ) || !( status & CMPL ) )
 		{
 			fprintf( stderr, "FAILED: write status 0x%x, error %i\n", ThreadIbsta(),
@@ -243,7 +289,7 @@ int async_read_write_test( const struct board_descriptors *boards )
 			ibonl( ud, 0 );
 			return -1;
 		}
-		status = ibwait( boards->slave, CMPL );
+		status = ibwait( boards->slave, CMPL | TIMO );
 		if( ( status & ERR ) || !( status & CMPL ) )
 		{
 			fprintf( stderr, "FAILED: write status 0x%x, error %i\n", ThreadIbsta(),
@@ -259,8 +305,74 @@ int async_read_write_test( const struct board_descriptors *boards )
 			return -1;
 		}
 	}
-	fprintf( stderr, "OK\n" );
 	ibonl( ud, 0 );
+	fprintf( stderr, "OK\n" );
+	return 0;
+}
+
+static int serial_poll_test( const struct board_descriptors *boards )
+{
+	int ud;
+	char result;
+	const int status_byte = 0x43;
+
+	fprintf( stderr, "%s...", __FUNCTION__ );
+	ud = open_slave_device_descriptor( boards, T3s, 1, 0 );
+	if( ud < 0 )
+		return -1;
+
+	/* make sure status queue is empty */
+	while( ibwait( ud, 0 ) & RQS )
+	{
+		ibrsp( ud, &result );
+		if( ThreadIbsta() & ERR )
+		{
+			fprintf( stderr, "FAILED: error emptying status queue\n" );
+			ibonl( ud, 0 );
+			return -1;
+		}
+	}
+
+	ibrsv( boards->slave, status_byte );
+	if( ThreadIbsta() & ERR )
+	{
+		fprintf( stderr, "FAILED: failed to request service\n" );
+		ibonl( ud, 0 );
+		return -1;
+	}
+
+	ibwait( ud, RQS | TIMO );
+	if( ( ThreadIbsta() & ERR ) || ( ThreadIbsta() & TIMO ) || !( ThreadIbsta() & RQS ) )
+	{
+		fprintf( stderr, "FAILED: did not receivce service request\n" );
+		ibonl( ud, 0 );
+		return -1;
+	}
+	result = 0;
+	ibrsp( ud, &result );
+	if( ThreadIbsta() & ERR )
+	{
+		fprintf( stderr, "FAILED: failed to read status byte\n" );
+		ibonl( ud, 0 );
+		return -1;
+	}
+
+	if( ( result & 0xff ) != status_byte )
+	{
+		fprintf( stderr, "FAILED: status byte value is incorrect\n" );
+		ibonl( ud, 0 );
+		return -1;
+	}
+
+	ibonl( ud, 0 );
+	if( ThreadIbsta() & ERR )
+	{
+		fprintf( stderr, "FAILED: failed to take descriptor offline\n" );
+		return -1;
+	}
+
+	fprintf( stderr, "OK\n" );
+
 	return 0;
 }
 
@@ -275,11 +387,10 @@ int main( int argc, char *argv[] )
 	retval = find_boards( &boards );
 	if( retval < 0 ) return retval;
 
-	retval = read_write_test( &boards );
-	if( retval < 0 ) return retval;
+	read_write_test( &boards );
 
-	retval = async_read_write_test( &boards );
-	if( retval < 0 ) return retval;
+	async_read_write_test( &boards );
+	serial_poll_test( &boards );
 
 	return 0;
 }
