@@ -268,6 +268,7 @@ ssize_t agilent_82357a_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 	int out_data_length, in_data_length;
 	int bytes_written, bytes_read;
 	int i = 0;
+	uint8_t trailing_flags;
 	
 	*nbytes = 0;
 	out_data_length = 0x9;
@@ -292,25 +293,26 @@ ssize_t agilent_82357a_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 		printk("%s: agilent_82357a_send_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, bytes_written, i);
 		return -EIO;
 	}
-	in_data_length = length;
+	in_data_length = length + 1;
 	in_data = kmalloc(in_data_length, GFP_KERNEL);
 	if(in_data == NULL) return -ENOMEM;
 	retval = agilent_82357a_receive_bulk_msg(a_priv, in_data, in_data_length, 
 		&bytes_read, agilent_82357a_timeout_jiffies(board->usec_timeout));
-	if(retval)
+	if(retval || bytes_read == 0)
 	{
 		printk("%s: %s: agilent_82357a_receive_bulk_msg returned %i, bytes_read=%i\n", __FILE__, __FUNCTION__, retval, bytes_read);		
 		kfree(in_data);
 		return -EIO;
 	}
-	// FIXME
 	memcpy(buffer, in_data, length);
 	printk("%s: %s: received response:\n", __FILE__, __FUNCTION__);
 	agilent_82357a_dump_raw_block(in_data, in_data_length);
+	trailing_flags = in_data[bytes_read - 1];
 	kfree(in_data);
-	if(1 /*FIXME*/) *end = 1;
+	*nbytes = bytes_read - 1;
+	if(trailing_flags & (ATRF_EOI | ATRF_EOS)) *end = 1;
 	else *end = 0;
-	*nbytes = bytes_read;
+	//FIXME check trailing flags for error
 	return 0;
 }
 

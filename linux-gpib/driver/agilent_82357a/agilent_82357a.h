@@ -58,6 +58,18 @@ enum agilent_82357a_read_flags
 	ARF_SPOLL = 0x8
 };
 
+enum agilent_82357a_trailing_read_flags
+{
+	ATRF_EOI = 0x1,
+	ATRF_ATN = 0x2,
+	ATRF_IFC = 0x4,
+	ATRF_EOS = 0x8,
+	ATRF_ABORT = 0x10,
+	ATRF_COUNT = 0x20,
+	ATRF_DEAD_BUS = 0x40,
+	ATRF_UNADDRESSED = 0x80
+};
+
 enum agilent_82357a_write_flags
 {
 	AWF_SEND_EOI = 0x1,
