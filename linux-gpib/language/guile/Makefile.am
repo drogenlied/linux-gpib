@@ -14,5 +14,5 @@ noinst_HEADERS = gpib.h
 libgpib_guile_la_SOURCES = gpib.c
 
 libgpib_guile_la_CFLAGS = $(LIBGPIB_CFLAGS)
-libgpib_guile_la_LDFLAGS = $(LIBGPIB_LDFLAGS)
+libgpib_guile_la_LDFLAGS = -release $(VERSION) $(LIBGPIB_LDFLAGS)
 

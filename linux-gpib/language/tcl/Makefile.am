@@ -12,5 +12,5 @@ lib_LTLIBRARIES = libgpib_tcl.la
 libgpib_tcl_la_SOURCES = ibCmds.c
 
 libgpib_tcl_la_CFLAGS = $(LIBGPIB_CFLAGS) -I/usr/include/tcl8.3
-libgpib_tcl = $(LIBGPIB_LDFLAGS)
+libgpib_tcl_la_LDFLAGS = -release $(VERSION) $(LIBGPIB_LDFLAGS)
 
