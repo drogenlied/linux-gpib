@@ -224,12 +224,6 @@ printk("minor %i ioctl %i\n", minor, cmd);
 		case IBRSV:
 			retval = ibrsv(device, ibargp->ib_arg);
 			break;
-		case DVTRG:
-			retval = dvtrg(device, ibargp->ib_arg);
-			break;
-		case DVCLR:
-			retval = dvclr(device, ibargp->ib_arg);
-			break;
 		case DVRSP:
 			/* Check write access to Poll byte */
 			retval = verify_area(VERIFY_WRITE, ibargp->ib_buf, 1);

@@ -97,3 +97,15 @@ int ibCheckDescriptor(int ud)
 		return -1;
 	return 0;
 }
+
+ssize_t device_command(ibBoard_t *board, uint8_t *cmd, size_t count, int pad, int sad)
+{
+	ssize_t retval;
+
+	if(send_setup(board, pad, sad) < 0)
+	{
+		return -1;
+	}
+
+	return __ibcmd(board, cmd, count);
+}

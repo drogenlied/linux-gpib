@@ -31,6 +31,8 @@ extern  int ibFindDevIndex(char *name);
 extern ssize_t __ibcmd(ibBoard_t *board, uint8_t *buffer, size_t length);
 extern int __ibtmo(ibBoard_t *board, int timeout);
 extern int config_parsed;
+extern int send_setup(ibBoard_t *board, int pad, int sad);
+extern ssize_t device_command(ibBoard_t *board, uint8_t *cmd, size_t length, int pad, int sad);
 
 #include <stdio.h>
 int gpib_yyparse(void);

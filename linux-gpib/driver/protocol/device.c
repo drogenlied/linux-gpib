@@ -19,66 +19,6 @@
 #include <ibprot.h>
 
 /*
- * DVTRG
- * Trigger the device with primary address pad and secondary
- * address sad.  If the device has no secondary address, pass a
- * zero in for this argument.  This function sends the TAD of the
- * GPIB interface, UNL, the LAD of the device, and GET.
- */
-int dvtrg(gpib_device_t *device, int padsad)
-{
-	uint8_t cmdString[2];
-	int status = ibstatus(device);
-
-	if((status & CIC) == 0)
-	{
-		printk("gpib: interface cannot trigger when not CIC\n");
-		return -1;
-	}
-#if 0
-	if(send_setup(device, padsad))
-	{
-		return -1;
-	}
-#endif
-	cmdString[0] = GET;
-	ibcmd(device, cmdString, 1);
-	return 0;
-}
-
-
-/*
- * DVCLR
- * Clear the device with primary address pad and secondary
- * address sad.  If the device has no secondary address, pass a
- * zero in for this argument.  This function sends the TAD of the
- * GPIB interface, UNL, the LAD of the device, and SDC.
- */
-int dvclr(gpib_device_t *device, int padsad)
-{
-	uint8_t cmdString[2];
-	int status = ibstatus(device);
-
-	if((status & CIC ) == 0)
-	{
-		printk("gpib: board not CIC during clear\n");
-		return -1;
-	}
-	if(device->interface->take_control(device, 0) < 0)
-		return -1;
-#if 0
-	if(send_setup(device, padsad) < 0)
-		return -1;
-#endif
-	cmdString[0] = SDC;
-	if(device->interface->command(device, cmdString, 1) < 0)
-		return -1;
-
-	return 0;
-}
-
-
-/*
  * DVRSP
  * This function performs a serial poll of the device with primary
  * address pad and secondary address sad. If the device has no
@@ -86,7 +26,6 @@ int dvclr(gpib_device_t *device, int padsad)
  * end of a successful serial poll the response is returned in result.
  * SPD and UNT are sent at the completion of the poll.
  */
-
 
 int dvrsp(gpib_device_t *device, int padsad, uint8_t *result)
 {

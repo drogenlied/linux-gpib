@@ -1,9 +1,5 @@
 /***** Public Functions ******/
-extern  int dvtrg(gpib_device_t *device, int padsad);
-extern  int dvclr(gpib_device_t *device, int padsad);
 extern  int dvrsp(gpib_device_t *device, int padsad, uint8_t *result);
-extern  int receive_setup(gpib_device_t *device, int padsad);
-extern  int send_setup(gpib_device_t *device, int padsad);
 extern  int ibAPWait(gpib_device_t *device, int pad);
 extern  int ibAPrsp(gpib_device_t *device, int padsad, char *spb);
 extern  void ibAPE(gpib_device_t *device, int pad, int v);

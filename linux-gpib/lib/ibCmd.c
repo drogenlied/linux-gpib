@@ -1,6 +1,7 @@
 
 #include "ib_internal.h"
 #include <ibP.h>
+#include <sys/ioctl.h>
 
 int ibcmd(int ud, void *cmd, unsigned long cnt)
 {
@@ -59,4 +60,30 @@ ssize_t __ibcmd(ibBoard_t *board, uint8_t *buffer, size_t count)
 	}
 
 	return cmd.count;
+}
+
+int send_setup(ibBoard_t *board, int pad, int sad)
+{
+	uint8_t cmdString[8];
+	unsigned i = 0;
+
+	if( pad < 0 || pad > gpib_addr_max || sad > gpib_addr_max)
+	{
+		fprintf(stderr, "gpib: bad addr\n");
+		return -1;
+	}
+
+	cmdString[ i++ ] = UNL;
+	cmdString[ i++ ] = MLA( pad );
+	if( sad >= 0)
+		cmdString[ i++ ] = MSA( sad );
+	/* controller's talk address */
+	cmdString[ i++ ] = MTA( board->pad );
+	if( board->sad >= 0 )
+		cmdString[ i++ ] = MSA( board->sad );
+
+	if( __ibcmd( board, cmdString, i) < 0 )
+		return -1;
+
+	return 0;
 }

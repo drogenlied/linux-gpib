@@ -37,8 +37,6 @@ typedef struct
 
 #define DEVFCN		100
 
-#define DVTRG		(DEVFCN+0)	/* Device-level functions...*/
-#define DVCLR		(DEVFCN+1)
 #define DVRSP		(DEVFCN+2)
 #define DVRD		(DEVFCN+3)
 #define DVWRT		(DEVFCN+4)
