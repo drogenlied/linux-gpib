@@ -44,8 +44,19 @@ A copy of the license is included in the section entitled
 
 <section ID="configuration">
 <title>
-	Configuration: gpib.conf
+	Configuration
 </title>
+<refentry>
+<refmeta>
+	<refentrytitle>gpib.conf</refentrytitle>
+	<manvolnum>5</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>gpib.conf</refname>
+	<refpurpose>GPIB library configuration file</refpurpose>
+</refnamediv>
+<refsect1>
+<title>Description</title>
 <para>
 The library reads its configuration information from the
 file /etc/gpib.conf.  A template gpib.conf
@@ -286,6 +297,38 @@ device {
 	</tgroup>
 	</table>
 </para>
+</refsect1>
+</refentry>
+
+<refentry>
+<refmeta>
+	<refentrytitle>gpib_config</refentrytitle>
+	<manvolnum>8</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>gpib_config</refname>
+	<refpurpose>GPIB administration program</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+<cmdsynopsis>
+<command>gpib_config</command>
+<arg>-b, --iobase <replaceable>number</replaceable></arg>
+<arg>-d, --dma <replaceable>number</replaceable></arg>
+<arg>-i, --irq <replaceable>number</replaceable></arg>
+<arg>-f, --file <replaceable>string</replaceable></arg>
+<arg>-l, --pci-slot <replaceable>number</replaceable></arg>
+<arg>-m, --minor <replaceable>number</replaceable></arg>
+<arg>-p, --pad <replaceable>number</replaceable></arg>
+<arg>-s, --sad <replaceable>number</replaceable></arg>
+<arg>-t, --board-type <replaceable>string</replaceable></arg>
+<arg>-u, --pci-bus <replaceable>number</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+<refsect1>
+<title>Description</title>
+<para>blah</para>
+</refsect1>
+</refentry>
 </section>
 
 <section ID="supported-hardware">
