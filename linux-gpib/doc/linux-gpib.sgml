@@ -108,7 +108,7 @@ volatile int iberr;
 	</para>
 	<para>
 	<table COLSEP="1" ROWSEP="1" ORIENT="port" PGWIDE="1">
-	<title>ibsta Bits</title>
+	<title>iberr error codes</title>
 	<tgroup COLS="3" ALIGN="left" >
 	<thead>
 	<row>
@@ -942,16 +942,107 @@ volatile int ibsta;
 	<tgroup COLS="3" ALIGN="left" >
 	<thead>
 	<row>
-	<entry>constant</entry>
-	<entry>value (hexadecimal)</entry>
+	<entry>byte value (hexadecimal)</entry>
+	<entry>name</entry>
 	<entry>description</entry>
 	</row>
 	</thead>
 	<tbody>
 	<row>
-	<entry></entry>
-	<entry></entry>
-	<entry></entry>
+	<entry>0x1</entry>
+	<entry>GTL</entry>
+	<entry>Go to local</entry>
+	</row>
+	<row>
+	<entry>0x4</entry>
+	<entry>SDC</entry>
+	<entry>Selected device clear</entry>
+	</row>
+	<row>
+	<entry>0x5</entry>
+	<entry>PPC</entry>
+	<entry>Parallel poll configure</entry>
+	</row>
+	<row>
+	<entry>0x8</entry>
+	<entry>GET</entry>
+	<entry>Group execute trigger</entry>
+	</row>
+	<row>
+	<entry>0x9</entry>
+	<entry>TCT</entry>
+	<entry>Take control</entry>
+	</row>
+	<row>
+	<entry>0x11</entry>
+	<entry>LLO</entry>
+	<entry>Local lockout</entry>
+	</row>
+	<row>
+	<entry>0x14</entry>
+	<entry>DCL</entry>
+	<entry>Device clear</entry>
+	</row>
+	<row>
+	<entry>0x15</entry>
+	<entry>PPU</entry>
+	<entry>Parallel poll unconfigure</entry>
+	</row>
+	<row>
+	<entry>0x18</entry>
+	<entry>SPE</entry>
+	<entry>Serial poll enable</entry>
+	</row>
+	<row>
+	<entry>0x19</entry>
+	<entry>SPD</entry>
+	<entry>Serial poll disable</entry>
+	</row>
+	<row>
+	<entry>0x20 to 0x3e</entry>
+	<entry>MLA0 to MLA30</entry>
+	<entry>My (primary) listen address 0 to 30</entry>
+	</row>
+	<row>
+	<entry>0x3f</entry>
+	<entry>UNL</entry>
+	<entry>Unlisten</entry>
+	</row>
+	<row>
+	<entry>0x40 to 0x5e</entry>
+	<entry>MTA0 to MTA30</entry>
+	<entry>My (primary) talk address 0 to 30</entry>
+	</row>
+	<row>
+	<entry>0x5f</entry>
+	<entry>UNT</entry>
+	<entry>Untalk</entry>
+	</row>
+	<row>
+	<entry>0x60 to 0x6f</entry>
+	<entry>MSA0 to MSA15, also PPE</entry>
+	<entry>When following a talk or listen address, this is
+	'my secondary address' 0 to 15.  When following a parallel
+	poll configure, this is 'parallel poll enable'.  For
+	parallel poll enable, the least significant 3 bits
+	of the command byte specify which DIO line the device
+	should use to send its parallel poll response.  The
+	fourth least significant bit (0x8)
+	indicates the 'sense' or polarity the device should use
+	when responding.
+	</entry>
+	</row>
+	<row>
+	<entry>0x70 to 0x7d</entry>
+	<entry>MSA16 to MSA29, also PPD</entry>
+	<entry>When following a talk or listen address, this is
+	'my secondary address' 16 to 29.  When following a parallel
+	poll configure, this is 'parallel poll disable'.</entry>
+	</row>
+	<row>
+	<entry>0x7e</entry>
+	<entry>MSA30</entry>
+	<entry>My secondary address 30</entry>
 	</row>
 	</tbody>
 	</tgroup>
@@ -969,7 +1060,7 @@ of how they are used follow:
 </para>
 <para>
 	<table COLSEP="1" ROWSEP="1" ORIENT="port" PGWIDE="1">
-	<title>GPIB command bytes</title>
+	<title>GPIB bus lines</title>
 	<tgroup COLS="3" ALIGN="left" >
 	<thead>
 	<row>
