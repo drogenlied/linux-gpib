@@ -284,9 +284,16 @@ enum ibconfig_option
 	IbcRsv = 0x21	/* board only */
 };
 
+enum t1_delays
+{
+	T1_DELAY_2000ns = 1,
+	T1_DELAY_500ns = 2,
+	T1_DELAY_350ns = 3
+};
+
 static const int request_service_bit = 0x40;
 
-enum events
+enum gpib_events
 {
 	EventNone = 0,
 	EventDevTrg = 1,

@@ -49,6 +49,24 @@ int query_autopoll( const ibBoard_t *board )
 	return info.autopolling;
 }
 
+int query_board_t1_delay( const ibBoard_t *board )
+{
+	int retval;
+	board_info_ioctl_t info;
+
+	retval = ioctl( board->fileno, IBBOARD_INFO, &info );
+	if( retval < 0 )
+	{
+		setIberr( EDVR );
+		setIbcnt( errno );
+		return retval;
+	}
+
+	if( info.t1_delay < 500 ) return T1_DELAY_350ns;
+	else if( info.t1_delay < 2000 ) return T1_DELAY_500ns;
+	return T1_DELAY_2000ns;
+}
+
 int query_board_rsv( const ibBoard_t *board )
 {
 	int retval;
@@ -173,8 +191,9 @@ int ibask( int ud, int option, int *value )
 				return exit_library( ud, 0 );
 				break;
 			case IbaTIMING:
-				// XXX we don't support changing bus timings yet
-				*value = 1;
+				retval = query_board_t1_delay( board );
+				if( retval < 0 ) return exit_library( ud, 1 );
+				*value = retval;
 				return exit_library( ud, 0 );
 				break;
 			case IbaDMA:

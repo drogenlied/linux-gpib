@@ -43,6 +43,40 @@ static int set_ppoll_timeout( ibConf_t *conf, int timeout )
 	return 0;
 }
 
+static int set_t1_delay( ibBoard_t *board, int delay )
+{
+	t1_delay_ioctl_t nano_sec;
+	int retval;
+
+	switch( delay )
+	{
+		case T1_DELAY_2000ns:
+			nano_sec = 2000;
+			break;
+		case T1_DELAY_500ns:
+			nano_sec = 500;
+			break;
+		case T1_DELAY_350ns:
+			nano_sec = 350;
+			break;
+		default:
+			fprintf( stderr, "libgpib: invalid T1 delay selection\n" );
+			setIberr( EARG );
+			return -1;
+			break;
+	}
+
+	retval = ioctl( board->fileno, IB_T1_DELAY, &nano_sec );
+	if( retval < 0 )
+	{
+		setIberr( EDVR );
+		setIbcnt( errno );
+		return -1;
+	}
+
+	return 0;
+}
+
 int ibconfig( int ud, int option, int value )
 {
 	ibConf_t *conf;
@@ -191,16 +225,9 @@ int ibconfig( int ud, int option, int value )
 				return exit_library( ud, 1 );
 				break;
 			case IbcTIMING:
-				// XXX
-				if( value == 1 )
-				{
-					return exit_library( ud, 0 );
-				}else
-				{
-					fprintf( stderr, "libgpib: high-speed timing not implemented\n");
-					setIberr( ECAP );
+				if( set_t1_delay( interfaceBoard( conf ), value ) < 0 )
 					return exit_library( ud, 1 );
-				}
+				return exit_library( ud, 0 );
 				break;
 			case IbcDMA:
 				// XXX
