@@ -4,7 +4,15 @@
 
 int ibrsp(int ud, char *spr)
 {
-return  ibBoardFunc( CONF(ud,board),
-                     ((CONF(ud,flags)&CN_AUTOPOLL) ? IBAPRSP : DVRSP),
-                     CONF(ud,padsad), spr);
+	ibConf_t *conf = ibConfigs[ud];
+
+	if(ibCheckDescriptor(ud) < 0)
+	{
+		iberr = EDVR;
+		return ibsta | ERR;
+	}
+
+	return ibBoardFunc( conf->board,
+		(conf->flags & CN_AUTOPOLL) ? IBAPRSP : DVRSP,
+		padsad(conf->pad, conf->sad), spr);
 }

@@ -4,5 +4,13 @@
 
 int ibclr(int ud)
 {
-	return ibBoardFunc( CONF(ud,board),DVCLR, CONF(ud,padsad));
+	ibConf_t *conf = ibConfigs[ud];
+
+	if(ibCheckDescriptor(ud) < 0)
+	{
+		iberr = EDVR;
+		return ibsta | ERR;
+	}
+
+	return ibBoardFunc( conf->board, DVCLR, padsad(conf->pad, conf->sad));
 }

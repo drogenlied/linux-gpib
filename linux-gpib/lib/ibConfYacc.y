@@ -74,8 +74,8 @@ char cval;
 			}
 		;
 
-	statement: T_PAD '=' T_NUMBER      { ibBoard[bdid].padsad |=  $3; ibFindConfigs[findIndex].padsad |= $3;}
-		| T_SAD '=' T_NUMBER      { ibBoard[bdid].padsad |= ($3<<8); ibFindConfigs[findIndex].padsad |= ($3<<8);}
+	statement: T_PAD '=' T_NUMBER      { ibBoard[bdid].pad =  $3; ibFindConfigs[findIndex].pad = $3;}
+		| T_SAD '=' T_NUMBER      { ibBoard[bdid].sad = $3; ibFindConfigs[findIndex].sad |= $3;}
                  | T_EOSBYTE '=' T_NUMBER  { ibBoard[bdid].eos = $3; ibFindConfigs[findIndex].eos = $3;}
 		| T_REOS T_BOOL           { ibBoard[bdid].eosflags |= $2 * REOS; ibFindConfigs[findIndex].eosflags |= $2 * REOS;}
                  | T_BIN  T_BOOL           { ibBoard[bdid].eosflags |= $2 * BIN; ibFindConfigs[findIndex].eosflags |= $2 * BIN;}
@@ -114,8 +114,8 @@ char cval;
 		;
 
 	assign:
-		T_PAD '=' T_NUMBER { ibFindConfigs[findIndex].padsad  |= $3; }
-		| T_SAD '=' T_NUMBER { ibFindConfigs[findIndex].padsad |= ($3<<8); }
+		T_PAD '=' T_NUMBER { ibFindConfigs[findIndex].pad = $3; }
+		| T_SAD '=' T_NUMBER { ibFindConfigs[findIndex].sad = $3; }
 		| T_INIT_S '=' T_STRING { strncpy(ibFindConfigs[findIndex].init_string,$3,60); }
 		| T_EOSBYTE '=' T_NUMBER  { ibFindConfigs[findIndex].eos = $3; }
 		| T_REOS T_BOOL           { ibFindConfigs[findIndex].eosflags |= $2 * REOS;}

@@ -18,81 +18,67 @@
 #include "ib_internal.h"
 #include <ibP.h>
 
-extern int ibfind_called;
+static int config_parsed = 0;
 
 int ibdev(int minor, int pad, int sad, int timo, int eot, int eos)
 {
 	int descriptor;
+	int index;
 	char *envptr;
+	int retval;
+	int uDesc;
+	ibConf_t conf;
 
-	if(!ibfind_called)
-	{		/*if called first time load config*/
-		if(( envptr = (char *) getenv("IB_CONFIG"))== (char *)0 )
+	/* load config */
+
+	if(config_parsed == 0)
+	{
+		envptr = getenv("IB_CONFIG");
+		if(envptr)
+			retval = ibParseConfigFile(envptr);
+		else
+			retval = ibParseConfigFile(DEFAULT_CONFIG_FILE);
+		if(retval < 0)
 		{
-			if(ibParseConfigFile(DEFAULT_CONFIG_FILE) < 0  )
-			{
-				ibsta |= ERR;
-				ibPutErrlog(-1,"ibParseConfig");
-				return ERR;
-			}
-		}else
-		{
-			if(ibParseConfigFile(envptr) < 0)
-			{
-				ibsta = ERR;
-				ibPutErrlog(-1,"ibParseConfig");
-				return ERR;
-			}
+			ibsta |= ERR;
+			ibPutErrlog(-1,"ibParseConfig");
+			return -1;
 		}
-		ibPutMsg("Linux-GPIB-Library Initializing..");
-
-		/*setup board characteristics*/
-		if(ibBdChrConfig(ind, ibBoard[minor].base,
-			ibBoard[minor].irq,
-			ibBoard[minor].dma) & ERR)
-		{
-			return ERR;
-		}
-
-
-		/* If the device is not a Board(controller) do the initializations
-			* automagically
-			*/
-		if(!(CONF(ind,flags) & CN_ISCNTL) )
-		{
-			if( ibonl(ind,1) & ERR ) return ERR;
-
-			if( ibeos(ind, ibBoard[CONF(ind,board)].eos
-				| (ibBoard[CONF(ind,board)].eosflags << 8)) & ERR) return ERR;
-
-			if( ibtmo(ind, ibBoard[CONF(ind,board)].timeout ) & ERR ) return ERR;
-
-			if( CONF(ind,flags) & CN_AUTOPOLL )
-				ibape( ind, 1);   /* set autopoll flag */
-
-
-			if(  ibBoard[CONF(ind,board)].ifc )
-			{
-				ibPutMsg("IFC ");
-				if ( ibsic(ind) & ERR ) return ERR;
-				if ( ibsre(ind,1) & ERR ) return ERR;
-
-				if( CONF(ind,flags) & CN_SDCL )
-				{
-					ibPutMsg("CLR ");
-					if(ibclr(ind) & ERR ) return ERR;
-				}
-				ibPutMsg("INIT: ");
-				if(ibConfigs[ind].init_string !='\0')
-				{
-					if( ibwrt(ind, ibConfigs[ind].init_string,
-						strlen( ibConfigs[ind].init_string)) & ERR ) return ERR;
-					ibPutMsg(ibConfigs[ind].init_string);
-				}
-			}
-		}
-		ibfind_called++;
+		config_parsed = 1;
 	}
-	return( ind );
 
+	conf.
+	uDesc = ibGetDescriptor(&ibFindConfigs[index]);
+	if(uDesc < 0)
+	{
+		fprintf(stderr, "ibfind failed to get descriptor\n");
+		return -1;
+	}
+	conf = ibConfigs[uDesc];
+
+	if(ibBdChrConfig(uDesc) & ERR)
+		return -1;
+
+	if(ibonl(uDesc, 1) & ERR)
+	{
+		fprintf(stderr, "failed to bring device online\n");
+		return -1;
+	}
+
+	if(ibsre(uDesc,1) & ERR ) return -1;
+
+	if(conf->flags & CN_SDCL)
+	{
+		ibPutMsg("CLR ");
+		if(ibclr(uDesc) & ERR ) return -1;
+	}
+
+	ibPutMsg("INIT: ");
+	if(strcmp(conf->init_string, ""))
+	{
+		if(ibwrt(uDesc, conf->init_string, strlen(conf->init_string)) & ERR )
+			return -1;
+		ibPutMsg(conf->init_string);
+	}
+	return uDesc;
 }

@@ -18,3 +18,15 @@ extern ibarg_t ibarg;
 #define IB_MAXDEV 31    /* maximal number of devices */
 #define NUM_CONFIGS 0x1000	// max number of device descriptors (length of ibConfigs array)
 
+// deal with stupid pad/sad packing scheme
+extern inline int padsad(int pad, int sad)
+{
+	const int sad_offset = 0x60;
+	const int sad_max = 30;
+
+	int padsad = pad & 0xff;
+	if(sad >= 0 && sad <= sad_max )
+		padsad |= (sad + sad_offset);
+	return padsad;
+}
+

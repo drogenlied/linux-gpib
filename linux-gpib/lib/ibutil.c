@@ -44,7 +44,7 @@ int ibGetDescriptor(ibConf_t *p)
 	int ib_ndev;
 
 	/* check validity of values */
-	if( (p->padsad & 0xff) >= IB_MAXDEV )
+	if( p->pad >= IB_MAXDEV )
 	{
 		iberr = ETAB;
 		return -1;
@@ -67,7 +67,8 @@ int ibGetDescriptor(ibConf_t *p)
 	/* put entry to the table */
 	strncpy(conf->name, p->name, sizeof(conf->name) );
 	conf->board = p->board;
-	conf->padsad = p->padsad;
+	conf->pad = p->pad;
+	conf->sad = p->sad;
 	conf->flags = p->flags;
 	conf->eos = p->eos;
 	conf->eosflags = p->eosflags;

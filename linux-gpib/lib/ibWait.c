@@ -4,33 +4,40 @@
 
 int ibwait(int ud, int mask)
 {
-char spr;
-int pollflag = 0;
-int amask;
+	char spr;
+	int pollflag = 0;
+	int amask;
+	ibConf_t *conf = ibConfigs[ud];
 
-if( CONF(ud,flags) & CN_AUTOPOLL ) pollflag=1;
+	if(ibCheckDescriptor(ud) < 0)
+	{
+		iberr = EDVR;
+		return ibsta | ERR;
+	}
 
-if ( mask & RQS ){
-  amask = ( mask | SRQI ) & ~RQS ;
+	if( conf->flags & CN_AUTOPOLL ) pollflag = 1;
 
-  while(1){
-  /* wait for SRQ */ 
-  if( ibBoardFunc(CONF(ud,board),
-		 (pollflag?IBAPWAIT:IBWAIT),
-		 (pollflag? CONF(ud,padsad)&0xff :amask)) & ( ERR | TIMO ) ) 
-       return ERR;  
-  /* Serial Poll Device */
-  if(  ibBoardFunc( CONF(ud,board),
-                     (pollflag?IBAPRSP:DVRSP),
-                     CONF(ud,padsad), &spr ) & ( ERR | TIMO )) 
-        return ERR;
-  /* if RQS set return */
-  if ( spr & 0x40 ) return spr;
-  }
+	// XXX this if should depend on whether ud is a board or device descriptor
+	if( mask & RQS )
+	{
+		amask = ( mask | SRQI ) & ~RQS ;
 
-}
-else
-  return  ibBoardFunc(CONF(ud,board),IBWAIT, mask); /*pollflag not necessary will be*/ 
-                                                    /*taken from remote*/
-
+		while(1)
+		{
+			/* wait for SRQ */
+			if(ibBoardFunc(conf->board, pollflag ? IBAPWAIT : IBWAIT,
+				pollflag ? padsad(conf->pad, conf->sad) : amask) & ( ERR | TIMO ) )
+				return ERR;
+			/* Serial Poll Device */
+			if( ibBoardFunc( conf->board, pollflag ? IBAPRSP : DVRSP,
+				padsad(conf->pad, conf->sad), &spr ) & ( ERR | TIMO ))
+        		return ERR;
+	/* if RQS set return */
+			if ( spr & 0x40 ) return spr;
+		}
+	}
+	/*pollflag will not necessary be*/
+	/*taken from remote*/
+	else
+		return ibBoardFunc(conf->board, IBWAIT, mask);
 }

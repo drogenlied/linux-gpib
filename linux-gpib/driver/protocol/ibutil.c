@@ -23,22 +23,20 @@ int ibpad(gpib_device_t *device, int v)
 /*
  * IBSAD
  * change the secondary GPIB address of the interface board.
- * The address must be 0x60 through 0x7E.  ibonl resets the
+ * The address must be 0 through 30, or negative disables.  ibonl resets the
  * address to SAD.
  */
 int ibsad(gpib_device_t *device, int v)
 {
-	if (v && ((v < 0x60) || (v > 0x7F)))
+	if (v > 30)
 	{
-		printk("gpib: invalid secondary address\n");
+		printk("gpib: invalid secondary address, must be 0-30\n");
 		return -1;
 	}else
 	{
-		if (v == 0x7F)
-			v = 0;		/* v == 0x7F also disables */
-		if ((mySAD = v))
+		if ((mySAD = v) >= 0) // mySAD shouldn't be global XXX
 		{
-			device->interface->secondary_address(device, mySAD - 0x60, 1);
+			device->interface->secondary_address(device, mySAD, 1);
 		}else
 		{
 			device->interface->secondary_address(device, 0,0);

@@ -22,7 +22,8 @@ void ibBoardDefaultValues(void)
 	int i;
 	for(i = 0; i < MAX_BOARDS; i++)
 	{
-		ibBoard[i].padsad = 0;
+		ibBoard[i].pad = 0;
+		ibBoard[i].sad = 0;
 		ibBoard[i].eos = '\n';
 		ibBoard[i].eosflags = 0;
 		ibBoard[i].base = 0;

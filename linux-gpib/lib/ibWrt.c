@@ -4,13 +4,13 @@
 
 int ibwrt(int ud, void *rd, unsigned long cnt)
 {
-  iblcleos(ud);
-  ibtmo(ud, CONF(ud,tmo));
+	ibConf_t *conf = ibConfigs[ud];
 
-  return  ibBoardFunc(  CONF(ud,board),
-		        (CONF(ud,flags) & CN_ISCNTL ? IBWRT : DVWRT ),
-                        CONF(ud,padsad), 
-                        rd, cnt);
+	iblcleos(ud);
+	ibtmo(ud, conf->tmo);
+
+return  ibBoardFunc( conf->board, (conf->flags & CN_ISCNTL) ? IBWRT : DVWRT,
+	padsad(conf->pad, conf->sad), rd, cnt);
 }
 
 
