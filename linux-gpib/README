@@ -4,7 +4,7 @@
 	The Linux GPIB Package
 	-----------------------------------
 		(c) 1994,1995,1996 by C.Schroeter
-		(c) 2001,2002 by Frank Mori Hess
+		(c) 2001,2002,2003,2004 by Frank Mori Hess
 
 =====================================================
 
@@ -18,8 +18,7 @@ I (Frank Hess) decided to pick it up and port it to the
 2.4 Linux kernel.
 
 Send comments, questions and suggestions to
-fmhess@users.sourceforge.net
-or better to the linux-gpib mailing list
+to the linux-gpib mailing list
 linux-gpib-general@lists.sourceforge.net
 
 *************** COPYRIGHT NOTICE ***********************
