@@ -28,7 +28,6 @@ computer, on the same GPIB bus, and one of which is the system controller.
 #include <pthread.h>
 #include <unistd.h>
 #include <string.h>
-#include <mcheck.h>
 
 #include "gpib/ib.h"
 
@@ -469,6 +468,8 @@ static int do_eos_pass(const struct board_descriptors *boards,
 	if( ThreadIbsta() & ERR )
 	{
 		PRINT_FAILED();
+		fprintf( stderr, "ibrd status 0x%x, error %i, count %i\n", ThreadIbsta(),
+			ThreadIberr(), ThreadIbcntl());
 		return -1;
 	}
 	buffer[ThreadIbcntl()] = '\0';
@@ -534,9 +535,6 @@ int main( int argc, char *argv[] )
 {
 	struct board_descriptors boards;
 	int retval;
-
-	if( mcheck( 0 ) )
-		fprintf( stderr, "mcheck() failed!\n" );
 
 	retval = find_boards( &boards );
 	if( retval < 0 ) return retval;
