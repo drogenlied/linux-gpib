@@ -21,9 +21,9 @@ program needs to be really, but useful for testing library functions.
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <ib.h>
 #include <stdint.h>
 #include <string.h>
+#include <gpib/ib.h>
 
 uint8_t buffer[1024];
 
