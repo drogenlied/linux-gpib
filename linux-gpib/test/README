@@ -3,8 +3,11 @@ tests for untested functions.  It requires two gpib boards to be installed
 in the computer, on the same GPIB bus.  Exactly one of which is the system
 controller.
 
-libgpib_test can be run with the -d or --daemonize option, which will
-cause it to become a daemon before running the tests (there have
-been problems with the linux-gpib use of pthreads breaking
-fork).
+Options:
+
+-n, --num_loops N
+	loop through tests N times
+-d, --daemonize [N]
+	daemonize after Nth loop
+
 

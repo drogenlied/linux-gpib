@@ -40,7 +40,8 @@ struct board_descriptors
 
 struct program_options
 {
-	short daemonize;
+	int daemonize_index;
+	int num_loops;
 };
 
 #define PRINT_FAILED() \
@@ -541,6 +542,8 @@ static void daemonize(void)
 {
 	pid_t my_pid;
 
+	fprintf(stderr, "Attempting to daemonize.\n");
+
 	my_pid = fork();
 	if(my_pid)
 	{
@@ -579,22 +582,32 @@ int parse_program_options(int argc, char *argv[], struct program_options *option
 {
 	static struct option long_options[] =
 	{
-		{"daemonize", 0, NULL, 'd'},
+		{"daemonize", optional_argument, NULL, 'd'},
+		{"num_loops", required_argument, NULL, 'n'},
 		{0, 0, 0, 0}
 	};
 	int c;
 	int option_index = 0;
 
 	memset(options, 0, sizeof(*options));
+	options->daemonize_index = -1;
+	options->num_loops = 1;
 	while(1)
 	{
-		c = getopt_long(argc, argv, "d", long_options, &option_index);
+		c = getopt_long(argc, argv, "d::n:", long_options, &option_index);
 		if(c < 0) break;
 		switch(c)
 		{
 		case 'd':
-			fprintf(stdout, "option: daemonize\n");
-			options->daemonize = 1;
+			if(optarg)
+				options->daemonize_index = strtol(optarg, NULL, 0);
+			else
+				options->daemonize_index = 0;
+			fprintf(stdout, "option: daemonize after %ith loop\n", options->daemonize_index);
+			break;
+		case 'n':
+			options->num_loops = strtol(optarg, NULL, 0);
+			fprintf(stdout, "option: loop %i times\n", options->num_loops);
 			break;
 		default:
 			fprintf(stderr, "bad option?\n");
@@ -610,26 +623,28 @@ int main( int argc, char *argv[] )
 	struct board_descriptors boards;
 	int retval;
 	struct program_options options;
+	int i;
 
 	if(parse_program_options(argc, argv, &options) < 0)
 		return -1;
-	if(options.daemonize)
-		daemonize();
 
-	retval = find_boards( &boards );
-	if( retval < 0 ) return retval;
-
-	retval = read_write_test( &boards );
-	if( retval < 0 ) return retval;
-	retval = async_read_write_test( &boards );
-	if( retval < 0 ) return retval;
-	retval = serial_poll_test( &boards );
-	if( retval < 0 ) return retval;
-	retval = parallel_poll_test( &boards );
-	if( retval < 0 ) return retval;
-	retval = eos_test( &boards );
-	if( retval < 0 ) return retval;
-
+	for(i = 0; i < options.num_loops; i++)
+	{
+		if(i == options.daemonize_index)
+			daemonize();
+		retval = find_boards( &boards );
+		if( retval < 0 ) return retval;
+		retval = read_write_test( &boards );
+		if( retval < 0 ) return retval;
+		retval = async_read_write_test( &boards );
+		if( retval < 0 ) return retval;
+		retval = serial_poll_test( &boards );
+		if( retval < 0 ) return retval;
+		retval = parallel_poll_test( &boards );
+		if( retval < 0 ) return retval;
+		retval = eos_test( &boards );
+		if( retval < 0 ) return retval;
+	}
 	return 0;
 }
 
