@@ -401,6 +401,38 @@ void ni_pci_detach(gpib_board_t *board)
 	tnt4882_free_private(board);
 }
 
+int ni_isapnp_find( struct pci_dev **dev )
+{
+	*dev = isapnp_find_dev( NULL, ISAPNP_VENDOR_ID_NI,
+		ISAPNP_FUNCTION( ISAPNP_ID_NI_ATGPIB_TNT ), NULL );
+	if( *dev == NULL )
+	{
+		printk( "tnt4882: failed to find isapnp board\n" );
+		return -ENODEV;
+	}
+	if( (*dev)->active )
+	{
+		printk( "tnt4882: atgpib/tnt board already active, aborting\n" );
+		return -EBUSY;
+	}
+	if( (*dev)->prepare( *dev ) < 0 )
+	{
+		printk( "tnt4882: failed to prepare() atgpib/tnt, aborting\n" );
+		return -EAGAIN;
+	}
+	if( (*dev)->ro )
+	{
+		printk( "tnt4882: atgpib/tnt board is read only?\n" );
+		return -EIO;
+	}
+	if( (*dev)->activate( *dev ) < 0 )
+	{
+		printk( "tnt4882: failed to activate() atgpib/tnt, aborting\n" );
+		return -ENOMEM;
+	}
+	return 0;
+}
+
 int ni_isa_attach(gpib_board_t *board)
 {
 	tnt4882_private_t *tnt_priv;
@@ -419,10 +451,23 @@ int ni_isa_attach(gpib_board_t *board)
 	nec_priv->write_byte = nec7210_ioport_write_byte;
 	nec_priv->offset = atgpib_reg_offset;
 
+	// look for plug-n-play board
+	if( board->ibbase == 0 )
+	{
+		struct pci_dev *dev;
+		int retval;
+
+		retval = ni_isapnp_find( &dev );
+		if( retval < 0 ) return retval;
+		tnt_priv->isapnp_dev = dev;
+		board->ibbase = dev->resource[ 0 ].start;
+		board->ibirq = dev->irq_resource[ 0 ].start;
+	}
+
 	// allocate ioports
 	if( request_region(board->ibbase, atgpib_iosize, "atgpib") == 0)
 	{
-		printk("gpib: ioports are already in use");
+		printk("tnt4882: failed to allocate ioports\n");
 		return -1;
 	}
 	nec_priv->iobase = board->ibbase;
@@ -448,15 +493,17 @@ void ni_isa_detach(gpib_board_t *board)
 	if(tnt_priv)
 	{
 		nec_priv = &tnt_priv->nec7210_priv;
-		if(tnt_priv->irq)
+		if( tnt_priv->irq )
 		{
-			free_irq(tnt_priv->irq, board);
+			free_irq( tnt_priv->irq, board );
 		}
-		if(nec_priv->iobase)
+		if( nec_priv->iobase )
 		{
 			nec7210_board_reset( nec_priv, board );
 			release_region(nec_priv->iobase, atgpib_iosize);
 		}
+		if( tnt_priv->isapnp_dev )
+			tnt_priv->isapnp_dev->deactivate( tnt_priv->isapnp_dev );
 	}
 	tnt4882_free_private(board);
 }

@@ -23,7 +23,10 @@
 #include "gpibP.h"
 #include "mite.h"
 #include <linux/init.h>
+#include <linux/isapnp.h>
 
+static const int ISAPNP_VENDOR_ID_NI = ISAPNP_VENDOR( 'N', 'I', 'C' );
+static const int ISAPNP_ID_NI_ATGPIB_TNT = 0xc601;
 enum
 {
 	PCI_DEVICE_ID_NI_GPIB = 0xc801,
@@ -35,6 +38,7 @@ typedef struct
 {
 	nec7210_private_t nec7210_priv;
 	struct mite_struct *mite;
+	struct pci_dev *isapnp_dev;
 	unsigned int irq;
 	volatile int imr3_bits;
 	void (*io_write)( unsigned int value, unsigned long address );
