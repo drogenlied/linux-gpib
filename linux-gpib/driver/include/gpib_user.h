@@ -86,24 +86,24 @@ enum iberr_code
 
 enum gpib_timeout
 {
-	TNONE,		/* Infinite timeout (disabled)     */
-	T10us,		/* Timeout of 10 usec (ideal)      */
-	T30us,		/* Timeout of 30 usec (ideal)      */
-	T100us,		/* Timeout of 100 usec (ideal)     */
-	T300us,		/* Timeout of 300 usec (ideal)     */
-	T1ms,		/* Timeout of 1 msec (ideal)       */
-	T3ms,		/* Timeout of 3 msec (ideal)       */
-	T10ms,		/* Timeout of 10 msec (ideal)      */
-	T30ms,		/* Timeout of 30 msec (ideal)      */
-	T100ms,		/* Timeout of 100 msec (ideal)     */
-	T300ms,		/* Timeout of 300 msec (ideal)     */
-	T1s,		/* Timeout of 1 sec (ideal)        */
-	T3s,		/* Timeout of 3 sec (ideal)        */
-	T10s,		/* Timeout of 10 sec (ideal)       */
-	T30s,		/* Timeout of 30 sec (ideal)       */
-	T100s,		/* Timeout of 100 sec (ideal)      */
-	T300s,		/* Timeout of 300 sec (ideal)      */
-	T1000s		/* Timeout of 1000 sec (maximum)   */
+	TNONE = 0,		/* Infinite timeout (disabled)     */
+	T10us = 1,		/* Timeout of 10 usec (ideal)      */
+	T30us = 2,		/* Timeout of 30 usec (ideal)      */
+	T100us = 3,		/* Timeout of 100 usec (ideal)     */
+	T300us = 4,		/* Timeout of 300 usec (ideal)     */
+	T1ms = 5,		/* Timeout of 1 msec (ideal)       */
+	T3ms = 6,		/* Timeout of 3 msec (ideal)       */
+	T10ms = 7,		/* Timeout of 10 msec (ideal)      */
+	T30ms = 8,		/* Timeout of 30 msec (ideal)      */
+	T100ms = 9,		/* Timeout of 100 msec (ideal)     */
+	T300ms = 10,	/* Timeout of 300 msec (ideal)     */
+	T1s = 11,		/* Timeout of 1 sec (ideal)        */
+	T3s = 12,		/* Timeout of 3 sec (ideal)        */
+	T10s = 13,		/* Timeout of 10 sec (ideal)       */
+	T30s = 14,		/* Timeout of 30 sec (ideal)       */
+	T100s = 15,		/* Timeout of 100 sec (ideal)      */
+	T300s = 16,		/* Timeout of 300 sec (ideal)      */
+	T1000s = 17		/* Timeout of 1000 sec (maximum)   */
 };
 
 /* End-of-string (EOS) modes for use with ibeos */

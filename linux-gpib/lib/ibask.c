@@ -193,7 +193,7 @@ int ibask( int ud, int option, int *value )
 				*value = conf->local_lockout;
 				return exit_library( ud, 0 );
 			case IbaPPollTime:
-				*value = usec_to_timeout( conf->ppoll_usec_timeout );
+				*value = usec_to_ppoll_timeout( conf->ppoll_usec_timeout );
 				return exit_library( ud, 0 );
 			case IbaHSCableLength:
 				/* HS transfer not supported and may never

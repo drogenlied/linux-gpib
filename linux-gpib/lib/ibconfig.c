@@ -18,6 +18,34 @@
 #include "ib_internal.h"
 #include "ibP.h"
 
+static int set_spoll_timeout( ibConf_t *conf, int timeout )
+{
+	if( timeout < TNONE || timeout > T1000s )
+	{
+		setIberr( EARG );
+		return -1;
+	}
+
+	conf->spoll_usec_timeout = timeout_to_usec( timeout );
+
+	return 0;
+}
+
+static int set_ppoll_timeout( ibConf_t *conf, int timeout )
+{
+	static const int default_usec_timeout = 2;
+
+	if( timeout < TNONE || timeout > T1000s )
+	{
+		setIberr( EARG );
+		return -1;
+	}
+
+	conf->ppoll_usec_timeout = ppoll_timeout_to_usec( timeout );
+
+	return 0;
+}
+
 int ibconfig( int ud, int option, int value )
 {
 	ibConf_t *conf;
@@ -78,6 +106,37 @@ int ibconfig( int ud, int option, int value )
 			conf->eos = value;
 			return exit_library( ud, 0 );
 			break;
+		case IbcReadAdjust:
+			// XXX
+			if( value )
+			{
+				fprintf( stderr, "libgpib: byte swapping on reads not implemented\n");
+				setIberr( ECAP );
+				return exit_library( ud, 1 );
+			}else
+				return exit_library( ud, 0 );
+			break;
+		case IbcWriteAdjust:
+			// XXX
+			if( value )
+			{
+				fprintf( stderr, "libgpib: byte swapping on writes not implemented\n");
+				setIberr( ECAP );
+				return exit_library( ud, 1 );
+			}else
+				return exit_library( ud, 0 );
+			break;
+		case IbcEndBitIsNormal:
+			if( value )
+			{
+				return exit_library( ud, 0 );
+			}else
+			{
+				fprintf( stderr, "libgpib: no support for END on EOI only yet \n");
+				setIberr( ECAP );
+				return exit_library( ud, 1 );
+			}
+			break;
 		default:
 			break;
 	}
@@ -119,12 +178,99 @@ int ibconfig( int ud, int option, int value )
 			case IbcSC:
 				// XXX
 				fprintf( stderr, "libgpib: request/release control protocol not supported\n");
+				setIberr( ECAP );
 				return exit_library( ud, 1 );
 				break;
 			case IbcSRE:
 				retval = internal_ibsre( conf, value );
 				if( retval < 0 ) return exit_library( ud, 1 );
 				return exit_library( ud, 0 );
+				break;
+			case IbcPP2:
+				// XXX
+				fprintf( stderr, "libgpib: local/remote parallel poll configuration not implemented\n");
+				setIberr( ECAP );
+				return exit_library( ud, 1 );
+				break;
+			case IbcTIMING:
+				// XXX
+				if( value == 1 )
+				{
+					return exit_library( ud, 0 );
+				}else
+				{
+					fprintf( stderr, "libgpib: high-speed timing not implemented\n");
+					setIberr( ECAP );
+					return exit_library( ud, 1 );
+				}
+				break;
+			case IbcDMA:
+				// XXX
+				if( value )
+				{
+					return exit_library( ud, 0 );
+				}else
+				{
+					fprintf( stderr, "libgpib: disabling DMA not supported\n");
+					setIberr( ECAP );
+					return exit_library( ud, 1 );
+				}
+				break;
+			case IbcEventQueue:
+				// XXX
+				fprintf( stderr, "libgpib: event queue not implemented\n");
+				setIberr( ECAP );
+				return exit_library( ud, 1 );
+				break;
+			case IbcSPollBit:
+				// XXX
+				fprintf( stderr, "libgpib: SPOLL bit support not implemented\n");
+				setIberr( ECAP );
+				return exit_library( ud, 1 );
+				break;
+			case IbcSendLLO:
+				// XXX
+				if( value )
+				{
+					fprintf( stderr, "libgpib: sending local lockout on device open not implemented\n");
+					setIberr( ECAP );
+					return exit_library( ud, 1 );
+				}else
+					return exit_library( ud, 0 );
+				break;
+			case IbcPPollTime:
+				retval = set_ppoll_timeout( conf, value );
+				if( retval < 0 )
+				{
+					setIberr( EARG );
+					return exit_library( ud, 1 );
+				}else
+				{
+					return exit_library( ud, 0 );
+				}
+				break;
+			case IbcHSCableLength:
+				// XXX
+				if( value )
+				{
+					fprintf( stderr, "libgpib: HS protocol not supported\n" );
+					setIberr( ECAP );
+					return exit_library( ud, 1 );
+				}else
+					return exit_library( ud, 0 );
+				break;
+			case IbcIst:
+				// XXX
+				fprintf( stderr, "libgpib: ibist not implemented\n");
+				setIberr( ECAP );
+				return exit_library( ud, 1 );
+				break;
+			case IbcRsv:
+				retval = internal_ibrsv( conf, value );
+				if( retval < 0 )
+					return exit_library( ud, 1 );
+				else
+					return exit_library( ud, 0 );
 				break;
 			default:
 				break;
@@ -143,6 +289,28 @@ int ibconfig( int ud, int option, int value )
 				else
 					conf->readdr = 0;
 				return exit_library( ud, 0 );
+				break;
+			case IbcSPollTime:
+				retval = set_spoll_timeout( conf, value );
+				if( retval < 0 )
+				{
+					setIberr( EARG );
+					return exit_library( ud, 1 );
+				}else
+				{
+					return exit_library( ud, 0 );
+				}
+				break;
+			case IbcUnAddr:
+				// XXX
+				if( value )
+				{
+					fprintf( stderr, "libgpib: no support for UNT/UNL at end of "
+						"device read and writes\n" );
+					setIberr( ECAP );
+					return exit_library( ud, 1 );
+				}else
+					return exit_library( ud, 0 );
 				break;
 			default:
 				break;

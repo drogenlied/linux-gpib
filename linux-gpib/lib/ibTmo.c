@@ -3,6 +3,8 @@
 #include <ibP.h>
 #include <sys/ioctl.h>
 
+static const int default_ppoll_usec_timeout = 2;
+
 unsigned int timeout_to_usec( enum gpib_timeout timeout )
 {
 	switch ( timeout )
@@ -66,6 +68,14 @@ unsigned int timeout_to_usec( enum gpib_timeout timeout )
 	return 0;
 }
 
+unsigned int ppoll_timeout_to_usec( unsigned int timeout )
+{
+	if( timeout == 0 )
+		return default_ppoll_usec_timeout;
+	else
+		return usec_to_timeout( timeout );
+}
+
 unsigned int usec_to_timeout( unsigned int usec )
 {
 	if( usec == 0 ) return TNONE;
@@ -88,6 +98,12 @@ unsigned int usec_to_timeout( unsigned int usec )
 	else if( usec <= 1000000000 ) return T1000s;
 
 	return TNONE;
+}
+
+unsigned int usec_to_ppoll_timeout( unsigned int usec )
+{
+	if( usec <= default_ppoll_usec_timeout ) return 0;
+	else return usec_to_timeout( usec );
 }
 
 int internal_ibtmo( ibConf_t *conf, int timeout )

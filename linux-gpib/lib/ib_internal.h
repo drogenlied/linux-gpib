@@ -53,6 +53,8 @@ extern void init_ibconf( ibConf_t *conf );
 extern int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout,
 	int send_eoi, int eos, int eosflags);
 extern unsigned int timeout_to_usec( enum gpib_timeout timeout );
+extern unsigned int ppoll_timeout_to_usec( unsigned int timeout );
+extern unsigned int usec_to_ppoll_timeout( unsigned int usec );
 extern int set_timeout( const ibBoard_t *board, unsigned int usec_timeout );
 extern int ib_lock_mutex( ibBoard_t *board );
 extern int ib_unlock_mutex( ibBoard_t *board );
@@ -77,6 +79,7 @@ extern int internal_ibtmo( ibConf_t *conf, int timeout );
 extern void internal_ibeot( ibConf_t *conf, int send_eoi );
 extern int internal_ibppc( ibConf_t *conf, int v );
 extern int internal_ibsre( ibConf_t *conf, int v );
+extern int internal_ibrsv( ibConf_t *conf, int v );
 
 extern int configure_autopoll( ibConf_t *conf, int enable );
 
