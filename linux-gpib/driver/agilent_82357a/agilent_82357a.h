@@ -91,8 +91,8 @@ enum agilent_82357_error_codes
 
 enum agilent_82357_control_values
 {
-	XFER_ABORT = 0xa000,
-	XFER_STATUS = 0xb000,
+	XFER_ABORT = 0xa0,
+	XFER_STATUS = 0xb0,
 };
 
 enum xfer_status_bits

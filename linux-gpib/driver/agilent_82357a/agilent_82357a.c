@@ -103,7 +103,7 @@ static void agilent_82357a_dump_raw_block(const uint8_t *raw_data, int length)
 	int i;
 	
 	printk("%s:", __FUNCTION__);
-	for(i = 0; i < length; i++)
+	for(i = 0; i < length; ++i)
 	{
 		if(i % 8 == 0)
 			printk("\n"); 
@@ -319,7 +319,7 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 	int retval;
 	agilent_82357a_private_t *a_priv = board->private_data;
 	uint8_t *out_data;
-	uint8_t status_data[0x6];;
+	uint8_t status_data[0x8];;
 	int out_data_length;	
 	int bytes_written;
 	int i = 0, j;
@@ -343,6 +343,8 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 	out_data[i++] = (length >> 24) & 0xff;
 	for(j = 0; j < length; j++)
 		out_data[i++] = buffer[j];
+	printk("%s: sending bulk msg(), send_commands=%i\n", __FUNCTION__, send_commands);
+	clear_bit(AIF_WRITE_COMPLETE_BN, &a_priv->interrupt_flags);
 	retval = agilent_82357a_send_bulk_msg(a_priv, out_data, i, &bytes_written, 
 		agilent_82357a_timeout_jiffies(board->usec_timeout));
 	kfree(out_data);
@@ -351,20 +353,25 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 		printk("%s: agilent_82357a_send_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, bytes_written, i);		
 		return -EIO;
 	}
+	printk("%s: waiting for write complete\n", __FUNCTION__);
 	if(wait_event_interruptible(board->wait, test_bit(AIF_WRITE_COMPLETE_BN, &a_priv->interrupt_flags)))
 	{
 		printk("%s: %s: wait interrupted\n", __FILE__, __FUNCTION__);
+		return -ERESTARTSYS;
 	}
+	printk("%s: receiving control msg\n", __FUNCTION__);
 	retval = agilent_82357a_receive_control_msg(a_priv, agilent_82357a_control_request, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE, 
 		XFER_STATUS, 0, status_data, sizeof(status_data), HZ);
-	if(retval)
+	if(retval < 0)
 	{
 		printk("%s: %s: agilent_82357a_receive_control_msg() returned %i\n", __FILE__, __FUNCTION__, retval);
+		return -EIO;
 	}
 	bytes_completed = status_data[2];
 	bytes_completed |= status_data[3] << 8;
 	bytes_completed |= status_data[4] << 16;
 	bytes_completed |= status_data[5] << 24;
+	printk("%s: write completed, bytes_completed=%i\n", __FUNCTION__, bytes_completed);
 	return bytes_completed;
 }
 
@@ -381,16 +388,56 @@ ssize_t agilent_82357a_command(gpib_board_t *board, uint8_t *buffer, size_t leng
 int agilent_82357a_take_control(gpib_board_t *board, int synchronous)
 {
 	agilent_82357a_private_t *a_priv = board->private_data;
+//	const int timeout = 1000;
+	struct agilent_82357a_register_pairlet write;
+	int retval;
+	
 	a_priv->bogus_ibsta |= ATN;
-	//FIXME: implement
+	
+	write.address = AUXCR;
+	if(synchronous)
+	{
+		write.value = AUX_TCS;
+	}else
+		write.value = AUX_TCA;
+	retval = agilent_82357a_write_registers(a_priv, &write, 1);
+	if(retval)
+	{
+		printk("%s: %s: agilent_82357a_write_registers() returned error\n", __FILE__, __FUNCTION__);
+	}
+#if 0
+	// busy wait until ATN is asserted
+	for(i = 0; i < timeout; ++i)
+	{
+		if((read_byte(priv, ADSR) & HR_ATN))
+			break;
+		udelay(1);
+	}
+	if( i == timeout )
+	{
+		printk(" tms9914: error waiting for ATN\n");
+		return -ETIMEDOUT;
+	};
+	clear_bit(WRITE_READY_BN, &priv->state);
+#endif
 	return 0;
 }
 
 int agilent_82357a_go_to_standby(gpib_board_t *board)
 {
 	agilent_82357a_private_t *a_priv = board->private_data;
+	struct agilent_82357a_register_pairlet write;
+	int retval;
+	
 	a_priv->bogus_ibsta &= ~ATN;
-	//FIXME: implement
+	
+	write.address = AUXCR;
+	write.value = AUX_GTS;
+	retval = agilent_82357a_write_registers(a_priv, &write, 1);
+	if(retval)
+	{
+		printk("%s: %s: agilent_82357a_write_registers() returned error\n", __FILE__, __FUNCTION__);
+	}
 	return 0;
 }
 
@@ -398,32 +445,71 @@ int agilent_82357a_go_to_standby(gpib_board_t *board)
 void agilent_82357a_request_system_control(gpib_board_t *board, int request_control)
 {
 	agilent_82357a_private_t *a_priv = board->private_data;
-	struct agilent_82357a_register_pairlet write;
+	struct agilent_82357a_register_pairlet writes[2];
 	int retval;
-	
+	int i = 0;
+		
+//	writes[i].address = AUXCR;
 	if(request_control)
+	{
+//		writes[i].value = AUX_RQC;
 		a_priv->hw_control_bits |= SYSTEM_CONTROLLER;
-	else
+	}else
+	{
+//		writes[i].value = AUX_RLC;
+		a_priv->bogus_ibsta &= ~CIC;
 		a_priv->hw_control_bits &= ~SYSTEM_CONTROLLER;
-	write.address = HW_CONTROL;
-	write.value = a_priv->hw_control_bits;
-	retval = agilent_82357a_write_registers(a_priv, &write, 1);
+	}
+//	++i;
+	writes[i].address = HW_CONTROL;
+	writes[i].value = a_priv->hw_control_bits;
+	++i;
+	printk("%s: wriing 0x%x to HW_CONTROL\n", __FUNCTION__, a_priv->hw_control_bits);
+	retval = agilent_82357a_write_registers(a_priv, writes, i);
 	if(retval)
 	{
 		printk("%s: %s: agilent_82357a_write_registers() returned error\n", __FILE__, __FUNCTION__);
 	}
-	a_priv->bogus_ibsta |= CIC;
 	return;// retval;
 }
 //FIXME maybe the interface should have a "pulse interface clear" function that can return an error?
 void agilent_82357a_interface_clear(gpib_board_t *board, int assert)
 {
-	//FIXME: implement
+	agilent_82357a_private_t *a_priv = board->private_data;
+	struct agilent_82357a_register_pairlet write;
+	int retval;
+		
+	write.address = AUXCR;
+	write.value = AUX_SIC;
+	if(assert)
+	{
+		write.value |= AUX_CS;
+		a_priv->bogus_ibsta |= CIC;
+	}
+	retval = agilent_82357a_write_registers(a_priv, &write, 1);
+	if(retval)
+	{
+		printk("%s: %s: agilent_82357a_write_registers() returned error\n", __FILE__, __FUNCTION__);
+	}
 	return;
 }
 void agilent_82357a_remote_enable(gpib_board_t *board, int enable)
 {
-	//FIXME: implement
+	agilent_82357a_private_t *a_priv = board->private_data;
+	struct agilent_82357a_register_pairlet write;
+	int retval;
+		
+	write.address = AUXCR;
+	write.value = AUX_SRE;
+	if(enable)
+	{
+		write.value |= AUX_CS;
+	}
+	retval = agilent_82357a_write_registers(a_priv, &write, 1);
+	if(retval)
+	{
+		printk("%s: %s: agilent_82357a_write_registers() returned error\n", __FILE__, __FUNCTION__);
+	}
 	return;// 0;
 }
 //FIXME need to be able to return error
@@ -492,8 +578,35 @@ void agilent_82357a_return_to_local( gpib_board_t *board )
 }
 int agilent_82357a_line_status( const gpib_board_t *board )
 {
-	//FIXME: implement
-	return 0;
+	agilent_82357a_private_t *a_priv = board->private_data;
+	struct agilent_82357a_register_pairlet bus_status;
+	int retval;
+	int status = ValidALL;
+
+	bus_status.address = BSR;
+	retval = agilent_82357a_read_registers(a_priv, &bus_status, 1);
+	if(retval)
+	{
+		printk("%s: %s: agilent_82357a_read_registers() returned error\n", __FILE__, __FUNCTION__);
+		return 0;
+	}
+	if( bus_status.value & BSR_REN_BIT )
+		status |= BusREN;
+	if( bus_status.value & BSR_IFC_BIT )
+		status |= BusIFC;
+	if( bus_status.value & BSR_SRQ_BIT )
+		status |= BusSRQ;
+	if( bus_status.value & BSR_EOI_BIT )
+		status |= BusEOI;
+	if( bus_status.value & BSR_NRFD_BIT )
+		status |= BusNRFD;
+	if( bus_status.value & BSR_NDAC_BIT )
+		status |= BusNDAC;
+	if( bus_status.value & BSR_DAV_BIT )
+		status |= BusDAV;
+	if( bus_status.value & BSR_ATN_BIT )
+		status |= BusATN;
+	return status;
 }
 unsigned int agilent_82357a_t1_delay( gpib_board_t *board, unsigned int nano_sec )
 {
@@ -512,7 +625,7 @@ void agilent_82357a_interrupt_complete(struct urb *urb, struct pt_regs *regs)
 	
 	printk("debug: %s: %s: status=0x%x, error_count=%i, actual_length=%i transfer_buffer:\n", __FILE__, __FUNCTION__,
 		urb->status, urb->error_count, urb->actual_length); 
-	for(i = 0; i < urb->actual_length; i++)
+	for(i = 0; i < urb->actual_length; ++i)
 	{
 		printk("%2x ", transfer_buffer[i]); 
 	}
@@ -603,16 +716,26 @@ static int agilent_82357a_init(gpib_board_t *board)
 {
 	agilent_82357a_private_t *a_priv = board->private_data;
 	struct agilent_82357a_register_pairlet hw_control;
-	struct agilent_82357a_register_pairlet writes[0x2];
+	struct agilent_82357a_register_pairlet writes[4];
 	int retval;
 	int i = 0;
 	
 	writes[i].address = PROTOCOL_CONTROL;
 	writes[i].value = WRITE_COMPLETE_INTERRUPT_EN;
-	i++;
+	++i;
+	writes[i].address = IMR0;
+	writes[i].value = HR_BOIE | HR_BIIE;
+	++i;
+	writes[i].address = IMR1;
+	writes[i].value = HR_SRQIE;
+	++i;
+	// turn off reset state
+	writes[i].address = AUXCR;
+	writes[i].value = AUX_CR;
+	++i;
 	writes[i].address = LED_CONTROL;
 	writes[i].value = FIRMWARE_LED_CONTROL;
-	i++;
+	++i;
 	if(i > sizeof(writes))
 	{
 		printk("%s: %s: bug! writes[] overflow\n", __FILE__, __FUNCTION__);
@@ -628,7 +751,7 @@ static int agilent_82357a_init(gpib_board_t *board)
 	{
 		printk("%s: %s: agilent_82357a_read_registers() returned error\n", __FILE__, __FUNCTION__);
 	}
-	a_priv->hw_control_bits = hw_control.value;
+	a_priv->hw_control_bits = hw_control.value & 0x7;
 	//FIXME: implement
 	return 0;
 }
@@ -637,9 +760,10 @@ int agilent_82357a_attach(gpib_board_t *board)
 	int retval;
 	int i;
 	agilent_82357a_private_t *a_priv;
-		
+	
 	if(down_interruptible(&agilent_82357a_hotplug_lock))
 		return -ERESTARTSYS;
+	printk("%s: enter\n", __FUNCTION__);
 	retval = agilent_82357a_allocate_private(board);
 	if(retval < 0)
 	{
@@ -649,7 +773,7 @@ int agilent_82357a_attach(gpib_board_t *board)
 	a_priv = board->private_data;
 	/*FIXME: should allow user to specifiy which device he wants to attach.
 	 Use usb_make_path() */
-	for(i = 0; i < MAX_NUM_82357A_INTERFACES; i++)
+	for(i = 0; i < MAX_NUM_82357A_INTERFACES; ++i)
 	{
 		if(agilent_82357a_driver_interfaces[i] && usb_get_intfdata(agilent_82357a_driver_interfaces[i]) == NULL)
 		{
@@ -671,12 +795,20 @@ int agilent_82357a_attach(gpib_board_t *board)
 		up(&agilent_82357a_hotplug_lock);
 		return retval;
 	}
+	printk("%s: finished setup_urbs()()\n", __FUNCTION__);
 	retval = agilent_82357a_init(board);
 	if(retval < 0) 
 	{
 		up(&agilent_82357a_hotplug_lock);
 		return retval;
 	}
+	printk("%s: finished init()\n", __FUNCTION__);
+	set_current_state(TASK_INTERRUPTIBLE);
+	if(schedule_timeout(100))
+	{
+		return -EIO;
+	}
+	printk("%s: exit\n", __FUNCTION__);
 	up(&agilent_82357a_hotplug_lock);
 	return retval;
 }
@@ -686,7 +818,7 @@ void agilent_82357a_detach(gpib_board_t *board)
 	agilent_82357a_private_t *a_priv;
 	
 	down(&agilent_82357a_hotplug_lock);
-//	printk("%s: enter\n", __FUNCTION__);
+	printk("%s: enter\n", __FUNCTION__);
 	a_priv = board->private_data;
 	if(a_priv)
 	{
@@ -705,7 +837,7 @@ void agilent_82357a_detach(gpib_board_t *board)
 		up(&a_priv->control_transfer_lock);
 		up(&a_priv->bulk_transfer_lock);
 	}
-//	printk("%s: exit\n", __FUNCTION__);
+	printk("%s: exit\n", __FUNCTION__);
 	up(&agilent_82357a_hotplug_lock);
 }
 
@@ -759,7 +891,7 @@ static int agilent_82357a_driver_probe(struct usb_interface *interface,
 	if(down_interruptible(&agilent_82357a_hotplug_lock))
 		return -ERESTARTSYS;
 	usb_get_dev(interface_to_usbdev(interface));
-	for(i = 0; i < MAX_NUM_82357A_INTERFACES; i++)
+	for(i = 0; i < MAX_NUM_82357A_INTERFACES; ++i)
 	{
 		if(agilent_82357a_driver_interfaces[i] == NULL)
 		{
@@ -796,7 +928,7 @@ static void agilent_82357a_driver_disconnect(struct usb_interface *interface)
 	
 	down(&agilent_82357a_hotplug_lock);
 //	printk("%s: enter\n", __FUNCTION__);
-	for(i = 0; i < MAX_NUM_82357A_INTERFACES; i++)
+	for(i = 0; i < MAX_NUM_82357A_INTERFACES; ++i)
 	{
 		if(agilent_82357a_driver_interfaces[i] == interface)
 		{
@@ -842,7 +974,7 @@ static int agilent_82357a_init_module(void)
 	int i;
 	
 	info("agilent_82357a_gpib driver loading");
-	for(i = 0; i < MAX_NUM_82357A_INTERFACES; i++)
+	for(i = 0; i < MAX_NUM_82357A_INTERFACES; ++i)
 		agilent_82357a_driver_interfaces[i] = NULL;
 	usb_register(&agilent_82357a_bus_driver);
 	gpib_register_driver(&agilent_82357a_gpib_interface);
