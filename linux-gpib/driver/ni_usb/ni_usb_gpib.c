@@ -356,6 +356,10 @@ int ni_usb_write_registers(ni_usb_private_t *ni_priv, const struct ni_usb_regist
 	while(i % 4)
 		out_data[i++] = 0x00;
 	i += ni_usb_bulk_termination(&out_data[i]);
+	if(i > out_data_length)
+	{
+		printk("%s: bug! buffer overrun\n", __FUNCTION__);
+	}
 	retval = ni_usb_send_bulk_msg(ni_priv, out_data, i, &bytes_written, HZ);
 	kfree(out_data);
 	if(retval)
@@ -1191,8 +1195,48 @@ printk("\n");
 }
 unsigned int ni_usb_t1_delay( gpib_board_t *board, unsigned int nano_sec )
 {
-	//FIXME implement
-	return 0;
+	int retval;
+	ni_usb_private_t *ni_priv = board->private_data;
+	int i = 0;
+	struct ni_usb_register writes[3];
+	unsigned int ibsta;
+	unsigned int actual_ns = 2000;
+	
+	writes[i].device = NIUSB_SUBDEV_TNT4882;
+	writes[i].address = nec7210_to_tnt4882_offset(AUXMR);
+	if(nano_sec <= 1100)
+	{
+		writes[i].value = AUXRI | USTD | SISB;
+		actual_ns = 1100;
+	}else
+		writes[i].value = AUXRI | SISB;
+	i++;
+	writes[i].device = NIUSB_SUBDEV_TNT4882;
+	writes[i].address = nec7210_to_tnt4882_offset(AUXMR);
+	if(nano_sec <= 500)	
+	{
+		writes[i].value = AUXRB | HR_TRI;
+		actual_ns = 500;
+	}else
+		writes[i].value = AUXRB;
+	i++;
+	writes[i].device = NIUSB_SUBDEV_TNT4882;
+	writes[i].address = KEYREG;
+	if(nano_sec <= 350)	
+	{
+		writes[i].value = MSTD;
+		actual_ns = 350;
+	}else
+		writes[i].value = 0x0;
+	i++;
+	retval = ni_usb_write_registers(ni_priv, writes, i, &ibsta);
+	if(retval < 0) 
+	{
+		printk("%s: %s: register write failed, retval=%i\n", __FILE__, __FUNCTION__, retval);		
+		return -1;	//FIXME should change return type to int for error reporting
+	}
+	ni_usb_soft_update_status(board, ibsta, 0);
+	return actual_ns;
 }
 
 static int ni_usb_allocate_private(gpib_board_t *board)
@@ -1282,6 +1326,8 @@ then reads back: 34 01 0a c3 34 e2 0a c3 35 01 00 00 04 00 00 00
 	writes[i].address = nec7210_to_tnt4882_offset(AUXMR);
 	writes[i].value = AUX_HLDI;
 	i++;
+	/* the following three writes should share code with set_t1_delay */
+	board->t1_nano_sec = 500;
 	writes[i].device = NIUSB_SUBDEV_TNT4882;
 	writes[i].address = nec7210_to_tnt4882_offset(AUXMR);
 	writes[i].value = AUXRI | SISB | USTD;
@@ -1367,7 +1413,10 @@ void ni_usb_interrupt_complete(struct urb *urb, struct pt_regs *regs)
 	spin_unlock_irqrestore(&board->spinlock, flags);
 	
 	retval = usb_submit_urb(ni_priv->interrupt_urb, GFP_ATOMIC);
-	//FIXME check retval
+	if(retval)
+	{
+		printk("%s: failed to resubmit interrupt urb\n", __FUNCTION__);
+	}
 	wake_up_interruptible( &board->wait );
 }
  
