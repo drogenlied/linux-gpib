@@ -562,18 +562,27 @@ static void daemonize(void)
 			exit(0);
 		}else
 		{
+			umask(0);
+			if(freopen("/dev/null", "r", stdin) == NULL)
+			{
+				fprintf(stderr, "failed to reopen stdin\n");
+				exit(1);
+			}
+			if(freopen("libgpib_test_daemon_output", "w", stdout) == NULL)
+			{
+				fprintf(stderr, "failed to reopen stdout\n");
+				exit(1);
+			}
+			if(freopen("libgpib_test_daemon_output", "w", stderr) == NULL)
+			{
+				fprintf(stderr, "failed to reopen stderr\n");
+				exit(1);
+			}
 			if(chdir("/"))
 			{
 				fprintf(stderr, "failed to chdir to root directory\n");
 				exit(1);
 			}
-			umask(0);
-			if(freopen("/dev/null", "r", stdin) == NULL)
-				exit(1);
-			if(freopen("/dev/console", "w", stdout) == NULL)
-				exit(1);
-			if(freopen("/dev/console", "w", stderr) == NULL)
-				exit(1);
 		}
 	}
 }
