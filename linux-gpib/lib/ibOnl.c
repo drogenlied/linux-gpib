@@ -32,6 +32,11 @@ int ibonl(int ud, int onl)
 	{
 		if(conf->is_interface)
 			ibBoardClose(conf->board);
+		if(conf)
+		{
+			free(ibConfigs[ud]);
+			ibConfigs[ud] = NULL;
+		}
 	}
 
 	return ibsta;

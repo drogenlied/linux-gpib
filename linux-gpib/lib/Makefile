@@ -16,7 +16,7 @@ INC_TARGET_DIR = $(TARGET_ROOT)/include
 LIB_CONFIG_FILE = /etc/gpib.conf
 
 
-LIBNAME=libgpib.so
+LIBNAME=libgpib.so.3.1.1
 
 EXPORTED_INCLUDES = ib.h ibProto.h ibConf.h ibP.h
 EXP_INC = $(EXPORTED_INCLUDES:%=$(ROOT)/include/%)
@@ -65,6 +65,8 @@ realclean : clean
 
 install:
 	$(INSTALL) $(LIBNAME)     $(LIB_TARGET_DIR)
+	cd $(LIB_TARGET_DIR)
+	ln -sf $(LIBNAME) libgpib.so
 	ldconfig $(LIB_TARGET_DIR)		
 #	install ib.h           $(INC_TARGET_DIR)		
 #        install ibConf.h       $(INC_TARGET_DIR)		

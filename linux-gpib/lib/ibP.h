@@ -18,5 +18,5 @@ extern ibarg_t ibarg;
 
 #define MAX_BOARDS 16    /* maximal number of boards */
 #define IB_MAXDEV 31    /* maximal number of devices */
-#define NUM_CONFIGS (MAX_BOARDS * IB_MAXDEV)
+#define NUM_CONFIGS 0x1000;	// max number of device descriptors (length of ibConfigs array)
 
