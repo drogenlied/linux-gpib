@@ -61,11 +61,13 @@ int InternalTestSys( ibConf_t *conf, const Addr4882_t addressList[], short resul
 			sizeof( reply ) - 1, STOPend );
 		if( retval < 0 )
 		{
-			failure_count++;
-			continue;
+			resultList[ i ] = -1;
+		}else
+		{
+			reply[ ThreadIbcnt() ] = 0;
+			resultList[ i ] = strtol( reply, NULL, 0 );
 		}
-		reply[ ThreadIbcnt() ] = 0;
-		resultList[ i ] = strtol( reply, NULL, 0 );
+		if( resultList[ i ] ) failure_count++;
 	}
 
 	setIbcnt( failure_count );
