@@ -88,7 +88,7 @@ unsigned int ppoll_timeout_to_usec( unsigned int timeout )
 	if( timeout == 0 )
 		return default_ppoll_usec_timeout;
 	else
-		return usec_to_timeout( timeout );
+		return timeout_to_usec(timeout);
 }
 
 unsigned int usec_to_timeout( unsigned int usec )
