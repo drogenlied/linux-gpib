@@ -27,6 +27,7 @@ National Instruments:
   PCII                    pcII                     pc2-gpib.o          ?
   PCIIa                   pcIIa                    pc2-gpib.o          Y
   PCII/IIa              * pcII or pcIIa            pc2-gpib.o          Y
+  PCMCIA-GPIB             ni_pcmcia                tnt4882.o           ?
 
 * depends on board switch which chooses pcII or pcIIa mode
 
