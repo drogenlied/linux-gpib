@@ -65,7 +65,7 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, int *end)
 	GPIBout(IMR2, imr2_bits);
 
 	// wait for data to transfer
-	if(wait_event_interruptible(nec7210_read_wait, test_bit(0, &dma_transfer_complete)))
+	if(wait_event_interruptible(nec7210_wait, test_bit(0, &dma_transfer_complete)))
 	{
 		printk("read wait interrupted\n");
 		return -1;
@@ -93,7 +93,7 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, int *end)
 		ret = gpib_buffer_get(read_buffer, &data);
 		if(ret < 0)
 		{
-			if(wait_event_interruptible(nec7210_read_wait, atomic_read(&read_buffer->size) > 0))
+			if(wait_event_interruptible(nec7210_wait, atomic_read(&read_buffer->size) > 0))
 			{
 				printk("wait failed\n");
 				// XXX

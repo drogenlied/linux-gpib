@@ -35,6 +35,7 @@ int pnp_attach(void);
 int cb_pci_attach(void);
 
 void pc2_detach(void);
+void pc2a_detach(void);
 void cb_pci_detach(void);
 
 unsigned long ibbase = IBBASE;
@@ -44,6 +45,8 @@ unsigned long remapped_ibbase = 0;
 unsigned long amcc_iobase = 0;
 
 struct pci_dev *pci_dev_ptr = NULL;
+
+DECLARE_WAIT_QUEUE_HEAD(nec7210_wait);
 
 gpib_driver_t pc2_driver =
 {
@@ -66,6 +69,7 @@ gpib_driver_t pc2_driver =
 	secondary_address:	nec7210_secondary_address,
 	serial_poll_response:	nec7210_serial_poll_response,
 	status:	0,
+	wait:	&nec7210_wait,
 	private_data:	NULL,
 };
 
@@ -73,7 +77,7 @@ gpib_driver_t pc2a_driver =
 {
 	name:	"nec7210",
 	attach:	pc2a_attach,
-	detach:	pc2_detach,
+	detach:	pc2a_detach,
 	read:	nec7210_read,
 	write:	nec7210_write,
 	command:	nec7210_command,
@@ -90,6 +94,7 @@ gpib_driver_t pc2a_driver =
 	secondary_address:	nec7210_secondary_address,
 	serial_poll_response:	nec7210_serial_poll_response,
 	status:	0,
+	wait:	&nec7210_wait,
 	private_data:	NULL,
 };
 
@@ -208,8 +213,8 @@ void free_buffers(void)
 
 int pc2_attach(void)
 {
-	unsigned int i, err;
 	int isr_flags = 0;
+	const int iosize = 8;	// pc2 uses 8 ioports
 
 	// nothing is allocated yet
 	ioports_allocated = iomem_allocated = irq_allocated =
@@ -218,28 +223,15 @@ int pc2_attach(void)
 	if(allocate_buffers())
 		return -1;
 
-	/* nec7210 registers can be spread out to varying degrees, so allocate
-	 * each one seperately.  Some boards have extra registers that I haven't
-	 * bothered to reserve.  fmhess */
-	err = 0;
-	for(i = 0; i < nec7210_num_registers; i++)
-	{
-		if(check_region(ibbase + i * NEC7210_REG_OFFSET, 1))
-			err++;
-	}
-	if(err)
+	if(request_region(ibbase, iosize, "pc2"));
 	{
 		printk("gpib: ioports are already in use");
 		return -1;
 	}
-	for(i = 0; i < nec7210_num_registers; i++)
-	{
-		request_region(ibbase + i * NEC7210_REG_OFFSET, 1, "gpib");
-	}
 	ioports_allocated = 1;
 
 	// install interrupt handler
-	if( request_irq(ibirq, nec7210_interrupt, isr_flags, "gpib", &ibbase))
+	if( request_irq(ibirq, nec7210_interrupt, isr_flags, "pc2", &ibbase))
 	{
 		printk("gpib: can't request IRQ %d\n", ibirq);
 		return -1;
@@ -248,7 +240,7 @@ int pc2_attach(void)
 
 	// request isa dma channel
 #if DMAOP
-	if( request_dma( ibdma, "gpib" ) )
+	if( request_dma( ibdma, "pc2" ) )
 	{
 		printk("gpib: can't request DMA %d\n",ibdma );
 		return -1;
@@ -271,7 +263,6 @@ int pc2_attach(void)
 
 void pc2_detach(void)
 {
-	int i;
 	if(dma_allocated)
 	{
 		free_dma(ibdma);
@@ -285,8 +276,7 @@ void pc2_detach(void)
 	if(ioports_allocated)
 	{
 		board_reset();
-		for(i = 0; i < nec7210_num_registers; i++)
-			release_region(ibbase + i * NEC7210_REG_OFFSET, 1);
+		release_region(ibbase, pc2_iosize);
 		ioports_allocated = 0;
 	}
 	free_buffers();
@@ -311,24 +301,22 @@ int pc2a_attach(void)
 		case 0x42e1:
 		case 0x62e1:
 			break;
-	   default:
-	     printk("PCIIa base range invalid, must be one of [0246]2e1 is %lx \n", ibbase);
-             return(0);
-           break;
+		default:
+			printk("PCIIa base range invalid, must be one of [0246]2e1 is %lx \n", ibbase);
+			return -1;
+			break;
 	}
 
-        if( ibirq < 2 || ibirq > 7 ){
-	  printk("Illegal Interrupt Level \n");
-          return(0);
+	if( ibirq < 2 || ibirq > 7 )
+	{
+		printk("Illegal Interrupt Level \n");
+		return -1;
 	}
 
-	/* nec7210 registers can be spread out to varying degrees, so allocate
-	 * each one seperately.  Some boards have extra registers that I haven't
-	 * bothered to reserve.  fmhess */
 	err = 0;
 	for(i = 0; i < nec7210_num_registers; i++)
 	{
-		if(check_region(ibbase + i * NEC7210_REG_OFFSET, 1))
+		if(check_region(ibbase + i * pc2a_reg_offset, 1))
 			err++;
 	}
 	if(err)
@@ -338,11 +326,11 @@ int pc2a_attach(void)
 	}
 	for(i = 0; i < nec7210_num_registers; i++)
 	{
-		request_region(ibbase + i * NEC7210_REG_OFFSET, 1, "gpib");
+		request_region(ibbase + i * pc2a_reg_offset, 1, "pc2a");
 	}
 	ioports_allocated = 1;
 
-	if( request_irq(ibirq, pc2a_interrupt, isr_flags, "gpib", &ibbase))
+	if( request_irq(ibirq, pc2a_interrupt, isr_flags, "pc2a", &ibbase))
 	{
 		printk("gpib: can't request IRQ %d\n", ibirq);
 		return -1;
@@ -350,7 +338,7 @@ int pc2a_attach(void)
 	irq_allocated = 1;
 	// request isa dma channel
 #if DMAOP
-	if( request_dma( ibdma, "gpib" ) )
+	if( request_dma( ibdma, "pc2a" ) )
 	{
 		printk("gpib: can't request DMA %d\n",ibdma );
 		return -1;
@@ -360,7 +348,7 @@ int pc2a_attach(void)
 	board_reset();
 
 	// make sure interrupt is clear
-        outb(0xff , CLEAR_INTR_REG(ibirq));
+	outb(0xff , CLEAR_INTR_REG(ibirq));
 
 	// enable interrupts
 	imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
@@ -372,6 +360,29 @@ int pc2a_attach(void)
 	GPIBout(AUXMR, AUX_PON);
 
 	return 0;
+}
+
+void pc2a_detach(void)
+{
+	int i;
+	if(dma_allocated)
+	{
+		free_dma(ibdma);
+		dma_allocated = 0;
+	}
+	if(irq_allocated)
+	{
+		free_irq(ibirq, &ibbase);
+		irq_allocated = 0;
+	}
+	if(ioports_allocated)
+	{
+		board_reset();
+		for(i = 0; i < nec7210_num_registers; i++)
+			release_region(ibbase + i * pc2a_reg_offset, 1);
+		ioports_allocated = 0;
+	}
+	free_buffers();
 }
 
 // this function will do more once I support more than one pnp board
@@ -396,6 +407,7 @@ int pnp_attach(void)
 	driver->secondary_address = nec7210_secondary_address;
 	driver->serial_poll_response = nec7210_serial_poll_response;
 	driver->status = 0;
+	driver->wait = &nec7210_wait,
 	driver->private_data = NULL;
 
 	return cb_pci_attach();
@@ -435,18 +447,15 @@ int cb_pci_attach(void)
 		return -1;
 	ioports_allocated = 1;
 
-	/* CBI 4882 reset */
+	/* CBI 4882 reset (trying for nec7210 compatibility mode here */
 	GPIBout(HS_INT_LEVEL, HS_RESET7210 );
 	GPIBout(HS_MODE, 0); /* disable system control */
 
-	// use register page 0 for nec7210 compatibility
-	GPIBout(AUXMR, AUX_PAGE);
-
-	// set clock register for 20MHz driving frequency
+	// XXX set clock register for 20MHz? driving frequency
 	GPIBout(AUXMR, ICR | 8);
 
 	isr_flags |= SA_SHIRQ;
-	if(request_irq(ibirq, cb_pci_interrupt, isr_flags, "gpib", &ibbase))
+	if(request_irq(ibirq, cb_pci_interrupt, isr_flags, "pci-gpib", &ibbase))
 	{
 		printk("gpib: can't request IRQ %d\n", ibirq);
 		return -1;

@@ -120,8 +120,7 @@ extern  struct timer_list ibtimer_list;
 
 	DBGin("osInit");
 
-#if SYSTIMO
-	s = TICKSPERSEC;
+	s = HZ;
 	DBGprint(DBG_DATA, ("ClkRate=%d  ", s));
 	if (s != timeTable[0]) {
 		DBGprint(DBG_BRANCH, ("adjusting timeTable %d", s));
@@ -144,13 +143,8 @@ extern  struct timer_list ibtimer_list;
 		timeTable[16] = TM(s,300,1);		/* 16: T300s    */
 		timeTable[17] = TM(s,1000,1);		/* 17: T1000s   */
 	}
-	ibtimer_list.list.next = ibtimer_list.list.prev = NULL;
-#endif
+	init_timer(&ibtimer_list);
 
-#if USEINTS
-        sema_init( &espsemid, 0);
-	DBGprint(DBG_DATA, ("espsemid=0x%x  ", atomic_read(&espsemid.count)));
-#endif
 	pgmstat |= PS_SYSRDY;
 	DBGout();
 	return 1;

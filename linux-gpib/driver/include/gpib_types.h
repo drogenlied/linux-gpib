@@ -44,8 +44,10 @@ typedef struct {
 /* gpib_board_t is filled out by driver.  It is the interface
  * between the board-specific details dealt with in the drivers
  * and generic interface provided by gpib-common.
- *
+ * This really should be in a different header file.
  */
+#include <linux/wait.h>
+
 typedef struct
 {
 	char *name;	// name of board
@@ -107,7 +109,7 @@ typedef struct
 	/* updates and returns the board's current status.
 	 * The meaning of the bits are specified in gpib_user.h
 	 * in the IBSTA section.  The driver does not need to
-	 * worry about setting the CMPL, END, or ERR bits.
+	 * worry about setting the CMPL, END, TIMO, or ERR bits.
 	 */
 	unsigned int (*update_status)(void);
 	/* Sets primary address 0-30 for gpib interface card.
@@ -117,12 +119,17 @@ typedef struct
 	 */
 	void (*secondary_address)(unsigned int address, int enable);
 	/* Sets the byte the board should send in response to a serial poll.  Returns
-	 * zero on success.  Function should also request service if appropriate.  
+	 * zero on success.  Function should also request service if appropriate.
 	 */
 	int (*serial_poll_response)(uint8_t status);
-	/* Can be used to hold the board's current status (see update_status() above)
+	/* Used to hold the board's current status (see update_status() above)
 	 */
 	volatile unsigned int status;
+	/* Driver should only sleep on this wait queue.  It is special in that the
+	 * core will wake this queue and set the TIMO bit in 'status' when the
+	 * watchdog timer times out.
+	 */
+	wait_queue_head_t *wait;
 	/* 'private_data' can be used as seen fit by the driver to
 	 * store additional variables for this board */
 	void *private_data;

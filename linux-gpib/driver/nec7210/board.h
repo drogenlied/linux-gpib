@@ -24,6 +24,8 @@
 #include <asm/io.h>
 #include <gpib_buffer.h>
 
+#include "nec7210.h"
+#include "pc2.h"
 #include "cb7210.h"
 
 extern ssize_t nec7210_read(uint8_t *buffer, size_t length, int *end);
@@ -32,7 +34,6 @@ extern ssize_t nec7210_command(uint8_t *buffer, size_t length);
 extern int nec7210_take_control(int syncronous);
 extern int nec7210_go_to_standby(void);
 extern void nec7210_interface_clear(int assert);
-extern unsigned int nec7210_wait(unsigned int status_mask);
 extern void nec7210_remote_enable(int enable);
 extern void nec7210_enable_eos(uint8_t eos_bytes, int compare_8_bits);
 extern void nec7210_disable_eos(void);
@@ -54,20 +55,15 @@ extern int          auxa_bits;  /* static bits for AUXRA (EOS modes) */
 
 extern gpib_buffer_t *read_buffer, *write_buffer;
 
-// interrupt service routines
+// interrupt service routine
 void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp);
-void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp);
-void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
 // boolean values that signal various conditions
 extern volatile int write_in_progress;	// data can be sent
 extern volatile int command_out_ready;	// command can be sent
 extern volatile int dma_transfer_complete;	// dma transfer is done
 
-extern wait_queue_head_t nec7210_write_wait;
-extern wait_queue_head_t nec7210_command_wait;
-extern wait_queue_head_t nec7210_read_wait;
-extern wait_queue_head_t nec7210_status_wait;
+extern wait_queue_head_t nec7210_wait;
 
 // software copies of bits written to interrupt mask registers
 extern volatile int imr1_bits, imr2_bits;

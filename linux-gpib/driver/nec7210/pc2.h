@@ -1,9 +1,9 @@
 /***************************************************************************
-                                    nec7210/cmd.c 
+                              nec7210/pc2.h
                              -------------------
 
-    begin                : Dec 2001
-    copyright            : (C) 2001, 2002 by Frank Mori Hess
+    begin                : Jan 2002
+    copyright            : (C) 2002 by Frank Mori Hess
     email                : fmhess@users.sourceforge.net
  ***************************************************************************/
 
@@ -16,45 +16,22 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "board.h"
+#ifndef _PC2_H
+#define _PC2_H
 
-// XXX
-IBLCL ssize_t nec7210_command(uint8_t *buffer, size_t length)
-{
-	size_t count = 0;
+// pc2 uses 8 consecutive io addresses
+static const int pc2_iosize = 8;
 
-	// enable command out interrupt
-	imr2_bits |= HR_COIE;
-	GPIBout(IMR2, imr2_bits);
+// offset between io addresses of successive nec7210 registers for pc2a
+static const int pc2a_reg_offset = 0x400;
 
-	while(count < length)
-	{
-		if(wait_event_interruptible(nec7210_wait, test_and_clear_bit(0, &command_out_ready)))
-		{
-			printk("gpib command wait interrupted\n");
-			break;
-		}
-		GPIBout(CDOR, buffer[count]);
-		count++;
-	}
+//interrupt service routine
+void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
-	// disable command out interrupt
-	imr2_bits |= HR_COIE;
-	GPIBout(IMR2, imr2_bits);
+// pc2 specific registers and bits
 
-	if (!noTimo)
-	{
-		set_bit(TIMO_NUM, &driver->status);
-		return -1;
-	}
-	return count;
-}
+// interrupt clear register address
+#define PC2A_CLEAR_INTR_IOBASE 0x2f0
+#define CLEAR_INTR_REG(irq)	(PC2A_CLEAR_INTR_IOBASE + (irq))
 
-
-
-
-
-
-
-
-
+#endif	// _PC2_H

@@ -17,18 +17,12 @@
  ***************************************************************************/
 
 #include "board.h"
-#include <linux/wait.h>
 #include <asm/bitops.h>
 #include <asm/dma.h>
 
 volatile int write_in_progress = 0;
 volatile int command_out_ready = 0;
 volatile int dma_transfer_complete = 0;
-
-DECLARE_WAIT_QUEUE_HEAD(nec7210_read_wait);
-DECLARE_WAIT_QUEUE_HEAD(nec7210_write_wait);
-DECLARE_WAIT_QUEUE_HEAD(nec7210_command_wait);
-DECLARE_WAIT_QUEUE_HEAD(nec7210_status_wait);
 
 /*
  * GPIB interrupt service routines
@@ -79,7 +73,7 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	if(status2 & HR_SRQI)
 	{
 		set_bit(SRQI_NUM, &driver->status);
-		wake_up_interruptible(&nec7210_status_wait);
+		wake_up_interruptible(&nec7210_wait);
 	}
 
 	// change in lockout status
@@ -122,7 +116,7 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 			clear_bit(ATN_NUM, &driver->status);
 		else
 			set_bit(ATN_NUM, &driver->status);
-		wake_up_interruptible(&nec7210_status_wait); /* wake up sleeping process */
+		wake_up_interruptible(&nec7210_wait); /* wake up sleeping process */
 	}
 
 	// record reception of END
@@ -140,19 +134,21 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 		ret = gpib_buffer_put(read_buffer, data);
 		if(ret)
 			printk("read buffer full\n");	//XXX
-		wake_up_interruptible(&nec7210_read_wait); /* wake up sleeping process */
+		wake_up_interruptible(&nec7210_wait); /* wake up sleeping process */
 	}
 
 	// check for dma read transfer complete
 	if(imr2_bits & HR_DMAI)
 	{
 		flags = claim_dma_lock();
+		disable_dma(ibdma);
 		clear_dma_ff(ibdma);
 		if((status1 & HR_END) || get_dma_residue(ibdma) == 0)
 		{
 			set_bit(0, &dma_transfer_complete);
-			wake_up_interruptible(&nec7210_read_wait); /* wake up sleeping process */
+			wake_up_interruptible(&nec7210_wait); /* wake up sleeping process */
 		}
+		enable_dma(ibdma);
 		release_dma_lock(flags);
 	}
 
@@ -164,7 +160,7 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 			if(gpib_buffer_get(write_buffer, &data))
 			{	// no data left so we are done with write
 				clear_bit(0, &write_in_progress);
-				wake_up_interruptible(&nec7210_write_wait); /* wake up sleeping process */
+				wake_up_interruptible(&nec7210_wait); /* wake up sleeping process */
 			}else	// else write data to output
 			{
 				GPIBout(CDOR, data.value);
@@ -173,12 +169,14 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 		{
 			// check if dma transfer is complete
 			flags = claim_dma_lock();
+			disable_dma(ibdma);
 			clear_dma_ff(ibdma);
 			if(get_dma_residue(ibdma) == 0)
 			{
 				clear_bit(0, &write_in_progress);
-				wake_up_interruptible(&nec7210_write_wait); /* wake up sleeping process */
+				wake_up_interruptible(&nec7210_wait); /* wake up sleeping process */
 			}
+			enable_dma(ibdma);
 			release_dma_lock(flags);
 		}
 	}
@@ -187,7 +185,7 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	if(status2 & HR_CO)
 	{
 		set_bit(0, &command_out_ready);
-		wake_up_interruptible(&nec7210_command_wait); /* wake up sleeping process */
+		wake_up_interruptible(&nec7210_wait); /* wake up sleeping process */
 	}else
 		clear_bit(0, &command_out_ready);
 

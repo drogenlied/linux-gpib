@@ -17,7 +17,6 @@
  ***************************************************************************/
 
 #include "board.h"
-#include <linux/wait.h>
 #include <linux/delay.h>
 #include <asm/bitops.h>
 
@@ -42,7 +41,7 @@ int nec7210_take_control(int syncronous)
 	{
 		while(GPIBin(ADSR) & HR_NATN )
 		{
-			if(interruptible_sleep_on_timeout(&nec7210_status_wait, 1))
+			if(interruptible_sleep_on_timeout(&nec7210_wait, 1))
 			{
 				printk("error waiting for ATN\n");
 				return -1;

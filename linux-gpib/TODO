@@ -6,11 +6,9 @@ make drivers support more than one gpib card in computer at once
 
 fix #ifdef nightmare
 
-fix completely useless interrupt handling
-
 parallel polls (ibppc)
 
-fix timeouts
+make gpib_driver_t.wait not a pointer
 
 generally make this software suck less
  

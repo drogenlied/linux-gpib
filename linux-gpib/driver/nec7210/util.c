@@ -52,7 +52,7 @@ int nec7210_parallel_poll(uint8_t *result)
 	GPIBout(AUXMR, AUX_EPP);
 
 	// wait for result
-	ret = wait_event_interruptible(nec7210_command_wait, test_bit(0, &command_out_ready));
+	ret = wait_event_interruptible(nec7210_wait, test_bit(0, &command_out_ready));
 
 	// disable command out interrupts
 	imr2_bits &= ~HR_COIE;

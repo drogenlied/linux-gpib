@@ -63,7 +63,7 @@ ssize_t nec7210_write(uint8_t *buffer, size_t length, int send_eoi)
 		GPIBout(IMR1, imr1_bits);
 
 		// suspend until message is sent
-		if(wait_event_interruptible(nec7210_write_wait, test_bit(0, &write_in_progress) == 0))
+		if(wait_event_interruptible(nec7210_wait, test_bit(0, &write_in_progress) == 0))
 		{
 			printk("gpib write interrupted!\n");
 			retval = -1;
@@ -98,7 +98,7 @@ ssize_t nec7210_write(uint8_t *buffer, size_t length, int send_eoi)
 		GPIBout(IMR1, imr1_bits);
 
 		// suspend until message is sent
-		if(wait_event_interruptible(nec7210_write_wait, test_bit(0, &write_in_progress) == 0))
+		if(wait_event_interruptible(nec7210_wait, test_bit(0, &write_in_progress) == 0))
 		{
 			printk("gpib write interrupted!\n");
 			retval = -1;
@@ -115,7 +115,7 @@ ssize_t nec7210_write(uint8_t *buffer, size_t length, int send_eoi)
 		set_bit(0, &write_in_progress);
 		GPIBout(CDOR, buffer[count]);
 		count++;
-		wait_event_interruptible(nec7210_write_wait, test_bit(0, &write_in_progress) == 0);
+		wait_event_interruptible(nec7210_wait, test_bit(0, &write_in_progress) == 0);
 	}
 	// disable 'data out' interrupts
 	imr1_bits &= ~HR_DOIE;

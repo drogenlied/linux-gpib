@@ -109,6 +109,7 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, uns
 	}
 #endif
 
+	// XXX make this interruptible
 	osLockMutex();        /* lock other processes from performing commands */
                               /* quick & dirty hack (glenn will flame me :-)  */
 

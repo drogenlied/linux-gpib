@@ -35,7 +35,6 @@
 
 #define MAX_DMA_SIZE	(64 * 1024)	/* Maximum DMA transfer size 	*/
 
-#define TICKSPERSEC 100
 #define OK 0
 
 extern int pgmstat;
