@@ -256,12 +256,12 @@ int InternalRcvRespMsg( ibConf_t *conf, void *buffer, long count, int terminatio
 	}
 
 	retval = read_data( conf, buffer, count );
-	if( retval != count )
+	if(retval < 0)
 	{
 		return -1;
 	}
 
-	setIbcnt( count );
+	setIbcnt(retval);
 
 	return 0;
 }
