@@ -165,8 +165,9 @@ enum cmd_byte
 {
 	GTL = 0x1,	/* go to local			*/
 	SDC = 0x4,	/* selected device clear 	*/
+	PPConfig = 0x5,
 #ifndef PPC
-	PPC = 0x5,	/* parallel poll configure	*/
+	PPC = PPConfig,	/* parallel poll configure	*/
 #endif
 	GET = 0x8,	/* group execute trigger 	*/
 	TCT = 0x9,	/* take control 		*/
