@@ -24,6 +24,7 @@ program needs to be really, but useful for testing library functions.
 #include <stdint.h>
 #include <string.h>
 #include <mcheck.h>
+#include <getopt.h>
 #include "gpib/ib.h"
 
 void fprint_status( FILE* filep, char *msg  );
@@ -41,6 +42,41 @@ enum Action
 	GPIB_WRITE,
 	GPIB_LINE_STATUS
 };
+
+typedef struct
+{
+	int minor;
+} parsed_options_t;
+
+static void parse_options( int argc, char *argv[], parsed_options_t *parsed_opts )
+{
+	int c, index;
+
+	struct option options[] =
+	{
+		{ "minor", required_argument, NULL, 'm' },
+		{ 0 },
+	};
+
+	parsed_opts->minor = 0;
+
+	while(1)
+	{
+		c = getopt_long(argc, argv, "m:", options, &index);
+		if( c == -1 ) break;
+		switch( c )
+		{
+		case 0:
+			break;
+		case 'm':
+			parsed_opts->minor = strtol( optarg, NULL, 0 );
+			break;
+		default:
+			fprintf(stderr, "ibtest: invalid option\n");
+			exit(1);
+		}
+	}
+}
 
 void descriptor_type( int ud, int *is_board, int *is_master )
 {
@@ -82,11 +118,10 @@ int descriptor_is_master( int ud )
 }
 
 /* returns a device descriptor after prompting user for primary address */
-int prompt_for_device(void)
+int prompt_for_device(int minor)
 {
 	int ud, pad;
 	const int sad = 0;
-	const int minor = 0;
 	const int send_eoi = 1;
 	const int eos_mode = 0;
 	const int timeout = T1s;
@@ -114,7 +149,7 @@ int prompt_for_device(void)
 }
 
 /* returns a device descriptor after prompting user for primary address */
-int prompt_for_board( void )
+int prompt_for_board(void)
 {
 	int ud;
 	char board_name[100];
@@ -138,7 +173,7 @@ int prompt_for_board( void )
 	return ud;
 }
 
-int prompt_for_descriptor( void )
+int prompt_for_descriptor(int minor)
 {
 	char input[100];
 
@@ -151,7 +186,7 @@ int prompt_for_descriptor( void )
 		{
 			case 'd':
 			case 'D':
-				return prompt_for_device();
+				return prompt_for_device(minor);
 				break;
 			case 'b':
 			case 'B':
@@ -426,15 +461,18 @@ int prompt_for_remote_enable( int ud )
 	return 0;
 }
 
-int main(int argc,char **argv)
+int main(int argc, char **argv)
 {
 	int dev;
 	enum Action act;
+	parsed_options_t parsed_opts;
 
 	if( mcheck( NULL ) )
 		fprintf( stderr, "mcheck() failed\n" );
 
-	dev = prompt_for_descriptor();
+	parse_options( argc, argv, &parsed_opts );
+
+	dev = prompt_for_descriptor(parsed_opts.minor);
 
 	do
 	{
