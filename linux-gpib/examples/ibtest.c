@@ -171,7 +171,8 @@ fprintf(stderr, "result 0x%x\n", result);
 
   printf("\nReading Value...");
 
-  if( ibrd(dev,res,1223) & ERR){
+  if( ibrd(dev, res, sizeof(res)) & ERR)
+	{
     printf("\n Warning, error occured!");
     gpiberr("read error");
   }
