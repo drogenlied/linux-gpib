@@ -13,10 +13,10 @@ INCLUDES = -I. -I../include -I../../include
 CFLAGS += $(INCLUDES) $(OPTIONS)
 
 
-all: board.o
+all: nec7210.o
 
-board.o: $(OBJS)
-	$(RLINK) -o board.o $(OBJS)
+nec7210.o: $(OBJS)
+	$(RLINK) -o nec7210.o $(OBJS)
 
 
 clean:

@@ -23,7 +23,7 @@
 
 #include "board.h"
 
-#ifdef CBI_PCMCIA
+#ifdef CONFIG_PCMCIA
 
 #include <linux/kernel.h>
 #include <linux/sched.h>
@@ -178,7 +178,7 @@ static void cs_error(int func, int ret)
     The dev_link structure is initialized, but we don't actually
     configure the card at this point -- we wait until we receive a
     card insertion event.
-    
+
 ======================================================================*/
 
 static dev_link_t *gpib_attach(void)
@@ -187,7 +187,7 @@ static dev_link_t *gpib_attach(void)
     dev_link_t *link;
     local_info_t *local;
     int ret;
-    
+
 #ifdef PCMCIA_DEBUG
     if (pc_debug)
 	printk(KERN_DEBUG "gpib_attach()\n");
@@ -210,8 +210,8 @@ static dev_link_t *gpib_attach(void)
     link->irq.Attributes = IRQ_TYPE_EXCLUSIVE;
     link->irq.IRQInfo1 = IRQ_INFO2_VALID|IRQ_LEVEL_ID;
     link->irq.IRQInfo2 = irq_mask;
-    link->irq.Handler = cb7210_interrupt;
-    link->irq.Instance = driver;
+    link->irq.Handler = NULL;
+    link->irq.Instance = NULL;
     
     /* General socket configuration */
     link->conf.Attributes = CONF_ENABLE_IRQ;
@@ -380,20 +380,19 @@ static void gpib_config(dev_link_t *link)
 	      if( parse.cftable_entry.io.nwin > 0) {   
 	         link->io.BasePort1 = parse.cftable_entry.io.win[0].base;
 	         link->io.NumPorts1 = parse.cftable_entry.io.win[0].len;
-	         link->io.BasePort2 = 0; 
+	         link->io.BasePort2 = 0;
 	         link->io.NumPorts2 = 0;
 	         i = CardServices(RequestIO, link->handle, &link->io);
 	         if (i == CS_SUCCESS) {
 		     printk( KERN_DEBUG "gpib_cs: base=0x%x len=%d registered\n",
 		       parse.cftable_entry.io.win[0].base,
 		       parse.cftable_entry.io.win[0].len
-		       );  
-                     ibbase = parse.cftable_entry.io.win[0].base;
-		     break;	
+		       );
+		     break;
 	         }
 	      }
 	      if ( next_tuple(handle,&tuple,&parse) != CS_SUCCESS ) break;
-		 
+
 	    }
 
 	  if (i != CS_SUCCESS) {
@@ -413,7 +412,6 @@ static void gpib_config(dev_link_t *link)
 	    break;
 	}
         printk(KERN_DEBUG "gpib_cs: IRQ_Line=%d\n",link->irq.AssignedIRQ);
-        ibirq = link->irq.AssignedIRQ;	 
 
 
 	/*
@@ -584,10 +582,10 @@ void pcmcia_cleanup_module(void)
     }
 }
 
-int cb_pcmcia_attach(gpib_driver_t *driver);
-void cb_pcmcia_detach(gpib_driver_t *driver);
+int cb_pcmcia_attach(gpib_device_t *device);
+void cb_pcmcia_detach(gpib_device_t *device);
 
-gpib_driver_t cb_pcmcia_driver =
+gpib_interface_t cb_pcmcia_interface =
 {
 	name: "cbi_pcmcia",
 	attach: cb_pcmcia_attach,
@@ -609,11 +607,11 @@ gpib_driver_t cb_pcmcia_driver =
 	serial_poll_response: cb7210_serial_poll_response,
 };
 
-int cb_pcmcia_attach(gpib_driver_t *driver)
+int cb_pcmcia_attach(gpib_device_t *device)
 {
 	cb7210_private_t *cb_priv;
 	nec7210_private_t *nec_priv;
-//	int isr_flags = 0;
+	int isr_flags = 0;
 //	int bits;
 
 	if(dev_list == NULL)
@@ -622,11 +620,11 @@ int cb_pcmcia_attach(gpib_driver_t *driver)
 		return -1;
 	}
 
-	driver->status = 0;
+	device->status = 0;
 
-	if(cb7210_allocate_private(driver))
+	if(cb7210_allocate_private(device))
 		return -ENOMEM;
-	cb_priv = driver->private_data;
+	cb_priv = device->private_data;
 	nec_priv = &cb_priv->nec7210_priv;
 	nec_priv->read_byte = ioport_read_byte;
 	nec_priv->write_byte = ioport_write_byte;
@@ -639,6 +637,11 @@ int cb_pcmcia_attach(gpib_driver_t *driver)
 	nec_priv->write_byte(nec_priv, 0, HS_INT_LEVEL);
 	nec_priv->write_byte(nec_priv, 0, HS_MODE); /* disable system control */
 
+	if(request_irq(dev_list->irq.AssignedIRQ, cb7210_interrupt, isr_flags, "pcmcia-gpib", device))
+	{
+		printk("gpib: can't request IRQ %d\n", dev_list->irq.AssignedIRQ);
+		return -1;
+	}
 	cb_priv->irq = dev_list->irq.AssignedIRQ;
 
 	nec7210_board_reset(nec_priv);
@@ -658,9 +661,14 @@ int cb_pcmcia_attach(gpib_driver_t *driver)
 	return 0;
 }
 
-void cb_pcmcia_detach(gpib_driver_t *driver)
+void cb_pcmcia_detach(gpib_device_t *device)
 {
-	cb7210_free_private(driver);
+	cb7210_private_t *priv = device->private_data;
+
+	if(priv && priv->irq)
+		free_irq(priv->irq, device);
+
+	cb7210_free_private(device);
 }
 
-#endif /*PCMCIA*/
+#endif /* CONFIG_PCMCIA */

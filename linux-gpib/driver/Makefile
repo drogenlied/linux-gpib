@@ -7,10 +7,6 @@
 #
 #
 ########################################################################
-# Choose a unique Major number for your device look at
-# ~/linux/include/linux/majors.h
-#
-DRIVER_DEVICE_ID = 0
 
 DEBUG_LEVEL=0x3d
 
@@ -40,22 +36,17 @@ EXPORTED_INCLUDES = gpib_types.h gpib_registers.h gpib_ioctl.h gpib_user.h
 EXP_INC = $(EXPORTED_INCLUDES:%=$(ROOT)/include/%)
 CWD := `pwd`
 
-OBJS = ./board/board.o
-
 MAKE = make OPTIONS="$(OPTIONS) " -C
-SUBDIRS = board protocol sys
+SUBDIRS = nec7210 protocol sys
 
 
-all : $(EXP_INC) subdirs gpib$(DRIVER_DEVICE_ID).o gpib-common.o
+all : $(EXP_INC) subdirs gpib0.o gpib-common.o
 
 subdirs:
 	set -e; \
 	for i in $(SUBDIRS); do \
 		$(MAKE) $$i all ; \
 	done	
-
-gpib$(DRIVER_DEVICE_ID).o: $(OBJS)
-	$(RLINK) -o gpib$(DRIVER_DEVICE_ID).o $(OBJS) 
 
 gpib-common.o: ./sys/sys.o ./protocol/ieee488.o
 	$(RLINK) -o gpib-common.o ./sys/sys.o ./protocol/ieee488.o
@@ -75,24 +66,23 @@ depend :
 	done
 
 load:
-	/sbin/insmod gpib$(DRIVER_DEVICE_ID).o 
-
-dload:
-	/sbin/insmod gpib$(DRIVER_DEVICE_ID).o dbgMask=$(DEBUG_LEVEL)
+	/sbin/insmod gpib-common.o 
+	/sbin/insmod nec7210/nec7210.o 
 
 unload:
-	-/sbin/rmmod gpib$(DRIVER_DEVICE_ID)
+	-/sbin/rmmod nec7210
+	-/sbin/rmmod gpib-common 
 
 test:  unload load run-test unload
 
 
 device:
-	mknod /dev/gpib$(DRIVER_DEVICE_ID)/master c $(DRIVER_MAJOR) 0
+	mknod /dev/gpib0/master c $(DRIVER_MAJOR) 0
 
 
 
 install:
-	$(INSTALL) -D gpib$(DRIVER_DEVICE_ID).o gpib-common.o $(MODLIB)/misc/
+	$(INSTALL) -D nec7210/nec7210.o gpib-common.o $(MODLIB)/misc/
 	depmod -a $(KERNELRELEASE)
 
 

@@ -14,7 +14,7 @@
 
 #include "board.h"
 
-#ifdef INES_PCMCIA
+#ifdef CONFIG_PCMCIA
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/ptrace.h>
@@ -607,4 +607,4 @@ IBLCL void pcmcia_cleanup_module(void)
 	gpib_detach(dev_list);
     }
 }
-#endif /*PCMCIA*/
+#endif /* CONFIG_PCMCIA */
