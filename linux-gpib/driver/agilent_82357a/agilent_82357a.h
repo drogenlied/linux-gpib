@@ -130,7 +130,6 @@ enum xfer_abort_type
 	XA_FLUSH = 0x1
 };
 
-
 // struct which defines local data for each 82357 device
 typedef struct
 {
@@ -140,6 +139,8 @@ typedef struct
 	unsigned short hw_control_bits;
 	unsigned long interrupt_flags;
 	unsigned int bogus_ibsta;
+	struct urb *bulk_urb;
+	struct semaphore bulk_completion;
 	struct urb *interrupt_urb;
 	uint8_t interrupt_buffer[0x8];	
 	struct semaphore bulk_transfer_lock;

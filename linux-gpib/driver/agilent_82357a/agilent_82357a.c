@@ -28,6 +28,16 @@ MODULE_LICENSE("GPL");
 static struct usb_interface *agilent_82357a_driver_interfaces[MAX_NUM_82357A_INTERFACES];
 static DECLARE_MUTEX(agilent_82357a_hotplug_lock);
 
+void agilent_82357a_bulk_complete(struct urb *urb, struct pt_regs *regs)
+{
+	agilent_82357a_private_t *a_priv = urb->context;
+	
+//	printk("debug: %s: %s: status=0x%x, error_count=%i, actual_length=%i\n", __FILE__, __FUNCTION__,
+//		urb->status, urb->error_count, urb->actual_length); 
+		
+	up(&a_priv->bulk_completion);
+}
+
 int agilent_82357a_send_bulk_msg(agilent_82357a_private_t *a_priv, void *data, int data_length, int *actual_data_length, 
 	int timeout_jiffies)
 {
@@ -43,10 +53,40 @@ int agilent_82357a_send_bulk_msg(agilent_82357a_private_t *a_priv, void *data, i
 		up(&a_priv->bulk_transfer_lock);
 		return -ENODEV;
 	}
+	a_priv->bulk_urb = usb_alloc_urb(0, GFP_KERNEL);
+	if(a_priv->bulk_urb == NULL)
+	{
+		up(&a_priv->bulk_transfer_lock);
+		return -ENOMEM;
+	}
 	usb_dev = interface_to_usbdev(a_priv->bus_interface);
 	out_pipe = usb_sndbulkpipe(usb_dev, AGILENT_82357A_BULK_OUT_ENDPOINT);
-	retval = usb_bulk_msg(usb_dev, out_pipe, data, data_length, actual_data_length, timeout_jiffies);
-	up(&a_priv->bulk_transfer_lock);
+	usb_fill_bulk_urb(a_priv->bulk_urb, usb_dev, out_pipe, data, data_length, 
+		agilent_82357a_bulk_complete, a_priv);
+	a_priv->bulk_urb->timeout = timeout_jiffies;
+	//printk("%s: submitting urb\n", __FUNCTION__);
+	retval = usb_submit_urb(a_priv->bulk_urb, GFP_KERNEL);
+	if(retval) 
+	{
+		usb_free_urb(a_priv->bulk_urb);
+		a_priv->bulk_urb = NULL;
+		printk("%s: failed to submit bulk out urb, retval=%i\n", __FILE__, retval);
+		up(&a_priv->bulk_transfer_lock);
+		return retval;
+	}
+	if(down_interruptible(&a_priv->bulk_completion))
+	{
+		printk("%s: %s: interrupted\n", __FILE__, __FUNCTION__);
+		//FIXME handle error gracefully (kill urb)
+		usb_free_urb(a_priv->bulk_urb);
+		a_priv->bulk_urb = NULL;
+		up(&a_priv->bulk_transfer_lock);	
+		return -ERESTARTSYS;
+	}
+	*actual_data_length = a_priv->bulk_urb->actual_length;
+	retval = a_priv->bulk_urb->status;
+	usb_free_urb(a_priv->bulk_urb);
+	up(&a_priv->bulk_transfer_lock);	
 	return retval;
 }
 
@@ -65,11 +105,40 @@ int agilent_82357a_receive_bulk_msg(agilent_82357a_private_t *a_priv, void *data
 		up(&a_priv->bulk_transfer_lock);
 		return -ENODEV;
 	}
-	
+	a_priv->bulk_urb = usb_alloc_urb(0, GFP_KERNEL);
+	if(a_priv->bulk_urb == NULL)
+	{
+		up(&a_priv->bulk_transfer_lock);
+		return -ENOMEM;
+	}
 	usb_dev = interface_to_usbdev(a_priv->bus_interface);
 	in_pipe = usb_rcvbulkpipe(usb_dev, AGILENT_82357A_BULK_IN_ENDPOINT);
-	retval = usb_bulk_msg(usb_dev, in_pipe, data, data_length, actual_data_length, timeout_jiffies);
-	up(&a_priv->bulk_transfer_lock);
+	usb_fill_bulk_urb(a_priv->bulk_urb, usb_dev, in_pipe, data, data_length, 
+		agilent_82357a_bulk_complete, a_priv);
+	a_priv->bulk_urb->timeout = timeout_jiffies;
+	//printk("%s: submitting urb\n", __FUNCTION__);
+	retval = usb_submit_urb(a_priv->bulk_urb, GFP_KERNEL);
+	if(retval) 
+	{
+		usb_free_urb(a_priv->bulk_urb);
+		a_priv->bulk_urb = NULL;
+		printk("%s: failed to submit bulk out urb, retval=%i\n", __FILE__, retval);
+		up(&a_priv->bulk_transfer_lock);
+		return retval;
+	}
+	if(down_interruptible(&a_priv->bulk_completion))
+	{
+		printk("%s: %s: interrupted\n", __FILE__, __FUNCTION__);
+		//FIXME handle error gracefully (kill urb)
+		usb_free_urb(a_priv->bulk_urb);
+		a_priv->bulk_urb = NULL;
+		up(&a_priv->bulk_transfer_lock);	
+		return -ERESTARTSYS;
+	}
+	*actual_data_length = a_priv->bulk_urb->actual_length;
+	retval = a_priv->bulk_urb->status;
+	usb_free_urb(a_priv->bulk_urb);
+	up(&a_priv->bulk_transfer_lock);	
 	return retval;
 }
 
@@ -865,17 +934,19 @@ static int agilent_82357a_setup_urbs(gpib_board_t *board)
 	usb_fill_int_urb(a_priv->interrupt_urb, usb_dev, int_pipe, a_priv->interrupt_buffer, 
 		sizeof(a_priv->interrupt_buffer), agilent_82357a_interrupt_complete, board, 1);
 	retval = usb_submit_urb(a_priv->interrupt_urb, GFP_KERNEL);
-	up(&a_priv->interrupt_transfer_lock);
 	if(retval) 
 	{
 		usb_free_urb(a_priv->interrupt_urb);
 		a_priv->interrupt_urb = NULL;
 		printk("%s: failed to submit first interrupt urb, retval=%i\n", __FILE__, retval);
+		up(&a_priv->interrupt_transfer_lock);
 		return retval;
 	}
+	up(&a_priv->interrupt_transfer_lock);
 	return 0;
 }
 
+#if 0
 static int agilent_82357a_reset_usb_configuration(gpib_board_t *board)
 {
 	agilent_82357a_private_t *a_priv = board->private_data;
@@ -894,6 +965,7 @@ static int agilent_82357a_reset_usb_configuration(gpib_board_t *board)
 	}
 	return retval;
 }
+#endif
 
 static void agilent_82357a_cleanup_urbs(agilent_82357a_private_t *a_priv)
 {
@@ -912,6 +984,7 @@ static int agilent_82357a_allocate_private(gpib_board_t *board)
 		return -ENOMEM;
 	a_priv = board->private_data;
 	memset(a_priv, 0, sizeof(agilent_82357a_private_t));
+	init_MUTEX_LOCKED(&a_priv->bulk_completion);
 	init_MUTEX(&a_priv->bulk_transfer_lock);
 	init_MUTEX(&a_priv->control_transfer_lock);
 	init_MUTEX(&a_priv->interrupt_transfer_lock);
@@ -935,9 +1008,14 @@ static int agilent_82357a_init(gpib_board_t *board)
 	int i;
 	unsigned int nanosec;
 	
-	writes[0].address = RESET_TO_POWERUP;
-	writes[0].value = RESET_SPACEBALL;
-	retval = agilent_82357a_write_registers(a_priv, writes, 1);
+	i = 0;
+	writes[i].address = LED_CONTROL;
+	writes[i].value = FAIL_LED_ON;
+	++i;
+	writes[i].address = RESET_TO_POWERUP;
+	writes[i].value = RESET_SPACEBALL;
+	++i;
+	retval = agilent_82357a_write_registers(a_priv, writes, i);
 	if(retval)
 	{
 		printk("%s: %s: agilent_82357a_write_registers() returned error\n", __FILE__, __FUNCTION__);
@@ -1061,12 +1139,14 @@ int agilent_82357a_attach(gpib_board_t *board)
 		printk("No NI usb-b gpib adapters found, have you loaded its firmware?\n");
 		return -ENODEV;
 	}
+#if 0	
 	retval = agilent_82357a_reset_usb_configuration(board);
 	if(retval < 0) 
 	{
 		up(&agilent_82357a_hotplug_lock);
 		return retval;
-	}	
+	}
+#endif
 	retval = agilent_82357a_setup_urbs(board);
 	if(retval < 0) 
 	{
