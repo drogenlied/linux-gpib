@@ -101,7 +101,7 @@ device:
 
 install:
 	$(INSTALL) -D gpib$(DRIVER_DEVICE_ID).o $(MODLIB)/misc/gpib$(DRIVER_DEVICE_ID).o
-	depmod -a
+	depmod -a $(KERNELRELEASE)
 
 
 # make module version matching kernel version
