@@ -5,4 +5,8 @@ reserve/free ioports and io memory regions
 make drivers for different boards have different module names
 
 make drivers support more than one gpib card in computer at once
+
+add MODULE_PARM support for module parameters
+add some documentation on how to load and pass parameters to kernel modules
+add doc on setting up kernel source to INSTALL
  
