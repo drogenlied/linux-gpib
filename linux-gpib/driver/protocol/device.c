@@ -92,12 +92,8 @@ IBLCL int dvrsp(int padsad, uint8_t *result)
 		// send serial poll command
 		osStartTimer(pollTimeidx);
 
-		board.take_control(0);
-
 		cmd_string[0] = SPE;
-		board.command(cmd_string, 1);
-
-		board.go_to_standby();
+		ibcmd(cmd_string, 1);
 
 		ret = board.read(result, 1, &end_flag);
 		if(ret <= 0)
@@ -106,17 +102,14 @@ IBLCL int dvrsp(int padsad, uint8_t *result)
 			*result = 0;
 		}
 
-		board.take_control(1);
-
 		cmd_string[0] = SPD;	/* disable serial poll bytes */
 		cmd_string[1] = UNT;
-		if ((board.command(cmd_string, 2) < 0) || !noTimo)
+		if ((ibcmd(cmd_string, 2) < 0) || !noTimo)
 		{
 			DBGprint(DBG_DATA, ("ps_noTimo=%d  ", noTimo));
 			ibsta |= ERR;	/* something went wrong */
 			iberr = EBUS;
 		}
-		board.go_to_standby();
 		osRemoveTimer();
 	}
 	DBGout();

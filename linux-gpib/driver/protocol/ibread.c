@@ -21,11 +21,9 @@ IBLCL ssize_t ibrd(uint8_t *buf, size_t length, int *end_flag)
 	ssize_t ret;
 	int status = board.update_status();
 
-	DBGin("ibrd");
 	if((status & LACS) == 0) 
 	{
 		printk("gpib read failed: not listener\n");
-		DBGout();
 		return -1;
 	}
 	board.go_to_standby();
@@ -40,8 +38,7 @@ IBLCL ssize_t ibrd(uint8_t *buf, size_t length, int *end_flag)
 		if(ret < 0)
 		{
 			printk("gpib read error\n");
-			break;
-			// XXX
+			return ret;	//XXX
 		}
 		buf += ret;
 		count += ret;
@@ -50,7 +47,6 @@ IBLCL ssize_t ibrd(uint8_t *buf, size_t length, int *end_flag)
 	osRemoveTimer();
 	// mark io completed
 	set_bit(CMPL_NUM, &board.status);
-	DBGout();
 	return count;
 }
 

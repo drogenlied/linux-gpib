@@ -43,7 +43,7 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, int *end)
 	if(wait_event_interruptible(nec7210_read_wait, test_and_clear_bit(0, &dma_transfer_complete)))
 	{
 		printk("read wait interrupted\n");
-		// XXX
+		return -1;
 	}
 
 	// disable nec7210 dma
@@ -95,7 +95,6 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, int *end)
 
 	if (!noTimo)
 	{
-		DBGprint(DBG_BRANCH, ("timeout  "));
 		set_bit(ERR_NUM, &board.status);
 		set_bit(TIMO_NUM, &board.status);
 		iberr = EABO;
