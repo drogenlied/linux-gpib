@@ -168,7 +168,8 @@ int ibrdf(int ud, const char *file_path )
 		retval = read_data( conf, buffer, sizeof( buffer ) );
 		if( retval < 0 )
 		{
-			return exit_library( ud, 1 );
+			error++;
+			break;
 		}
 		fwrite_count = fwrite( buffer, 1, retval, save_file );
 		if( fwrite_count != retval )
