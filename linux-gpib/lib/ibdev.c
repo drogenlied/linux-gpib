@@ -55,7 +55,7 @@ int ibdev(int minor, int pad, int sad, int timo, int eot, int eos)
 	}
 
 	return my_ibdev( minor, pad, sad, timeout_to_usec( timo ),
-		eot, eos & 0xff, ( eos >> 8 ) & 0xff );
+		eot, eos & 0xff, eos & 0xff00 );
 }
 
 int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_eoi, int eos, int eos_flags)
