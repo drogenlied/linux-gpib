@@ -1,99 +1,110 @@
+/***************************************************************************
+                                 tms9914/aux.c
+                             -------------------
 
+    begin                : Dec 2001
+    copyright            : (C) 2001, 2002 by Frank Mori Hess
+    email                : fmhess@users.sourceforge.net
+ ***************************************************************************/
 
-#include <board.h>
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
 
+#include "board.h"
+#include <linux/delay.h>
+#include <asm/bitops.h>
 
-
-
-
-/* -- bdSendAuxCmd(int cmd)
- * Performs single auxiliary commands (nec7210)
- *
- *
- */
-
-IBLCL void bdSendAuxCmd(int cmd)
+int tms9914_take_control(gpib_device_t *device, tms9914_private_t *priv, int syncronous)
 {
-  DBGin("bdSendAuxCmd");
-  switch(cmd){
+	int i;
+	const int timeout = 1000;
 
-  case AUX_GTS:
-    DBGprint(DBG_BRANCH,("Aux Send GTS"));
-    GPIBout(AUXCR,AUX_GTS); 
-    break;
-  case AUX_TCS:
-    DBGprint(DBG_BRANCH,("Aux Send TCS"));
-    GPIBout(AUXCR,AUX_TCS);
-    break;
-  case AUX_TCA:
-    DBGprint(DBG_BRANCH,("Aux Send TCA"));
-    GPIBout(AUXCR,AUX_TCA);
-    break;
-  case AUX_SIFC:
-    DBGprint(DBG_BRANCH,("Aux Send IFC"));
-    GPIBout(AUXCR,AUX_SIFC); 
-    break;
-  case AUX_SREN:
-    DBGprint(DBG_BRANCH,("Aux Send REM"));
-    GPIBout(AUXCR,AUX_SREN); 
-    break;
-  case AUX_CREN:
-    DBGprint(DBG_BRANCH,("Aux Send unset REM"));
-    GPIBout(AUXCR,AUX_CREN); 
-    break;
-  case AUX_CIFC:
-    DBGprint(DBG_BRANCH,("Aux Send unset IFC"));
-    GPIBout(AUXCR,AUX_CIFC); 
-    break;
-  case AUX_SEOI:
-    if( pgmstat & PS_NOEOI){ 
-      DBGprint(DBG_BRANCH,("Aux Send SEOI disabled"));
-    } else {
-      DBGprint(DBG_BRANCH,("Aux Send EOI"));
-      GPIBout(AUXCR, AUX_SEOI);
-    }
-    break;  
-#if 0
-  case AUX_EPP:
-    DBGprint(DBG_BRANCH,("Aux Send EPP"));
-    GPIBout(AUXCR,AUX_EPP);
-    break;
-#endif
+	if(syncronous)
+	{
+		// make sure we aren't asserting rfd holdoff
+		if(test_and_clear_bit(RFD_HOLDOFF_BN, &priv->state))
+		{
+			write_byte(priv, AUX_RHDF, AUXCR);
+		}
+		write_byte(priv, AUX_TCS, AUXCR);
+	}else
+		write_byte(priv, AUX_TCA, AUXCR);
+	// busy wait until ATN is asserted
+	for(i = 0; i < timeout; i++)
+	{
+		if((read_byte(priv, ADSR) & HR_ATN))
+			break;
+		udelay(1);
+	}
+	// suspend if we still don't have ATN
+	if(i == timeout)
+	{
+		while((read_byte(priv, ADSR) & HR_ATN) == 0 &&
+			test_bit(TIMO_NUM, &device->status) == 0)
+		{
+			if(interruptible_sleep_on_timeout(&device->wait, 1))
+			{
+				printk("interupted for ATN\n");
+				return -EINTR;
+			}
+		}
+	}
 
+	if(test_bit(TIMO_NUM, &device->status))
+	{
+		printk("gpib: take control timed out\n");
+		return -ETIMEDOUT;
+	}
 
-  case AUX_FH:
-    DBGprint(DBG_BRANCH,("Aux Send FH"));
-    GPIBout(AUXCR,AUX_FH);
-    break;
-
-
-  default:
-    DBGprint(DBG_BRANCH,(" warning: illegal auxiliary command"));
-    GPIBout(AUXCR,cmd);
-    break;
-  }
-  /*bdlines();*/
-  DBGout();
+	return 0;
 }
 
-
-
-/* -- bdSendAuxACmd(int cmd)
- * Set Auxiliary A Register not for hp82335
- *
- *
- */
-
-IBLCL void bdSendAuxACmd(int cmd)
+int tms9914_go_to_standby(gpib_device_t *device, tms9914_private_t *priv)
 {
-  DBGin("bdSendAuxACmd not implemented");
-#if 0
-  DBGprint(DBG_BRANCH,("Aux Send=0x%x",cmd));
+	int i;
+	const int timeout = 1000;
 
-  GPIBout(AUXCR, cmd);
-#endif
-  DBGout();
+	write_byte(priv, AUX_GTS, AUXCR);
+	// busy wait until ATN is released
+	for(i = 0; i < timeout; i++)
+	{
+		if((read_byte(priv, ADSR) & HR_ATN) == 0)
+			break;
+		udelay(1);
+	}
+	if(i == timeout)
+	{
+		printk("error waiting for NATN\n");
+		return -ETIMEDOUT;
+	}
+
+	return 0;
 }
 
+void tms9914_interface_clear(gpib_device_t *device, tms9914_private_t *priv, int assert)
+{
+	if(assert)
+		write_byte(priv, AUX_SIC | AUX_CS, AUXCR);
+	else
+		write_byte(priv, AUX_SIC, AUXCR);
+}
 
+void tms9914_remote_enable(gpib_device_t *device, tms9914_private_t *priv, int enable)
+{
+	if(enable)
+		write_byte(priv, AUX_SRE | AUX_CS, AUXCR);
+	else
+		write_byte(priv, AUX_SRE, AUXCR);
+}
+
+EXPORT_SYMBOL(tms9914_take_control);
+EXPORT_SYMBOL(tms9914_go_to_standby);
+EXPORT_SYMBOL(tms9914_interface_clear);
+EXPORT_SYMBOL(tms9914_remote_enable);
 

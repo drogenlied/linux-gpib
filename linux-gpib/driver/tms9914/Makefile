@@ -1,25 +1,28 @@
 #
-# Makefile for directory driver/atgpib
+# Makefile for directory driver/tms9914
 #
+include $(ROOT)/util/.config
 
-#include $(ROOT)/util/.config
+SRCS =  cmd.c init.c read.c util.c \
+	write.c aux.c interrupt.c 
 
-SRCS =  cmd.c init.c lines.c read.c util.c \
-	wait.c write.c aux.c interrupt.c 
 OBJS =  $(SRCS:.c=.o)
 
-INCLUDES = -I. -I../include -I../../include -I../sys
-CFLAGS += $(INCLUDES)
+INCLUDES = -I. -I../include -I../../include
+CFLAGS += $(INCLUDES) $(OPTIONS) -DEXPORT_SYMTAB
+
+all: tms9914.o
 
 
-all: board.o
-
-board.o: $(OBJS)
-	$(RLINK) -o board.o $(OBJS)
+tms9914.o: $(OBJS)
+	$(RLINK) -o tms9914.o $(OBJS)
 
 
 clean:
 	$(RM) *.o .depend
+
+install:
+	$(INSTALL) -D tms9914.o $(MODLIB)/misc/tms9914.o
 
 
 include $(ROOT)/makefile.inc

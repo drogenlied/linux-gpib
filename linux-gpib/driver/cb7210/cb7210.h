@@ -80,11 +80,14 @@ static const int cb7210_reg_offset = 1;
 static const int cb7210_iosize = 10;
 
 // cb7210 specific registers and bits
-
-#define HS_MODE	0x8	/* HS_MODE register */
-#define HS_INT_LEVEL	0x9	/* HS_INT_LEVEL register */
-
-#define HS_STATUS	0x8	/* HS_STATUS register */
+enum
+{
+	//write registers
+	HS_MODE = 0x8,	/* HS_MODE register */
+	HS_INT_LEVEL = 0x9,	/* HS_INT_LEVEL register */
+	//read registers
+	HS_STATUS = 0x8,	/* HS_STATUS register */
+};
 
 /* CBI 488.2 HS control */
 

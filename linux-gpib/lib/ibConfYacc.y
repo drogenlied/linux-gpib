@@ -43,11 +43,7 @@ char cval;
 	configure: preamble definition 
 	
 	preamble: T_CONFIG { if(bdid < MAX_BOARDS) bdid++;  
-#if 0
 	                     sprintf(ibBoard[bdid].device,"/dev/gpib%d",bdid) ; 
-#else
-                             sprintf(ibBoard[bdid].device,"/dev/gpib%d/master",bdid) ; 
-#endif
                            }
 
 	definition:  '{' parameter '}'

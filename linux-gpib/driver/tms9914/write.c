@@ -1,79 +1,107 @@
+/***************************************************************************
+                              tms9914/write.c
+                             -------------------
+
+    begin                : Dec 2001
+    copyright            : (C) 2001, 2002 by Frank Mori Hess
+    email                : fmhess@users.sourceforge.net
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
+
 #include "board.h"
 
+static ssize_t pio_write(gpib_device_t *device, tms9914_private_t *priv, uint8_t *buffer, size_t length)
+{
+	size_t count = 0;
+	ssize_t retval = 0;
+	unsigned long flags;
 
-/*
- *  BDWRT (PIO)
- *  This function performs a single Programmed I/O write operation.
- */
-IBLCL void bdwrt(ibio_op_t *wrtop)
-{ 
-	faddr_t		buf;
-	unsigned	cnt;
-	int		s1, s2;		/* software copies of HW status regs... */
-	int		cfgbits;
-	uint8_t		lsb;		/* unsigned residual LSB */
-	char		msb;		/* signed residual MSB */
-extern  int eosmodes;
-        int bytes=0;
+	while(count < length)
+	{
+		// wait until byte is ready to be sent
+		if(wait_event_interruptible(device->wait, test_bit(WRITE_READY_BN, &priv->state) ||
+			test_bit(TIMO_NUM, &device->status)))
+		{
+			printk("gpib write interrupted!\n");
+			retval = -EINTR;
+			break;
+		}
+		if(test_bit(TIMO_NUM, &device->status))
+		{
+			break;
+		}
 
-	DBGin("bdwrt");
-
-	buf = wrtop->io_vbuf;
-	cnt = wrtop->io_cnt;
-
-	DBGprint(DBG_DATA, ("buf=0x%p cnt=%d  ", buf, cnt));
-
-	GPIBout(IMR0, 0);
-	GPIBout(IMR1, 0);		/* clear any previously arrived bits */
-
-	s2 = GPIBin(ISR1);		/* clear the status registers... */
-	s1 = GPIBin(ISR0);
-
-	DBGprint(DBG_DATA, ("ISR1=0x%x ISR2=0x%x  ", s1, s2));
-
-	DBGprint(DBG_BRANCH, ("begin PIO loop  "));
-
-        cnt-- ; /* save the last byte for sending EOI */
-
-
-	while (ibcnt < cnt) {
-		GPIBout(CDOR, buf[ibcnt]); 
-                bytes++;
-                /*printk("out=%c\n",buf[ibcnt]);*/
-                ibcnt++;
-		bdWaitOut();
-		if( TimedOut() ) break;
+		spin_lock_irqsave(&device->spinlock, flags);
+		clear_bit(WRITE_READY_BN, &priv->state);
+		write_byte(priv, buffer[count++], CDOR);
+		spin_unlock_irqrestore(&device->lock, flags);
 	}
-wrtdone:
-
-	  DBGprint(DBG_BRANCH, ("send EOI with last byte "));
-	  bdSendAuxCmd(AUX_SEOI);
-	  GPIBout(CDOR, buf[ibcnt]);
-	  bytes++; ibcnt++;
-
-	bdWaitOut();
-
-
-	DBGprint(DBG_BRANCH, ("done  "));
-	GPIBout(IMR1, 0);		/* clear ERRIE if set */
-
-	if (GPIBin(ISR1) & HR_ERR) {
-		DBGprint(DBG_BRANCH, ("no listeners  "));
-		ibsta |= ERR;
-		iberr = ENOL;
+	// wait till last byte gets sent
+	if(wait_event_interruptible(device->wait, test_bit(WRITE_READY_BN, &priv->state) ||
+		test_bit(TIMO_NUM, &device->status)))
+	{
+		printk("gpib write interrupted!\n");
+		retval = -EINTR;
+	}
+	if(test_bit(TIMO_NUM, &device->status))
+	{
+		retval = -ETIMEDOUT;
 	}
 
-	else if (!noTimo) {
-		DBGprint(DBG_BRANCH, ("timeout  "));
-		ibsta |= (ERR | TIMO);
-		iberr = EABO;
-	}
+	if(retval)
+		return retval;
 
-	ibcnt = bytes;
-	DBGout();
+	return length;
 }
 
 
+ssize_t tms9914_write(gpib_device_t *device, tms9914_private_t *priv, uint8_t *buffer, size_t length, int send_eoi)
+{
+	size_t count = 0;
+	ssize_t retval = 0;
+
+	if(length == 0) return 0;
+
+	//make active talker
+	write_byte(priv, AUX_TON | AUX_CS, AUXCR);
+
+	if(send_eoi)
+	{
+		length-- ; /* save the last byte for sending EOI */
+	}
+
+	if(length > 0)
+	{
+		// PIO transfer
+		retval = pio_write(device, priv, buffer, length);
+		if(retval < 0)
+			return retval;
+		else count += retval;
+	}
+	if(send_eoi)
+	{
+		/*send EOI */
+		write_byte(priv, AUX_SEOI, AUXCR);
+
+		retval = pio_write(device, priv, &buffer[count], 1);
+		if(retval < 0)
+			return retval;
+		else
+			count++;
+	}
+
+	return count ? count : -1;
+}
+
+EXPORT_SYMBOL(tms9914_write);
 
 
 

@@ -26,6 +26,8 @@ clean:
 
 include $(ROOT)/makefile.inc
 
+install:
+
 depend:
 
 ifndef NODEPS

@@ -27,6 +27,8 @@
 
 /* NAT4882 "Paged In" read- and write-only registers (must use GPIBpg__ macros) */
 
+#if 0
+
 #define CSR		SPMR		/* Chip Signature Register */
 #define KEYR		SPMR		/* Key Register */
 #define SASR		AUXMR		/* Source/Acceptor Status Register */
@@ -34,6 +36,8 @@
 #define IMR0		ADR		/* Interrupt Mask Register 0 */
 #define BSR		EOSR		/* Bus Status Register */
 #define BCR		EOSR		/* Bus Control Register */
+
+#endif
 
 #define CR_EOI	(1<<7)	/* gpibc        */
 #define CR_ATN	(1<<6)	/*  ,           */

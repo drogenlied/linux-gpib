@@ -1,163 +1,112 @@
+/***************************************************************************
+                              tms9914/util.c
+                             -------------------
 
-#include <board.h>
+    begin                : Dec 2001
+    copyright            : (C) 2001, 2002 by Frank Mori Hess
+    email                : fmhess@users.sourceforge.net
+ ***************************************************************************/
 
-/*
- * BDSRQSTAT
- * Return the 'ibsta' status of the SRQ line.
- */
-IBLCL int bdSRQstat(void)
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
+
+#include "board.h"
+#include <linux/delay.h>
+
+void tms9914_enable_eos(gpib_device_t *device, tms9914_private_t *priv, uint8_t eos_byte, int compare_8_bits)
 {
-	int	result = 0;
-
-	DBGin("bdSRQstat");
-#if 0
-	result = (GPIBin(ISR3) & HR_SRQI_CIC) ? SRQI : 0;
-//XXX
-	result = (GPIBin(ISR2) & HR_SRQI) ? SRQI : 0;
-        /*result=0;*/       
-         /* quick and dirty hack */
-#endif
-	DBGout();
-	return result;
+	// XXX
 }
 
-
-/*
- * BDSC
- * Enable System Controller state.
- */
-IBLCL void bdsc(void)
+void tms9914_disable_eos(gpib_device_t *device, tms9914_private_t *priv)
 {
-	DBGin("bdsc");
-/*	GPIBout(cmdr, SETSC);	*/	/* set system controller */
-	DBGout();
+	// XXX
 }
 
-
-/* -- bdGetDataByte()
- * get last byte from bus
- */
-IBLCL uint8_t bdGetDataByte(void)
+int tms9914_parallel_poll(gpib_device_t *device, tms9914_private_t *priv, uint8_t *result)
 {
-  DBGin("bdGetDataByte");
-  DBGout();
-  return GPIBin(DIR);
-}
+	int ret;
 
-/* -- bdGetCmdByte()
- * get last Cmd byte from bus
- */
+	// execute parallel poll
+	write_byte(priv, AUX_RPP, AUXCR);
 
-IBLCL uint8_t bdGetCmdByte(void)
-{
-  DBGin("bdGetCmdByte");
-  DBGout();
-  return (GPIBin(CPTR));
-}
+	// wait for result
+	ret = wait_event_interruptible(device->wait, test_bit(COMMAND_READY_BN, &priv->state));
 
-/* -- bdGetAdrStat()
- * get address status
- */
+	if(ret)
+	{
+		printk("gpib: parallel poll interrupted\n");
+		return -EINTR;
+	}
 
-IBLCL uint8_t bdGetAdrStat(void)
-{
+	*result = read_byte(priv, CPTR);
 
-  uint8_t stat;
-
-  DBGin("bdGetAdrStatus");
-
-  stat = GPIBin(ADSR);
-  DBGprint(DBG_DATA,("ADSR=0x%x",stat));
-  DBGout();
-  return stat;
-}
-
-
-/* -- bdCheckEOI()
- * Checks if EOI is set in ADR1
- *
- */
-
-IBLCL uint8_t bdCheckEOI(void)
-{
-  DBGin("bdCheckEOI not implemented");
-  DBGout();
-#if 0
-  return ( GPIBin(ADR1) & HR_EOI );
-#endif
 	return 0;
 }
 
-/* -- bdSetEOS(eos)
- * set eos byte
- *
- */
-
-static int eosbyte = 0x0a; /*default eos byte for write operations*/
-int eosmodes = 0;
-
-
-IBLCL void bdSetEOS(int ebyte)
+int tms9914_serial_poll_response(gpib_device_t *device, tms9914_private_t *priv, uint8_t status)
 {
-  DBGin("bdSetEOS ");
+	write_byte(priv, status, SPMR);		/* set new status to v */
 
-  eosbyte = ebyte;
-  DBGout();
+	return 0;
 }
 
-IBLCL uint8_t bdGetEOS(void)
+void tms9914_primary_address(gpib_device_t *device, tms9914_private_t *priv, unsigned int address)
 {
-  DBGin("bdGetEOS");
-  DBGout();
-
-  return(eosbyte);
+	// put primary address in address0
+	write_byte(priv, address & ADDRESS_MASK, ADR);
 }
 
-/* -- bdSetSPMode(reg)
- * Sets Serial Poll Mode
- *
- */
-
-IBLCL void bdSetSPMode(int v)
+void tms9914_secondary_address(gpib_device_t *device, tms9914_private_t *priv, unsigned int address, int enable)
 {
-  DBGin("bdSetSPMode");
-	GPIBout(SPMR, 0);		/* clear current serial poll status */
-	GPIBout(SPMR, v);		/* set new status to v */
-  DBGout();
+	//XXX
 }
 
-
-/* -- bdSetPAD(reg)
- * Sets PAD of Controller
- *
- */
-
-IBLCL void bdSetPAD(int v)
+unsigned int tms9914_update_status(gpib_device_t *device, tms9914_private_t *priv)
 {
-  DBGin("bdSetPAD");
-  GPIBout(ADR,( v & LOMASK ));
-  DBGout();
+	int address_status;
+
+	address_status = read_byte(priv, ADSR);
+
+	// check for remote/local
+	if(address_status & HR_REM)
+		set_bit(REM_NUM, &device->status);
+	else
+		clear_bit(REM_NUM, &device->status);
+	// check for lockout
+	if(address_status & HR_LLO)
+		set_bit(LOK_NUM, &device->status);
+	else
+		clear_bit(LOK_NUM, &device->status);
+	// check for ATN
+	if(address_status & HR_ATN)
+		set_bit(ATN_NUM, &device->status);
+	else
+		clear_bit(ATN_NUM, &device->status);
+	// check for talker/listener addressed
+	if(address_status & HR_TA)
+		set_bit(TACS_NUM, &device->status);
+	else
+		clear_bit(TACS_NUM, &device->status);
+	if(address_status & HR_LA)
+		set_bit(LACS_NUM, &device->status);
+	else
+		clear_bit(LACS_NUM, &device->status);
+
+	return device->status;
 }
 
-/* -- bdSetSAD()
- * Sets SAD of Controller
- *
- */
-
-IBLCL void bdSetSAD(int mySAD,int enable)
-{
-  DBGin("bdSetSAD");
-  if(enable){
-    DBGprint(DBG_DATA, ("sad=0x%x  ", mySAD));
-    GPIBout(ADR, HR_EDPA | (mySAD & LOMASK));
-    /*GPIBout(ADMR, HR_TRM1 | HR_TRM0 | HR_ADM1);*/
-  } else {
-    GPIBout(ADR, HR_EDPA | HR_DAT | HR_DAL);
-    /*GPIBout(ADMR, HR_TRM1 | HR_TRM0 | HR_ADM0);*/
-  }
-  DBGout();
-}
-
-
-
+EXPORT_SYMBOL(tms9914_enable_eos);
+EXPORT_SYMBOL(tms9914_disable_eos);
+EXPORT_SYMBOL(tms9914_serial_poll_response);
+EXPORT_SYMBOL(tms9914_parallel_poll);
+EXPORT_SYMBOL(tms9914_primary_address);
+EXPORT_SYMBOL(tms9914_secondary_address);
+EXPORT_SYMBOL(tms9914_update_status);
 

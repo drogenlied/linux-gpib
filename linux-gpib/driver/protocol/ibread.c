@@ -39,11 +39,6 @@ IBLCL ssize_t ibrd(gpib_device_t *device, uint8_t *buf, size_t length, int *end_
 	ssize_t ret = 0;
 	int status = ibstatus(device);
 
-	if((status & LACS) == 0) 
-	{
-		printk("gpib read failed: not listener\n");
-		return -1;
-	}
 	device->interface->go_to_standby(device);
 	osStartTimer(device, timeidx);
 	// mark io in progress

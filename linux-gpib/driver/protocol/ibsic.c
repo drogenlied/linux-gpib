@@ -24,6 +24,8 @@ IBLCL int ibsic(gpib_device_t *device)
 		device->interface->interface_clear(device, 0);                   /* clear IFC */
 		drvstat |= DRV_IFC;
 	}
+// is CIC going to be set by core or driver? XXX
+	set_bit(CIC_NUM, &device->status);
 
 	return 0;
 }

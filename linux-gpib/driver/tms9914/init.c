@@ -1,10 +1,10 @@
 /***************************************************************************
-                          init.c  -  description
+                          tms9914/init.c  -  description
                              -------------------
  board specific initialization stuff
 
     begin                : Dec 2001
-    copyright            : (C) 2001 by Frank Mori Hess, and unknown author(s)
+    copyright            : (C) 2001, 2002 by Frank Mori Hess
     email                : fmhess@users.sourceforge.net
  ***************************************************************************/
 
@@ -21,171 +21,107 @@
 #include <linux/ioport.h>
 #include <linux/sched.h>
 #include <linux/module.h>
+#include <linux/slab.h>
 #include <asm/dma.h>
+#include <gpib_buffer.h>
+#include <linux/pci.h>
+#include <linux/pci_ids.h>
+#include <linux/string.h>
 
-unsigned long ibbase = IBBASE;
-unsigned int ibirq = IBIRQ;
-unsigned int ibdma = IBDMA;
-
-MODULE_PARM(ibbase, "l");
-MODULE_PARM_DESC(ibbase, "base io address");
-MODULE_PARM(ibirq, "i");
-MODULE_PARM_DESC(ibirq, "interrupt request line");
-MODULE_PARM(ibdma, "i");
-MODULE_PARM_DESC(ibdma, "dma channel");
-
-unsigned long remapped_ibbase = 0;
-
-// flags to indicate if various resources have been allocated
-static unsigned int ioports_allocated = 0, iomem_allocated = 0, irq_allocated = 0, dma_allocated = 0;
-
-static const int iomem_size = 0x4000;
-static const int io_size = 0x8;	// ziatech uses at least 8 ports
-
-void board_reset(void)
-{
-	GPIBout(AUXCR, AUX_CR | AUX_CS);   /* enable 9914 chip reset state */
-
-	GPIBout(IMR0, 0);                              /* disable all interrupts */
-	GPIBout(IMR1, 0);
-	GPIBin(ISR0);
-	GPIBin(ISR1);  /* clear status registers by reading */
-
-	GPIBout(ADR,(PAD & LOMASK));                   /* set GPIB address;
-                                                          MTA=PAD|100, MLA=PAD|040*/
-	GPIBout(AUXCR, AUX_CR );   /* release 9914 chip reset state */
-
-	GPIBin(DIR);
-	GPIBout(AUXCR, AUX_HLDA | AUX_CS); /* Holdoff on all data */
-
-#if defined(HP82335) && USEINTS
-	ccrbits |= HR_INTEN;
-	GPIBout(CCR,ccrbits);
-	GPIBout(IMR0,0);
-	GPIBout(IMR1,0);
-	GPIBout(AUXCR,AUX_DAI);
+#ifdef MODULE_LICENSE
+MODULE_LICENSE("GPL");
 #endif
+
+// size of modbus pci memory io region
+static const int iomem_size = 0x2000;
+
+void tms9914_board_reset(tms9914_private_t *priv)
+{
+	/* chip reset */
+	write_byte(priv, AUX_CR | AUX_CS, AUXCR);
+
+	/* clear registers by reading */
+	read_byte(priv, CPTR);
+	read_byte(priv, ISR0);
+	read_byte(priv, ISR1);
+
+	/* disable all interrupts */
+	priv->imr0_bits = 0;
+	write_byte(priv, priv->imr0_bits, IMR0);
+	priv->imr1_bits = 0;
+	write_byte(priv, priv->imr1_bits, IMR1);
+	write_byte(priv, 0, SPMR);
+	write_byte(priv, AUX_DAI | AUX_CS, AUXCR);
+
+//	write_byte(priv, 0, EOSR);
+
+	/* parallel poll unconfigure */
+	write_byte(priv, 0, PPR);
+
+	/* set GPIB address; MTA=PAD|100, MLA=PAD|040 */
+	write_byte(priv, PAD & ADDRESS_MASK, ADR);
+//	priv->admr_bits = HR_TRM0 | HR_TRM1;
+
+#if 0
+
+#if (SAD)
+	/* enable secondary addressing */
+	write_byte(priv, HR_ARS | (SAD & ADDRESS_MASK), ADR);
+	priv->admr_bits |= HR_ADM1;
+	write_byte(priv, priv->admr_bits, ADMR);
+#else
+	/* disable secondary addressing */
+	write_byte(priv, HR_ARS | HR_DT | HR_DL, ADR);
+	priv->admr_bits |= HR_ADM0;
+	write_byte(priv, priv->admr_bits, ADMR);
+#endif
+
+#endif
+
+	// request for data holdoff
+	set_bit(RFD_HOLDOFF_BN, &priv->state);
+	write_byte(priv, AUX_RHDF, AUXCR);
 }
 
-int board_attach(void)
+// wrapper for inb
+uint8_t tms9914_ioport_read_byte(tms9914_private_t *priv, unsigned int register_num)
 {
-	// nothing is allocated yet
-	ioports_allocated = iomem_allocated = irq_allocated = dma_allocated = 0;
+	return inb(priv->iobase + register_num * priv->offset);
+}
+// wrapper for outb
+void tms9914_ioport_write_byte(tms9914_private_t *priv, uint8_t data, unsigned int register_num)
+{
+	if(register_num == AUXCR)
+		udelay(1);
+	outb(data, priv->iobase + register_num * priv->offset);
+}
 
-#if defined(ZIATECH)
-	printk("Ziatech: set base to 0x%lx \n ", ibbase);
-	printk("Ziatech: ISR1 = 0x%lx \n ", ibbase + ISR1);
-	printk("Ziatech: adswr= 0x%lx \n ", ibbase + ADSWR);
-#endif
-#if defined(HP82335)
-	switch( ibbase )
-	{
-		case 0xC000:
-		case 0xC400:
-		case 0xC800:
-		case 0xCC00:
-		case 0xD000:
-		case 0xD400:
-		case 0xD800:
-		case 0xDC00:
-		case 0xE000:
-		case 0xE400:
-		case 0xE800:
-		case 0xEC00:
-		case 0xF000:
-		case 0xF400:
-		case 0xF800:
-		case 0xFC00:
-		break;
-	default:
-		printk("hp82335 base range 0x%lx invalid, see Hardware Manual\n",ibbase);
-		return -1;
-		break;
-	}
-        if( ibirq < 3 || ibirq > 7 )
-	{
-		printk("Illegal Interrupt Level must be within 3..7\n");
-		return -1;
-	}
-	if(check_mem_region(ibbase, iomem_size))
-	{
-		printk("gpib: memory io region already in use");
-		return -1;
-	}
-	request_mem_region(ibbase, iomem_size, "gpib");
-	remapped_ibbase = (unsigned long) ioremap(ibbase, iomem_size);          /* setting base address */
-	iomem_allocated = 1;
-#else
-	if(check_region(ibbase, iosize))
-	{
-		printk("gpib: ioports are already in use");
-		return -1;
-	}
-	request_region(ibbase, io_size, "gpib");
-	ioports_allocated = 1;
-#endif
-	// install interrupt handler
-#if USEINTS
-	if( request_irq(ibirq, ibintr, 0, "gpib", NULL))
-	{
-		printk("gpib: can't request IRQ %d\n", ibirq);
-		return -1;
-	}
-	irq_allocated = 1;
-#endif
-	// request isa dma channel
-#if DMAOP
-	if( request_dma( ibdma, "gpib" ) )
-	{
-		printk("gpib: can't request DMA %d\n",ibdma );
-		return -1;
-	}
-	dma_allocated = 1;
-#endif
+// wrapper for readb
+uint8_t tms9914_iomem_read_byte(tms9914_private_t *priv, unsigned int register_num)
+{
+	return readb(priv->iobase + register_num * priv->offset);
+}
+// wrapper for writeb
+void tms9914_iomem_write_byte(tms9914_private_t *priv, uint8_t data, unsigned int register_num)
+{
+	if(register_num == AUXCR)
+		udelay(1);
+	writeb(data, priv->iobase + register_num * priv->offset);
+}
 
-	board_reset();
+int init_module(void)
+{
 	return 0;
 }
 
-void board_detach(void)
+void cleanup_module(void)
 {
-	if(dma_allocated)
-	{
-		free_dma(ibdma);
-		dma_allocated = 0;
-	}
-	if(irq_allocated)
-	{
-		free_irq(ibirq, 0);
-		irq_allocated = 0;
-	}
-	if(ioports_allocated || iomem_allocated)
-	{
-		board_reset();
-	}
-	if(ioports_allocated)
-	{
-		release_region(ibbase, io_size);
-		ioports_allocated = 0;
-	}
-	if(iomem_allocated)
-	{
-		iounmap((void*) remapped_ibbase);
-		release_mem_region(ibbase, iomem_size);
-		iomem_allocated = 0;
-	}
 }
 
+EXPORT_SYMBOL(tms9914_board_reset);
 
-
-
-
-
-
-
-
-
-
-
-
+EXPORT_SYMBOL(tms9914_ioport_read_byte);
+EXPORT_SYMBOL(tms9914_ioport_write_byte);
+EXPORT_SYMBOL(tms9914_iomem_read_byte);
+EXPORT_SYMBOL(tms9914_iomem_write_byte);
 

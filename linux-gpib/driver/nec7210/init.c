@@ -93,6 +93,8 @@ uint8_t nec7210_ioport_read_byte(nec7210_private_t *priv, unsigned int register_
 // wrapper for outb
 void nec7210_ioport_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num)
 {
+	if(register_num == AUXMR)
+		udelay(1);
 	outb(data, priv->iobase + register_num * priv->offset);
 }
 
@@ -104,6 +106,8 @@ uint8_t nec7210_iomem_read_byte(nec7210_private_t *priv, unsigned int register_n
 // wrapper for writeb
 void nec7210_iomem_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num)
 {
+	if(register_num == AUXMR)
+		udelay(1);
 	writeb(data, priv->iobase + register_num * priv->offset);
 }
 

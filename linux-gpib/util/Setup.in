@@ -442,30 +442,7 @@ fi
 #
 ##########
 
-dialog --title "Driver Major Number Settings" \
-       --menu "  Please Select one of the following MAJOR Numbers\n\
-                 Or 'Custom' if you want to Specify Your Own Major" 17 70 5 \
-                 "250" "Default Major for GPIB Driver"\
-                 "240" "Alternate Major for GPIB Driver"\
-                 "254" "Alternate Major for GPIB Driver"\
-                 "Custom" "Specify Your Own Setting" \
-                 2>/tmp/reply
-
-if [ $? = 0 ];then
-get_result 0
-
-   if [ $RESULT = Custom ]; then
-	dialog --title "Custom Major Number" \
-		--inputbox "Input the desired Major Number" 8 60 2>/tmp/reply
-	if [ $? = 0 ] ; then
-		get_result 0
-		set_var IBMAJOR $RESULT
-        fi
-   else
-	set_var IBMAJOR $RESULT
-   fi
-
-fi
+set_var IBMAJOR 160
 
 ##########
 #

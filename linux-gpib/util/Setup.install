@@ -31,32 +31,31 @@ fi
 #
 ##########
 
-
-if [ ! -r /dev/gpib0/master ]; then
+if [ ! -c /dev/gpib0 ]; then
+	if [ -a /dev/gpib0 ]; then
+		echo "A file or directory called /dev/gpib0 exists but it is not"\
+			"a character device.  Delete or move it and try again."
+		exit 1
+	fi
+ 
         dialog --yesno "
-   /dev/gpib0/master not found\n
-         Create?" 8 60
+   /dev/gpib0 device file doesn't exist\n
+         Create /dev/gpib[0-15]?" 8 60
         if [ $? = 0 ]; then
-                if [ ! -d /dev/gpib0 ]; then
-                        mkdir /dev/gpib0
-                fi
-                mknod --mode=u+rw,g+rw,o-rw /dev/gpib0/master c $IBMAJOR 0 || exit 1
 		groupadd gpib
-		chown root.gpib /dev/gpib0/master
-        fi
-else
-        ls -l /dev/gpib0/master | grep -q "$IBMAJOR",
-        if [ $? != 0 ]; then
-                dialog --yesno "
-      Old /dev/gpib0/master has different Major\n
-               Update ?" 8 60
-                if [ $? = 0 ];then
-                        rm -f /dev/gpib0/master
-                	mknod --mode=u+rw,g+rw,o-rw /dev/gpib0/master c $IBMAJOR 0 || exit 1
-			groupadd gpib
-			chown root.gpib /dev/gpib0/master
-                fi
+		for i in $(seq 0 15);
+		do
+			mknod --mode=u+rw,g+rw,o-rw /dev/gpib${i} c $IBMAJOR ${i} || exit 1
+			chown root.gpib /dev/gpib${i}
+		done
         fi
 fi
 
+# check major number
+ls -l /dev/gpib0 | grep -q "$IBMAJOR",
+if [ $? != 0 ]; then
+	echo "/dev/gpib0 has the wrong major number. "\
+		"Delete or move it and try again."
+	exit 1
+fi
 
