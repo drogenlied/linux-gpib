@@ -22,6 +22,7 @@
 #include "tms9914.h"
 #include "gpibP.h"
 #include "mite.h"
+#include <linux/delay.h>
 
 enum
 {

@@ -26,6 +26,7 @@
 #include <linux/pci.h>
 #include <linux/devfs_fs_kernel.h>
 #include <linux/init.h>
+#include <linux/vmalloc.h>
 
 MODULE_LICENSE("GPL");
 

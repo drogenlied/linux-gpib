@@ -17,7 +17,6 @@
  ***************************************************************************/
 
 #include "board.h"
-#include <linux/delay.h>
 #include <asm/bitops.h>
 
 int nec7210_take_control(gpib_board_t *board, nec7210_private_t *priv, int syncronous)

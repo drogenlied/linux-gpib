@@ -17,7 +17,6 @@
  ***************************************************************************/
 
 #include "board.h"
-#include <linux/delay.h>
 #include <asm/bitops.h>
 
 int tms9914_take_control(gpib_board_t *board, tms9914_private_t *priv, int syncronous)

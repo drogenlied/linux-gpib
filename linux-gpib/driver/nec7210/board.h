@@ -24,6 +24,7 @@
 #include <asm/io.h>
 #include <linux/module.h>
 #include <linux/sched.h>
+#include <linux/delay.h>
 
 #include "nec7210.h"
 

@@ -24,6 +24,7 @@
 #include "mite.h"
 #include <linux/init.h>
 #include <linux/isapnp.h>
+#include <linux/delay.h>
 
 static const int ISAPNP_VENDOR_ID_NI = ISAPNP_VENDOR( 'N', 'I', 'C' );
 static const int ISAPNP_ID_NI_ATGPIB_TNT = 0xc601;

@@ -26,7 +26,6 @@
 #include <linux/pci.h>
 #include <linux/pci_ids.h>
 #include <linux/string.h>
-#include <linux/delay.h>
 #include <linux/init.h>
 
 MODULE_LICENSE("GPL");
