@@ -18,6 +18,12 @@ int ibtrg(int ud)
 
 	board = &ibBoard[conf->board];
 
+	if( conf->is_interface )
+	{
+		iberr = EARG;
+		return ibsta | ERR;
+	}
+
 	i = 0;
 	cmd[ i++ ] = UNL;
 	cmd[ i++ ] = MLA( conf->pad );
