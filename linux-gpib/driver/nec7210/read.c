@@ -13,7 +13,6 @@ IBLCL void bdDMAread(ibio_op_t *rdop)
 
 	faddr_t		buf;
 	unsigned	cnt;
-	unsigned long flags;
 
 	DBGin("bdread(dma)");
 	buf = rdop->io_vbuf;
@@ -26,7 +25,6 @@ IBLCL void bdDMAread(ibio_op_t *rdop)
 		pgmstat &= ~PS_HELD;
 	}else
 	{
-		spinlock_irqsave(&status_lock, flags);
 		if ((s1 & HR_DI) && (s1 & HR_END))
 		{
 			DBGprint(DBG_BRANCH, ("one-byte read with END  "));
@@ -136,13 +134,8 @@ IBLCL void bdPIOread(ibio_op_t *rdop)
 /*
  *	Set EOS modes, holdoff on END, and holdoff on all carry cycle...
  */
-	GPIBout(AUXMR, auxrabits | HR_HLDE );
-
-	/* if first data byte availiable read once */
-	/*
-	* This is a relatively clean solution for the EOS detection problem
-	*
-	*/
+//	GPIBout(AUXMR, auxrabits | HR_HLDE );
+	GPIBout(AUXMR, auxrabits );	//normal handshaking
 
 	DBGprint(DBG_BRANCH, ("begin PIO loop  "));
 	while (ibcnt < cnt )
@@ -152,11 +145,11 @@ IBLCL void bdPIOread(ibio_op_t *rdop)
 		spin_unlock_irqrestore(&read_buffer->lock, flags);
 		if(ret < 0)
 		{
-			printk("gpib:no data\n");
-			if(wait_event_interruptible(nec7210_read_wait, read_buffer->size > 0))
+			if(wait_event_interruptible(nec7210_read_wait, atomic_read(&read_buffer->size) > 0))
 			{
 				printk("wait failed\n");
 				// XXX
+				break;
 			};
 			continue;
 		}
@@ -167,8 +160,6 @@ IBLCL void bdPIOread(ibio_op_t *rdop)
 			break;
 		}
 	}
-	GPIBout(AUXMR, auxrabits | HR_HLDA );
-	pgmstat |= PS_HELD;
 
 	DBGprint(DBG_BRANCH, ("done  "));
 

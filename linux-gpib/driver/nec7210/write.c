@@ -102,8 +102,11 @@ IBLCL void bdPIOwrt( ibio_op_t *wrtop)
 
 	while (ibcnt < cnt)
 	{
-		// XXX check for failure
-		wait_event_interruptible(nec7210_write_wait, test_bit(0, &write_in_progress) == 0);
+		if(wait_event_interruptible(nec7210_write_wait, test_bit(0, &write_in_progress) == 0))
+		{
+			printk("gpib write interrupted\n");
+			break;
+		}
 		set_bit(0, &write_in_progress);
 		GPIBout(CDOR, buf[ibcnt]);
 		bytes++;

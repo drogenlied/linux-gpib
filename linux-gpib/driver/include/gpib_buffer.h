@@ -21,6 +21,7 @@
 #define _GPIB_BUFFER_H
 
 #include <linux/spinlock.h>
+#include <asm/atomic.h>
 
 #define GPIB_MAX_BUFFER_SIZE 4096
 
@@ -36,7 +37,7 @@ typedef struct gpib_buffer_struct
 {
 	gpib_char_t array[GPIB_MAX_BUFFER_SIZE];
 	gpib_char_t *front, *back;
-	unsigned int size;	// number of elements currently stored in buffer
+	atomic_t size;	// number of elements currently stored in buffer
 	spinlock_t lock;
 } gpib_buffer_t;
 
@@ -44,37 +45,37 @@ typedef struct gpib_buffer_struct
 extern inline void gpib_buffer_init(gpib_buffer_t *buffer)
 {
 	buffer->front = buffer->back = buffer->array;
-	buffer->size = 0;
+	atomic_set(&buffer->size, 0);
 	spin_lock_init(&buffer->lock);
 };
 
 // put element into fifo
 extern inline int gpib_buffer_put(gpib_buffer_t *buffer, gpib_char_t data)
 {
-	if(buffer->size >= GPIB_MAX_BUFFER_SIZE)
+	if(atomic_read(&buffer->size) >= GPIB_MAX_BUFFER_SIZE)
 	{
 		return -1;
 	}
 	*buffer->back = data;
 	buffer->back++;
-	if(buffer->back >= buffer->array + buffer->size)
+	if(buffer->back >= buffer->array + GPIB_MAX_BUFFER_SIZE)
 		buffer->back = buffer->array;
-	buffer->size++;
+	atomic_inc(&buffer->size);
 	return 0;
 };
 
 // get element from fifo
 extern inline int gpib_buffer_get(gpib_buffer_t *buffer, gpib_char_t *data)
 {
-	if(buffer->size == 0)
+	if(atomic_read(&buffer->size) == 0)
 	{
 		return -1;
 	}
+	atomic_dec(&buffer->size);
 	*data = *buffer->front;
 	buffer->front++;
-	if(buffer->front >= buffer->array + buffer->size)
+	if(buffer->front >= buffer->array + GPIB_MAX_BUFFER_SIZE)
 		buffer->front = buffer->array;
-	buffer->size--;
 	return 0;
 };
 

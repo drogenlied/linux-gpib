@@ -21,15 +21,15 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	gpib_char_t data;
 	int ret;
 
-#ifdef NIPCIIa
-	/* clear interrupt circuit */
-	outb(0xff , CLEAR_INTR_REG(ibirq) );
-#endif
-
 	// read interrupt status (also clears status)
 
 	status1 = GPIBin(ISR1);
 	status2 = GPIBin(ISR2);
+
+#ifdef NIPCIIa
+	/* clear interrupt circuit */
+	outb(0xff , CLEAR_INTR_REG(ibirq) );
+#endif
 
 	// record service request in ibsta
 	if(status2 & HR_SRQI)
@@ -85,15 +85,21 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 		clear_bit(0, &write_in_progress);
 		wake_up_interruptible(&nec7210_write_wait); /* wake up sleeping process */
 	}
-	// outgoing data can be sent
 
+	// outgoing command can be sent
 	if(status2 & HR_CO)
 	{
 		set_bit(0, &command_out_ready);
 		wake_up_interruptible(&nec7210_write_wait); /* wake up sleeping process */
 	}
 
-	printk("isr1 0x%x, isr2 0x%x, ibsta 0x%x\n", status1, status2, ibsta);
+	// command pass through received
+	if(status1 & HR_CPT)
+	{
+		printk("gpib command pass thru 0x%x\n", GPIBin(CPTR));
+	}
+
+//	printk("isr1 0x%x, isr2 0x%x, ibsta 0x%x\n", status1, status2, ibsta);
 
 }
 

@@ -137,6 +137,7 @@ IBLCL int dvrd(int padsad,faddr_t buf,unsigned int cnt)
 	DBGin("dvrd");
 	ibcnt = 0;
 	if (fnInit(HR_CIC) & ERR) {
+printk("fnInit err");
 		DBGout();
 		return ibsta;
 	}
