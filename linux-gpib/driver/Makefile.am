@@ -14,7 +14,7 @@ SUBDIRS = cb7210 cec hp82335 ines nec7210 pc2 sys tms9914 tnt4882 tnt4882-tms in
 -include $(top_srcdir)/util/linux_flags/flags
 
 install-data-hook: device-file-check /etc/gpib.conf
-	depmod -ae $(KERNELRELEASE_LINUX)
+	depmod -ae 
 
 /dev/gpib0:
 	groupadd gpib || echo "group gpib exists"
