@@ -71,6 +71,7 @@ int ni_usb_send_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_length,
 	int retval;
 	unsigned int out_pipe;
 
+	*actual_data_length = 0;
 	retval = down_interruptible(&ni_priv->bulk_transfer_lock);
 	if(retval) return retval;
 	if(ni_priv->bus_interface == NULL)
@@ -91,6 +92,7 @@ int ni_usb_receive_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_leng
 	int retval;
 	unsigned int in_pipe;
 		
+	*actual_data_length = 0;
 	retval = down_interruptible(&ni_priv->bulk_transfer_lock);
 	if(retval) return retval;
 	if(ni_priv->bus_interface == NULL)
@@ -338,7 +340,7 @@ int ni_usb_write_registers(ni_usb_private_t *ni_priv, const struct ni_usb_regist
 	int retval;
 	uint8_t *out_data, *in_data;
 	int out_data_length, in_data_length;
-	int bytes_written, bytes_read;
+	int bytes_written = 0, bytes_read = 0;
 	int i = 0;
 	int j;
 	struct ni_usb_status_block status;
@@ -417,7 +419,7 @@ ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *en
 	ni_usb_private_t *ni_priv = board->private_data;
 	uint8_t *out_data, *in_data;
 	int out_data_length, in_data_length;
-	int bytes_written, bytes_read;
+	int bytes_written = 0, bytes_read = 0;
 	int i = 0;
 	int complement_count;
 	int actual_length;
@@ -504,7 +506,7 @@ static ssize_t ni_usb_write(gpib_board_t *board, uint8_t *buffer, size_t length,
 	ni_usb_private_t *ni_priv = board->private_data;
 	uint8_t *out_data, *in_data;
 	int out_data_length, in_data_length;
-	int bytes_written, bytes_read;
+	int bytes_written = 0, bytes_read = 0;
 	int i = 0, j;
 	int complement_count;
 	struct ni_usb_status_block status;
@@ -575,7 +577,7 @@ ssize_t ni_usb_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 	ni_usb_private_t *ni_priv = board->private_data;
 	uint8_t *out_data, *in_data;
 	int out_data_length, in_data_length;
-	int bytes_written, bytes_read;
+	int bytes_written = 0, bytes_read = 0;
 	int i = 0, j;
 	int complement_count;
 	struct ni_usb_status_block status;
@@ -635,7 +637,7 @@ int ni_usb_take_control(gpib_board_t *board, int synchronous)
 	ni_usb_private_t *ni_priv = board->private_data;
 	uint8_t *out_data, *in_data;
 	int out_data_length, in_data_length;
-	int bytes_written, bytes_read;
+	int bytes_written = 0, bytes_read = 0;
 	int i = 0;
 	struct ni_usb_status_block status;
 	
@@ -686,7 +688,7 @@ int ni_usb_go_to_standby(gpib_board_t *board)
 	ni_usb_private_t *ni_priv = board->private_data;
 	uint8_t *out_data, *in_data;
 	int out_data_length, in_data_length;
-	int bytes_written, bytes_read;
+	int bytes_written = 0, bytes_read = 0;
 	int i = 0;
 	struct ni_usb_status_block status;
 	
@@ -745,7 +747,7 @@ void ni_usb_request_system_control( gpib_board_t *board, int request_control )
 	{
 		writes[i].device = NIUSB_SUBDEV_TNT4882;
 		writes[i].address = CMDR;
-		writes[i].value = SETSC;
+		writes[i].value = CLRSC;	// ni usb seems to reverse polarity of SC bit?
 		i++;
 		writes[i].device = NIUSB_SUBDEV_TNT4882;
 		writes[i].address = nec7210_to_tnt4882_offset(AUXMR);
@@ -767,7 +769,7 @@ void ni_usb_request_system_control( gpib_board_t *board, int request_control )
 		i++;
 		writes[i].device = NIUSB_SUBDEV_TNT4882;
 		writes[i].address = CMDR;
-		writes[i].value = CLRSC;
+		writes[i].value = SETSC;	// ni usb seems to reverse polarity of SC bit?
 		i++;
 	}
 	retval = ni_usb_write_registers(ni_priv, writes, i, &ibsta);
@@ -786,7 +788,7 @@ void ni_usb_interface_clear(gpib_board_t *board, int assert)
 	ni_usb_private_t *ni_priv = board->private_data;
 	uint8_t *out_data, *in_data;
 	int out_data_length, in_data_length;
-	int bytes_written, bytes_read;
+	int bytes_written = 0, bytes_read = 0;
 	int i = 0;
 	struct ni_usb_status_block status;
 	
@@ -982,7 +984,7 @@ int ni_usb_parallel_poll(gpib_board_t *board, uint8_t *result)
 	ni_usb_private_t *ni_priv = board->private_data;
 	uint8_t *out_data, *in_data;
 	int out_data_length, in_data_length;
-	int bytes_written, bytes_read;
+	int bytes_written = 0, bytes_read = 0;
 	int i = 0;
 	int j = 0;
 	struct ni_usb_status_block status;
@@ -1125,7 +1127,7 @@ int ni_usb_line_status( const gpib_board_t *board )
 	ni_usb_private_t *ni_priv = board->private_data;
 	uint8_t *out_data, *in_data;
 	int out_data_length, in_data_length;
-	int bytes_written, bytes_read;
+	int bytes_written = 0, bytes_read = 0;
 	int i = 0;
 	unsigned int bsr_bits;
 	int line_status = ValidALL;
@@ -1586,8 +1588,8 @@ void ni_usb_detach(gpib_board_t *board)
 		down(&ni_priv->bulk_transfer_lock);
 		down(&ni_priv->control_transfer_lock);
 		down(&ni_priv->interrupt_transfer_lock);
-		
-		ni_usb_cleanup_urbs(ni_priv);
+		if(ni_priv->bus_interface)
+			ni_usb_cleanup_urbs(ni_priv);
 		ni_usb_free_private(ni_priv);
 		
 		up(&ni_priv->interrupt_transfer_lock);

@@ -1029,8 +1029,8 @@ void agilent_82357a_detach(gpib_board_t *board)
 		down(&a_priv->bulk_transfer_lock);
 		down(&a_priv->control_transfer_lock);
 		down(&a_priv->interrupt_transfer_lock);
-		
-		agilent_82357a_cleanup_urbs(a_priv);
+		if(a_priv->bus_interface)
+			agilent_82357a_cleanup_urbs(a_priv);
 		agilent_82357a_free_private(a_priv);
 		
 		up(&a_priv->interrupt_transfer_lock);
