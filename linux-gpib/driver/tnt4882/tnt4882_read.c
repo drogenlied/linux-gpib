@@ -112,14 +112,11 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 	imr0_bits = tnt_priv->imr0_bits;
 	tnt_priv->imr0_bits &= ~TNT_ATNI_BIT;
 	tnt_writeb(tnt_priv, tnt_priv->imr0_bits, IMR0);
-
-	tnt_writeb( tnt_priv, RESET_FIFO, CMDR );
-	udelay(1);
-
 	tnt_writeb( tnt_priv, nec_priv->auxa_bits | HR_HLDA, CCR );
 	bits = TNT_TLCHE | TNT_B_16BIT | TNT_IN | TNT_CCEN;
 	tnt_writeb( tnt_priv, bits, CFG );
-
+	tnt_writeb( tnt_priv, RESET_FIFO, CMDR );
+	udelay(1);
 	// load 2's complement of count into hardware counters
 	hw_count = -length;
 	tnt_writeb( tnt_priv, hw_count & 0xff, CNT0 );
