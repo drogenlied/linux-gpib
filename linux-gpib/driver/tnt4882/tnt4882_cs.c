@@ -370,14 +370,12 @@ static void ni_gpib_config(dev_link_t *link)
 		last_ret = pcmcia_get_tuple_data(link->handle, &tuple);
 		if(last_ret != CS_SUCCESS) 
 		{
-			last_fn = GetTupleData;
-			goto cs_failed;
+			goto next_entry;
 		}
 		last_ret = pcmcia_parse_tuple(link->handle, &tuple, &parse);
 		if(last_ret != CS_SUCCESS) 
 		{
-			last_fn = ParseTuple;
-			goto cs_failed;
+			goto next_entry;
 		}
 		if (cfg->flags & CISTPL_CFTABLE_DEFAULT) dflt = *cfg;
 		if (cfg->index == 0) goto next_entry;
@@ -436,8 +434,7 @@ static void ni_gpib_config(dev_link_t *link)
 			last_ret = pcmcia_request_io(link->handle, &link->io);
 			if(last_ret != CS_SUCCESS) 
 			{
-				last_fn = RequestIO;
-				goto cs_failed;
+				goto next_entry;
 			}
 		}
 	
