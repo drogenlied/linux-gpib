@@ -3030,7 +3030,7 @@ volatile int ibsta;
 	<funcprototype>
 		<funcdef>void <function>DevClearList</function></funcdef>
 		<paramdef>int <parameter>board_desc</parameter></paramdef>
-		<paramdef>const Addr4882_t *<parameter>addressList</parameter></paramdef>
+		<paramdef>const Addr4882_t <parameter>addressList[]</parameter></paramdef>
 	</funcprototype>
 	</funcsynopsis>
 </refsynopsisdiv>
@@ -3065,7 +3065,7 @@ volatile int ibsta;
 	<funcprototype>
 		<funcdef>void <function>EnableLocal</function></funcdef>
 		<paramdef>int <parameter>board_desc</parameter></paramdef>
-		<paramdef>const Addr4882_t *<parameter>addressList</parameter></paramdef>
+		<paramdef>const Addr4882_t <parameter>addressList[]</parameter></paramdef>
 	</funcprototype>
 	</funcsynopsis>
 </refsynopsisdiv>
@@ -3104,7 +3104,7 @@ volatile int ibsta;
 	<funcprototype>
 		<funcdef>void <function>EnableRemote</function></funcdef>
 		<paramdef>int <parameter>board_desc</parameter></paramdef>
-		<paramdef>const Addr4882_t *<parameter>addressList</parameter></paramdef>
+		<paramdef>const Addr4882_t <parameter>addressList[]</parameter></paramdef>
 	</funcprototype>
 	</funcsynopsis>
 </refsynopsisdiv>
@@ -3117,6 +3117,118 @@ volatile int ibsta;
 	all of the devices
 	in the <parameter>addressList</parameter> array as listeners (causing
 	them to enter remote mode).  The board must be system controller.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-findlstn">
+<refmeta>
+	<refentrytitle>FindLstn</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>FindLstn</refname>
+	<refpurpose>Find devices</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>FindLstn</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>const Addr4882_t <parameter>padList[]</parameter></paramdef>
+		<paramdef>Addr4882_t <parameter>resultList[]</parameter></paramdef>
+		<paramdef>int <parameter>maxNumResults</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	FindLstn() will check the primary addresses in the <parameter>padList</parameter>
+	array for devices.  The GPIB addresses of all devices found will be stored in the
+	<parameter>resultList</parameter> array.  The <parameter>maxNumResults</parameter>
+	limits the maximum number of results that will be returned, and is usually
+	set to the number of elements in the <parameter>resultList</parameter> array.
+	If more than <parameter>maxNumResults</parameter> devices are found, an
+	ETAB error is returned in <link LINKEND="reference-globals-iberr">iberr</link>.
+	The <parameter>padList</parameter> should consist of primary addresses only,
+	with no secondary addresses (all possible secondary addresses will be checked
+	as necessary).
+	</para>
+	<para>
+	Your GPIB board must have the capability to monitor the NDAC bus line in order
+	to use this function (see <link LINKEND="reference-function-iblines">iblines</link>).
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-findrqs">
+<refmeta>
+	<refentrytitle>FindRQS</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>FindRQS</refname>
+	<refpurpose>Find device requesting service and read its status byte</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>FindRQS</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>const Addr4882_t <parameter>addressList[]</parameter></paramdef>
+		<paramdef>short *<parameter>status</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	FindRQS will serial poll the GPIB addresses specified in the
+	<parameter>addressList</parameter> array until it finds a device
+	requesting service.  The status byte of the device requesting
+	service is stored in the location specified by <parameter>status</parameter>.
+	The <parameter>addressList</parameter> array index of the device requesting
+	service is returned in <link LINKEND="reference-globals-ibcnt">ibcnt</link>.
+	If no device requesting service is found,
+	an ETAB error is returned in <link LINKEND="reference-globals-iberr">iberr</link>.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-passcontrol">
+<refmeta>
+	<refentrytitle>PassControl</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>PassControl</refname>
+	<refpurpose>Make device controller-in-charge</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>PassControl</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>const Addr4882_t <parameter>address</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	PassControl() causes the board specified by <parameter>board_desc</parameter>
+	to pass control to the device specified by <parameter>address</parameter>.
+	On success, the device becomes the new controller-in-charge.
 	</para>
 </refsect1>
 </refentry>
@@ -3277,12 +3389,13 @@ volatile int ibsta;
 	Examples
 	</title>
 <programlisting>
-Addr4882_t address;
+Addr4882_t addressList[ 5 ];
 
-address = 5 /* primary address 5, no secondary address */
-address = MakeAddr(3, 0); /* primary address 3, no secondary address */
-address = MakeAddr(7, 0x70); /* primary address 3, secondary address 16 */
-address = MakeAddr(20, MSA(9)); /* primary address 20, secondary address 9 */
+addressList[ 0 ] = 5 /* primary address 5, no secondary address */
+addressList[ 1 ] = MakeAddr(3, 0); /* primary address 3, no secondary address */
+addressList[ 2 ] = MakeAddr(7, 0x70); /* primary address 3, secondary address 16 */
+addressList[ 3 ] = MakeAddr(20, MSA(9)); /* primary address 20, secondary address 9 */
+addressList[ 4 ] = NOADDR;
 </programlisting>
 </refsect1>
 <refsect1>
