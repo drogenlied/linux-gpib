@@ -298,7 +298,7 @@ int ni_isa_attach(gpib_board_t *board)
 	nec_priv->offset = atgpib_reg_offset;
 
 	// allocate ioports
-	if(request_region(board->ibbase, atgpib_iosize, "atgpib") < 0)
+	if( request_region(board->ibbase, atgpib_iosize, "atgpib") == 0)
 	{
 		printk("gpib: ioports are already in use");
 		return -1;

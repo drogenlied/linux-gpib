@@ -333,7 +333,7 @@ int cb_isa_attach(gpib_board_t *board)
 	retval = cb7210_generic_attach(board);
 	if(retval) return retval;
 
-	if(request_region(board->ibbase, cb7210_iosize, "isa-gpib"));
+	if( request_region(board->ibbase, cb7210_iosize, "isa-gpib") == 0 );
 	{
 		printk("gpib: ioports are already in use");
 		return -1;
