@@ -75,7 +75,7 @@ ines_pci_id pci_ids[] =
 		subsystem_device_id: 0x0011,
 		gpib_region: 1,
 		io_offset: 1,
-		pci_chip_type: PCI_CHIP_UNKNOWN,
+		pci_chip_type: PCI_CHIP_QUICKLOGIC5030,
 	},
 	{
 		vendor_id: PCI_VENDOR_ID_QUANCOM,
@@ -400,7 +400,7 @@ int ines_common_pci_attach( gpib_board_t *board )
 			break;
 		case PCI_CHIP_QUANCOM:
 			break;
-		case PCI_CHIP_UNKNOWN:
+		case PCI_CHIP_QUICKLOGIC5030:
 			break;
 		default:
 			printk("gpib: unspecified chip type? (bug)\n");
@@ -444,7 +444,7 @@ int ines_common_pci_attach( gpib_board_t *board )
 		case PCI_CHIP_QUANCOM:
 			outb( QUANCOM_IRQ_ENABLE_BIT, nec_priv->iobase + QUANCOM_IRQ_CONTROL_STATUS_REG );
 			break;
-		case PCI_CHIP_UNKNOWN:
+		case PCI_CHIP_QUICKLOGIC5030:
 			break;
 		default:
 			printk("gpib: unspecified chip type? (bug)\n");
