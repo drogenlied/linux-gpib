@@ -18,12 +18,9 @@
  *                                                                         *
  ***************************************************************************/
 
-#if defined( GPIB_CONFIG_PCMCIA )
-
 #include "tnt4882.h"
 
-#include <pcmcia/config.h>
-#include <pcmcia/k_compat.h>
+#if defined( GPIB_CONFIG_PCMCIA )
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -657,7 +654,7 @@ gpib_interface_t ni_pcmcia_interface =
 {
 	name: "ni_pcmcia",
 	attach: ni_pcmcia_attach,
-	detach: ni_detach,
+	detach: ni_pcmcia_detach,
 	read: tnt4882_read,
 	write: tnt4882_write,
 	command: tnt4882_command,

@@ -66,7 +66,7 @@ int tnt4882_serial_poll_response(gpib_board_t *board, uint8_t status);
 
 // pcmcia init/cleanup
 int __init init_ni_gpib_cs(void);
-int __exit exit_ni_gpib_cs(void);
+void __exit exit_ni_gpib_cs(void);
 
 // interrupt service routines
 void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp);
@@ -74,6 +74,7 @@ void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp);
 // utility functions
 int tnt4882_allocate_private(gpib_board_t *board);
 void tnt4882_free_private(gpib_board_t *board);
+void tnt4882_init( tnt4882_private_t *tnt_priv );
 
 // register offset for nec7210 compatible registers
 static const int atgpib_reg_offset = 2;
