@@ -74,16 +74,11 @@ int ibParseConfigFile( void )
 	FILE *infile;
 	int stat = 0;
 	static int config_parsed = 0;
-	char *filename, *envptr;
 	int i;
 
 	if( config_parsed ) return 0;
 
-	envptr = getenv("IB_CONFIG");
-	if( envptr ) filename = envptr;
-	else filename = DEFAULT_CONFIG_FILE;
-
-	if ((infile = fopen(filename, "r")) == NULL)
+	if ((infile = fopen( DEFAULT_CONFIG_FILE, "r")) == NULL)
 	{
 		fprintf(stderr, "failed to open configuration file\n");
 		setIberr( EDVR );
