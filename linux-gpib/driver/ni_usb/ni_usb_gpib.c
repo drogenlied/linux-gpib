@@ -36,7 +36,33 @@ static inline int ni_usb_timeout_jiffies(unsigned int usec)
 {
 	return HZ + (usec * HZ ) / 900000;
 };
-
+// returns timeout code byte for use in ni-usb-b instructions
+static unsigned short ni_usb_timeout_code(unsigned int usec)
+{
+	if( usec == 0 ) return 0xf0;
+	else if( usec <= 10 ) return 0xf1;
+	else if( usec <= 30 ) return 0xf2;
+	else if( usec <= 100 ) return 0xf3;
+	else if( usec <= 300 ) return 0xf4;
+	else if( usec <= 1000 ) return 0x5;
+	else if( usec <= 3000 ) return 0xf6;
+	else if( usec <= 10000 ) return 0xf7;
+	else if( usec <= 30000 ) return 0xf8;
+	else if( usec <= 100000 ) return 0xf9;
+	else if( usec <= 300000 ) return 0xfa;
+	else if( usec <= 1000000 ) return 0xfb;
+	else if( usec <= 3000000 ) return 0xfc;
+	else if( usec <= 10000000 ) return 0xfd;
+	else if( usec <= 30000000 ) return 0xfe;
+	else if( usec <= 100000000 ) return 0xff;
+	else if( usec <= 300000000 ) return 0x01;
+	else if( usec <= 1000000000 ) return 0x02;	//NI driver actually uses 0xff for timeout T1000s, which must be a bug in their code
+	else
+	{
+		printk("%s: bug? usec is greater than 1e9\n", __FILE__);
+		return 0xf0;
+	}
+};
 int ni_usb_send_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_length, int *actual_data_length, int timeout_jiffies)
 {
 	struct usb_device *usb_dev;
@@ -386,7 +412,6 @@ ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *en
 	int i = 0;
 	int complement_count;
 	struct ni_usb_status_block status;
-	int timeout_code = 0xd;	//FIXME
 	static const int max_read_length = 0xffff;
 	struct ni_usb_register reg;
 	
@@ -401,7 +426,7 @@ ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *en
 	out_data[i++] = 0x0a;
 	out_data[i++] = ni_priv->eos_mode >> 8;
 	out_data[i++] = ni_priv->eos_char;
-	out_data[i++] = 0xf0 | timeout_code;
+	out_data[i++] = ni_usb_timeout_code(board->usec_timeout);
 	complement_count = length;
 	complement_count = length - 1;
 	complement_count = ~complement_count;
@@ -439,7 +464,7 @@ ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *en
 	retval = parse_board_ibrd_readback(in_data, &status, buffer, length);
 	if(retval != bytes_read)
 	{
-		printk("%s: %s: parsed %i bytes out of %i\n", retval, bytes_read);
+		printk("%s: %s: parsed %i bytes out of %i\n", __FILE__, __FUNCTION__, retval, bytes_read);
 	}
 	kfree(in_data);
 	switch(status.error_code)
@@ -467,7 +492,6 @@ static ssize_t ni_usb_write(gpib_board_t *board, uint8_t *buffer, size_t length,
 	int i = 0, j;
 	int complement_count;
 	struct ni_usb_status_block status;
-	int timeout_code = 0xd;	//FIXME
 	static const int max_write_length = 0xffff;
 	
 	if(length > max_write_length)
@@ -485,7 +509,7 @@ static ssize_t ni_usb_write(gpib_board_t *board, uint8_t *buffer, size_t length,
 	complement_count = ~complement_count;
 	out_data[i++] = complement_count & 0xff;
 	out_data[i++] = (complement_count >> 8) & 0xff;
-	out_data[i++] = 0xf0 | timeout_code;
+	out_data[i++] = ni_usb_timeout_code(board->usec_timeout);
 	out_data[i++] = 0x0;
 	out_data[i++] = 0x0;
 	if(send_eoi)
@@ -539,7 +563,6 @@ ssize_t ni_usb_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 	int i = 0, j;
 	int complement_count;
 	struct ni_usb_status_block status;
-	int timeout_code = 0xd;	//FIXME
 	static const int max_command_length = 0xff;
 	
 	if(length > max_command_length) length = max_command_length;
@@ -552,7 +575,7 @@ ssize_t ni_usb_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 	complement_count = ~complement_count;
 	out_data[i++] = complement_count;
 	out_data[i++] = 0x0;
-	out_data[i++] = 0xf0 | timeout_code;
+	out_data[i++] = ni_usb_timeout_code(board->usec_timeout);
 	for(j = 0; j < length; j++)
 		out_data[i++] = buffer[j];
 	while(i % 4)	// pad with zeros to 4-byte boundary
