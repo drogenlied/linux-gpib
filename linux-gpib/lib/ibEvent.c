@@ -13,14 +13,28 @@ int ibevent(int ud, short *event )
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 
+	if( conf->is_interface == 0 )
+	{
+		setIberr( EARG );
+		return exit_library( ud, 1 );
+	}
+
 	board = interfaceBoard( conf );
 
 	retval = ioctl( board->fileno, IBEVENT, &user_event );
 	if( retval < 0 )
 	{
-		setIberr( EDVR );
-		setIbcnt( errno );
-		return exit_library(ud, 1 );
+		switch( errno )
+		{
+			case EPIPE:
+				setIberr( ETAB );
+				break;
+			default:
+				setIberr( EDVR );
+				setIbcnt( errno );
+				break;
+		}
+		return exit_library( ud, 1 );
 	}
 
 	*event = user_event;
