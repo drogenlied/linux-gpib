@@ -5,6 +5,7 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 
 #define errp stderr
 
@@ -21,7 +22,7 @@ PRIVATE void ibOpenErrlog(char *name)
 }
 
 
-PRIVATE int ibCloseErrlog(void)
+PRIVATE void ibCloseErrlog(void)
 {
   if( errp != stderr )
     fclose(errp);
@@ -87,7 +88,7 @@ int ibPutMsg(char *msg)
 }
 #endif
 
-PRIVATE int ibPutMsg (char *format,...) 
+PRIVATE void ibPutMsg (char *format,...) 
 {
 
 va_list ap;
@@ -107,7 +108,7 @@ va_list ap;
 }
 
 
-PRIVATE int ibPutErrlog(int ud,char *routine)
+PRIVATE void ibPutErrlog(int ud,char *routine)
 {
 
 time_t tm;

@@ -2,10 +2,16 @@
 
 #include <stdio.h>
 #include <ib.h>
+#include <stdlib.h>
 
 #define DEFAULT_CONFIG_FILE "/etc/gpib.conf"
 
-main(int argc, char **argv){
+extern int ibDumpConfiguration(int format,char *filename);
+
+void set_defaults(){
+}
+
+int main(int argc, char **argv){
         char *envptr;
 	int format = IB_DUMP_CONFIG;
         
@@ -35,11 +41,6 @@ main(int argc, char **argv){
 	}
 	ibDumpConfiguration( format,   NULL);
 
-        exit(0);
-
+	return 0;
 }
 
-set_defaults(){
-
-
-}

@@ -16,7 +16,7 @@ rgpib_svc_null_1 (void){
 
 DB(printf("nullproc called\n"));
 
-
+return NULL;
 }
 
 /*----------------------------------------------------------------------*/
@@ -74,7 +74,7 @@ switch(req->request) {
      * Free previous result
      *
      */
-    DB(printf("Freeing old buffer @ 0x%x \n",tmpbuf));
+    DB(printf("Freeing old buffer @ 0x%p \n",tmpbuf));
     if (tmpbuf) free(tmpbuf);
      /*xdr_free(xdr_gpib_request, &result );*/
     /*
@@ -85,8 +85,8 @@ switch(req->request) {
       ibsta |= ERR;
       ibPutMsg("Network Request Error: No more Memory !");
     } else {
-      DB(printf("Got %d bytes @ 0x%x for Read Buffer\n",req->count+1,result.buf));
-      DB(printf("ibrd(req->handle=%i,tmpbuf=0x%x,req->count=%i)\n",
+      DB(printf("Got %d bytes @ 0x%p for Read Buffer\n",req->count+1,result.buf));
+      DB(printf("ibrd(req->handle=%i,tmpbuf=0x%p,req->count=%i)\n",
 		req->handle,tmpbuf,req->count));
       if (( r = ibrd(req->handle,tmpbuf,req->count)) & ERR )
 	ibsta |= ERR;

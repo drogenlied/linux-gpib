@@ -1,6 +1,8 @@
 
 #include <ib.h>
 #include <ibP.h>
+#include <string.h>
+#include <stdlib.h>
 
 char ibfind_called = 0;       /* first call = setup board */
 

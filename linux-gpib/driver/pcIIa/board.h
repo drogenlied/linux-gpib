@@ -44,7 +44,7 @@ extern inline uint8 bdP8in(faddr_t in_addr)
 #if !defined(NIPCIIa)
 	retval = osP8in((unsigned int) in_addr);
 #else
-	retval = osP8in( (unsigned int) (in_addr << 10) | ibbase  );
+	retval = osP8in( ((unsigned int)in_addr << 10) | ibbase  );
 #endif
 	return retval;
 }

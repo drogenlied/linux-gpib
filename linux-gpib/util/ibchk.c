@@ -8,9 +8,12 @@
 
 #include <ib.h>
 #include <ibP.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-
-main(int argc,char **argv){
+int main(int argc,char **argv){
 
 char *envptr;
 int fd;
@@ -117,7 +120,7 @@ or if you have an unsupported board.\n\
   Some Device Commands with ibsh or with own Programs that uses GPIB Commands.\n\
   Good Luck.\n",ibGetNrDev());
 
-
+	return 0;
 }
 
 

@@ -4,7 +4,7 @@
 
 PUBLIC int ibtmo(int ud,int v)
 {
-    static current_timeout = -1;
+    static int current_timeout = -1;
 
   if ((v < TNONE) || (v > T1000s)) {
     ibsta = CMPL | ERR;

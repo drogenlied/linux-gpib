@@ -112,8 +112,9 @@ ibProto.h: $(SRCS)
 	grep -h PUBLIC *.c|/lib/cpp -P -DPUBLIC=extern -DVOID=void| sed 's/)/);/' >>ibProto.h
 	echo "/***** Private Functions ******/" >>ibProto.h 
 	grep -h PRIVATE *.c|/lib/cpp -P -DPRIVATE=extern -DVOID=void| sed 's/)/);/' >>ibProto.h
+	grep -h PRIVATE "net/"*.c|/lib/cpp -P -DPRIVATE=extern -DVOID=void| sed 's/)/);/' >>ibProto.h
 	grep -h _VARARGS *.c| awk '{print "extern "$$2" "$$3"();" }' >>ibProto.h
-	echo "#ifdef __cplusplus" >>ibProto.h 
+	echo "#ifdef __cplusplus" >>ibProto.h
 	echo "}" >>ibProto.h 
 	echo "#endif" >>ibProto.h 
 

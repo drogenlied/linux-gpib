@@ -3,7 +3,9 @@
 #include <ibP.h>
 
 #include <fcntl.h>
+#include <unistd.h>
 #include <stdarg.h>
+#include <sys/ioctl.h>
 
 int iberr = 0;
 int ibsta = 0;
@@ -14,9 +16,9 @@ ibarg_t ibarg = {0 };
 
 ibBoard_t ibBoard[MAX_BOARDS];
 
-PRIVATE int ibBoardDefaultValues(void)
+PRIVATE void ibBoardDefaultValues(void)
 {
-register i;
+register int i;
 for(i=0;i<MAX_BOARDS;i++){
 
 	ibBoard[i].padsad =0;					

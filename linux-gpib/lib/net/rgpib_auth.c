@@ -11,7 +11,7 @@ int auth_unix(rqstp,transp)
      SVCXPRT *transp;
 {
 
-
+return 0;
 }
 
 

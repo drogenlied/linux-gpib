@@ -13,7 +13,7 @@ PUBLIC int ibloc(int ud)
   }
   
   cmds[0] = UNL;
-  cmds[1] = LAD | CONF(ud,padsad) & 0x0f;
+  cmds[1] = (LAD | CONF(ud,padsad)) & 0x0f; //XXX guessed on parenthesis
   cmds[2] = GTL;
   cmds[3] = UNL;
   return ibcmd(CONF(ud,board), cmds, 4);

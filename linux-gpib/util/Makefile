@@ -33,7 +33,7 @@ ibchk: $(OBJS) ../lib/libgpib.a
 DUMP_OBJS = ibdump.o ibDevMan.o
 
 ibdump: $(DUMP_OBJS) ../lib/libgpib.a
-	$(CC) -o ibdump $(CFLAGS) $(DUMP_OBJS) $(LIBS) 
+	$(CC) -o ibdump $(CFLAGS) $(INCLUDES) $(DUMP_OBJS) $(LIBS) 
 
 clean: 
 	-rm *.o ibchk

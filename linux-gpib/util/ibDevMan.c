@@ -28,10 +28,10 @@ static char *yesno[] = {
 "yes"
 };
 
-PRIVATE ibDumpConfiguration(int format,char *filename)
+PRIVATE int ibDumpConfiguration(int format,char *filename)
 {
 FILE *outfile;
-int bd,ud;
+int bd=0,ud;
 char *t;
 int i=0;
 
@@ -51,9 +51,9 @@ switch (format){
     fprintf(outfile,"device_major=%d \n",IBMAJOR);
     fprintf(outfile,"if [ -d $device_dir/gpib%d ]; then\n",bd);
     fprintf(outfile,"  mkdir $device_dir/gpib%d \n",bd);
-    fprintf(outfile,"fi \n",bd);
+    fprintf(outfile,"fi \n");
   for(bd=0;bd<ibGetNrBoards();bd++){
-    fprintf(outfile,"mknod $device_dir/gpib%d/master c $device_major 0 \n");
+    fprintf(outfile,"mknod $device_dir/gpib%d/master c $device_major 0 \n", bd);
     fprintf(outfile,"# Devices for board %d :\n",bd);
 
     for(ud=0;ud<ibGetNrDev();ud++){
@@ -166,9 +166,9 @@ switch (format){
   fprintf(outfile,"         set-bin = %s \n",((ibBoard[bd].eosflags & BIN) ? yesno[1] : yesno[0]) );
 
   fprintf(outfile,"         errlog  = %s \n",ibBoard[bd].errlog );
-  fprintf(outfile,"         debug   = %s \n",ibBoard[bd].debug );
+  fprintf(outfile,"         debug   = %d \n",ibBoard[bd].debug );
 
-  fprintf(outfile,"         dma-bufsize   = %s \n",ibBoard[bd].dmabuf );
+  fprintf(outfile,"         dma-bufsize   = %d \n",ibBoard[bd].dmabuf );
 
 
   fprintf(outfile,"         set-ifc = %s \n",yesno[ibBoard[bd].ifc] );

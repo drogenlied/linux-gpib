@@ -33,9 +33,9 @@ return stat;
 /**********************************************************************/
 
 
-char ib_ndev=0;
+int ib_ndev=0;
 
-PRIVATE ibInstallConfigItem(ibConf_t *p)
+PRIVATE int ibInstallConfigItem(ibConf_t *p)
 {
 
 /* check validity of values */
@@ -81,7 +81,7 @@ return ib_ndev;
 PRIVATE int ibFindDevIndex(char *name)
 {
 
-register i;
+register int i;
 
 for(i=0;i<IB_MAXDEV;i++){
 if(! strcmp(ibConfigs[i].name,name)) return(i);

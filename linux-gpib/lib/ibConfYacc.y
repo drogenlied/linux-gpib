@@ -3,6 +3,8 @@
 #include <ib.h>
 #undef EXTERN
 #include <ibP.h>
+#include <string.h>
+#include <stdlib.h>
 
 static ibConf_t  temp;
 
