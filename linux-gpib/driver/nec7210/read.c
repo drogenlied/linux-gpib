@@ -35,9 +35,12 @@ static ssize_t pio_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *b
 			printk("nec7210: pio read wait interrupted\n");
 			retval = -ERESTARTSYS;
 			break;
-		};
+		}
 		if(test_bit(TIMO_NUM, &board->status))
+		{
+			retval = -ETIMEDOUT;
 			break;
+		}
 
 		spin_lock_irqsave(&board->spinlock, flags);
 		clear_bit(READ_READY_BN, &priv->state);
@@ -50,10 +53,8 @@ static ssize_t pio_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *b
 		spin_unlock_irqrestore(&board->spinlock, flags);
 
 		if( count < length )
-			write_byte(priv, AUX_FH, AUXMR);
+			nec7210_release_rfd_holdoff( priv );
 	}
-	if(test_bit(TIMO_NUM, &board->status))
-		retval = -ETIMEDOUT;
 
 	return retval ? retval : count;
 }
@@ -142,10 +143,8 @@ ssize_t nec7210_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buff
 
 	*end = 0;
 
-	priv->auxa_bits &= ~HR_HANDSHAKE_MASK;
-	priv->auxa_bits |= HR_HLDA;
-	write_byte(priv, priv->auxa_bits, AUXMR);
-	write_byte(priv, AUX_FH, AUXMR);
+	nec7210_set_handshake_mode( priv, HR_HLDA );
+	nec7210_release_rfd_holdoff( priv );
 
 	if(length)
 	{

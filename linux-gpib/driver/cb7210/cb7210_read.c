@@ -258,19 +258,15 @@ ssize_t cb7210_accel_read( gpib_board_t *board, uint8_t *buffer,
 
 	//XXX deal with lack of eos capability when using fifos
 	if( length <= cb7210_fifo_size /* || ( nec_priv->auxa_bits & HR_REOS XXX ) */ )
-{
-	nec7210_set_auxa_bits( nec_priv, HR_HANDSHAKE_MASK, 0 );
-	nec7210_set_auxa_bits( nec_priv, HR_HLDE, 1 );
+	{
+		nec7210_set_handshake_mode( nec_priv, HR_HLDE );
 		return cb7210_read( board, buffer, length, end );
-}
+	}
 	*end = 0;
 
 	/* release rfd holdoff */
-	nec7210_set_auxa_bits( nec_priv, HR_HANDSHAKE_MASK, 0 );
-	nec7210_set_auxa_bits( nec_priv, HR_HLDE, 1 );
+	nec7210_set_handshake_mode( nec_priv, HR_HLDE );
 	write_byte( nec_priv, AUX_FH, AUXMR );
-	nec7210_set_auxa_bits( nec_priv, HR_HANDSHAKE_MASK, 0 );
-	nec7210_set_auxa_bits( nec_priv, HR_HLDE, 1 );
 
 	if( wait_event_interruptible( board->wait,
 		test_bit( READ_READY_BN, &nec_priv->state ) ||
@@ -300,8 +296,7 @@ ssize_t cb7210_accel_read( gpib_board_t *board, uint8_t *buffer,
 	count += retval;
 #endif
 
-	nec7210_set_auxa_bits( nec_priv, HR_HANDSHAKE_MASK, 0 );
-	nec7210_set_auxa_bits( nec_priv, HR_HLDA, 1 );
+	nec7210_set_handshake_mode( nec_priv, HR_HLDA );
 
 	if( wait_event_interruptible( board->wait,
 		test_bit( READ_READY_BN, &nec_priv->state ) ||

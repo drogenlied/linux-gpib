@@ -100,7 +100,7 @@ extern void nec7210_board_reset( nec7210_private_t *priv, const gpib_board_t *bo
 extern void nec7210_board_online( nec7210_private_t *priv, const gpib_board_t *board );
 extern unsigned int nec7210_set_reg_bits( nec7210_private_t *priv, unsigned int reg,
 	unsigned int mask, int set );
-extern unsigned int nec7210_set_auxa_bits( nec7210_private_t *priv, unsigned int mask, int set );
+extern void nec7210_set_handshake_mode( nec7210_private_t *priv, int mode );
 
 // wrappers for io functions
 extern uint8_t nec7210_ioport_read_byte(nec7210_private_t *priv, unsigned int register_num);

@@ -27,7 +27,7 @@ static ssize_t pio_read( gpib_board_t *board, ines_private_t *ines_priv, uint8_t
 	ssize_t retval = 0;
 	unsigned int num_bytes, i;
 	nec7210_private_t *nec_priv = &ines_priv->nec7210_priv;
-	
+
 	ines_priv->extend_mode_bits |= LAST_BYTE_HANDLING_BIT | XFER_COUNTER_ENABLE_BIT;
 	ines_priv->extend_mode_bits &= ~XFER_COUNTER_OUTPUT_BIT;
 	outb( ines_priv->extend_mode_bits, iobase( ines_priv ) + EXTEND_MODE );
@@ -80,10 +80,8 @@ ssize_t ines_accel_read( gpib_board_t *board, uint8_t *buffer,
 
 	/* release rfd holdoff */
 	write_byte( nec_priv, AUX_FH, AUXMR );
-
 	// holdoff on END
-	nec7210_set_auxa_bits( nec_priv, HR_HANDSHAKE_MASK, 0 );
-	nec7210_set_auxa_bits( nec_priv, HR_HLDE, 1 );
+	nec7210_set_handshake_mode( nec_priv, HR_HLDE );
 
 	retval = pio_read( board, ines_priv, buffer, length );
 	if( retval < 0 )

@@ -166,15 +166,11 @@ unsigned int nec7210_set_reg_bits( nec7210_private_t *priv, unsigned int reg,
 	return priv->reg_bits[ reg ];
 }
 
-unsigned int nec7210_set_auxa_bits( nec7210_private_t *priv, unsigned int mask, int set )
+void nec7210_set_handshake_mode( nec7210_private_t *priv, int mode )
 {
-	if( set )
-		priv->auxa_bits |= mask;
-	else
-		priv->auxa_bits &= ~mask;
+	priv->auxa_bits &= ~HR_HANDSHAKE_MASK;
+	priv->auxa_bits |= ( mode & HR_HANDSHAKE_MASK );
 	write_byte( priv, priv->auxa_bits, AUXMR );
-
-	return priv->auxa_bits;
 }
 
 EXPORT_SYMBOL( nec7210_enable_eos );
@@ -187,5 +183,5 @@ EXPORT_SYMBOL( nec7210_primary_address );
 EXPORT_SYMBOL( nec7210_secondary_address );
 EXPORT_SYMBOL( nec7210_update_status );
 EXPORT_SYMBOL( nec7210_set_reg_bits );
-EXPORT_SYMBOL( nec7210_set_auxa_bits );
+EXPORT_SYMBOL( nec7210_set_handshake_mode );
 

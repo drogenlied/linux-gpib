@@ -98,6 +98,20 @@ void nec7210_remote_enable(gpib_board_t *board, nec7210_private_t *priv, int ena
 		write_byte(priv, AUX_CREN, AUXMR);
 }
 
+/* This function exists partly to work around a hardware bug
+ in the cb7210.  If you send the finish handshake aux cmd while
+ there is a byte in the data in register, then it gets stuck
+ and you will never be able to finish the handshake.  There
+ is still some potential for a race here, but there is
+ nothing more I can do with their broken chip.  It is also
+ useful for preventing the loss of a byte after a timeout
+ on chips that lack a holdoff immediately capability */
+void nec7210_release_rfd_holdoff( nec7210_private_t *priv )
+{
+	if( test_bit( READ_READY_BN, &priv->state ) == 0 )
+		write_byte( priv, AUX_FH, AUXMR );
+}
+
 EXPORT_SYMBOL( nec7210_request_system_control );
 EXPORT_SYMBOL( nec7210_take_control );
 EXPORT_SYMBOL( nec7210_go_to_standby );
