@@ -66,13 +66,6 @@ int ibopen(struct inode *inode, struct file *filep)
 
 	board = &board_array[minor];
 
-	filep->private_data = kmalloc( sizeof( gpib_file_private_t ), GFP_KERNEL );
-	if( filep->private_data == NULL )
-	{
-		return -ENOMEM;
-	}
-	init_gpib_file_private( ( gpib_file_private_t * ) filep->private_data );
-
 	if( board->exclusive )
 	{
 		return -EBUSY;
@@ -87,6 +80,14 @@ int ibopen(struct inode *inode, struct file *filep)
 		board->exclusive = 1;
 	}
 
+	filep->private_data = kmalloc( sizeof( gpib_file_private_t ), GFP_KERNEL );
+	if( filep->private_data == NULL )
+	{
+		return -ENOMEM;
+	}
+	init_gpib_file_private( ( gpib_file_private_t * ) filep->private_data );
+
+	MOD_INC_USE_COUNT;
 	board->open_count++;
 
 	return 0;
@@ -110,6 +111,7 @@ int ibclose(struct inode *inode, struct file *filep)
 	if( board->online && board->open_count == 1 )
 		iboffline( board );
 
+	MOD_DEC_USE_COUNT;
 	board->open_count--;
 
 	if( board->exclusive )
