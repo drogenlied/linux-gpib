@@ -47,6 +47,8 @@ extern void FindLstn( int boardID, Addr4882_t padList[],
 	Addr4882_t resultList[], int maxNumResults );
 extern void FindRQS( int boardID, Addr4882_t addressList[], short *result );
 extern void PPoll( int boardID, short *result );
+extern void PPollConfig( int boardID, Addr4882_t address, int dataLine, int lineSense );
+extern void PPollUnconfig( int boardID, Addr4882_t addressList[] );
 extern void SendSetup( int boardID, Addr4882_t addressList[] );
 extern int ThreadIbsta( void );
 extern int ThreadIberr( void );

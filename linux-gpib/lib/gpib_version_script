@@ -10,6 +10,8 @@ GPIB_DUMMY_VERSION {
 		FindLstn;
 		FindRQS;
 		PPoll;
+		PPollConfig;
+		PPollUnconfig;
 		SendSetup;
 		ThreadIbsta;
 		ThreadIberr;
