@@ -111,14 +111,6 @@ int ibclose(struct inode *inode, struct file *filep)
 
 	board = &board_array[ minor ];
 
-	if( board->online && board->open_count == 1 )
-		iboffline( board );
-
-	board->open_count--;
-
-	if( board->exclusive )
-		board->exclusive = 0;
-
 	if( priv )
 	{
 		cleanup_open_devices( priv, board );
@@ -126,6 +118,14 @@ int ibclose(struct inode *inode, struct file *filep)
 			up( &board->mutex );
 		kfree( filep->private_data );
 	}
+
+	if( board->online && board->open_count == 1 )
+		iboffline( board );
+
+	board->open_count--;
+
+	if( board->exclusive )
+		board->exclusive = 0;
 
 	return 0;
 }
@@ -144,7 +144,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 	}
 	board = &board_array[ minor ];
 
-	GPIB_DPRINTK( "minor %i ioctl %d, ifc=%s, open=%d, onl=%d\n", 
+	GPIB_DPRINTK( "minor %i ioctl %d, ifc=%s, open=%d, onl=%d\n",
 		      minor, cmd&0xff,
 		      board->interface ? board->interface->name : "",
 		      board->open_count,
@@ -184,7 +184,11 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			break;
 	}
 
-	if ( !board->online ) return -EINVAL;
+	if ( !board->online )
+	{
+		printk( "gpib: invalid ioctl for offline board\n" );
+		return -EINVAL;
+	}
 
 	switch( cmd )
 	{
