@@ -158,12 +158,16 @@ int main(int argc,char **argv){
    *
    *
    */
+
+#if 0
   fprintf(stderr, "\nserial poll\n");
   if( ibrsp(dev, &result) & ERR ){
     gpiberr("ibsic Err");
     exit(1);
   }
 fprintf(stderr, "result 0x%x\n", result);
+#endif
+
   printf("\nReading Value...");
 
   if( ibrd(dev,res,1223) & ERR){
