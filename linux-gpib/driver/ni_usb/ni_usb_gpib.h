@@ -43,8 +43,8 @@ enum ni_usb_device
 enum endpoint_addresses
 {
 	NIUSB_BULK_OUT_ENDPOINT = 0x2,
-	NIUSB_BULK_IN_ENDPOINT = 0x82,
-	NIUSB_INTERRUPT_IN_ENDPOINT = 0x84,
+	NIUSB_BULK_IN_ENDPOINT = 0x2,
+	NIUSB_INTERRUPT_IN_ENDPOINT = 0x4,
 };
 
 // struct which defines private_data for ni_usb devices
