@@ -25,7 +25,7 @@ static int pio_write_wait(gpib_board_t *board, nec7210_private_t *priv,
 {
 	// wait until byte is ready to be sent
 	if(wait_event_interruptible(board->wait,
-		test_bit(WRITE_READY_BN, &priv->state) ||
+		(test_bit(TACS_NUM, &board->status) && test_bit(WRITE_READY_BN, &priv->state)) ||
 		test_bit(DEV_CLEAR_BN, &priv->state) ||
 		(wake_on_bus_error && test_bit(BUS_ERROR_BN, &priv->state)) ||
 		(wake_on_lacs && test_bit(LACS_NUM, &board->status)) ||
@@ -35,17 +35,17 @@ static int pio_write_wait(gpib_board_t *board, nec7210_private_t *priv,
 		GPIB_DPRINTK( "gpib write interrupted\n" );
 		return -ERESTARTSYS;
 	}
-	if( test_bit( TIMO_NUM, &board->status ) )
+	if(test_bit(TIMO_NUM, &board->status))
 	{
 		printk("nec7210: write timed out\n");
 		return -ETIMEDOUT;
 	}
-	if( test_bit( DEV_CLEAR_BN, &priv->state ) )
+	if(test_bit(DEV_CLEAR_BN, &priv->state))
 	{
 		printk("nec7210: write interrupted by clear\n");
 		return -EINTR;
 	}
-	if( test_and_clear_bit( BUS_ERROR_BN, &priv->state ) )
+	if(wake_on_bus_error && test_and_clear_bit(BUS_ERROR_BN, &priv->state))
 	{
 		GPIB_DPRINTK("nec7210: bus error on write\n");
 		return -EIO;
@@ -55,22 +55,23 @@ static int pio_write_wait(gpib_board_t *board, nec7210_private_t *priv,
 
 static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer, size_t length)
 {
-	size_t count = 0;
+	size_t count = 0, last_count = 0;
 	ssize_t retval = 0;
 	unsigned long flags;
 	const int max_bus_errors = (length > 1000) ? length : 1000;
 	int bus_error_count = 0;
-
-	while( count < length )
+	clear_bit(BUS_ERROR_BN, &priv->state);
+	while(count < length)
 	{
 		if(current->need_resched)
 			schedule();
 
 		retval = pio_write_wait(board, priv, 0, 0, priv->type == NEC7210);
-		if(priv->type == NEC7210 && retval == -EIO)
+		if(retval == -EIO)
 		{
-			/* resend last byte on bus error, not required with cb7210 chip */
-			count--;
+			/* resend last byte on bus error */
+			count = last_count;
+			GPIB_DPRINTK("resending %c\n", buffer[count]);
 			/* we can get unrecoverable bus errors,
 			* so give up after a while */
 			bus_error_count++;
@@ -79,8 +80,10 @@ static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 		}else if( retval < 0 ) return retval;
 
 		spin_lock_irqsave(&board->spinlock, flags);
+		clear_bit(BUS_ERROR_BN, &priv->state);
 		clear_bit(WRITE_READY_BN, &priv->state);
-		write_byte(priv, buffer[ count++ ], CDOR);
+		last_count = count;
+		write_byte(priv, buffer[count++], CDOR);
 		spin_unlock_irqrestore(&board->spinlock, flags);
 	}
 	retval = pio_write_wait(board, priv, 1, 1, priv->type == NEC7210);
@@ -172,7 +175,6 @@ ssize_t nec7210_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buf
 	ssize_t retval = 0;
 
 	clear_bit( DEV_CLEAR_BN, &priv->state ); //XXX
-	clear_bit( BUS_ERROR_BN, &priv->state );
 
 	if(send_eoi)
 	{
