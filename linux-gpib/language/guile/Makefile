@@ -8,13 +8,14 @@
 MAKE 		= make -C
 ROOT 		= ../..
 GPIBLIBS 	= -L$(ROOT)/lib -lgpib -lpthread
-GPIBINCLUDE 	= -I$(ROOT)/include 
+GPIBINCLUDE 	= -I$(ROOT)/include
 
 GUILEDIR 	= /usr/local
 GUILELIBS 	= -L$(GUILEDIR)/lib -lguile
 GUILEINCLUDE    = -I$(GUILEDIR)/include
 
-INSTALLDIR = /usr/local/lib
+PREFIX = /usr/local
+INSTALLDIR = $(PREFIX)/lib
 LIBS =  $(GPIBLIBS) $(GUILELIBS)
 INCLUDES = -I. -I$(ROOT)/include -I$(ROOT)/driver/include $(GUILEINCLUDE)
 CFLAGS = -fpic $(INCLUDES) $(DEFINES) -Wall
@@ -30,7 +31,7 @@ all: libgpib-guile.so
 libgpib-guile.so: $(OBJS)
 	$(CC) -shared $(OBJS) $(LIBS) -o $@ -Wl,-rpath $(GUILEDIR)/lib -Wl,-rpath $(INSTALLDIR)
 
-clean: 
+clean:
 	rm -f *.o *.so *~
 
 install:

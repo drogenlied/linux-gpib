@@ -1,3 +1,23 @@
+;;
+;; gpib.scm - guile binding for LinuxGpib
+;;
+;; Copyright (C) 2003 Stefan Jahn <stefan@lkcc.org>
+;;
+;; LinuxGpib is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2 of the License, or
+;; (at your option) any later version.
+;;
+;; LinuxGpib is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with LinuxGpib; if not, write to the Free Software
+;; Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+;;
+
 (define (println . args) (for-each display args) (newline))
 
 (define gpib:handle '())
@@ -119,4 +139,7 @@
  ;; timeout constants
  TNONE T10us T30us T100us T300us T1ms T3ms T10ms T30ms T100ms T300ms T1s
  T3s   T10s  T30s  T100s  T300s  T1000s
+
+ ;; end-of-string constants
+ REOS XEOS BIN
 )

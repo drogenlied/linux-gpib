@@ -1,3 +1,24 @@
+/*
+ * gpib.c - guile binding for LinuxGpib
+ *
+ * Copyright (C) 2003 Stefan Jahn <stefan@lkcc.org>
+ *
+ * LinuxGpib is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * LinuxGpib is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with LinuxGpib; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,7 +32,7 @@
 SCM
 guile_ibdev (SCM board_index, SCM pad, SCM sad, SCM timeout, SCM eoi, SCM eos)
 {
-  int fd;
+  int fd, _eoi;
 
   SCM_ASSERT_TYPE (SCM_EXACTP (board_index), board_index, 
 		   SCM_ARG1, FUNC_NAME, "exact");
@@ -21,16 +42,22 @@ guile_ibdev (SCM board_index, SCM pad, SCM sad, SCM timeout, SCM eoi, SCM eos)
 		   SCM_ARG3, FUNC_NAME, "exact");
   SCM_ASSERT_TYPE (SCM_EXACTP (timeout), timeout, 
 		   SCM_ARG4, FUNC_NAME, "exact");
-  SCM_ASSERT_TYPE (SCM_EXACTP (eoi), eoi, 
-		   SCM_ARG5, FUNC_NAME, "exact");
+  SCM_ASSERT_TYPE (SCM_EXACTP (eoi) || SCM_BOOLP (eoi), eoi, 
+		   SCM_ARG5, FUNC_NAME, "exact or bool");
   SCM_ASSERT_TYPE (SCM_EXACTP (eos), eos, 
 		   SCM_ARG6, FUNC_NAME, "exact");
+
+  if (SCM_BOOLP (eoi))
+    _eoi = SCM_NFALSEP (eoi);
+  else
+    _eoi = SCM_NUM2INT (SCM_ARG5, eoi);
+
 
   if ((fd = ibdev (SCM_NUM2INT (SCM_ARG1, board_index), 
 		   SCM_NUM2INT (SCM_ARG2, pad),
 		   SCM_NUM2INT (SCM_ARG3, sad),
 		   SCM_NUM2INT (SCM_ARG4, timeout),
-		   SCM_NUM2INT (SCM_ARG5, eoi),
+		   _eoi,
 		   SCM_NUM2INT (SCM_ARG6, eos))) < 0) {
     scm_syserror (FUNC_NAME);
   }
@@ -133,15 +160,19 @@ guile_ibfind (SCM name)
 SCM
 guile_ibsre (SCM ud, SCM enable)
 {
-  int ret;
+  int ret, val;
 
   SCM_ASSERT_TYPE (SCM_EXACTP (ud), ud, 
 		   SCM_ARG1, FUNC_NAME, "exact");
-  SCM_ASSERT_TYPE (SCM_EXACTP (enable), enable, 
-		   SCM_ARG2, FUNC_NAME, "exact");
+  SCM_ASSERT_TYPE (SCM_EXACTP (enable) || SCM_BOOLP (enable), enable, 
+		   SCM_ARG2, FUNC_NAME, "exact or bool");
+
+  if (SCM_BOOLP (enable))
+    val = SCM_NFALSEP (enable);
+  else
+    val = SCM_NUM2INT (SCM_ARG2, enable);
   
-  if ((ret = ibsre (SCM_NUM2INT (SCM_ARG1, ud),
-		    SCM_NUM2INT (SCM_ARG2, enable))) & ERR) {
+  if ((ret = ibsre (SCM_NUM2INT (SCM_ARG1, ud), val)) & ERR) {
     return SCM_BOOL_F;
   }
   return scm_int2num (ret);
@@ -184,15 +215,19 @@ guile_ibclr (SCM ud)
 SCM
 guile_ibonl (SCM ud, SCM online)
 {
-  int ret;
+  int ret, val;
 
   SCM_ASSERT_TYPE (SCM_EXACTP (ud), ud, 
 		   SCM_ARG1, FUNC_NAME, "exact");
-  SCM_ASSERT_TYPE (SCM_EXACTP (online), online, 
-		   SCM_ARG2, FUNC_NAME, "exact");
+  SCM_ASSERT_TYPE (SCM_EXACTP (online) || SCM_BOOLP (online), online, 
+		   SCM_ARG2, FUNC_NAME, "exact or bool");
   
-  if ((ret = ibonl (SCM_NUM2INT (SCM_ARG1, ud),
-		    SCM_NUM2INT (SCM_ARG2, online))) & ERR) {
+  if (SCM_BOOLP (online))
+    val = SCM_NFALSEP (online);
+  else
+    val = SCM_NUM2INT (SCM_ARG2, online);
+  
+  if ((ret = ibonl (SCM_NUM2INT (SCM_ARG1, ud), val)) & ERR) {
     return SCM_BOOL_F;
   }
   return scm_int2num (ret);
@@ -349,6 +384,10 @@ gpib_bindings (void)
   scm_c_define ("ESTB", scm_int2num (ESTB));
   scm_c_define ("ESRQ", scm_int2num (ESRQ));
   scm_c_define ("ETAB", scm_int2num (ETAB));
+
+  scm_c_define ("REOS", scm_int2num (REOS));
+  scm_c_define ("XEOS", scm_int2num (XEOS));
+  scm_c_define ("BIN",  scm_int2num (BIN));
 
   scm_c_define ("TNONE",  scm_int2num (TNONE));
   scm_c_define ("T10us",  scm_int2num (T10us));
