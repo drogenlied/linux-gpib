@@ -22,7 +22,7 @@
 #include "gpibP.h"
 
 
-// struct which defines private_data for tnt4882 devices
+// struct which defines private_data for board
 typedef struct
 {
 	tms9914_private_t tms9914_priv;
