@@ -102,8 +102,11 @@ void nec7210_secondary_address(gpib_device_t *device, nec7210_private_t *priv, u
 unsigned int nec7210_update_status(gpib_device_t *device, nec7210_private_t *priv)
 {
 	int address_status_bits;
+	unsigned long flags;
 
 	if(priv == NULL) return 0;
+
+	spin_lock_irqsave(&device->spinlock, flags);
 
 	address_status_bits = read_byte(priv, ADSR);
 
@@ -125,8 +128,10 @@ unsigned int nec7210_update_status(gpib_device_t *device, nec7210_private_t *pri
 	else
 		set_bit(ATN_NUM, &device->status);
 
+	spin_unlock_irqrestore(&device->spinlock, flags);
+
 	/* we rely on the interrupt handler to set the
-	 * bits read from ISR1 and ISR2 */
+	 * rest of the status bits */
 
 	return device->status;
 }

@@ -78,10 +78,6 @@ void nec7210_interrupt(gpib_device_t *device, nec7210_private_t *priv)
 			set_bit(LACS_NUM, &device->status);
 		else
 			clear_bit(LACS_NUM, &device->status);
-		if(address_status & HR_NATN)
-			clear_bit(ATN_NUM, &device->status);
-		else
-			set_bit(ATN_NUM, &device->status);
 		wake_up_interruptible(&device->wait); /* wake up sleeping process */
 	}
 

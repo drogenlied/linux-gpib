@@ -24,6 +24,8 @@ int nec7210_take_control(gpib_device_t *device, nec7210_private_t *priv, int syn
 {
 	int i;
 	const int timeout = 1000;
+	int retval = 0;
+	unsigned int adsr_bits = 0;
 
 	if(syncronous)
 	{
@@ -38,20 +40,24 @@ int nec7210_take_control(gpib_device_t *device, nec7210_private_t *priv, int syn
 	// busy wait until ATN is asserted
 	for(i = 0; i < timeout; i++)
 	{
-		if((read_byte(priv, ADSR) & HR_NATN) == 0)
+		adsr_bits = read_byte(priv, ADSR);
+		if((adsr_bits & HR_NATN) == 0)
+		{
 			break;
+		}
 		udelay(1);
 	}
 	// suspend if we still don't have ATN
 	if(i == timeout)
 	{
-		while((read_byte(priv, ADSR) & HR_NATN) &&
+		while(((adsr_bits = read_byte(priv, ADSR)) & HR_NATN) &&
 			test_bit(TIMO_NUM, &device->status) == 0)
 		{
 			if(interruptible_sleep_on_timeout(&device->wait, 1))
 			{
-				printk("interupted for ATN\n");
-				return -EINTR;
+				printk("interupted waiting for ATN\n");
+				retval = -EINTR;
+				break;
 			}
 		}
 	}
@@ -59,31 +65,43 @@ int nec7210_take_control(gpib_device_t *device, nec7210_private_t *priv, int syn
 	if(test_bit(TIMO_NUM, &device->status))
 	{
 		printk("gpib: take control timed out\n");
-		return -ETIMEDOUT;
+		retval = -ETIMEDOUT;
 	}
+	if(adsr_bits & HR_NATN)
+		clear_bit(ATN_NUM, &device->status);
+	else
+		set_bit(ATN_NUM, &device->status);
 
-	return 0;
+	return retval;
 }
 
 int nec7210_go_to_standby(gpib_device_t *device, nec7210_private_t *priv)
 {
 	int i;
 	const int timeout = 1000;
+	unsigned int adsr_bits = 0;
+	int retval = 0;
 
 	write_byte(priv, AUX_GTS, AUXMR);
 	// busy wait until ATN is released
 	for(i = 0; i < timeout; i++)
 	{
-		if(read_byte(priv, ADSR) & HR_NATN)
+		adsr_bits = read_byte(priv, ADSR);
+		if(adsr_bits & HR_NATN)
 			break;
 		udelay(1);
 	}
 	if(i == timeout)
 	{
 		printk("error waiting for NATN\n");
-		return -ETIMEDOUT;
+		retval = -ETIMEDOUT;
 	}
-	return 0;
+	if(adsr_bits & HR_NATN)
+		clear_bit(ATN_NUM, &device->status);
+	else
+		set_bit(ATN_NUM, &device->status);
+
+	return retval;
 }
 
 void nec7210_interface_clear(gpib_device_t *device, nec7210_private_t *priv, int assert)
