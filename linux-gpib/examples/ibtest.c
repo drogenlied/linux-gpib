@@ -32,6 +32,7 @@ enum Action
 	GPIB_IFC,
 	GPIB_QUIT,
 	GPIB_READ,
+	GPIB_REMOTE_ENABLE,
 	GPIB_REQUEST_SERVICE,
 	GPIB_SERIAL_POLL,
 	GPIB_TIMEOUT,
@@ -171,6 +172,7 @@ int prompt_for_action(void)
 	{
 		printf("You can:\n"
 			"\tw(a)it for an event\n"
+			"\tchange remote (e)nable line (system controller only)\n"
 			"\tsend (i)nterface clear (system controller only)\n"
 			"\tget bus (l)ine status (board only)\n"
  			"\t(q)uit\n"
@@ -188,6 +190,10 @@ int prompt_for_action(void)
 			case 'A':
 			case 'a':
 				return GPIB_WAIT;
+				break;
+			case 'E':
+			case 'e':
+				return GPIB_REMOTE_ENABLE;
 				break;
 			case 'L':
 			case 'l':
@@ -383,6 +389,21 @@ int interface_clear( int ud )
 	return 0;
 }
 
+int prompt_for_remote_enable( int ud )
+{
+	int status;
+	int assert;
+
+	printf("Enter '1' to assert remote enable, or '0' to unassert: ");
+	scanf( "%i", &assert );
+
+	status = ibsre( ud, assert );
+	if( status & ERR )
+		return -1;
+		
+	return 0;
+}
+
 int main(int argc,char **argv)
 {
 	int dev;
@@ -406,6 +427,9 @@ int main(int argc,char **argv)
 				break;
 			case GPIB_READ:
 				perform_read( dev );
+				break;
+			case GPIB_REMOTE_ENABLE:
+				prompt_for_remote_enable( dev );
 				break;
 			case GPIB_REQUEST_SERVICE:
 				request_service( dev );
