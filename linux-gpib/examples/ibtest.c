@@ -19,6 +19,7 @@ Example program which uses gpib c library, good for initial test of library.
 
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <ib.h>
 #include <stdint.h>
 
@@ -30,6 +31,7 @@ enum Action
 {
 	GPIB_WRITE,
 	GPIB_READ,
+	GPIB_QUIT,
 };
 
 // returns a device descriptor after prompting user for primary address
@@ -41,11 +43,13 @@ int prompt_for_device(void)
 	const int send_eoi = 1;
 	const int eos_mode = 0;
 	const int timeout = T1s;
+	char input[100];
 
 	while(1)
 	{
 		printf("enter primary address for device [0-30]: ");
-		scanf("%i", &pad);
+		fgets(input, sizeof(input), stdin);
+		pad = strtol(input, NULL, 0);
 		if(pad < 0 || pad > 30)
 			printf("primary address must be between 0 and 30\n");
 		else break;
@@ -64,12 +68,12 @@ int prompt_for_device(void)
 // asks user what they want to do next
 int prompt_for_action(void)
 {
-	char result;
+	char input[10];
 	while(1)
 	{
-		printf("You can (r)ead or (w)rite a string to your device (cntl-c to quit):");
-		result = getchar();
-		switch( result )
+		printf("You can (r)ead or (w)rite a string to your device or (q)uit: ");
+		fgets(input, sizeof(input), stdin);
+		switch( input[0] )
 		{
 			case 'r':
 			case 'R':
@@ -78,6 +82,10 @@ int prompt_for_action(void)
 			case 'w':
 			case 'W':
 				return GPIB_WRITE;
+				break;
+			case 'q':
+			case 'Q':
+				return GPIB_QUIT;
 				break;
 			default:
 				break;
@@ -110,7 +118,7 @@ int prompt_for_write(int ud)
 	char buffer[100];
 
 	printf("enter a string to send to your device: ");
-	fgets(buffer, sizeof(buffer), stdin);
+	fgets( buffer, sizeof(buffer), stdin );
 
 	printf("sending string: %s\n", buffer);
 	if( ibwrt(ud, buffer, strlen(buffer)) & ERR )
@@ -141,21 +149,24 @@ int main(int argc,char **argv)
 		exit(1);
 	}
 
-	act = prompt_for_action();
-
-	switch( act )
+	do	
 	{
-		case GPIB_WRITE:
-			if(prompt_for_write(dev) < 0)
-				exit(1);
-			break;
-		case GPIB_READ:
-			if(perform_read(dev) < 0)
-				exit(1);
-			break;
-		default:
-			break;
-	}
+		act = prompt_for_action();
+
+		switch( act )
+		{
+			case GPIB_WRITE:
+				if(prompt_for_write(dev) < 0)
+					exit(1);
+				break;
+			case GPIB_READ:
+				if(perform_read(dev) < 0)
+					exit(1);
+				break;
+			default:
+				break;
+		}
+	}while(act != GPIB_QUIT);
 
 
 #if 0
