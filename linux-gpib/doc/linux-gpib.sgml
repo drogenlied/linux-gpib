@@ -1008,6 +1008,44 @@ volatile int ibsta;
 </refsect1>
 </refentry>
 
+<refentry ID="reference-function-ibrsp">
+<refmeta>
+	<refentrytitle>ibrsp</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibrsp</refname>
+	<refpurpose>conduct serial poll (device)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibrsp</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>char* <parameter>result</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibrsp() serial polls the device specified by <parameter>ud</parameter>.
+	The status byte is stored in the location specified by <parameter>result</parameter>.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
 <refentry ID="reference-function-ibsad">
 <refmeta>
 	<refentrytitle>ibsad</refentrytitle>
@@ -1319,6 +1357,52 @@ volatile int ibsta;
 	'Multidevice' API Functions
 </title>
 
+<refentry ID="reference-function-allspoll">
+<refmeta>
+	<refentrytitle>AllSPoll</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>AllSPoll</refname>
+	<refpurpose>Serial poll multiple devices</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>AllSPoll</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>Addr4882_t* <parameter>addressList</parameter></paramdef>
+		<paramdef>short* <parameter>resultList</parameter></paramdef>
+	</funcprototype>
+	<funcprototype>
+		<funcdef>void <function>AllSpoll</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>Addr4882_t* <parameter>addressList</parameter></paramdef>
+		<paramdef>short* <parameter>resultList</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	AllSPoll() causes the interface board specified by <parameter>board_desc</parameter>
+	to serial poll all the GPIB addresses specified in the <parameter>addressList</parameter>
+	array.  The results of the serial polls are stored into <parameter>resultList</parameter>.
+	If you only wish to serial poll a single device,
+	<link LINKEND="reference-function-readstatusbyte">ReadStatusByte()</link> or
+	<link LINKEND="reference-function-ibrsp">ibrsp()</link> may be
+	more convenient.
+	</para>
+	<para>
+	This function may also be invoked with the alternate capitalization 'AllSpoll'
+	for compatibility with NI's library.
+	</para>
+</refsect1>
+</refentry>
+
 <refentry ID="reference-function-enablelocal">
 <refmeta>
 	<refentrytitle>EnableLocal</refentrytitle>
@@ -1386,6 +1470,44 @@ volatile int ibsta;
 	all of the devices
 	in the <parameter>addressList</parameter> array as listeners (causing
 	them to enter remote mode).  The board must be system controller.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-readstatusbyte">
+<refmeta>
+	<refentrytitle>ReadStatusByte</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ReadStatusByte</refname>
+	<refpurpose>Serial poll a device</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>ReadStatusByte</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>Addr4882_t <parameter>address</parameter></paramdef>
+		<paramdef>short* <parameter>result</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ReadStatusByte() causes the board specified by
+	the board descriptor <parameter>board_desc</parameter> to serial poll
+	the GPIB address specified by <parameter>address</parameter>.  The
+	status byte is stored at the location specified by the <parameter>result</parameter>
+	pointer.  If you wish to serial poll multiple devices, it
+	may be slightly more efficient to use
+	<link LINKEND="reference-function-allspoll">AllSPoll()</link>.
+	Serial polls may also be conducted with the 'traditional API' function
+	<link LINKEND="reference-function-ibrsp">ibrsp()</link>.
 	</para>
 </refsect1>
 </refentry>
