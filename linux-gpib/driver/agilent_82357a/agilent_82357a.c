@@ -124,6 +124,7 @@ int agilent_82357a_write_registers(agilent_82357a_private_t *a_priv, const struc
 	if(num_writes > max_writes)
 	{
 		printk("%s: %s: bug! num_writes=%i too large\n", __FILE__, __FUNCTION__, num_writes);
+		return -EIO;
 	}
 	out_data_length = num_writes * bytes_per_write + header_length;
 	out_data = kmalloc(out_data_length, GFP_KERNEL);
@@ -863,6 +864,8 @@ static int agilent_82357a_setup_urbs(gpib_board_t *board)
 	up(&a_priv->interrupt_transfer_lock);
 	if(retval) 
 	{
+		usb_free_urb(a_priv->interrupt_urb);
+		a_priv->interrupt_urb = NULL;
 		printk("%s: failed to submit first interrupt urb, retval=%i\n", __FILE__, retval);
 		return retval;
 	}
@@ -915,6 +918,7 @@ static int agilent_82357a_init(gpib_board_t *board)
 	if(retval)
 	{
 		printk("%s: %s: agilent_82357a_write_registers() returned error\n", __FILE__, __FUNCTION__);
+		return -EIO;
 	}
 	set_current_state(TASK_INTERRUPTIBLE);
 	if(schedule_timeout(usec_to_jiffies(2000)))
@@ -980,21 +984,25 @@ static int agilent_82357a_init(gpib_board_t *board)
 	if(i > sizeof(writes) / sizeof(writes[0]))
 	{
 		printk("%s: %s: bug! writes[] overflow\n", __FILE__, __FUNCTION__);
+		return -EFAULT;
 	}
 	retval = agilent_82357a_write_registers(a_priv, writes, i);
 	if(retval)
 	{
 		printk("%s: %s: agilent_82357a_write_registers() returned error\n", __FILE__, __FUNCTION__);
+		return -EIO;
 	}
 	hw_control.address = HW_CONTROL;
 	retval = agilent_82357a_read_registers(a_priv, &hw_control, 1);
 	if(retval)
 	{
 		printk("%s: %s: agilent_82357a_read_registers() returned error\n", __FILE__, __FUNCTION__);
+		return -EIO;
 	}
 	a_priv->hw_control_bits = hw_control.value & 0x7;
 	return 0;
 }
+
 int agilent_82357a_attach(gpib_board_t *board)
 {
 	int retval;
