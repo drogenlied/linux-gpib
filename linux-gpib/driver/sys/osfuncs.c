@@ -251,36 +251,6 @@ printk("minor %i ioctl %i\n", minor, cmd);
 			retval = ibAPrsp(device, ibargp->ib_arg, &c);
 			put_user( c, ibargp->ib_buf );
 			break;
-		case DVWRT:	// XXX unnecessary, should be in user space lib
-
-			/* Check read access to buffer */
-			retval = verify_area(VERIFY_READ, ibargp->ib_buf, ibargp->ib_cnt);
-			if (retval)
-				GIVE_UP(retval);
-
-			/* Write buffer loads till we empty the user supplied buffer */
-			userbuf = ibargp->ib_buf;
-			remain = ibargp->ib_cnt;
-			while (remain > 0  && !(ibstatus(device) & (TIMO)))
-			{
-				int send_eoi;
-				send_eoi = device->buffer_length <= remain && device->send_eoi;
-				copy_from_user(device->buffer, userbuf, (device->buffer_length < remain) ?
-					device->buffer_length : remain );
-				ret = dvwrt(device, ibargp->ib_arg, device->buffer, (device->buffer_length < remain) ?
-					device->buffer_length : remain, send_eoi);
-				if(ret < 0)
-				{
-					retval = -EIO;
-					break;
-				}
-				remain -= ret;
-				userbuf += ret;
-			}
-			ibargp->ib_ibcnt = ibargp->ib_cnt - remain;
-
-			break;
-
 		/* special configuration options */
 		case CFCBASE:
 			osChngBase(device, ibargp->ib_arg);

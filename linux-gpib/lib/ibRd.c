@@ -22,7 +22,7 @@ int receive_setup(ibBoard_t *board, int pad, int sad)
 	if ( board->sad >= 0 )
 		cmdString[i++] = MSA(board->sad);
 	cmdString[i++] = MTA(pad);
-	if (sad)
+	if(sad >= 0)
 		cmdString[i++] = MSA(sad);
 
 	if ( __ibcmd(board, cmdString, i) < 0)

@@ -179,22 +179,6 @@ printf("\nres='%s' cnt=%d\n",res,ibcnt);
 
 }
 
-/*
-* This shows how ibcmd could be used
-* to clean up the bus sending UNL UNT messages.
-*
-*/
-
-
-printf("\nSend Unlisten,Untalk\n");
-cmd[0] = UNL;
-cmd[1] = UNT;
-if( ibcmd(dev,cmd,2L) & ERR ){
-	gpiberr("error sending UNL,UNT\n");
-	exit(1);
-}
-
-
 if( ibsre(dev,0) & ERR ){      /* unset rem */
 	gpiberr("ibsre err");
 	exit(1);
@@ -203,8 +187,6 @@ if( ibsre(dev,0) & ERR ){      /* unset rem */
 ibonl(dev,0);
 	return 0;
 }
-
-
 
 /*
 * This is a simple error handling function

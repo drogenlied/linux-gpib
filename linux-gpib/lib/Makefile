@@ -65,8 +65,7 @@ realclean : clean
 
 install:
 	$(INSTALL) -D libgpib.so $(LIB_TARGET_DIR)/$(LIBNAME)
-	cd $(LIB_TARGET_DIR)
-	ln -sf $(LIBNAME) libgpib.so
+	cd $(LIB_TARGET_DIR) && ln -sf $(LIBNAME) libgpib.so
 	ldconfig $(LIB_TARGET_DIR)		
 #	install ib.h           $(INC_TARGET_DIR)		
 #        install ibConf.h       $(INC_TARGET_DIR)		

@@ -34,6 +34,7 @@ int ibcmd(int ud, void *cmd, unsigned long cnt)
 	}
 
 	ibcnt = count;
+	ibsta &= ~ERR;
 	return ibsta;
 }
 

@@ -77,12 +77,7 @@ int ibBoardFunc (int bd, int code, ...)
 
 	switch (code)
 	{
-		case IBRD:
-		case DVRD:
-		case IBWRT:
-		case DVWRT:
 		case IBAPE:
-		case IBCMD:
 			va_start(ap, code);
 			arg=va_arg(ap, int);
 			buf=va_arg(ap, void*);
@@ -107,8 +102,6 @@ int ibBoardFunc (int bd, int code, ...)
 			cnt=0;
 			break;
 	}
-	if(code == IBRD)
-		memset(buf, 0, cnt);
 
 	if( ibBoard[bd].fileno > 0 )
 	{

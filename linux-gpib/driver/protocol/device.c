@@ -35,10 +35,12 @@ int dvtrg(gpib_device_t *device, int padsad)
 		printk("gpib: interface cannot trigger when not CIC\n");
 		return -1;
 	}
+#if 0
 	if(send_setup(device, padsad))
 	{
 		return -1;
 	}
+#endif
 	cmdString[0] = GET;
 	ibcmd(device, cmdString, 1);
 	return 0;
@@ -64,8 +66,10 @@ int dvclr(gpib_device_t *device, int padsad)
 	}
 	if(device->interface->take_control(device, 0) < 0)
 		return -1;
+#if 0
 	if(send_setup(device, padsad) < 0)
 		return -1;
+#endif
 	cmdString[0] = SDC;
 	if(device->interface->command(device, cmdString, 1) < 0)
 		return -1;
