@@ -695,7 +695,7 @@ int ni_pcmcia_attach(gpib_board_t *board)
 
 	if( dev_list->io.NumPorts1 )
 	{
-		GPIB_DPRINTK( "ioport1 window attributes: 0x%x\n", io.Attributes1 );
+		GPIB_DPRINTK( "ioport1 window attributes: 0x%x\n", dev_list->io.Attributes1 );
 		nec_priv->iobase = dev_list->io.BasePort1;
 		tnt_priv->io_write = outb_wrapper;
 		tnt_priv->io_read = inb_wrapper;
@@ -703,7 +703,7 @@ int ni_pcmcia_attach(gpib_board_t *board)
 		nec_priv->write_byte = nec7210_ioport_write_byte;
 	} else if ( dev_list->io.NumPorts2 )
 	{
-		GPIB_DPRINTK( "ioport2 window attributes: 0x%x\n", io.Attributes2 );
+		GPIB_DPRINTK( "ioport2 window attributes: 0x%x\n", dev_list->io.Attributes2 );
 		nec_priv->iobase = dev_list->io.BasePort2;
 		tnt_priv->io_write = outb_wrapper;
 		tnt_priv->io_read = inb_wrapper;
