@@ -65,7 +65,7 @@ static const int DRIVERBITS = ( SRQI | LOK | REM | CIC | ATN | TACS | LACS | DTA
 
 static const int device_status_mask = ERR | TIMO | END | CMPL | RQS;
 static const int board_status_mask = ERR | TIMO | END | CMPL | SPOLL |
-	EVENT | LOK | REM | CIC | ATN | TACS | LACS | DTAS | DCAS;
+	EVENT | LOK | REM | CIC | ATN | TACS | LACS | DTAS | DCAS | SRQI;
 
 /* IBERR error codes */
 enum iberr_code
