@@ -33,12 +33,7 @@
 #define DMA_PAGE_SIZE (128*1024)       /* Page Boundaries for channel 5-7 transfers */
 #define MAX_DMA_MEMORY (16*1024*1024)  /* DMA transfers limited to lower 16M */
 
-#ifdef CONFIG_DMA_MEM_PERM
-#define MAX_DMA_SIZE	(128*1024)	/* Maximum DMA transfer size 	*/
-#else
-#define MAX_DMA_SIZE	(63*1024)	/* Maximum DMA transfer size 	*/
-#endif
-
+#define MAX_DMA_SIZE	(64 * 1024)	/* Maximum DMA transfer size 	*/
 
 #define TICKSPERSEC 100
 #define OK 0

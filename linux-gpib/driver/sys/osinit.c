@@ -180,8 +180,8 @@ struct file_operations ib_fops =
 {
 	owner: THIS_MODULE,
 	llseek: NULL,
-	read: ibVFSread,
-	write: ibVFSwrite,
+	read: NULL,
+	write: NULL,
 	readdir: NULL,
 	poll: NULL,
 	ioctl: ibioctl,
