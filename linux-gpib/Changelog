@@ -1,5 +1,15 @@
 Linux GPIB Package changelog
 
+3.1.91: Fixed compilation of Perl and TCL bindings.  Added accelerated
+support for Ines, NI, and Measurement Computing chips.  Added ibpct(),
+PassControl(), ibrsc(), ibrdf(), and ibwrtf().  Reduced size of
+massive dependency files which slowed down compilation.  Fixed use
+of board index as a board descriptor.  ThreadIb*() fixes from Kentaro
+Kitigawa.  Fixed setting of eos mode with ibdev().  Fixed RFD holdoff
+problems on reads due to incompatibilities in chips.  Fixed brokeness
+that happened after a timeout occurs.  Implemented IbcTIMING/IbaTIMING
+in ibconfig()/ibask() so T1 delay can now be adjusted.
+
 3.1.9: Added ability to specify pci boards by bus and slot int gpib.conf.
 Fixed Ines PCMCIA support.  Fixed HP82335 support.  Fixed reporting of 
 errors on writes.  Added support for devfs.  Fixes for giving boards 
