@@ -360,7 +360,7 @@ static int board_type_ioctl(gpib_board_t *board, unsigned long arg)
 	board_type_ioctl_t cmd;
 	int retval;
 
-	if( !capable( CAP_SYS_ADMIN ) )
+	if( !suser() )
 		return -EPERM;
 
 	retval = copy_from_user(&cmd, (void*)arg, sizeof(board_type_ioctl_t));
@@ -950,7 +950,7 @@ static int iobase_ioctl( gpib_board_t *board, unsigned long arg )
 	unsigned long base_addr;
 	int retval;
 
-	if( !capable( CAP_SYS_ADMIN ) )
+	if( !suser() )
 		return -EPERM;
 
 	retval = copy_from_user( &base_addr, ( void * ) arg, sizeof( base_addr ) );
@@ -967,7 +967,7 @@ static int irq_ioctl( gpib_board_t *board, unsigned long arg )
 	unsigned int irq;
 	int retval;
 
-	if( !capable( CAP_SYS_ADMIN ) )
+	if( !suser() )
 		return -EPERM;
 
 	retval = copy_from_user( &irq, ( void * ) arg, sizeof( irq ) );
@@ -984,7 +984,7 @@ static int dma_ioctl( gpib_board_t *board, unsigned long arg )
 	unsigned int dma_channel;
 	int retval;
 
-	if( !capable( CAP_SYS_ADMIN ) )
+	if( !suser() )
 		return -EPERM;
 
 	retval = copy_from_user( &dma_channel, ( void * ) arg, sizeof( dma_channel ) );
@@ -1182,7 +1182,7 @@ static int select_pci_ioctl( gpib_board_t *board, unsigned long arg )
 	select_pci_ioctl_t selection;
 	int retval;
 
-	if( !capable( CAP_SYS_ADMIN ) )
+	if( !suser() )
 		return -EPERM;
 
 	retval = copy_from_user( &selection, ( void * ) arg, sizeof( selection ) );
