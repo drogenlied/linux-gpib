@@ -51,7 +51,7 @@ if [ -f ".config" ];then
 fi
 
 RESULT=$(dialog --title "Kernel Source Directory" --inputbox "Input path to linux \
-kernel source directory" 10 70 $LINUXDIR 2>&1)
+kernel source directory" 10 70 $LINUXDIR 2>&1 1>/dev/null)
 
 set_svar LINUXDIR $RESULT
 
@@ -96,7 +96,7 @@ RESULT=$(dialog --title "Board Type Selection" \
 	"INES" "Ines boards" "on" \
 	"CEC" "Captial Equipment Corporation / Keithley" "on" \
 	"TNT4882TMS" "NI PCI-GPIB in tms9914 mode (for testing only)" "off" \
-	2>&1)
+	2>&1 1>/dev/null)
 
 if [ $? = 0 ]; then
 	for i in `echo $RESULT | sed 's!\"!!g' `; do
@@ -115,7 +115,7 @@ RESULT=$(dialog --title "Compilation options" \
 	17 76 10 \
 	"GPIB_CONFIG_PCMCIA"  "Compile in support for PCMCIA boards" "off" \
 	"GPIB_CONFIG_VERBOSE_DEBUG" "Produce verbose debugging messages" "off" \
-	2>&1)
+	2>&1 1>/dev/null)
 
 if [ $? = 0 ]; then
 	for i in `echo $RESULT | sed 's!\"!!g' `; do
