@@ -84,7 +84,7 @@ char cval;
 		| T_BASE '=' T_NUMBER     { ibBoard[bdid].base = $3; }
 		| T_IRQ  '=' T_NUMBER     { ibBoard[bdid].irq = $3; }
 		| T_DMA  '=' T_NUMBER     { ibBoard[bdid].dma = $3; }
-		| T_MASTER T_BOOL	{ ibBoard[bdid].is_system_controller = 1;}
+		| T_MASTER T_BOOL	{ ibBoard[bdid].is_system_controller = $2; }
 		| T_BOARD_TYPE '=' T_STRING
 			{
 				strncpy(ibBoard[bdid].board_type, $3,
