@@ -438,6 +438,12 @@ pci board.  If used, you must also specify the pci slot with <option>--pci-slot<
 	<entry>cec_pci</entry>
 	</row>
 	<row>
+	<entry>CONTEC</entry>
+	<entry>GP-IB(PC)</entry>
+	<entry>pc2_gpib.o</entry>
+	<entry>pcIIa</entry>
+	</row>
+	<row>
 	<entry>Hewlett Packard</entry>
 	<entry>HP82335</entry>
 	<entry>hp82335.o</entry>
