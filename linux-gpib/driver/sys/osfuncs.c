@@ -196,7 +196,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 	}
 	board = &board_array[ minor ];
 
-	GPIB_DPRINTK( "pid %i minor %i ioctl %d, interface=%s, open=%d, onl=%d\n",
+	GPIB_DPRINTK( "pid %i, minor %i, ioctl %d, interface=%s, open=%d, onl=%d\n",
 		current->pid, minor, cmd & 0xff,
 		board->interface ? board->interface->name : "",
 		board->open_count,
@@ -1013,7 +1013,9 @@ static int autospoll_ioctl(gpib_board_t *board, unsigned long arg)
 	{
 		return -ERESTARTSYS;
 	}
-
+/*FIXME: should keep track of whether autospolling is on or off
+ * by descriptor.  That would also allow automatic decrement
+ * of autospollers when descriptors are closed. */
 	if(enable)
 		board->autospollers++;
 	else
