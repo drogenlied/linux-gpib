@@ -49,6 +49,7 @@ typedef struct
 	unsigned long misc_base;
 	int irq;
 	unsigned short card_mode_bits;
+	unsigned short event_status_bits;
 } agilent_82350b_private_t;
 
 // interfaces
@@ -85,6 +86,7 @@ irqreturn_t agilent_82350b_interrupt(int irq, void *arg, struct pt_regs *registe
 // utility functions
 int agilent_82350b_allocate_private(gpib_board_t *board);
 void agilent_82350b_free_private(gpib_board_t *board);
+unsigned short read_and_clear_event_status(gpib_board_t *board);
 
 //registers
 enum agilent_82350b_gpib_registers

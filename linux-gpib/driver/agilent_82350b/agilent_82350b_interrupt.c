@@ -18,6 +18,18 @@
 
 #include "agilent_82350b.h"
 
+unsigned short read_and_clear_event_status(gpib_board_t *board)
+{
+	agilent_82350b_private_t *a_priv = board->private_data;
+	unsigned long flags;
+	unsigned short status;
+	spin_lock_irqsave(&board->spinlock, flags);
+	status = a_priv->event_status_bits;
+	a_priv->event_status_bits = 0;	
+	spin_unlock_irqrestore(&board->spinlock, flags);
+	return status;
+}
+
 irqreturn_t agilent_82350b_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
 	int tms9914_status1, tms9914_status2;
@@ -45,6 +57,8 @@ irqreturn_t agilent_82350b_interrupt(int irq, void *arg, struct pt_regs *registe
 	{
 		writeb(event_status & (BUFFER_END_STATUS_BIT | TERM_COUNT_STATUS_BIT), 
 			a_priv->gpib_base + EVENT_STATUS_REG);
+		a_priv->event_status_bits |= event_status;
+		wake_up_interruptible(&board->wait);
 	}
 	spin_unlock_irqrestore( &board->spinlock, flags );
 	return retval;
