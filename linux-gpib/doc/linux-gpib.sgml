@@ -642,19 +642,70 @@ volatile int ibsta;
 	<para>
 	ibrd() is used to read data bytes from a device or board.  The argument
 	<parameter>ud</parameter> can be either a device or board descriptor.
+  Up to
+	<parameter>num_bytes</parameter> bytes
+	are read into the user-supplied array <parameter>buffer</parameter>.
+	The read may be terminated by a
+	timeout occuring(see <link LINKEND="reference-function-ibtmo">ibtmo()</link>),
+	the talker asserting the EOI line, the board receiving the
+	end-of-string character (see
+	<link LINKEND="reference-function-ibeos">ibeos()</link>), receiving a device
+	clear command, or receiving an interface clear.
+	</para>
+	<para>
 	If <parameter>ud</parameter> is a device descriptor, then the library
 	automatically handles addressing the device as talker and the interface
-	board as listener before performing the read.  Up to
-	<parameter>num_bytes</parameter> bytes
-	are read into the user-supplied array <parameter>buffer</parameter>.  The
-	read may be terminated by an end-of-string character (see
-	<link LINKEND="reference-function-ibeos">ibeos()</link>), a
-	timeout (see <link LINKEND="reference-function-ibtmo">ibtmo()</link>),
-	or by the talker asserting the EOI line.
+	board as listener before performing the read.
+	</para>
+	<para>
+	If <parameter>ud</parameter> is a board descriptor, no addressing
+	is performed and the board must have already been addressed as a listener
+	by the controller-in-charge.
 	</para>
 	<para>
 	After the ibrd() call, ibcnt and ibcntl are set to the number of bytes
 	read.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-ibrdf">
+<refmeta>
+	<refentrytitle>ibrdf</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibrdf</refname>
+	<refpurpose>read data bytes to file (board or device)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibrdf</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>const char* <parameter>file_path</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibrdf() is similar to <link LINKEND="reference-function-ibwrt">ibrd()</link>
+	except that the data bytes read are stored in a file instead
+	of an array in memory.  <parameter>file_path</parameter> specifies
+	the save file.  If the file already exists, the data will be appended
+	onto the end of the file.
 	</para>
 </refsect1>
 <refsect1>
@@ -896,21 +947,69 @@ volatile int ibsta;
 	<para>
 	ibwrt() is used to write data bytes to a device or board.  The argument
 	<parameter>ud</parameter> can be either a device or board descriptor.
-	If <parameter>ud</parameter> is a device descriptor, then the library
-	automatically handles addressing the device as listener and the interface
-	board as talker before performing the write.
-	<parameter>num_bytes</parameter> bytes
+	<parameter>num_bytes</parameter> specifies how many bytes
 	are written from the user-supplied array <parameter>buffer</parameter>.
 	EOI may be asserted with the last byte sent or when the end-of-string
 	character is sent (see <link LINKEND="reference-function-ibeos">
 	ibeos()</link> and <link LINKEND="reference-function-ibeot">
-	ibeot()</link>).  The write
+	ibeot()</link>).  The write operation
 	may be interrupted by a timeout (see <link LINKEND="reference-function-ibtmo">
-	ibtmo()</link>).
+	ibtmo()</link>), the board receiving a device clear command, or
+	receiving an interface clear.
+	</para>
+	<para>
+	If <parameter>ud</parameter> is a device descriptor, then the library
+	automatically handles addressing the device as listener and the interface
+	board as talker, before sending the data bytes onto the bus.
+	</para>
+	<para>
+	If <parameter>ud</parameter>
+	is a board descriptor, the board simply writes the data onto the bus.  The
+	board must have already been addressed as talker by the controller-in-charge.
 	</para>
 	<para>
 	After the ibwrt() call, ibcnt and ibcntl are set to the number of bytes
 	written.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-ibwrtf">
+<refmeta>
+	<refentrytitle>ibwrtf</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibwrtf</refname>
+	<refpurpose>write data bytes from file (board or device)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibwrtf</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>const char* <parameter>file_path</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibwrtf() is similar to <link LINKEND="reference-function-ibwrt">ibwrt()</link>
+	except that the data to be written is taken from a file instead
+	of an array in memory.  <parameter>file_path</parameter> specifies
+	the file, which is written byte for byte onto the bus.
 	</para>
 </refsect1>
 <refsect1>
