@@ -1,5 +1,5 @@
 /***************************************************************************
-                                 nec7210/aux.c 
+                                 nec7210/aux.c
                              -------------------
 
     begin                : Dec 2001
@@ -18,37 +18,60 @@
 
 #include "board.h"
 #include <linux/wait.h>
+#include <linux/delay.h>
 #include <asm/bitops.h>
 
 int nec7210_take_control(int syncronous)
 {
+	int i;
+	const int timeout = 1000;
+
 	if(syncronous)
 		GPIBout(AUXMR, AUX_TCS);
 	else
 		GPIBout(AUXMR, AUX_TCA);
-	// wait until we have control
-	while(GPIBin(ADSR) & HR_NATN)
+	// busy wait until ATN is asserted
+	for(i = 0; i < timeout; i++)
 	{
-		if(interruptible_sleep_on_timeout(&nec7210_status_wait, 1))
+		if((GPIBin(ADSR) & HR_NATN) == 0)
+			break;
+		udelay(1);
+	}
+	// suspend if we still don't have ATN
+	if(i == timeout)
+	{
+		while(GPIBin(ADSR) & HR_NATN)
 		{
-			printk("error waiting for ATN\n");
-			return -1;
+			if(interruptible_sleep_on_timeout(&nec7210_status_wait, 1))
+			{
+				printk("error waiting for ATN\n");
+				return -1;
+			}
 		}
 	}
+
 	return 0;
 }
 
 int nec7210_go_to_standby(void)
 {
+	int i;
+	const int timeout = 1000;
+
 	GPIBout(AUXMR, AUX_GTS);
-	while((GPIBin(ADSR) & HR_NATN) == 0)
+	// busy wait until ATN is released
+	for(i = 0; i < timeout; i++)
 	{
-		if(interruptible_sleep_on_timeout(&nec7210_status_wait, 1))
-		{
-			printk("error waiting for NATN\n");
-			return -1;
-		}
+		if(GPIBin(ADSR) & HR_NATN)
+			break;
+		udelay(1);
 	}
+	if(i == timeout)
+	{
+		printk("error waiting for NATN\n");
+		return -1;
+	}
+
 	return 0;
 }
 

@@ -92,8 +92,6 @@ IBLCL int dvclr(int padsad)
 IBLCL int dvrsp(int padsad, uint8_t *result)
 {
 	char cmd_string[2];
-	uint8_t isreg1;
-	int sp_noTimo;
 	int status = board.update_status();
 	int end_flag;
 	ssize_t ret;

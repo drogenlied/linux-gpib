@@ -17,6 +17,7 @@
  ***************************************************************************/
 
 #include "board.h"
+#include <linux/delay.h>
 
 int admr_bits = HR_TRM0 | HR_TRM1;
 
@@ -39,13 +40,31 @@ void nec7210_disable_eos(void)
 	GPIBout(AUXMR, auxa_bits);
 }
 
-int nec7210_parallel_poll(uint8_t * result)
+int nec7210_parallel_poll(uint8_t *result)
 {
-	return -1;
+	int ret;
+
+	// enable command out interrupts
+	imr2_bits |= HR_COIE;
+	GPIBout(IMR2, imr2_bits);
 
 	// execute parallel poll
 	GPIBout(AUXMR, AUX_EPP);
-	// wait for result and store it XXX
+
+	// wait for result
+	ret = wait_event_interruptible(nec7210_command_wait, test_bit(0, &command_out_ready));
+
+	// disable command out interrupts
+	imr2_bits &= ~HR_COIE;
+	GPIBout(IMR2, imr2_bits);
+
+	if(ret)
+	{
+		printk("gpib: parallel poll interrupted\n");
+		return -1;
+	}
+
+	*result = GPIBin(CPTR);
 
 	return 0;
 }
