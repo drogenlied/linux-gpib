@@ -81,7 +81,7 @@ unsigned int ines_t1_delay( gpib_board_t *board, unsigned int nano_sec )
 		write_byte( nec_priv, INES_AUXD | INES_FOLLOWING_T1_350ns |
 			INES_INITIAL_T1_2000ns, AUXMR );
 		retval = 350;
-	}else if( nano_sec <= 500 )
+	}else 
 	{
 		write_byte( nec_priv, INES_AUXD | INES_FOLLOWING_T1_500ns |
 			INES_INITIAL_T1_2000ns, AUXMR );
