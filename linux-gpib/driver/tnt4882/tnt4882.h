@@ -43,8 +43,11 @@ typedef struct
 
 // interfaces
 extern gpib_interface_t ni_isa_interface;
+extern gpib_interface_t ni_isa_accel_interface;
 extern gpib_interface_t ni_pci_interface;
+extern gpib_interface_t ni_pci_accel_interface;
 extern gpib_interface_t ni_pcmcia_interface;
+extern gpib_interface_t ni_pcmcia_accel_interface;
 
 // interface functions
 ssize_t tnt4882_read(gpib_board_t *board, uint8_t *buffer, size_t length,
