@@ -93,12 +93,6 @@ unload:
 
 test:  unload load run-test unload
 
-
-device:
-	mknod /dev/gpib0/master c $(DRIVER_MAJOR) 0
-
-
-
 install: 
 	$(INSTALL) -D gpib-common.o $(MODLIB)/misc/gpib-common.o
 	for i in $(SUBDIRS); do \
