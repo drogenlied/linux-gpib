@@ -11,11 +11,12 @@
 This is Linux-GPIB the IEEE-488 card support
 package and measurement suite for LINUX.
 
-It is based on the 2.05-alpha release from the Linux Lab
-Project, which was maintained by C. Schroeter.  However,
-the package was left unmaintained for a couple years so
-I (Frank Hess) decided to pick it up and port it to the
-2.4 Linux kernel.
+This version of Linux-GPIB requires a version 2.6.x of the
+Linux kernel.  Older 2.4.x kernels are supported by
+Linux-GPIB versions 3.1.x.
+
+See the INSTALL file for instructions on building and
+installing this software package.
 
 Send comments, questions and suggestions to
 to the linux-gpib mailing list
@@ -23,8 +24,8 @@ linux-gpib-general@lists.sourceforge.net
 
 *************** COPYRIGHT NOTICE ***********************
 
-If You want to use the Package for Commercial Purpose
-Please read the COPYRIGHTS File very Carefuly.
+If you want to distribute software which makes use of
+this package, please read the COPYRIGHTS file carefully.
 
 ********************************************************
 
