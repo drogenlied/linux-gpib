@@ -33,8 +33,7 @@ static int close_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned lo
 static int serial_poll_ioctl( gpib_board_t *board, unsigned long arg );
 static int wait_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board, unsigned long arg );
 static int parallel_poll_ioctl( gpib_board_t *board, unsigned long arg );
-static int online_ioctl( gpib_board_t *board, gpib_file_private_t *priv,
-	unsigned long arg );
+static int online_ioctl( gpib_board_t *board, unsigned long arg );
 static int remote_enable_ioctl( gpib_board_t *board, unsigned long arg );
 static int take_control_ioctl( gpib_board_t *board, unsigned long arg );
 static int line_status_ioctl( gpib_board_t *board, unsigned long arg );
@@ -77,7 +76,6 @@ static gpib_descriptor_t* handle_to_descriptor( const gpib_file_private_t *file_
 
 static int init_gpib_file_private( gpib_file_private_t *priv )
 {
-	priv->online_count = 0;
 	priv->holding_mutex = 0;
 	memset( priv->descriptors, 0, sizeof( priv->descriptors ) );
 	priv->descriptors[ 0 ] = kmalloc( sizeof( gpib_descriptor_t ), GFP_KERNEL );
@@ -139,8 +137,9 @@ int ibopen(struct inode *inode, struct file *filep)
 			printk( "gpib: request module returned %i\n", retval );
 		}
 	}
-
 	board->open_count++;
+	if( board->interface )
+		__MOD_INC_USE_COUNT( board->interface->provider_module );
 
 	return 0;
 }
@@ -167,14 +166,14 @@ int ibclose(struct inode *inode, struct file *filep)
 		cleanup_open_devices( priv, board );
 		if( priv->holding_mutex )
 			up( &board->mutex );
-		while( priv->online_count )
-			iboffline( board, priv );
 
 		kfree( filep->private_data );
 		filep->private_data = NULL;
 	}
 
 	board->open_count--;
+	if( board->interface )
+		__MOD_DEC_USE_COUNT( board->interface->provider_module );
 
 	if( board->exclusive )
 		board->exclusive = 0;
@@ -239,7 +238,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			return mutex_ioctl( board, filep->private_data, arg );
 			break;
 		case IBONL:
-			return online_ioctl( board, filep->private_data, arg );
+			return online_ioctl( board, arg );
 			break;
 		case IBPAD:
 			return pad_ioctl( board, filep->private_data, arg );
@@ -376,7 +375,10 @@ static int board_type_ioctl(gpib_board_t *board, unsigned long arg)
 		interface = list_entry(list_ptr, gpib_interface_t, list);
 		if(strcmp(interface->name, cmd.name) == 0)
 		{
+			if( board->interface )
+				__MOD_DEC_USE_COUNT( board->interface->provider_module );
 			board->interface = interface;
+			__MOD_INC_USE_COUNT( board->interface->provider_module );
 			return 0;
 		}
 	}
@@ -794,8 +796,7 @@ static int parallel_poll_ioctl( gpib_board_t *board, unsigned long arg )
 	return 0;
 }
 
-static int online_ioctl( gpib_board_t *board, gpib_file_private_t *priv,
-	unsigned long arg )
+static int online_ioctl( gpib_board_t *board, unsigned long arg )
 {
 	online_ioctl_t online_cmd;
 	int retval;
@@ -805,9 +806,9 @@ static int online_ioctl( gpib_board_t *board, gpib_file_private_t *priv,
 		return -EFAULT;
 
 	if( online_cmd.online )
-		return ibonline( board, priv );
+		return ibonline( board );
 	else
-		return iboffline( board, priv );
+		return iboffline( board );
 
 	return 0;
 }

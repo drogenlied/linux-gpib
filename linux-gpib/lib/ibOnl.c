@@ -20,7 +20,6 @@
 
 int board_online( ibBoard_t *board, int online )
 {
-	online_ioctl_t online_cmd;
 	int retval;
 
 	if( online )
@@ -32,46 +31,8 @@ int board_online( ibBoard_t *board, int online )
 		retval = destroy_autopoll_thread( board );
 		if( retval < 0 )
 			return retval;
+		ibBoardClose( board );
 	}
-	online_cmd.online = online;
-	retval = ioctl( board->fileno, IBONL, &online_cmd );
-	if( retval < 0 )
-	{
-		fprintf( stderr, "libgpib: IBONL ioctl failed\n" );
-		setIberr( EDVR );
-		setIbcnt( errno );
-		return -1;
-	}
-
-	if( online )
-	{
-		retval = lock_board_mutex( board );
-		if( retval < 0 ) return retval;
-
-		retval = request_system_control( board, board->is_system_controller );
-		if( retval < 0 )
-		{
-			unlock_board_mutex( board );
-			return retval;
-		}
-		if( board->is_system_controller )
-		{
-			retval = remote_enable( board, 1 );
-			if( retval < 0 )
-			{
-				unlock_board_mutex( board );
-				return retval;
-			}
-			retval = assert_ifc( board, 100 );
-			if( retval < 0 )
-			{
-				unlock_board_mutex( board );
-				return retval;
-			}
-		}
-		retval = unlock_board_mutex( board );
-		if( retval < 0 ) return retval;
-	}else ibBoardClose( board );
 
 	return 0;
 }

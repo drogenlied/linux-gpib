@@ -154,6 +154,7 @@ static int configure_board( ibBoard_t *board, unsigned int minor, unsigned int p
 	select_pci_ioctl_t pci_selection;
 	pad_ioctl_t pad_cmd;
 	sad_ioctl_t sad_cmd;
+	online_ioctl_t online_cmd;
 	int retval;
 
 	strncpy( boardtype.name, board->board_type, sizeof( boardtype.name ) );
@@ -180,6 +181,44 @@ static int configure_board( ibBoard_t *board, unsigned int minor, unsigned int p
 	pci_selection.pci_slot = board->pci_slot;
 	retval = ioctl( board->fileno, IBSELECT_PCI, &pci_selection );
 	if( retval < 0 ) return retval;
+
+	online_cmd.online = 0;
+	retval = ioctl( board->fileno, IBONL, &online_cmd );
+	if( retval < 0 )
+	{
+		fprintf( stderr, "failed to bring board offline\n" );
+		return retval;
+	}
+	online_cmd.online = 1;
+	retval = ioctl( board->fileno, IBONL, &online_cmd );
+	if( retval < 0 )
+	{
+		fprintf( stderr, "failed to bring board online\n" );
+		return retval;
+	}
+
+	retval = ibrsc( minor, board->is_system_controller );
+	if( retval & ERR )
+	{
+		fprintf( stderr, "failed to request/release system control\n" );
+		return -1;
+	}
+	if( board->is_system_controller )
+	{
+		// these should be optional XXX
+		retval = ibsre( minor, 1 );
+		if( retval & ERR )
+		{
+			fprintf( stderr, "failed to assert remote enable\n" );
+			return -1;
+		}
+		retval = ibsic( minor );
+		if( retval & ERR )
+		{
+			fprintf( stderr, "failed to assert interface clear\n" );
+			return -1;
+		}
+	}
 
 	return 0;
 }

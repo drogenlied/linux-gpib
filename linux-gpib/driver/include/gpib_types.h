@@ -263,7 +263,6 @@ typedef struct
 
 typedef struct
 {
-	unsigned int online_count;
 	volatile short holding_mutex;
 	gpib_descriptor_t *descriptors[ GPIB_MAX_NUM_DESCRIPTORS ];
 } gpib_file_private_t;

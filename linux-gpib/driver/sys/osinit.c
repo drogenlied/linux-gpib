@@ -78,15 +78,13 @@ void gpib_unregister_driver(gpib_interface_t *interface)
 	for(i = 0; i < GPIB_MAX_NUM_BOARDS; i++)
 	{
 		gpib_board_t *board = &board_array[i];
-		if (board->interface == interface) {
-			if (board->open_count > 0)
+		if (board->interface == interface)
+		{
+			if( board->open_count > 0 )
 				printk("gpib: Warning:"
 					" deregisted interface %s in use\n",
 					interface->name);
-			if (board->online > 0)
-				printk("gpib: This can\'t happen:"
-					" deregisted interface %s is online\n",
-					interface->name);
+			iboffline( board );
 			board->interface = NULL;
 		}
 	}

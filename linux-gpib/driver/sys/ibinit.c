@@ -18,47 +18,40 @@
 #include "ibsys.h"
 #include <linux/vmalloc.h>
 
-int ibonline( gpib_board_t *board, gpib_file_private_t *priv )
+int ibonline( gpib_board_t *board )
 {
 	int retval;
 
-	if( !board->online )
+	if( board->online ) return -EBUSY;
+
+	retval = gpib_allocate_board( board );
+	if( retval < 0 ) return retval;
+
+	if( board->interface->attach( board ) < 0 )
 	{
-		retval = gpib_allocate_board( board );
-		if( retval < 0 ) return retval;
-
-		if( board->interface->attach( board ) < 0 )
-		{
-			board->interface->detach(board);
-			printk("gpib: interface attach failed\n");
-			return -1;
-		}
+		board->interface->detach(board);
+		printk("gpib: interface attach failed\n");
+		return -1;
 	}
-
-	__MOD_INC_USE_COUNT( board->interface->provider_module );
-	board->online++;
-	priv->online_count++;
+	board->online = 1;
 
 	return 0;
 }
 
-// XXX need to make sure autopoll is not in progress
-int iboffline( gpib_board_t *board, gpib_file_private_t *priv )
+/* XXX need to make sure autopoll is not in progress,
+ * and board is generaly not in use (grab board lock?) */
+int iboffline( gpib_board_t *board )
 {
 	if( board->online == 0 )
 	{
 		return 0;
 	}
 
-	if( board->online == 1 )
-	{
-		board->interface->detach( board );
-		gpib_deallocate_board( board );
-		GPIB_DPRINTK( "gpib: board offline\n" );
-	}
-	__MOD_DEC_USE_COUNT( board->interface->provider_module );
-	board->online--;
-	priv->online_count--;
+	board->interface->detach( board );
+	gpib_deallocate_board( board );
+	GPIB_DPRINTK( "gpib: board offline\n" );
+
+	board->online = 0;
 
 	return 0;
 }

@@ -137,7 +137,6 @@ enum gpib_ioctl
 	IBWAIT = _IOWR( GPIB_CODE, 5, wait_ioctl_t ),
 	IBRPP = _IOWR( GPIB_CODE, 6, uint8_t ),
 
-	IBONL = _IOW( GPIB_CODE, 8, online_ioctl_t ),
 	IBSIC = _IOW( GPIB_CODE, 9, unsigned int ),
 	IBSRE = _IOW( GPIB_CODE, 10, int ),
 	IBGTS = _IO( GPIB_CODE, 11 ),
@@ -164,7 +163,8 @@ enum gpib_ioctl
 	IBEVENT = _IOR( GPIB_CODE, 33, event_ioctl_t ),
 	IBRSC = _IOW( GPIB_CODE, 34, rsc_ioctl_t ),
 	IB_T1_DELAY = _IOW( GPIB_CODE, 35, t1_delay_ioctl_t ),
-	IBLOC = _IO( GPIB_CODE, 36 )
+	IBLOC = _IO( GPIB_CODE, 36 ),
+	IBONL = _IOW( GPIB_CODE, 37, online_ioctl_t )
 };
 
 #endif	/* _GPIB_IOCTL_H */
