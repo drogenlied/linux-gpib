@@ -49,15 +49,17 @@ minor         { return (T_MINOR);}
 pad          { return(T_PAD);}
 sad          { return(T_SAD);}
 eos          { return(T_EOSBYTE);}
-timeout      |
+timeout |
 timo	     { return(T_TIMO);}
 
-set-reos      { return T_REOS;}
-set-bin       { return T_BIN; }
+set-reos	{ return T_REOS;}
+set-bin	{ return T_BIN; }
+set-xeos	{ return T_XEOS; }
+set-eot	{ return T_EOT; }
 
-init-string   { return T_INIT_S; }
-init-flags    { return T_INIT_F; }
-set-clear     { printf ("DCL not longer supported") ;return T_DCL;  }
+init-string	{ printf( "init-string deprecated\n" ); return T_INIT_S; }
+init-flags	{ printf( "init-flags deprecated\n" ); return T_INIT_F; }
+set-clear	{ printf( "set-clear deprecated\n" ); return T_DCL;  }
 
 LLO           { return T_LLO; }
 DCL           { return T_DCL; }
@@ -110,7 +112,7 @@ T100s         { gpib_lvalp->ival=100000000; return(T_TIVAL);}
 T300s         { gpib_lvalp->ival=300000000; return(T_TIVAL);}
 T1000s        { gpib_lvalp->ival=1000000000; return(T_TIVAL);}
 
-0x[0-9a-fA-F]+ {
+0[xX][0-9a-fA-F]+ {
 	gpib_lvalp->ival = strtol( gpib_yytext, NULL, 0 );
 	return( T_NUMBER );
 }
@@ -124,7 +126,7 @@ T1000s        { gpib_lvalp->ival=1000000000; return(T_TIVAL);}
 
 [a-zA-Z0-9_\-]+ {
 	gpib_lvalp->sval = gpib_yytext;
-	/* printf("<%s>\n", gpib_yytext); */
+	/* printf("bare string <%s> should be enclosed in double-quotes\n", gpib_yytext); */
 	return (T_STRING);
 }
 

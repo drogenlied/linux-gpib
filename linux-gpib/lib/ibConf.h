@@ -49,7 +49,7 @@ typedef struct ibConfStruct
 	int sad;		/* device secodnary address (negative disables) */
 	char init_string[100];               /* initialization string (optional) */
 	int board;                         /* board number                     */
-	char eos;                           /* local eos modes                  */
+	char eos;                           /* eos character */
 	int eos_flags;
 	int flags;                         /* some flags, deprecated          */
 	unsigned int usec_timeout;

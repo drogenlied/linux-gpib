@@ -29,7 +29,7 @@ char cval;
 
 %token T_INTERFACE T_DEVICE T_NAME T_MINOR T_BASE T_IRQ T_DMA
 %token T_PAD T_SAD T_TIMO T_EOSBYTE T_BOARD_TYPE T_PCI_BUS T_PCI_SLOT
-%token T_REOS T_BIN T_INIT_S T_DCL 
+%token T_REOS T_BIN T_INIT_S T_DCL T_XEOS T_EOT
 %token T_MASTER T_LLO T_DCL T_EXCL T_INIT_F T_AUTOPOLL
 
 %token T_NUMBER T_STRING T_BOOL T_TIVAL
@@ -86,8 +86,11 @@ char cval;
 		| T_REOS T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $2 * REOS;}
 		| T_BIN  T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $2 * BIN;}
 		| T_REOS '=' T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $3 * REOS;}
+		| T_XEOS '=' T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $3 * XEOS;}
 		| T_BIN '=' T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $3 * BIN;}
+		| T_EOT '=' T_BOOL           { ibFindConfigs[findIndex].send_eoi = $3;}
 		| T_TIMO '=' T_TIVAL      { ibFindConfigs[findIndex].usec_timeout = $3; }
+		| T_TIMO '=' T_NUMBER      { ibFindConfigs[findIndex].usec_timeout = timeout_to_usec( $3 ); }
 		| T_BASE '=' T_NUMBER     { ibBoard[bdid].base = $3; }
 		| T_IRQ  '=' T_NUMBER     { ibBoard[bdid].irq = $3; }
 		| T_DMA  '=' T_NUMBER     { ibBoard[bdid].dma = $3; }
@@ -119,8 +122,8 @@ char cval;
 			}
 		;
 
-        option: /* empty */
-	        | assign option
+	option: /* empty */
+		| assign option
 		| error
  			{
  				fprintf(stderr, "option error on line %i of %s\n", @1.first_line, DEFAULT_CONFIG_FILE);
@@ -135,18 +138,21 @@ char cval;
 		| T_EOSBYTE '=' T_NUMBER  { ibFindConfigs[findIndex].eos = $3; }
 		| T_REOS T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $2 * REOS;}
 		| T_REOS '=' T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $3 * REOS;}
+		| T_XEOS '=' T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $3 * XEOS;}
 		| T_BIN T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $2 * BIN; }
 		| T_BIN '=' T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $3 * BIN; }
+		| T_EOT '=' T_BOOL           { ibFindConfigs[findIndex].send_eoi = $3;}
 		| T_AUTOPOLL              { ibFindConfigs[findIndex].flags |= CN_AUTOPOLL; }
 		| T_INIT_F '=' flags
 		| T_NAME '=' T_STRING	{ strncpy(ibFindConfigs[findIndex].name,$3, sizeof(ibFindConfigs[findIndex].name));}
 		| T_MINOR '=' T_NUMBER	{ ibFindConfigs[findIndex].board = $3;}
 		| T_TIMO '=' T_TIVAL      { ibFindConfigs[findIndex].usec_timeout = $3; }
+		| T_TIMO '=' T_NUMBER      { ibFindConfigs[findIndex].usec_timeout = timeout_to_usec( $3 ); }
 		;
 
 	flags: /* empty */
 		| ',' flags
-	        | oneflag flags
+		| oneflag flags
 		;
 
 	oneflag: T_LLO       { ibFindConfigs[findIndex].flags |= CN_SLLO; }
