@@ -2,12 +2,13 @@
 #include "ib_internal.h"
 #include <ibP.h>
 
-int ibclr(int ud)
+int ibclr( int ud )
 {
-	uint8_t cmd = SDC;
+	uint8_t cmd[ 16 ];
 	ibConf_t *conf = ibConfigs[ud];
 	ibBoard_t *board;
 	ssize_t count;
+	unsigned int i;
 
 	if(ibCheckDescriptor(ud) < 0)
 	{
@@ -17,8 +18,15 @@ int ibclr(int ud)
 
 	board = &ibBoard[conf->board];
 
-	count = __ibcmd( board, conf, &cmd, 1 );
-	if(count != 1)
+	i = 0;
+	cmd[ i++ ] = UNL;
+	cmd[ i++ ] = MLA( conf->pad );
+	if( conf->sad >=0 )
+		cmd[ i++ ] = MSA( conf->sad );
+	cmd[ i++ ] = SDC;
+
+	count = __ibcmd( board, conf, &cmd, i );
+	if(count != i)
 	{
 		iberr = EDVR;
 		return ibsta | ERR;

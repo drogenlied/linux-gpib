@@ -7,6 +7,8 @@ int ibloc(int ud)
 	ibConf_t *conf = ibConfigs[ud];
 	ibBoard_t *board;
 	uint8_t cmds[256];
+	unsigned int i;
+	ssize_t count;
 
 	if(ibCheckDescriptor(ud) < 0)
 	{
@@ -16,11 +18,22 @@ int ibloc(int ud)
 
 	board = &ibBoard[ conf->board ];
 
-	cmds[0] = UNL;
-	cmds[1] = LAD | conf->pad;
-// XXX fix for sad
-	cmds[2] = GTL;
-	cmds[3] = UNL;
-	return __ibcmd(board, conf, cmds, 4);
+	i = 0;
+	cmds[ i++ ] = UNL;
+	cmds[ i++ ] = MLA( conf->pad );
+	if( conf->sad >= 0 )
+		cmds[ i++ ] = MSA( conf->sad );
+	cmds[ i++ ] = GTL;
+	cmds[ i++ ] = UNL;
+	count = __ibcmd(board, conf, cmds, i);
+
+	if(count != i)
+	{
+		iberr = EDVR;
+		return ibsta | ERR;
+	}
+
+	return ibsta;
+
 } /* ibloc */
 
