@@ -9,8 +9,6 @@
 export 
 TARGET_ROOT = /usr/local
 
-SUBDIRS = net
-
 BIN_TARGET_DIR = $(TARGET_ROOT)/bin
 LIB_TARGET_DIR = $(TARGET_ROOT)/lib
 INC_TARGET_DIR = $(TARGET_ROOT)/include
@@ -49,20 +47,11 @@ SRCS =  ibCac.c ibClr.c ibCmd.c ibConfYacc.c ibConfLex.c  ibEos.c ibEot.c \
 	ibFindLstn.c #ibEvent.c
 
 
-OBJS =  $(SRCS:.c=.o) net/rgpib.o
+OBJS =  $(SRCS:.c=.o) 
 
 
 
-all: $(EXP_INC) subdirs $(DEFAULT_BUILD) server
-
-subdirs:
-	set -e; \
-	for i in $(SUBDIRS); do \
-		$(MAKE) $$i all ; \
-	done
-
-server:
-	make -C net rgpib_svc
+all: $(EXP_INC) $(DEFAULT_BUILD) 
 
 $(LIBNAME):   $(OBJS) 
 	rm -f $(LIBNAME)
@@ -112,7 +101,6 @@ ibProto.h: $(SRCS)
 	grep -h PUBLIC *.c|/lib/cpp -P -DPUBLIC=extern -DVOID=void| sed 's/)/);/' >>ibProto.h
 	echo "/***** Private Functions ******/" >>ibProto.h 
 	grep -h PRIVATE *.c|/lib/cpp -P -DPRIVATE=extern -DVOID=void| sed 's/)/);/' >>ibProto.h
-	grep -h PRIVATE "net/"*.c|/lib/cpp -P -DPRIVATE=extern -DVOID=void| sed 's/)/);/' >>ibProto.h
 	grep -h _VARARGS *.c| awk '{print "extern "$$2" "$$3"();" }' >>ibProto.h
 	echo "#ifdef __cplusplus" >>ibProto.h
 	echo "}" >>ibProto.h 
@@ -125,10 +113,6 @@ ibProto.h: $(SRCS)
 
 clean: 
 	$(RM) $(EXP_INC) *.o ibConfYacc.c ibConfLex.c *.a .depend y.tab.h ibProto.h
-	set -e; \
-	for i in $(SUBDIRS); do \
-		make -C $$i clean; \
-	done
 
 
 realclean : clean
