@@ -60,12 +60,12 @@ printk("ammc status 0x%x\n", inl(amcc_iobase + INTCSR_REG));
 void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 {
 	int status1, status2, address_status;
-	gpib_char_t data;
 	int ret;
 	unsigned long flags;
 	gpib_driver_t *driver = (gpib_driver_t*) arg;
 	nec7210_private_t *priv = driver->private_data;
-
+	uint8_t data;
+	
 	/* interrupt should also update RDF_HOLDOFF in state
 	 * by checking auxa_bits and END, but I need to make
 	 * auxa_bits store handshaking bits first */
@@ -126,19 +126,24 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 
 	// record reception of END
 	if(status1 & HR_END)
-		set_bit(END_NUM, &driver->status);
+	{
+		priv->buffer.end_flag = 1;
+	}
 
 	// get incoming data in PIO mode
-	if((status1 & HR_DI) && (test_bit(DMA_IN_PROGRESS_BN, &priv->state) == 0))
+	if((status1 & HR_DI) && test_bit(PIO_IN_PROGRESS_BN, &priv->state))
 	{
-		data.value = priv->read_byte(priv, DIR);
-		if(status1 & HR_END)
-			data.end = 1;
-		else
-			data.end = 0;
-		ret = gpib_buffer_put(read_buffer, data);
+		ret = gpib_buffer_put(&priv->buffer, priv->read_byte(priv, DIR));
 		if(ret)
-			printk("read buffer full\n");	//XXX
+		{
+			printk("read buffer full\n");
+			priv->buffer.error_flag = 1;
+		}
+		if((status1 & HR_END) ||
+			atomic_read(&priv->buffer.size) == priv->buffer.length)
+		{
+			clear_bit(PIO_IN_PROGRESS_BN, &priv->state);
+		}
 		wake_up_interruptible(&driver->wait); /* wake up sleeping process */
 	}
 
@@ -157,20 +162,20 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 		release_dma_lock(flags);
 	}
 
-	if((status1 & HR_DO) && test_bit(WRITING_BN, &priv->state))
+	if((status1 & HR_DO))
 	{
 		// write data, pio mode
-		if((priv->imr2_bits & HR_DMAO) == 0)
+		if(test_bit(PIO_IN_PROGRESS_BN, &priv->state))
 		{
-			if(gpib_buffer_get(write_buffer, &data))
+			if(gpib_buffer_get(&priv->buffer, &data))
 			{	// no data left so we are done with write
-				clear_bit(WRITING_BN, &priv->state);
+				clear_bit(PIO_IN_PROGRESS_BN, &priv->state);
 				wake_up_interruptible(&driver->wait); /* wake up sleeping process */
 			}else	// else write data to output
 			{
-				priv->write_byte(priv, data.value, CDOR);
+				priv->write_byte(priv, data, CDOR);
 			}
-		}else	// write data, isa dma mode
+		}else if(test_bit(DMA_IN_PROGRESS_BN, &priv->state))	// write data, isa dma mode
 		{
 			// check if dma transfer is complete
 			flags = claim_dma_lock();
@@ -178,7 +183,7 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 			clear_dma_ff(priv->dma_channel);
 			if(get_dma_residue(priv->dma_channel) == 0)
 			{
-				clear_bit(WRITING_BN, &priv->state);
+				clear_bit(DMA_IN_PROGRESS_BN, &priv->state);
 				wake_up_interruptible(&driver->wait); /* wake up sleeping process */
 			}else
 				enable_dma(priv->dma_channel);

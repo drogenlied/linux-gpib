@@ -185,34 +185,6 @@ void board_reset(nec7210_private_t *priv)
 	priv->write_byte(priv, AUXRE, AUXMR);
 }
 
-int allocate_buffers(void)
-{
-	read_buffer = kmalloc(sizeof(gpib_buffer_t), GFP_KERNEL);
-	gpib_buffer_init(read_buffer);
-	write_buffer = kmalloc(sizeof(gpib_buffer_t), GFP_KERNEL);
-	gpib_buffer_init(write_buffer);
-	if(read_buffer == NULL || write_buffer == NULL)
-	{
-		printk("gpib: failed to allocate buffers\n");
-		return -1;
-	}
-	return 0;
-}
-
-void free_buffers(void)
-{
-	if(read_buffer)
-	{
-		kfree(read_buffer);
-		read_buffer = NULL;
-	}
-	if(write_buffer)
-	{
-		kfree(write_buffer);
-		write_buffer = NULL;
-	}
-}
-
 int allocate_private(gpib_driver_t *driver)
 {
 	driver->private_data = kmalloc(sizeof(nec7210_private_t), GFP_KERNEL);
@@ -265,9 +237,6 @@ int pc2_attach(gpib_driver_t *driver)
 	priv->offset = pc2_reg_offset;
 	priv->read_byte = ioport_read_byte;
 	priv->write_byte = ioport_write_byte;
-
-	if(allocate_buffers())
-		return -ENOMEM;
 
 	if(request_region(ibbase, pc2_iosize, "pc2"));
 	{
@@ -327,7 +296,6 @@ void pc2_detach(gpib_driver_t *driver)
 			release_region(priv->iobase, pc2_iosize);
 		}
 	}
-	free_buffers();
 	free_private(driver);
 }
 
@@ -345,9 +313,6 @@ int pc2a_attach(gpib_driver_t *driver)
 	priv->offset = pc2a_reg_offset;
 	priv->read_byte = ioport_read_byte;
 	priv->write_byte = ioport_write_byte;
-
-	if(allocate_buffers())
-		return -ENOMEM;
 
 	switch( ibbase ){
 
@@ -442,7 +407,6 @@ void pc2a_detach(gpib_driver_t *driver)
 			release_region(priv->iobase + i * pc2a_reg_offset, 1);
 		release_region(pc2a_clear_intr_iobase, pc2a_clear_intr_iosize);
 	}
-	free_buffers();
 	free_private(driver);
 }
 
@@ -460,9 +424,6 @@ int cb_pci_attach(gpib_driver_t *driver)
 	priv->read_byte = ioport_read_byte;
 	priv->write_byte = ioport_write_byte;
 	priv->offset = cb_pci_reg_offset;
-
-	if(allocate_buffers())
-		return -ENOMEM;
 
 	// find board
 	priv->pci_device = pci_find_device(PCI_VENDOR_ID_CBOARDS, PCI_DEVICE_ID_CBOARDS_PCI_GPIB, NULL);
@@ -537,7 +498,6 @@ void cb_pci_detach(gpib_driver_t *driver)
 			pci_release_regions(priv->pci_device);
 		}
 	}
-	free_buffers();
 	free_private(driver);
 }
 
@@ -552,8 +512,6 @@ int board_attach(void)
 	ioports_allocated = iomem_allocated = irq_allocated =
 		dma_allocated = pcmcia_initialized = 0;
 
-	if(allocate_buffers())
-		return -1;
 #ifdef INES_PCMCIA
 	pcmcia_init_module();
 	pcmcia_initialized = 1;
@@ -689,7 +647,6 @@ void board_detach(void)
 #endif
 		pcmcia_initialized = 0;
 	}
-	free_buffers();
 }
 
 #endif

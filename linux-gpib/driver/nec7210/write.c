@@ -19,14 +19,95 @@
 #include "board.h"
 #include <asm/dma.h>
 
+ssize_t pio_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length)
+{
+	ssize_t retval = 0;
+
+	init_gpib_buffer(&priv->buffer, buffer, length);
+	atomic_set(&priv->buffer.size, &length);
+
+	set_bit(PIO_IN_PROGRESS_BN, &priv->state);
+
+	// enable 'data out' interrupts
+	priv->imr1_bits |= HR_DOIE;
+	priv->write_byte(priv, priv->imr1_bits, IMR1);
+
+	// suspend until message is sent
+	if(wait_event_interruptible(driver->wait, test_bit(PIO_IN_PROGRESS_BN, &priv->state) == 0 ||
+		test_bit(TIMO_NUM, &driver->status)))
+	{
+		printk("gpib write interrupted!\n");
+		retval = -EINTR;
+	}
+
+	// disable 'data out' interrupts
+	priv->imr1_bits &= ~HR_DOIE;
+	priv->write_byte(priv, priv->imr1_bits, IMR1);
+
+	if(priv->buffer.error_flag)
+		return -EIO;
+	if(retval)
+		return retval;
+
+	return length;
+}
+
+ssize_t dma_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length)
+{
+	unsigned long flags;
+	int residue = 0;
+
+	/* program dma controller */
+	flags = claim_dma_lock();
+	disable_dma(priv->dma_channel);
+	clear_dma_ff(priv->dma_channel);
+	set_dma_count(priv->dma_channel, length);
+	set_dma_addr(priv->dma_channel, virt_to_bus(buffer));
+	set_dma_mode(priv->dma_channel, DMA_MODE_WRITE );
+	enable_dma(priv->dma_channel);
+	release_dma_lock(flags);
+
+	// enable board's dma for output
+	priv->imr2_bits |= HR_DMAO;
+	priv->write_byte(priv, priv->imr2_bits, IMR2);
+
+	// enable 'data out' interrupts
+	priv->imr1_bits |= HR_DOIE;
+	priv->write_byte(priv, priv->imr1_bits, IMR1);
+
+	// suspend until message is sent
+	if(wait_event_interruptible(driver->wait, test_bit(DMA_IN_PROGRESS_BN, &priv->state) == 0 ||
+		test_bit(TIMO_NUM, &driver->status)))
+	{
+		printk("gpib write interrupted!\n");
+	}
+
+	// disable board's dma
+	priv->imr2_bits &= ~HR_DMAO;
+	priv->write_byte(priv, priv->imr2_bits, IMR2);
+
+	// disable 'data out' interrupts
+	priv->imr1_bits &= ~HR_DOIE;
+	priv->write_byte(priv, priv->imr1_bits, IMR1);
+
+	flags = claim_dma_lock();
+	clear_dma_ff(priv->dma_channel);
+	disable_dma(priv->dma_channel);
+	residue = get_dma_residue(priv->dma_channel);
+	release_dma_lock(flags);
+
+	if(residue)
+		return -EIO;
+
+	return length;
+}
+
 ssize_t nec7210_write(gpib_driver_t *driver, uint8_t *buffer, size_t length, int send_eoi)
 {
-	gpib_char_t data;
-	unsigned long flags;
 	size_t count = 0;
-	int err = 0;
+	ssize_t retval = 0;
 	nec7210_private_t *priv = driver->private_data;
-	
+
 	if(length == 0) return 0;
 
 	/* normal handshaking, XXX necessary?*/
@@ -37,99 +118,34 @@ ssize_t nec7210_write(gpib_driver_t *driver, uint8_t *buffer, size_t length, int
 		length-- ; /* save the last byte for sending EOI */
 	}
 
-	if(test_and_set_bit(WRITING_BN, &priv->state))
-	{
-		printk("gpib: bug? write already in progress");
-		return -1;
-	}
-
-#if DMAOP	// isa dma transfer
 	if(length > 0)
 	{
-		/* program dma controller */
-		flags = claim_dma_lock();
-		disable_dma(priv->dma_channel);
-		clear_dma_ff(priv->dma_channel);
-		set_dma_count(priv->dma_channel, length );
-		set_dma_addr(priv->dma_channel, virt_to_bus(buffer));
-		set_dma_mode(priv->dma_channel, DMA_MODE_WRITE );
-		enable_dma(priv->dma_channel);
-		release_dma_lock(flags);
-
-		// enable board's dma for output
-		priv->imr2_bits |= HR_DMAO;
-		priv->write_byte(priv, priv->imr2_bits, IMR2);
-
-		// enable 'data out' interrupts
-		priv->imr1_bits |= HR_DOIE;
-		priv->write_byte(priv, priv->imr1_bits, IMR1);
-
-		// suspend until message is sent
-		if(wait_event_interruptible(driver->wait, test_bit(WRITING_BN, &priv->state) == 0 ||
-			test_bit(TIMO_NUM, &driver->status)))
-		{
-			printk("gpib write interrupted!\n");
+		if(priv->dma_channel)
+		{	// isa dma transfer
+			retval = dma_write(driver, priv, buffer, length);
+			if(retval < 0)
+				return retval;
+			else count += retval;
+		}else
+		{	// PIO transfer
+			retval = pio_write(driver, priv, buffer, length);
+			if(retval < 0)
+				return retval;
+			else count += retval;
 		}
-
-		// disable board's dma
-		priv->imr2_bits &= ~HR_DMAO;
-		priv->write_byte(priv, priv->imr2_bits, IMR2);
-
-		flags = claim_dma_lock();
-		clear_dma_ff(priv->dma_channel);
-		disable_dma(priv->dma_channel);
-		count += length - get_dma_residue(priv->dma_channel);
-		release_dma_lock(flags);
 	}
 
-#else	// PIO transfer
-
-	data.end = 0;
-	if(length > 0)
-	{
-		// load message into buffer
-		while (count < length)
-		{
-			data.value = buffer[count];
-			if(gpib_buffer_put(write_buffer, data))
-			{
-				printk("gpib: write buffer full!\n");
-				return -1;
-			}
-		}
-
-		// enable 'data out' interrupts
-		priv->imr1_bits |= HR_DOIE;
-		priv->write_byte(priv, priv->imr1_bits, IMR1);
-
-		// suspend until message is sent
-		if(wait_event_interruptible(driver->wait, test_bit(WRITING_BN, &priv->state) == 0 ||
-			test_bit(TIMO_NUM, &driver->status)))
-		{
-			printk("gpib write interrupted!\n");
-		}
-
-		// XXX bug if write was interrupted, how is buffer cleaned up?
-		count += length - atomic_read(&write_buffer->size);
-	}
-
-#endif	// DMAOP
-
-	if(send_eoi && err == 0)
+	if(send_eoi)
 	{
 		/*send EOI */
 		priv->write_byte(priv, AUX_SEOI, AUXMR);
-		set_bit(WRITING_BN, &priv->state);
-		priv->write_byte(priv, buffer[count], CDOR);
-		wait_event_interruptible(driver->wait, test_bit(WRITING_BN, &priv->state) == 0 ||
-			test_bit(TIMO_NUM, &driver->status));
-		if(test_and_clear_bit(WRITING_BN, &priv->state) == 0 &&
-			test_bit(TIMO_NUM, &driver->status) == 0)
+
+		retval = pio_write(driver, priv, &buffer[count], 1);
+		if(retval < 0)
+			return retval;
+		else
 			count++;
 	}
-	// disable 'data out' interrupts
-	priv->imr1_bits &= ~HR_DOIE;
-	priv->write_byte(priv, priv->imr1_bits, IMR1);
 
 	return count ? count : -1;
 }

@@ -29,8 +29,7 @@ struct nec7210_private_struct
 	unsigned int offset;	// offset between successive nec7210 io addresses
 	unsigned int irq;
 	unsigned int dma_channel;
-	uint8_t *dma_buffer;
-	unsigned int dma_buffer_length;
+	gpib_buffer_t buffer;
 	// software copy of bits written to interrupt mask registers
 	volatile uint8_t imr1_bits, imr2_bits;
 	// bits written to address mode register
@@ -46,8 +45,7 @@ struct nec7210_private_struct
 // nec7210_private_t.state bit numbers
 enum
 {
-	WRITING_BN,	// write in progress
-	READING_BN,	// read in progress
+	PIO_IN_PROGRESS_BN,	// pio transfer in progress
 	DMA_IN_PROGRESS_BN,	// dma transfer in progress
 	COMMAND_READY_BN,	// board is ready to send a command byte
 	RFD_HOLDOFF_BN,	// board is asserting a request for data holdoff

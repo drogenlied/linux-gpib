@@ -19,31 +19,53 @@
 #include "board.h"
 #include <asm/dma.h>
 
-ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int *end)
+ssize_t pio_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length)
 {
-	size_t	count = 0;
-	gpib_char_t data;
-	int ret = 0;
-	unsigned long flags;
-	nec7210_private_t *priv = driver->private_data;
+	size_t count = 0;
+	ssize_t retval = 0;
+	uint8_t data;
 
-	*end = 0;
+	init_gpib_buffer(&priv->buffer, buffer, length);
 
-	if(length == 0) return 0;
+	set_bit(PIO_IN_PROGRESS_BN, &priv->state);
 
-	if(test_and_clear_bit(RFD_HOLDOFF_BN, &priv->state))
+	// enable 'data in' and 'end' interrupt
+	priv->imr1_bits |= HR_DIIE | HR_ENDIE;
+	priv->write_byte(priv, priv->imr1_bits, IMR1);
+
+	// try busy wait XXX
+	if(wait_event_interruptible(driver->wait,
+		test_bit(PIO_IN_PROGRESS_BN, &priv->state) == 0 ||
+		test_bit(TIMO_NUM, &driver->status)))
 	{
-		/* set HLDA in AUXRA to ensure FH works */
-		priv->write_byte(priv, priv->auxa_bits | HR_HLDA, AUXMR);	//XXX
-		priv->write_byte(priv, AUX_FH, AUXMR);
-	}
-	clear_bit(END_NUM, &driver->status);
-/*
- *	holdoff on END
- */
-	priv->write_byte(priv, priv->auxa_bits | HR_HLDE, AUXMR);
+		printk("gpib: pio read wait interrupted\n");
+		retval = -EINTR;
+	};
 
-#if DMAOP		// ISA DMA transfer
+	while(count < length)
+	{
+		retval = gpib_buffer_get(&priv->buffer, &data);
+		if(retval < 0)
+		{
+			break;
+		}
+		buffer[count++] = data;
+	}
+
+	// disable 'data in' and 'end' interrupt
+	priv->imr1_bits &= ~HR_DIIE & ~HR_ENDIE;
+	priv->write_byte(priv, priv->imr1_bits, IMR1);
+
+
+	return retval ? retval : count;
+}
+
+ssize_t dma_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length)
+{
+	ssize_t retval = 0;
+	size_t count = 0;
+	unsigned long flags;
+
 	flags = claim_dma_lock();
 	disable_dma(priv->dma_channel);
 
@@ -66,17 +88,23 @@ ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int 
 	priv->imr2_bits |= HR_DMAI;
 	priv->write_byte(priv, priv->imr2_bits, IMR2);
 
+	// attempt to busy wait may improve performance XXX
+
 	// wait for data to transfer
 	if(wait_event_interruptible(driver->wait, test_bit(DMA_IN_PROGRESS_BN, &priv->state) == 0 ||
 		test_bit(TIMO_NUM, &driver->status)))
 	{
 		printk("gpib: dma read wait interrupted\n");
-		ret = -EINTR;
+		retval = -EINTR;
 	}
 
 	// disable nec7210 dma
 	priv->imr2_bits &= ~HR_DMAI;
 	priv->write_byte(priv, priv->imr2_bits, IMR2);
+
+	// disable 'data in' and 'end' interrupt
+	priv->imr1_bits &= ~HR_DIIE & ~HR_ENDIE;
+	priv->write_byte(priv, priv->imr1_bits, IMR1);
 
 	// record how many bytes we transferred
 	flags = claim_dma_lock();
@@ -85,50 +113,62 @@ ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int 
 	count += length - get_dma_residue(priv->dma_channel);
 	release_dma_lock(flags);
 
-#else	// PIO transfer
+	return retval ? retval : count;
+}
 
-	// enable 'data in' and 'end' interrupt
-	priv->imr1_bits |= HR_DIIE | HR_ENDIE;
-	priv->write_byte(priv, priv->imr1_bits, IMR1);
+ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int *end)
+{
+	size_t	count = 0;
+	ssize_t retval = 0;
+	nec7210_private_t *priv = driver->private_data;
 
-	while (count < length && test_bit(TIMO_NUM, &driver->status) == 0)
+	*end = 0;
+
+	if(length == 0) return 0;
+
+	if(test_and_clear_bit(RFD_HOLDOFF_BN, &priv->state))
 	{
-		ret = gpib_buffer_get(read_buffer, &data);
-		if(ret < 0)
-		{
-			if(wait_event_interruptible(driver->wait, atomic_read(&read_buffer->size) > 0 ||
-				test_bit(TIMO_NUM, &driver->status)))
-			{
-				printk("gpib: pio read wait interrupted\n");
-				ret = -EINTR;
-				break;
-			};
-			continue;
+		priv->write_byte(priv, AUX_FH, AUXMR);
+	}
+/*
+ *	holdoff on END
+ */
+	priv->write_byte(priv, priv->auxa_bits | HR_HLDE, AUXMR);
+
+	// transfer data (except for last byte)
+	length--;
+	if(length)
+	{
+		if(priv->dma_channel)
+		{		// ISA DMA transfer
+			retval = dma_read(driver, priv, buffer, length);
+		}else
+		{	// PIO transfer
+			retval = pio_read(driver, priv, buffer, length);
 		}
-		buffer[count++] = data.value;
-		if(data.end)
-		{
-			break;
-		}
+		if(retval < 0)
+			return retval;
+		else
+			count += retval;
 	}
 
-#endif
-
-	// disable 'data in' and 'end' interrupt
-	priv->imr1_bits &= ~HR_DIIE & ~HR_ENDIE;
-	priv->write_byte(priv, priv->imr1_bits, IMR1);
-
-	if(test_bit(END_NUM, &driver->status))
+	// read last byte if we havn't received an END yet
+	if(priv->buffer.end_flag == 0)
 	{
-		*end = 1;
-		// XXX
-		set_bit(RFD_HOLDOFF_BN, &priv->state);
+		// make sure we holdoff after last byte read
+		priv->write_byte(priv, priv->auxa_bits | HR_HLDA, AUXMR);
+		retval = pio_read(driver, priv, &buffer[count], 1);
+		if(retval < 0)
+			return retval;
+		else
+			count++;
 	}
 
-	if(test_bit(TIMO_NUM, &driver->status))
-		ret = -ETIMEDOUT;
+	*end = priv->buffer.end_flag;
 
-	return count ? count : ret;
+	set_bit(RFD_HOLDOFF_BN, &priv->state);
+
+	return count;
 }
 
 
