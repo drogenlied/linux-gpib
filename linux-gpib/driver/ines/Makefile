@@ -3,7 +3,7 @@
 #
 include $(ROOT)/util/.config
 
-SRCS =  ines_init.c ines_cs.c interrupt.c
+SRCS =  ines_init.c ines_cs.c interrupt.c ines_util.c
 
 OBJS =  $(SRCS:.c=.o)
 
