@@ -37,19 +37,11 @@ int tms9914_parallel_poll(gpib_board_t *board, tms9914_private_t *priv, uint8_t 
 	int ret;
 
 	// execute parallel poll
-	write_byte(priv, AUX_RPP, AUXCR);
-
-	// wait for result
-	ret = wait_event_interruptible(board->wait, test_bit(COMMAND_READY_BN, &priv->state));
-
-	if(ret)
-	{
-		printk("gpib: parallel poll interrupted\n");
-		return -EINTR;
-	}
-
+	write_byte(priv, AUX_CS | AUX_RPP, AUXCR);
+	udelay(2);
 	*result = read_byte(priv, CPTR);
-
+	// clear parallel poll state
+	write_byte(priv, AUX_RPP, AUXCR);
 	return 0;
 }
 
