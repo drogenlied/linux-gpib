@@ -30,7 +30,6 @@ int main( int argc, char *argv[] )
 	int sad = 0;
 	int send_eoi = 1;
 	int eos_mode = 0;
-	char buffer[ 100 ];
 	char *file_path;
 	int status;
 	struct timeval start_time, end_time;
@@ -48,8 +47,7 @@ int main( int argc, char *argv[] )
 	if( dev < 0 )
 	{
 		fprintf( stderr, "ibdev() failed\n" );
-		gpib_error_string( ThreadIberr(), buffer, sizeof( buffer ) );
-		fprintf( stderr, "%s\n", buffer );
+		fprintf( stderr, "%s\n", gpib_error_string( ThreadIberr() ) );
 		return -1;
 	}
 
@@ -62,8 +60,7 @@ int main( int argc, char *argv[] )
 	if( status & ERR )
 	{
 		fprintf( stderr, "ibwrtf() failed\n" );
-		gpib_error_string( ThreadIberr(), buffer, sizeof( buffer ) );
-		fprintf( stderr, "%s\n", buffer );
+		fprintf( stderr, "%s\n", gpib_error_string( ThreadIberr() ) );
 		return -1;
 	}
 

@@ -26,7 +26,6 @@ int main( int argc, char *argv[] )
 {
 	int board = 0;
 	int eos_mode = 0;
-	char buffer[ 100 ];
 	char *file_path;
 	int status;
 
@@ -42,8 +41,7 @@ int main( int argc, char *argv[] )
 	if( status & ERR )
 	{
 		fprintf( stderr, "ibeos() failed\n" );
-		gpib_error_string( ThreadIberr(), buffer, sizeof( buffer ) );
-		fprintf( stderr, "%s\n", buffer );
+		fprintf( stderr, "%s\n", gpib_error_string( ThreadIberr() ) );
 		return -1;
 	}
 
@@ -51,8 +49,7 @@ int main( int argc, char *argv[] )
 	if( status & ERR )
 	{
 		fprintf( stderr, "ibeos() failed\n" );
-		gpib_error_string( ThreadIberr(), buffer, sizeof( buffer ) );
-		fprintf( stderr, "%s\n", buffer );
+		fprintf( stderr, "%s\n", gpib_error_string( ThreadIberr() ) );
 		return -1;
 	}
 
@@ -60,10 +57,10 @@ int main( int argc, char *argv[] )
 	if( status & ERR )
 	{
 		fprintf( stderr, "ibrdf() failed\n" );
-		gpib_error_string( ThreadIberr(), buffer, sizeof( buffer ) );
-		fprintf( stderr, "%s\n", buffer );
+		fprintf( stderr, "%s\n", gpib_error_string( ThreadIberr() ) );
 		return -1;
 	}
 
 	return 0;
 }
+

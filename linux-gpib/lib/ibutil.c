@@ -616,60 +616,36 @@ int is_system_controller( const ibBoard_t *board )
 	return info.is_system_controller;
 }
 
-void gpib_error_string( int error, char *buffer, unsigned int buffer_length )
+const char* gpib_error_string( int error )
 {
-	switch( error )
+	static const char* error_descriptions[] =
 	{
-		case EDVR:
-			strncpy( buffer, "EDVR: OS error", buffer_length );
-			break;
-		case ECIC:
-			strncpy( buffer, "ECIC: Board not controller in charge", buffer_length );
-			break;
-		case ENOL:
-			strncpy( buffer, "ENOL: No listeners", buffer_length );
-			break;
-		case EADR:
-			strncpy( buffer, "EADR: Improper addressing", buffer_length );
-			break;
-		case EARG:
-			strncpy( buffer, "EARG: Bad argument", buffer_length );
-			break;
-		case ESAC:
-			strncpy( buffer, "ESAC: Board not system controller", buffer_length );
-			break;
-		case EABO:
-			strncpy( buffer, "EABO: Operation aborted", buffer_length );
-			break;
-		case ENEB:
-			strncpy( buffer, "ENEB: Non-existant board", buffer_length );
-			break;
-		case EDMA:
-			strncpy( buffer, "EDMA: DMA error", buffer_length );
-			break;
-		case EOIP:
-			strncpy( buffer, "EOIP: IO operation in progress", buffer_length );
-			break;
-		case ECAP:
-			strncpy( buffer, "ECAP: Capability does not exist", buffer_length );
-			break;
-		case EFSO:
-			strncpy( buffer, "EFSO: File system error", buffer_length );
-			break;
-		case EBUS:
-			strncpy( buffer, "EBUS: Bus error", buffer_length );
-			break;
-		case ESTB:
-			strncpy( buffer, "ESTB: Lost status byte", buffer_length );
-			break;
-		case ESRQ:
-			strncpy( buffer, "ESRQ: Stuck service request", buffer_length );
-			break;
-		case ETAB:
-			strncpy( buffer, "ETAB: Table problem", buffer_length );
-			break;
-		default:
-			strncpy( buffer, "Unrecognized/invalid error code", buffer_length );
-			break;
+		"EDVR 0: OS error",
+		"ECIC 1: Board not controller in charge",
+		"ENOL 2: No listeners",
+		"EADR 3: Improper addressing",
+		"EARG 4: Bad argument",
+		"ESAC 5: Board not system controller",
+		"EABO 6: Operation aborted",
+		"ENEB 7: Non-existant board",
+		"EDMA 8: DMA error",
+		"libgpib: Unknown error code 9",
+		"EOIP 10: IO operation in progress",
+		"ECAP 11: Capability does not exist",
+		"EFSO 12: File system error",
+		"libgpib: Unknown error code 13",
+		"EBUS 14: Bus error",
+		"ESTB 15: Lost status byte",
+		"ESRQ 16: Stuck service request",
+		"libgpib: Unknown error code 17",
+		"libgpib: Unknown error code 18",
+		"libgpib: Unknown error code 19",
+		"ETAB 20: Table problem",
 	};
+	static const int max_error_code = ETAB;
+
+	if( error < 0 || error > max_error_code )
+		return "libgpib: Unknown error code";
+
+	return error_descriptions[ error ];
 }

@@ -441,8 +441,6 @@ int main(int argc,char **argv)
 
 void fprint_status( FILE* filep, char *msg )
 {
-	char buffer[ 100 ];
-
 	fprintf( filep, "%s\n", msg);
 
 	fprintf( filep, "ibsta = 0x%x  < ", ThreadIbsta() );
@@ -461,8 +459,7 @@ void fprint_status( FILE* filep, char *msg )
 	fprintf( filep,"iberr= %d\n", iberr);
 	if( ( ThreadIbsta() & ERR ) )
 	{
-		gpib_error_string( ThreadIberr(), buffer, sizeof( buffer ) );
-		fprintf( filep, "%s\n", buffer );
+		fprintf( filep, "%s\n", gpib_error_string( ThreadIberr() ) );
 	}
 
 	fprintf( filep, "\n" );
