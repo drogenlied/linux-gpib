@@ -36,7 +36,7 @@ enum internal_gpib_addr
 void init_async_op( struct async_operation *async );
 int ibCheckDescriptor(int ud);
 int ibBdChrConfig( ibBoard_t *board );
-int initIbBoardArray( void );
+int initIbBoardAtFork( void );
 int ibBoardOpen( ibBoard_t *board );
 int ibBoardClose( ibBoard_t *board );
 int ibGetNrBoards(void);
@@ -54,6 +54,7 @@ unsigned int create_send_setup( const ibBoard_t *board,
 	const Addr4882_t addressList[], uint8_t *cmdString );
 int send_setup( ibConf_t *conf );
 void init_ibconf( ibConf_t *conf );
+void init_ibboard( ibBoard_t *board );
 int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout,
 	int send_eoi, int eos, int eosflags);
 int my_ibbna( ibConf_t *conf, unsigned int new_board_index );
@@ -125,8 +126,10 @@ static __inline__ ibBoard_t* interfaceBoard( const ibConf_t *conf )
 }
 
 #include <stdio.h>
-int gpib_yyparse(void);
-void gpib_yyrestart(FILE*);
+int gpib_yyparse( void *parse_arg );
+void gpib_yyrestart( FILE* );
+int parse_gpib_conf( const char *filename, ibConf_t *configs,
+	unsigned int configs_length, ibBoard_t *boards, unsigned int boards_length );
 #define YY_DECL int gpib_yylex( YYSTYPE *gpib_lvalp, YYLTYPE *gpib_llocp )
 
 #endif	/* _IB_INTERNAL_H */

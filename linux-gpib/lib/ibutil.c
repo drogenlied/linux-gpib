@@ -23,6 +23,7 @@
 #include "parse.h"
 
 ibConf_t *ibConfigs[NUM_CONFIGS];
+ibConf_t ibFindConfigs[ FIND_CONFIGS_LENGTH ];
 
 int insert_descriptor( int ud, ibConf_t p )
 {
@@ -55,58 +56,38 @@ void setup_global_board_descriptors( void )
 	}
 }
 
-// initialize variables used in yyparse() - see ibConfYacc.y
-int init_yyparse_vars( void )
-{
-	int i ;
-
-	findIndex = 0; bdid = 0;
-	for( i = 0; i < FIND_CONFIGS_LENGTH; i++ )
-	{
-		init_ibconf( &ibFindConfigs[ i ] );
-	}
-
-	return initIbBoardArray();
-}
-
 int ibParseConfigFile( void )
 {
-	FILE *infile;
-	int stat = 0;
-	static int config_parsed = 0;
-	int i;
+	int retval = 0;
+	static volatile int config_parsed = 0;
+	static pthread_mutex_t config_lock = PTHREAD_MUTEX_INITIALIZER;//PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP;
+	char *filename, *envptr;
 
-	if( config_parsed ) return 0;
-
-	if ((infile = fopen( DEFAULT_CONFIG_FILE, "r")) == NULL)
+	pthread_mutex_lock( &config_lock );
+	if( config_parsed )
 	{
-		fprintf(stderr, "failed to open configuration file\n");
-		setIberr( EDVR );
-		return -1;
+		pthread_mutex_unlock( &config_lock );
+		return 0;
 	}
 
-	/*ibPutMsg("Parse Config %s",filename); */
-	gpib_yyrestart(infile);
+	envptr = getenv("IB_CONFIG");
+	if( envptr ) filename = envptr;
+	else filename = DEFAULT_CONFIG_FILE;
 
-	stat = init_yyparse_vars();
-	if( gpib_yyparse() < 0 )
+	retval = parse_gpib_conf( filename, ibFindConfigs, FIND_CONFIGS_LENGTH,
+		ibBoard, MAX_BOARDS );
+	if( retval < 0 )
 	{
-		fprintf(stderr, "failed to parse configuration file\n");
-		stat = -1 ;
+		pthread_mutex_unlock( &config_lock );
+		return retval;
 	}
-	fclose(infile);
+	initIbBoardAtFork();
+	setup_global_board_descriptors();
 
-	if( stat == 0 )
-	{
-		for( i = 0; i < FIND_CONFIGS_LENGTH && strlen( ibFindConfigs[ i ].name ); i++ )
-		{
-			ibFindConfigs[ i ].settings = ibFindConfigs[ i ].defaults;
-		}
-		setup_global_board_descriptors();
-		config_parsed = 1;
-	}
+	config_parsed = 1;
+	pthread_mutex_unlock( &config_lock );
 
-	return stat;
+	return retval;
 }
 
 /**********************************************************************/

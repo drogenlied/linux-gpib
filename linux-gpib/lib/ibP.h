@@ -26,7 +26,7 @@
 
 extern ibBoard_t ibBoard[];
 extern ibConf_t *ibConfigs[];
-extern ibConf_t ibFindConfigs[ FIND_CONFIGS_LENGTH ];
+extern ibConf_t ibFindConfigs[];
 
 #include <errno.h>
 #include <fcntl.h>

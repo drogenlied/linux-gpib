@@ -66,26 +66,25 @@ void atfork_autopoll_child( void )
 	}
 }
 
-int initIbBoardArray( void )
+void init_ibboard( ibBoard_t *board )
 {
-	int i;
-	for( i = 0; i < MAX_BOARDS; i++ )
-	{
-		ibBoard[ i ].pad = 0;
-		ibBoard[ i ].sad = -1;
-		ibBoard[ i ].base = 0;
-		ibBoard[ i ].irq = 0;
-		ibBoard[ i ].dma = 0;
-		ibBoard[ i ].is_system_controller = 0;
-		ibBoard[ i ].fileno = -1;
-		strcpy( ibBoard[ i ].device, "" );
-		strcpy( ibBoard[ i ].board_type, "" );
-		ibBoard[ i ].autopoll_thread = NULL;
-		pthread_mutex_init( &ibBoard[ i ].autopoll_lock, NULL );
-		ibBoard[ i ].pci_bus = -1;
-		ibBoard[ i ].pci_slot = -1;
-	}
+	board->pad = 0;
+	board->sad = -1;
+	board->base = 0;
+	board->irq = 0;
+	board->dma = 0;
+	board->is_system_controller = 0;
+	board->fileno = -1;
+	strcpy( board->device, "" );
+	strcpy( board->board_type, "" );
+	board->autopoll_thread = NULL;
+	pthread_mutex_init( &board->autopoll_lock, NULL );
+	board->pci_bus = -1;
+	board->pci_slot = -1;
+}
 
+int initIbBoardAtFork( void )
+{
 	if( pthread_atfork( atfork_autopoll_prepare, atfork_autopoll_parent,
 		atfork_autopoll_child ) )
 	{
