@@ -20,7 +20,6 @@ IBLCL ssize_t ibrd(uint8_t *buf, size_t length)
 	size_t count = 0;
 	ssize_t ret;
 	int status = board.update_status();
-printk("entering ibrd\n");
 
 	DBGin("ibrd");
 	if((status & LACS) == 0) 
@@ -45,7 +44,6 @@ printk("entering ibrd\n");
 		}
 		buf += ret;
 		count += ret;
-printk("board status 0x%x\n", board.status);
 	}
 	osRemoveTimer();
 	// mark io completed

@@ -8,8 +8,6 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, uint8_t eos) // XXX eos bro
 	int ret;
 	unsigned long flags;
 
-printk("entering nec7210_read %i\n", length);
-
 	if(length == 0) return 0;
 
 	if (pgmstat & PS_HELD) {
@@ -102,8 +100,6 @@ printk("entering nec7210_read %i\n", length);
 		set_bit(TIMO_NUM, &board.status);
 		iberr = EABO;
 	}
-
-printk("bs 0x%x\n", board.status);
 
 	return count;
 }
