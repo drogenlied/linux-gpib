@@ -52,7 +52,7 @@
 #ifdef PCMCIA_DEBUG
 static int pc_debug = PCMCIA_DEBUG;
 static char *version =
-"ines_cs.c 0.11";
+"ines_cs.c 0.12";
 #endif
 
 /*====================================================================*/
