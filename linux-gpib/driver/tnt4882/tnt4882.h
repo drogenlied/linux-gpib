@@ -41,8 +41,10 @@ typedef struct
 	struct pci_dev *isapnp_dev;
 	unsigned int irq;
 	volatile int imr3_bits;
-	void (*io_write)( unsigned int value, unsigned long address );
-	unsigned int (*io_read)( unsigned long address );
+	void (*io_writeb)( unsigned int value, unsigned long address );
+	void (*io_writew)( unsigned int value, unsigned long address );
+	unsigned int (*io_readb)( unsigned long address );
+	unsigned int (*io_readw)( unsigned long address );
 } tnt4882_private_t;
 
 // interfaces

@@ -81,9 +81,9 @@ void tnt4882_request_system_control( gpib_board_t *board, int request_control )
 
 	nec7210_request_system_control( board, &priv->nec7210_priv, request_control );
 	if( request_control )
-		priv->io_write( SETSC, iobase + CMDR );
+		priv->io_writeb( SETSC, iobase + CMDR );
 	else
-		priv->io_write( CLRSC, iobase + CMDR );
+		priv->io_writeb( CLRSC, iobase + CMDR );
 	udelay(1);
 }
 void tnt4882_interface_clear(gpib_board_t *board, int assert)
@@ -284,33 +284,33 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 	const unsigned long iobase = nec_priv->iobase;
 
 	/* NAT 4882 reset */
-	tnt_priv->io_write( SOFT_RESET, iobase + CMDR );	/* Turbo488 software reset */
+	tnt_priv->io_writeb( SOFT_RESET, iobase + CMDR );	/* Turbo488 software reset */
 	udelay(1);
 
 	// turn off one-chip mode and dma
-	tnt_priv->io_write( NODMA, iobase + HSSEL );
-	tnt_priv->io_write( 0, iobase + ACCWR );
+	tnt_priv->io_writeb( NODMA, iobase + HSSEL );
+	tnt_priv->io_writeb( 0, iobase + ACCWR );
 
 	// make sure we are in 7210 mode
-	tnt_priv->io_write(AUX_7210, iobase + AUXCR);
+	tnt_priv->io_writeb(AUX_7210, iobase + AUXCR);
 	udelay(1);
 	// registers might be swapped, so write it to the swapped address too
-	tnt_priv->io_write(AUX_7210, iobase +  SWAPPED_AUXCR);
+	tnt_priv->io_writeb(AUX_7210, iobase +  SWAPPED_AUXCR);
 	udelay(1);
 
 	nec7210_board_reset( nec_priv, board );
 	// read-clear isr0
-	tnt_priv->io_read( iobase + ISR0 );
+	tnt_priv->io_readb( iobase + ISR0 );
 
 	// turn off one chip mode and dma
-	tnt_priv->io_write( NODMA , iobase + HSSEL);
+	tnt_priv->io_writeb( NODMA , iobase + HSSEL);
 
 	// enable passing of nec7210 interrupts
 	tnt_priv->imr3_bits = HR_TLCI;
-	tnt_priv->io_write( tnt_priv->imr3_bits, iobase + IMR3 );
+	tnt_priv->io_writeb( tnt_priv->imr3_bits, iobase + IMR3 );
 
 	// enable interrupt
-	tnt_priv->io_write( 0x1, iobase + INTRT );
+	tnt_priv->io_writeb( 0x1, iobase + INTRT );
 
 	// force immediate holdoff
 	write_byte( nec_priv, AUX_HLDI, AUXMR );
@@ -318,7 +318,7 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 
 	nec7210_board_online( nec_priv, board );
 	// enable interface clear interrupt for event queue
-	tnt_priv->io_write( TNT_IMR0_ALWAYS_BITS | TNT_IFCIE_BIT,
+	tnt_priv->io_writeb( TNT_IMR0_ALWAYS_BITS | TNT_IFCIE_BIT,
 		iobase + IMR0 );
 }
 
@@ -333,8 +333,10 @@ int ni_pci_attach(gpib_board_t *board)
 	if(tnt4882_allocate_private(board))
 		return -ENOMEM;
 	tnt_priv = board->private_data;
-	tnt_priv->io_write = writeb_wrapper;
-	tnt_priv->io_read = readb_wrapper;
+	tnt_priv->io_writeb = writeb_wrapper;
+	tnt_priv->io_readb = readb_wrapper;
+	tnt_priv->io_writew = writew_wrapper;
+	tnt_priv->io_readw = readw_wrapper;
 	nec_priv = &tnt_priv->nec7210_priv;
 	nec_priv->read_byte = nec7210_iomem_read_byte;
 	nec_priv->write_byte = nec7210_iomem_write_byte;
@@ -452,8 +454,10 @@ int ni_isa_attach(gpib_board_t *board)
 	if(tnt4882_allocate_private(board))
 		return -ENOMEM;
 	tnt_priv = board->private_data;
-	tnt_priv->io_write = outb_wrapper;
-	tnt_priv->io_read = inb_wrapper;
+	tnt_priv->io_writeb = outb_wrapper;
+	tnt_priv->io_readb = inb_wrapper;
+	tnt_priv->io_writew = outw_wrapper;
+	tnt_priv->io_readw = inw_wrapper;
 	nec_priv = &tnt_priv->nec7210_priv;
 	nec_priv->read_byte = nec7210_ioport_read_byte;
 	nec_priv->write_byte = nec7210_ioport_write_byte;

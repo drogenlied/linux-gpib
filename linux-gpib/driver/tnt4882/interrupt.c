@@ -36,8 +36,8 @@ void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp)
 
 	nec7210_interrupt(board, &priv->nec7210_priv);
 
-	isr0_bits = priv->io_read( nec_priv->iobase + ISR0 );
-	isr3_bits = priv->io_read( nec_priv->iobase + ISR3 );
+	isr0_bits = priv->io_readb( nec_priv->iobase + ISR0 );
+	isr3_bits = priv->io_readb( nec_priv->iobase + ISR3 );
 	imr3_bits = priv->imr3_bits;
 
 	if( isr0_bits & TNT_IFCI_BIT )
@@ -62,7 +62,7 @@ void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	{
 		GPIB_DPRINTK( "tnt4882: isr3 0x%x imr3 0x%x\n", isr3_bits,
 			imr3_bits );
-		priv->io_write( priv->imr3_bits, nec_priv->iobase + IMR3 );
+		priv->io_writeb( priv->imr3_bits, nec_priv->iobase + IMR3 );
 		wake_up_interruptible( &board->wait );
 	}
 

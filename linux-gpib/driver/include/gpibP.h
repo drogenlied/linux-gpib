@@ -35,6 +35,10 @@ void writeb_wrapper( unsigned int value, unsigned long address );
 unsigned int readb_wrapper( unsigned long address );
 void outb_wrapper( unsigned int value, unsigned long address );
 unsigned int inb_wrapper( unsigned long address );
+void writew_wrapper( unsigned int value, unsigned long address );
+unsigned int readw_wrapper( unsigned long address );
+void outw_wrapper( unsigned int value, unsigned long address );
+unsigned int inw_wrapper( unsigned long address );
 
 #endif	// _GPIB_P_H
 
