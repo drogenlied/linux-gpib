@@ -59,11 +59,6 @@ void ines_interrupt(int irq, void *arg, struct pt_regs *registerp)
 		OUT_FIFO_EMPTY_BIT ) )
 		wake++;
 
-	if( isr4_bits & IN_FIFO_FULL_BIT )
-	{
-		printk("ines: uh-oh, input fifo became full!\n");
-		wake++;
-	}
 	if(wake) wake_up_interruptible(&board->wait);
 
 	spin_unlock_irqrestore( &board->spinlock, flags );
