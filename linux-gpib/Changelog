@@ -30,3 +30,11 @@ isa-dma in pc2-gpib driver.  Fixes for ISA boards.  Fixed tcl binding
 for ibdev().  Made devices opened with ibfind() default to sending EOI at end
 of writes.
 
+3.1.5: Fixed some problems that showed up with pc2 boards not being able to
+send command bytes.  Added device id for NI GPIB+ boards.  Fixed lockup on
+write with dma enabled for pc2/2a boards.  Added options during 'make config'
+for specifying whether you want pcmcia support, and enabling verbose debugging
+spam to your kernel logs.  Added support for NI PCMCIA GPIB boards (probably
+doesn't work yet).  Allows 'whiptail' to be used instead of 'dialog' for gui
+during configuration.  Fixed locking in ioctl to make it safe for multiple
+processes to access devices through the same interface board.

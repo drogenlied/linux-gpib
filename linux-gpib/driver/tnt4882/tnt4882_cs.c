@@ -754,7 +754,7 @@ void ni_pcmcia_detach(gpib_board_t *board)
 		if(nec_priv->iobase)
 		{
 			nec7210_board_reset(nec_priv);
-			if( dev_list->io.NumPorts1 == 0 && dev_list->io.NumPorts2 == 0 )
+			if( tnt_priv->io_write == writeb_wrapper )
 				iounmap( (void *) nec_priv->iobase );
 		}
 	}
