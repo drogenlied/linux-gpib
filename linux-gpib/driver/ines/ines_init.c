@@ -339,7 +339,7 @@ int init_module(void)
 
 	gpib_register_driver(&ines_pci_interface);
 
-#if defined(CONFIG_PCMCIA) || defined(CONFIG_PCMCIA_MODULE)
+#if defined(GPIB_CONFIG_PCMCIA) 
 	INIT_LIST_HEAD(&ines_pcmcia_interface.list);
 
 	gpib_register_driver(&ines_pcmcia_interface);
@@ -354,7 +354,7 @@ int init_module(void)
 void cleanup_module(void)
 {
 	gpib_unregister_driver(&ines_pci_interface);
-#if defined(CONFIG_PCMCIA) || defined(CONFIG_PCMCIA_MODULE)
+#if defined(GPIB_CONFIG_PCMCIA)
 	gpib_unregister_driver(&ines_pcmcia_interface);
 	ines_pcmcia_cleanup_module();
 #endif
