@@ -98,7 +98,7 @@ if test $PHP_CONFIG == "no"; then
 fi
 
 dnl Checks for libraries.
-AC_CHECK_LIB([guile],[gh_define],[],
+AC_CHECK_LIB([guile],[gh_define],[echo this prevents default actions from occurring > /dev/null],
 	[BIND_GUILE="no";AC_MSG_WARN([libguile not found, disabling guile binding])],[])
 
 dnl Checks for header files.
