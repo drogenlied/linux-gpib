@@ -37,6 +37,5 @@ ibConfYacc.c + ibConfYacc.h: $(srcdir)/ibConfYacc.y
 	$(YACC) -d -p gpib_yy -o ibConfYacc.c ibConfYacc.y
 
 install-data-local:
-	$(INSTALL) -d $(includedir)/gpib
-	$(INSTALL_HEADER) ib.h $(includedir)/gpib
+	$(INSTALL_HEADER) -D ib.h $(includedir)/gpib/ib.h
 

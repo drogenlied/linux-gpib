@@ -48,14 +48,14 @@ fi
 if [[ ! -f "$LINUX_SRCDIR/.hdepend" ]];then
 	AC_MSG_ERROR([You need to run \'make dep\' on the kernel source before continuing.])
 fi
-[echo \ yes]
+[echo \ ok]
 [echo -n checking for Linux kernel compilation flags... ]
 dnl get compile flags for modules from linux kernel source tree
 (cd util/linux_flags && make --quiet LINUXDIR=$LINUX_SRCDIR)
 if [[ $? != 0 ]]; then
 	AC_MSG_ERROR([Failed to get compile flags from Linux kernel directory.])
 fi
-[echo \ yes]
+[echo \ ok]
 
 dnl Checks for programs.
 AC_PROG_INSTALL
@@ -93,17 +93,30 @@ LIBGPIB_LDFLAGS="-L\$(top_srcdir)/lib -lgpib -lpthread"
 AC_SUBST(LIBGPIB_CFLAGS)
 AC_SUBST(LIBGPIB_LDFLAGS)
 
-AC_OUTPUT( Makefile \
+AC_OUTPUT([\
+	Makefile \
 	lib/Makefile \
 	lib/gpib_config/Makefile \
 	examples/Makefile \
 	test/Makefile \
 	driver/Makefile \
 	driver/include/Makefile \
+	driver/cb7210/Makefile \
+	driver/cec/Makefile \
+	driver/hp82335/Makefile \
+	driver/ines/Makefile \
+	driver/nec7210/Makefile \
+	driver/pc2/Makefile \
+	driver/sys/Makefile \
+	driver/tms9914/Makefile \
+	driver/tnt4882/Makefile \
+	driver/tnt4882-tms/Makefile \
+	driver//Makefile \
 	doc/Makefile \
 	include/Makefile \
 	language/guile/Makefile \
 	language/python/Makefile \
 	language/tcl/Makefile \
+]
 )
 

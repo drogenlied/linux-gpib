@@ -121,7 +121,7 @@ D) Loading the driver module
 	You can also set up the modules to load automatically by adding lines
 	something like (this does NOT apply to PCMCIA cards)
 
-	alias char-major-160 gpib-common
+	alias char-major-160 gpib_common
 	alias char-major-160-0 tnt4882
 	post-install tnt4882 export PATH=/sbin:/usr/sbin:/usr/local/sbin:$PATH;gpib_config --minor 0
 

@@ -10,5 +10,4 @@
 EXTRA_DIST = amcc5920.h gpibP.h gpib_proto.h nec7210.h plx9050.h tms9914.h
 
 install-data-local:
-	$(INSTALL) -d $(includedir)/gpib
-	$(INSTALL_HEADER) gpib_user.h $(includedir)/gpib
+	$(INSTALL_HEADER) -D gpib_user.h $(includedir)/gpib/gpib_user.h

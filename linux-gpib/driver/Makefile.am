@@ -9,14 +9,4 @@
 
 SUBDIRS = cb7210 cec hp82335 ines nec7210 pc2 sys tnt4882 tnt4882-tms include
 
-#should use this if I convert driver makefiles to automake
-#AUTOMAKE_OPTIONS=nostdinc
-
--include $(top_srcdir)/util/linux_flags/flags
-CFLAGS = -I$(shell cd $(top_srcdir);pwd)/ -I$(shell cd $(top_srcdir);pwd)/driver/include -I$(shell cd $(top_srcdir);pwd)/include $(CFLAGS_LINUX)
-CC = $(CC_LINUX)
-LD = $(LD_LINUX)
-MODLIB = $(MODLIB_LINUX)
-export CC CFLAGS LD MODLIB INSTALL
-
 

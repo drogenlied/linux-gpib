@@ -428,13 +428,13 @@ pci board.  If used, you must also specify the pci slot with <option>--pci-slot<
 	<row>
 	<entry>Capital Equipment Corporation</entry>
 	<entry>PC-488</entry>
-	<entry>pc2-gpib.o</entry>
+	<entry>pc2_gpib.o</entry>
 	<entry>pcII</entry>
 	</row>
 	<row>
 	<entry>Capital Equipment Corporation</entry>
 	<entry>PCI-488</entry>
-	<entry>cec-gpib.o</entry>
+	<entry>cec_gpib.o</entry>
 	<entry>cec_pci</entry>
 	</row>
 	<row>
@@ -452,37 +452,37 @@ pci board.  If used, you must also specify the pci slot with <option>--pci-slot<
 	<row>
 	<entry>Ines</entry>
 	<entry>GPIB for Compact PCI</entry>
-	<entry>ines-gpib.o</entry>
+	<entry>ines_gpib.o</entry>
 	<entry>ines_pci, ines_pci_accel</entry>
 	</row>
 	<row>
 	<entry>Ines</entry>
 	<entry>GPIB for PCI</entry>
-	<entry>ines-gpib.o</entry>
+	<entry>ines_gpib.o</entry>
 	<entry>ines_pci, ines_pci_accel</entry>
 	</row>
 	<row>
 	<entry>Ines</entry>
 	<entry>GPIB for PCMCIA</entry>
-	<entry>ines-gpib.o</entry>
+	<entry>ines_gpib.o</entry>
 	<entry>ines_pcmcia, ines_pcmcia_accel</entry>
 	</row>
 	<row>
 	<entry>Iotech</entry>
 	<entry>GP488B</entry>
-	<entry>pc2-gpib.o</entry>
+	<entry>pc2_gpib.o</entry>
 	<entry>pcIIa</entry>
 	</row>
 	<row>
 	<entry>Keithley</entry>
 	<entry>KPCI-488</entry>
-	<entry>cec-gpib.o</entry>
+	<entry>cec_gpib.o</entry>
 	<entry>cec_pci</entry>
 	</row>
 	<row>
 	<entry>Keithley</entry>
 	<entry>MBC-488</entry>
-	<entry>pc2-gpib.o</entry>
+	<entry>pc2_gpib.o</entry>
 	<entry>pcII</entry>
 	</row>
 	<row>
@@ -506,7 +506,7 @@ pci board.  If used, you must also specify the pci slot with <option>--pci-slot<
 	<row>
 	<entry>Measurement Computing (Computer Boards)</entry>
 	<entry>ISA-GPIB-PC2A</entry>
-	<entry>pc2-gpib.o</entry>
+	<entry>pc2_gpib.o</entry>
 	<entry>pcIIa</entry>
 	</row>
 	<row>
@@ -554,19 +554,19 @@ pci board.  If used, you must also specify the pci slot with <option>--pci-slot<
 	<row>
 	<entry>National Instruments</entry>
 	<entry>PCII</entry>
-	<entry>pc2-gpib.o</entry>
+	<entry>pc2_gpib.o</entry>
 	<entry>pcII</entry>
 	</row>
 	<row>
 	<entry>National Instruments</entry>
 	<entry>PCIIa</entry>
-	<entry>pc2-gpib.o</entry>
+	<entry>pc2_gpib.o</entry>
 	<entry>pcIIa</entry>
 	</row>
 	<row>
 	<entry>National Instruments</entry>
 	<entry>PCII/IIa</entry>
-	<entry>pc2-gpib.o</entry>
+	<entry>pc2_gpib.o</entry>
 	<entry>pcII or pcII_IIa (depending on board switch)</entry>
 	</row>
 	<row>
