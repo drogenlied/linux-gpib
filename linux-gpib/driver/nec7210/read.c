@@ -159,20 +159,17 @@ ssize_t nec7210_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buff
 	nec7210_set_handshake_mode( board, priv, HR_HLDA );
 	nec7210_release_rfd_holdoff( board, priv );
 
-	if(length)
-	{
-		if( 0 /* priv->dma_channel */ )
-		{	// ISA DMA transfer
-//			retval = dma_read(board, priv, buffer, length);
-		}else
-		{	// PIO transfer
-			retval = pio_read( board, priv, buffer, length, end );
-		}
-		if(retval < 0)
-			return retval;
-		else
-			count += retval;
+	if( 0 /* priv->dma_channel */ )
+	{	// ISA DMA transfer
+//		retval = dma_read(board, priv, buffer, length);
+	}else
+	{	// PIO transfer
+		retval = pio_read( board, priv, buffer, length, end );
 	}
+	if(retval < 0)
+		return retval;
+	else
+		count += retval;
 
 	return count;
 }
