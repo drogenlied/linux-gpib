@@ -53,7 +53,7 @@ int nec7210_take_control(gpib_board_t *board, nec7210_private_t *priv, int syncr
 		}
 		if(i == HZ)
 		{
-			printk("error waiting for ATN\n");
+			printk("nec7210: error waiting for ATN\n");
 			return -ETIMEDOUT;
 		}
 	}
@@ -91,7 +91,7 @@ int nec7210_go_to_standby(gpib_board_t *board, nec7210_private_t *priv)
 		}
 		if(i == HZ)
 		{
-			printk("error waiting for NATN\n");
+			printk("nec7210: error waiting for NATN\n");
 			return -ETIMEDOUT;
 		}
 	}
