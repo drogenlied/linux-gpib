@@ -162,6 +162,10 @@ void init_gpib_board( gpib_board_t *board )
 	board->buffer_length = 0;
 	board->buffer = NULL;
 	INIT_LIST_HEAD( &board->device_list );
+	board->pad = 0;
+	board->sad = -1;
+	board->usec_timeout = 3000000;
+	board->auto_poll = 1;
 }
 
 void init_board_array( gpib_board_t *board_array, unsigned int length )
@@ -176,7 +180,8 @@ void init_board_array( gpib_board_t *board_array, unsigned int length )
 void init_gpib_device( gpib_device_t *device )
 {
 	INIT_LIST_HEAD( &device->list );
-	INIT_LIST_HEAD( &device->serial_poll_bytes );
+	INIT_LIST_HEAD( &device->status_bytes );
+	device->num_status_bytes = 0;
 	device->reference_count = 0;
 }
 

@@ -76,7 +76,7 @@ int ibGetDescriptor(ibConf_t p)
 	conf->flags = p.flags;
 	conf->eos = p.eos;
 	conf->eosflags = p.eosflags;
-	conf->timeout = p.timeout;
+	conf->usec_timeout = p.usec_timeout;
 	conf->send_eoi = p.send_eoi;
 	conf->is_interface = p.is_interface;
 
@@ -114,7 +114,7 @@ void init_ibconf( ibConf_t *conf )
 	conf->eos = 0;             
 	conf->eosflags = 0;
 	conf->flags = 0;                
-	conf->timeout = T3s;
+	conf->usec_timeout = 3000000;
 	conf->send_eoi = 1;
 	conf->is_interface = 0;
 }

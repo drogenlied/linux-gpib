@@ -27,6 +27,10 @@ int status_ioctl(gpib_board_t *board, unsigned long arg);
 int open_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned long arg );
 int close_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned long arg );
 int cleanup_open_devices( struct file *filep, gpib_board_t *board );
+int serial_poll_ioctl( gpib_board_t *board, unsigned long arg );
+int wait_ioctl( gpib_board_t *board, unsigned long arg );
+int parallel_poll_ioctl( gpib_board_t *board, unsigned long arg );
+int auto_poll_enable_ioctl( gpib_board_t *board, unsigned long arg );
 
 #define GIVE_UP(a) {up(&board->mutex); return a;}
 
@@ -104,7 +108,6 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 {
 	int	retval = 0; 		/* assume everything OK for now */
 	ibarg_t m_ibarg,*ibargp;
-	char c;
 	int end_flag = 0;
 	unsigned int minor = MINOR(inode->i_rdev);
 	gpib_board_t *board;
@@ -168,6 +171,22 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			retval = close_dev_ioctl( filep, board, arg );
 			GIVE_UP( retval );
 			break;
+		case IBRSP:
+			retval = serial_poll_ioctl( board, arg );
+			GIVE_UP( retval );
+			break;
+		case IBWAIT:
+			retval = wait_ioctl( board, arg );
+			GIVE_UP( retval );
+			break;
+		case IBRPP:
+			retval = parallel_poll_ioctl( board, arg );
+			GIVE_UP( retval );
+			break;
+		case IBAPE:
+			retval = auto_poll_enable_ioctl( board, arg );
+			GIVE_UP( retval );
+			break;
 		default:
 			break;
 	}
@@ -208,23 +227,8 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 
 	switch (cmd)
 	{
-		case IBWAIT:
-			retval = ibwait(board, ibargp->ib_arg);
-			break;
-		case IBRPP:
-			/* Check write access to Poll byte */
-			retval = verify_area(VERIFY_WRITE, ibargp->ib_buf, 1);
-			if (retval)
-				GIVE_UP(retval);
-
-			retval = ibrpp(board, &c);
-			put_user( c, ibargp->ib_buf );
-			break;
 		case IBONL:
 			retval = ibonl(board, ibargp->ib_arg);
-			break;
-		case IBAPE:
-			ibAPE(board, ibargp->ib_arg,ibargp->ib_cnt);
 			break;
 		case IBSIC:
 			retval = ibsic(board);
@@ -254,27 +258,6 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			break;
 		case IBRSV:
 			retval = ibrsv(board, ibargp->ib_arg);
-			break;
-		case DVRSP:
-			/* Check write access to Poll byte */
-			retval = verify_area(VERIFY_WRITE, ibargp->ib_buf, 1);
-			if (retval)
-			{
-				GIVE_UP(retval);
-			}
-			retval = dvrsp(board, ibargp->ib_arg, &c);
-
-			put_user( c, ibargp->ib_buf );
-
-			break;
-		case IBAPRSP:
-			retval = verify_area(VERIFY_WRITE, ibargp->ib_buf, 1);
-			if (retval)
-			{
-				GIVE_UP(retval);
-			}
-			retval = ibAPrsp(board, ibargp->ib_arg, &c);
-			put_user( c, ibargp->ib_buf );
 			break;
 		/* special configuration options */
 		case CFCBASE:
@@ -617,3 +600,102 @@ int close_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned long arg 
 	return 0;
 }
 
+gpib_device_t * get_gpib_device( gpib_board_t *board, unsigned int pad, int sad )
+{
+	gpib_device_t *device;
+	struct list_head *list_ptr;
+	const struct list_head *head = &board->device_list;
+
+	for( list_ptr = head->next; list_ptr != head; list_ptr = list_ptr->next )
+	{
+		device = list_entry( list_ptr, gpib_device_t, list );
+		if( device->pad == pad && device->sad == sad )
+			return device;
+	}
+
+	return NULL;
+}
+
+#if 0
+unsigned int num_status_bytes( const gpib_device_t *dev )
+{
+	struct list_head *list_ptr;
+	const struct list_head *head = &device->serial_poll_bytes;
+	unsigned int count;
+
+	count = 0;
+	for( list_ptr = head->next; list_ptr != head; list_ptr = list_ptr->next )
+		count++
+
+	GPIB_DPRINTK( "%i status bytes stored for pad %i, sad %i\n", count,
+		dev->pad, dev->sad );
+
+	return count;
+}
+#endif
+
+int serial_poll_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	serial_poll_ioctl_t serial_cmd;
+	int retval;
+
+	retval = copy_from_user( &serial_cmd, ( void* ) arg, sizeof( serial_cmd ) );
+	if( retval )
+		return -EFAULT;
+//XXX check for autopoll
+	retval = dvrsp( board, serial_cmd.pad, serial_cmd.sad, board->usec_timeout,
+		&serial_cmd.status_byte );
+	if( retval < 0 )
+		return retval;
+
+	retval = copy_to_user( ( void * ) arg, &serial_cmd, sizeof( serial_cmd ) );
+	if( retval )
+		return -EFAULT;
+
+	return 0;
+}
+
+int wait_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	unsigned int wait_mask;
+	int retval;
+
+	retval = copy_from_user( &wait_mask, ( void * ) arg, sizeof( wait_mask ) );
+	if( retval )
+		return -EFAULT;
+
+	return ibwait( board, wait_mask );
+}
+
+int parallel_poll_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	uint8_t poll_byte;
+	int retval;
+
+	retval = ibrpp( board, &poll_byte );
+	if( retval < 0 )
+		return retval;
+
+	retval = copy_to_user( ( void * ) arg, &poll_byte, sizeof( poll_byte ) );
+	if( retval )
+		return -EFAULT;
+
+	return 0;
+}
+
+int auto_poll_enable_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	int enable;
+	int retval;
+
+	retval = copy_from_user( &enable, ( void * ) arg, sizeof( enable ) );
+	if( retval )
+		return -EFAULT;
+
+	if( enable )
+		board->auto_poll = 1;
+	else
+		board->auto_poll = 0;
+
+	return 0;
+}

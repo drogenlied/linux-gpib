@@ -19,7 +19,7 @@ typedef struct ibConfStruct
 	char eos;                           /* local eos modes                  */
 	int eosflags;
 	int flags;                         /* some flags                       */
-	int timeout;
+	unsigned int usec_timeout;
 	unsigned int send_eoi : 1;	// assert EOI at end of writes
 	unsigned int is_interface : 1;	// is interface board
 } ibConf_t;

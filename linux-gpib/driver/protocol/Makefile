@@ -5,7 +5,7 @@
 -include $(ROOT)/util/.config
 
 SRCS = ibcac.c ibcmd.c ibgts.c ibinit.c iblines.c ibread.c ibrpp.c ibrsv.c ibsic.c \
-	ibsre.c ibutil.c ibwait.c ibwrite.c device.c ibAutoSP.c
+	ibsre.c ibutil.c ibwait.c ibwrite.c device.c
 
 OBJS = $(SRCS:.c=.o)
 

@@ -1,5 +1,5 @@
 
-#include <ibprot.h>
+#include "gpibP.h"
 
 /*
  * IBCMD
@@ -13,7 +13,7 @@
  *          must be called to initialize the GPIB and enable
  *          the interface to leave the controller idle state.
  */
-ssize_t ibcmd(gpib_board_t *board, uint8_t *buf, size_t length)
+ssize_t ibcmd( gpib_board_t *board, uint8_t *buf, size_t length )
 {
 	size_t	count = 0;
 	ssize_t ret = 0;
@@ -26,8 +26,8 @@ ssize_t ibcmd(gpib_board_t *board, uint8_t *buf, size_t length)
 		printk("gpib: cannot send command when not controller-in-charge\n");
 		return -1;
 	}
-	// XXX global
-	osStartTimer(board, timeidx);
+
+	osStartTimer( board, board->usec_timeout );
 
 	if((ret = board->interface->take_control(board, 0)))
 	{

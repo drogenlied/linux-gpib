@@ -40,8 +40,8 @@ int ibfind(char *dev)
 
 	conf = &ibFindConfigs[index];
 
-	uDesc = ibdev(conf->board, conf->pad, conf->sad, conf->timeout,
-		conf->send_eoi, conf->eos | (conf->eosflags << 8));
+	uDesc = my_ibdev( conf->board, conf->pad, conf->sad, conf->usec_timeout,
+		conf->send_eoi, conf->eos, conf->eosflags );
 	if(uDesc < 0)
 	{
 		fprintf(stderr, "ibfind failed to get descriptor\n");

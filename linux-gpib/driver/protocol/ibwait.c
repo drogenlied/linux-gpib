@@ -16,7 +16,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include <ibprot.h>
+#include "gpibP.h"
 #include <linux/sched.h>
 
 /*
@@ -27,7 +27,7 @@
  * If the mask is 0 then
  * no condition is waited for.
  */
-int ibwait(gpib_board_t *board, unsigned int mask)
+int ibwait( gpib_board_t *board, unsigned int mask )
 {
 	int retval = 0;
 
@@ -40,17 +40,19 @@ int ibwait(gpib_board_t *board, unsigned int mask)
 		printk("bad mask 0x%x \n",mask);
 		return -1;
 	}
-	osStartTimer(board, timeidx);
-	while((ibstatus(board) & mask) == 0)
+	if( mask & TIMO )
+		osStartTimer( board, board->usec_timeout );
+	while( ( ibstatus( board ) & mask) == 0 )
 	{
-		if(interruptible_sleep_on_timeout(&board->wait, 1))
+		if( interruptible_sleep_on_timeout( &board->wait, 1 ) )
 		{
 			printk("wait interrupted\n");
-			retval = -1;
+			retval = -ERESTARTSYS;
 			break;
 		}
 	}
-	osRemoveTimer(board);
+	if( mask & TIMO )
+		osRemoveTimer( board );
 	return retval;
 }
 

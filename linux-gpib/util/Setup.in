@@ -160,8 +160,7 @@ $DIALOG --msgbox "
       Now Type 'make' to start compilation\n" 10 60
 
 
-
-
-
 ######################################################################
+
+clear
 

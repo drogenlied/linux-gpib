@@ -31,7 +31,7 @@ int ibcmd(int ud, void *cmd, unsigned long cnt)
 
 	board = &ibBoard[conf->board];
 
-	count = __ibcmd(board, conf, cmd, cnt);
+	count = my_ibcmd(board, conf, cmd, cnt);
 
 	if(count < 0)
 	{
@@ -73,7 +73,7 @@ int ibcmd(int ud, void *cmd, unsigned long cnt)
 	return status;
 }
 
-ssize_t __ibcmd( const ibBoard_t *board, const ibConf_t *conf, uint8_t *buffer, size_t count)
+ssize_t my_ibcmd( const ibBoard_t *board, const ibConf_t *conf, uint8_t *buffer, size_t count)
 {
 	read_write_ioctl_t cmd;
 	int retval;
@@ -84,10 +84,10 @@ ssize_t __ibcmd( const ibBoard_t *board, const ibConf_t *conf, uint8_t *buffer, 
 		return -1;
 	}
 
-	__ibtmo( board, conf->timeout );
-
 	cmd.buffer = buffer;
 	cmd.count = count;
+	
+	set_timeout( board, conf->usec_timeout);
 
 	retval = ioctl( board->fileno, IBCMD, &cmd );
 	if( retval < 0 )
@@ -120,7 +120,7 @@ int send_setup( const ibBoard_t *board, const ibConf_t *conf )
 	if( board->sad >= 0 )
 		cmdString[ i++ ] = MSA( board->sad );
 
-	if( __ibcmd( board, conf, cmdString, i) < 0 )
+	if( my_ibcmd( board, conf, cmdString, i) < 0 )
 		return -1;
 
 	return 0;

@@ -16,7 +16,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include <ibprot.h>
+#include "gpibP.h"
 
 /*
  * DVRSP
@@ -27,13 +27,13 @@
  * SPD and UNT are sent at the completion of the poll.
  */
 
-int dvrsp(gpib_board_t *board, int padsad, uint8_t *result)
+int dvrsp( gpib_board_t *board, unsigned int pad, int sad,
+	unsigned int usec_timeout, uint8_t *result )
 {
 	uint8_t cmd_string[8];
 	int status = ibstatus(board);
 	int end_flag;
 	ssize_t ret;
-	unsigned int pad, sad;
 	int i;
 
 	if((status & CIC) == 0)
@@ -42,57 +42,56 @@ int dvrsp(gpib_board_t *board, int padsad, uint8_t *result)
 		return -1;
 	}
 
-	pad = padsad & 0xff;
-	sad = (padsad >> 8) & 0xff;
-	if ((pad > 0x1E) || (sad && ((sad < 0x60) || (sad > 0x7E)))) {
+	if( pad > 0x1E || sad > 0x1E )
+	{
 		printk("gpib: bad address for serial poll");
 		return -1;
 	}
 
-	osStartTimer( board, timeidx );
+	osStartTimer( board, usec_timeout );
 
 	board->interface->take_control(board, 0);
 
 	i = 0;
 	cmd_string[i++] = UNL;
-	cmd_string[i++] = myPAD | LAD;	/* controller's listen address */
-	if (mySAD)
-		cmd_string[i++] = mySAD;
+	cmd_string[i++] = MLA( board->pad );	/* controller's listen address */
+	if( board->sad >= 0 )
+		cmd_string[i++] = MSA( board->sad );
 	cmd_string[i++] = SPE;	//serial poll enable
 	// send talk address
-	cmd_string[i++] = pad | TAD;
-	if (sad)
-		cmd_string[i++] = sad;
+	cmd_string[i++] = MTA( pad );
+	if( sad >= 0 )
+		cmd_string[i++] = MSA( sad );
 
-	if (board->interface->command(board, cmd_string, i) < i)
+	if( board->interface->command( board, cmd_string, i ) < i )
 	{
 		printk("gpib: failed to setup serial poll\n");
-		osRemoveTimer(board);
+		osRemoveTimer( board );
 		return -1;
 	}
 
-	board->interface->go_to_standby(board);
+	board->interface->go_to_standby( board );
 
 	// read poll result
-	ret = board->interface->read(board, result, 1, &end_flag);
-	if(ret < 1)
+	ret = board->interface->read( board, result, 1, &end_flag );
+	if( ret < 1 )
 	{
-		printk("gpib: serial poll failed\n");
-		osRemoveTimer(board);
+		printk( "gpib: serial poll failed\n" );
+		osRemoveTimer( board );
 		return -1;
 	}
 
-	board->interface->take_control(board, 0);
+	board->interface->take_control( board, 0 );
 
 	cmd_string[0] = SPD;	/* disable serial poll bytes */
 	cmd_string[1] = UNT;
-	if(board->interface->command(board, cmd_string, 2) < 2 )
+	if( board->interface->command(board, cmd_string, 2) < 2 )
 	{
-		printk("gpib: failed to disable serial poll\n");
-		osRemoveTimer(board);
+		printk( "gpib: failed to disable serial poll\n" );
+		osRemoveTimer( board );
 		return -1;
 	}
-	osRemoveTimer(board);
+	osRemoveTimer( board );
 
 	return 0;
 }

@@ -3,13 +3,16 @@
 #include <ibP.h>
 #include <sys/ioctl.h>
 
-ssize_t __ibwrt(ibBoard_t *board, uint8_t *buffer, size_t count, int send_eoi)
+ssize_t my_ibwrt( const ibBoard_t *board, const ibConf_t *conf,
+	uint8_t *buffer, size_t count )
 {
 	read_write_ioctl_t write_cmd;
 
 	write_cmd.buffer = buffer;
 	write_cmd.count = count;
-	write_cmd.end = send_eoi;
+	write_cmd.end = conf->send_eoi;
+
+	set_timeout( board, conf->usec_timeout );
 
 	if( ioctl( board->fileno, IBWRT, &write_cmd) < 0)
 	{
@@ -37,7 +40,6 @@ int ibwrt(int ud, void *rd, unsigned long cnt)
 	board = &ibBoard[conf->board];
 
 	iblcleos(ud);
-	__ibtmo(board, conf->timeout);
 
 	if(conf->is_interface == 0)
 	{
@@ -51,7 +53,7 @@ int ibwrt(int ud, void *rd, unsigned long cnt)
 		}
 	}
 
-	count = __ibwrt(board, rd, cnt, conf->send_eoi);
+	count = my_ibwrt( board, conf, rd, cnt );
 
 	if(count < 0)
 	{

@@ -16,7 +16,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include <ibprot.h>
+#include "gpibP.h"
 
 /*
  * IBWRT
@@ -40,7 +40,7 @@ ssize_t ibwrt(gpib_board_t *board, uint8_t *buf, size_t cnt, int send_eoi)
 	board->interface->go_to_standby(board);
 	// mark io in progress
 	clear_bit(CMPL_NUM, &board->status);
-	osStartTimer(board, timeidx);
+	osStartTimer( board, board->usec_timeout );
 
 	ret = board->interface->write(board, buf, cnt, send_eoi);
 	if(ret < 0)

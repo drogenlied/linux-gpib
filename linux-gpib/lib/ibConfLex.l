@@ -59,23 +59,23 @@ no          { gpib_yylval.bval=0; return(T_BOOL);}
 
 
 none         { gpib_yylval.ival=0 ; return(T_TIVAL);}
-10us         { gpib_yylval.ival=1 ; return(T_TIVAL);}
-30us         { gpib_yylval.ival=2 ; return(T_TIVAL);}
-100us        { gpib_yylval.ival=3 ; return(T_TIVAL);}
-300us        { gpib_yylval.ival=4 ; return(T_TIVAL);}
-1ms          { gpib_yylval.ival=5 ; return(T_TIVAL);}
-3ms          { gpib_yylval.ival=6 ; return(T_TIVAL);}
-10ms         { gpib_yylval.ival=7 ; return(T_TIVAL);}
-30ms         { gpib_yylval.ival=8 ; return(T_TIVAL);}
-100ms        { gpib_yylval.ival=9 ; return(T_TIVAL);}
-300ms        { gpib_yylval.ival=10; return(T_TIVAL);}
-1s           { gpib_yylval.ival=11; return(T_TIVAL);}
-3s           { gpib_yylval.ival=12; return(T_TIVAL);}
-10s          { gpib_yylval.ival=13; return(T_TIVAL);}
-30s          { gpib_yylval.ival=14; return(T_TIVAL);}
-100s         { gpib_yylval.ival=15; return(T_TIVAL);}
-300s         { gpib_yylval.ival=16; return(T_TIVAL);}
-1000s        { gpib_yylval.ival=17; return(T_TIVAL);}
+10us         { gpib_yylval.ival=10; return(T_TIVAL);}
+30us         { gpib_yylval.ival=30; return(T_TIVAL);}
+100us        { gpib_yylval.ival=100; return(T_TIVAL);}
+300us        { gpib_yylval.ival=300; return(T_TIVAL);}
+1ms          { gpib_yylval.ival=1000; return(T_TIVAL);}
+3ms          { gpib_yylval.ival=3000; return(T_TIVAL);}
+10ms         { gpib_yylval.ival=10000; return(T_TIVAL);}
+30ms         { gpib_yylval.ival=30000; return(T_TIVAL);}
+100ms        { gpib_yylval.ival=100000; return(T_TIVAL);}
+300ms        { gpib_yylval.ival=300000; return(T_TIVAL);}
+1s           { gpib_yylval.ival=1000000; return(T_TIVAL);}
+3s           { gpib_yylval.ival=3000000; return(T_TIVAL);}
+10s          { gpib_yylval.ival=1000000; return(T_TIVAL);}
+30s          { gpib_yylval.ival=30000000; return(T_TIVAL);}
+100s         { gpib_yylval.ival=100000000; return(T_TIVAL);}
+300s         { gpib_yylval.ival=300000000; return(T_TIVAL);}
+1000s        { gpib_yylval.ival=1000000000; return(T_TIVAL);}
 
 
 [0-9]+  { sscanf(gpib_yytext,"%d",&gpib_yylval.ival); 

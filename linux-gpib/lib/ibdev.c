@@ -21,7 +21,14 @@
 
 int config_parsed = 0;
 
+
 int ibdev(int minor, int pad, int sad, int timo, int eot, int eos)
+{
+	return my_ibdev( minor, pad, sad, timeout_to_usec( timo ),
+		eot, eos & 0xff, ( eos >> 8 ) & 0xff );
+}
+
+int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_eoi, int eos, int eosflags)
 {
 	char *envptr;
 	int retval;
@@ -52,10 +59,10 @@ int ibdev(int minor, int pad, int sad, int timo, int eot, int eos)
 	conf.sad = sad - sad_offset;                        /* device address                   */
 	conf.init_string[0] = 0;               /* initialization string (optional) */
 	conf.board = minor;                         /* board number                     */
-	conf.eos = eos & 0xff;                           /* local eos modes                  */
-	conf.eosflags = (eos >> 8) & 0xff;
-	conf.timeout = timo;
-	if(eot)
+	conf.eos = eos;                           /* local eos modes                  */
+	conf.eosflags = eosflags;
+	conf.usec_timeout = usec_timeout;
+	if( send_eoi )
 		conf.send_eoi = 1;
 	else
 		conf.send_eoi = 0;

@@ -86,7 +86,6 @@ int ibBoardFunc (int bd, int code, ...)
 			break;
 		case IBAPRSP:
 		case IBRPP:
-		case DVRSP:
 			va_start(ap, code);
 			arg=va_arg(ap, int);
 			buf=va_arg(ap, char *);

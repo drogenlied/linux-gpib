@@ -1,5 +1,5 @@
 
-#include <ibprot.h>
+#include "gpibP.h"
 
 /*
  * IBRPP
@@ -9,24 +9,24 @@
  *      1.  Prior to conducting the poll the interface is placed
  *          in the controller active state.
  */
-int ibrpp(gpib_board_t *board, uint8_t *buf)
+int ibrpp(gpib_board_t *board, uint8_t *result )
 {
-	int status = ibstatus(board);
-	if((status * CIC) == 0)
+	int status = ibstatus( board );
+	int retval = 0;
+
+	if( ( status & CIC ) == 0 )
 	{
 		return -1;
 	}
-	osStartTimer(board, timeidx);
+	osStartTimer( board, board->usec_timeout );
 	board->interface->take_control(board, 0);
-	if(board->interface->parallel_poll(board, buf))
+	if(board->interface->parallel_poll( board, result ) )
 	{
 		printk("gpib: parallel poll failed\n");
-		osRemoveTimer(board);
-		return -1;
+		retval = -1;
 	}
-//supposed to send rpp local message false at end
 	osRemoveTimer(board);
-	return 0;
+	return retval;
 }
 
 

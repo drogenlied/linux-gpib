@@ -5,13 +5,13 @@
 #include <gpib_registers.h>
 #include <gpib_ioctl.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
 
-#include <ibConf.h>
+#include "ibConf.h"
 
 #define NOADDR -1
 #define IbcAUTOPOLL 0
 
-/***** Private Functions ******/
 extern int ibCheckDescriptor(int ud);
 extern  int ibBdChrConfig(int ud);
 extern  void ibBoardDefaultValues(void);
@@ -28,11 +28,14 @@ extern  void ibPutErrlog(int ud,char *routine);
 extern  int ibParseConfigFile(char *filename);
 extern  int ibGetDescriptor(ibConf_t conf);
 extern  int ibFindDevIndex(char *name);
-extern ssize_t __ibcmd( const ibBoard_t *board, const ibConf_t *conf, uint8_t *buffer, size_t length);
-extern int __ibtmo( const ibBoard_t *board, int timeout);
+extern ssize_t my_ibcmd( const ibBoard_t *board, const ibConf_t *conf, uint8_t *buffer, size_t length);
 extern int config_parsed;
 extern int send_setup( const ibBoard_t *board, const ibConf_t *conf );
 extern void init_ibconf( ibConf_t *conf );
+extern int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout,
+	int send_eoi, int eos, int eosflags);
+extern unsigned int timeout_to_usec( enum gpib_timeout timeout );
+extern int set_timeout( const ibBoard_t *board, unsigned int usec_timeout );
 
 #include <stdio.h>
 int gpib_yyparse(void);

@@ -1,4 +1,5 @@
-#include <ibprot.h>
+
+#include "gpibP.h"
 #include <linux/delay.h>
 
 /*

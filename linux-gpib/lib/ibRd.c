@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include "ib_internal.h"
 #include <ibP.h>
-#include <sys/ioctl.h>
 
 // sets up bus to receive data from device with address pad/sad
 int receive_setup( const ibBoard_t *board, const ibConf_t *conf )
@@ -27,7 +26,7 @@ int receive_setup( const ibBoard_t *board, const ibConf_t *conf )
 	if(sad >= 0)
 		cmdString[i++] = MSA(sad);
 
-	if ( __ibcmd(board, conf, cmdString, i) < 0)
+	if ( my_ibcmd(board, conf, cmdString, i) < 0)
 	{
 		fprintf(stderr, "receive_setup: command failed\n");
 		return -1;
@@ -56,8 +55,6 @@ int ibrd(int ud, void *rd, unsigned long cnt)
 
 	// set eos mode
 	iblcleos(ud);
-	// set timeout XXX need to init conf with board default when not set
-	__ibtmo(board, conf->timeout);
 
 	if(conf->is_interface == 0)
 	{
@@ -73,6 +70,8 @@ int ibrd(int ud, void *rd, unsigned long cnt)
 
 	read_cmd.buffer = rd;
 	read_cmd.count = cnt;
+
+	set_timeout( board, conf->usec_timeout );
 
 	retval = ioctl(board->fileno, IBRD, &read_cmd);
 	if(retval < 0)

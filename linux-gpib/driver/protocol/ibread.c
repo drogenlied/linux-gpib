@@ -17,7 +17,7 @@
  ***************************************************************************/
 
 
-#include <ibprot.h>
+#include "gpibP.h"
 
 
 /*
@@ -41,7 +41,7 @@ ssize_t ibrd(gpib_board_t *board, uint8_t *buf, size_t length, int *end_flag)
 	if(length == 0) return 0;
 
 	board->interface->go_to_standby(board);
-	osStartTimer(board, timeidx);
+	osStartTimer( board, board->usec_timeout );
 	// mark io in progress
 	clear_bit(CMPL_NUM, &board->status);
 	// initialize status to END not yet received

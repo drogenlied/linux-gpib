@@ -1,20 +1,21 @@
-#include <ibprot.h>
+
+#include "gpibP.h"
 
 /*
  * IBPAD
  * change the GPIB address of the interface board.  The address
  * must be 0 through 30.  ibonl resets the address to PAD.
  */
-int ibpad(gpib_board_t *board, int v)
+int ibpad( gpib_board_t *board, unsigned int addr )
 {
-	if ((v < 0) || (v > 30))
+	if ( addr > 30 )
 	{
 		printk("gpib: invalid primary address\n");
 		return -1;
 	}else
 	{
-		myPAD = v;
-		board->interface->primary_address(board, myPAD );
+		board->pad = addr;
+		board->interface->primary_address( board, board->pad );
 	}
 	return 0;
 }
@@ -26,43 +27,34 @@ int ibpad(gpib_board_t *board, int v)
  * The address must be 0 through 30, or negative disables.  ibonl resets the
  * address to SAD.
  */
-int ibsad(gpib_board_t *board, int v)
+int ibsad( gpib_board_t *board, int addr )
 {
-	if (v > 30)
+	if( addr > 30 )
 	{
 		printk("gpib: invalid secondary address, must be 0-30\n");
 		return -1;
 	}else
 	{
-		if ((mySAD = v) >= 0) // mySAD shouldn't be global XXX
+		if( ( board->sad = addr ) >= 0 )
 		{
-			board->interface->secondary_address(board, mySAD, 1);
+			board->interface->secondary_address( board, board->sad, 1 );
 		}else
 		{
-			board->interface->secondary_address(board, 0,0);
+			board->interface->secondary_address( board, 0, 0 );
 		}
 	}
 	return 0;
 }
 
-
 /*
  * IBTMO
- * Set the timeout value for I/O operations to v.  Timeout
- * intervals can range from 10 usec to 1000 sec.  The value
- * of v specifies an index into the array timeTable.
- * If v == 0 then timeouts are disabled.
+ * Set the timeout value for I/O operations.  A timeout
+ * of zero disables.
  */
-int ibtmo(gpib_board_t *board, unsigned int timeout)
+int ibtmo(gpib_board_t *board, unsigned int usec_timeout)
 {
-	if (timeout > T1000s)
-	{
-		printk("gpib: invalid timeout setting\n");
-		return -EINVAL;
-	}else
-	{
-		timeidx = timeout;	// XXX global
-	}
+	board->usec_timeout = usec_timeout;
+
 	return 0;
 }
 
@@ -71,7 +63,7 @@ int ibtmo(gpib_board_t *board, unsigned int timeout)
  * Set the end-of-string modes for I/O operations to v.
  *
  */
-int ibeos(gpib_board_t *board, int v)
+int ibeos( gpib_board_t *board, int v )
 {
 	int ebyte, emodes;
 	ebyte = v & 0xFF;

@@ -168,17 +168,24 @@ struct gpib_board_struct
 	/* 'private_data' can be used as seen fit by the driver to
 	 * store additional variables for this board */
 	void *private_data;
+	/* Number of open file descriptors for this board */
+	unsigned int open_count;
+	/* list of open devices connected to this board */
+	struct list_head device_list;
+	// primary address
+	unsigned int pad;
+	// secondary address
+	int sad;
+	// timeout for operations, in microseconds
+	unsigned int usec_timeout;
 	/* Flag that indicates whether board is up and running or not */
 	unsigned online : 1;
 	/* Flag that indicates whether board is system controller of the bus */
 	unsigned master : 1;
 	/* Flag board has been opened for exclusive access */
 	unsigned exclusive : 1;
-	/* Number of open file descriptors for this board */
-	unsigned int open_count;
-	/* list of open devices connected to this board */
-	struct list_head device_list;
-
+	// enable auto serial polling or no
+	unsigned auto_poll : 1;
 };
 
 /* Each board has a list of gpib_device_t to keep track of all open devices
@@ -190,7 +197,8 @@ typedef struct
 	unsigned int pad;	// primary gpib address
 	int sad;	// secondary gpib address (negative means disabled)
 	// stores serial poll bytes for this device
-	struct list_head serial_poll_bytes;
+	struct list_head status_bytes;
+	unsigned int num_status_bytes;
 	// number of times this address is opened
 	unsigned int reference_count;
 } gpib_device_t;

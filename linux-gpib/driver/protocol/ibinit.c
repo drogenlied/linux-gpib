@@ -1,43 +1,12 @@
 
-#include <ibprot.h>
+#include "gpibP.h"
 #include <linux/kernel.h>
 #include <linux/vmalloc.h>
-
-int timeidx = T1s;	/* timeout index into timeTable */
-int myPAD = 0;		/* current primary address */
-int mySAD = 0;		/* current secondary address */
 
 #if !defined(HP82335) && !defined(TMS9914)
 #else
 int ccrbits	= 0;	/* static bits for AUXRA (EOS modes) */
 #endif
-
-// store number of jiffies to wait for various timeouts
-#define usec_to_jiffies(usec) (((usec) + 1000000 / HZ - 1) / (1000000 / HZ))
-unsigned long timeTable[] =
-{
-	0,                      	/*  0: TNONE    */
-	usec_to_jiffies(10),        	/*  1: T10us    */
-	usec_to_jiffies(30),        	/*  2: T30us    */
-	usec_to_jiffies(100),       	/*  3: T100us   */
-	usec_to_jiffies(300),       	/*  4: T300us   */
-	usec_to_jiffies(1000),             	/*  5: T1ms     */
-	usec_to_jiffies(3000),             	/*  6: T3ms     */
-	usec_to_jiffies(10000),            	/*  7: T10ms    */
-	usec_to_jiffies(30000),            	/*  8: T30ms    */
-	usec_to_jiffies(100000),           	/*  9: T100ms   */
-	usec_to_jiffies(300000),           	/* 10: T300ms   */
-	usec_to_jiffies(1000000),                	/* 11: T1s      */
-	usec_to_jiffies(3000000),                	/* 12: T3s      */
-	usec_to_jiffies(10000000),               	/* 13: T10s     */
-	usec_to_jiffies(30000000),               	/* 14: T30s     */
-	usec_to_jiffies(100000000),              	/* 15: T100s    */
-	usec_to_jiffies(300000000),              	/* 16: T300s    */
-	usec_to_jiffies(1000000000),              	/* 17: T1000s   */
-};
-
-
-
 
 /*
 * IBONL
@@ -60,9 +29,8 @@ int ibonl(gpib_board_t *board, int v)
 	*/
 	if( board->open_count == 1 || !(board->online) )
 	{
-		timeidx = T1s; /* initialize configuration variables... */
 		myPAD = 0;
-		mySAD = 0;
+		mySAD = -1;
 #if !defined(HP82335) && !defined(TMS9914)
 #else
 		ccrbits = 0;

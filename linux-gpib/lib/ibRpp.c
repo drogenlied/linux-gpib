@@ -15,7 +15,6 @@ int ibrpp(int ud, char *ppr)
 
 	board = &ibBoard[ conf->board ];
 
-	__ibtmo( board, conf->timeout );
-
+	// XXX set timeout
 	return ibBoardFunc(CONF(ud,board),IBRPP,0 ,ppr);
 }

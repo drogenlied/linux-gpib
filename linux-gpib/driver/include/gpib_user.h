@@ -64,25 +64,27 @@ static const int DRIVERBITS = (SRQI | LOK | REM | CIC | ATN | TACS | LACS | DTAS
 
 /* Timeout values and meanings */
 
-#define TNONE    0		/* Infinite timeout (disabled)     */
-#define T10us    1		/* Timeout of 10 usec (ideal)      */
-#define T30us    2		/* Timeout of 30 usec (ideal)      */
-#define T100us   3		/* Timeout of 100 usec (ideal)     */
-#define T300us   4		/* Timeout of 300 usec (ideal)     */
-#define T1ms     5		/* Timeout of 1 msec (ideal)       */
-#define T3ms     6		/* Timeout of 3 msec (ideal)       */
-#define T10ms    7		/* Timeout of 10 msec (ideal)      */
-#define T30ms    8		/* Timeout of 30 msec (ideal)      */
-#define T100ms   9		/* Timeout of 100 msec (ideal)     */
-#define T300ms  10		/* Timeout of 300 msec (ideal)     */
-#define T1s     11		/* Timeout of 1 sec (ideal)        */
-#define T3s     12		/* Timeout of 3 sec (ideal)        */
-#define T10s    13		/* Timeout of 10 sec (ideal)       */
-#define T30s    14		/* Timeout of 30 sec (ideal)       */
-#define T100s   15		/* Timeout of 100 sec (ideal)      */
-#define T300s   16		/* Timeout of 300 sec (ideal)      */
-#define T1000s  17		/* Timeout of 1000 sec (maximum)   */
-
+enum gpib_timeout
+{
+	TNONE,		/* Infinite timeout (disabled)     */
+	T10us,		/* Timeout of 10 usec (ideal)      */
+	T30us,		/* Timeout of 30 usec (ideal)      */
+	T100us,		/* Timeout of 100 usec (ideal)     */
+	T300us,		/* Timeout of 300 usec (ideal)     */
+	T1ms,		/* Timeout of 1 msec (ideal)       */
+	T3ms,		/* Timeout of 3 msec (ideal)       */
+	T10ms,		/* Timeout of 10 msec (ideal)      */
+	T30ms,		/* Timeout of 30 msec (ideal)      */
+	T100ms,		/* Timeout of 100 msec (ideal)     */
+	T300ms,		/* Timeout of 300 msec (ideal)     */
+	T1s,		/* Timeout of 1 sec (ideal)        */
+	T3s,		/* Timeout of 3 sec (ideal)        */
+	T10s,		/* Timeout of 10 sec (ideal)       */
+	T30s,		/* Timeout of 30 sec (ideal)       */
+	T100s,		/* Timeout of 100 sec (ideal)      */
+	T300s,		/* Timeout of 300 sec (ideal)      */
+	T1000s,		/* Timeout of 1000 sec (maximum)   */
+};
 
 /* End-of-string (EOS) modes for use with ibeos */
 
@@ -127,17 +129,17 @@ static const int DRIVERBITS = (SRQI | LOK | REM | CIC | ATN | TACS | LACS | DTAS
 #define LAD 0x20 /* value to be 'ored' in to obtain listen address */
 #define TAD 0x40 /* value to be 'ored' in to obtain talk address   */
 
-extern inline uint8_t MLA(unsigned int addr)
+extern inline uint8_t MLA( unsigned int addr )
 {
 	return addr | 0x20;
 };
 
-extern inline uint8_t MTA(unsigned int addr)
+extern inline uint8_t MTA( unsigned int addr )
 {
 	return addr | 0x40;
 };
 
-extern inline uint8_t MSA(unsigned int addr)
+extern inline uint8_t MSA( unsigned int addr )
 {
 	return addr | 0x60;
 };
