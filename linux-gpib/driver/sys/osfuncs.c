@@ -390,7 +390,6 @@ static int command_ioctl(gpib_board_t *board, unsigned long arg)
 	uint8_t *userbuf;
 	unsigned long remain;
 	int retval;
-	ssize_t ret;
 
 	retval = copy_from_user(&cmd, (void*) arg, sizeof(cmd));
 	if( retval )
@@ -404,26 +403,28 @@ static int command_ioctl(gpib_board_t *board, unsigned long arg)
 	/* Write buffer loads till we empty the user supplied buffer */
 	userbuf = cmd.buffer;
 	remain = cmd.count;
-	while( remain > 0 && !io_timed_out( board ) )
+
+	while( remain > 0 )
 	{
 		copy_from_user(board->buffer, userbuf, (board->buffer_length < remain) ?
 			board->buffer_length : remain );
-		ret = ibcmd(board, board->buffer, (board->buffer_length < remain) ?
+		retval = ibcmd(board, board->buffer, (board->buffer_length < remain) ?
 			board->buffer_length : remain );
-		if(ret < 0)
+		if(retval < 0)
 		{
-			retval = -EIO;
 			break;
 		}
-		if( ret == 0 ) break;
-		remain -= ret;
-		userbuf += ret;
+		if( retval == 0 ) break;
+		remain -= retval;
+		userbuf += retval;
 	}
 
 	cmd.count -= remain;
 
+	if( retval < 0 ) return retval;
+
 	retval = copy_to_user((void*) arg, &cmd, sizeof(cmd));
-	if(retval) return -EFAULT;
+	if( retval ) return -EFAULT;
 
 	return 0;
 }

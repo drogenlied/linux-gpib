@@ -45,15 +45,13 @@ ssize_t ibcmd( gpib_board_t *board, uint8_t *buf, size_t length )
 
 	osStartTimer( board, board->usec_timeout );
 
-	if( ( ret = ibcac( board, 0 ) ) )
-	{
-		ret = -1;
-	}else
+	ret = ibcac( board, 0 );
+	if( ret == 0 )
 	{
 		ret = board->interface->command(board, buf, length - count);
 		if(ret < 0)
 		{
-			printk("error writing gpib command bytes\n");
+			printk("gpib: error writing gpib command bytes\n");
 		}else
 		{
 			buf += ret;
