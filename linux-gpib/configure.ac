@@ -3,7 +3,7 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_INIT
 dnl Every other copy of the package version number gets its value from here
-AM_INIT_AUTOMAKE(libgpib, 3.1.94-cvs)
+AM_INIT_AUTOMAKE(linux-gpib, 3.1.94-cvs)
 
 dnl create a config.h file (Automake will add -DHAVE_CONFIG_H)
 AM_CONFIG_HEADER(config.h)
@@ -89,7 +89,7 @@ dnl Checks for typedefs, structures, and compiler characteristics.
 dnl Checks for library functions.
 
 LIBGPIB_CFLAGS="-I\$(top_srcdir)/include -Wall -D_REENTRANT"
-LIBGPIB_LDFLAGS="-L\$(top_srcdir)/lib -lgpib -lpthread"
+LIBGPIB_LDFLAGS="\$(top_srcdir)/lib/libgpib.la -lpthread"
 AC_SUBST(LIBGPIB_CFLAGS)
 AC_SUBST(LIBGPIB_LDFLAGS)
 
