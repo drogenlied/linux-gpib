@@ -41,7 +41,7 @@ int tms9914_take_control(gpib_board_t *board, tms9914_private_t *priv, int syncr
 		printk(" tms9914: error waiting for ATN\n");
 		return -ETIMEDOUT;
 	};
-
+	clear_bit(WRITE_READY_BN, &priv->state);
 	return 0;
 }
 
@@ -63,7 +63,7 @@ int tms9914_go_to_standby(gpib_board_t *board, tms9914_private_t *priv)
 		printk("error waiting for NATN\n");
 		return -ETIMEDOUT;
 	}
-
+	clear_bit(COMMAND_READY_BN, &priv->state);
 	return 0;
 }
 
