@@ -25,8 +25,6 @@ program needs to be really, but useful for testing library functions.
 #include <string.h>
 #include <gpib/ib.h>
 
-uint8_t buffer[1024];
-
 void fprint_status( FILE* filep, char *msg  );
 
 enum Action
