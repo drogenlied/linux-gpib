@@ -38,7 +38,6 @@ typedef struct gpib_buffer_struct
 	gpib_char_t array[GPIB_MAX_BUFFER_SIZE];
 	gpib_char_t *front, *back;
 	atomic_t size;	// number of elements currently stored in buffer
-	spinlock_t lock;
 } gpib_buffer_t;
 
 // dynamically initialize buffer
@@ -46,7 +45,6 @@ extern inline void gpib_buffer_init(gpib_buffer_t *buffer)
 {
 	buffer->front = buffer->back = buffer->array;
 	atomic_set(&buffer->size, 0);
-	spin_lock_init(&buffer->lock);
 };
 
 // put element into fifo

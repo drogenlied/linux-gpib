@@ -18,12 +18,6 @@ IBLCL void bdDMAwait(ibio_op_t *rwop, int noWait)
  */
 IBLCL void bdDMAstart(ibio_op_t *rwop)
 {
-#if 0
-	} else {
-		GPIBout(IMR1, HR_ERRIE);  /* set IMR1 before IMR2 */
-		GPIBout(IMR2, HR_DMAO);
-        }
-#endif
 }
 
 IBLCL int bdDMAstop(ibio_op_t *rwop)
