@@ -71,9 +71,9 @@ unsigned int tnt4882_t1_delay( gpib_board_t *board, unsigned int nano_sec )
 
 	if( nano_sec > 500 && nano_sec <= 1100 )
 	{
-		nec_write_byte( tnt_priv, AUXRI | USTD, AUXMR );
+		write_byte( nec_priv, AUXRI | USTD, AUXMR );
 		retval = 1100;
 	}else
-		nec_write_byte( tnt_priv, AUXRI, AUXMR );
+		write_byte( nec_priv, AUXRI, AUXMR );
 	return retval;
 }

@@ -51,7 +51,6 @@ typedef struct
 	unsigned int irq;
 	volatile int imr3_bits;
 	ni_chipset_t chipset;
-	spinlock_t register_page_lock;
 	void (*io_writeb)( unsigned int value, unsigned long address );
 	void (*io_writew)( unsigned int value, unsigned long address );
 	unsigned int (*io_readb)( unsigned long address );
@@ -306,8 +305,9 @@ static inline unsigned short tnt_readb( tnt4882_private_t *priv, unsigned long o
 	unsigned long address = priv->nec7210_priv.iobase + offset;
 	unsigned long flags;
 	unsigned short retval;
+	spinlock_t *register_lock = &priv->nec7210_priv.register_page_lock;
 
-	spin_lock_irqsave( &priv->register_page_lock, flags );
+	spin_lock_irqsave( register_lock, flags );
 	switch( offset )
 	{
 	case CSR:
@@ -335,7 +335,7 @@ static inline unsigned short tnt_readb( tnt4882_private_t *priv, unsigned long o
 		retval = priv->io_readb( address );
 		break;
 	}
-	spin_unlock_irqrestore( &priv->register_page_lock, flags );
+	spin_unlock_irqrestore( register_lock, flags );
 	return retval;
 }
 
@@ -343,8 +343,9 @@ static inline void tnt_writeb( tnt4882_private_t *priv, unsigned short value, un
 {
 	unsigned long address = priv->nec7210_priv.iobase + offset;
 	unsigned long flags;
+	spinlock_t *register_lock = &priv->nec7210_priv.register_page_lock;
 
-	spin_lock_irqsave( &priv->register_page_lock, flags );
+	spin_lock_irqsave( register_lock, flags );
 	switch( offset )
 	{
 	case KEYREG:
@@ -380,27 +381,7 @@ static inline void tnt_writeb( tnt4882_private_t *priv, unsigned short value, un
 		priv->io_writeb( value, address );
 		break;
 	}
-	spin_unlock_irqrestore( &priv->register_page_lock, flags );
-}
-
-static inline uint8_t nec_read_byte( tnt4882_private_t *priv, unsigned int register_number )
-{
-	uint8_t retval;
-	unsigned long flags;
-
-	spin_lock_irqsave( &priv->register_page_lock, flags );
-	retval = read_byte( &priv->nec7210_priv, register_number );
-	spin_unlock_irqrestore( &priv->register_page_lock, flags );
-	return retval;
-}
-
-static inline void nec_write_byte( tnt4882_private_t *priv, uint8_t value, unsigned int register_number )
-{
-	unsigned long flags;
-
-	spin_lock_irqsave( &priv->register_page_lock, flags );
-	write_byte( &priv->nec7210_priv, value, register_number );
-	spin_unlock_irqrestore( &priv->register_page_lock, flags );
+	spin_unlock_irqrestore( register_lock, flags );
 }
 
 #endif	// _TNT4882_H

@@ -50,7 +50,7 @@ ssize_t tnt4882_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *e
 
 	if( retval < 0 )
 	{	// force immediate holdoff
-		nec_write_byte( priv, AUX_HLDI, AUXMR );
+		write_byte( nec_priv, AUX_HLDI, AUXMR );
 		set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
 		nec7210_read_data_in( board, nec_priv, &dummy );
 	}
@@ -407,7 +407,7 @@ int tnt4882_allocate_private(gpib_board_t *board)
 		return -1;
 	tnt_priv = board->private_data;
 	memset(tnt_priv, 0, sizeof(tnt4882_private_t));
-	spin_lock_init( &tnt_priv->register_page_lock );
+	init_nec7210_private( &tnt_priv->nec7210_priv );
 	return 0;
 }
 
@@ -451,7 +451,7 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 	tnt_writeb( tnt_priv, 0x1, INTRT );
 
 	// force immediate holdoff
-	nec_write_byte( tnt_priv, AUX_HLDI, AUXMR );
+	write_byte( &tnt_priv->nec7210_priv, AUX_HLDI, AUXMR );
 	set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
 
 	nec7210_board_online( nec_priv, board );
@@ -476,8 +476,8 @@ int ni_pci_attach(gpib_board_t *board)
 	tnt_priv->io_readw = readw_wrapper;
 	tnt_priv->chipset = TNT4882;
 	nec_priv = &tnt_priv->nec7210_priv;
-	nec_priv->read_byte = nec7210_iomem_read_byte;
-	nec_priv->write_byte = nec7210_iomem_write_byte;
+	nec_priv->read_byte = nec7210_locking_iomem_read_byte;
+	nec_priv->write_byte = nec7210_locking_iomem_write_byte;
 	nec_priv->offset = atgpib_reg_offset;
 
 	if(mite_devices == NULL)
@@ -600,8 +600,8 @@ int ni_isa_attach_common( gpib_board_t *board, ni_chipset_t chipset )
 	tnt_priv->io_readw = inw_wrapper;
 	tnt_priv->chipset = chipset;
 	nec_priv = &tnt_priv->nec7210_priv;
-	nec_priv->read_byte = nec7210_ioport_read_byte;
-	nec_priv->write_byte = nec7210_ioport_write_byte;
+	nec_priv->read_byte = nec7210_locking_ioport_read_byte;
+	nec_priv->write_byte = nec7210_locking_ioport_write_byte;
 	nec_priv->offset = atgpib_reg_offset;
 
 	// look for plug-n-play board

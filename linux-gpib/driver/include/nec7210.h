@@ -38,10 +38,18 @@ struct nec7210_private_struct
 	volatile uint8_t auxb_bits;	// bits written to auxilliary register B
 	// used to keep track of board's state, bit definitions given below
 	volatile int state;
+	/* lock for chips that extend the nec7210 registers by paging in alternate regs */
+	spinlock_t register_page_lock;
 	// wrappers for outb, inb, readb, or writeb
 	uint8_t (*read_byte)(nec7210_private_t *priv, unsigned int register_number);
 	void (*write_byte)(nec7210_private_t *priv, uint8_t byte, unsigned int register_number);
 };
+
+static inline void init_nec7210_private( nec7210_private_t *priv )
+{
+	memset( priv, 0, sizeof( nec7210_private_t ) );
+	spin_lock_init( &priv->register_page_lock );
+}
 
 // slightly shorter way to access read_byte and write_byte
 static inline uint8_t read_byte(nec7210_private_t *priv, unsigned int register_number)
@@ -117,6 +125,10 @@ uint8_t nec7210_ioport_read_byte(nec7210_private_t *priv, unsigned int register_
 void nec7210_ioport_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num);
 uint8_t nec7210_iomem_read_byte(nec7210_private_t *priv, unsigned int register_num);
 void nec7210_iomem_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num);
+uint8_t nec7210_locking_ioport_read_byte(nec7210_private_t *priv, unsigned int register_num);
+void nec7210_locking_ioport_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num);
+uint8_t nec7210_locking_iomem_read_byte(nec7210_private_t *priv, unsigned int register_num);
+void nec7210_locking_iomem_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num);
 
 // interrupt service routine
 void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv);

@@ -79,30 +79,75 @@ void nec7210_board_online( nec7210_private_t *priv, const gpib_board_t *board )
 	write_byte( priv, AUX_PON, AUXMR);
 }
 
-// wrapper for inb
+/* wrappers for io */
 uint8_t nec7210_ioport_read_byte(nec7210_private_t *priv, unsigned int register_num)
 {
 	return inb(priv->iobase + register_num * priv->offset);
 }
-// wrapper for outb
 void nec7210_ioport_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num)
 {
-	outb(data, priv->iobase + register_num * priv->offset);
 	if(register_num == AUXMR)
-		udelay(1);
+	{
+		/* locking makes absolutely sure noone accesses the
+		 * AUXMR register faster than once per microsecond */
+		nec7210_locking_ioport_write_byte( priv, data, register_num );
+	}else
+		outb(data, priv->iobase + register_num * priv->offset);
 }
-
-// wrapper for readb
 uint8_t nec7210_iomem_read_byte(nec7210_private_t *priv, unsigned int register_num)
 {
 	return readb(priv->iobase + register_num * priv->offset);
 }
-// wrapper for writeb
 void nec7210_iomem_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num)
 {
-	writeb(data, priv->iobase + register_num * priv->offset);
+	if(register_num == AUXMR)
+	{
+		/* locking makes absolutely sure noone accesses the
+		 * AUXMR register faster than once per microsecond */
+		nec7210_locking_iomem_write_byte( priv, data, register_num );
+	}else
+		writeb(data, priv->iobase + register_num * priv->offset);
+}
+/* locking variants of io wrappers, for chips that page-in registers */
+uint8_t nec7210_locking_ioport_read_byte(nec7210_private_t *priv, unsigned int register_num)
+{
+	uint8_t retval;
+	unsigned long flags;
+
+	spin_lock_irqsave( &priv->register_page_lock, flags );
+	retval = inb(priv->iobase + register_num * priv->offset);
+	spin_unlock_irqrestore( &priv->register_page_lock, flags );
+	return retval;
+}
+void nec7210_locking_ioport_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num)
+{
+	unsigned long flags;
+
+	spin_lock_irqsave( &priv->register_page_lock, flags );
 	if(register_num == AUXMR)
 		udelay(1);
+	outb(data, priv->iobase + register_num * priv->offset);
+	spin_unlock_irqrestore( &priv->register_page_lock, flags );
+}
+uint8_t nec7210_locking_iomem_read_byte(nec7210_private_t *priv, unsigned int register_num)
+{
+	uint8_t retval;
+	unsigned long flags;
+
+	spin_lock_irqsave( &priv->register_page_lock, flags );
+	retval = readb(priv->iobase + register_num * priv->offset);
+	spin_unlock_irqrestore( &priv->register_page_lock, flags );
+	return retval;
+}
+void nec7210_locking_iomem_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num)
+{
+	unsigned long flags;
+
+	spin_lock_irqsave( &priv->register_page_lock, flags );
+	if(register_num == AUXMR)
+		udelay(1);
+	writeb(data, priv->iobase + register_num * priv->offset);
+	spin_unlock_irqrestore( &priv->register_page_lock, flags );
 }
 
 static int nec7210_init_module( void )
@@ -124,4 +169,8 @@ EXPORT_SYMBOL(nec7210_ioport_read_byte);
 EXPORT_SYMBOL(nec7210_ioport_write_byte);
 EXPORT_SYMBOL(nec7210_iomem_read_byte);
 EXPORT_SYMBOL(nec7210_iomem_write_byte);
+EXPORT_SYMBOL(nec7210_locking_ioport_read_byte);
+EXPORT_SYMBOL(nec7210_locking_ioport_write_byte);
+EXPORT_SYMBOL(nec7210_locking_iomem_read_byte);
+EXPORT_SYMBOL(nec7210_locking_iomem_write_byte);
 
