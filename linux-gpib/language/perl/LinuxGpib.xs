@@ -18,7 +18,7 @@ constant(char *name, int len, int arg)
     return 0;
 }
 
-MODULE = LinuxGpib		PACKAGE = LinuxGpib		
+MODULE = LinuxGpib		PACKAGE = LinuxGpib
 
 
 double
@@ -113,17 +113,45 @@ ibrd(ud, rd, cnt)
 	int	ud
 	SV  *rd
 	unsigned long	cnt
-CODE:
+PREINIT:
 	int i;
-	STRLEN len;
 	char *buf;
-
+CODE:
 	buf = malloc( cnt + 1 );
 	if( buf )
 	{
 		for(i = 0; i <= cnt; i++) { buf[i] = 0; }
 		RETVAL = ibrd(ud, buf, cnt);
 		sv_setpvn(rd, buf, cnt + 1);
+		free( buf );
+	}else
+		RETVAL = ERR;
+
+int
+ibrdi(ud, array, cnt)
+	int	ud
+	AV  *array
+	unsigned long	cnt
+PREINIT:
+	int i;
+	char *buf;
+	SV *byte;
+CODE:
+
+	byte = newSViv( 0 );
+	av_clear( array );
+	buf = malloc( cnt );
+	if( buf )
+	{
+		RETVAL = ibrd(ud, buf, cnt);
+		if( ( RETVAL & ERR ) == 0 )
+		{
+			for( i = 0; i < ThreadIbcntl(); i++ )
+			{
+				sv_setuv( byte, (unsigned int) ( buf[ i ] & 0xff ) );
+				av_push( array, byte );
+			}
+		}
 		free( buf );
 	}else
 		RETVAL = ERR;

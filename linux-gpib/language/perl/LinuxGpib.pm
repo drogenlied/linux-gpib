@@ -34,6 +34,7 @@ our %EXPORT_TAGS = ( 'all' => [ qw(
 	ibonl
 	ibpad
 	ibrd
+	ibrdi
 	ibrpp
 	ibrsp
 	ibrsv
