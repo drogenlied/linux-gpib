@@ -7,11 +7,11 @@ libgpib_test must be run, one with the --master option and one with
 Example:
 On computer with slave gpib board, run
 
-/libgpib_test --slave --pad 10
+./libgpib_test --slave --pad 10
 
 Then on computer with bus master gpib board, run
 
-/libgpib_test --master --pad 10
+./libgpib_test --master --pad 10
 
 Options:
 
@@ -33,4 +33,4 @@ Options:
 	addressing is disabled.
 -v, --verbose
 	Produce verbose debugging output (doesn't do much yet).
-	
+
