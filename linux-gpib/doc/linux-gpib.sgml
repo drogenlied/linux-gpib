@@ -1131,13 +1131,16 @@ volatile int ibsta;
 	<row>
 	<entry>IbaSC</entry>
 	<entry>0xa</entry>
-	<entry>Nonzero if board is system controller.</entry>
+	<entry>Nonzero if board is system controller.
+	See <link LINKEND="reference-function-ibrsc">ibrsc()</link>.
+	</entry>
 	<entry>board</entry>
 	</row>
 	<row>
 	<entry>IbaSRE</entry>
 	<entry>0xb</entry>
-	<entry>Nonzero if board is asserting REN line.  See
+	<entry>Nonzero if board autmatically asserts REN line when
+	it becomes the system controller.  See
 	<link LINKEND="reference-function-ibsre">ibsre()</link>.
 	</entry>
 	<entry>board</entry>
