@@ -1,5 +1,11 @@
 Linux GPIB Package changelog
 
+3.1.100: Fixed kernel oops that would occur after module
+removal with some Measurement Computing boards.  Fixed timeouts
+which could occur with some instruments when asserting/releasing
+the ATN line.  New functions for Python binding (John Ackermann).
+Switched module building to use kernel's kbuild.
+
 3.1.99: Fixed possible oops on module removal, while attempting to
 kill auto serial poll thread.  Fixed various bugs in tnt4882
 driver.  Random bugfixes.
