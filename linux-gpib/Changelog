@@ -1,5 +1,14 @@
 Linux GPIB Package changelog
 
+3.1.8: Added a bunch of new (mostly untested) functions: ibbna(),
+ibcmda(), ibconfig(), DevClear(), DevClearList(), SendSetup(),
+AllSpoll(), EnableRemote(), EnableLocal(), FindLstn(), FindRQS(),
+PPoll(), PPollConfig(), PPollUnconfig(), RecvRespMsg(), ReadStatusByte(),
+Receive(), ReceiveSetup(), ResetSys(), Send(), SendDataBytes(),
+SendList(), SendCmds(), SendIFC(), SendLLO(), SetRWLS(), TestSRQ(),
+TestSys(), Trigger(), TriggerList(), WaitSRQ().
+New (partially tested) HP82335 support, and a couple assorted bugfixes.
+
 3.1.7: Added ibppc(), ibask(), ThreadIbsta(), ThreadIberr(), ThreadIbcnt().
 Added autopolling support (can't be turned off yet).  Fixed ibtrg() and
 ibclr(). ibwait() fixes.  New Perl bindings by Thomas Nisius.  Fixed
