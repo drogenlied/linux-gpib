@@ -80,7 +80,7 @@ int ibBoardOpen( ibBoard_t *board )
 	{
 		setIberr( EDVR );
 		setIbcnt( errno );
-		fprintf( stderr, "libgpib: ibBoardOpen failed to open device file\n" );
+		fprintf( stderr, "libgpib: ibBoardOpen failed to open device file %s\n", board->device);
 		perror( "libgpib" );
 		return -1;
 	}
