@@ -1,6 +1,8 @@
 #include "board.h"
 #if defined(CBI_PCI)
 
+#include <linux/pci.h>
+#include <asm/io.h>
 
 #define INTCSR_DWORD 0x00ff1f00L
 #define BMCSR_DWORD  0x08000000L
@@ -8,17 +10,12 @@
 #define INTCSR_REG    0x38
 #define BMCSR_REG     0x3c
 
-
-
-
-#include <linux/pci.h>
-#include <asm/io.h>
-
 #define CBI_VENDOR_ID 0x1307
-#define CBI_DEV_ID 6
-
+#define CBI_DEV_ID 0x6
 
 unsigned int pci_config_reg = 0x0000;
+
+struct pci_dev *ib_pci_dev = NULL;
 
 IBLCL void bd_PCIInfo(void)
 {
