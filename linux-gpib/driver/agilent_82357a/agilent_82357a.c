@@ -531,7 +531,6 @@ void agilent_82357a_request_system_control(gpib_board_t *board, int request_cont
 	writes[i].address = HW_CONTROL;
 	writes[i].value = a_priv->hw_control_bits;
 	++i;
-	printk("%s: wriing 0x%x to HW_CONTROL\n", __FUNCTION__, a_priv->hw_control_bits);
 	retval = agilent_82357a_write_registers(a_priv, writes, i);
 	if(retval)
 	{
@@ -651,7 +650,7 @@ void agilent_82357a_primary_address(gpib_board_t *board, unsigned int address)
 	struct agilent_82357a_register_pairlet write;
 	int retval;
 	
-	// put primary address in address0 (not that it matters since we can only be system controller)
+	// put primary address in address0
 	write.address = ADR;
 	write.value = address & ADDRESS_MASK;
 	retval = agilent_82357a_write_registers(a_priv, &write, 1);
@@ -665,6 +664,7 @@ void agilent_82357a_primary_address(gpib_board_t *board, unsigned int address)
 
 void agilent_82357a_secondary_address(gpib_board_t *board, unsigned int address, int enable)
 {
+	printk("%s: %s: warning: assigning a secondary address not supported\n", __FILE__, __FUNCTION__);
 	return;
 }
 
@@ -797,11 +797,11 @@ void agilent_82357a_interrupt_complete(struct urb *urb, struct pt_regs *regs)
 	gpib_board_t *board = urb->context;
 	agilent_82357a_private_t *a_priv = board->private_data;
 	int retval;
-	int i;
 	uint8_t *transfer_buffer = urb->transfer_buffer;
 	unsigned long interrupt_flags;
-	
 #if 0
+	int i;
+	
 	printk("debug: %s: %s: status=0x%x, error_count=%i, actual_length=%i transfer_buffer:\n", __FILE__, __FUNCTION__,
 		urb->status, urb->error_count, urb->actual_length); 
 	for(i = 0; i < urb->actual_length; ++i)
@@ -898,9 +898,20 @@ static int agilent_82357a_init(gpib_board_t *board)
 	struct agilent_82357a_register_pairlet hw_control;
 	struct agilent_82357a_register_pairlet writes[9];
 	int retval;
-	int i = 0;
+	int i;
 	unsigned int nanosec;
 	
+	writes[0].address = RESET_TO_POWERUP;
+	writes[0].value = RESET_SPACEBALL;
+	retval = agilent_82357a_write_registers(a_priv, writes, 1);
+	if(retval)
+	{
+		printk("%s: %s: agilent_82357a_write_registers() returned error\n", __FILE__, __FUNCTION__);
+	}
+	set_current_state(TASK_INTERRUPTIBLE);
+	if(schedule_timeout(usec_to_jiffies(2000)))
+		return -ERESTARTSYS;
+	i = 0;
 	writes[i].address = AUXCR;
 	writes[i].value = AUX_STDL;
 	++i;
@@ -957,7 +968,7 @@ int agilent_82357a_attach(gpib_board_t *board)
 	
 	if(down_interruptible(&agilent_82357a_hotplug_lock))
 		return -ERESTARTSYS;
-	printk("%s: enter\n", __FUNCTION__);
+	//printk("%s: enter\n", __FUNCTION__);
 	retval = agilent_82357a_allocate_private(board);
 	if(retval < 0)
 	{
@@ -989,20 +1000,15 @@ int agilent_82357a_attach(gpib_board_t *board)
 		up(&agilent_82357a_hotplug_lock);
 		return retval;
 	}
-	printk("%s: finished setup_urbs()()\n", __FUNCTION__);
+	//printk("%s: finished setup_urbs()()\n", __FUNCTION__);
 	retval = agilent_82357a_init(board);
 	if(retval < 0) 
 	{
 		up(&agilent_82357a_hotplug_lock);
 		return retval;
 	}
-	printk("%s: finished init()\n", __FUNCTION__);
-	set_current_state(TASK_INTERRUPTIBLE);
-	if(schedule_timeout(100))
-	{
-		return -EIO;
-	}
-	printk("%s: exit\n", __FUNCTION__);
+	//printk("%s: finished init()\n", __FUNCTION__);
+	printk("%s: attached\n", __FUNCTION__);
 	up(&agilent_82357a_hotplug_lock);
 	return retval;
 }
@@ -1012,7 +1018,7 @@ void agilent_82357a_detach(gpib_board_t *board)
 	agilent_82357a_private_t *a_priv;
 	
 	down(&agilent_82357a_hotplug_lock);
-	printk("%s: enter\n", __FUNCTION__);
+	//printk("%s: enter\n", __FUNCTION__);
 	a_priv = board->private_data;
 	if(a_priv)
 	{
@@ -1031,7 +1037,7 @@ void agilent_82357a_detach(gpib_board_t *board)
 		up(&a_priv->control_transfer_lock);
 		up(&a_priv->bulk_transfer_lock);
 	}
-	printk("%s: exit\n", __FUNCTION__);
+	printk("%s: detached\n", __FUNCTION__);
 	up(&agilent_82357a_hotplug_lock);
 }
 
