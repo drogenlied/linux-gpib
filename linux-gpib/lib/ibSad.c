@@ -14,7 +14,7 @@ int ibsad(int ud, int v)
 		return ibsta | ERR;
 	}
 
-	if( conf->flags & CN_ISCNTL)
+	if( conf->is_interface )
 		return ibBoardFunc( conf->board, IBSAD, v - sad_offset);
 	else
 	{

@@ -27,7 +27,7 @@ int ibBdChrConfig(int ud)
 		ibPutErrlog(ud,"ibBdChrConfig");
 	}else 
 	{
-		strncpy(boardtype.name, board->name, sizeof(board->name));
+		strncpy(boardtype.name, board->board_type, sizeof(board->board_type));
 		ioctl(board->fileno, CFCBOARDTYPE, &boardtype); 
 		if(board->base != 0) ibBoardFunc(conf->board, CFCBASE, board->base);
 		if(board->irq  != 0) ibBoardFunc(conf->board, CFCIRQ , board->irq);

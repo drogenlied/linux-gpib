@@ -39,7 +39,6 @@ timo	     { return(T_TIMO);}
 
 set-reos      { return T_REOS;}
 set-bin       { return T_BIN; }
-set-ifc       { return T_IFC; }
 
 init-string   { return T_INIT_S; }
 init-flags    { return T_INIT_F; }

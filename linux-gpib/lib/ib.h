@@ -39,7 +39,6 @@ extern int ibdma( int ud, int v );
 extern int ibeot(int ud, int v);
 extern int ibevent(int ud, short *event);
 extern int ibfind(char *dev);
-extern int ibIsMaster(int ud);
 extern int ibgts(int ud, int v);
 extern int iblines(int ud, unsigned short *buf);
 extern int ibloc(int ud);

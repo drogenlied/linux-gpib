@@ -14,7 +14,7 @@ int ibpad(int ud, int v)
 		return ibsta | ERR;
 	}
 
-	if ( conf->flags & CN_ISCNTL)
+	if ( conf->is_interface )
 		return ibBoardFunc(conf->board, IBPAD, v);
 	/* enable ibpad also working on devices, not only on boards */
 	else

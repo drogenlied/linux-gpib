@@ -29,7 +29,7 @@ void ibBoardDefaultValues(void)
 		ibBoard[i].base = 0;
 		ibBoard[i].irq = 0;
 		ibBoard[i].dma = 0;
-		ibBoard[i].ifc = 0;
+		ibBoard[i].is_system_controller = 0;
 		ibBoard[i].fileno = -1;
 		strcpy(ibBoard[i].device, "");
 	}

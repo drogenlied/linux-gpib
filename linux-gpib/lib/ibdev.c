@@ -64,8 +64,6 @@ int ibdev(int minor, int pad, int sad, int timo, int eot, int eos)
 	if(board->pad == conf.pad && board->sad == conf.sad)
 	{
 		conf.is_interface = 1;
-		if(board->ifc)
-			conf.flags |= CN_ISCNTL;
 	}else
 		conf.is_interface = 0;
 

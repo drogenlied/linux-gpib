@@ -81,7 +81,7 @@ ssize_t __ibcmd(ibBoard_t *board, uint8_t *buffer, size_t count)
 	int retval;
 
 	// check that interface board is master
-	if(board->ifc == 0)
+	if(board->is_system_controller == 0)
 	{
 		return -1;
 	}

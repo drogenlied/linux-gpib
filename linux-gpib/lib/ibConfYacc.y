@@ -23,8 +23,8 @@ char cval;
 }
 
 %token T_INTERFACE T_DEVICE T_NAME T_MINOR T_BASE T_IRQ T_DMA
-%token T_PAD T_SAD T_TIMO T_EOSBYTE
-%token T_REOS T_BIN T_INIT_S T_DCL T_IFC
+%token T_PAD T_SAD T_TIMO T_EOSBYTE T_BOARD_TYPE
+%token T_REOS T_BIN T_INIT_S T_DCL 
 %token T_MASTER T_LLO T_DCL T_EXCL T_INIT_F T_AUTOPOLL
 
 %token T_NUMBER T_STRING T_BOOL T_TIVAL
@@ -78,16 +78,19 @@ char cval;
 		| T_SAD '=' T_NUMBER      { ibBoard[bdid].sad = $3 - sad_offset; ibFindConfigs[findIndex].sad = $3 - sad_offset;}
                  | T_EOSBYTE '=' T_NUMBER  { ibBoard[bdid].eos = $3; ibFindConfigs[findIndex].eos = $3;}
 		| T_REOS T_BOOL           { ibBoard[bdid].eosflags |= $2 * REOS; ibFindConfigs[findIndex].eosflags |= $2 * REOS;}
-                 | T_BIN  T_BOOL           { ibBoard[bdid].eosflags |= $2 * BIN; ibFindConfigs[findIndex].eosflags |= $2 * BIN;}
-		| T_IFC  T_BOOL           { ibBoard[bdid].ifc = $2 ; ibFindConfigs[findIndex].flags |= CN_ISCNTL;}
+		| T_BIN  T_BOOL           { ibBoard[bdid].eosflags |= $2 * BIN; ibFindConfigs[findIndex].eosflags |= $2 * BIN;}
 		| T_TIMO '=' T_TIVAL      { ibBoard[bdid].timeout = $3; }
 		| T_BASE '=' T_NUMBER     { ibBoard[bdid].base = $3; }
 		| T_IRQ  '=' T_NUMBER     { ibBoard[bdid].irq = $3; }
 		| T_DMA  '=' T_NUMBER     { ibBoard[bdid].dma = $3; }
+		| T_MASTER T_BOOL	{ ibBoard[bdid].is_system_controller = 1;}
+		| T_BOARD_TYPE '=' T_STRING
+			{
+				strncpy(ibBoard[bdid].board_type, $3,
+					sizeof(ibBoard[bdid].board_type));
+			}
 		| T_NAME '=' T_STRING
 			{
-				strncpy(ibBoard[bdid].name, $3,
-					sizeof(ibBoard[bdid].name));
 				strncpy(ibFindConfigs[findIndex].name, $3,
 					sizeof(ibFindConfigs[findIndex].name));
 			}
@@ -120,7 +123,6 @@ char cval;
 		| T_EOSBYTE '=' T_NUMBER  { ibFindConfigs[findIndex].eos = $3; }
 		| T_REOS T_BOOL           { ibFindConfigs[findIndex].eosflags |= $2 * REOS;}
 		| T_BIN  T_BOOL           { ibFindConfigs[findIndex].eosflags |= $2 * BIN; }
-		| T_MASTER                { ibFindConfigs[findIndex].flags |= CN_ISCNTL; }
 		| T_AUTOPOLL              { ibFindConfigs[findIndex].flags |= CN_AUTOPOLL; }
 		| T_INIT_F '=' flags
 		| T_NAME '=' T_STRING	{ strncpy(ibFindConfigs[findIndex].name,$3, sizeof(ibFindConfigs[findIndex].name));}
