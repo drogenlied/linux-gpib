@@ -97,7 +97,6 @@ long send_data_smart_eoi( ibConf_t *conf, void *buffer, unsigned long count, int
 	}
 
 	send_eoi = force_eoi || ( eoi_on_eos && eos_found );
-
 	if( send_data( conf, buffer, block_size, send_eoi ) < 0 )
 	{
 		return -1;
@@ -213,6 +212,7 @@ ssize_t my_ibwrtf( ibConf_t *conf, const char *file_path )
 	while( count )
 	{
 		long fread_count;
+		int send_eoi;
 
 		fread_count = fread( buffer, 1, sizeof( buffer ), data_file );
 		if( fread_count == 0 )
@@ -222,7 +222,8 @@ ssize_t my_ibwrtf( ibConf_t *conf, const char *file_path )
 			return -1;
 		}
 
-		block_size = send_data_smart_eoi( conf, buffer, fread_count, conf->send_eoi );
+		send_eoi = conf->send_eoi && ( count == fread_count );
+		block_size = send_data_smart_eoi( conf, buffer, fread_count, send_eoi );
 		if( block_size < fread_count )
 		{
 			return -1;

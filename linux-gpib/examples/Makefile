@@ -6,7 +6,7 @@
 #
 #######################################################################
 
-CFLAGS= -I. -I../include -I ../driver/include -Wall -O2 -D_REENTRANT
+CFLAGS= -I. -I../include -I ../driver/include -Wall -O2 -D_REENTRANT 
 LDFLAGS = -L../lib
 
 SRCS = ibtest.c master_write_from_file.c slave_read_to_file.c
