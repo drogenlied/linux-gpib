@@ -71,6 +71,7 @@ void tnt4882_parallel_poll_response( gpib_board_t *board, uint8_t config );
 void tnt4882_serial_poll_response(gpib_board_t *board, uint8_t status);
 uint8_t tnt4882_serial_poll_status( gpib_board_t *board );
 int tnt4882_line_status( const gpib_board_t *board );
+unsigned int tnt4882_t1_delay( gpib_board_t *board, unsigned int nano_sec );
 
 // pcmcia init/cleanup
 int __init init_ni_gpib_cs(void);
@@ -125,32 +126,16 @@ enum
 
 /* TURBO-488 registers bit definitions */
 
-/* HSSEL -- handshake select register (write only) */
-enum hssel_bits
+enum bus_control_status_bits
 {
-	NODMA = 0x10,
-};
-
-/* STS1 -- Status Register 1 (read only) */
-enum sts1_bits
-{
-	S_DONE = 0x80,	/* DMA done                           */
-	S_SC = 0x40,	/* is system contoller                */
-	S_IN = 0x20,	/* DMA in (to memory)                 */
-	S_DRQ = 0x10,	/* DRQ line (for diagnostics)         */
-	S_STOP = 0x08,	/* DMA stopped                        */
-	S_NDAV = 0x04,	/* inverse of DAV                     */
-	S_HALT = 0x02,	/* status of transfer machine         */
-	S_GSYNC = 0x01,	/* indicates if GPIB is in sync w I/O */
-};
-
-/* STS2 -- Status Register 2 */
-enum sts2_bits
-{
-	AFFN = ( 1 << 3 ), 	/* "A full FIFO NOT"  (0=FIFO full)  */
-	AEFN = ( 1 << 2 ),	/* "A empty FIFO NOT" (0=FIFO empty) */
-	BFFN = ( 1 << 1 ),	/* "B full FIFO NOT"  (0=FIFO full)  */
-	BEFN = ( 1 << 0 ),	/* "B empty FIFO NOT" (0=FIFO empty) */
+	BCSR_REN_BIT = 0x1,
+	BCSR_IFC_BIT = 0x2,
+	BCSR_SRQ_BIT = 0x4,
+	BCSR_EOI_BIT = 0x5,
+	BCSR_NRFD_BIT = 0x10,
+	BCSR_NDAC_BIT = 0x20,
+	BCSR_DAV_BIT = 0x40,
+	BCSR_ATN_BIT = 0x80,
 };
 
 /* CFG -- Configuration Register (write only) */
@@ -163,6 +148,23 @@ enum cfg_bits
 	TNT_TMOE = ( 1 << 2 ),	/* enable CPU bus time limit          */
 	TNT_TIM_BYTN = ( 1 << 1 ),	/* tmot reg is: 1=125ns clocks, 0=num bytes */
 	TNT_B_16BIT = ( 1 << 0 ),	/* 1=FIFO is 16-bit register, 0=8-bit */
+};
+
+/* CMDR -- Command Register */
+enum cmdr_bits
+{
+	CLRSC = 0x2,	/* clear the SC bit */
+	SETSC = 0x3,	/* set the SC bit */
+	GO = 0x4,	/* start fifos */
+	STOP = 0x8,	/* stop fifos */
+	RESET_FIFO = 0x10,	/* reset the FIFOs 		*/
+	SOFT_RESET = 0x22,	/* issue a software reset 	*/
+};
+
+/* HSSEL -- handshake select register (write only) */
+enum hssel_bits
+{
+	NODMA = 0x10,
 };
 
 /* IMR0 -- Interrupt Mode Register 0 */
@@ -203,35 +205,51 @@ enum isr3_bits
 	HR_DONE = ( 1 << 0 ),	/* transfer done */
 };
 
-/* CMDR -- Command Register */
-enum cmdr_bits
+enum keyreg_bits
 {
-	CLRSC = 0x2,	/* clear the SC bit */
-	SETSC = 0x3,	/* set the SC bit */
-	GO = 0x4,	/* start fifos */
-	STOP = 0x8,	/* stop fifos */
-	RESET_FIFO = 0x10,	/* reset the FIFOs 		*/
-	SOFT_RESET = 0x22,	/* issue a software reset 	*/
+	MSTD = 0x20,	// enable 350ns T1 delay
 };
 
-enum bus_control_status_bits
+/* STS1 -- Status Register 1 (read only) */
+enum sts1_bits
 {
-	BCSR_REN_BIT = 0x1,
-	BCSR_IFC_BIT = 0x2,
-	BCSR_SRQ_BIT = 0x4,
-	BCSR_EOI_BIT = 0x5,
-	BCSR_NRFD_BIT = 0x10,
-	BCSR_NDAC_BIT = 0x20,
-	BCSR_DAV_BIT = 0x40,
-	BCSR_ATN_BIT = 0x80,
+	S_DONE = 0x80,	/* DMA done                           */
+	S_SC = 0x40,	/* is system contoller                */
+	S_IN = 0x20,	/* DMA in (to memory)                 */
+	S_DRQ = 0x10,	/* DRQ line (for diagnostics)         */
+	S_STOP = 0x08,	/* DMA stopped                        */
+	S_NDAV = 0x04,	/* inverse of DAV                     */
+	S_HALT = 0x02,	/* status of transfer machine         */
+	S_GSYNC = 0x01,	/* indicates if GPIB is in sync w I/O */
+};
+
+/* STS2 -- Status Register 2 */
+enum sts2_bits
+{
+	AFFN = ( 1 << 3 ), 	/* "A full FIFO NOT"  (0=FIFO full)  */
+	AEFN = ( 1 << 2 ),	/* "A empty FIFO NOT" (0=FIFO empty) */
+	BFFN = ( 1 << 1 ),	/* "B full FIFO NOT"  (0=FIFO full)  */
+	BEFN = ( 1 << 0 ),	/* "B empty FIFO NOT" (0=FIFO empty) */
 };
 
 // Auxilliary commands
-enum
+enum tnt4882_aux_cmds
 {
 	AUX_9914 = 0x15,	// switch to 9914 mode
 	AUX_HLDI = 0x51,	// rfd holdoff immediately
 	AUX_7210 = 0x99,	// switch to 7210 mode
+};
+
+enum tnt4882_aux_regs
+{
+	AUXRI = 0xe0,
+};
+
+enum auxi_bits
+{
+	SISB = 0x1,	// static interrupt bits (don't clear isr1, isr2 on read )
+	PP2 = 0x4,	// ignore remote parallel poll configuration
+	USTD = 0x8,	// ultra short ( 1100 nanosec ) T1 delay
 };
 
 #endif	// _TNT4882_H

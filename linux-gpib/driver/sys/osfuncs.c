@@ -54,6 +54,7 @@ static int interface_clear_ioctl( gpib_board_t *board, unsigned long arg );
 static int select_pci_ioctl( gpib_board_t *board, unsigned long arg );
 static int event_ioctl( gpib_board_t *board, unsigned long arg );
 static int request_system_control_ioctl( gpib_board_t *board, unsigned long arg );
+static int t1_delay_ioctl( gpib_board_t *board, unsigned long arg );
 
 static int cleanup_open_devices( gpib_file_private_t *file_priv, gpib_board_t *board );
 
@@ -301,6 +302,9 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			break;
 		case IBRSV:
 			return request_service_ioctl( board, arg );
+			break;
+		case IB_T1_DELAY:
+			return t1_delay_ioctl( board, arg );
 			break;
 		default:
 			return -ENOTTY;
@@ -991,7 +995,8 @@ static int board_info_ioctl( const gpib_board_t *board, unsigned long arg)
 		info.autopolling = 1;
 	else
 		info.autopolling = 0;
-
+	info.t1_delay = board->t1_nano_sec;
+	
 	retval = copy_to_user( ( void * ) arg, &info, sizeof( info ) );
 	if( retval )
 		return -EFAULT;
@@ -1051,6 +1056,28 @@ static int request_system_control_ioctl( gpib_board_t *board, unsigned long arg 
 	if( retval ) return -EFAULT;
 
 	ibrsc( board, request_control );
+
+	return 0;
+}
+
+static int t1_delay_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	t1_delay_ioctl_t cmd;
+	unsigned int delay;
+	int retval;
+
+	if( board->interface->t1_delay == NULL )
+	{
+		printk("gpib: t1 delay not implemented in driver!\n" );
+		return -EIO;
+	}
+
+	retval = copy_from_user( &cmd, ( void * ) arg, sizeof( cmd ) );
+	if( retval ) return -EFAULT;
+
+	delay = cmd;
+
+	board->t1_nano_sec = board->interface->t1_delay( board, delay );
 
 	return 0;
 }

@@ -62,7 +62,7 @@ ssize_t tnt4882_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length
 	nec7210_set_reg_bits( nec_priv, IMR1, 0xff, 0 );
 	nec7210_set_reg_bits( nec_priv, IMR1, HR_ERRIE | HR_DECIE, 1 );
 	nec7210_set_reg_bits( nec_priv, IMR2, 0xff, 0 );
-nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAO, 1 );
+	nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAO, 1 );
 
 	tnt_priv->io_write( RESET_FIFO, iobase + CMDR );
 	udelay(1);

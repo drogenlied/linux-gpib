@@ -117,6 +117,8 @@ struct gpib_interface_struct
 	/* returns the byte the board will send in response to a serial poll.
 	 */
 	uint8_t ( *serial_poll_status )( gpib_board_t *board );
+	/* adjust T1 delay */
+	unsigned int ( *t1_delay )( gpib_board_t *board, unsigned int nano_sec );
 	/* Pointer to module whose use count we should increment when this
 	 * interface is in use */
 	struct module *provider_module;
@@ -195,6 +197,8 @@ struct gpib_board_struct
 	unsigned int usec_timeout;
 	/* board's parallel poll configuration byte */
 	uint8_t parallel_poll_configuration;
+	/* t1 delay we are using */
+	unsigned int t1_nano_sec;
 	/* Count that keeps track of whether board is up and running or not */
 	unsigned int online;
 	/* number of processes trying to autopoll */

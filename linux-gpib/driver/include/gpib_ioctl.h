@@ -82,6 +82,7 @@ typedef struct
 	int parallel_poll_configuration;
 	int autopolling;
 	int is_system_controller;
+	unsigned int t1_delay;
 } board_info_ioctl_t;
 
 typedef struct
@@ -92,6 +93,7 @@ typedef struct
 
 typedef short event_ioctl_t;
 typedef int rsc_ioctl_t;
+typedef unsigned int t1_delay_ioctl_t;
 
 /* Standard functions. */
 enum gpib_ioctl
@@ -130,7 +132,8 @@ enum gpib_ioctl
 	IBQUERY_BOARD_RSV = _IOR( GPIB_CODE, 31, int ),
 	IBSELECT_PCI = _IOWR( GPIB_CODE, 32, select_pci_ioctl_t ),
 	IBEVENT = _IOR( GPIB_CODE, 33, event_ioctl_t ),
-	IBRSC = _IOW( GPIB_CODE, 34, rsc_ioctl_t )
+	IBRSC = _IOW( GPIB_CODE, 34, rsc_ioctl_t ),
+	IB_T1_DELAY = _IOWR( GPIB_CODE, 35, t1_delay_ioctl_t )
 };
 
 #endif	/* _GPIB_IOCTL_H */
