@@ -217,9 +217,9 @@ gpib_interface_t ni_isa_interface =
 	name: "ni_isa",
 	attach: ni_tnt_isa_attach,
 	detach: ni_isa_detach,
-	read: tnt4882_read,
-	write: tnt4882_write,
-	command: tnt4882_command_unaccel,
+	read: tnt4882_read_accel,
+	write: tnt4882_write_accel,
+	command: tnt4882_command,
 	take_control: tnt4882_take_control,
 	go_to_standby: tnt4882_go_to_standby,
 	request_system_control: tnt4882_request_system_control,
@@ -439,7 +439,9 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 	udelay(1);
 	// turn on one-chip mode
 	if( tnt_priv->chipset == TNT4882 )
-		tnt_writeb( tnt_priv, NODMA | TNT_ONE_CHIP_BIT, HSSEL );
+		tnt_writeb(tnt_priv, NODMA | TNT_ONE_CHIP_BIT, HSSEL);
+	else
+		tnt_writeb(tnt_priv, NODMA, HSSEL);
 
 	nec7210_board_reset( nec_priv, board );
 	// read-clear isr0
