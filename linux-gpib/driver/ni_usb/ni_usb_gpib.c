@@ -261,6 +261,7 @@ void ni_usb_soft_update_status(gpib_board_t *board, unsigned int ni_usb_ibsta, u
 	unsigned long flags;
 		
 	board->status &= ~clear_mask;
+	board->status &= ~ni_usb_ibsta_mask;
 	board->status |= ni_usb_ibsta & ni_usb_ibsta_mask;	
 //	if(ni_usb_ibsta & ~ni_usb_ibsta_mask)
 //	{
