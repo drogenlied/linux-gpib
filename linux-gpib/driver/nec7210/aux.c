@@ -45,10 +45,7 @@ int nec7210_take_control(gpib_board_t *board, nec7210_private_t *priv, int syncr
 	if( i == timeout )
 		retval = -ETIMEDOUT;
 
-	if(adsr_bits & HR_NATN)
-		clear_bit(ATN_NUM, &board->status);
-	else
-		set_bit(ATN_NUM, &board->status);
+	nec7210_update_status( board, priv );
 
 	return retval;
 }

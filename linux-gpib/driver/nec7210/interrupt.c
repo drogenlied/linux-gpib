@@ -26,7 +26,7 @@
 
 void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv)
 {
-	int status1, status2, address_status;
+	int status1, status2;
 	unsigned long flags;
 
 	spin_lock(&board->spinlock);
@@ -63,21 +63,7 @@ void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv)
 	// record address status change in status
 	if(status2 & HR_ADSC)
 	{
-		address_status = read_byte(priv, ADSR);
-		// check if we are controller in charge
-		if(address_status & HR_CIC)
-			set_bit(CIC_NUM, &board->status);
-		else
-			clear_bit(CIC_NUM, &board->status);
-		// check for talker/listener addressed
-		if(address_status & HR_TA)
-			set_bit(TACS_NUM, &board->status);
-		else
-			clear_bit(TACS_NUM, &board->status);
-		if(address_status & HR_LA)
-			set_bit(LACS_NUM, &board->status);
-		else
-			clear_bit(LACS_NUM, &board->status);
+		nec7210_update_status( board, priv );
 		wake_up_interruptible(&board->wait); /* wake up sleeping process */
 	}
 
@@ -132,8 +118,7 @@ void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv)
 		{
 			wake_up_interruptible(&board->wait);
 		}
-	}else
-		clear_bit(WRITE_READY_BN, &priv->state);
+	}
 
 	// outgoing command can be sent
 	if(status2 & HR_CO)

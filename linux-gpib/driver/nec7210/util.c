@@ -105,10 +105,10 @@ unsigned int nec7210_update_status(gpib_board_t *board, nec7210_private_t *priv)
 {
 	int address_status_bits;
 	unsigned long flags;
-
+	static spinlock_t lock = SPIN_LOCK_UNLOCKED;
 	if(priv == NULL) return 0;
 
-	spin_lock_irqsave(&board->spinlock, flags);
+	spin_lock_irqsave( &lock, flags );
 
 	address_status_bits = read_byte(priv, ADSR);
 
@@ -126,11 +126,15 @@ unsigned int nec7210_update_status(gpib_board_t *board, nec7210_private_t *priv)
 	else
 		clear_bit(LACS_NUM, &board->status);
 	if(address_status_bits & HR_NATN)
+	{
+		clear_bit(COMMAND_READY_BN, &priv->state);
 		clear_bit(ATN_NUM, &board->status);
-	else
+	}else
+	{
+		clear_bit(WRITE_READY_BN, &priv->state);
 		set_bit(ATN_NUM, &board->status);
-
-	spin_unlock_irqrestore(&board->spinlock, flags);
+	}
+	spin_unlock_irqrestore( &lock, flags );
 
 	/* we rely on the interrupt handler to set the
 	 * rest of the status bits */
