@@ -28,19 +28,24 @@ Measurement Computing
                       cbi_isa_accel                                        ?
   ISA-GPIB/LC         cbi_isa                                              ?
   ISA-GPIB-PC2A       pcIIa                             pc2-gpib.o         Y
-  PCI-GPIB            cbi_pci                           cb7210.o           Y
+  PCI-GPIB/300k       cbi_pci                           cb7210.o           Y
+  PCI-GPIB/1M         cbi_pci                           cb7210.o           ?
                       cbi_pci_accel                                        ?
   PCMCIA-GPIB         cbi_pcmcia                        cb7210.o           Y
-                      cbi_pcmcia_accel                                     Y
+                      cbi_pcmcia_accel                                     ?
 
 National Instruments:
   AT-GPIB             ni_isa                            tnt4882.o          Y
+                      ni_isa_accel                                         ?
   PCI-GPIB            ni_pci                            tnt4882.o          Y
+                      ni_pci_accel                                         Y
   PCI-GPIB+           ni_pci                            tnt4882.o          Y
+                      ni_pci_accel                                         ?
   PCII                pcII                              pc2-gpib.o         Y
   PCIIa               pcIIa                             pc2-gpib.o         Y
   PCII/IIa          * pcII or pcIIa                     pc2-gpib.o         Y
   PCMCIA-GPIB         ni_pcmcia                         tnt4882.o          Y
+                      ni_pcmcia_accel                                      ?
 
 * depends on board switch which chooses pcII or pcIIa mode
 
