@@ -18,12 +18,13 @@ int ibclr(int ud)
 	board = &ibBoard[conf->board];
 
 	count = device_command(board, &cmd, 1, conf->pad, conf->sad);
-	if(count != 1);
+	if(count != 1)
 	{
 		iberr = EDVR;
 		return ibsta | ERR;
 	}
 
+	ibsta &= ~ERR;
 	return ibsta;
 }
 
