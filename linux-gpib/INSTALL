@@ -21,8 +21,9 @@ A) First steps:
 ---------------
 
 o) Installing your Hardware:
-	Your GPIB Boards has to be configured by setting the desired board jumpers
-	for its base-address interrupt-level (IRQ) and dma-request channel (DMA)
+	If you have an old ISA board it may need to be configured by setting
+	the appropriate board jumpers or switches
+	for its base-address, interrupt-level (IRQ) and dma-request channel (DMA).
 	Please choose a free base-address, irq and dma for your system
 	(refer to your
 	hardware documentation for this). Take a look to /proc/interrupts
@@ -48,7 +49,7 @@ o) Unpacking the Software:
 		to have write permission to your kernel source
 		directory the first time you run 'make config' in your
 		linux-gpib directory (see below), so it might be easiest to unpack
-		the kernel source into a user-owned directory. 
+		the kernel source into a user-owned directory.
 	2) You might need to edit the file 'Makefile' in the kernel source.
 		At the top of the Makefile, the variable EXTRAVERSION is defined.
 		If necessary, change it to match your kernel (for example, if the command
@@ -87,9 +88,9 @@ o) cd to your linux-gpib directory and type 'make config'.  If you
 
 	To give a user access to the computer's gpib board you will have to add
 	them to the group 'gpib' (you can use the 'usermod' tool to change the
-	groups a user belongs to).  Or, you could use 'chmod' to change the
+	groups a user belongs to).  Or, you could change the
 	permissions on the device files /dev/gpib[0-15] to something you like
-	better.
+	better, using 'chmod' (or editing devfsd.conf if you are using devfs).
 
 C) Loading the driver module
 -----------------------------
@@ -101,12 +102,20 @@ C) Loading the driver module
 	See the file 'drivers.txt' to see which driver your board is supported
 	by.
 
+	You can also set up the modules to load automatically by adding a line
+	something like
+
+	alias char-major-160 tnt4882
+
+	to /etc/modules.conf, which would autoload the tnt4882.o module when
+	the library is used.
 
 D) Configuring the GPIB-Library
 -------------------------------
 
 	Edit /etc/gpib.conf to match your interface board, and any devices you wish
-	to open via ibfind().
+	to open via ibfind().  See the documentation in doc/html or doc/pdf for
+	more information.
 
 	You may find the examples/ibtest program useful as a starting point in trying
 	out your setup.
