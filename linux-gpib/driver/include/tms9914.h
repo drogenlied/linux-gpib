@@ -243,7 +243,7 @@ enum bus_status_bits
 enum aux_cmd_bits
 {
 	AUX_CS = 0x80,	/* set bit instead of clearing it, used with commands marked 'd' below */
-	AUX_CR = 0x0,	/* d Chip reset                   */
+	AUX_CHIP_RESET = 0x0,	/* d Chip reset                   */
 	AUX_INVAL = 0x1,	// release dac holdoff, invalid command byte
 	AUX_VAL = ( AUX_INVAL | AUX_CS ),	// release dac holdoff, valid command byte
 	AUX_RHDF = 0x2,	/* X Release RFD holdoff          */

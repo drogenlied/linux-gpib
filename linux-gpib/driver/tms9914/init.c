@@ -36,7 +36,7 @@ static const int iomem_size = 0x2000;
 void tms9914_board_reset( tms9914_private_t *priv )
 {
 	/* chip reset */
-	write_byte(priv, AUX_CR | AUX_CS, AUXCR);
+	write_byte(priv, AUX_CHIP_RESET | AUX_CS, AUXCR);
 
 	/* disable all interrupts */
 	priv->imr0_bits = 0;
@@ -75,7 +75,7 @@ void tms9914_online( gpib_board_t *board, tms9914_private_t *priv )
 	write_byte(priv, AUX_DAI, AUXCR);
 
 	// turn off reset state
-	write_byte(priv, AUX_CR, AUXCR);
+	write_byte(priv, AUX_CHIP_RESET, AUXCR);
 }
 
 // wrapper for inb
