@@ -297,7 +297,7 @@ static void ni_gpib_detach(dev_link_t *link)
     ni_gpib_config() is scheduled to run after a CARD_INSERTION event
     is received, to configure the PCMCIA socket, and to make the
     device available to the system.
-    
+
 ======================================================================*/
 
 #define CS_CHECK(fn, args...) \
@@ -318,7 +318,7 @@ static void ni_gpib_config(dev_link_t *link)
     win_req_t req;
     memreq_t map;
     cistpl_cftable_entry_t dflt = { 0 };
-    
+
     DEBUG(0, "ni_gpib_config(0x%p)\n", link);
 
     /*
@@ -335,7 +335,7 @@ static void ni_gpib_config(dev_link_t *link)
     CS_CHECK(ParseTuple, handle, &tuple, &parse);
     link->conf.ConfigBase = parse.config.base;
     link->conf.Present = parse.config.rmask[0];
-    
+
     /* Configure card */
     link->state |= DEV_CONFIG;
 
@@ -365,13 +365,13 @@ static void ni_gpib_config(dev_link_t *link)
 	if (cfg->flags & CISTPL_CFTABLE_DEFAULT) dflt = *cfg;
 	if (cfg->index == 0) goto next_entry;
 	link->conf.ConfigIndex = cfg->index;
-	
+
 	/* Does this card need audio output? */
 	if (cfg->flags & CISTPL_CFTABLE_AUDIO) {
 	    link->conf.Attributes |= CONF_ENABLE_SPKR;
 	    link->conf.Status = CCSR_AUDIO_ENA;
 	}
-	
+
 	/* Use power settings for Vcc and Vpp if present */
 	/*  Note that the CIS values need to be rescaled */
 	if (cfg->vcc.present & (1<<CISTPL_POWER_VNOM)) {
@@ -381,18 +381,18 @@ static void ni_gpib_config(dev_link_t *link)
 	    if (conf.Vcc != dflt.vcc.param[CISTPL_POWER_VNOM]/10000)
 		goto next_entry;
 	}
-	    
+
 	if (cfg->vpp1.present & (1<<CISTPL_POWER_VNOM))
 	    link->conf.Vpp1 = link->conf.Vpp2 =
 		cfg->vpp1.param[CISTPL_POWER_VNOM]/10000;
 	else if (dflt.vpp1.present & (1<<CISTPL_POWER_VNOM))
 	    link->conf.Vpp1 = link->conf.Vpp2 =
 		dflt.vpp1.param[CISTPL_POWER_VNOM]/10000;
-	
+
 	/* Do we need to allocate an interrupt? */
 	if (cfg->irq.IRQInfo1 || dflt.irq.IRQInfo1)
 	    link->conf.Attributes |= CONF_ENABLE_IRQ;
-	
+
 	/* IO window settings */
 	link->io.NumPorts1 = link->io.NumPorts2 = 0;
 	if ((cfg->io.nwin > 0) || (dflt.io.nwin > 0)) {
@@ -442,13 +442,13 @@ static void ni_gpib_config(dev_link_t *link)
 	}
 	/* If we got this far, we're cool! */
 	break;
-	
+
     next_entry:
 	if (link->io.NumPorts1)
 	    CardServices(ReleaseIO, link->handle, &link->io);
 	CS_CHECK(GetNextTuple, handle, &tuple);
     }
-    
+
     /*
        Allocate an interrupt line.  Note that this does not assign a
        handler to the interrupt, unless the 'Handler' member of the
@@ -456,7 +456,7 @@ static void ni_gpib_config(dev_link_t *link)
     */
     if (link->conf.Attributes & CONF_ENABLE_IRQ)
 	CS_CHECK(RequestIRQ, link->handle, &link->irq);
-	
+
     /*
        This actually configures the PCMCIA socket -- setting up
        the I/O windows and the interrupt mapping, and putting the
@@ -480,7 +480,7 @@ static void ni_gpib_config(dev_link_t *link)
       At this point, the dev_node_t structure(s) need to be
       initialized and arranged in a linked list at link->dev.
     */
-    sprintf(dev->node.dev_name, "skel0");
+    sprintf(dev->node.dev_name, "ni_pcmcia_gpib");
     dev->node.major = dev->node.minor = 0;
     link->dev = &dev->node;
 
@@ -502,7 +502,7 @@ static void ni_gpib_config(dev_link_t *link)
 	printk(", mem 0x%06lx-0x%06lx", req.Base,
 	       req.Base+req.Size-1);
     printk("\n");
-    
+
     link->state &= ~DEV_CONFIG_PENDING;
     return;
 
@@ -543,9 +543,9 @@ static void ni_gpib_release(u_long arg)
 
     /*
       In a normal driver, additional code may be needed to release
-      other kernel data structures associated with this device. 
+      other kernel data structures associated with this device.
     */
-    
+
     /* Don't bother checking to see if these succeed or not */
     if (link->win)
 	CardServices(ReleaseWindow, link->win);
@@ -555,10 +555,10 @@ static void ni_gpib_release(u_long arg)
     if (link->irq.AssignedIRQ)
 	CardServices(ReleaseIRQ, link->handle, &link->irq);
     link->state &= ~DEV_CONFIG;
-    
+
     if (link->state & DEV_STALE_LINK)
 	ni_gpib_detach(link);
-    
+
 } /* ni_gpib_release */
 
 /*======================================================================
@@ -570,7 +570,7 @@ static void ni_gpib_release(u_long arg)
     private flag to block future accesses to this device.  All the
     functions that actually access the device should check this flag
     to make sure the card is still present.
-    
+
 ======================================================================*/
 
 static int ni_gpib_event(event_t event, int priority,
@@ -677,20 +677,54 @@ int ni_pcmcia_attach(gpib_board_t *board)
 	tnt4882_private_t *tnt_priv;
 	nec7210_private_t *nec_priv;
 	int isr_flags = SA_SHIRQ;
+	int retval;
+
+	if( dev_list == NULL )
+	{
+		printk( "gpib: no NI PCMCIA board found\n" );
+		return -1;
+	}
 
 	board->status = 0;
 
 	if(tnt4882_allocate_private(board))
 		return -ENOMEM;
 	tnt_priv = board->private_data;
-	tnt_priv->io_write = writeb_wrapper;
-	tnt_priv->io_read = readb_wrapper;
 	nec_priv = &tnt_priv->nec7210_priv;
-	nec_priv->read_byte = nec7210_iomem_read_byte;
-	nec_priv->write_byte = nec7210_iomem_write_byte;
 	nec_priv->offset = atgpib_reg_offset;
 
-	nec_priv->iobase = dev_list->io.BasePort1;
+	if( dev_list->io.NumPorts1 )
+	{
+		GPIB_DPRINTK( "ioport1 window attributes: 0x%x\n", io.Attributes1 );
+		nec_priv->iobase = dev_list->io.BasePort1;
+		tnt_priv->io_write = outb_wrapper;
+		tnt_priv->io_read = inb_wrapper;
+		nec_priv->read_byte = nec7210_ioport_read_byte;
+		nec_priv->write_byte = nec7210_ioport_write_byte;
+	} else if ( dev_list->io.NumPorts2 )
+	{
+		GPIB_DPRINTK( "ioport2 window attributes: 0x%x\n", io.Attributes2 );
+		nec_priv->iobase = dev_list->io.BasePort2;
+		tnt_priv->io_write = outb_wrapper;
+		tnt_priv->io_read = inb_wrapper;
+		nec_priv->read_byte = nec7210_ioport_read_byte;
+		nec_priv->write_byte = nec7210_ioport_write_byte;
+	} else
+	{
+		win_req_t req;
+		retval = CardServices( GetFirstWindow, &dev_list->handle, &req );
+		if( retval )
+		{
+			printk( "gpib: failed to get memory window information\n" );
+			return -1;
+		}
+		GPIB_DPRINTK( "memory window attributes: 0x%x\n", req.Attributes );
+		nec_priv->iobase = (unsigned long) ioremap( req.Base, req.Size );
+		tnt_priv->io_write = writeb_wrapper;
+		tnt_priv->io_read = readb_wrapper;
+		nec_priv->read_byte = nec7210_iomem_read_byte;
+		nec_priv->write_byte = nec7210_iomem_write_byte;
+	}
 
 	// get irq
 	if( request_irq( dev_list->irq.AssignedIRQ, tnt4882_interrupt, isr_flags, "tnt4882", board))
@@ -720,6 +754,8 @@ void ni_pcmcia_detach(gpib_board_t *board)
 		if(nec_priv->iobase)
 		{
 			nec7210_board_reset(nec_priv);
+			if( dev_list->io.NumPorts1 == 0 && dev_list->io.NumPorts2 == 0 )
+				iounmap( (void *) nec_priv->iobase );
 		}
 	}
 	tnt4882_free_private(board);
