@@ -100,7 +100,7 @@ device:
 
 
 install:
-	$(INSTALL) -D gpib$(DRIVER_DEVICE_ID).o /lib/modules/`uname -r`/misc/gpib$(DRIVER_DEVICE_ID).o
+	$(INSTALL) -D gpib$(DRIVER_DEVICE_ID).o $(MODLIB)/misc/gpib$(DRIVER_DEVICE_ID).o
 	depmod -a
 
 

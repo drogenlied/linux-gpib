@@ -154,7 +154,6 @@ set_svar BOARD_TYPE $REPLY
 		       IBBASE=0x02e1
 		       IBIRQ=5
 		       IBDMA=1
-		       dmasupport=off
                        ;;
 
 	       hp82335) echo "#define HP82335 " >>../driver/include/gpib_board.h 
@@ -162,7 +161,6 @@ set_svar BOARD_TYPE $REPLY
                         IBBASE=0xDC000
 		        IBIRQ=3
 		        IBDMA=1
-		        dmasupport=off
                        ;;
 
 	       ziatech) echo "#define ZIATECH " >>../driver/include/gpib_board.h 
@@ -171,7 +169,6 @@ set_svar BOARD_TYPE $REPLY
                         IBBASE=0x210
 		        IBIRQ=3
 		        IBDMA=1
-		        dmasupport=off
                        ;;
 
 	       cbi4882) echo "#define NIPCII " >>../driver/include/gpib_board.h 
@@ -180,7 +177,6 @@ set_svar BOARD_TYPE $REPLY
                         IBBASE=0x300
 		        IBIRQ=5
 		        IBDMA=1
-		        dmasupport=off
                        ;;
 
 	       cbi_pcmcia) echo "#define NIPCII " >>../driver/include/gpib_board.h 
@@ -190,7 +186,6 @@ set_svar BOARD_TYPE $REPLY
                         IBBASE=0x200
 		        IBIRQ=5
 		        IBDMA=1
-		        dmasupport=off
 			auto_recog=on
                        ;;
 
@@ -201,7 +196,6 @@ set_svar BOARD_TYPE $REPLY
                         IBBASE=0x0
 		        IBIRQ=0
 		        IBDMA=0
-		        dmasupport=off
 			auto_recog=on
                        ;;
 
@@ -211,7 +205,6 @@ set_svar BOARD_TYPE $REPLY
                         IBBASE=0x0
 		        IBIRQ=0
 		        IBDMA=0
-		        dmasupport=off
 			auto_recog=on
                        ;;
 
@@ -222,7 +215,6 @@ set_svar BOARD_TYPE $REPLY
                         IBBASE=0x0
                         IBIRQ=0
                         IBDMA=0
-                        dmasupport=off
                         auto_recog=on
                        ;;
 
@@ -232,7 +224,6 @@ set_svar BOARD_TYPE $REPLY
                         IBBASE=0x0
                         IBIRQ=0
                         IBDMA=0
-                        dmasupport=off
                         auto_recog=on
                        ;;
 
@@ -241,6 +232,29 @@ set_svar BOARD_TYPE $REPLY
                exit 1 ;;
          esac
 
+
+##########
+#
+# other options
+#
+##########
+
+USE_DMA=0
+BUILD_DEBUG=0
+DEFAULT_DEBUG=0
+SWAP_UNL_LAD=0
+
+dialog --title "Driver Options" --checklist "Select the following Options" 17 70 10 \
+	USE_DMA "Use DMA Mode for Transfers" "$dmasupport" \
+	BUILD_DEBUG "Build Driver With Debugging Code" "on"\
+	DEFAULT_DEBUG "Set Default Debugging Mode to 'none'" "on"\
+	SWAP_UNL_LAD "Swap UNL/LAD Sequence (nec7210 only)" "off" 2>/tmp/reply
+
+if [ $? = 0 ]; then
+for i in `cat /tmp/reply | sed 's!\"!!g' `; do
+set_var $i 1
+done
+fi
 
 ##########
 #
@@ -407,7 +421,7 @@ if [ $auto_recog = off ];then
 
          ############################# DMA Selection #######################################
 
-      if [ $dmasupport = on ];then         
+      if [ $USE_DMA = 1 ];then         
   	case $BOARD_TYPE in
          pcII*)
 	 dialog --title "Selecting DMA channel" --menu \
@@ -441,27 +455,6 @@ if [ $auto_recog = off ];then
   fi
 
 fi
-##########
-#
-# other options
-#
-##########
-
-
-dialog --title "Driver Options" --checklist "Select the following Options" 17 70 10 \
-	USE_DMA "Use DMA Mode for Transfers" "$dmasupport" \
-	BUILD_DEBUG "Build Driver With Debugging Code" "on"\
-	DEFAULT_DEBUG "Set Default Debugging Mode to 'none'" "on"\
-	SWAP_UNL_LAD "Swap UNL/LAD Sequence (nec7210 only)" "off" 2>/tmp/reply
-
-
-
-if [ $? = 0 ]; then
-for i in `cat /tmp/reply | sed 's!\"!!g' `; do
-set_var $i 1
-done
-fi
-
 
 ##########
 #
@@ -475,7 +468,7 @@ dialog --title "Driver Major Number Settings" \
                  "250" "Default Major for GPIB Driver"\
                  "240" "Alternate Major for GPIB Driver"\
                  "254" "Alternate Major for GPIB Driver"\
-                 "Custom" "Specify Your Own Setting (a number between 240 and 254 is recommended)" \
+                 "Custom" "Specify Your Own Setting\n(a number between 240 and 254 is recommended)" \
                  2>/tmp/reply
 
 if [ $? = 0 ];then
@@ -493,61 +486,6 @@ get_result 0
    fi
 
 fi
-
-
-##########
-#
-# generating Library Configuration File
-#
-##########
-
-if [ ! -r /etc/gpib.conf ]; then
-	dialog --yesno "
-	/etc/gpib.conf not found\n
-		Create?" 8 60 
-	if [ $? = 0 ]; then
-		cat ./templates/gpib.conf | sed -e "s/?base?/$IBBASE/g" \
-			-e "s/?irq?/$IBIRQ/g" \
-			-e "s/?dma?/$IBDMA/g" >/etc/gpib.conf
-	fi
-fi
-
-
-
-##########
-#
-# generating Driver inode
-#
-##########
-
-
-if [ ! -r /dev/gpib0/master ]; then
-	dialog --yesno "
-   /dev/gpib0/master not found\n
-         Create?" 8 60 
-	if [ $? = 0 ]; then
-		if [ ! -d /dev/gpib0 ]; then
-			mkdir /dev/gpib0
-		fi
-		mknod /dev/gpib0/master c $IBMAJOR 0
-	fi
-else
-	ls -l /dev/gpib0/master | grep -q "$IBMAJOR",
-	if [ $? = 0 ]; then
-		dialog --infobox "Found /dev/gpib0/master !" 8 60
-	else
-		dialog --yesno "
-      Old /dev/gpib0/master has different Major\n
-               Update ?" 8 60
-	        if [ $? = 0 ];then
-			rm -f /dev/gpib0/master
-			mknod /dev/gpib0/master c $IBMAJOR 0
-		fi
-	fi
-fi
-
-
-
 
 ##########
 #

@@ -1,2 +1,8 @@
-cleanup and improve organization of code
+cleanup and improve organization of code - lots of work to do here
 
+reserve/free ioports and io memory regions
+
+make drivers for different boards have different module names
+
+make drivers support more than one gpib card in computer at once
+ 

@@ -26,7 +26,7 @@
 
 #ifndef IBMAJOR
 /* default value for major number */
-#define IBMAJOR 31
+#define IBMAJOR 250
 #endif
 
 #define LINUX_VERS	1

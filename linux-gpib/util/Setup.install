@@ -10,6 +10,57 @@ config_file=/etc/rc.d/rc.local
 insmod=/sbin/insmod
 options=""
 
+source .config
+
+##########
+#
+# generating Library Configuration File
+#
+##########
+
+if [ ! -r /etc/gpib.conf ]; then
+        dialog --yesno "
+        /etc/gpib.conf not found\n
+                Create?" 8 60
+        if [ $? = 0 ]; then
+                cat ./templates/gpib.conf | sed -e "s/?base?/$IBBASE/g" \
+                        -e "s/?irq?/$IBIRQ/g" \
+                        -e "s/?dma?/$IBDMA/g" >/etc/gpib.conf
+        fi
+fi
+
+##########
+#
+# generating Driver inode
+#
+##########
+
+
+if [ ! -r /dev/gpib0/master ]; then
+        dialog --yesno "
+   /dev/gpib0/master not found\n
+         Create?" 8 60
+        if [ $? = 0 ]; then
+                if [ ! -d /dev/gpib0 ]; then
+                        mkdir /dev/gpib0
+                fi
+                mknod /dev/gpib0/master c $IBMAJOR 0
+        fi
+else
+        ls -l /dev/gpib0/master | grep -q "$IBMAJOR",
+        if [ $? = 0 ]; then
+                dialog --infobox "Found /dev/gpib0/master !" 8 60
+        else
+                dialog --yesno "
+      Old /dev/gpib0/master has different Major\n
+               Update ?" 8 60
+                if [ $? = 0 ];then
+                        rm -f /dev/gpib0/master
+                        mknod --mode=a+w /dev/gpib0/master c $IBMAJOR 0 || exit 1
+                fi
+        fi
+fi
+
 
 grep -q $driver_file $config_file
 if [ $? = 1 ]; then
