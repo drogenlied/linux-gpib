@@ -648,7 +648,7 @@ volatile int ibsta;
 
 <section>
 <title>
-	'Traditional' API Functions
+	'Traditional API' Functions
 </title>
 
 <refentry ID="reference-function-ibclr">
@@ -675,6 +675,60 @@ volatile int ibsta;
 	</title>
 	<para>
 	ibclr() sends the clear command to the device specified by <parameter>ud</parameter>.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-ibcmd">
+<refmeta>
+	<refentrytitle>ibcmd</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibcmd</refname>
+	<refpurpose>write command bytes (board)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibcmd</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>const void *<parameter>commands</parameter></paramdef>
+		<paramdef>long <parameter>num_bytes</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibcmd() writes the <link LINKEND="reference-command-bytes">command bytes</link>
+	contained
+	in the array <parameter>commands</parameter>
+	to the bus.  The number of bytes written from the array is specified by
+	<parameter>num_bytes</parameter>.  The <parameter>ud</parameter> argument is a
+	board descriptor, and the
+	board must be controller-in-charge.  Most of the
+	possible command bytes are declared as constants in the header files.
+	In particular, the constants GTL, SDC, PPC, GET, TCT, LLO, DCL, PPU, SPE, SPD,
+	UNL, UNT,and PPD are available.  Additionally, the inline functions
+	MTA(), MLA(), MSA(), and PPE_byte() are available for producing
+	'my talk address', 'my listen address', 'my secondary address', and
+	'parallel poll enable' command bytes respectively.
+	</para>
+	<para>
+	It is generally not necessary to call ibcmd().  It is provided
+	for advanced users who want direct, low-level access to the GPIB bus.
 	</para>
 </refsect1>
 <refsect1>
@@ -868,7 +922,7 @@ volatile int ibsta;
 	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
 	<funcprototype>
 		<funcdef>int <function>ibfind</function></funcdef>
-		<paramdef>const char* <parameter>name</parameter></paramdef>
+		<paramdef>const char *<parameter>name</parameter></paramdef>
 	</funcprototype>
 	</funcsynopsis>
 </refsynopsisdiv>
@@ -956,7 +1010,7 @@ volatile int ibsta;
 	<funcprototype>
 		<funcdef>int <function>ibrd</function></funcdef>
 		<paramdef>int <parameter>ud</parameter></paramdef>
-		<paramdef>void* <parameter>buffer</parameter></paramdef>
+		<paramdef>void *<parameter>buffer</parameter></paramdef>
 		<paramdef>long <parameter>num_bytes</parameter></paramdef>
 	</funcprototype>
 	</funcsynopsis>
@@ -1018,7 +1072,7 @@ volatile int ibsta;
 	<funcprototype>
 		<funcdef>int <function>ibrdf</function></funcdef>
 		<paramdef>int <parameter>ud</parameter></paramdef>
-		<paramdef>const char* <parameter>file_path</parameter></paramdef>
+		<paramdef>const char *<parameter>file_path</parameter></paramdef>
 	</funcprototype>
 	</funcsynopsis>
 </refsynopsisdiv>
@@ -1059,7 +1113,7 @@ volatile int ibsta;
 	<funcprototype>
 		<funcdef>int <function>ibrsp</function></funcdef>
 		<paramdef>int <parameter>ud</parameter></paramdef>
-		<paramdef>char* <parameter>result</parameter></paramdef>
+		<paramdef>char *<parameter>result</parameter></paramdef>
 	</funcprototype>
 	</funcsynopsis>
 </refsynopsisdiv>
@@ -1299,7 +1353,7 @@ volatile int ibsta;
 	<funcprototype>
 		<funcdef>int <function>ibwrt</function></funcdef>
 		<paramdef>int <parameter>ud</parameter></paramdef>
-		<paramdef>void* <parameter>buffer</parameter></paramdef>
+		<paramdef>const void *<parameter>data</parameter></paramdef>
 		<paramdef>long <parameter>num_bytes</parameter></paramdef>
 	</funcprototype>
 	</funcsynopsis>
@@ -1312,7 +1366,7 @@ volatile int ibsta;
 	ibwrt() is used to write data bytes to a device or board.  The argument
 	<parameter>ud</parameter> can be either a device or board descriptor.
 	<parameter>num_bytes</parameter> specifies how many bytes
-	are written from the user-supplied array <parameter>buffer</parameter>.
+	are written from the user-supplied array <parameter>data</parameter>.
 	EOI may be asserted with the last byte sent or when the end-of-string
 	character is sent (see <link LINKEND="reference-function-ibeos">
 	ibeos()</link> and <link LINKEND="reference-function-ibeot">
@@ -1361,7 +1415,7 @@ volatile int ibsta;
 	<funcprototype>
 		<funcdef>int <function>ibwrtf</function></funcdef>
 		<paramdef>int <parameter>ud</parameter></paramdef>
-		<paramdef>const char* <parameter>file_path</parameter></paramdef>
+		<paramdef>const char *<parameter>file_path</parameter></paramdef>
 	</funcprototype>
 	</funcsynopsis>
 </refsynopsisdiv>
@@ -1390,7 +1444,7 @@ volatile int ibsta;
 
 <section>
 <title>
-	'Multidevice' API Functions
+	'Multidevice API' Functions
 </title>
 
 <refentry ID="reference-function-allspoll">
@@ -1408,14 +1462,14 @@ volatile int ibsta;
 	<funcprototype>
 		<funcdef>void <function>AllSPoll</function></funcdef>
 		<paramdef>int <parameter>board_desc</parameter></paramdef>
-		<paramdef>Addr4882_t* <parameter>addressList</parameter></paramdef>
-		<paramdef>short* <parameter>resultList</parameter></paramdef>
+		<paramdef>Addr4882_t *<parameter>addressList</parameter></paramdef>
+		<paramdef>short *<parameter>resultList</parameter></paramdef>
 	</funcprototype>
 	<funcprototype>
 		<funcdef>void <function>AllSpoll</function></funcdef>
 		<paramdef>int <parameter>board_desc</parameter></paramdef>
-		<paramdef>Addr4882_t* <parameter>addressList</parameter></paramdef>
-		<paramdef>short* <parameter>resultList</parameter></paramdef>
+		<paramdef>const Addr4882_t *<parameter>addressList</parameter></paramdef>
+		<paramdef>short *<parameter>resultList</parameter></paramdef>
 	</funcprototype>
 	</funcsynopsis>
 </refsynopsisdiv>
@@ -1486,7 +1540,7 @@ volatile int ibsta;
 	<funcprototype>
 		<funcdef>void <function>DevClearList</function></funcdef>
 		<paramdef>int <parameter>board_desc</parameter></paramdef>
-		<paramdef>Addr4882_t* <parameter>addressList</parameter></paramdef>
+		<paramdef>const Addr4882_t *<parameter>addressList</parameter></paramdef>
 	</funcprototype>
 	</funcsynopsis>
 </refsynopsisdiv>
@@ -1521,7 +1575,7 @@ volatile int ibsta;
 	<funcprototype>
 		<funcdef>void <function>EnableLocal</function></funcdef>
 		<paramdef>int <parameter>board_desc</parameter></paramdef>
-		<paramdef>Addr4882_t* <parameter>addressList</parameter></paramdef>
+		<paramdef>const Addr4882_t *<parameter>addressList</parameter></paramdef>
 	</funcprototype>
 	</funcsynopsis>
 </refsynopsisdiv>
@@ -1560,7 +1614,7 @@ volatile int ibsta;
 	<funcprototype>
 		<funcdef>void <function>EnableRemote</function></funcdef>
 		<paramdef>int <parameter>board_desc</parameter></paramdef>
-		<paramdef>Addr4882_t* <parameter>addressList</parameter></paramdef>
+		<paramdef>const Addr4882_t *<parameter>addressList</parameter></paramdef>
 	</funcprototype>
 	</funcsynopsis>
 </refsynopsisdiv>
@@ -1593,7 +1647,7 @@ volatile int ibsta;
 		<funcdef>void <function>ReadStatusByte</function></funcdef>
 		<paramdef>int <parameter>board_desc</parameter></paramdef>
 		<paramdef>Addr4882_t <parameter>address</parameter></paramdef>
-		<paramdef>short* <parameter>result</parameter></paramdef>
+		<paramdef>short *<parameter>result</parameter></paramdef>
 	</funcprototype>
 	</funcsynopsis>
 </refsynopsisdiv>
