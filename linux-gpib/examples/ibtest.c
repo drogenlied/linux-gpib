@@ -363,7 +363,7 @@ int get_lines( int ud )
 	if( iblines( ud, &line_status ) & ERR )
 		return -1;
 
-	printf( "Line status word is 0x%x\n", line_status );
+	printf( "Line status word is 0x%x\n", line_status & 0xffff );
 
 	return 0;
 }
