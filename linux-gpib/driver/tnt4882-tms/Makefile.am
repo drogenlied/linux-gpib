@@ -7,7 +7,7 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
-EXTRA_DIST = $(SRCS) tnt4882.h
+EXTRA_DIST = $(SRCS) tnt4882.h mite.h
 
 include $(top_srcdir)/util/linux_flags/flags
 CFLAGS = -I$(top_srcdir) -I$(top_srcdir)/driver/include -I$(top_srcdir)/include \

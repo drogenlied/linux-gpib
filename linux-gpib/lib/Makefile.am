@@ -18,8 +18,8 @@ MAINTAINERCLEANFILES = ibConfLex.c ibConfYacc.c ibConfYacc.h
 
 EXTRA_DIST = ibConfLex.l ibConfYacc.y gpib_version_script
 
-nodist_libgpib_la_SOURCES = ibConfLex.c ibConfYacc.c
 libgpib_la_SOURCES = \
+	ib.h ib_internal.h ibConf.h ibP.h parse.h \
 	ibCac.c ibClr.c ibCmd.c ibEos.c ibEot.c \
 	ibFind.c ibLines.c ibOnl.c ibPad.c ibRd.c ibRpp.c ibRsp.c ibRsv.c \
 	ibSad.c ibSic.c ibSre.c ibTmo.c ibTrg.c ibWait.c ibWrt.c \
