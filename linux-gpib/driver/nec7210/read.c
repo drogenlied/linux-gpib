@@ -38,7 +38,6 @@ static ssize_t pio_read( gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 			retval = -ERESTARTSYS;
 			break;
 		}
-
 		if( test_bit(READ_READY_BN, &priv->state) )
 		{
 			buffer[ count++ ] = nec7210_read_data_in( board, priv, end );

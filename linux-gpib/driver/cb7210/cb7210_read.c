@@ -179,9 +179,10 @@ ssize_t cb7210_accel_read( gpib_board_t *board, uint8_t *buffer,
 	nec7210_set_handshake_mode( board, nec_priv, HR_HLDE );
 	nec7210_release_rfd_holdoff( board, nec_priv );
 
-	count += fifo_read( board, cb_priv, &buffer[ count ], length - count - 1, end );
-	if( count < 0 )
-		return count;
+	retval = fifo_read( board, cb_priv, &buffer[ count ], length - count - 1, end );
+	if( retval < 0 )
+		return retval;
+	count += retval;
 	if( *end ) return count;
 
 	retval = cb7210_read( board, &buffer[ count ], 1, end );
