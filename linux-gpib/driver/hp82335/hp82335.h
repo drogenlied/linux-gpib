@@ -62,9 +62,6 @@ irqreturn_t hp82335_interrupt(int irq, void *arg, struct pt_regs *registerp);
 int hp82335_allocate_private(gpib_board_t *board);
 void hp82335_free_private(gpib_board_t *board);
 
-// register offset for tms9914 compatible registers
-static const int atgpib_reg_offset = 2;
-
 // size of io memory region used
 static const int hp82335_iomem_size = 0x4000;
 static const int hp82335_rom_size = 0x2000;
