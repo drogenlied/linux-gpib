@@ -118,14 +118,15 @@ PREINIT:
 	char *buf;
 CODE:
 	buf = malloc( cnt + 1 );
-	if( buf )
-	{
-		for(i = 0; i <= cnt; i++) { buf[i] = 0; }
-		RETVAL = ibrd(ud, buf, cnt);
-		sv_setpvn(rd, buf, cnt + 1);
-		free( buf );
-	}else
-		RETVAL = ERR;
+	if( buf == NULL )
+		croak( "malloc() returned NULL in ibrd()\n" );
+
+	for(i = 0; i <= cnt; i++) { buf[i] = 0; }
+	RETVAL = ibrd(ud, buf, cnt);
+	sv_setpvn(rd, buf, cnt + 1);
+	free( buf );
+OUTPUT:
+	RETVAL
 
 int
 ibrdi(ud, array, cnt)
@@ -137,24 +138,23 @@ PREINIT:
 	char *buf;
 	SV *byte;
 CODE:
-
 	byte = newSViv( 0 );
 	av_clear( array );
 	buf = malloc( cnt );
-	if( buf )
+	if( buf == NULL )
+		croak( "malloc() returned NULL in ibrdi()\n" );
+	RETVAL = ibrd(ud, buf, cnt);
+	if( ( RETVAL & ERR ) == 0 )
 	{
-		RETVAL = ibrd(ud, buf, cnt);
-		if( ( RETVAL & ERR ) == 0 )
+		for( i = 0; i < ThreadIbcntl(); i++ )
 		{
-			for( i = 0; i < ThreadIbcntl(); i++ )
-			{
-				sv_setuv( byte, (unsigned int) ( buf[ i ] & 0xff ) );
-				av_push( array, byte );
-			}
+			sv_setuv( byte, (unsigned int) ( buf[ i ] & 0xff ) );
+			av_push( array, byte );
 		}
-		free( buf );
-	}else
-		RETVAL = ERR;
+	}
+	free( buf );
+OUTPUT:
+	RETVAL
 
 int
 ibrpp(ud, ppr)
