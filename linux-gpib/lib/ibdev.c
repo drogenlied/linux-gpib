@@ -80,9 +80,6 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 		return -1;
 	}
 
-	if( ibBdChrConfig(uDesc) & ERR )
-		return -1;
-
 	if( ibonl( uDesc, 1 ) & ERR )
 	{
 		fprintf(stderr, "failed to bring device online\n");

@@ -13,7 +13,7 @@
 #define IbcAUTOPOLL 0
 
 extern int ibCheckDescriptor(int ud);
-extern  int ibBdChrConfig(int ud);
+extern  int ibBdChrConfig( ibConf_t *conf );
 extern  void ibBoardDefaultValues(void);
 extern  int ibBoardOpen(int bd,int flags);
 extern  int ibBoardClose(int bd);

@@ -25,14 +25,24 @@ int ibonl( int ud, int onl )
 	if( conf->flags & CN_EXCLUSIVE )
 		oflags |= O_EXCL;
 
-	if( ( board->fileno < 0 )
-		&& ( ibBoardOpen( conf->board, oflags ) & ERR ) )
+	if( board->fileno < 0 )
 	{
-		status |= ERR;
-		iberr = EDVR;
-		ibcnt = errno;
-		ibsta = status;
-		return status;
+		if( ibBoardOpen( conf->board, oflags ) & ERR ) 
+		{
+			status |= ERR;
+			iberr = EDVR;
+			ibcnt = errno;
+			ibsta = status;
+			return status;
+		}
+		if( ibBdChrConfig( conf ) < 0 )
+		{
+			status |= ERR;
+			iberr = EDVR;
+			ibcnt = errno;
+			ibsta = status;
+			return status;
+		}
 	}
 
 	if( !onl )

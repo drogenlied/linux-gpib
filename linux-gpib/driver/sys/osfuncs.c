@@ -792,6 +792,7 @@ static int autopoll_ioctl( gpib_board_t *board )
 		return -ERESTARTSYS;
 	}
 
+	GPIB_DPRINTK( "entering autopoll loop\n" );
 	while( 1 )
 	{
 		if( wait_event_interruptible( board->wait,
@@ -813,6 +814,7 @@ static int autopoll_ioctl( gpib_board_t *board )
 			break;
 		}
 	}
+	GPIB_DPRINTK( "left autopoll loop\n" );
 
 	up( &board->autopoll_mutex );
 
