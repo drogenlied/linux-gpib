@@ -1441,8 +1441,8 @@ volatile int ibsta;
 	board descriptor, and the
 	board must be controller-in-charge.  Most of the
 	possible command bytes are declared as constants in the header files.
-	In particular, the constants GTL, SDC, PPC, GET, TCT, LLO, DCL, PPU, SPE, SPD,
-	UNL, UNT,and PPD are available.  Additionally, the inline functions
+	In particular, the constants GTL, SDC, PPConfig, GET, TCT, LLO, DCL, PPU, SPE,
+	SPD, UNL, UNT,and PPD are available.  Additionally, the inline functions
 	MTA(), MLA(), MSA(), and PPE_byte() are available for producing
 	'my talk address', 'my listen address', 'my secondary address', and
 	'parallel poll enable' command bytes respectively.
@@ -5177,7 +5177,7 @@ addressList[ 4 ] = NOADDR;
 	</row>
 	<row>
 	<entry>0x5</entry>
-	<entry>PPC</entry>
+	<entry>PPConfig (also 'PPC' on non-powerpc architectures)</entry>
 	<entry>Parallel poll configure</entry>
 	</row>
 	<row>
