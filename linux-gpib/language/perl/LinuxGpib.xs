@@ -1,8 +1,8 @@
+#include <ib.h>
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
 
-#include <ib.h>
 
 static int
 not_here(char *s)
