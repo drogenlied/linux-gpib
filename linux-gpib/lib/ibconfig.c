@@ -33,8 +33,6 @@ static int set_spoll_timeout( ibConf_t *conf, int timeout )
 
 static int set_ppoll_timeout( ibConf_t *conf, int timeout )
 {
-	static const int default_usec_timeout = 2;
-
 	if( timeout < TNONE || timeout > T1000s )
 	{
 		setIberr( EARG );
