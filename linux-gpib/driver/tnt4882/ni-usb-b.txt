@@ -1,0 +1,88 @@
+device ibwrt
+
+03 00 00 00 0c CNT1 NOT_READDR TIMEOUT MTA (MSA) UNL MLA (MSA) (pad with zeros to 32 bit boundary) 0d CNT1 (CNT2 guess) TIMEOUT (eosmode high byte) (eosmode low byte) (08 when eot, 00 without) 00 data[0] ... data[n-1] (pad with zeros to 32 bit boundary) 09 01 00 02 03 01 00 00 04 00 00 00
+
+
+device ibrd
+
+03 00 00 00 0c CNT1 NOT_READDR TIMEOUT UNL MLA (MSA) MTA (MSA) (pad with 00 to 32 bit boundary) 0a (eosmode high byte) (eosmode low byte) TIMEOUT
+CNT1 CNT2 00 00 09 02 00 (triplet 01 0a 51: holdoff handshake immediately) (triplet 01 0a 55: clear END) 00 00 00
+09 01 00 02 03 01 00 00 04 00 00 00
+
+
+board ibwrt
+
+0d CNT1 CNT2 (fX where X is timeout, AUXRJ?) 00 00 (08 when eot, 00 without) 00 data[0] ... data[n-1] (pad with zeros to 32 bit boundary) 04 00 00 00
+
+
+board ibrd
+
+0a (eosmode high byte) (eosmode low byte) TIMEOUT
+CNT1 CNT2 00 00 09 02 00 (triplet 01 0a 51: holdoff handshake immediately) (triplet 01 0a 55: clear END) 00 00 00 04 00 00 00
+
+readback (success):
+36 data[0] data[1] ... data[15]
+36 data[16] data[17] ... data[N-1] (pad with 00 to 16 byte boundary)
+38 (20 if received EOI, 00 otherwise) 24 00 CNT1 CNT2 ff ff ADR1 (N mod 15) 00 00 09 00 24 00 CNT1 CNT2 ff ff 02 00 00 00 04 00 00 00
+
+readback (timeout, nothing received):
+38 00 00 0a CNT1 CNT2 ff ff ADR1 00 00 00 09 00 00 00
+CNT1 CNT2 ff ff 02 00 00 00 04 00 00 00
+
+  
+board ibcmd
+
+0c CNT1 00 (fX where X is timeout) cmd[0] ... cmd[n-1] (pad with zeros to 32 bit boundary) 04 00 00 00
+
+
+board ibpad 
+
+09 02 00 01 0c (PAD, this is ADR register at offset 0c) 02 00 PAD 00 00 00 04 00 00 00
+
+
+board ibsad
+
+09 03 00 01 0c (0x80 + 0 to 31 for sad, or 0xe0 if disabled, this is the ADR register at offset 0x0c) 01 08 (32 enabled 31 no sad, this is ADMR at offset 0x08) 02 01 MSA 04 00 00 00
+
+
+ibsic
+
+0f 00 00 00 04 00 00 00
+readback:
+0f 00 20 00 CNT1 CNT2 ff ff 04 00 00 00
+  
+***
+notes:
+
+TIMEOUT = fX where X is timeout number, same as AUXRJ?
+
+NOT_READDR = 00 forces command string containing talk/listen addresses to be sent.  02 means it is not sent.
+
+tnt4882 registers: CNT1, CNT2, ADR1, AUXMR, etc.
+
+01 00 00 00 = ibcac 0
+01 01 00 00 = ibcac 1
+
+03 00 00 00 = beginning of multiple command message
+
+04 00 00 00 = end of message
+
+06 00 00 00 = ibgts
+
+08 N pair1 pair2 ... pairN = register level read
+pair = device address
+readback = 34 value1 value2 ... valueN 35 N (pad with zeros) 
+
+09 N 00 triplet1 triplet2 ... tripletN (pad to 32 bit boundary) = register level write.
+triplet = device address value
+device 1 is tnt4482
+device 2 is ??
+device 2 address 0 = PAD
+device 2 address 1 = MSA
+device 2 address 3 = ?? writes 1 during device read or write
+
+***
+
+
+
+
