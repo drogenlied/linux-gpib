@@ -9,7 +9,7 @@
 
 -include $(ROOT)/util/.config
 
-CFLAGS= -I. -I../include -I ../driver/include -Wall -D_REENTRANT -g3 -O -ansi -pedantic
+CFLAGS= -I. -I../include -I ../driver/include -Wall -D_REENTRANT -g3 -O 
 LDFLAGS = -L../lib -lgpib -lpthread
 
 BINS = libgpib_test

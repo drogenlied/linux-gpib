@@ -26,6 +26,7 @@ computer, on the same GPIB bus, and one of which is the system controller.
 #include <errno.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include "gpib/ib.h"
 
@@ -72,8 +73,8 @@ int find_boards( struct board_descriptors *boards )
 	}
 }
 
-const char *read_write_string1 = "dig8esdfas sdf\n";
-const char *read_write_string2 = "DFLIJFES8F3	";
+const char read_write_string1[] = "dig8esdfas sdf\n";
+const char read_write_string2[] = "DFLIJFES8F3	";
 
 struct read_write_slave_parameters
 {
@@ -87,17 +88,23 @@ void* read_write_slave_thread( void *arg )
 	char buffer[ 1000 ];
 	int status;
 
-	status = ibrd( param->slave_board, buffer, sizeof( buffer ) - 1 );
+	status = ibrd( param->slave_board, buffer, sizeof( buffer ) );
 	if( status & ERR )
 	{
 		fprintf( stderr, "FAILED: slave thread got error from ibrd\n" );
 		param->retval = -1;
 		return NULL;
 	}
-	buffer[ ThreadIbcntl() ] = 0;
 	if( strcmp( buffer, read_write_string1 ) )
 	{
 		fprintf( stderr, "FAILED: slave thread got bad data from ibrd\n" );
+		param->retval = -1;
+		return NULL;
+	}
+	status = ibwrt( param->slave_board, read_write_string2, strlen( read_write_string2 ) + 1 );
+	if( status & ERR )
+	{
+		fprintf( stderr, "FAILED: slave thread got error from ibwrt\n" );
 		param->retval = -1;
 		return NULL;
 	}
@@ -112,6 +119,7 @@ int read_write_test( const struct board_descriptors *boards )
 	volatile struct read_write_slave_parameters param;
 	int status;
 	int pad, sad;
+	char buffer[ 1000 ];
 
 	fprintf( stderr, "read/write test..." );
 	status = ibask( boards->slave, IbaPAD, &pad );
@@ -138,10 +146,24 @@ int read_write_test( const struct board_descriptors *boards )
 		fprintf( stderr, "FAILED: error creating slave thread\n" );
 		return -1;
 	}
-	status = ibwrt( ud, read_write_string1, strlen( read_write_string1 ) );
+	status = ibwrt( ud, read_write_string1, strlen( read_write_string1 ) + 1 );
 	if( status & ERR )
 	{
 		fprintf( stderr, "FAILED: write error %i\n", ThreadIberr() );
+		pthread_join( slave_thread, NULL );
+		return -1;
+	}
+	status = ibrd( ud, buffer, sizeof( buffer ) );
+	if( status & ERR )
+	{
+		fprintf( stderr, "FAILED: read error %i\n", ThreadIberr() );
+		pthread_join( slave_thread, NULL );
+		return -1;
+	}
+	if( strcmp( buffer, read_write_string2 ) )
+	{
+		fprintf( stderr, "FAILED: got bad data from ibrd\n" );
+		fprintf( stderr, "received %i bytes:%s\n", ThreadIbcnt(), buffer );
 		pthread_join( slave_thread, NULL );
 		return -1;
 	}
