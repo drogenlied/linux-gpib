@@ -47,7 +47,7 @@ int prompt_for_device(void)
 
 	while(1)
 	{
-		printf("enter primary address for device [0-30]: ");
+		printf("enter primary address for device (not interface board) [0-30]: ");
 		fgets(input, sizeof(input), stdin);
 		pad = strtol(input, NULL, 0);
 		if(pad < 0 || pad > 30)
