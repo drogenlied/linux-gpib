@@ -124,6 +124,7 @@ void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv)
 				wake_up_interruptible(&board->wait);
 			}else
 			{
+				clear_bit(WRITE_READY_BN, &priv->state);
 				enable_dma(priv->dma_channel);
 			}
 			release_dma_lock(flags);

@@ -90,6 +90,7 @@ static ssize_t __dma_write(gpib_board_t *board, nec7210_private_t *priv, dma_add
 	priv->imr2_bits |= HR_DMAO;
 	write_byte(priv, priv->imr2_bits, IMR2);
 
+	clear_bit(WRITE_READY_BN, &priv->state);
 	set_bit(DMA_IN_PROGRESS_BN, &priv->state);
 
 	spin_unlock_irqrestore(&board->spinlock, flags);
