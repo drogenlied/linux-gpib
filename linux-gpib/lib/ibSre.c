@@ -2,6 +2,29 @@
 #include "ib_internal.h"
 #include <ibP.h>
 
+int remote_enable( const ibBoard_t *board, int enable )
+{
+	int retval;
+
+	if( board->is_system_controller == 0 )
+	{
+		// XXX we don't distinguish ECIC and ESAC?
+		setIberr( ESAC );
+		return -1;
+	}
+
+	retval = ioctl( board->fileno, IBSRE, &enable );
+	if( retval < 0 )
+	{
+		// XXX other error types?
+		setIberr( EDVR );
+		setIbcnt( errno );
+		return retval;
+	}
+
+	return 0;
+}
+
 int internal_ibsre( ibConf_t *conf, int v )
 {
 	ibBoard_t *board;
@@ -14,21 +37,10 @@ int internal_ibsre( ibConf_t *conf, int v )
 		setIberr( EARG );
 		return -1;
 	}
-	if( board->is_system_controller == 0 )
-	{
-		// XXX we don't distinguish ECIC and ESAC?
-		setIberr( ESAC );
-		return -1;
-	}
 
-	retval = ioctl( board->fileno, IBSRE, &v );
+	retval = remote_enable( board, v );
 	if( retval < 0 )
-	{
-		// XXX other error types?
-		setIberr( EDVR );
-		setIbcnt( errno );
 		return retval;
-	}
 
 	return 0;
 }

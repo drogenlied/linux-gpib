@@ -96,13 +96,6 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 		return -1;
 	}
 
-	if( conf.is_interface && board->is_system_controller )
-	{
-		// XXX free descriptors resources
-		if( ibsre( uDesc, 1 ) & ERR ) return -1;
-		setIbsta( ERR );
-	}
-
 	// XXX do local lockout if appropriate
 
 	return uDesc;

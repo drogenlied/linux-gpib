@@ -25,15 +25,23 @@ extern "C" {
 #include <stdint.h>
 #include <gpib_user.h>
 
-typedef unsigned int Addr4882_t;
+typedef uint16_t Addr4882_t;
 static const Addr4882_t NOADDR = -1;
-static const int NO_SAD = 0;
+
+enum sad_special_address
+{
+	NO_SAD = 0,
+	ALL_SAD = 0xff
+};
 
 extern volatile int ibsta, ibcnt, iberr;
 extern volatile long ibcntl;
 
+extern void AllSPoll( int boardID, Addr4882_t addressList[], short resultList[] );
+extern void AllSpoll( int boardID, Addr4882_t addressList[], short resultList[] );
 extern void DevClear( int boardID, Addr4882_t address );
 extern void DevClearList( int boardID, Addr4882_t addressList[] );
+extern void SendSetup( int boardID, Addr4882_t addressList[] );
 extern int ThreadIbsta( void );
 extern int ThreadIberr( void );
 extern int ThreadIbcnt( void );

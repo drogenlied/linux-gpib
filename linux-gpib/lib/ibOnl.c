@@ -22,6 +22,12 @@ int board_online( ibBoard_t *board, int online )
 		return -1;
 	}
 
+	if( online && board->is_system_controller )
+	{
+		retval = remote_enable( board, online );
+		if( retval < 0 ) return retval;
+	}
+
 	return 0;
 }
 

@@ -64,7 +64,7 @@ void DevClearList( int boardID, Addr4882_t addressList[] )
 	ibBoard_t *board;
 	uint8_t *cmd;
 	int count;
-	
+
 	conf = enter_library( boardID );
 	if( conf == NULL )
 	{
@@ -80,7 +80,7 @@ void DevClearList( int boardID, Addr4882_t addressList[] )
 
 	if( conf->is_interface == 0 )
 	{
-		setIberr( ENEB );
+		setIberr( EDVR );
 		exit_library( boardID, 1 );
 		return;
 	}

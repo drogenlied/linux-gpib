@@ -1,8 +1,11 @@
 
 GPIB_DUMMY_VERSION {
 	global:
+		AllSPoll;
+		AllSpoll;
 		DevClear;
 		DevClearList;
+		SendSetup;
 		ThreadIbsta;
 		ThreadIberr;
 		ThreadIbcnt;

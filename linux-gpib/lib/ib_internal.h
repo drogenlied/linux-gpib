@@ -82,6 +82,7 @@ extern Addr4882_t packAddress( unsigned int pad, int sad );
 extern int addressIsValid( Addr4882_t address );
 extern int addressListIsValid( Addr4882_t addressList[] );
 extern unsigned int numAddresses( Addr4882_t addressList[] );
+extern int remote_enable( const ibBoard_t *board, int enable );
 
 extern int internal_ibpad( ibConf_t *conf, unsigned int address );
 extern int internal_ibsad( ibConf_t *conf, int address );
@@ -91,7 +92,7 @@ extern int internal_ibppc( ibConf_t *conf, int v );
 extern int internal_ibsre( ibConf_t *conf, int v );
 extern int internal_ibrsv( ibConf_t *conf, int v );
 
-extern __inline__ ibBoard_t* interfaceBoard( const ibConf_t *conf )
+static __inline__ ibBoard_t* interfaceBoard( const ibConf_t *conf )
 {
 	return &ibBoard[ conf->board ];
 }
