@@ -89,6 +89,7 @@ install:
 	$(INSTALL) -D libgpib.so $(LIB_TARGET_DIR)/$(LIBNAME)
 	cd $(LIB_TARGET_DIR) && ln -sf $(LIBNAME) libgpib.so
 	ldconfig $(LIB_TARGET_DIR)
+	make -C gpib_config install
 
 rcsput:
 	ci -u $(SRCS) *.h *.l *.y  gpib.conf.dist
