@@ -1,0 +1,339 @@
+/***************************************************************************
+                          agilent_82350b/agilent_82350b.c  -  description
+                             -------------------
+
+    copyright            : (C) 2002, 2004 by Frank Mori Hess
+    email                : fmhess@users.sourceforge.net
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
+
+#include "agilent_82350b"
+#include <linux/ioport.h>
+#include <linux/sched.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <asm/dma.h>
+#include <linux/pci.h>
+#include <linux/pci_ids.h>
+#include <linux/string.h>
+#include <linux/init.h>
+
+MODULE_LICENSE("GPL");
+
+int agilent_82350b_attach( gpib_board_t *board );
+
+void agilent_82350b_detach( gpib_board_t *board );
+
+// wrappers for interface functions
+ssize_t agilent_82350b_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes)
+{
+	agilent_82350b_private_t *priv = board->private_data;
+	return tms9914_read( board, &priv->tms9914_priv, buffer, length, end, nbytes);
+}
+ssize_t agilent_82350b_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi )
+{
+	agilent_82350b_private_t *priv = board->private_data;
+	return tms9914_write( board, &priv->tms9914_priv, buffer, length, send_eoi );
+}
+ssize_t agilent_82350b_command( gpib_board_t *board, uint8_t *buffer, size_t length )
+{
+	agilent_82350b_private_t *priv = board->private_data;
+	return tms9914_command( board, &priv->tms9914_priv, buffer, length );
+}
+int agilent_82350b_take_control( gpib_board_t *board, int synchronous )
+{
+	agilent_82350b_private_t *priv = board->private_data;
+	return tms9914_take_control( board, &priv->tms9914_priv, synchronous );
+}
+int agilent_82350b_go_to_standby( gpib_board_t *board )
+{
+	agilent_82350b_private_t *priv = board->private_data;
+	return tms9914_go_to_standby( board, &priv->tms9914_priv );
+}
+void agilent_82350b_request_system_control( gpib_board_t *board, int request_control )
+{
+	agilent_82350b_private_t *priv = board->private_data;
+	tms9914_request_system_control( board, &priv->tms9914_priv, request_control );
+}
+void agilent_82350b_interface_clear( gpib_board_t *board, int assert )
+{
+	agilent_82350b_private_t *priv = board->private_data;
+	tms9914_interface_clear( board, &priv->tms9914_priv, assert );
+}
+void agilent_82350b_remote_enable( gpib_board_t *board, int enable )
+{
+	agilent_82350b_private_t *priv = board->private_data;
+	tms9914_remote_enable( board, &priv->tms9914_priv, enable );
+}
+void agilent_82350b_enable_eos( gpib_board_t *board, uint8_t eos_byte, int compare_8_bits )
+{
+	agilent_82350b_private_t *priv = board->private_data;
+	tms9914_enable_eos( board, &priv->tms9914_priv, eos_byte, compare_8_bits );
+}
+void agilent_82350b_disable_eos( gpib_board_t *board )
+{
+	agilent_82350b_private_t *priv = board->private_data;
+	tms9914_disable_eos( board, &priv->tms9914_priv );
+}
+unsigned int agilent_82350b_update_status( gpib_board_t *board, unsigned int clear_mask )
+{
+	agilent_82350b_private_t *priv = board->private_data;
+	return tms9914_update_status( board, &priv->tms9914_priv, clear_mask );
+}
+void agilent_82350b_primary_address( gpib_board_t *board, unsigned int address )
+{
+	agilent_82350b_private_t *priv = board->private_data;
+	tms9914_primary_address( board, &priv->tms9914_priv, address );
+}
+void agilent_82350b_secondary_address( gpib_board_t *board, unsigned int address, int enable )
+{
+	agilent_82350b_private_t *priv = board->private_data;
+	tms9914_secondary_address( board, &priv->tms9914_priv, address, enable );
+}
+int agilent_82350b_parallel_poll( gpib_board_t *board, uint8_t *result )
+{
+	agilent_82350b_private_t *priv = board->private_data;
+	return tms9914_parallel_poll( board, &priv->tms9914_priv, result );
+}
+void agilent_82350b_parallel_poll_configure( gpib_board_t *board, uint8_t config )
+{
+	agilent_82350b_private_t *priv = board->private_data;
+	tms9914_parallel_poll_configure( board, &priv->tms9914_priv, config );
+}
+void agilent_82350b_parallel_poll_response( gpib_board_t *board, int ist )
+{
+	agilent_82350b_private_t *priv = board->private_data;
+	tms9914_parallel_poll_response( board, &priv->tms9914_priv, ist );
+}
+void agilent_82350b_serial_poll_response( gpib_board_t *board, uint8_t status )
+{
+	agilent_82350b_private_t *priv = board->private_data;
+	tms9914_serial_poll_response( board, &priv->tms9914_priv, status );
+}
+uint8_t agilent_82350b_serial_poll_status( gpib_board_t *board )
+{
+	agilent_82350b_private_t *priv = board->private_data;
+	return tms9914_serial_poll_status( board, &priv->tms9914_priv );
+}
+int agilent_82350b_line_status( const gpib_board_t *board )
+{
+	agilent_82350b_private_t *priv = board->private_data;
+	return tms9914_line_status( board, &priv->tms9914_priv );
+}
+unsigned int agilent_82350b_t1_delay( gpib_board_t *board, unsigned int nano_sec )
+{
+	agilent_82350b_private_t *priv = board->private_data;
+	return tms9914_t1_delay( board, &priv->tms9914_priv, nano_sec );
+}
+void agilent_82350b_return_to_local( gpib_board_t *board )
+{
+	agilent_82350b_private_t *priv = board->private_data;
+	tms9914_return_to_local( board, &priv->tms9914_priv );
+}
+
+gpib_interface_t agilent_82350b_interface =
+{
+	name: "agilent_82350b",
+	attach: agilent_82350b_attach,
+	detach: agilent_82350b_detach,
+	read: agilent_82350b_read,
+	write: agilent_82350b_write,
+	command: agilent_82350b_command,
+	request_system_control: agilent_82350b_request_system_control,
+	take_control: agilent_82350b_take_control,
+	go_to_standby: agilent_82350b_go_to_standby,
+	interface_clear: agilent_82350b_interface_clear,
+	remote_enable: agilent_82350b_remote_enable,
+	enable_eos: agilent_82350b_enable_eos,
+	disable_eos: agilent_82350b_disable_eos,
+	parallel_poll: agilent_82350b_parallel_poll,
+	parallel_poll_configure: agilent_82350b_parallel_poll_configure,
+	parallel_poll_response: agilent_82350b_parallel_poll_response,
+	line_status: agilent_82350b_line_status,
+	update_status: agilent_82350b_update_status,
+	primary_address: agilent_82350b_primary_address,
+	secondary_address: agilent_82350b_secondary_address,
+	serial_poll_response: agilent_82350b_serial_poll_response,
+	t1_delay: agilent_82350b_t1_delay,
+	return_to_local: agilent_82350b_return_to_local,
+	provider_module: &__this_module,
+};
+
+int agilent_82350b_allocate_private( gpib_board_t *board )
+{
+	board->private_data = kmalloc( sizeof( agilent_82350b_private_t ), GFP_KERNEL );
+	if( board->private_data == NULL )
+		return -1;
+	memset( board->private_data, 0, sizeof( agilent_82350b_private_t ) );
+	return 0;
+}
+
+void agilent_82350b_free_private( gpib_board_t *board )
+{
+	if( board->private_data )
+	{
+		kfree( board->private_data );
+		board->private_data = NULL;
+	}
+}
+
+static inline unsigned int tms9914_to_agilent_82350b_offset( unsigned int register_num )
+{
+	return 0x3ff8 + register_num;
+}
+
+uint8_t agilent_82350b_read_byte( tms9914_private_t *priv, unsigned int register_num )
+{
+	return tms9914_iomem_read_byte( priv, tms9914_to_agilent_82350b_offset( register_num ) );
+}
+
+void agilent_82350b_write_byte( tms9914_private_t *priv, uint8_t data, unsigned int register_num )
+{
+	tms9914_iomem_write_byte( priv, data, tms9914_to_agilent_82350b_offset( register_num ) );
+}
+
+void agilent_82350b_clear_interrupt( agilent_82350b_private_t *a_priv)
+{
+	tms9914_private_t *tms_priv = &a_priv->tms9914_priv;
+	writeb( 0, tms_priv->iobase + HPREG_INTR_CLEAR );
+}
+
+int agilent_82350b_attach( gpib_board_t *board )
+{
+	agilent_82350b_private_t *a_priv;
+	tms9914_private_t *tms_priv;
+
+	board->status = 0;
+
+	if( agilent_82350b_allocate_private( board ) )
+		return -ENOMEM;
+	a_priv = board->private_data;
+	tms_priv = &a_priv->tms9914_priv;
+	tms_priv->read_byte = agilent_82350b_read_byte;
+	tms_priv->write_byte = agilent_82350b_write_byte;
+	tms_priv->offset = 1;
+
+	switch( board->ibbase )
+	{
+		case 0xc4000:
+		case 0xc8000:
+		case 0xcc000:
+		case 0xd0000:
+		case 0xd4000:
+		case 0xd8000:
+		case 0xdc000:
+		case 0xe0000:
+		case 0xe4000:
+		case 0xe8000:
+		case 0xec000:
+		case 0xf0000:
+		case 0xf4000:
+		case 0xf8000:
+		case 0xfc000:
+			break;
+		default:
+			printk("%s: invalid base io address 0x%lx\n", __FUNCTION__, board->ibbase );
+			return -1;
+			break;
+	}
+	if( request_mem_region( board->ibbase + agilent_82350b_rom_size,
+		agilent_82350b_iomem_size - agilent_82350b_rom_size, "agilent_82350b" ) == NULL )
+	{
+		printk( "%s: failed to allocate io memory region 0x%lx-0x%lx\n", __FUNCTION__,
+			board->ibbase + agilent_82350b_rom_size,
+			board->ibbase + agilent_82350b_iomem_size - agilent_82350b_rom_size - 1 );
+		return -1;
+	}
+	a_priv->raw_iobase = board->ibbase;
+	tms_priv->iobase = ( unsigned long ) ioremap( board->ibbase, agilent_82350b_iomem_size );
+	printk("%s: base address 0x%x remapped to 0x%lx\n", __FUNCTION__, a_priv->raw_iobase,
+		tms_priv->iobase );
+
+	if(request_irq( board->ibirq, agilent_82350b_interrupt, SA_SHIRQ, "agilent_82350b", board))
+	{
+		printk( "%s: can't request IRQ %d\n", __FUNCTION__, board->ibirq );
+		return -1;
+	}
+	a_priv->irq = board->ibirq;
+	printk( "agilent_82350b: IRQ %d\n", board->ibirq );
+
+	tms9914_board_reset(tms_priv);
+
+	agilent_82350b_clear_interrupt( a_priv );
+
+	writeb( INTR_ENABLE, tms_priv->iobase + HPREG_CCR );
+
+	tms9914_online( board, tms_priv );
+
+	return 0;
+}
+
+void agilent_82350b_detach(gpib_board_t *board)
+{
+	agilent_82350b_private_t *a_priv = board->private_data;
+	tms9914_private_t *tms_priv;
+
+	if( a_priv )
+	{
+		tms_priv = &a_priv->tms9914_priv;
+		if( a_priv->irq )
+		{
+			free_irq( a_priv->irq, board );
+		}
+		if( tms_priv->iobase )
+		{
+			writeb( 0, tms_priv->iobase + HPREG_CCR );
+			tms9914_board_reset( tms_priv );
+			iounmap( ( void * ) tms_priv->iobase );
+		}
+		if( a_priv->raw_iobase )
+			release_mem_region( a_priv->raw_iobase + agilent_82350b_rom_size,
+				agilent_82350b_iomem_size - agilent_82350b_rom_size );
+	}
+	agilent_82350b_free_private( board );
+}
+
+
+static int agilent_82350b_init_module( void )
+{
+	gpib_register_driver(&agilent_82350b_interface);
+	return 0;
+}
+
+static void agilent_82350b_exit_module( void )
+{
+	gpib_unregister_driver(&agilent_82350b_interface);
+}
+
+module_init( agilent_82350b_init_module );
+module_exit( agilent_82350b_exit_module );
+
+/*
+ * GPIB interrupt service routines
+ */
+
+irqreturn_t agilent_82350b_interrupt(int irq, void *arg, struct pt_regs *registerp)
+{
+	int status1, status2;
+	gpib_board_t *board = arg;
+	agilent_82350b_private_t *priv = board->private_data;
+	unsigned long flags;
+	irqreturn_t retval;
+	
+	spin_lock_irqsave( &board->spinlock, flags );
+	status1 = read_byte( &priv->tms9914_priv, ISR0);
+	status2 = read_byte( &priv->tms9914_priv, ISR1);
+	agilent_82350b_clear_interrupt( priv );
+	retval = tms9914_interrupt_have_status(board, &priv->tms9914_priv, status1, status2);
+	spin_unlock_irqrestore( &board->spinlock, flags );
+	return retval;
+}
+
