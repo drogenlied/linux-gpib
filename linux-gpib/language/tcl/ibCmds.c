@@ -106,7 +106,7 @@ int ibFind  _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,cha
   char res[10];
     char *tmpbuf[120];
     int i;
-    extern ibConf_t  ibConfigs[];
+    extern ibConf_t *ibConfigs[];
 
   if( argc != 2 ){
     Tcl_SetResult(interp, "Error: ibfind <string>", TCL_STATIC);
@@ -125,25 +125,26 @@ int ibFind  _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,cha
     Tcl_SetVar(interp,"Gpib_Devices",(char *)tmpbuf, TCL_GLOBAL_ONLY);
     sprintf((char *)tmpbuf,"%d",ibGetNrBoards());
     Tcl_SetVar(interp,"Gpib_Boards",(char *)tmpbuf, TCL_GLOBAL_ONLY);
-    
-    for(i=0; i<ibGetNrDev() ; i++){
+
+    for(i=0; i < NUM_CONFIGS ; i++){
+    	if(ibConfigs[i] == NULL) continue;
         sprintf((char *)tmpbuf,"%d",i );
-        Tcl_SetVar2(interp,"ibDevices",(char *)tmpbuf,ibConfigs[i].name,TCL_GLOBAL_ONLY);
+        Tcl_SetVar2(interp,"ibDevices",(char *)tmpbuf,ibConfigs[i]->name,TCL_GLOBAL_ONLY);
 
         /* names */
-        sprintf((char *)tmpbuf,"%d",ibConfigs[i].padsad & 0xff );
-        Tcl_SetVar2(interp,ibConfigs[i].name,"pad",(char *)tmpbuf,TCL_GLOBAL_ONLY);
-        sprintf((char *)tmpbuf,"%d",ibConfigs[i].padsad>>8 & 0xff );
-        Tcl_SetVar2(interp,ibConfigs[i].name,"sad",(char *)tmpbuf,TCL_GLOBAL_ONLY);
+        sprintf((char *)tmpbuf,"%d",ibConfigs[i]->padsad & 0xff );
+        Tcl_SetVar2(interp,ibConfigs[i]->name,"pad",(char *)tmpbuf,TCL_GLOBAL_ONLY);
+        sprintf((char *)tmpbuf,"%d",ibConfigs[i]->padsad>>8 & 0xff );
+        Tcl_SetVar2(interp,ibConfigs[i]->name,"sad",(char *)tmpbuf,TCL_GLOBAL_ONLY);
         /*flags*/
-        sprintf((char *)tmpbuf,"0x%x",ibConfigs[i].flags);
-        Tcl_SetVar2(interp,ibConfigs[i].name,"flags",(char *)tmpbuf,TCL_GLOBAL_ONLY);
-        sprintf((char *)tmpbuf,"0x%x",ibConfigs[i].eos);
-        Tcl_SetVar2(interp,ibConfigs[i].name,"eos",(char *)tmpbuf,TCL_GLOBAL_ONLY);
-        sprintf((char *)tmpbuf,"0x%x",ibConfigs[i].eosflags);
-        Tcl_SetVar2(interp,ibConfigs[i].name,"eosflags",(char *)tmpbuf,TCL_GLOBAL_ONLY);
+        sprintf((char *)tmpbuf,"0x%x",ibConfigs[i]->flags);
+        Tcl_SetVar2(interp,ibConfigs[i]->name,"flags",(char *)tmpbuf,TCL_GLOBAL_ONLY);
+        sprintf((char *)tmpbuf,"0x%x",ibConfigs[i]->eos);
+        Tcl_SetVar2(interp,ibConfigs[i]->name,"eos",(char *)tmpbuf,TCL_GLOBAL_ONLY);
+        sprintf((char *)tmpbuf,"0x%x",ibConfigs[i]->eosflags);
+        Tcl_SetVar2(interp,ibConfigs[i]->name,"eosflags",(char *)tmpbuf,TCL_GLOBAL_ONLY);
 
-        Tcl_SetVar2(interp,ibConfigs[i].name,"init",ibConfigs[i].init_string,TCL_GLOBAL_ONLY);
+        Tcl_SetVar2(interp,ibConfigs[i]->name,"init",ibConfigs[i]->init_string,TCL_GLOBAL_ONLY);
 
     }
     Gpib_find_called++;
@@ -158,10 +159,11 @@ int ibFind  _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,cha
 int ibInfo  _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,char *argv[])){
 
     int i;
-    extern ibConf_t  ibConfigs[];
+    extern ibConf_t *ibConfigs[];
 
-  for(i=0; i < ibGetNrDev(); i++ ){
-    Tcl_AppendResult(interp,ibConfigs[i].name," ",(char *)NULL);
+	for(i=0; i < NUM_CONFIGS; i++ ){
+		if(ibConfigs[i] == NULL) continue;
+    Tcl_AppendResult(interp,ibConfigs[i]->name," ",(char *)NULL);
   }
   return TCL_OK;
 

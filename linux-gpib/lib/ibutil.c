@@ -48,7 +48,7 @@ int ibInstallConfigItem(ibConf_t *p)
 	// search for an unused descriptor
 	for(ib_ndev = 0; ib_ndev < NUM_CONFIGS; ib_ndev++)
 	{
-		if(check_descriptor(ib_ndev) < 0)
+		if(ibConfigs[ib_ndev] == NULL)
 		{
 			ibConfigs[ib_ndev] = malloc(sizeof(ibConf_t));
 			break;
@@ -86,35 +86,10 @@ int ibFindDevIndex(char *name)
 
 	for(i = 0; i < NUM_CONFIGS; i++)
 	{
-		if(check_descriptor(i) < 0) continue;
+		if(ibConfigs[i] == NULL) continue;
 		if(!strcmp(ibConfigs[i]->name, name)) return i;
 	}
 
 	return -1;
 }
-
-int check_descriptor(int ud)
-{
-	int fd;
-	ibConf_t *conf = ibConfigs[ud];
-
-	if(ud >= NUM_CONFIGS) return -1;
-
-	if(conf == NULL) return -1;
-	fd = ibBoard[conf->board].fileno;
-	if(fcntl(fd, F_GETFD) < 0)
-	{
-		free(conf);
-		ibConfigs[ud] = NULL;
-		num_devices--;
-		return -1;
-	}
-	return 0;
-}
-
-
-
-
-
-
 

@@ -71,7 +71,7 @@ int ibDumpConfiguration(int format,char *filename)
 				{
 					if( CONF(ud,board) == bd )
 					{ /* only current board */
-						fprintf(outfile,"%s ",ibConfigs[ud].name);
+						fprintf(outfile,"%s ",ibConfigs[ud]->name);
 					}
 				}
 				fprintf(outfile,"}\n");
@@ -93,20 +93,20 @@ int ibDumpConfiguration(int format,char *filename)
 				{
 					if( CONF(ud,board) == bd )
 					{ /* only current board */
-						fprintf(outfile,"set %s(pad) %d\n", ibConfigs[ud].name, CONF(ud,padsad) & 0xff );
-						fprintf(outfile,"set %s(sad) %d\n", ibConfigs[ud].name, (CONF(ud,padsad)>>8) & 0xff );
-						if(strlen(ibConfigs[ud].init_string) > 0 )
-							fprintf(outfile,"set %s(init) %s \n",ibConfigs[ud].name, ibConfigs[ud].init_string );
+						fprintf(outfile,"set %s(pad) %d\n", ibConfigs[ud]->name, CONF(ud,padsad) & 0xff );
+						fprintf(outfile,"set %s(sad) %d\n", ibConfigs[ud]->name, (CONF(ud,padsad)>>8) & 0xff );
+						if(strlen(ibConfigs[ud]->init_string) > 0 )
+							fprintf(outfile,"set %s(init) %s \n",ibConfigs[ud]->name, ibConfigs[ud]->init_string );
 						else
-							fprintf(outfile,"set %s(init) \"\" \n",ibConfigs[ud].name);
+							fprintf(outfile,"set %s(init) \"\" \n",ibConfigs[ud]->name);
 
-						fprintf(outfile,"set %s(eos) 0x%x\n",ibConfigs[ud].name,CONF(ud,eos) );
+						fprintf(outfile,"set %s(eos) 0x%x\n",ibConfigs[ud]->name,CONF(ud,eos) );
 
-						fprintf(outfile,"set %s(reos) %d\n",ibConfigs[ud].name,( (CONF(ud,eosflags) & REOS) ? 1:0 ) );
-						fprintf(outfile,"set %s(bin) %d \n",ibConfigs[ud].name,( (CONF(ud,eosflags) & BIN)  ? 1:0) );
+						fprintf(outfile,"set %s(reos) %d\n",ibConfigs[ud]->name,( (CONF(ud,eosflags) & REOS) ? 1:0 ) );
+						fprintf(outfile,"set %s(bin) %d \n",ibConfigs[ud]->name,( (CONF(ud,eosflags) & BIN)  ? 1:0) );
 
 
-						fprintf(outfile,"set %s(init_flags) { ",ibConfigs[ud].name);
+						fprintf(outfile,"set %s(init_flags) { ",ibConfigs[ud]->name);
 						if( CONF(ud,flags) & CN_SDCL)
 							fprintf(outfile,"DCL ");
 						if ( CONF(ud,flags) & CN_SLLO)
@@ -117,17 +117,17 @@ int ibDumpConfiguration(int format,char *filename)
 
 						if( CONF(ud,flags) & CN_ISCNTL )
 						{
-							fprintf(outfile,"set %s(master) 1 \n",ibConfigs[ud].name);
+							fprintf(outfile,"set %s(master) 1 \n",ibConfigs[ud]->name);
 						}else
 						{
-							fprintf(outfile,"set %s(master) 0 \n",ibConfigs[ud].name);
+							fprintf(outfile,"set %s(master) 0 \n",ibConfigs[ud]->name);
 						}
 						if( CONF(ud,flags) & CN_AUTOPOLL )
 						{
-							fprintf(outfile,"set %s(autopoll) 1 \n",ibConfigs[ud].name);
+							fprintf(outfile,"set %s(autopoll) 1 \n",ibConfigs[ud]->name);
 						}else
 						{
-							fprintf(outfile,"set %s(autopoll) 0 \n",ibConfigs[ud].name);
+							fprintf(outfile,"set %s(autopoll) 0 \n",ibConfigs[ud]->name);
 						}
 					}
 				}
@@ -157,11 +157,11 @@ int ibDumpConfiguration(int format,char *filename)
 				{
 					if( CONF(ud,board) == bd )
 					{	/* only current board */
-						fprintf(outfile,"device { name        = %s\n",ibConfigs[ud].name ); /* begin header */
+						fprintf(outfile,"device { name        = %s\n",ibConfigs[ud]->name ); /* begin header */
 						fprintf(outfile,"         pad         = %d \n",CONF(ud,padsad) & 0xff );
 						fprintf(outfile,"         sad         = %d \n",(CONF(ud,padsad)>>8) & 0xff );
-						if(strlen(ibConfigs[ud].init_string) > 0 )
-							fprintf(outfile,"         init-string = %s \n", ibConfigs[ud].init_string );
+						if(strlen(ibConfigs[ud]->init_string) > 0 )
+							fprintf(outfile,"         init-string = %s \n", ibConfigs[ud]->init_string );
 
 						if( CONF(ud,eos) )
 							fprintf(outfile,"         eos         = 0x%x \n",CONF(ud,eos) );
