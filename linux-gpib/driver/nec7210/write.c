@@ -25,7 +25,7 @@ ssize_t nec7210_write(gpib_driver_t *driver, uint8_t *buffer, size_t length, int
 	unsigned long flags;
 	size_t count = 0;
 	int retval = 0;
-printk("write %i\n", length);
+
 	if(length == 0) return 0;
 
 	GPIBout(AUXMR, auxa_bits);	/* normal handshaking, XXX necessary?*/

@@ -160,7 +160,8 @@ void board_reset(void)
 	GPIBout(SPMR, 0);
 
 	GPIBout(EOSR, 0);
-	GPIBout(AUXMR, ICR | 5);                    /* set internal counter register N= 8 */
+	/* set internal counter register 8 for 8 MHz input clock */
+	GPIBout(AUXMR, ICR + 8);                    /* set internal counter register N= 8 */
 	GPIBout(AUXMR, PPR | HR_PPU);               /* parallel poll unconfigure */
 
 	GPIBout(ADR, (PAD & ADDRESS_MASK));                /* set GPIB address; MTA=PAD|100, MLA=PAD|040 */
