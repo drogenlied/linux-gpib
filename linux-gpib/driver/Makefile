@@ -8,8 +8,6 @@
 #
 ########################################################################
 
-export 
-
 -include $(ROOT)/util/.config
 -include $(ROOT)/util/linux_flags/flags
 
@@ -86,10 +84,6 @@ install:
 #	@echo char kernel_version[] = \"`uname -r`\"\; > kernel_version.c
 
 
-
-
-
-
 rcsput:
 	ci -u $(SRCS) *.h
 
@@ -101,7 +95,7 @@ $(EXP_INC):
 	rm -f $@
 	ln -s $(CWD)/include/`basename $@` $@
 
-
+export
 
 
 

@@ -1,9 +1,6 @@
-BOLD		= ""
-NBOLD		= ""
+ECHO = /bin/echo
 
-ECHO		= /bin/echo
-
-CC	= gcc
+CC = gcc
 
 COMPILE	= $(CC)
 DEPEND	= $(CC)

@@ -1,7 +1,6 @@
 #
 # Makefile for directory driver/pcIIa
 #
-include $(ROOT)/util/.config
 
 SRCS =  cmd.c init.c read.c util.c \
 	write.c aux.c interrupt.c
@@ -20,8 +19,6 @@ clean:
 
 install:
 	$(INSTALL) -D nec7210.o $(MODLIB)/misc/nec7210.o
-
-include $(ROOT)/makefile.inc
 
 depend:
 

@@ -1,7 +1,6 @@
 #
 # Makefile for directory driver/tnt4882-tms
 #
-include $(ROOT)/util/.config
 
 SRCS =  init.c mite.c interrupt.c
 
@@ -17,8 +16,6 @@ clean:
 
 install:
 	$(INSTALL) -D tnt4882-tms.o $(MODLIB)/misc/tnt4882-tms.o
-
-include $(ROOT)/makefile.inc
 
 depend:
 

@@ -1,7 +1,6 @@
 #
 # Makefile for directory driver/cb7210
 #
-include $(ROOT)/util/.config
 
 SRCS =  cb7210_init.c cb7210_cs.c interrupt.c cb7210_aux.c cb7210_read.c cb7210_write.c
 
@@ -20,8 +19,6 @@ clean:
 install:
 	$(INSTALL) -D cb7210.o $(MODLIB)/misc/cb7210.o
 
-
-include $(ROOT)/makefile.inc
 
 depend:
 

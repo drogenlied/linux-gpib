@@ -1,7 +1,6 @@
 #
 # Makefile for directory driver/tms9914
 #
-include $(ROOT)/util/.config
 
 SRCS =  cmd.c init.c read.c util.c \
 	write.c aux.c interrupt.c 
@@ -22,9 +21,6 @@ clean:
 
 install:
 	$(INSTALL) -D tms9914.o $(MODLIB)/misc/tms9914.o
-
-
-include $(ROOT)/makefile.inc
 
 depend:
 

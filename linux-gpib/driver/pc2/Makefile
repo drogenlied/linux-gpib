@@ -1,7 +1,6 @@
 #
 # Makefile for directory driver/pc2
 #
-include $(ROOT)/util/.config
 
 SRCS =  pc2_init.c interrupt.c
 
@@ -17,8 +16,6 @@ clean:
 
 install:
 	$(INSTALL) -D pc2-gpib.o $(MODLIB)/misc/pc2-gpib.o
-
-include $(ROOT)/makefile.inc
 
 depend:
 

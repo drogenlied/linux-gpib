@@ -1,7 +1,6 @@
 #
 # Makefile for directory driver/tnt4882-tms
 #
-include $(ROOT)/util/.config
 
 SRCS =  hp82335_init.c 
 
@@ -20,8 +19,6 @@ clean:
 install:
 	$(INSTALL) -D hp82335.o $(MODLIB)/misc/hp82335.o
 
-
-include $(ROOT)/makefile.inc
 
 depend:
 
