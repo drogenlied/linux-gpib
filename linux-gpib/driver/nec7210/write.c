@@ -10,7 +10,6 @@ IBLCL int bdwrt( ibio_op_t *wrtop)
 {
 	faddr_t		buf;
 	unsigned	cnt;
-	extern int eosmodes;
 	gpib_char_t data;
 	unsigned long flags;
 //	int ibcnt = 0; //ibcnt is currently a global variable (ugh) but will be fixed eventually
@@ -109,26 +108,12 @@ IBLCL int bdwrt( ibio_op_t *wrtop)
 
 	if(wrtop->io_flags & IO_LAST)
 	{
-		DBGprint(DBG_BRANCH, ("send EOI  "));
 		/*send EOI */
-
-		if( eosmodes & XEOS )
-		{
-			DBGprint(DBG_BRANCH, ("send EOS with EOI  "));
-			set_bit(0, &write_in_progress);
-			GPIBout(CDOR, buf[ibcnt]);
-			ibcnt++;
-			wait_event_interruptible(nec7210_write_wait, test_bit(0, &write_in_progress) == 0);
-			set_bit(0, &write_in_progress);
+		if((pgmstat & PS_NOEOI) == 0)
 			bdSendAuxCmd(AUX_SEOI);
-			GPIBout(CDOR, bdGetEOS() );
-		} else {
-			DBGprint(DBG_BRANCH, ("send EOI with last byte "));
-			set_bit(0, &write_in_progress);
-			bdSendAuxCmd(AUX_SEOI);
-			GPIBout(CDOR, buf[ibcnt]);
-			ibcnt++;
-		}
+		set_bit(0, &write_in_progress);
+		GPIBout(CDOR, buf[ibcnt]);
+		ibcnt++;
 		wait_event_interruptible(nec7210_write_wait, test_bit(0, &write_in_progress) == 0);
 	}
 	// disable 'data out' interrupts

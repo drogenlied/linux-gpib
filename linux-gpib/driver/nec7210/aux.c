@@ -54,12 +54,8 @@ IBLCL void bdSendAuxCmd(int cmd)
     GPIBout(AUXMR,AUX_FH);
     break;
   case AUX_SEOI:
-    if( pgmstat & PS_NOEOI){ 
-      DBGprint(DBG_BRANCH,("Aux Send SEOI disabled"));
-    } else {
-      DBGprint(DBG_BRANCH,("Aux Send EOI"));
-      GPIBout(AUXMR, AUX_SEOI);
-    }
+    DBGprint(DBG_BRANCH,("Aux Send EOI"));
+    GPIBout(AUXMR, AUX_SEOI);
     break;  
   default:
     DBGprint(DBG_BRANCH,(" warning: illegal auxiliary command"));

@@ -13,6 +13,10 @@
 #define RQS      (1 << RQS_NUM)      /* Device requesting Service */
 #define CMPL_NUM	8
 #define CMPL	 (1 <<  CMPL_NUM)	/* I/O is complete (should always be set) */
+#define LOK_NUM	7
+#define LOK	(1 << LOK_NUM)	// lockout state
+#define REM_NUM	6
+#define REM	(1 << REM_NUM)	// remote state
 #define CIC_NUM	5
 #define CIC	 (1 <<  CIC_NUM)	/* GPIB interface is Controller-in-Charge */
 #define ATN_NUM	4
@@ -21,6 +25,10 @@
 #define TACS	 (1 <<  TACS_NUM)	/* GPIB interface is addressed as Talker */
 #define LACS_NUM	2
 #define LACS	 (1 <<  LACS_NUM)	/* GPIB interface is addressed as Listener */
+#define DTAS_NUM 1
+#define DTAS (1 << DTAS_NUM)	// device trigger state
+#define DCAS_NUM 0
+#define DCAS	(1 << DCAS_NUM)	// device clear state
 
 #define WAITBITS (TIMO | SRQI | CIC | TACS | LACS)
 
@@ -78,10 +86,9 @@
 /* End-of-string (EOS) modes for use with ibeos */
 
 #define REOS     0x04		/* Terminate reads on EOS	*/
-#define XEOS     0x08		/* Set EOI with EOS on writes	*/
 #define BIN      0x10		/* Do 8-bit compare on EOS	*/
 
-#define EOSM	(REOS | XEOS | BIN)
+#define EOSM	(REOS | BIN)
 
 
 /* GPIB Bus Control Lines bit vector */

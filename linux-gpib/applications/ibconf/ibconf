@@ -90,7 +90,6 @@ set ibBoard(0,irq)  5
 set ibBoard(0,dma)  1
 set ibBoard(0,eos) 0x0a
 set ibBoard(0,reos) 1
-set ibBoard(0,xeos) 0
 set ibBoard(0,bin)  0
 set ibBoard(0,ifc)  1
 set ibBoard(0,debug)  0
@@ -186,7 +185,7 @@ foreach i $ibBoard(0,devices) {
 
 ######################################################################
 proc add_new { {aname Unknown} } {
-   global name init pad sad eos reos xeos bin init_flags network master new_device changed_state
+   global name init pad sad eos reos bin init_flags network master new_device changed_state
    global tk_version autopoll
 
    set name     $aname
@@ -197,7 +196,6 @@ proc add_new { {aname Unknown} } {
    set sad      0
    set eos      0x0d
    set reos 1
-   set xeos 0
    set bin  0
    set init_flags     ""
    set master    0
@@ -211,7 +209,6 @@ proc add_new { {aname Unknown} } {
    set sad        $Device(sad)
    set eos        $Device(eos)
    set reos       $Device(reos)
-   set xeos       $Device(xeos)
    set bin        $Device(bin)
    set init_flags      $Device(init_flags)
    set network    $Device(network)	   
@@ -278,15 +275,12 @@ set scrolloption -scroll
    label       .new.eosflags.l    -text "EOS Handling Modes" -relief groove -borderwidth 2
    checkbutton .new.eosflags.c1   -text "Terminate read on EOS (REOS)" -variable reos \
                                   -relief flat		
-   checkbutton .new.eosflags.c2   -text "Send EOS with EOI (XEOS)"     -variable xeos \
-                                  -relief flat		
    checkbutton .new.eosflags.c3   -text "Compare EOS 8-bit (BIN)"      -variable bin \
                                   -relief flat		
 
 
    pack     .new.eosflags.l    -side top -fill x -expand yes -padx 8 -pady 10 -expand yes 
    pack     .new.eosflags.c1   -side top -expand yes -anchor w -padx 10
-   pack     .new.eosflags.c2   -side top -expand yes -anchor w -padx 10
    pack     .new.eosflags.c3   -side top -expand yes -anchor w -padx 10
    pack     .new.eosflags      -side top -fill both -expand yes -padx 8 -pady 5 
 
@@ -343,7 +337,7 @@ set scrolloption -scroll
 ######################################################################
 proc update_struct {  } {
    global ibBoard changed_state
-   global name init pad sad eos reos xeos bin init_flags network master new_device
+   global name init pad sad eos reos bin init_flags network master new_device
    global $name autopoll
 
    set changed_state 1
@@ -354,7 +348,6 @@ proc update_struct {  } {
    eval "set $name\(sad\)        $sad"
    eval "set $name\(eos\)        $eos"
    eval "set $name\(reos\)       $reos"
-   eval "set $name\(xeos\)       $xeos"
    eval "set $name\(bin\)        $bin"
    eval "set $name\(init_flags\) \{$init_flags\}"
    eval "set $name\(network\)    \{$network\}"	   
@@ -423,7 +416,6 @@ update idletasks
 	 puts $outfile "      dma-bufsize   = $ibBoard($bd,dmabuf) "	
 
 	 vput_bool $outfile ibBoard "      set-reos " $bd,reos	
-	 vput_bool $outfile ibBoard "      set-xeos " $bd,xeos	
 	 vput_bool $outfile ibBoard "      set-bin  " $bd,bin	
 	 vput_bool $outfile ibBoard "      set-ifc  " $bd,ifc	
          puts $outfile ""
@@ -436,7 +428,6 @@ update idletasks
           vput_s     $outfile "$i" "        sad =  " sad
           vput_s     $outfile "$i" "        eos =  " eos
           vput_bool  $outfile "$i" "        set-reos   " reos
-          vput_bool  $outfile "$i" "        set-xeos   " xeos
           vput_bool  $outfile "$i" "        set-bin    " bin
           vput_s     $outfile "$i" "        init-flags    =  " init_flags
           vput_s     $outfile "$i" "        init-string   =  " init
@@ -488,7 +479,7 @@ if "$tval > 0" {
 ######################################################################
 proc configure_board {} {
 global ibBoard
-global bpad bsad timo beos breos bxeos bbin base irq dma ifc errlog changed_state debug dmabuf
+global bpad bsad timo beos breos bbin base irq dma ifc errlog changed_state debug dmabuf
 
 toplevel .board
 wm title .board "Configure Board Characteristics"
@@ -500,7 +491,6 @@ set bsad   $ibBoard(0,sad)
 set timo   $ibBoard(0,timeout)
 set beos   $ibBoard(0,eos)
 set breos  $ibBoard(0,reos)
-set bxeos  $ibBoard(0,xeos)
 set bbin   $ibBoard(0,bin)
 set base   $ibBoard(0,base)
 set irq    $ibBoard(0,irq)
@@ -600,15 +590,12 @@ set dmabuf [ expr $ibBoard(0,dmabuf) / 1024 ]
    label       .board.eosflags.l    -text "EOS Handling Modes" -relief groove -borderwidth 2
    checkbutton .board.eosflags.c1   -text "Terminate read on EOS (REOS)" -variable breos \
                                   -relief flat		
-   checkbutton .board.eosflags.c2   -text "Send EOS with EOI (XEOS)"     -variable bxeos \
-                                  -relief flat		
    checkbutton .board.eosflags.c3   -text "Compare EOS 8-bit (BIN)"      -variable bbin \
                                   -relief flat		
 
 
    pack     .board.eosflags.l    -side top -fill x -expand yes -padx 8 -pady 10 -expand yes 
    pack     .board.eosflags.c1   -side top -expand yes -anchor w -padx 10
-   pack     .board.eosflags.c2   -side top -expand yes -anchor w -padx 10
    pack     .board.eosflags.c3   -side top -expand yes -anchor w -padx 10
    pack     .board.eosflags      -side top -fill both -expand yes -padx 8 -pady 5 
 
@@ -692,7 +679,7 @@ set dmabuf [ expr $ibBoard(0,dmabuf) / 1024 ]
 
 proc accept_boardopts {} {
 global ibBoard changed_state
-global bpad bsad timo beos breos bxeos bbin base irq dma ifc errlog debug dmabuf
+global bpad bsad timo beos breos bbin base irq dma ifc errlog debug dmabuf
 
 set changed_state 1
 
@@ -701,7 +688,6 @@ set ibBoard(0,sad) $bsad
 set ibBoard(0,timeout) $timo
 set ibBoard(0,eos) $beos
 set ibBoard(0,reos) $breos
-set ibBoard(0,xeos) $bxeos
 set ibBoard(0,bin) $bbin
 set ibBoard(0,base) $base
 set ibBoard(0,irq) $irq

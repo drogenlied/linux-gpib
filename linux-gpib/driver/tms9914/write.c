@@ -30,18 +30,10 @@ extern  int eosmodes;
 	s1 = GPIBin(ISR0);
 
 	DBGprint(DBG_DATA, ("ISR1=0x%x ISR2=0x%x  ", s1, s2));
-#if 0
-	GPIBout(auxmr, auxrabits);	/* send EOI w/EOS if requested */
-#endif
-
-
-#define FIX_EOS_BUG 1 
 
 	DBGprint(DBG_BRANCH, ("begin PIO loop  "));
 
-#if FIX_EOS_BUG
         cnt-- ; /* save the last byte for sending EOI */
-#endif
 
 
 	while (ibcnt < cnt) {
@@ -54,24 +46,10 @@ extern  int eosmodes;
 	}
 wrtdone:
 
-#if FIX_EOS_BUG
-	if( eosmodes & XEOS ) {
-          DBGprint(DBG_BRANCH, ("send EOS with EOI  "));
-	  GPIBout(CDOR, buf[ibcnt]);
-	  bdWaitOut();
-	  bytes++; ibcnt++;
-	  bdSendAuxCmd(AUX_SEOI);
-	  GPIBout(CDOR, bdGetEOS() );
-	} else {
 	  DBGprint(DBG_BRANCH, ("send EOI with last byte "));
 	  bdSendAuxCmd(AUX_SEOI);
 	  GPIBout(CDOR, buf[ibcnt]);
 	  bytes++; ibcnt++;
-	}
-#else
-	GPIBout(AUXCR, AUX_SEOI);
-	GPIBout(CDOR, bdGetEOS() );
-#endif
 
 	bdWaitOut();
 

@@ -120,19 +120,10 @@ printk("REMAINDER: %d\n",cnt-ibcnt);
         /*send EOI */
 
 
-	if( eosmodes & XEOS ) {
-          DBGprint(DBG_BRANCH, ("send EOS with EOI  "));
-	  GPIBout(CDOR, buf[ibcnt]);
-	  bdWaitOut();
-	  bytes++; ibcnt++;
-	  bdSendAuxCmd(AUX_SEOI);
-	  GPIBout(CDOR, bdGetEOS() );
-	} else {
 	  DBGprint(DBG_BRANCH, ("send EOI with last byte "));
 	  bdSendAuxCmd(AUX_SEOI);
 	  GPIBout(CDOR, buf[ibcnt]);
 	  bytes++; ibcnt++;
-	}
 	bdWaitOut();
 
 

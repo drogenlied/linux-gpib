@@ -90,7 +90,6 @@ switch (format){
         
     fprintf(outfile,"set ibBoard(%d,eos) 0x%x\n" ,bd,ibBoard[bd].eos );   
     fprintf(outfile,"set ibBoard(%d,reos) %d\n" ,bd,(ibBoard[bd].eosflags & REOS ? 1 : 0 ) );
-    fprintf(outfile,"set ibBoard(%d,xeos) %d\n" ,bd,(ibBoard[bd].eosflags & XEOS ? 1 : 0 ) );
     fprintf(outfile,"set ibBoard(%d,bin)  %d\n" ,bd,(ibBoard[bd].eosflags & BIN ? 1 : 0 ) );
 
     fprintf(outfile,"set ibBoard(%d,ifc)  %d\n" ,bd,ibBoard[bd].ifc  );
@@ -113,7 +112,6 @@ switch (format){
 	fprintf(outfile,"set %s(eos) 0x%x\n",ibConfigs[ud].name,CONF(ud,eos) );
 
 	fprintf(outfile,"set %s(reos) %d\n",ibConfigs[ud].name,( (CONF(ud,eosflags) & REOS) ? 1:0 ) );
-	fprintf(outfile,"set %s(xeos) %d\n",ibConfigs[ud].name,( (CONF(ud,eosflags) & XEOS) ? 1:0) );
 	fprintf(outfile,"set %s(bin) %d \n",ibConfigs[ud].name,( (CONF(ud,eosflags) & BIN)  ? 1:0) );
        
 
@@ -161,7 +159,6 @@ switch (format){
 
   fprintf(outfile,"         eos     = 0x%x \n",ibBoard[bd].eos );
   fprintf(outfile,"         set-reos= %s \n",((ibBoard[bd].eosflags & REOS) ? yesno[1] : yesno[0]) );
-  fprintf(outfile,"         set-xeos= %s \n",((ibBoard[bd].eosflags & XEOS) ? yesno[1] : yesno[0]) );
   fprintf(outfile,"         set-bin = %s \n",((ibBoard[bd].eosflags & BIN) ? yesno[1] : yesno[0]) );
 
   fprintf(outfile,"         errlog  = %s \n",ibBoard[bd].errlog );
@@ -185,7 +182,6 @@ switch (format){
         fprintf(outfile,"         eos         = 0x%x \n",CONF(ud,eos) );
       if( CONF(ud,eosflags) > 0 ){
 	fprintf(outfile,"         set-reos    = %s \n",( (CONF(ud,eosflags) & REOS) ? yesno[1] : yesno[0]) );
-	fprintf(outfile,"         set-xeos    = %s \n",( (CONF(ud,eosflags) & XEOS) ? yesno[1] : yesno[0]) );
 	fprintf(outfile,"         set-bin     = %s \n",( (CONF(ud,eosflags) & BIN)  ? yesno[1] : yesno[0]) );
       }
 

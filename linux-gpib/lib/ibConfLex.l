@@ -32,7 +32,6 @@ timeout      |
 timo	     { return(T_TIMO);}
 
 set-reos      { return T_REOS;}
-set-xeos      { return T_XEOS;}
 set-bin       { return T_BIN; }
 set-ifc       { return T_IFC; }
 

@@ -24,7 +24,7 @@ char cval;
 
 %token T_CONFIG T_DEVICE T_NAME T_BASE T_IRQ T_DMA T_DMABUF
 %token T_PAD T_SAD T_TIMO T_EOSBYTE T_DEBUG
-%token T_REOS T_XEOS T_BIN T_ERRLOG T_INIT_S T_DCL T_IFC
+%token T_REOS T_BIN T_ERRLOG T_INIT_S T_DCL T_IFC
 %token T_MASTER T_LLO T_DCL T_EXCL T_INIT_F T_NETWORK T_SERVER T_AUTOPOLL 
 
 %token T_NUMBER T_STRING T_BOOL T_TIVAL
@@ -59,7 +59,6 @@ char cval;
 		 | T_SAD '=' T_NUMBER      { ibBoard[bdid].padsad |= ($3<<8); }
                  | T_EOSBYTE '=' T_NUMBER  { ibBoard[bdid].eos = $3; }
 		 | T_REOS T_BOOL           { ibBoard[bdid].eosflags |= $2 * REOS;}
-	         | T_XEOS T_BOOL           { ibBoard[bdid].eosflags |= $2 * XEOS;}
                  | T_BIN  T_BOOL           { ibBoard[bdid].eosflags |= $2 * BIN; }
 		 | T_IFC  T_BOOL           { ibBoard[bdid].ifc = $2 ; }
 		 | T_TIMO '=' T_TIVAL      { ibBoard[bdid].timeout = $3; }
@@ -100,7 +99,6 @@ char cval;
 		/*|  T_DCL T_BOOL { temp.dcl=$2; }*/ 
                 |  T_EOSBYTE '=' T_NUMBER  { temp.eos = $3; }
 		|  T_REOS T_BOOL           { temp.eosflags |= $2 * REOS;}
-	        |  T_XEOS T_BOOL           { temp.eosflags |= $2 * XEOS;}
                 |  T_BIN  T_BOOL           { temp.eosflags |= $2 * BIN; }
                 |  T_MASTER                { temp.flags |= CN_ISCNTL; }
                 |  T_AUTOPOLL              { temp.flags |= CN_AUTOPOLL; }
