@@ -55,6 +55,9 @@ typedef struct
 extern gpib_interface_t agilent_82350b_interface;
 
 // interface functions
+ssize_t agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes);
+ssize_t agilent_82350b_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi );
+ssize_t agilent_82350b_accel_command( gpib_board_t *board, uint8_t *buffer, size_t length );
 ssize_t agilent_82350b_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes);
 ssize_t agilent_82350b_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi );
 ssize_t agilent_82350b_command( gpib_board_t *board, uint8_t *buffer, size_t length );
@@ -125,6 +128,26 @@ enum interrupt_enable_bits
 	ENABLE_TERM_COUNT_INTERRUPT_BIT = 0x20,
 };
 
+enum event_enable_bits
+{
+	ENABLE_BUFFER_END_EVENTS_BIT = 0x10,
+	ENABLE_TERM_COUNT_EVENTS_BIT = 0x20,
+};
+
+enum event_status_bits
+{
+	TMS9914_IRQ_STATUS_BIT = 0x1,
+	IRQ_STATUS_BIT = 0x2,
+	BUFFER_END_STATUS_BIT = 0x10,	// write-clear
+	TERM_COUNT_STATUS_BIT = 0x20,	// write-clear
+};
+
+enum stream_status_bits
+{
+	HALTED_STATUS_BIT = 0x1,	//read
+	RESTART_STREAM_BIT = 0x1,	//write
+};
+
 enum internal_config_bits
 {
 	IC_SYSTEM_CONTROLLER_BIT = 0x80,
@@ -135,5 +158,7 @@ enum sram_access_control_bits
 	DIRECTION_GPIB_TO_HOST = 0x20,	// transfer direction
 	ENABLE_TI_TO_SRAM = 0x40,	// enable fifo
 };
+
+static const int agilent_82350b_fifo_size = 1024;
 
 #endif	// _AGILENT_82350B_H

@@ -28,7 +28,8 @@
 
 MODULE_LICENSE("GPL");
 
-int agilent_82350b_attach( gpib_board_t *board );
+int agilent_82350b_unaccel_attach( gpib_board_t *board );
+int agilent_82350b_accel_attach( gpib_board_t *board );
 
 void agilent_82350b_detach( gpib_board_t *board );
 
@@ -158,14 +159,41 @@ void agilent_82350b_return_to_local( gpib_board_t *board )
 	tms9914_return_to_local( board, &priv->tms9914_priv );
 }
 
-gpib_interface_t agilent_82350b_interface =
+gpib_interface_t agilent_82350b_unaccel_interface =
 {
-	name: "agilent_82350b",
-	attach: agilent_82350b_attach,
+	name: "agilent_82350b_unaccel",
+	attach: agilent_82350b_unaccel_attach,
 	detach: agilent_82350b_detach,
 	read: agilent_82350b_read,
 	write: agilent_82350b_write,
 	command: agilent_82350b_command,
+	request_system_control: agilent_82350b_request_system_control,
+	take_control: agilent_82350b_take_control,
+	go_to_standby: agilent_82350b_go_to_standby,
+	interface_clear: agilent_82350b_interface_clear,
+	remote_enable: agilent_82350b_remote_enable,
+	enable_eos: agilent_82350b_enable_eos,
+	disable_eos: agilent_82350b_disable_eos,
+	parallel_poll: agilent_82350b_parallel_poll,
+	parallel_poll_configure: agilent_82350b_parallel_poll_configure,
+	parallel_poll_response: agilent_82350b_parallel_poll_response,
+	line_status: agilent_82350b_line_status,
+	update_status: agilent_82350b_update_status,
+	primary_address: agilent_82350b_primary_address,
+	secondary_address: agilent_82350b_secondary_address,
+	serial_poll_response: agilent_82350b_serial_poll_response,
+	t1_delay: agilent_82350b_t1_delay,
+	return_to_local: agilent_82350b_return_to_local,
+};
+
+gpib_interface_t agilent_82350b_interface =
+{
+	name: "agilent_82350b",
+	attach: agilent_82350b_accel_attach,
+	detach: agilent_82350b_detach,
+	read: agilent_82350b_accel_read,
+	write: agilent_82350b_accel_write,
+	command: agilent_82350b_accel_command,
 	request_system_control: agilent_82350b_request_system_control,
 	take_control: agilent_82350b_take_control,
 	go_to_standby: agilent_82350b_go_to_standby,
@@ -208,7 +236,7 @@ static inline unsigned int tms9914_to_agilent_82350b_offset( unsigned int regist
 	return 0x3ff8 + register_num;
 }
 
-int agilent_82350b_attach( gpib_board_t *board )
+int agilent_82350b_generic_attach(gpib_board_t *board, int use_fifos)
 {
 	agilent_82350b_private_t *a_priv;
 	tms9914_private_t *tms_priv;
@@ -260,9 +288,19 @@ int agilent_82350b_attach( gpib_board_t *board )
 	writeb(0, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG); 
 	a_priv->card_mode_bits = ENABLE_PCI_IRQ_BIT;
 	writeb(a_priv->card_mode_bits, a_priv->gpib_base + CARD_MODE_REG); 
-	writeb(ENABLE_TMS9914_INTERRUPTS_BIT, a_priv->gpib_base + INTERRUPT_ENABLE_REG); 
+	if(use_fifos)
+	{
+		writeb(ENABLE_BUFFER_END_EVENTS_BIT | ENABLE_TERM_COUNT_EVENTS_BIT,
+			a_priv->gpib_base + EVENT_ENABLE_REG);
+		writeb(ENABLE_TERM_COUNT_INTERRUPT_BIT | ENABLE_BUFFER_END_INTERRUPT_BIT | ENABLE_TMS9914_INTERRUPTS_BIT, 
+			a_priv->gpib_base + INTERRUPT_ENABLE_REG); 
+	}else
+	{
+		writeb(0, a_priv->gpib_base + EVENT_ENABLE_REG);
+		writeb(ENABLE_TMS9914_INTERRUPTS_BIT, 
+			a_priv->gpib_base + INTERRUPT_ENABLE_REG); 
+	}
 	board->t1_nano_sec = agilent_82350b_t1_delay(board, 2000);
-	
 	tms9914_board_reset(tms_priv);
 
 	tms9914_online( board, tms_priv );
@@ -270,6 +308,16 @@ int agilent_82350b_attach( gpib_board_t *board )
 	return 0;
 }
 
+int agilent_82350b_unaccel_attach(gpib_board_t *board)
+{
+	return agilent_82350b_generic_attach(board, 0);
+}
+
+int agilent_82350b_accel_attach(gpib_board_t *board)
+{
+	return agilent_82350b_generic_attach(board, 1);
+}
+	
 void agilent_82350b_detach(gpib_board_t *board)
 {
 	agilent_82350b_private_t *a_priv = board->private_data;
@@ -303,6 +351,7 @@ MODULE_DEVICE_TABLE(pci, agilent_82350b_pci_table);
 
 static int agilent_82350b_init_module( void )
 {
+	gpib_register_driver(&agilent_82350b_unaccel_interface, &__this_module);
 	gpib_register_driver(&agilent_82350b_interface, &__this_module);
 	return 0;
 }
@@ -310,28 +359,9 @@ static int agilent_82350b_init_module( void )
 static void agilent_82350b_exit_module( void )
 {
 	gpib_unregister_driver(&agilent_82350b_interface);
+	gpib_unregister_driver(&agilent_82350b_unaccel_interface);
 }
 
 module_init( agilent_82350b_init_module );
 module_exit( agilent_82350b_exit_module );
-
-/*
- * GPIB interrupt service routines
- */
-
-irqreturn_t agilent_82350b_interrupt(int irq, void *arg, struct pt_regs *registerp)
-{
-	int status1, status2;
-	gpib_board_t *board = arg;
-	agilent_82350b_private_t *priv = board->private_data;
-	unsigned long flags;
-	irqreturn_t retval;
-	
-	spin_lock_irqsave( &board->spinlock, flags );
-	status1 = read_byte( &priv->tms9914_priv, ISR0);
-	status2 = read_byte( &priv->tms9914_priv, ISR1);
-	retval = tms9914_interrupt_have_status(board, &priv->tms9914_priv, status1, status2);
-	spin_unlock_irqrestore( &board->spinlock, flags );
-	return retval;
-}
 
