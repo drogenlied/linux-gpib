@@ -27,6 +27,7 @@ computer, on the same GPIB bus, and one of which is the system controller.
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <string.h>
 #include <mcheck.h>
 
 #include "gpib/ib.h"
