@@ -1,5 +1,5 @@
 /***************************************************************************
-                              nec7210/nat4882.h
+                              nec7210/tnt4882.h
                              -------------------
 
     begin                : Jan 2002
@@ -16,46 +16,46 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef _NAT4882_H
-#define _NAT4882_H
+#ifndef _TNT4882_H
+#define _TNT4882_H
 
-// struct which defines private_data for nat4882 devices
+// struct which defines private_data for tnt4882 devices
 typedef struct
 {
 	nec7210_private_t nec7210_priv;
 	struct pci_dev *pci_device;
 	unsigned int irq;
-} nat4882_private_t;
+} tnt4882_private_t;
 
 // interfaces
 extern gpib_interface_t ni_isa_interface;
 
 // interface functions
-ssize_t nat4882_read(gpib_device_t *device, uint8_t *buffer, size_t length, int
+ssize_t tnt4882_read(gpib_device_t *device, uint8_t *buffer, size_t length, int
  *end);
-ssize_t nat4882_write(gpib_device_t *device, uint8_t *buffer, size_t length, int
+ssize_t tnt4882_write(gpib_device_t *device, uint8_t *buffer, size_t length, int
  send_eoi);
-ssize_t nat4882_command(gpib_device_t *device, uint8_t *buffer, size_t length);
-int nat4882_take_control(gpib_device_t *device, int synchronous);
-int nat4882_go_to_standby(gpib_device_t *device);
-void nat4882_interface_clear(gpib_device_t *device, int assert);
-void nat4882_remote_enable(gpib_device_t *device, int enable);
-void nat4882_enable_eos(gpib_device_t *device, uint8_t eos_byte, int
+ssize_t tnt4882_command(gpib_device_t *device, uint8_t *buffer, size_t length);
+int tnt4882_take_control(gpib_device_t *device, int synchronous);
+int tnt4882_go_to_standby(gpib_device_t *device);
+void tnt4882_interface_clear(gpib_device_t *device, int assert);
+void tnt4882_remote_enable(gpib_device_t *device, int enable);
+void tnt4882_enable_eos(gpib_device_t *device, uint8_t eos_byte, int
  compare_8_bits);
-void nat4882_disable_eos(gpib_device_t *device);
-unsigned int nat4882_update_status(gpib_device_t *device);
-void nat4882_primary_address(gpib_device_t *device, unsigned int address);
-void nat4882_secondary_address(gpib_device_t *device, unsigned int address, int
+void tnt4882_disable_eos(gpib_device_t *device);
+unsigned int tnt4882_update_status(gpib_device_t *device);
+void tnt4882_primary_address(gpib_device_t *device, unsigned int address);
+void tnt4882_secondary_address(gpib_device_t *device, unsigned int address, int
  enable);
-int nat4882_parallel_poll(gpib_device_t *device, uint8_t *result);
-int nat4882_serial_poll_response(gpib_device_t *device, uint8_t status);
+int tnt4882_parallel_poll(gpib_device_t *device, uint8_t *result);
+int tnt4882_serial_poll_response(gpib_device_t *device, uint8_t status);
 
 // interrupt service routines
-void nat4882_interrupt(int irq, void *arg, struct pt_regs *registerp);
+void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
 // utility functions
-int nat4882_allocate_private(gpib_device_t *device);
-void nat4882_free_private(gpib_device_t *device);
+int tnt4882_allocate_private(gpib_device_t *device);
+void tnt4882_free_private(gpib_device_t *device);
 
 // register offset for nec7210 compatible registers
 static const int atgpib_reg_offset = 2;
@@ -63,7 +63,7 @@ static const int atgpib_reg_offset = 2;
 // number of ioports used
 static const int atgpib_iosize = 32;
 
-// nat4882 specific registers and bits
+// tnt4882 specific registers and bits
 #define GPIBC	0x1
 #define GPIBD	0x3
 #define KEYPRT	0x5
@@ -87,4 +87,4 @@ static const int atgpib_iosize = 32;
 
 
 
-#endif	// _NAT4882_H
+#endif	// _TNT4882_H

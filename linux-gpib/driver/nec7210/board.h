@@ -27,7 +27,7 @@
 #include "pc2.h"
 #include "cb7210.h"
 #include "ines.h"
-#include "nat4882.h"
+#include "tnt4882.h"
 
 #endif	//_GPIB_PCIIA_BOARD_H
 

@@ -84,10 +84,10 @@ void ines_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	nec7210_interrupt(device, &priv->nec7210_priv);
 }
 
-void nat4882_interrupt(int irq, void *arg, struct pt_regs *registerp)
+void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
 	gpib_device_t *device = arg;
-	nat4882_private_t *priv = device->private_data;
+	tnt4882_private_t *priv = device->private_data;
 
 	nec7210_interrupt(device, &priv->nec7210_priv);
 
