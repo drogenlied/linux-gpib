@@ -123,10 +123,10 @@ int main(int argc,char **argv)
 	/****************/
 
 
-	fprintf(stderr, "\n\n  Everything seems to be OK for me.(Found %d Devices).\n"
+	fprintf(stderr, "\n\n  Everything seems to be OK to me (found %d devices).\n"
 		"It's now your turn to check out\n"
-		"Some Device Commands with ibsh or with own Programs that uses GPIB Commands.\n"
-		"Good Luck.\n", ibGetNrDev());
+		"some device commands with your own programs that use GPIB commands.\n"
+		"Good luck.\n", ibGetNrDev());
 
 	return 0;
 }

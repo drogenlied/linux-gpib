@@ -46,22 +46,21 @@ int ibInstallConfigItem(ibConf_t *p)
 		return -1;
 	}
 	// search for an unused descriptor
-	for(ib_ndev = 0; ib_ndev < IB_MAXDEV * MAX_BOARDS; ib_ndev++)
+	for(ib_ndev = 0; ib_ndev < NUM_CONFIGS; ib_ndev++)
 	{
-		if(check_descriptor(ib_ndev) == 0)
+		if(check_descriptor(ib_ndev) < 0)
 		{
 			ibConfigs[ib_ndev] = malloc(sizeof(ibConf_t));
 			break;
 		}
 	}
-	if( ib_ndev == IB_MAXDEV * MAX_BOARDS)
+	if( ib_ndev == NUM_CONFIGS)
 	{
 		iberr = ETAB;
 		return -1;
 	}
 	conf = ibConfigs[ib_ndev];
 	/* put entry to the table */
-fprintf(stderr, "size of conf->name is %i\n", sizeof(conf->name));
 	strncpy(conf->name, p->name, sizeof(conf->name) );
 	conf->board = p->board;
 	conf->padsad = p->padsad;
@@ -70,9 +69,7 @@ fprintf(stderr, "size of conf->name is %i\n", sizeof(conf->name));
 	conf->eosflags = p->eosflags;
 	conf->tmo = p->tmo;
 
-fprintf(stderr, "size of conf->init_string is %i\n", sizeof(conf->init_string));
 	strncpy(conf->init_string, p->init_string, sizeof(conf->init_string));
-fprintf(stderr, "ib_ndev is %i\n", ib_ndev);
 	num_devices++;
 	return ib_ndev;
 }
