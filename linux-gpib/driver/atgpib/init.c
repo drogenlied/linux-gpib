@@ -173,7 +173,6 @@ int board_attach(void)
 // free resources
 void board_detach(void)
 {
-	board_reset();
 	if(dma_allocated)
 	{
 		free_dma(ibdma);
@@ -186,6 +185,7 @@ void board_detach(void)
 	}
 	if(ioports_allocated)
 	{
+		board_reset();
 		release_region(ibbase, niat_iosize);
 		ioports_allocated = 0;
 	}

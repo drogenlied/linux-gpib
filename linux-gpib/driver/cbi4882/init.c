@@ -143,10 +143,6 @@ int board_attach(void)
 
 void board_detach(void)
 {
-#if defined(CBI_PCI)
-	pci_DisableIRQ();
-#endif
-	board_reset();
 	if(dma_allocated)
 	{
 		free_dma(ibdma);
@@ -159,6 +155,10 @@ void board_detach(void)
 	}
 	if(ioports_allocated)
 	{
+#if defined(CBI_PCI)
+		pci_DisableIRQ();
+#endif
+		board_reset();
 		release_region(ibbase, cbi_iosize);
 		ioports_allocated = 0;
 	}

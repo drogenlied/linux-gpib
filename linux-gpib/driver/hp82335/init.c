@@ -141,7 +141,6 @@ int board_attach(void)
 
 void board_detach(void)
 {
-	board_reset();
 	if(dma_allocated)
 	{
 		free_dma(ibdma);
@@ -151,6 +150,10 @@ void board_detach(void)
 	{
 		free_irq(ibirq, 0);
 		irq_allocated = 0;
+	}
+	if(ioports_allocated || iomem_allocated)
+	{
+		board_reset();
 	}
 	if(ioports_allocated)
 	{

@@ -170,10 +170,6 @@ int board_attach(void)
 void board_detach(void)
 {
 	int i;
-	board_reset();
-#if defined(MODBUS_PCI) || defined(INES_PCI)
-	pci_DisableIRQ();
-#endif
 	if(dma_allocated)
 	{
 		free_dma(ibdma);
@@ -183,6 +179,13 @@ void board_detach(void)
 	{
 		free_irq(ibirq, 0);
 		irq_allocated = 0;
+	}
+	if(ioports_allocated || iomem_allocated)
+	{
+		board_reset();
+#if defined(MODBUS_PCI) || defined(INES_PCI)
+		pci_DisableIRQ();
+#endif
 	}
 	if(ioports_allocated)
 	{
