@@ -5,4 +5,10 @@ make drivers for different boards have different module names
 make drivers support more than one gpib card in computer at once
 
 fix #ifdef nightmare
+
+add support for more file operations
+
+fix completely useless interrupt handling
+
+generally make this software suck less
  

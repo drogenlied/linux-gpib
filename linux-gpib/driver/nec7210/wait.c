@@ -16,10 +16,10 @@ IBLCL void bdwait(unsigned int mask)
 		s1 = GPIBin(ISR1)  ;           /* clear ISRs by reading */
 		s2 = GPIBin(ISR2)  ;
 
-   		GPIBout(IMR2, 0);   /* clear IMR2 IE bits */
+		GPIBout(IMR2, 0);   /* clear IMR2 IE bits */
 #ifdef NIPCIIa
-                /* clear interrupt logic */
-                outb(0xff, CLEAR_INTR_REG(ibirq));
+		/* clear interrupt logic */
+		outb(0xff, CLEAR_INTR_REG(ibirq));
 #endif
 		imr2mask = 0;
 		if (mask & SRQI)
@@ -28,25 +28,25 @@ IBLCL void bdwait(unsigned int mask)
 			imr2mask |= HR_ACIE;
 		DBGprint(DBG_DATA, ("imr2mask=0x%x  ", imr2mask));
 
-		while (!(s2 & imr2mask) && NotTimedOut()) {
-                          /* was ibstat() & mask */
+		while (!(s2 & imr2mask) && NotTimedOut())
+		{
+			/* was ibstat() & mask */
 			ibsta = CMPL;
-			osWaitForInt(imr2mask); 
+			osWaitForInt(imr2mask);
                            /* the imr3mask is imr2 for PCII */
 			s2 = GPIBin(ISR2);
 			DBGprint(DBG_DATA, ("***ISR2=0x%x ", s2));
 			s1 = GPIBin(ISR1);   /* clear ISR2 status bits */
 			DBGprint(DBG_DATA, ("***ISR1=0x%x ", s1));
-   			GPIBout(IMR1, 0);   /* clear IMR1 IE bits */
-   			GPIBout(IMR2, 0);   /* clear IMR2 IE bits */
-
+			GPIBout(IMR1, 0);   /* clear IMR1 IE bits */
+			GPIBout(IMR2, 0);   /* clear IMR2 IE bits */
 		}
 	}
 	else
 #endif
+		while (!(s2 & imr2mask) && NotTimedOut())
+			ibsta = CMPL;
 
-	while (!(s2 & imr2mask) && NotTimedOut())
-		ibsta = CMPL;
 	DBGout();
 }
 

@@ -17,8 +17,9 @@ extern int          pgmstat;    /* Program state */
 extern int          auxrabits;  /* static bits for AUXRA (EOS modes) */
 
 extern void *ib;            /* Local pointer to IB registers */
-#define IB ib
 
+// interrupt service routine
+void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
 #define LOW_PORT 0x2e1
 
