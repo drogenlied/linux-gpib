@@ -677,6 +677,33 @@ gpib_interface_t ni_pcmcia_interface =
 	provider_module: &__this_module,
 };
 
+gpib_interface_t ni_pcmcia_interface =
+{
+	name: "ni_pcmcia_accel",
+	attach: ni_pcmcia_attach,
+	detach: ni_pcmcia_detach,
+	read: tnt4882_accel_read,
+	write: tnt4882_accel_write,
+	command: tnt4882_command,
+	take_control: tnt4882_take_control,
+	go_to_standby: tnt4882_go_to_standby,
+	request_system_control: tnt4882_request_system_control,
+	interface_clear: tnt4882_interface_clear,
+	remote_enable: tnt4882_remote_enable,
+	enable_eos: tnt4882_enable_eos,
+	disable_eos: tnt4882_disable_eos,
+	parallel_poll: tnt4882_parallel_poll,
+	parallel_poll_response: tnt4882_parallel_poll_response,
+	line_status: tnt4882_line_status,
+	update_status: tnt4882_update_status,
+	primary_address: tnt4882_primary_address,
+	secondary_address: tnt4882_secondary_address,
+	serial_poll_response: tnt4882_serial_poll_response,
+	serial_poll_status: tnt4882_serial_poll_status,
+	t1_delay: tnt4882_t1_delay,
+	provider_module: &__this_module,
+};
+
 int ni_pcmcia_attach(gpib_board_t *board)
 {
 	tnt4882_private_t *tnt_priv;
