@@ -19,6 +19,9 @@
 
 #include "gpibP.h"
 
+static int push_gpib_event_nolock( gpib_event_queue_t *queue, short event_type );
+static int pop_gpib_event_nolock( gpib_event_queue_t *queue, short *event_type );
+
 unsigned int num_gpib_events( const gpib_event_queue_t *queue )
 {
 	return queue->num_events;
@@ -26,6 +29,17 @@ unsigned int num_gpib_events( const gpib_event_queue_t *queue )
 
 // push event onto back of event queue
 int push_gpib_event( gpib_event_queue_t *queue, short event_type )
+{
+	unsigned long flags;
+	int retval;
+
+	spin_lock_irqsave( &queue->lock, flags );
+	retval = push_gpib_event_nolock( queue, event_type );
+	spin_unlock_irqrestore( &queue->lock, flags );
+	return retval;
+}
+
+static int push_gpib_event_nolock( gpib_event_queue_t *queue, short event_type )
 {
 	struct list_head *head = &queue->event_head;
 	gpib_event_t *event;
@@ -37,12 +51,18 @@ int push_gpib_event( gpib_event_queue_t *queue, short event_type )
 		short lost_event;
 
 		queue->dropped_event = 1;
-		retval = pop_gpib_event( queue, &lost_event );
-		if( retval < 0 ) return retval;
+		retval = pop_gpib_event_nolock( queue, &lost_event );
+		if( retval < 0 )
+			return retval;
 	}
 
-	event = kmalloc( sizeof( gpib_event_t ), GFP_KERNEL );
-	if( event == NULL ) return -ENOMEM;
+	event = kmalloc( sizeof( gpib_event_t ), GFP_ATOMIC );
+	if( event == NULL )
+	{
+		queue->dropped_event = 1;
+		printk( "gpib: failed to allocate memory for event\n");
+		return -ENOMEM;
+	}
 
 	INIT_LIST_HEAD( &event->list );
 	event->event_type = event_type;
@@ -59,6 +79,17 @@ int push_gpib_event( gpib_event_queue_t *queue, short event_type )
 
 // pop event from front of event queue
 int pop_gpib_event( gpib_event_queue_t *queue, short *event_type )
+{
+	unsigned long flags;
+	int retval;
+
+	spin_lock_irqsave( &queue->lock, flags );
+	retval = pop_gpib_event_nolock( queue, event_type );
+	spin_unlock_irqrestore( &queue->lock, flags );
+	return retval;
+}
+
+static int pop_gpib_event_nolock( gpib_event_queue_t *queue, short *event_type )
 {
 	struct list_head *head = &queue->event_head;
 	struct list_head *front = head->next;

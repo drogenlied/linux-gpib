@@ -99,5 +99,10 @@ unsigned int full_ibstatus( gpib_board_t *board, const gpib_device_t *device )
 		if( board->locking_pid != current->pid ) status |= CMPL;
 	}
 
+	if( num_gpib_events( &board->event_queue ) )
+		status |= EVENT;
+	else
+		status &= ~EVENT;
+		
 	return status;
 }
