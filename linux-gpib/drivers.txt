@@ -6,7 +6,7 @@ Capital Eq. Corp.:
   PC-488                  pcII                        pc2-gpib.o          ?
 
 HP:                      
-  HP82335                 hp82335                     hp82335.o           ?
+  HP82335                 hp82335                     hp82335.o           Y
   HP27209                 hp82335                     hp82335.o           ?
 
 Ines:
