@@ -32,7 +32,6 @@ PRIVATE int ibDumpConfiguration(int format,char *filename)
 {
 FILE *outfile;
 int bd=0,ud;
-char *t;
 int i=0;
 
 if( filename == NULL )
@@ -58,9 +57,9 @@ switch (format){
 
     for(ud=0;ud<ibGetNrDev();ud++){
       if( CONF(ud,board) == bd ){ /* only current board */
-        fprintf(outfile,"echo Creating: $device_dir/gpib%d/%s  \n",bd, CONF(ud,name));
+        fprintf(outfile,"echo Creating: $device_dir/gpib%d/%s  \n",bd, ibConfigs[ud].name);
 	fprintf(outfile,"mknod $device_dir/gpib%d/%s c $device_major %d \n",
-                         bd,CONF(ud,name),CONF(ud,padsad) );
+                         bd,ibConfigs[ud].name,CONF(ud,padsad) );
       }
     }
   }
@@ -76,7 +75,7 @@ switch (format){
     fprintf(outfile,"set ibBoard(%d,devices) { ",bd);   
     for(ud=0;ud<ibGetNrDev();ud++){
       if( CONF(ud,board) == bd ){ /* only current board */
-	fprintf(outfile,"%s ",CONF(ud,name));   
+	fprintf(outfile,"%s ",ibConfigs[ud].name);   
       }
     }
     fprintf(outfile,"}\n");   
@@ -103,22 +102,22 @@ switch (format){
     /* dump devices information */
     for(ud=0;ud<ibGetNrDev();ud++){
       if( CONF(ud,board) == bd ){ /* only current board */
-	fprintf(outfile,"set %s(pad) %d\n", CONF(ud,name), CONF(ud,padsad) & 0xff );
-	fprintf(outfile,"set %s(sad) %d\n", CONF(ud,name), (CONF(ud,padsad)>>8) & 0xff );
-	if(strlen(CONF(ud,init_string)) > 0 )
-	  fprintf(outfile,"set %s(init) %s \n",CONF(ud,name),(char *)CONF(ud,init_string) );
+	fprintf(outfile,"set %s(pad) %d\n", ibConfigs[ud].name, CONF(ud,padsad) & 0xff );
+	fprintf(outfile,"set %s(sad) %d\n", ibConfigs[ud].name, (CONF(ud,padsad)>>8) & 0xff );
+	if(strlen(ibConfigs[ud].init_string) > 0 )
+	  fprintf(outfile,"set %s(init) %s \n",ibConfigs[ud].name, ibConfigs[ud].init_string );
 	else
-	  fprintf(outfile,"set %s(init) \"\" \n",CONF(ud,name));
+	  fprintf(outfile,"set %s(init) \"\" \n",ibConfigs[ud].name);
 
 
-	fprintf(outfile,"set %s(eos) 0x%x\n",CONF(ud,name),CONF(ud,eos) );
+	fprintf(outfile,"set %s(eos) 0x%x\n",ibConfigs[ud].name,CONF(ud,eos) );
 
-	fprintf(outfile,"set %s(reos) %d\n",CONF(ud,name),( (CONF(ud,eosflags) & REOS) ? 1:0 ) );
-	fprintf(outfile,"set %s(xeos) %d\n",CONF(ud,name),( (CONF(ud,eosflags) & XEOS) ? 1:0) );
-	fprintf(outfile,"set %s(bin) %d \n",CONF(ud,name),( (CONF(ud,eosflags) & BIN)  ? 1:0) );
+	fprintf(outfile,"set %s(reos) %d\n",ibConfigs[ud].name,( (CONF(ud,eosflags) & REOS) ? 1:0 ) );
+	fprintf(outfile,"set %s(xeos) %d\n",ibConfigs[ud].name,( (CONF(ud,eosflags) & XEOS) ? 1:0) );
+	fprintf(outfile,"set %s(bin) %d \n",ibConfigs[ud].name,( (CONF(ud,eosflags) & BIN)  ? 1:0) );
        
 
-	fprintf(outfile,"set %s(init_flags) { ",CONF(ud,name));
+	fprintf(outfile,"set %s(init_flags) { ",ibConfigs[ud].name);
         if( CONF(ud,flags) & CN_SDCL)
           fprintf(outfile,"DCL ");
         if ( CONF(ud,flags) & CN_SLLO)
@@ -128,20 +127,20 @@ switch (format){
         fprintf(outfile,"} \n");
 
 	if( CONF(ud,flags) & CN_ISCNTL ){
-	  fprintf(outfile,"set %s(master) 1 \n",CONF(ud,name));
+	  fprintf(outfile,"set %s(master) 1 \n",ibConfigs[ud].name);
 	} else {
-	  fprintf(outfile,"set %s(master) 0 \n",CONF(ud,name));
+	  fprintf(outfile,"set %s(master) 0 \n",ibConfigs[ud].name);
 	}
 	if( CONF(ud,flags) & CN_AUTOPOLL ){
-	  fprintf(outfile,"set %s(autopoll) 1 \n",CONF(ud,name));
+	  fprintf(outfile,"set %s(autopoll) 1 \n",ibConfigs[ud].name);
 	} else {
-	  fprintf(outfile,"set %s(autopoll) 0 \n",CONF(ud,name));
+	  fprintf(outfile,"set %s(autopoll) 0 \n",ibConfigs[ud].name);
 	}
 
-	if( CONF(ud,networkdb) != NULL )
-	  fprintf(outfile,"set %s(network) %s\n",CONF(ud,name),CONF(ud,networkdb));
+	if( ibConfigs[ud].networkdb != NULL )
+	  fprintf(outfile,"set %s(network) %s\n",ibConfigs[ud].name,ibConfigs[ud].networkdb);
         else
-          fprintf(outfile,"set %s(network) \"\" \n",CONF(ud,name));
+          fprintf(outfile,"set %s(network) \"\" \n",ibConfigs[ud].name);
       }
     }
   }
@@ -176,11 +175,11 @@ switch (format){
   fprintf(outfile,"}\n");
   for(ud=0;ud<ibGetNrDev();ud++){
     if( CONF(ud,board) == bd ){	/* only current board */
-      fprintf(outfile,"device { name        = %s\n",(char *)CONF(ud,name) ); /* begin header */
+      fprintf(outfile,"device { name        = %s\n",ibConfigs[ud].name ); /* begin header */
       fprintf(outfile,"         pad         = %d \n",CONF(ud,padsad) & 0xff );
       fprintf(outfile,"         sad         = %d \n",(CONF(ud,padsad)>>8) & 0xff );
-      if(strlen(CONF(ud,init_string)) > 0 )
-      fprintf(outfile,"         init-string = %s \n",(char *)CONF(ud,init_string) );
+      if(strlen(ibConfigs[ud].init_string) > 0 )
+      fprintf(outfile,"         init-string = %s \n", ibConfigs[ud].init_string );
 
       if( CONF(ud,eos) )
         fprintf(outfile,"         eos         = 0x%x \n",CONF(ud,eos) );
@@ -214,8 +213,8 @@ switch (format){
       }
       if( CONF(ud,flags) & CN_ISCNTL ){
 	fprintf(outfile,"         master \n");
-	if( CONF(ud,networkdb) != NULL )
-	  fprintf(outfile,"         network     = %s\n",CONF(ud,networkdb));
+	if( ibConfigs[ud].networkdb != NULL )
+	  fprintf(outfile,"         network     = %s\n", ibConfigs[ud].networkdb);
       }
       if( CONF(ud,flags) & CN_AUTOPOLL ){
 	  fprintf(outfile,"         autopoll \n");

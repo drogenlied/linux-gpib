@@ -11,5 +11,4 @@
 #undef MODBUS_PCI 
 #undef INES_PCI 
 #undef INES_PCMCIA 
-#define NIPCII 
-#define INES_PCI 
+#define NIAT 

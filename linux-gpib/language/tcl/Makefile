@@ -12,7 +12,7 @@
 #
 GPIB_HOME = `(cd ../.. ; pwd)`
 
-include make.config
+-include make.config
 
 #######################################################################
 # The switches for your GPIB library

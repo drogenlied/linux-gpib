@@ -105,10 +105,10 @@ char *device;
 	   }
 
 	   ibPutMsg("INIT: ");
-	   if( CONF(ind,init_string[0])!='\0' ){
-	     if( ibwrt(ind, CONF(ind,init_string), 
-		       strlen( CONF(ind,init_string))) & ERR ) return ERR;
-	     ibPutMsg(CONF(ind,init_string));
+	   if( ibConfigs[ind].init_string !='\0' ){
+	     if( ibwrt(ind, ibConfigs[ind].init_string,
+		       strlen( ibConfigs[ind].init_string)) & ERR ) return ERR;
+	     ibPutMsg(ibConfigs[ind].init_string);
 
 	   }
 

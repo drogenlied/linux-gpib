@@ -31,7 +31,7 @@ dialog --clear --title "Linux-GPIB Configuration" --msgbox "\
 \n\
  Welcome to the Linux-GPIB Configuration and Setup Program\n\
 \n\
-      (c) 1995-1999 by C.Schroeter (clausi@chemie.fu-berlin.de)
+      (c) 1995-1999 by C.Schroeter (clausi@chemie.fu-berlin.de)\n\
       (c) 2001 by Frank Mori Hess (fmhess@users.sourceforge.net)
 \n\
 This Utility configures the Compile Time Options of the Package\n\

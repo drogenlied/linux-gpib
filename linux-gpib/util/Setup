@@ -18,7 +18,7 @@ if [ ! -x /bin/dialog -a ! -x /usr/bin/dialog -a ! -x /usr/local/bin/dialog ] ; 
   echo "please get the package from sunsite"
   echo "or install it from your linux distribution."
   echo 
-  echo "BTW: next time please read the INSTALL and README files"
+  echo "please read the INSTALL and README files"
   echo
 exit 1
 fi
@@ -31,7 +31,7 @@ function set_var() {
 }
 
 function set_svar() {
-	echo "$1=$2" >>$CONFIG
+	echo "$1=\"$2\"" >>$CONFIG
 	echo "#define $1 \"$2\"" >>$CONFIG_H
 	eval "$1=$2"
 }

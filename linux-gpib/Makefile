@@ -64,7 +64,6 @@ install: all
 	done
 	(cd ./util; ./Setup.install)
 
-
 .config.stat config: 
 	(cd ./util; ./Setup)
 	touch .config.stat

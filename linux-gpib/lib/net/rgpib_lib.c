@@ -29,7 +29,7 @@ r_handle_t RgpibHandles[MAXHANDLES];
 int Rhandle_cnt = 0;
 
 /*----------------------------------------------------------------------*/
-int ibRemoteFunc (int handle, int code, int arg, char *buf, int cnt)
+PRIVATE int ibRemoteFunc (int handle, int code, int arg, char *buf, int cnt)
 {
   gpib_request request, *result;
   CLIENT *cl;
@@ -208,7 +208,7 @@ char *ibGetNetDB(int ud)
   if( ud & UD_REMOTE ){ 
     return NULL;
   }
-  return (char *)CONF(ud,networkdb);
+  return ibConfigs[ud].networkdb;
 
 }
 /*----------------------------------------------------------------------*/

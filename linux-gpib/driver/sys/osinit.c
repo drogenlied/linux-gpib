@@ -93,7 +93,7 @@ IBLCL int osInit(void)
 	int	s;
 extern  struct timer_list ibtimer_list;
 extern  void ibintr(int irq, void *d, struct pt_regs *regs);
-
+	int isr_flags = 0;
 
 	DBGin("osInit");
 
@@ -135,7 +135,10 @@ extern  void ibintr(int irq, void *d, struct pt_regs *regs);
 	/* register IRQ and DMA channel */
 
 #if USEINTS
-	if( request_irq(ibirq, ibintr, 0, "gpib", NULL)){
+#if defined(CBI_PCI) || defined(MODBUS_PCI) || 	defined(INES_PCI)  
+	isr_flags |= SA_SHIRQ;
+#endif
+	if( request_irq(ibirq, ibintr, isr_flags, "gpib", NULL)){
 	  printk("can't request IRQ %d\n",ibirq);
           DBGout();
 	  return(0);
