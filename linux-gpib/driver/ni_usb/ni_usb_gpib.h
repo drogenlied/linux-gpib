@@ -100,6 +100,18 @@ enum ni_usb_bulk_ids
 	NIUSB_IBRD_STATUS_ID = 0x38
 };
 
+enum ni_usb_error_codes
+{
+	NIUSB_NO_ERROR = 0,
+	// this code occurs when you do a board read/write as CIC but are not in LACS/TACS
+	NIUSB_ADDRESSING_ERROR = 3,
+	// this code occurs when you try to write a command byte but there are no devices connected to the gpib bus
+	NIUSB_NO_BUS_ERROR = 5,
+	// this code occurs when you do a board write as CIC with no listener
+	NIUSB_NO_LISTENER_ERROR = 8,
+	// get this on board read/write timeout
+	NIUSB_TIMEOUT_ERROR = 10,
+};
 static const int ni_usb_control_request = 0x21;
 
 static const unsigned int ni_usb_ibsta_monitor_mask = SRQI | LOK | REM | CIC | ATN | TACS | LACS | DTAS | DCAS;
