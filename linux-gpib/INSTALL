@@ -102,10 +102,17 @@ C) Loading the driver module
 	See the file 'drivers.txt' to see which driver your board is supported
 	by.
 
+	You need to run the 'gpib_config' utility to setup the driver
+	before you can use it (the 'minor' options specifies which
+	board index you are setting up):
+
+		gpib_config --minor 0
+
 	You can also set up the modules to load automatically by adding a line
 	something like
 
 	alias char-major-160 tnt4882
+	post-install tnt4882 gpib_config --minor 0
 
 	to /etc/modules.conf, which would autoload the tnt4882.o module when
 	the library is used.
