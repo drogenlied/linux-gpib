@@ -1,5 +1,13 @@
 Linux GPIB Package changelog
 
+3.1.94:  Added 'gpib_config' utility which now must be
+run to configure drivers after loading, in order to
+implement proper permission checking when configuring
+hardware.  New Guile binding by Stefan Jahn.  New
+Perl example programs by John Ackermann.  Added ibrda(),
+ibwrta(), ibstop(), and ibln().  More documentation.
+PowerPC compilation fixes.  New test code.  Random bugfixes.
+
 3.1.93: Added ibwrti() and ibrdi() to Perl binding, fixed Perl
 bindings for ibevent(), iblines(), ibrpp(), and ibrsp().
 Added isapnp support for NI AT-GPIB/TNT.  Fixed
@@ -25,9 +33,9 @@ that happened after a timeout occurs.  Implemented IbcTIMING/IbaTIMING
 in ibconfig()/ibask() so T1 delay can now be adjusted.
 
 3.1.9: Added ability to specify pci boards by bus and slot int gpib.conf.
-Fixed Ines PCMCIA support.  Fixed HP82335 support.  Fixed reporting of 
-errors on writes.  Added support for devfs.  Fixes for giving boards 
-secondary address.  Added event queue and implemented ibevent().  Fixed 
+Fixed Ines PCMCIA support.  Fixed HP82335 support.  Fixed reporting of
+errors on writes.  Added support for devfs.  Fixes for giving boards
+secondary address.  Added event queue and implemented ibevent().  Fixed
 running as bus master for Measurement Computing (Computer Boards) cards.
 Fixed polarity of bus control lines (iblines()) for Measurement
 Computing (Computer Boards) cards.  Random bugfixes.
@@ -49,9 +57,9 @@ in use.  Fixes for operating boards when board is not system controller.
 Various other bugfixes.
 
 3.1.6: Made timeout for serial polls adjustable instead of being hard coded
-to 100 msec.  Removed a couple more global variables.  Fixed some problems 
+to 100 msec.  Removed a couple more global variables.  Fixed some problems
 with timeout values not being updated.  Added some missing includes of string.h.
-Fixed setting of EOI on writes.  Fixed disabling of dma when dma channel is set 
+Fixed setting of EOI on writes.  Fixed disabling of dma when dma channel is set
 to zero after being nonzero.  Fixed ibtrg() and ibclr().  Fixed use of secondary
 addressing and return value for ibloc().
 
@@ -73,7 +81,7 @@ of writes.
 
 3.1.3: Fixed race in nec7210 read that could cause failure to receive last
 byte on reads. Board-specific fixes for ines pci, ines pcmcia, and
-cec/keithley pci support. 
+cec/keithley pci support.
 
 3.1.2: Same as 3.1.1 except with some annoying debugging messages turned off.
 
@@ -90,7 +98,7 @@ between library and modules from earlier versions.
 	with kernels that use module versioning.  Got rid of all usage of pointers to
 	store io addresses.
 
-3.0.0: Completed first pass at port to 2.4 kernel, and cleaned up a lot of little things. 
+3.0.0: Completed first pass at port to 2.4 kernel, and cleaned up a lot of little things.
 	Still needs a lot of work, but should have all the capabilities/limitations
-	of version 2.05-alpha which it was based on. 
+	of version 2.05-alpha which it was based on.
 

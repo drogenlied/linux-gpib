@@ -132,8 +132,7 @@ int prompt_for_board( void )
 		if(ud < 0)
 		{
 			fprintf( stderr, "failed to open board\n" );
-		}else
-			printf( "ibfind returned descriptor %i\n", ud );
+		}
 	}while( ud < 0 );
 
 	return ud;
