@@ -33,8 +33,15 @@ enum
 
 enum ni_usb_devices
 {
-	NI_USB_SUBDEV_TNT4882 = 1,
-	NI_USB_SUBDEV_UNKNOWN = 2,
+	NIUSB_SUBDEV_TNT4882 = 1,
+	NIUSB_SUBDEV_UNKNOWN = 2,
+};
+
+enum endpoint_addresses
+{
+	NIUSB_BULK_OUT_ENDPOINT = 0x2,
+	NIUSB_BULK_IN_ENDPOINT = 0x82,
+	NIUSB_BULK_STATUS_IN_ENDPOINT = 0x84,
 };
 
 // struct which defines private_data for ni_usb devices
@@ -53,9 +60,11 @@ struct ni_usb_status_block
 
 enum ni_usb_bulk_ids
 {
+	NIUSB_IBCAC_ID = 0x1,
 	NIUSB_TERM_ID = 0x4,
+	NIUSB_IBGTS_ID = 0x6,
 	NIUSB_REG_WRITE_ID = 0x9,
-	NIUSB_IFC_ID = 0xf,
+	NIUSB_IBSIC_ID = 0xf,
 };
 
 static inline int nec7210_to_tnt4882_offset(int offset)
