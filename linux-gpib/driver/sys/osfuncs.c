@@ -61,8 +61,11 @@ if(device_array[minor] == NULL)
 		printk("unable to find driver\n");
 		return -EINVAL;
 	}
-	device_array[minor]->private_data = NULL;	
-	device_array[minor]->status = 0;	
+	device_array[minor]->private_data = NULL;
+	device_array[minor]->status = 0;
+	device_array[minor]->ibbase = IBBASE;
+	device_array[minor]->ibirq = IBIRQ;
+	device_array[minor]->ibdma = IBDMA;
 	init_waitqueue_head(&device_array[minor]->wait);
 	init_MUTEX(&device_array[minor]->mutex);
 }

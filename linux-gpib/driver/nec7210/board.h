@@ -27,9 +27,5 @@
 #include "pc2.h"
 #include "cb7210.h"
 
-extern unsigned long ibbase;	/* base addr of GPIB interface registers  */
-extern unsigned int ibirq;	/* interrupt request line for GPIB (1-7)  */
-extern unsigned int ibdma;      /* DMA channel                            */
-
 #endif	//_GPIB_PCIIA_BOARD_H
 

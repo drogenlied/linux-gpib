@@ -151,6 +151,12 @@ struct gpib_device_struct
 	wait_queue_head_t wait;
 	/* Lock that only allows one process to access this device at a time */
 	struct semaphore mutex;
+	/* IO base address to use for non-pnp cards (set by core, driver should make local copy) */
+	unsigned long ibbase;
+	/* IRQ to use for non-pnp cards (set by core, driver should make local copy) */
+	unsigned int ibirq;
+	/* dma channel to use for non-pnp cards (set by core, driver should make local copy) */
+	unsigned int ibdma;
 	/* 'private_data' can be used as seen fit by the driver to
 	 * store additional variables for this board */
 	void *private_data;

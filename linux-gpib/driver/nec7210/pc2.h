@@ -24,6 +24,8 @@ typedef struct
 {
 	nec7210_private_t nec7210_priv;
 	unsigned int irq;
+	// io address that clears interrupt for pc2a (0x2f0 + irq)
+	unsigned int clear_intr_addr;
 } pc2_private_t;
 
 // interfaces
@@ -45,7 +47,6 @@ void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
 // interrupt clear register address
 static const int pc2a_clear_intr_iobase = 0x2f0;
-static const int pc2a_clear_intr_iosize = 8;
 #define CLEAR_INTR_REG(irq)	(pc2a_clear_intr_iobase + (irq))
 
 #endif	// _PC2_H

@@ -186,10 +186,6 @@ struct file_operations ib_fops =
 
 int ibmajor = IBMAJOR;   /* major number for dynamic configuration */
 
-unsigned long ibbase = IBBASE;
-unsigned int ibirq = IBIRQ;
-unsigned int ibdma = IBDMA;
-
 gpib_device_t *device_array[MAX_NUM_GPIB_DEVICES] = {NULL};
 
 LIST_HEAD(registered_drivers);
@@ -235,6 +231,3 @@ void cleanup_module(void)
 
 EXPORT_SYMBOL(gpib_register_driver);
 EXPORT_SYMBOL(gpib_unregister_driver);
-EXPORT_SYMBOL(ibbase);
-EXPORT_SYMBOL(ibirq);
-EXPORT_SYMBOL(ibdma);

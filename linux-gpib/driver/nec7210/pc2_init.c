@@ -183,29 +183,29 @@ int pc2_attach(gpib_device_t *device)
 	nec_priv->read_byte = ioport_read_byte;
 	nec_priv->write_byte = ioport_write_byte;
 
-	if(request_region(ibbase, pc2_iosize, "pc2"));
+	if(request_region(device->ibbase, pc2_iosize, "pc2"));
 	{
 		printk("gpib: ioports are already in use");
 		return -1;
 	}
-	nec_priv->iobase = ibbase;
+	nec_priv->iobase = device->ibbase;
 
 	// install interrupt handler
-	if( request_irq(ibirq, pc2_interrupt, isr_flags, "pc2", device))
+	if( request_irq(device->ibirq, pc2_interrupt, isr_flags, "pc2", device))
 	{
-		printk("gpib: can't request IRQ %d\n", ibirq);
+		printk("gpib: can't request IRQ %d\n", device->ibirq);
 		return -1;
 	}
-	pc2_priv->irq = ibirq;
+	pc2_priv->irq = device->ibirq;
 
 	// request isa dma channel
 #if DMAOP
-	if( request_dma( ibdma, "pc2" ) )
+	if( request_dma( device->ibdma, "pc2" ) )
 	{
-		printk("gpib: can't request DMA %d\n",ibdma );
+		printk("gpib: can't request DMA %d\n", device->ibdma);
 		return -1;
 	}
-	nec_priv->dma_channel = ibdma;
+	nec_priv->dma_channel = device->ibdma;
 #endif
 	nec7210_board_reset(nec_priv);
 
@@ -263,7 +263,7 @@ int pc2a_attach(gpib_device_t *device)
 	nec_priv->read_byte = ioport_read_byte;
 	nec_priv->write_byte = ioport_write_byte;
 
-	switch( ibbase ){
+	switch( device->ibbase ){
 
 		case 0x02e1:
 		case 0x22e1:
@@ -271,12 +271,12 @@ int pc2a_attach(gpib_device_t *device)
 		case 0x62e1:
 			break;
 		default:
-			printk("PCIIa base range invalid, must be one of [0246]2e1 is %lx \n", ibbase);
+			printk("PCIIa base range invalid, must be one of [0246]2e1 is %lx \n", device->ibbase);
 			return -1;
 			break;
 	}
 
-	if( ibirq < 2 || ibirq > 7 )
+	if(device->ibirq < 2 || device->ibirq > 7 )
 	{
 		printk("Illegal Interrupt Level \n");
 		return -1;
@@ -285,10 +285,10 @@ int pc2a_attach(gpib_device_t *device)
 	err = 0;
 	for(i = 0; i < nec7210_num_registers; i++)
 	{
-		if(check_region(ibbase + i * pc2a_reg_offset, 1))
+		if(check_region(device->ibbase + i * pc2a_reg_offset, 1))
 			err++;
 	}
-	if(check_region(pc2a_clear_intr_iobase, pc2a_clear_intr_iosize))
+	if(check_region(pc2a_clear_intr_iobase + device->ibirq, 1))
 	{
 		err++;
 	}
@@ -299,25 +299,26 @@ int pc2a_attach(gpib_device_t *device)
 	}
 	for(i = 0; i < nec7210_num_registers; i++)
 	{
-		request_region(ibbase + i * pc2a_reg_offset, 1, "pc2a");
+		request_region(device->ibbase + i * pc2a_reg_offset, 1, "pc2a");
 	}
-	request_region(pc2a_clear_intr_iobase, pc2a_clear_intr_iosize, "pc2a");
-	nec_priv->iobase = ibbase;
+	nec_priv->iobase = device->ibbase;
+	request_region(pc2a_clear_intr_iobase + device->ibirq, 1, "pc2a");
+	pc2_priv->clear_intr_addr = pc2a_clear_intr_iobase + device->ibirq;
 
-	if(request_irq(ibirq, pc2a_interrupt, isr_flags, "pc2a", device))
+	if(request_irq(device->ibirq, pc2a_interrupt, isr_flags, "pc2a", device))
 	{
-		printk("gpib: can't request IRQ %d\n", ibirq);
+		printk("gpib: can't request IRQ %d\n", device->ibirq);
 		return -1;
 	}
-	pc2_priv->irq = ibirq;
+	pc2_priv->irq = device->ibirq;
 	// request isa dma channel
 #if DMAOP
-	if(request_dma(ibdma, "pc2a"))
+	if(request_dma(device->ibdma, "pc2a"))
 	{
-		printk("gpib: can't request DMA %d\n",ibdma );
+		printk("gpib: can't request DMA %d\n", device->ibdma );
 		return -1;
 	}
-	nec_priv->dma_channel = ibdma;
+	nec_priv->dma_channel = device->ibdma;
 #endif
 	nec7210_board_reset(nec_priv);
 
@@ -358,8 +359,9 @@ void pc2a_detach(gpib_device_t *device)
 			nec7210_board_reset(nec_priv);
 			for(i = 0; i < nec7210_num_registers; i++)
 				release_region(nec_priv->iobase + i * pc2a_reg_offset, 1);
-			release_region(pc2a_clear_intr_iobase, pc2a_clear_intr_iosize);
 		}
+		if(pc2_priv->clear_intr_addr)
+			release_region(pc2_priv->clear_intr_addr, 1);
 	}
 	free_private(device);
 }
