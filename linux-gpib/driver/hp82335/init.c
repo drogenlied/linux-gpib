@@ -3,7 +3,7 @@
 #include <board.h>
 
 
-uint16      ibbase = IBBASE;	/* base addr of GPIB interface registers  */
+unsigned int      ibbase = IBBASE;	/* base addr of GPIB interface registers  */
 uint8       ibirq  = IBIRQ;	/* interrupt request line for GPIB (1-7)  */
 uint8       ibdma  = IBDMA;     /* DMA channel                            */
 
@@ -29,9 +29,9 @@ IBLCL int bdonl(int v)
 
 #if defined(ZIATECH)
 	ib = (struct ibregs *) ( ibbase );          /* setting base address */
-	printk("Ziatech: set base to 0x%x \n ",ib);
-	printk("Ziatech: isr1 = 0x%x \n ",&IB->isr1);
-	printk("Ziatech: adswr= 0x%x \n ",&IB->adswr);
+	printk("Ziatech: set base to 0x%p \n ",ib);
+	printk("Ziatech: isr1 = 0x%p \n ",&IB->isr1);
+	printk("Ziatech: adswr= 0x%p \n ",&IB->adswr);
 #endif
 #if defined(HP82335)
         switch( ibbase ){
@@ -55,7 +55,7 @@ IBLCL int bdonl(int v)
 
              break;
 	   default:
-	     printk("hp82335 base range 0x%lx invalid, see Hardware Manual\n",ibbase);
+	     printk("hp82335 base range 0x%x invalid, see Hardware Manual\n",ibbase);
              DBGout(); return(0);
            break;
 	}

@@ -2,16 +2,14 @@
 # Makefile for directory driver/atgpib
 #
 
-.SILENT:
-
-ROOT=../..
+include $(ROOT)/util/.config
 
 SRCS =  adjcount.c cmd.c dma.c init.c lines.c read.c util.c \
-	wait.c write.c aux.c io.c
+	wait.c write.c aux.c 
 OBJS =  $(SRCS:.c=.o)
 
-INCLUDES = -I/usr/src/linux/include  -I. -I../include -I../../include
-CFLAGS = $(INCLUDES) -D__KERNEL__ -DLINUX -O6 -m486 $(OPTIONS) -Wall -DMODULE -DMODULE -DMODVERSIONS -include /usr/src/linux/include/linux/modversions.h
+INCLUDES = -I$(LINUXDIR)/include  -I. -I../include -I../../include
+CFLAGS = $(INCLUDES) -D__KERNEL__ -DLINUX -O2 -m486 $(OPTIONS) -Wall -DMODULE 
 
 
 

@@ -8,7 +8,7 @@ extern uint8 ibirq;
  */
 IBLCL void bdwait(unsigned int mask)
 {
-	uint8 s1, s2,  f, imr2mask;
+	uint8 s1, s2 = 0, imr2mask = 0;
 
 	DBGin("bdwait");
 
@@ -83,7 +83,7 @@ DBGout();
  *
  */
 
-IBLCL bdWaitOut(void)
+IBLCL void bdWaitOut(void)
 {
 DBGin("bdWaitOut");
 while (!((GPIBin(isr0) & HR_BO))  && NotTimedOut());
@@ -95,7 +95,7 @@ DBGout();
  *
  */
 
-IBLCL bdWaitATN(void)
+IBLCL void bdWaitATN(void)
 {
 DBGin("bdWaitATN");
 while (!((GPIBin(adsr) & HR_ATN)) && NotTimedOut());

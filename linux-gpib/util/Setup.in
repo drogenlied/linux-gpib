@@ -115,14 +115,14 @@ set_svar BOARD_TYPE $REPLY
          case $BOARD_TYPE in 
 	
 	       atgpib) echo "#define NIAT " >>../driver/include/gpib_board.h 
-         	       ln -s ../driver/atgpib ../driver/board
+         	       ln -s ./atgpib ../driver/board
 		       IBBASE=0x2c0
 		       IBIRQ=11
 		       IBDMA=7
                        dmasupport=on
 		       ;;
 	       pcII) echo "#define NIPCII " >>../driver/include/gpib_board.h
-         	       ln -s ../driver/pcIIa ../driver/board
+         	       ln -s ./pcIIa ../driver/board
 		       IBBASE=0x2b8
 		       IBIRQ=5
 		       IBDMA=1
@@ -130,7 +130,7 @@ set_svar BOARD_TYPE $REPLY
 
 	       pcIIa|ibm) echo "#define NIPCIIa " >>../driver/include/gpib_board.h 
                       echo "#define NIPCII " >>../driver/include/gpib_board.h 
-         	       ln -s ../driver/pcIIa ../driver/board
+         	       ln -s ./pcIIa ../driver/board
 		       IBBASE=0x02e1
 		       IBIRQ=5
 		       IBDMA=1
@@ -138,7 +138,7 @@ set_svar BOARD_TYPE $REPLY
                        ;;
 
 	       hp82335) echo "#define HP82335 " >>../driver/include/gpib_board.h 
-         	       ln -s ../driver/hp82335 ../driver/board
+         	       ln -s ./hp82335 ../driver/board
                         IBBASE=0xDC000
 		        IBIRQ=3
 		        IBDMA=1
@@ -146,7 +146,7 @@ set_svar BOARD_TYPE $REPLY
                        ;;
 
 	       ziatech) echo "#define ZIATECH " >>../driver/include/gpib_board.h 
-         	       ln -s ../driver/hp82335 ../driver/board
+         	       ln -s ./hp82335 ../driver/board
                         IBBASE=0x210
 		        IBIRQ=3
 		        IBDMA=1
@@ -155,7 +155,7 @@ set_svar BOARD_TYPE $REPLY
 
 	       cbi4882) echo "#define NIPCII " >>../driver/include/gpib_board.h 
 			echo "#define CBI_4882 " >>../driver/include/gpib_board.h 
-         	       ln -s ../driver/cbi4882 ../driver/board
+         	       ln -s ./cbi4882 ../driver/board
                         IBBASE=0x300
 		        IBIRQ=5
 		        IBDMA=1
@@ -165,7 +165,7 @@ set_svar BOARD_TYPE $REPLY
 	       cbi_pcmcia) echo "#define NIPCII " >>../driver/include/gpib_board.h 
 			echo "#define CBI_4882 " >>../driver/include/gpib_board.h 
 			echo "#define CBI_PCMCIA " >>../driver/include/gpib_board.h 
-         	       ln -s ../driver/cbi4882 ../driver/board
+         	       ln -s ./cbi4882 ../driver/board
                         IBBASE=0x200
 		        IBIRQ=5
 		        IBDMA=1
@@ -176,7 +176,7 @@ set_svar BOARD_TYPE $REPLY
 	       cbi_pci) echo "#define NIPCII " >>../driver/include/gpib_board.h 
 			echo "#define CBI_4882 " >>../driver/include/gpib_board.h 
 			echo "#define CBI_PCI " >>../driver/include/gpib_board.h 
-         	       ln -s ../driver/cbi4882 ../driver/board
+         	       ln -s ./cbi4882 ../driver/board
                         IBBASE=0x0
 		        IBIRQ=0
 		        IBDMA=0
@@ -186,7 +186,7 @@ set_svar BOARD_TYPE $REPLY
 
 	       modbus_pci) echo "#define NIPCII " >>../driver/include/gpib_board.h 
 			echo "#define MODBUS_PCI " >>../driver/include/gpib_board.h 
-         	       ln -s ../driver/pcIIa ../driver/board
+         	       ln -s ./pcIIa ../driver/board
                         IBBASE=0x0
 		        IBIRQ=0
 		        IBDMA=0
@@ -197,7 +197,7 @@ set_svar BOARD_TYPE $REPLY
 
               ines_pci) echo "#define NIPCII " >>../driver/include/gpib_board.h
                         echo "#define INES_PCI " >>../driver/include/gpib_board.h
-         	       ln -s ../driver/pcIIa ../driver/board
+         	       ln -s ./pcIIa ../driver/board
                         IBBASE=0x0
                         IBIRQ=0
                         IBDMA=0
@@ -207,7 +207,7 @@ set_svar BOARD_TYPE $REPLY
 
               ines_pcmcia) echo "#define NIPCII " >>../driver/include/gpib_board.h
                         echo "#define INES_PCMCIA " >>../driver/include/gpib_board.h
-         	       ln -s ../driver/pcIIa ../driver/board
+         	       ln -s ./pcIIa ../driver/board
                         IBBASE=0x0
                         IBIRQ=0
                         IBDMA=0

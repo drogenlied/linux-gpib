@@ -2,10 +2,10 @@
 /***** Public Functions ******/
 extern  void bdDMAAdjCnt(ibio_op_t *rwop);
 extern  void bdPIOAdjCnt(ibio_op_t *rwop);
-extern  void bdSendAuxCmd(int cmd);
-extern  void bdSendAuxACmd(int cmd);
+extern  int bdSendAuxCmd(int cmd);
+extern  int bdSendAuxACmd(int cmd);
 extern  void bdcmd(ibio_op_t *cmdop);
-extern  int bdDMAwait(ibio_op_t *rwop, int noWait);
+extern  int bdDMAwait(ibio_op_t *rwop);
 extern  void bdDMAstart(ibio_op_t *rwop);
 extern  int bdDMAstop(ibio_op_t *rwop);
 extern  int bdonl(int v);
@@ -28,4 +28,4 @@ extern  int bdWaitIn(void);
 extern  void bdWaitOut(void);
 extern  void bdWaitATN(void);
 extern  void bdDMAwrt(ibio_op_t *wrtop);
-extern  void bdPIOwrt( ibio_op_t *wrtop);
+extern  void bdPIOwrt(ibio_op_t *wrtop);

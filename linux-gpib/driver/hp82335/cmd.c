@@ -27,7 +27,7 @@ extern  int             myPAD;
 	DBGin("bdcmd");
 	buf = cmdop->io_vbuf;
 	cnt = cmdop->io_cnt;
-	DBGprint(DBG_DATA, ("buf=0x%x cnt=%d  ", buf, cnt));
+	DBGprint(DBG_DATA, ("buf=0x%p cnt=%d  ", buf, cnt));
 
 
 	GPIBout(imr0, 0);
@@ -42,9 +42,9 @@ extern  int             myPAD;
 	DBGprint(DBG_BRANCH, ("begin PIO loop  "));
 	while (ibcnt < cnt) {
 
-          /* the 9914 has no full controller function so adressing itself to 
+          /* the 9914 has no full controller function so adressing itself to
            * talker or listener state must be done by TON or LON commands.
-	   * This may affect the raw bus-control commands, its better to send 
+	   * This may affect the raw bus-control commands, its better to send
            * always an UNT or UNL as first message.
            *
 	   */
@@ -53,7 +53,7 @@ extern  int             myPAD;
 
 	  if( buf[ibcnt] == UNL || buf[ibcnt] == UNT ){
 	    if( GPIBin(adsr) & HR_TA ){
-	      DBGprint(DBG_BRANCH, 
+	      DBGprint(DBG_BRANCH,
 		       ("*** disable talker state "));
 	      GPIBout(auxcr,AUX_TON ); /* enable talker */
 	    } 

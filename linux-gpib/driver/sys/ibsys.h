@@ -48,7 +48,7 @@
 
 
 
-extern uint16      ibbase;	/* base addr of GPIB interface registers  */
+extern unsigned int      ibbase;	/* base addr of GPIB interface registers  */
 extern uint8       ibirq;	/* interrupt request line for GPIB (1-7)  */
 extern uint8       ibdma ;      /* DMA channel                            */
 

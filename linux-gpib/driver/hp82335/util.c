@@ -7,13 +7,12 @@
  */
 IBLCL int bdSRQstat(void)
 {
-	int	result;
+	int	result = 0;
 
 	DBGin("bdSRQstat");
 #if 0
 	result = (GPIBin(isr3) & HR_SRQI_CIC) ? SRQI : 0;
-
-/*@@*/
+//XXX
 	result = (GPIBin(isr2) & HR_SRQI) ? SRQI : 0;
         /*result=0;*/       
          /* quick and dirty hack */
@@ -86,6 +85,7 @@ IBLCL uint8 bdCheckEOI(void)
 #if 0
   return ( GPIBin(adr1) & HR_EOI );
 #endif
+	return 0;
 }
 
 /* -- bdSetEOS(eos)

@@ -12,7 +12,7 @@
  *
  */
 
-IBLCL int bdSendAuxCmd(int cmd)
+IBLCL void bdSendAuxCmd(int cmd)
 {
   DBGin("bdSendAuxCmd");
   switch(cmd){
@@ -84,7 +84,7 @@ IBLCL int bdSendAuxCmd(int cmd)
  *
  */
 
-IBLCL int bdSendAuxACmd(int cmd)
+IBLCL void bdSendAuxACmd(int cmd)
 {
   DBGin("bdSendAuxACmd not implemented");
 #if 0

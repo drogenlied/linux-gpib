@@ -129,7 +129,7 @@ IBLCL void bdPIOread(ibio_op_t *rdop)
 
 	buf = rdop->io_vbuf;
 	cnt = rdop->io_cnt;
-	DBGprint(DBG_DATA, ("buf=0x%x cnt=%d  ", buf, cnt));
+	DBGprint(DBG_DATA, ("buf=0x%p cnt=%d  ", buf, cnt));
 
 	eos = bdGetEOS();
 	DBGprint(DBG_DATA, ("eos=0x%x",eos));

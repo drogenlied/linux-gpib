@@ -10,7 +10,7 @@
 
 #if DMAOP
 
-IBLCL bdDMAwrt(ibio_op_t *wrtop)
+IBLCL void bdDMAwrt(ibio_op_t *wrtop)
 { 
 
 #if 0
@@ -93,7 +93,7 @@ IBLCL bdDMAwrt(ibio_op_t *wrtop)
  *  BDWRT (PIO)
  *  This function performs a single Programmed I/O write operation.
  */
-IBLCL bdPIOwrt(ibio_op_t *wrtop)
+IBLCL void bdPIOwrt(ibio_op_t *wrtop)
 { 
 	faddr_t		buf;
 	unsigned	cnt;
@@ -109,7 +109,7 @@ extern  int eosmodes;
 	buf = wrtop->io_vbuf;
 	cnt = wrtop->io_cnt;
 
-	DBGprint(DBG_DATA, ("buf=0x%x cnt=%d  ", buf, cnt));
+	DBGprint(DBG_DATA, ("buf=0x%p cnt=%d  ", buf, cnt));
 
 	GPIBout(imr0, 0);
 	GPIBout(imr1, 0);		/* clear any previously arrived bits */
