@@ -57,9 +57,8 @@ all: $(EXP_INC) libgpib.so
 libgpib.so:   $(OBJS) 
 	ld --version-script=gpib_version_script -shared -lpthread $(OBJS) -o libgpib.so	
 
-ibConfLex.c:  ibConfLex.l ibConfYacc.h 
+ibConfLex.c: ibConfLex.l ibConfYacc.h 
 	flex -Pgpib_yy -o$@ $<
-	
 
 ibConfYacc.c + ibConfYacc.h: ibConfYacc.y
 	bison -d -y -p gpib_yy -o ibConfYacc.c ibConfYacc.y
