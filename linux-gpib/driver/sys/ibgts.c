@@ -26,15 +26,20 @@
 int ibgts( gpib_board_t *board )
 {
 	int status = ibstatus(board);
+	int retval;
 
 	if( ( status & CIC ) == 0 )
 	{
-		printk( "gpib: not CIC during ibgts\n" );
+		printk( "gpib: not CIC during ibgts()\n" );
 		return -1;
 	}
 
-	board->interface->go_to_standby( board );                    /* go to standby */
-	
-	return 0;
+	retval = board->interface->go_to_standby( board );                    /* go to standby */
+	if( retval < 0 )
+		printk( "gpib: error while going to standby\n");
+
+	board->interface->update_status( board );
+
+	return retval;
 }
 

@@ -163,6 +163,8 @@ unsigned int update_status_nolock( gpib_board_t *board, tms9914_private_t *priv 
 	}else
 		clear_bit( LACS_NUM, &board->status );
 
+//	GPIB_DPRINTK( "status 0x%x, state 0x%x\n", board->status, priv->state );
+	
 	return board->status;
 }
 

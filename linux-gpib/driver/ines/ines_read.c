@@ -78,11 +78,14 @@ ssize_t ines_accel_read( gpib_board_t *board, uint8_t *buffer,
 
 	*end = 0;
 
+	/* release rfd holdoff */
+	nec7210_set_auxa_bits( nec_priv, HR_HANDSHAKE_MASK, 0 );
+	nec7210_set_auxa_bits( nec_priv, HR_HLDA, 1 );
+	outb( AUX_FH, nec_priv->iobase + AUXMR );
+
 	// holdoff on END
 	nec7210_set_auxa_bits( nec_priv, HR_HANDSHAKE_MASK, 0 );
 	nec7210_set_auxa_bits( nec_priv, HR_HLDE, 1 );
-	/* release rfd holdoff */
-	outb( AUX_FH, nec_priv->iobase + AUXMR );
 
 	retval = pio_read( board, ines_priv, buffer, length );
 	if( retval < 0 )

@@ -68,7 +68,7 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 	// record address status change in status
 	if(status2 & HR_ADSC)
 	{
-		update_status_nolock( board, priv );
+//		update_status_nolock( board, priv );
 	}
 
 	// record reception of END
@@ -157,8 +157,9 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 
 	if( ( status1 & priv->reg_bits[ IMR1 ] ) || ( status2 & priv->reg_bits[ IMR2 ] ) )
 	{
-		GPIB_DPRINTK( "isr1 0x%x, imr1 0x%x, isr2 0x%x, imr2 0x%x, status 0x%x\n",
-			status1, priv->reg_bits[ IMR1 ], status2, priv->reg_bits[ IMR2 ], board->status);
+		GPIB_DPRINTK( "isr1 0x%x, imr1 0x%x, isr2 0x%x, imr2 0x%x\n",
+			status1, priv->reg_bits[ IMR1 ], status2, priv->reg_bits[ IMR2 ] );
+		update_status_nolock( board, priv );
 		wake_up_interruptible( &board->wait ); /* wake up sleeping process */
 	}
 }

@@ -135,6 +135,8 @@ unsigned int update_status_nolock( gpib_board_t *board, nec7210_private_t *priv 
 		set_bit(ATN_NUM, &board->status);
 	}
 
+//	GPIB_DPRINTK( "status 0x%x, state 0x%x\n", board->status, priv->state );
+
 	/* we rely on the interrupt handler to set the
 	 * rest of the status bits */
 

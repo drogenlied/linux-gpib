@@ -32,13 +32,15 @@ int ibcac( gpib_board_t *board, int sync )
 
 	if( ( status & CIC ) == 0 )
 	{
-		printk("gpib: not CIC during ibcac\n");
+		printk("gpib: not CIC during ibcac()\n");
 		return -1;
 	}
 
 	retval = board->interface->take_control( board, sync );
-	if( retval )
+	if( retval < 0 )
 		printk("gpib: error while becoming active controller\n");
+
+	board->interface->update_status( board );
 
 	return retval;
 }

@@ -37,9 +37,6 @@ int tms9914_take_control(gpib_board_t *board, tms9914_private_t *priv, int syncr
 			break;
 		udelay(1);
 	}
-
-	tms9914_update_status( board, priv );
-
 	if( i == timeout )
 	{
 		printk(" tms9914: error waiting for ATN\n");
@@ -62,9 +59,6 @@ int tms9914_go_to_standby(gpib_board_t *board, tms9914_private_t *priv)
 			break;
 		udelay(1);
 	}
-
-	tms9914_update_status( board, priv );
-
 	if(i == timeout)
 	{
 		printk("error waiting for NATN\n");
@@ -87,8 +81,10 @@ void tms9914_interface_clear(gpib_board_t *board, tms9914_private_t *priv, int a
 void tms9914_remote_enable(gpib_board_t *board, tms9914_private_t *priv, int enable)
 {
 	if(enable)
+	{
 		write_byte(priv, AUX_SRE | AUX_CS, AUXCR);
-	else
+		set_bit(CIC_NUM, &board->status);
+	}else
 		write_byte(priv, AUX_SRE, AUXCR);
 }
 
@@ -98,7 +94,10 @@ void tms9914_request_system_control( gpib_board_t *board, tms9914_private_t *pri
 	if( request_control )
 		write_byte(priv, AUX_RQC, AUXCR);
 	else
+	{
+		clear_bit(CIC_NUM, &board->status);
 		write_byte(priv, AUX_RLC, AUXCR);
+	}
 }
 
 EXPORT_SYMBOL( tms9914_request_system_control );

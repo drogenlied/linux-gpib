@@ -44,7 +44,7 @@ void tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv,
 	// record address status change
 	if(status0 & HR_RLC || status0 & HR_MAC)
 	{
-		update_status_nolock( board, priv );
+//		update_status_nolock( board, priv );
 	}
 
 	// record reception of END
@@ -84,7 +84,7 @@ void tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv,
 	// have been addressed (with secondary addressing disabled)
 	if(status1 & HR_MA)
 	{
-		update_status_nolock( board, priv );
+//		update_status_nolock( board, priv );
 		// clear dac holdoff
 		write_byte(priv, AUX_VAL, AUXCR);
 	}
@@ -105,6 +105,7 @@ void tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv,
 	if( status1 & HR_IFC )
 	{
 		push_gpib_event( &board->event_queue, EventIFC );
+		clear_bit(CIC_NUM, &board->status);
 	}
 
 	if( status1 & HR_GET )
@@ -147,15 +148,16 @@ void tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv,
 			write_byte(priv, AUX_VAL, AUXCR);
 		}else
 			write_byte(priv, AUX_INVAL, AUXCR);
-		update_status_nolock( board, priv );
+//		update_status_nolock( board, priv );
 	}
 
 	spin_unlock(&board->spinlock);
 
 	if( ( status0 & priv->imr0_bits ) || ( status1 & priv->imr1_bits ) )
 	{
-		GPIB_DPRINTK("isr0 0x%x, imr0 0x%x, isr1 0x%x, imr1 0x%x, status 0x%x\n",
-			status0, priv->imr0_bits, status1, priv->imr1_bits, board->status);
+		GPIB_DPRINTK("isr0 0x%x, imr0 0x%x, isr1 0x%x, imr1 0x%x\n",
+			status0, priv->imr0_bits, status1, priv->imr1_bits );
+		update_status_nolock( board, priv );
 		wake_up_interruptible( &board->wait );
 	}
 }

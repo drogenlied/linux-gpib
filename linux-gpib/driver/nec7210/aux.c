@@ -42,9 +42,6 @@ int nec7210_take_control(gpib_board_t *board, nec7210_private_t *priv, int syncr
 		}
 		udelay(1);
 	}
-
-	nec7210_update_status( board, priv );
-
 	if( i == timeout )
 		retval = -ETIMEDOUT;
 
@@ -67,9 +64,6 @@ int nec7210_go_to_standby(gpib_board_t *board, nec7210_private_t *priv)
 			break;
 		udelay(1);
 	}
-
-	nec7210_update_status( board, priv );
-
 	if(i == timeout)
 	{
 		printk("error waiting for NATN\n");

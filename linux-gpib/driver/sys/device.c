@@ -104,14 +104,14 @@ static int cleanup_serial_poll( gpib_board_t *board, unsigned int usec_timeout )
 static int serial_poll_single( gpib_board_t *board, unsigned int pad, int sad,
 	unsigned int usec_timeout, uint8_t *result )
 {
-	int retval;
+	int retval, cleanup_retval;
 
 	retval = setup_serial_poll( board, usec_timeout );
 	if( retval < 0 ) return retval;
 	retval = read_serial_poll_byte( board, pad, sad, usec_timeout, result );
+	cleanup_retval = cleanup_serial_poll( board, usec_timeout );
 	if( retval < 0 ) return retval;
-	retval = cleanup_serial_poll( board, usec_timeout );
-	if( retval < 0 ) return retval;
+	if( cleanup_retval < 0 ) return retval;
 
 	return 0;
 }
