@@ -59,9 +59,13 @@ static char *version =
 
 /* Parameters that can be set with 'insmod' */
 
-/* Bit map of interrupts to choose from */
-static u_long irq_mask = 0xffff;
+/* Newer, simpler way of listing specific interrupts */
+static int irq_list[4] = { -1 };
+MODULE_PARM(irq_list, "1-4i");
 
+/* The old way: bit map of interrupts to choose from */
+static int irq_mask = 0xffff;
+MODULE_PARM(irq_mask, "i");
 
 static int get_tuple(int fn, client_handle_t handle, tuple_t *tuple,
 	cisparse_t *parse)
@@ -174,7 +178,8 @@ static dev_link_t *gpib_attach(void)
 	dev_link_t *link;
 	local_info_t *local;
 	int ret;
-
+	int i;
+	
 #ifdef PCMCIA_DEBUG
 	if (pc_debug)
 		printk(KERN_DEBUG "gpib_attach()\n");
@@ -196,7 +201,11 @@ static dev_link_t *gpib_attach(void)
 	/* Interrupt setup */
 	link->irq.Attributes = IRQ_TYPE_EXCLUSIVE;
 	link->irq.IRQInfo1 = IRQ_INFO2_VALID|IRQ_LEVEL_ID;
-	link->irq.IRQInfo2 = irq_mask;
+	if(irq_list[0] == -1)
+		link->irq.IRQInfo2 = irq_mask;
+	else
+		for(i = 0; i < 4; i++)
+			link->irq.IRQInfo2 |= 1 << irq_list[i];
 	link->irq.Handler = NULL;
 
 	/* General socket configuration */
