@@ -139,16 +139,32 @@ static int ni_usb_parse_status_block(const uint8_t *buffer, struct ni_usb_status
 	return 8;
 };
 
+static void ni_usb_dump_raw_block(const uint8_t *raw_data, int length)
+{
+	int i;
+	
+	printk("%s:", __FUNCTION__);
+	for(i = 0; i < length; i++)
+	{
+		if(i % 8 == 0)
+			printk("\n"); 
+		printk(" 0x%2x", raw_data[i]);
+	}
+	printk("\n");
+}
+
 // this should work when reading from the tnt4882, but the format is different when reading
 // from mystery device #3	
 int ni_usb_parse_register_read_block(const uint8_t *raw_data, unsigned int *results, int num_results)
 {
 	int i = 0;
 	int j;
+	int unexpected = 0;
 	
 	if(raw_data[i++] != NIUSB_REGISTER_READ_DATA_START_ID)
 	{
 		printk("%s: %s: parse error: wrong start id\n", __FILE__, __FUNCTION__);
+		unexpected = 1;
 	}
 	for(j = 0; j < num_results; j++)
 	{
@@ -156,19 +172,27 @@ int ni_usb_parse_register_read_block(const uint8_t *raw_data, unsigned int *resu
 	}
 	while(i % 4)
 	{
+#if 0
+// I sometimes get 0x10 for raw_data[3], I don't know what (if anything) it means	
 		if(raw_data[i++] != 0)
 		{
 			printk("%s: %s: unexpected data: raw_data[%i]=%i, expected 0\n", 
 				__FILE__, __FUNCTION__, i - 1, (int)raw_data[i - 1]);
+			unexpected = 1;
 		}
+#else
+		i++;
+#endif
 	}
 	if(raw_data[i++] != NIUSB_REGISTER_READ_DATA_END_ID)
 	{
 		printk("%s: %s: parse error: wrong end id\n", __FILE__, __FUNCTION__);
+		unexpected = 1;
 	}
 	if(raw_data[i++] != num_results)
 	{
 		printk("%s: %s: parse error: wrong N\n", __FILE__, __FUNCTION__);
+		unexpected = 1;
 	}
 	while(i % 4)
 	{
@@ -176,8 +200,11 @@ int ni_usb_parse_register_read_block(const uint8_t *raw_data, unsigned int *resu
 		{
 			printk("%s: %s: unexpected data: raw_data[%i]=%i, expected 0\n", 
 				__FILE__, __FUNCTION__, i - 1, (int)raw_data[i - 1]);
+			unexpected = 1;
 		}
 	}
+	if(unexpected)
+		ni_usb_dump_raw_block(raw_data, i);
 	return i;
 }
 
@@ -208,7 +235,8 @@ int parse_board_ibrd_readback(const uint8_t *raw_data, struct ni_usb_status_bloc
 	int k;
 	unsigned int adr1_bits;
 	struct ni_usb_status_block register_write_status;
-		
+	int unexpected = 0;
+	
 	while(raw_data[i] == NIUSB_IBRD_DATA_ID)
 	{
 		if(parsed_data_length < j + ibrd_data_block_length)
@@ -229,30 +257,37 @@ int parse_board_ibrd_readback(const uint8_t *raw_data, struct ni_usb_status_bloc
 		return -EIO;
 	}
 	adr1_bits = raw_data[i++];
+	i++;	// this skips over element which is set to (bytes read) modulo 15
 	for(k = 0; k < 2; k++)
 		if(raw_data[i++] != 0)
 		{
 			printk("%s: %s: unexpected data: raw_data[%i]=%i, expected 0\n", 
 				__FILE__, __FUNCTION__, i - 1, (int)raw_data[i - 1]);
+			unexpected = 1;
 		}
 	i += ni_usb_parse_status_block(&raw_data[i], &register_write_status);
 	if(register_write_status.id != NIUSB_REG_WRITE_ID)
 	{
 		printk("%s: %s: unexpected data: register write status id=0x%x, expected 0x%x\n", 
 			__FILE__, __FUNCTION__, register_write_status.id, NIUSB_REG_WRITE_ID);
+		unexpected = 1;
 	}
 	if(raw_data[i++] != 2)
 	{
 		printk("%s: %s: unexpected data: register write count=%i, expected 2\n", 
 			__FILE__, __FUNCTION__, (int)raw_data[i - 1]);
+		unexpected = 1;
 	}
 	for(k = 0; k < 3; k++)
 		if(raw_data[i++] != 0)
 		{
 			printk("%s: %s: unexpected data: raw_data[%i]=%i, expected 0\n", 
 				__FILE__, __FUNCTION__, i - 1, (int)raw_data[i - 1]);
+			unexpected = 1;
 		}
 	i += ni_usb_parse_termination_block(&raw_data[i]);
+	if(unexpected)
+		ni_usb_dump_raw_block(raw_data, i);
 	return i;
 }
 
@@ -401,7 +436,11 @@ ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *en
 		kfree(in_data);
 		return -EIO;
 	}
-	parse_board_ibrd_readback(in_data, &status, buffer, length);
+	retval = parse_board_ibrd_readback(in_data, &status, buffer, length);
+	if(retval != bytes_read)
+	{
+		printk("%s: %s: parsed %i bytes out of %i\n", retval, bytes_read);
+	}
 	kfree(in_data);
 	switch(status.error_code)
 	{
@@ -852,7 +891,6 @@ void ni_usb_primary_address(gpib_board_t *board, unsigned int address)
 		return;// retval;
 	}
 	ni_usb_soft_update_status(board, ibsta, 0);
-	printk("%s: debug: primary address set to %i\n", __FILE__, address);
 	return;// 0;
 }
 
@@ -1409,7 +1447,7 @@ static void ni_usb_cleanup_urbs(gpib_board_t *board)
 	ni_priv = board->private_data;
 	if(ni_priv && ni_priv->interrupt_urb)
 	{
-		usb_unlink_urb(ni_priv->interrupt_urb);
+		usb_kill_urb(ni_priv->interrupt_urb);
 	}
 };
 
@@ -1511,7 +1549,7 @@ static int ni_usb_driver_probe(struct usb_interface *interface,
 		{
 			ni_usb_driver_interfaces[i] = interface;
 			usb_set_intfdata(interface, NULL);
-			usb_get_intf(interface);
+			usb_get_dev(interface_to_usbdev(interface));
 			//printk("set bus interface %i to address 0x%p\n", i, interface);	
 			break;
 		}
@@ -1547,7 +1585,7 @@ static void ni_usb_driver_disconnect(struct usb_interface *interface)
 				up(&ni_priv->bulk_transfer_lock);
 			}	
 			ni_usb_driver_interfaces[i] = NULL;
-			usb_put_intf(interface);
+			usb_put_dev(interface_to_usbdev(interface));
 			break;
 		}
 	}
