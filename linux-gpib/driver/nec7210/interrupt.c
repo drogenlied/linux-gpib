@@ -201,7 +201,7 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 		printk("gpib output error\n");
 	}
 
-printk("isr1 0x%x, isr2 0x%x, status 0x%x\n", status1, status2, driver->status);
+//printk("isr1 0x%x, isr2 0x%x, status 0x%x\n", status1, status2, driver->status);
 
 }
 
