@@ -106,8 +106,7 @@ void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp);
 // utility functions
 int tnt4882_allocate_private(gpib_board_t *board);
 void tnt4882_free_private(gpib_board_t *board);
-void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board,
-	ni_chipset_t chipset );
+void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board );
 
 // register offset for nec7210 compatible registers
 static const int atgpib_reg_offset = 2;

@@ -404,12 +404,9 @@ void tnt4882_free_private(gpib_board_t *board)
 	}
 }
 
-void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board,
-	ni_chipset_t chipset )
+void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 {
 	nec7210_private_t *nec_priv = &tnt_priv->nec7210_priv;
-
-	tnt_priv->chipset = chipset;
 	
 	/* Turbo488 software reset */
 	tnt_writeb( tnt_priv, SOFT_RESET, CMDR );
@@ -500,6 +497,8 @@ int ni_pci_attach(gpib_board_t *board)
 
 	nec_priv->iobase = mite_iobase(tnt_priv->mite);
 
+	tnt_priv->chipset = TNT4882;
+
 	// get irq
 	if(request_irq(mite_irq(tnt_priv->mite), tnt4882_interrupt, isr_flags, "ni-pci-gpib", board))
 	{
@@ -509,7 +508,7 @@ int ni_pci_attach(gpib_board_t *board)
 	tnt_priv->irq = mite_irq(tnt_priv->mite);
 	printk( "tnt4882: irq %i\n", tnt_priv->irq );
 
-	tnt4882_init( tnt_priv, board, TNT4882 );
+	tnt4882_init( tnt_priv, board );
 
 	return 0;
 }
@@ -608,6 +607,8 @@ int ni_isa_attach_common( gpib_board_t *board, ni_chipset_t chipset )
 	}
 	nec_priv->iobase = board->ibbase;
 
+	tnt_priv->chipset = chipset;
+
 	// get irq
 	if(request_irq(board->ibirq, tnt4882_interrupt, isr_flags, "atgpib", board))
 	{
@@ -616,7 +617,7 @@ int ni_isa_attach_common( gpib_board_t *board, ni_chipset_t chipset )
 	}
 	tnt_priv->irq = board->ibirq;
 
-	tnt4882_init( tnt_priv, board, chipset );
+	tnt4882_init( tnt_priv, board );
 
 	return 0;
 }

@@ -737,6 +737,8 @@ int ni_pcmcia_attach(gpib_board_t *board)
 	GPIB_DPRINTK( "ioport1 window attributes: 0x%x\n", dev_list->io.Attributes1 );
 	nec_priv->iobase = dev_list->io.BasePort1;
 
+	tnt_priv->chipset = TNT4882;
+
 	// get irq
 	if( request_irq( dev_list->irq.AssignedIRQ, tnt4882_interrupt, isr_flags, "tnt4882", board))
 	{
@@ -745,7 +747,7 @@ int ni_pcmcia_attach(gpib_board_t *board)
 	}
 	tnt_priv->irq = dev_list->irq.AssignedIRQ;
 
-	tnt4882_init( tnt_priv, board, TNT4882 );
+	tnt4882_init( tnt_priv, board );
 
 	return 0;
 }

@@ -57,7 +57,6 @@ unsigned int tnt4882_t1_delay( gpib_board_t *board, unsigned int nano_sec )
 {
 	tnt4882_private_t *tnt_priv = board->private_data;
 	nec7210_private_t *nec_priv = &tnt_priv->nec7210_priv;
-	unsigned long iobase = nec_priv->iobase;
 	unsigned int retval;
 
 	retval = nec7210_t1_delay( board, nec_priv, nano_sec );
