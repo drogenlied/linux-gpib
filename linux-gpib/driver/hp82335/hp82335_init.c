@@ -229,7 +229,7 @@ int hp82335_attach( gpib_board_t *board )
 	}
 	hp_priv->raw_iobase = board->ibbase;
 	tms_priv->iobase = ( unsigned long ) ioremap( board->ibbase, hp82335_iomem_size );
-	printk("hp82335: 0x%x remapped to 0x%lx\n", hp_priv->raw_iobase,
+	printk("hp82335: base address 0x%x remapped to 0x%lx\n", hp_priv->raw_iobase,
 		tms_priv->iobase );
 
 	// get irq
@@ -240,10 +240,11 @@ int hp82335_attach( gpib_board_t *board )
 		return -1;
 	}
 	hp_priv->irq = board->ibirq;
+	printk( "hp82335: IRQ %d\n", board->ibirq );
 
 	tms9914_board_reset(tms_priv);
 
-	write_byte( tms_priv, INTR_ENABLE, HPREG_CCR );
+	writeb( INTR_ENABLE, tms_priv->iobase + HPREG_CCR );
 
 	// enable tms9914 interrupts
 	tms_priv->imr0_bits = HR_MACIE | HR_RLCIE | HR_ENDIE | HR_BOIE | HR_BIIE;
@@ -273,7 +274,7 @@ void hp82335_detach(gpib_board_t *board)
 		}
 		if( tms_priv->iobase )
 		{
-			write_byte( tms_priv, 0, HPREG_CCR );
+			writeb( 0, tms_priv->iobase + HPREG_CCR );
 			tms9914_board_reset( tms_priv );
 			iounmap( ( void * ) tms_priv->iobase );
 		}

@@ -72,6 +72,7 @@ static const int hp82335_rom_size = 0x2000;
 enum hp_read_regs
 {
 	HPREG_CSR = 0x37f8,
+	HPREG_STATUS = 0x3ffc,
 };
 enum hp_write_regs
 {
