@@ -627,8 +627,8 @@ int __init init_ni_gpib_cs(void)
     DEBUG(0, "%s\n", version);
     CardServices(GetCardServicesInfo, &serv);
     if (serv.Revision != CS_RELEASE_CODE) {
-	printk(KERN_NOTICE "ni_gpib_cs: Card Services release "
-	       "does not match!\n");
+	printk( "ni_gpib_cs: Card Services release "
+	       "does not match!  Revision = %i, CS_RELEASE_CODE = %i\n", serv.Revision, CS_RELEASE_CODE );
 	return -EINVAL;
     }
     register_pccard_driver(&dev_info, &ni_gpib_attach, &ni_gpib_detach);
