@@ -145,7 +145,7 @@ int prompt_for_timeout( int ud )
 	int timeout;
 
 	printf( "enter the desired timeout:\n"
-		"(0) none\n"
+		"\t(0) none\n"
 		"\t(1) 10 microsec\n"
 		"\t(2) 30 microsec\n"
 		"\t(3) 100 microsec\n"
@@ -188,7 +188,7 @@ int main(int argc,char **argv)
 	*/
 
 	printf("clearing device..\n");
-	if(ibclr(dev) & ERR)
+	if( (ibclr(dev) & ERR ) && iberr != EARG )
 	{
 		gpiberr("gpib clear error");
 		ibonl(dev, 0);
@@ -210,6 +210,7 @@ int main(int argc,char **argv)
 				break;
 			case GPIB_TIMEOUT:
 				prompt_for_timeout( dev ); 
+				break;
 			case GPIB_WRITE:
 				if(prompt_for_write(dev) < 0)
 				{
