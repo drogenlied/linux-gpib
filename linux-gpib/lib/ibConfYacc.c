@@ -50,7 +50,7 @@
 #include "ibP.h"
 #include <string.h>
 #include <stdlib.h>
-//#include "ibConfYacc.h"
+#include "ibConfYacc.h"
 
 #define YYERROR_VERBOSE
 
@@ -1460,6 +1460,8 @@ yyreturn:
   return yyresult;
 }
 #line 161 "ibConfYacc.y"
+
+
 
 
 void yyerror(char *s)
