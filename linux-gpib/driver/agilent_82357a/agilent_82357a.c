@@ -35,6 +35,7 @@ int agilent_82357a_send_bulk_msg(agilent_82357a_private_t *a_priv, void *data, i
 	int retval;
 	unsigned int out_pipe;
 
+	*actual_data_length = 0;
 	retval = down_interruptible(&a_priv->bulk_transfer_lock);
 	if(retval) return retval;
 	if(a_priv->bus_interface == NULL)
@@ -56,6 +57,7 @@ int agilent_82357a_receive_bulk_msg(agilent_82357a_private_t *a_priv, void *data
 	int retval;
 	unsigned int in_pipe;
 
+	*actual_data_length = 0;
 	retval = down_interruptible(&a_priv->bulk_transfer_lock);
 	if(retval) return retval;
 	if(a_priv->bus_interface == NULL)
@@ -358,7 +360,12 @@ ssize_t agilent_82357a_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 		if(retval < 0) return retval;
 		return -EIO;
 	}
-	memcpy(buffer, in_data, length);
+	if(bytes_read > length + 1)
+	{
+		bytes_read = length + 1;
+		printk("%s: %s: bytes_read > length? truncating", __FILE__, __FUNCTION__);
+	}
+	memcpy(buffer, in_data, bytes_read - 1);
 	//printk("%s: %s: received response:\n", __FILE__, __FUNCTION__);
 	//agilent_82357a_dump_raw_block(in_data, in_data_length);
 	trailing_flags = in_data[bytes_read - 1];
@@ -391,7 +398,7 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 	out_data[i++] = 0; // secondary address when AWF_NO_ADDRESS is not set
 	out_data[i] = AWF_NO_ADDRESS | AWF_NO_FAST_TALKER_FIRST_BYTE;
 	if(send_commands)
-		out_data[i] |= AWF_ATN | AWF_NO_FAST_TALKER;	
+		out_data[i] |= AWF_ATN | AWF_NO_FAST_TALKER;
 	if(send_eoi)
 		out_data[i] |= AWF_SEND_EOI;	
 	++i;
@@ -414,7 +421,7 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 			__FILE__, __FUNCTION__, bytes_written);
 	}else if(retval || bytes_written != i)
 	{
-		printk("%s: agilent_82357a_send_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, bytes_written, i);		
+		printk("%s: agilent_82357a_send_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, bytes_written, i);
 		return -EIO;
 	}
 	//printk("%s: waiting for write complete\n", __FUNCTION__);
