@@ -123,6 +123,7 @@ struct gpib_interface_struct
 typedef struct
 {
 	struct list_head event_head;
+	spinlock_t lock;
 	unsigned int num_events;
 	unsigned dropped_event : 1;
 } gpib_event_queue_t;
@@ -132,6 +133,7 @@ static inline void init_event_queue( gpib_event_queue_t *queue )
 	INIT_LIST_HEAD( &queue->event_head );
 	queue->num_events = 0;
 	queue->dropped_event = 0;
+	spin_lock_init( &queue->lock );
 }
 
 /* One gpib_board_t is allocated for each physical board in the computer.

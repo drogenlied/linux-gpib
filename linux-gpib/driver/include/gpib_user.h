@@ -19,40 +19,46 @@
 #ifndef _GPIB_USER_H
 #define _GPIB_USER_H
 
-/* IBSTA status bits (returned by all functions) */
+enum ibsta_bit_numbers
+{
+	DCAS_NUM = 0,
+	DTAS_NUM = 1,
+	LACS_NUM = 2,
+	TACS_NUM = 3,
+	ATN_NUM = 4,
+	CIC_NUM = 5,
+	REM_NUM = 6,
+	LOK_NUM = 7,
+	CMPL_NUM = 8,
+	EVENT_NUM = 9,
+	SPOLL_NUM = 10,
+	RQS_NUM = 11,
+	SRQI_NUM = 12,
+	END_NUM = 13,
+	TIMO_NUM = 14,
+	ERR_NUM = 15
+};
 
-#define ERR_NUM	15
-#define ERR	 (1 << ERR_NUM)	/* Function call terminated on error */
-#define TIMO_NUM	14
-#define TIMO	 (1 << TIMO_NUM)	/* Time limit on I/O or wait function exceeded */
-#define END_NUM	13
-#define END	 (1 << END_NUM)	/* EOI or EOS encountered */
-#define SRQI_NUM	12
-#define SRQI	 (1 << SRQI_NUM)	/* SRQ is asserted */
-#define RQS_NUM	11
-#define RQS	 (1 <<  RQS_NUM)	/* Device requesting service  */
-#define SPOLL_NUM	10
-#define SPOLL      (1 << SPOLL_NUM)      /* board serial polled by busmaster */
-#define EVENT_NUM	9
-#define EVENT      (1 << EVENT_NUM)      /* DCAS, DTAS, or IFC has occurred */
-#define CMPL_NUM	8
-#define CMPL	 (1 <<  CMPL_NUM)	/* I/O is complete  */
-#define LOK_NUM	7
-#define LOK	(1 << LOK_NUM)	// lockout state
-#define REM_NUM	6
-#define REM	(1 << REM_NUM)	// remote state
-#define CIC_NUM	5
-#define CIC	 (1 <<  CIC_NUM)	/* GPIB interface is Controller-in-Charge */
-#define ATN_NUM	4
-#define ATN	 (1 <<  ATN_NUM)	/* Attention is asserted */
-#define TACS_NUM	3
-#define TACS	 (1 <<  TACS_NUM)	/* GPIB interface is addressed as Talker */
-#define LACS_NUM	2
-#define LACS	 (1 <<  LACS_NUM)	/* GPIB interface is addressed as Listener */
-#define DTAS_NUM 1
-#define DTAS (1 << DTAS_NUM)	// device trigger state
-#define DCAS_NUM 0
-#define DCAS	(1 << DCAS_NUM)	// device clear state
+/* IBSTA status bits (returned by all functions) */
+enum ibsta_bits
+{
+	DCAS = ( 1 << DCAS_NUM ),	// device clear state
+	DTAS = ( 1 << DTAS_NUM ),	// device trigger state
+	LACS = ( 1 <<  LACS_NUM ),	/* GPIB interface is addressed as Listener */
+	TACS = ( 1 <<  TACS_NUM ),	/* GPIB interface is addressed as Talker */
+	ATN = ( 1 <<  ATN_NUM ),	/* Attention is asserted */
+	CIC = ( 1 <<  CIC_NUM ),	/* GPIB interface is Controller-in-Charge */
+	REM = ( 1 << REM_NUM ),	// remote state
+	LOK = ( 1 << LOK_NUM ),	// lockout state
+	CMPL = ( 1 <<  CMPL_NUM ),	/* I/O is complete  */
+	EVENT = ( 1 << EVENT_NUM ),	/* DCAS, DTAS, or IFC has occurred */
+	SPOLL = ( 1 << SPOLL_NUM ),	/* board serial polled by busmaster */
+	RQS = ( 1 <<  RQS_NUM ),	/* Device requesting service  */
+	SRQI = ( 1 << SRQI_NUM ),	/* SRQ is asserted */
+	END = ( 1 << END_NUM ),	/* EOI or EOS encountered */
+	TIMO = ( 1 << TIMO_NUM ),	/* Time limit on I/O or wait function exceeded */
+	ERR = ( 1 << ERR_NUM )	/* Function call terminated on error */
+};
 
 // status bits that drivers are responsible for
 static const int DRIVERBITS = ( SRQI | LOK | REM | CIC | ATN | TACS | LACS | DTAS | DCAS );
