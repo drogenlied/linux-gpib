@@ -28,7 +28,7 @@ int ibppc( int ud, int v )
 	int i;
 	int retval;
 
-	if( ( v & ppc_mask ) != ppc_code )
+	if( v && ( v & ppc_mask ) != ppc_code )
 	{
 		fprintf( stderr, "libgpib: illegal parallel poll configuration\n" );
 		setIberr( EARG );
@@ -52,9 +52,13 @@ int ibppc( int ud, int v )
 		return exit_library( ud, 1 );
 	}
 
-	cmd[ i++ ] = PPC;
-	cmd[ i++ ] = v;
-
+	if( v )
+	{
+		cmd[ i++ ] = PPC;
+		cmd[ i++ ] = v;
+	}else
+		cmd[ i++ ] = PPU;
+		
 	retval = my_ibcmd( conf, cmd, i );
 	if( retval < 0 )
 	{
