@@ -20,6 +20,7 @@
 #define _NI_USB_GPIB_H
 
 #include <linux/usb.h>
+#include "gpibP.h"
 
 enum 
 {
@@ -28,7 +29,8 @@ enum
 
 enum
 {
-	USB_DEVICE_ID_NI_USB_B = 0x702a
+	USB_DEVICE_ID_NI_USB_B = 0x702a,
+	USB_DEVICE_ID_NI_USB_B_PREINIT = 0x702b	// device id before firmware is loaded
 };
 
 enum ni_usb_device
@@ -51,6 +53,9 @@ typedef struct
 	struct usb_interface *bus_interface;
 	uint8_t eos_char;
 	unsigned short eos_mode;
+	unsigned int monitored_ibsta_bits;
+	struct urb *interrupt_urb;
+	uint8_t interrupt_buffer[0x11];
 } ni_usb_private_t;
 
 struct ni_usb_status_block
@@ -83,6 +88,8 @@ enum ni_usb_bulk_ids
 	NIUSB_IBRD_DATA_ID = 0x36,
 	NIUSB_IBRD_STATUS_ID = 0x38
 };
+
+static const unsigned int ni_usb_ibsta_monitor_mask = SRQI | LOK | REM | CIC | ATN | TACS | LACS | DTAS | DCAS;
 
 static inline int nec7210_to_tnt4882_offset(int offset)
 {
