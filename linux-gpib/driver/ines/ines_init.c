@@ -344,7 +344,7 @@ int ines_common_pci_attach( gpib_board_t *board )
 
 	// find board
 	ines_priv->pci_device = NULL;
-	for(i = 0; i < num_pci_chips; i++)
+	for(i = 0; i < num_pci_chips && ines_priv->pci_device == NULL; i++)
 	{
 		pdev = NULL;
 		do
