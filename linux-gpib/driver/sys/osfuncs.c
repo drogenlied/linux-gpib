@@ -130,11 +130,11 @@ int ibopen(struct inode *inode, struct file *filep)
 		char module_string[ 32 ];
 		int retval;
 
-		snprintf( module_string, sizeof( module_string ), "char-major-%i-%i", IBMAJOR, minor );
+		snprintf(module_string, sizeof(module_string), "gpib%i", minor);
 		retval = request_module( module_string );
 		if( retval )
 		{
-			printk( "gpib: request module returned %i\n", retval );
+			printk( "gpib: (debug) request module returned %i\n", retval );
 		}
 	}
 	if(board->interface)
