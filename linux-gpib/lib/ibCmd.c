@@ -40,7 +40,7 @@ int ibcmd(int ud, void *cmd, unsigned long cnt)
 		return status;
 	}
 
-	count = my_ibcmd(board, conf, cmd, cnt);
+	count = my_ibcmd( conf, cmd, cnt);
 
 	// get more status bits from interface board
 	status_ret = ioctl( board->fileno, IBSTATUS, &board_status );
@@ -84,10 +84,11 @@ int ibcmd(int ud, void *cmd, unsigned long cnt)
 	return status;
 }
 
-ssize_t my_ibcmd( const ibBoard_t *board, const ibConf_t *conf, uint8_t *buffer, size_t count)
+ssize_t my_ibcmd( const ibConf_t *conf, uint8_t *buffer, size_t count)
 {
 	read_write_ioctl_t cmd;
 	int retval;
+	const ibBoard_t *board = &ibBoard[ conf->board ];
 
 	// check that interface board is master
 	if( board->is_system_controller == 0 )
@@ -109,16 +110,23 @@ ssize_t my_ibcmd( const ibBoard_t *board, const ibConf_t *conf, uint8_t *buffer,
 	return cmd.count;
 }
 
-int send_setup( const ibBoard_t *board, const ibConf_t *conf )
+int send_setup_string( const ibConf_t *conf,
+	uint8_t *cmdString )
 {
-	uint8_t cmdString[8];
-	unsigned int i = 0;
 	int pad = conf->pad;
 	int sad = conf->sad;
+	unsigned int i = 0;
+	const ibBoard_t *board = &ibBoard[ conf->board ];
 
 	if( pad < 0 || pad > gpib_addr_max || sad > gpib_addr_max)
 	{
-		fprintf(stderr, "gpib: bad addr\n");
+		fprintf(stderr, "libgpib: bug! bad conf gpib address\n");
+		return -1;
+	}
+
+	if( board->sad > gpib_addr_max )
+	{
+		fprintf(stderr, "libgpib: bug! bad board gpib secondary address\n");
 		return -1;
 	}
 
@@ -131,7 +139,18 @@ int send_setup( const ibBoard_t *board, const ibConf_t *conf )
 	if( board->sad >= 0 )
 		cmdString[ i++ ] = MSA( board->sad );
 
-	if( my_ibcmd( board, conf, cmdString, i) < 0 )
+	return i;
+}
+
+int send_setup( const ibBoard_t *board, const ibConf_t *conf )
+{
+	uint8_t cmdString[8];
+	int retval;
+
+	retval = send_setup_string( conf, cmdString );
+	if( retval < 0 ) return retval;
+
+	if( my_ibcmd( conf, cmdString, retval ) < 0 )
 		return -1;
 
 	return 0;

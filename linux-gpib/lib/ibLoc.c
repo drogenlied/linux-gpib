@@ -25,7 +25,7 @@ int ibloc(int ud)
 		cmds[ i++ ] = MSA( conf->sad );
 	cmds[ i++ ] = GTL;
 	cmds[ i++ ] = UNL;
-	count = my_ibcmd(board, conf, cmds, i);
+	count = my_ibcmd( conf, cmds, i);
 
 	if(count != i)
 	{

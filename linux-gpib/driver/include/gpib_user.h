@@ -108,23 +108,29 @@ enum gpib_timeout
 
 /* Possible GPIB command messages */
 
-#define GTL	0x1	/* go to local			*/
-#define SDC	0x4	/* selected device clear 	*/
-#define PPC	0x5	/* parallel poll configure	*/
-#define GET	0x8	/* group execute trigger 	*/
-#define TCT	0x9	/* take control 		*/
-#define LLO	0x11	/* local lockout		*/
-#define DCL	0x14	/* device clear 		*/
-#define PPU	0x15	/* parallel poll unconfigure 	*/
-#define SPE	0x18	/* serial poll enable 		*/
-#define SPD	0x19	/* serial poll disable 		*/
-#define UNL	0x3F	/* unlisten 			*/
-#define UNT	0x5F	/* untalk 			*/
-#define PPE	0x60	/* parallel poll enable (base)	*/
-#define S	0x08	/* parallel poll sense bit	*/
+enum cmd_byte
+{
+	GTL = 0x1,	/* go to local			*/
+	SDC = 0x4,	/* selected device clear 	*/
+	PPC = 0x5,	/* parallel poll configure	*/
+	GET = 0x8,	/* group execute trigger 	*/
+	TCT = 0x9,	/* take control 		*/
+	LLO = 0x11,	/* local lockout		*/
+	DCL = 0x14,	/* device clear 		*/
+	PPU = 0x15,	/* parallel poll unconfigure 	*/
+	SPE = 0x18,	/* serial poll enable 		*/
+	SPD = 0x19,	/* serial poll disable 		*/
+	UNL = 0x3F,	/* unlisten 			*/
+	UNT = 0x5F,	/* untalk 			*/
+	PPE = 0x60,	/* parallel poll enable (base)	*/
+	PPD = 0x70	/* parallel poll disable */
+};
 
-#define TRUE     1
-#define FALSE    0
+enum ppe_bits
+{
+	PPC_SENSE = 0x8,	/* parallel poll sense bit	*/
+	PPC_DIO_MASK = 0x7
+};
 
 #define LAD 0x20 /* value to be 'ored' in to obtain listen address */
 #define TAD 0x40 /* value to be 'ored' in to obtain talk address   */

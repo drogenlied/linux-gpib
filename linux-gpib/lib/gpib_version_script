@@ -17,6 +17,7 @@ GPIB_DUMMY_VERSION {
 		ibloc;
 		ibonl;
 		ibpad;
+		ibppc;
 		ibrd;
 		ibrpp;
 		ibrsp;

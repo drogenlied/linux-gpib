@@ -8,7 +8,7 @@ int ibtrg(int ud)
 	ibConf_t *conf = ibConfigs[ud];
 	ibBoard_t *board;
 	ssize_t count;
-	unsigned int i;
+	int i;
 
 	if(ibCheckDescriptor(ud) < 0)
 	{
@@ -24,14 +24,15 @@ int ibtrg(int ud)
 		return ibsta | ERR;
 	}
 
-	i = 0;
-	cmd[ i++ ] = UNL;
-	cmd[ i++ ] = MLA( conf->pad );
-	if( conf->sad >=0 )
-		cmd[ i++ ] = MSA( conf->sad );
+	i = send_setup_string( conf, cmd );
+	if( i < 0 )
+	{
+		iberr = EDVR;
+		return ibsta | ERR;
+	}
 	cmd[ i++ ] = GET;
 
-	count = my_ibcmd( board, conf, cmd, i );
+	count = my_ibcmd( conf, cmd, i );
 	if(count != i)
 	{
 		iberr = EDVR;

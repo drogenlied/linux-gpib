@@ -23,9 +23,10 @@ typedef struct ibConfStruct
 	int eos_flags;
 	int flags;                         /* some flags                       */
 	unsigned int usec_timeout;
-	unsigned int send_eoi : 1;	// assert EOI at end of writes
-	unsigned int is_interface : 1;	// is interface board
-	unsigned int is_open : 1;
+	unsigned send_eoi : 1;	// assert EOI at end of writes
+	unsigned is_interface : 1;	// is interface board
+	unsigned is_open : 1;
+	unsigned has_lock : 1;
 } ibConf_t;
 
 /*---------------------------------------------------------------------- */

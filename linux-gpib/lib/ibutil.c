@@ -80,6 +80,7 @@ int ibGetDescriptor(ibConf_t p)
 	conf->send_eoi = p.send_eoi;
 	conf->is_interface = p.is_interface;
 	conf->is_open = p.is_open;
+	conf->has_lock = p.has_lock;
 
 	strncpy(conf->init_string, p.init_string, sizeof(conf->init_string));
 	return ib_ndev;
@@ -119,6 +120,7 @@ void init_ibconf( ibConf_t *conf )
 	conf->send_eoi = 1;
 	conf->is_interface = 0;
 	conf->is_open = 0;
+	conf->has_lock = 0;
 }
 
 int ib_lock_mutex( ibBoard_t *board )
@@ -207,13 +209,80 @@ int gpibi_change_address( ibBoard_t *board, ibConf_t *conf, unsigned int pad, in
 int lock_board_mutex( ibBoard_t *board )
 {
 	static const int lock = 1;
+	int retval;
 
-	return ioctl( board->fileno, IBMUTEX, &lock );
+	retval = ioctl( board->fileno, IBMUTEX, &lock );
+	if( retval < 0 )
+		fprintf( stderr, "libgpib: error locking board mutex!\n");
+	return retval;
 }
 
 int unlock_board_mutex( ibBoard_t *board )
 {
 	static const int unlock = 0;
+	int retval;
 
-	return ioctl( board->fileno, IBMUTEX, &unlock );
+	retval = ioctl( board->fileno, IBMUTEX, &unlock );
+	if( retval < 0 )
+		fprintf( stderr, "libgpib: error unlocking board mutex!\n");
+	return retval;
+}
+
+ibConf_t * enter_library( int ud, int lock_library )
+{
+	ibConf_t *conf = ibConfigs[ ud ];
+	ibBoard_t *board;
+	int retval;
+
+	if( ibCheckDescriptor( ud ) < 0 ) return NULL;
+
+	board = &ibBoard[ conf->board ];
+
+	if( lock_library )
+	{
+		retval = lock_board_mutex( board );
+		if( retval < 0 )
+		{
+			return NULL;
+		}
+		conf->has_lock = 1;
+	}
+
+	return conf;
+}
+
+//XXX
+int ibstatus( ibConf_t *conf, int error )
+{
+	int status = 0;
+
+	status |= CMPL;
+	if( error ) status |= ERR;
+
+	ibsta = status;
+
+	return status;
+}
+
+int exit_library( int ud, int error )
+{
+	ibConf_t *conf = ibConfigs[ ud ];
+	ibBoard_t *board;
+	int retval;
+
+	if( ibCheckDescriptor( ud ) < 0 ) return ERR;
+
+	board = &ibBoard[ conf->board ];
+
+	if( conf->has_lock )
+	{
+		conf->has_lock = 0;
+		retval = unlock_board_mutex( board );
+		if( retval < 0 )
+		{
+			error++;
+		}
+	}
+	
+	return ibstatus( conf, error );
 }

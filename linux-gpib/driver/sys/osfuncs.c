@@ -851,10 +851,12 @@ static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 			return -ERESTARTSYS;
 		}
 		file_priv->holding_mutex = 1;
+		GPIB_DPRINTK( "locked board mutex\n" );
 	}else
 	{
 		file_priv->holding_mutex = 0;
 		up( &board->mutex );
+		GPIB_DPRINTK( "unlocked board mutex\n" );
 	}
 
 	return 0;

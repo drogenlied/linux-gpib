@@ -26,7 +26,7 @@ int receive_setup( const ibBoard_t *board, const ibConf_t *conf )
 	if(sad >= 0)
 		cmdString[i++] = MSA(sad);
 
-	if ( my_ibcmd(board, conf, cmdString, i) < 0)
+	if ( my_ibcmd( conf, cmdString, i) < 0)
 	{
 		fprintf(stderr, "receive_setup: command failed\n");
 		return -1;

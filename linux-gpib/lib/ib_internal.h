@@ -27,8 +27,9 @@ extern  void ibPutErrlog(int ud,char *routine);
 extern  int ibParseConfigFile(char *filename);
 extern  int ibGetDescriptor(ibConf_t conf);
 extern  int ibFindDevIndex(char *name);
-extern ssize_t my_ibcmd( const ibBoard_t *board, const ibConf_t *conf, uint8_t *buffer, size_t length);
+extern ssize_t my_ibcmd( const ibConf_t *conf, uint8_t *buffer, size_t length);
 extern int config_parsed;
+extern int send_setup_string( const ibConf_t *conf, uint8_t *cmdString );
 extern int send_setup( const ibBoard_t *board, const ibConf_t *conf );
 extern void init_ibconf( ibConf_t *conf );
 extern int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout,
@@ -43,6 +44,8 @@ extern int gpibi_change_address( ibBoard_t *board, ibConf_t *conf,
 	unsigned int pad, int sad );
 extern int lock_board_mutex( ibBoard_t *board );
 extern int unlock_board_mutex( ibBoard_t *board );
+extern int exit_library( int ud, int error );
+extern ibConf_t * enter_library( int ud, int lock_library );
 
 #include <stdio.h>
 int gpib_yyparse(void);

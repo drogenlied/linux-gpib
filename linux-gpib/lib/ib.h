@@ -43,6 +43,7 @@ extern int iblines( int ud, short *line_status );
 extern int ibloc(int ud);
 extern int ibonl(int ud, int onl);
 extern int ibpad(int ud, int v);
+extern int ibppc( int ud, int v );
 extern int ibrd(int ud, void *rd, unsigned long cnt);
 extern int ibrpp(int ud, char *ppr);
 extern int ibrsp(int ud, char *spr);
