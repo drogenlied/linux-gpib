@@ -184,7 +184,6 @@ int hp82335_attach( gpib_board_t *board )
 {
 	hp82335_private_t *hp_priv;
 	tms9914_private_t *tms_priv;
-	int isr_flags;
 
 	board->status = 0;
 
@@ -232,9 +231,7 @@ int hp82335_attach( gpib_board_t *board )
 	printk("hp82335: base address 0x%x remapped to 0x%lx\n", hp_priv->raw_iobase,
 		tms_priv->iobase );
 
-	// get irq
-	isr_flags = 0;
-	if( request_irq( board->ibirq, hp82335_interrupt, isr_flags, "hp82335", board ) )
+	if( request_irq( board->ibirq, hp82335_interrupt, SA_SHIRQ, "hp82335", board ) )
 	{
 		printk( "hp82335: can't request IRQ %d\n", board->ibirq );
 		return -1;

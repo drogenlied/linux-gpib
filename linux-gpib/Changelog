@@ -1,5 +1,13 @@
 Linux GPIB Package changelog
 
+3.1.9: Added ability to specify pci boards by bus and slot int gpib.conf.
+Fixed Ines PCMCIA support.  Fixed HP82335 support.  Fixed reporting of 
+errors on writes.  Added support for devfs.  Fixes for giving boards 
+secondary address.  Added event queue and implemented ibevent().  Fixed 
+running as bus master for Measurement Computing (Computer Boards) cards.
+Fixed polarity of bus control lines (iblines()) for Measurement i
+Computing (Computer Boards) cards.  Random bugfixes.
+
 3.1.8: Added a bunch of new (mostly untested) functions: ibbna(),
 ibcmda(), ibconfig(), DevClear(), DevClearList(), SendSetup(),
 AllSpoll(), EnableRemote(), EnableLocal(), FindLstn(), FindRQS(),
