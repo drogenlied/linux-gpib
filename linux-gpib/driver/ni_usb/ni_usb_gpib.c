@@ -19,13 +19,16 @@
 
 #include <linux/module.h>
 #include "ni_usb_gpib.h"
+#include "gpibP.h"
+#include "nec7210.h"
+#include "tnt4882_registers.h"
 
 MODULE_LICENSE("GPL");
 
-#define MAX_NUM_NI_USB_INTERFACES = 128
+#define MAX_NUM_NI_USB_INTERFACES 128
 static struct usb_interface *ni_usb_bus_interfaces[MAX_NUM_NI_USB_INTERFACES];
 
-void ni_usb_parse_status_block(struct ni_usb_status_block *status, const uint8_t *buffer)
+int ni_usb_parse_status_block(const uint8_t *buffer, struct ni_usb_status_block *status)
 {
 	uint16_t count;
 	
@@ -36,7 +39,84 @@ void ni_usb_parse_status_block(struct ni_usb_status_block *status, const uint8_t
 	count = ~count;
 	count++;
 	status->count = count;
+	return 8;
 };
+
+int ni_usb_parse_termination_block(const uint8_t *buffer)
+{
+	int i = 0;
+	
+	if(buffer[i++] != NIUSB_TERM_ID ||
+		buffer[i++] != 0x0 ||
+		buffer[i++] != 0x0 ||
+		buffer[i++] != 0x0)
+		printk("%s: bug: invalid termination block\n", __FILE__);
+	return i;	
+};
+
+int parse_board_ibrd_readback(const uint8_t *raw_data, struct ni_usb_status_block *status, 
+	uint8_t *parsed_data, int parsed_data_length)
+{
+	static const int ibrd_data_id = 0x36;
+	static const int ibrd_data_block_length = 15;
+	static const int ibrd_status_id = 0x38;
+	int i = 0;
+	int j = 0;
+	int k;
+	unsigned int adr1_bits;
+	struct ni_usb_status_block register_write_status;
+		
+	while(raw_data[i] == ibrd_data_id)
+	{
+		if(parsed_data_length < j + ibrd_data_block_length)
+		{
+			printk("%s: bug: buffer too small\n", __FILE__);
+			return -EIO;
+		}
+		i++;
+		for(j = 0; j < ibrd_data_block_length; j++)
+		{
+			parsed_data[j++] = raw_data[i++];
+		}
+	}
+	i += ni_usb_parse_status_block(&raw_data[i], status);
+	if(status->id != ibrd_status_id)
+	{
+		printk("%s: bug: status->id=%i, != ibrd_status_id\n", __FILE__, status->id);
+		return -EIO;
+	}
+	adr1_bits = raw_data[i++];
+	if(raw_data[i++] != status->count % ibrd_data_block_length)
+	{
+		printk("%s: unexpected data: raw_data[%i]=%i, status->count=%i\n", 
+			__FILE__, i - 1, (int)raw_data[i - 1], status->count);
+	}
+	for(k = 0; k < 2; k++)
+		if(raw_data[i++] != 0)
+		{
+			printk("%s: unexpected data: raw_data[%i]=%i, expected 0\n", 
+				__FILE__, i - 1, (int)raw_data[i - 1]);
+		}
+	i += ni_usb_parse_status_block(&raw_data[i], &register_write_status);
+	if(register_write_status.id != NIUSB_REG_WRITE_ID)
+	{
+		printk("%s: unexpected data: register write status id=0x%x, expected 0x%x\n", 
+			__FILE__, register_write_status.id, NIUSB_REG_WRITE_ID);
+	}
+	if(raw_data[i++] != 2)
+	{
+		printk("%s: unexpected data: register write count=%i, expected 2\n", 
+			__FILE__, (int)raw_data[i - 1]);
+	}
+	for(k = 0; k < 3; k++)
+		if(raw_data[i++] != 0)
+		{
+			printk("%s: unexpected data: raw_data[%i]=%i, expected 0\n", 
+				__FILE__, i - 1, (int)raw_data[i - 1]);
+		}
+	i += ni_usb_parse_termination_block(&raw_data[i]);
+	return i;
+}
 
 // interface functions
 ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end)
@@ -44,11 +124,11 @@ ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *en
 	int retval;
 	ni_usb_private_t *ni_priv = board->private_data;
 	struct usb_device *usb_dev;
-	int pipe;
+	int out_pipe, in_pipe;
 	uint8_t *out_data, *in_data;
 	int out_data_length, in_data_length;
 	int bytes_written, bytes_read;
-	int i, j;
+	int i = 0;
 	int complement_count;
 	struct ni_usb_status_block status;
 	int timeout_code = 0xd;	//FIXME
@@ -83,28 +163,28 @@ ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *en
 	while(i % 4)	// pad with zeros to 4-byte boundary
 		out_data[i++] = 0x0;
 	i += ni_usb_bulk_termination(&out_data[i]);
-	retval = usb_bulk_msg(usb_dev, pipe, out_data, i, &bytes_written, HZ /*FIXME set timeout properly */);
+	retval = usb_bulk_msg(usb_dev, out_pipe, out_data, i, &bytes_written, HZ /*FIXME set timeout properly */);
 	kfree(out_data);
 	if(retval || bytes_written != i)
 	{
-		printk("%s: usb_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, actual_length, i);		
+		printk("%s: usb_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, bytes_written, i);
 		return -EIO;
 	}
 	in_data_length = (length / 15 + 1) * 0x10 + 0x20;
 	in_data = kmalloc(in_data_length, GFP_KERNEL);
 	if(in_data == NULL) return -ENOMEM;
 	in_pipe = usb_rcvbulkpipe(usb_dev, 0);
-	retval = usb_bulk_msg(usb_dev, pipe, in_data, in_data_length, &bytes_read, HZ /*FIXME set timeout properly */);
+	retval = usb_bulk_msg(usb_dev, in_pipe, in_data, in_data_length, &bytes_read, HZ /*FIXME set timeout properly */);
 	if(retval)
 	{
 		printk("%s: usb_bulk_msg returned %i, bytes_read=%i\n", __FILE__, retval, bytes_read);		
 		kfree(in_data);
 		return -EIO;
 	}
-	parse_ni_usb_status_block(&status, in_data);
+	parse_board_ibrd_readback(in_data, &status, buffer, length);
 	kfree(in_data);
 	//FIXME update ibsta using status info
-	return status.count
+	return status.count;
 }
 
 static ssize_t ni_usb_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi)
@@ -116,7 +196,7 @@ static ssize_t ni_usb_write(gpib_board_t *board, uint8_t *buffer, size_t length,
 	uint8_t *out_data, *in_data;
 	int out_data_length, in_data_length;
 	int bytes_written, bytes_read;
-	int i, j;
+	int i = 0, j;
 	int complement_count;
 	struct ni_usb_status_block status;
 	int timeout_code = 0xd;	//FIXME
@@ -152,28 +232,28 @@ static ssize_t ni_usb_write(gpib_board_t *board, uint8_t *buffer, size_t length,
 	while(i % 4)	// pad with zeros to 4-byte boundary
 		out_data[i++] = 0x0;
 	i += ni_usb_bulk_termination(&out_data[i]);
-	in_pipe = usb_rcvbulkpipe(usb_dev, 0);
-	retval = usb_bulk_msg(usb_dev, in_pipe, out_data, i, &bytes_written, HZ /*FIXME set timeout properly */);
+	retval = usb_bulk_msg(usb_dev, out_pipe, out_data, i, &bytes_written, HZ /*FIXME set timeout properly */);
 	kfree(out_data);
 	if(retval || bytes_written != i)
 	{
-		printk("%s: usb_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, actual_length, i);		
+		printk("%s: usb_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, bytes_written, i);		
 		return -EIO;
 	}
 	in_data_length = 0x10;
 	in_data = kmalloc(in_data_length, GFP_KERNEL);
 	if(in_data == NULL) return -ENOMEM;
-	retval = usb_bulk_msg(usb_dev, pipe, in_data, in_data_length, &bytes_read, HZ /*FIXME set timeout properly */);
+	in_pipe = usb_rcvbulkpipe(usb_dev, 0);
+	retval = usb_bulk_msg(usb_dev, in_pipe, in_data, in_data_length, &bytes_read, HZ /*FIXME set timeout properly */);
 	if(retval || bytes_read != 8)
 	{
 		printk("%s: usb_bulk_msg returned %i, bytes_read=%i\n", __FILE__, retval, bytes_read);		
 		kfree(in_data);
 		return -EIO;
 	}
-	parse_ni_usb_status_block(&status, in_data);
+	ni_usb_parse_status_block(in_data, &status);
 	kfree(in_data);
 	//FIXME update ibsta using status info
-	return status.count
+	return status.count;
 }
 ssize_t ni_usb_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 {
@@ -184,7 +264,7 @@ ssize_t ni_usb_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 	uint8_t *out_data, *in_data;
 	int out_data_length, in_data_length;
 	int bytes_written, bytes_read;
-	int i, j;
+	int i = 0, j;
 	int complement_count;
 	struct ni_usb_status_block status;
 	int timeout_code = 0xd;	//FIXME
@@ -208,11 +288,11 @@ ssize_t ni_usb_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 	while(i % 4)	// pad with zeros to 4-byte boundary
 		out_data[i++] = 0x0;
 	i += ni_usb_bulk_termination(&out_data[i]);
-	retval = usb_bulk_msg(usb_dev, pipe, out_data, i, &bytes_written, HZ /*FIXME set timeout properly */);
+	retval = usb_bulk_msg(usb_dev, out_pipe, out_data, i, &bytes_written, HZ /*FIXME set timeout properly */);
 	kfree(out_data);
 	if(retval || bytes_written != i)
 	{
-		printk("%s: usb_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, actual_length, i);		
+		printk("%s: usb_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, bytes_written, i);		
 		return -EIO;
 	}
 	in_data_length = 0x10;
@@ -226,22 +306,76 @@ ssize_t ni_usb_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 		kfree(in_data);
 		return -EIO;
 	}
-	parse_ni_usb_status_block(&status, in_data);
+	ni_usb_parse_status_block(in_data, &status);
 	kfree(in_data);
 	//FIXME update ibsta using status info
-	return status.count
+	return status.count;
 }
 int ni_usb_take_control(gpib_board_t *board, int synchronous)
 {
+	return 0;
 }
 int ni_usb_go_to_standby(gpib_board_t *board)
 {
+	return 0;
 }
 void ni_usb_request_system_control( gpib_board_t *board, int request_control )
 {
 }
+//FIXME maybe the interface should have a "pulse interface clear" function that can return an error?
 void ni_usb_interface_clear(gpib_board_t *board, int assert)
 {
+	int retval;
+	ni_usb_private_t *ni_priv = board->private_data;
+	struct usb_device *usb_dev;
+	int out_pipe, in_pipe;
+	uint8_t *out_data, *in_data;
+	int out_data_length, in_data_length;
+	int bytes_written, bytes_read;
+	int i = 0;
+	struct ni_usb_status_block status;
+	
+	if(assert == 0) return;
+	usb_dev = interface_to_usbdev(ni_priv->bus_interface);
+	out_pipe = usb_sndbulkpipe(usb_dev, 0);
+	out_data_length = 0x10;
+	out_data = kmalloc(out_data_length, GFP_KERNEL);
+	if(out_data == NULL)
+	{	
+		printk("%s: kmalloc failed\n", __FILE__);
+		return;
+	}
+	out_data[i++] = NIUSB_IFC_ID;
+	out_data[i++] = 0x0;
+	out_data[i++] = 0x0;
+	out_data[i++] = 0x0;
+	i += ni_usb_bulk_termination(&out_data[i]);
+	retval = usb_bulk_msg(usb_dev, out_pipe, out_data, i, &bytes_written, HZ /*FIXME set timeout properly */);
+	kfree(out_data);
+	if(retval || bytes_written != i)
+	{
+		printk("%s: usb_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, bytes_written, i);		
+		return;
+	}
+	in_data_length = 0x10;
+	in_data = kmalloc(in_data_length, GFP_KERNEL);
+	if(in_data == NULL)
+	{
+		printk("%s: kmalloc failed\n", __FILE__);
+		return;
+	}
+	in_pipe = usb_rcvbulkpipe(usb_dev, 0);
+	retval = usb_bulk_msg(usb_dev, in_pipe, in_data, in_data_length, &bytes_read, HZ /*FIXME set timeout properly */);
+	if(retval || bytes_read != 8)
+	{
+		printk("%s: usb_bulk_msg returned %i, bytes_read=%i\n", __FILE__, retval, bytes_read);		
+		kfree(in_data);
+		return;
+	}
+	ni_usb_parse_status_block(in_data, &status);
+	kfree(in_data);
+	//FIXME update ibsta using status info
+	return;
 }
 void ni_usb_remote_enable(gpib_board_t *board, int enable)
 {
@@ -272,21 +406,22 @@ unsigned int ni_usb_update_status( gpib_board_t *board, unsigned int clear_mask 
 	}
 	retval = usb_control_msg(usb_dev, pipe, USB_DIR_IN | USB_TYPE_VENDOR, 
 		0x21, 0x200, 0x0, buffer, bufferLength, HZ);
-	if(retval != sizeof(buffer)
+	if(retval != sizeof(buffer))
 	{
 		printk("%s: usb_control_msg returned %i\n", __FILE__, retval);		
 		kfree(buffer);
 		return -1;
 	}
-	parse_ni_usb_status_block(&status, buffer);
+	ni_usb_parse_status_block(buffer, &status);
 	kfree(buffer);
 	board->status &= ~clear_mask;
 	board->status &= ni_usb_ibsta_mask;
-	board->status |= status->ibsta & ni_usb_ibsta_mask;	
-	if(status->ibsta & ~ni_usb_ibsta_mask)
+	board->status |= status.ibsta & ni_usb_ibsta_mask;	
+	if(status.ibsta & ~ni_usb_ibsta_mask)
 	{
-		printk("%s: debug: ibsta from status block is 0x%x\n", status->ibsta);
+		printk("%s: debug: ibsta from status block is 0x%x\n", __FILE__, status.ibsta);
 	}
+	return 0;
 }
 void ni_usb_primary_address(gpib_board_t *board, unsigned int address)
 {
@@ -296,6 +431,7 @@ void ni_usb_secondary_address(gpib_board_t *board, unsigned int address, int ena
 }
 int ni_usb_parallel_poll(gpib_board_t *board, uint8_t *result)
 {
+	return 0;
 }
 void ni_usb_parallel_poll_configure(gpib_board_t *board, uint8_t config )
 {
@@ -313,7 +449,14 @@ uint8_t ni_usb_serial_poll_status( gpib_board_t *board )
 void ni_usb_return_to_local( gpib_board_t *board )
 {
 }
-
+int ni_usb_line_status( const gpib_board_t *board )
+{
+	return 0;
+}
+unsigned int ni_usb_t1_delay( gpib_board_t *board, unsigned int nano_sec )
+{
+	return 0;
+}
 int ni_usb_allocate_private(gpib_board_t *board)
 {
 	ni_usb_private_t *ni_priv;
@@ -329,16 +472,19 @@ int ni_usb_allocate_private(gpib_board_t *board)
 int ni_usb_attach(gpib_board_t *board)
 {
 	int retval;
-	
+	int i;
+	ni_usb_private_t *ni_priv;
+		
 	retval = ni_usb_allocate_private(board);
 	if(retval < 0) return retval;
+	ni_priv = board->private_data;
 	/*FIXME: should allow user to specifiy which device he wants to attach.
 	 Use usb_make_path() */
 	for(i = 0; i < MAX_NUM_NI_USB_INTERFACES; i++)
 	{
 		if(ni_usb_bus_interfaces[i])
 		{
-			board->bus_interface = ni_usb_bus_interfaces[i];
+			ni_priv->bus_interface = ni_usb_bus_interfaces[i];
 			break;
 		}
 	}
@@ -360,8 +506,8 @@ gpib_interface_t ni_usb_gpib_interface =
 	name: "ni_usb_b",
 	attach: ni_usb_attach,
 	detach: ni_usb_detach,
-	read: ni_usb_accel_read,
-	write: ni_usb_accel_write,
+	read: ni_usb_read,
+	write: ni_usb_write,
 	command: ni_usb_command,
 	take_control: ni_usb_take_control,
 	go_to_standby: ni_usb_go_to_standby,
@@ -399,6 +545,8 @@ MODULE_DEVICE_TABLE(usb, ni_usb_device_table);
 static int ni_usb_driver_probe(struct usb_interface *interface, 
 	const struct usb_device_id *id) 
 {
+	int i;
+	
 	printk("ni_usb_driver_probe\n");
 	for(i = 0; i < MAX_NUM_NI_USB_INTERFACES; i++)
 	{
@@ -418,6 +566,8 @@ static int ni_usb_driver_probe(struct usb_interface *interface,
 
 static void ni_usb_driver_disconnect(struct usb_interface *interface) 
 {
+	int i;
+	
 	printk("ni_usb_driver_disconnect\n");
 	for(i = 0; i < MAX_NUM_NI_USB_INTERFACES; i++)
 	{
@@ -440,15 +590,17 @@ static struct usb_driver ni_usb_bus_driver =
 	.name = "ni_usb_gpib",
 	.probe = ni_usb_driver_probe,
 	.disconnect = ni_usb_driver_disconnect,
-	.id_table = ni_usb_driver_devicetable,
+	.id_table = ni_usb_driver_device_table,
 };
 
 static int ni_usb_init_module( void )
 {
+	int i;
+	
 	info("ni_usb_gpib driver loading");
 	for(i = 0; i < MAX_NUM_NI_USB_INTERFACES; i++)
 		ni_usb_bus_interfaces[i] = NULL;
-	usb_register(&ni_usb_driver);
+	usb_register(&ni_usb_bus_driver);
 	gpib_register_driver(&ni_usb_gpib_interface);
 
 	return 0;
@@ -458,7 +610,7 @@ static void ni_usb_exit_module( void )
 {
 	info("ni_usb_gpib driver unloading");
 	gpib_unregister_driver(&ni_usb_gpib_interface);
-	usb_deregister(&ni_usb_driver);
+	usb_deregister(&ni_usb_bus_driver);
 }
 
 module_init( ni_usb_init_module );

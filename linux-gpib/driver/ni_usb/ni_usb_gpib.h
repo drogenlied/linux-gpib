@@ -21,8 +21,15 @@
 
 #include <linux/usb.h>
 
-static const int USB_VENDOR_ID_NI = 0x3923;
-static const int USB_DEVICE_ID_NI_USB_B = 0x702a;
+enum 
+{
+	USB_VENDOR_ID_NI = 0x3923
+};
+
+enum
+{
+	USB_DEVICE_ID_NI_USB_B = 0x702a
+};
 
 enum ni_usb_devices
 {
@@ -44,7 +51,14 @@ struct ni_usb_status_block
 	unsigned short count;
 };
 
-static inline nec7210_to_tnt4882_offset(int offset)
+enum ni_usb_bulk_ids
+{
+	NIUSB_TERM_ID = 0x4,
+	NIUSB_REG_WRITE_ID = 0x9,
+	NIUSB_IFC_ID = 0xf,
+};
+
+static inline int nec7210_to_tnt4882_offset(int offset)
 {
 	return 2 * offset;
 };
@@ -52,7 +66,7 @@ static inline int ni_usb_bulk_termination(uint8_t *buffer)
 {
 	int i = 0;
 	
-	buffer[i++] = 0x4;
+	buffer[i++] = NIUSB_TERM_ID;
 	buffer[i++] = 0x0;
 	buffer[i++] = 0x0;
 	buffer[i++] = 0x0;
@@ -63,7 +77,7 @@ static inline int ni_usb_bulk_register_write_header(uint8_t *buffer, int num_wri
 {
 	int i = 0;
 	
-	buffer[i++] = 0x9;
+	buffer[i++] = NIUSB_REG_WRITE_ID;
 	buffer[i++] = num_writes;
 	buffer[i++] = 0x0;
 	return i;	
