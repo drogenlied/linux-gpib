@@ -126,7 +126,6 @@ int ibopen(struct inode *inode, struct file *filep)
 	}
 	if(board->interface)
 	{
-		printk("%s: board=%p, use_count=%i calling try_module_get()\n", __FUNCTION__, board, board->use_count);
 		if(!try_module_get(board->provider_module))
 		{
 			printk("gpib: try_module_get() failed\n");
@@ -163,7 +162,6 @@ int ibclose(struct inode *inode, struct file *filep)
 		
 		if(priv->got_module && board->use_count)
 		{
-			printk("%s: board=%p, use_count=%i, calling module_put()\n", __FUNCTION__, board, board->use_count);
 			module_put(board->provider_module);
 			--board->use_count;
 		}
@@ -382,7 +380,6 @@ static int board_type_ioctl(gpib_file_private_t *file_priv, gpib_board_t *board,
 			{
 				for(i = 0; i < board->use_count; ++i)
 				{
-					printk("%s: board=%p, use_count=%i, calling module_put()\n", __FUNCTION__, board, board->use_count);
 					module_put(board->provider_module);
 				}
 				board->interface = NULL;
@@ -392,7 +389,6 @@ static int board_type_ioctl(gpib_file_private_t *file_priv, gpib_board_t *board,
 			board->provider_module = entry->module;
 			for(i = 0; i < board->use_count; ++i)
 			{
-				printk("%s: board=%p, use_count=%i calling try_module_get()\n", __FUNCTION__, board, board->use_count);
 				if(!try_module_get(entry->module))
 				{
 					board->use_count = i;
@@ -401,7 +397,6 @@ static int board_type_ioctl(gpib_file_private_t *file_priv, gpib_board_t *board,
 			}
 			if(had_module == 0)
 			{
-				printk("%s: board=%p, use_count=%i calling try_module_get()\n", __FUNCTION__, board, board->use_count);
 				if(!try_module_get(entry->module))
 				{
 					return -ENOSYS;
