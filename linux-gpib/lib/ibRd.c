@@ -160,6 +160,9 @@ int ibrdf(int ud, const char *file_path )
 		}
 	}
 
+	// set eos mode
+	iblcleos( conf );
+
 	byte_count = error = 0;
 	do
 	{
