@@ -47,10 +47,10 @@ void cb7210_internal_interrupt( gpib_board_t *board )
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 	int clear_bits;
 
-	if( ( priv->hs_mode_bits & HS_ENABLE_MASK )  )
-		status1 = 0;
+	if((priv->hs_mode_bits & HS_ENABLE_MASK))
+	{	status1 = 0;
 		hs_status = inb( nec_priv->iobase + HS_STATUS );
-	else
+	}else
 	{
 //		if( ( priv->hs_mode_bits & HS_ENABLE_MASK ) )
 //			outb( priv->hs_mode_bits & ~HS_ENABLE_MASK, nec_priv->iobase + HS_MODE );
