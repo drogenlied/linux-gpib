@@ -173,7 +173,7 @@ ssize_t cb7210_accel_read( gpib_board_t *board, uint8_t *buffer,
 
 	/* release rfd holdoff */
 	nec7210_set_handshake_mode( nec_priv, HR_HLDE );
-	nec7210_release_holdoff( nec_priv );
+	nec7210_release_rfd_holdoff( nec_priv );
 
 	if( wait_event_interruptible( board->wait,
 		test_bit( READ_READY_BN, &nec_priv->state ) ||
