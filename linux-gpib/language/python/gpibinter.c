@@ -36,31 +36,32 @@ static char gpib_read__doc__[] =
 
 static PyObject* gpib_read(PyObject *self, PyObject *args)
 {
-        static char *result = 0x0;
-	static int result_len = 0;
-
+	char *result;
 	int device;
-        int len;
+	int len;
+	PyObject *retval;
 
 	if (!PyArg_ParseTuple(args, "ii",&device,&len))
 		return NULL;
 
-	if (result_len < len+1) 
-	  {
-	    if((result = realloc(result, len+1)) == NULL)
-	      {
+	result = malloc(len + 1);
+	if(result == NULL)
+	{
 		PyErr_SetString(GpibError,"Read Error: can't get Memory ");
 		return NULL;
-	      }
-	  }
-	
-        if( ibrd(device,result,len) & ERR ){
-	   PyErr_SetString(GpibError,"Read Error: ibrd() failed");
-	   return NULL;
+	}
+
+	if( ibrd(device,result,len) & ERR )
+	{
+		PyErr_SetString(GpibError,"Read Error: ibrd() failed");
+		free(result);
+		return NULL;
 	}
 	result[ibcnt] = '\0';
 
-	return Py_BuildValue("s", result);
+	retval = Py_BuildValue("s", result);
+	free(result);
+	return retval;
 }
 
 static char gpib_readbin__doc__[] =
@@ -70,30 +71,31 @@ static char gpib_readbin__doc__[] =
 
 static PyObject* gpib_readbin(PyObject *self, PyObject *args)
 {
-        static char *result = 0x0;
-	static int result_len = 0;
-
+	char *result;
+	PyObject *retval;
 	int device;
-        int len;
+	int len;
 
 	if (!PyArg_ParseTuple(args, "ii",&device,&len))
 		return NULL;
 
-	if (result_len < len+1)
-	  {
-	    if((result = realloc(result, len+1)) == NULL)
-	      {
+	result = malloc(len + 1);
+	if(result == NULL)
+	{
 		PyErr_SetString(GpibError,"Read Error: can't get Memory ");
 		return NULL;
-	      }
-	  }
-	
-        if( ibrd(device,result,len) & ERR ){
-	   PyErr_SetString(GpibError,"Read Error: ibrd() failed");
-	   return NULL;
 	}
 
-	return Py_BuildValue("s#", result,ibcnt);
+	if( ibrd(device,result,len) & ERR )
+	{
+		PyErr_SetString(GpibError,"Read Error: ibrd() failed");
+		free(result);
+		return NULL;
+	}
+
+	retval = Py_BuildValue("s#", result, ibcnt);
+	free(result);
+	return retval;
 }
 
 
