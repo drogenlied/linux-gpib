@@ -24,6 +24,10 @@
 #include <linux/module.h>
 #include <linux/init.h>
 
+#ifndef PCI_VENDOR_ID_QUANCOM
+#define PCI_VENDOR_ID_QUANCOM	0x8008
+#endif
+
 MODULE_LICENSE("GPL");
 
 int ines_pci_attach(gpib_board_t *board);
@@ -32,11 +36,6 @@ int ines_isa_attach(gpib_board_t *board);
 
 void ines_pci_detach(gpib_board_t *board);
 void ines_isa_detach(gpib_board_t *board);
-
-enum pci_vendor_ids
-{
-	PCI_VENDOR_ID_QUANCOM = 0x8008,
-};
 
 enum ines_pci_chip
 {
@@ -344,9 +343,10 @@ int ines_common_pci_attach( gpib_board_t *board )
 	nec_priv = &ines_priv->nec7210_priv;
 
 	// find board
-	pdev = NULL;
+	ines_priv->pci_device = NULL;
 	for(i = 0; i < num_pci_chips; i++)
 	{
+		pdev = NULL;
 		do
 		{
 			if( pci_ids[i].subsystem_vendor_id >= 0 && pci_ids[i].subsystem_device_id >= 0 )
@@ -362,15 +362,15 @@ int ines_common_pci_attach( gpib_board_t *board )
 				PCI_SLOT( pdev->devfn ) )
 				continue;
 			found_id = pci_ids[i];
+			ines_priv->pci_device = pdev;
 			break;
 		}while( 1 );
 	}
-	if(pdev == NULL)
+	if(ines_priv->pci_device == NULL)
 	{
 		printk("gpib: could not find ines PCI board\n");
 		return -1;
 	}
-	ines_priv->pci_device = pdev;
 
 	if(pci_enable_device(ines_priv->pci_device))
 	{
@@ -380,6 +380,7 @@ int ines_common_pci_attach( gpib_board_t *board )
 
 	if(pci_request_regions(ines_priv->pci_device, "ines-gpib"))
 		return -1;
+	nec_priv->iobase = pci_resource_start(ines_priv->pci_device, found_id.gpib_region);
 
 	switch(found_id.pci_chip_type)
 	{
@@ -390,14 +391,20 @@ int ines_common_pci_attach( gpib_board_t *board )
 			ines_priv->amcc_iobase = pci_resource_start(ines_priv->pci_device, 0);
 			break;
 		case PCI_CHIP_UNKNOWN:
+			printk( "quancom register dump:\n" );
+			for( i = 0; i < 256; i++ )
+			{
+				printk( "0x%lx: 0x%x\n", nec_priv->iobase + i, inb( nec_priv->iobase + i ) );
+			}
+			return -1;
 			break;
 		default:
 			printk("gpib: unspecified chip type? (bug)\n");
+			nec_priv->iobase = 0;
 			pci_release_regions(ines_priv->pci_device);
 			return -1;
 			break;
 	}
-	nec_priv->iobase = pci_resource_start(ines_priv->pci_device, found_id.gpib_region);
 
 	nec7210_board_reset( nec_priv, board );
 
