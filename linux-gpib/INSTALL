@@ -49,17 +49,6 @@
 
 	  
   ------------------------------------------------------------------------
-  You'll need the following packages:
-
-     linux-gpib-<version>.base.tgz
-
-  contains the driver, the user library and basic utilities
-
-     linux-gpib-<version>.contrib.tgz
-
-  contains additional extensions for Tcl/Tk interpreter for Linux-GPIB
-
-  ------------------------------------------------------------------------
 
   Important Note:
 
@@ -255,7 +244,7 @@
        is not set correctly with X11R6, please in this case add -L/usr/X11/lib
        to the XLIBS variable in applications/ibsh/Makefile.
 
-   -)  At this time only Kernels from the 2.0.x tree are supported
+   -)  At this time only Kernels from the 2.4.x tree are supported
 
 
 

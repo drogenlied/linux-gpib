@@ -1,4 +1,4 @@
-#!tclsh
+#!/usr/bin/tclsh
 
 if { [catch [info commands load] ]  } {
 

@@ -26,7 +26,15 @@ the package.
 Checklist:
 
    - The kernel sources
-        [ see if /usr/src/linux exists ]
+        [ Ideally, you will have the kernel source directory that your
+          kernel was compiled from.  If not, you can compile a new kernel,
+          or if you want to cheat then do the following:
+          1) unpack a fresh copy of the kernel source for the kernel version
+             you are running.  Copy the config file for your kernel to
+             '.config' in the top level directory of your kernel source.
+          2) 'make oldconfig' (in your kernel source dir).
+          3) 'make dep' (still in kernel source dir).
+        ]
 
    - The C development environment (don't laugh, I've seen that problem)
 	[ try typing gcc and make ]
