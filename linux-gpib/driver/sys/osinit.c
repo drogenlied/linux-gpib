@@ -121,11 +121,7 @@ extern  void ibintr(int irq, void *d, struct pt_regs *regs);
 #endif
 
 #if USEINTS
- #ifdef LINUX2_2
         sema_init( &espsemid, 0);
- #else
-	espsemid.count=0;
- #endif
 	DBGprint(DBG_DATA, ("espsemid=0x%x  ", atomic_read(&espsemid.count)));
 #endif
         /* avoid symbols to be exported (TB) */
@@ -150,11 +146,7 @@ extern  void ibintr(int irq, void *d, struct pt_regs *regs);
 	if( request_dma( ibdma, "gpib" ) ){
 	  printk("can't request DMA %d\n",ibdma );
 #if USEINTS
-#ifdef LINUX2_0
 	free_irq(ibirq, NULL);
-#else
-	free_irq(ibirq);
-#endif
 #endif
           DBGout();
 	  return(0);
@@ -173,11 +165,7 @@ IBLCL void osReset(void)
         if( pgmstat & PS_SYSRDY ){
 
 #if USEINTS                /*release ressources */
-#ifdef LINUX2_0
 	free_irq(ibirq, NULL);
-#else
-	free_irq(ibirq);
-#endif
 #endif
 #if DMAOP
 	free_dma(ibdma);

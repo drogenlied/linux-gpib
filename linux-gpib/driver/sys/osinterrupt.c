@@ -1,4 +1,6 @@
 #include <ibsys.h>
+#include <board.h>
+
 extern uint8       CurHSMode;
 
 /*

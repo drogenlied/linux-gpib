@@ -1,4 +1,6 @@
 
+#ifndef _GPIB_TYPES_H
+#define _GPIB_TYPES_H
 
 
 typedef char		int8;		
@@ -62,4 +64,4 @@ typedef struct {
 } ibarg_t;
 
 
-
+#endif	// _GPIB_TYPES_H

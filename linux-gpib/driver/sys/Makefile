@@ -8,7 +8,7 @@ SRCS =  osadjcnt.c osdma.c osfuncs.c  osinit.c  osinterrupt.c ostimer.c \
 	osutil.c oslock.c osmem.c
 OBJS =  $(SRCS:.c=.o)
 
-INCLUDES = -I. -I../include -I../../include -I$(LINUXDIR)/include
+INCLUDES = -I. -I../include -I ../board/ -I../../include -I$(LINUXDIR)/include
 
 CFLAGS = $(INCLUDES)  -D__KERNEL__ -DLINUX -O2 -m486 $(OPTIONS) -Wall -DMODULE
 

@@ -1,4 +1,7 @@
 
+#ifndef _GPIB_REGISTERS_H
+#define _GPIB_REGISTERS_H
+
 #define GPIBin(x)	bdP8in(&IB->x)	/* Board access macros...	*/
 #define GPIBout(x,v)	bdP8out(&IB->x, v)
 
@@ -617,4 +620,5 @@ typedef struct ibregs {
 #define DRV_REN      (1<<2)
 
 
+#endif	//_GPIB_REGISTERS_H
 

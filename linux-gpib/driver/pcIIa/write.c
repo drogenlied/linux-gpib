@@ -96,9 +96,6 @@ IBLCL void bdPIOwrt( ibio_op_t *wrtop)
 	faddr_t		buf;
 	unsigned	cnt;
 	uint8		s1, s2;		/* software copies of HW status regs... */
-	int		cfgbits;
-	uint8		lsb;		/* unsigned residual LSB */
-	char		msb;		/* signed residual MSB */
 extern int eosmodes;
         int bytes=0;
 
@@ -107,7 +104,7 @@ extern int eosmodes;
 	buf = wrtop->io_vbuf;
 	cnt = wrtop->io_cnt;
 
-	DBGprint(DBG_DATA, ("buf=0x%x cnt=%d  ", buf, cnt));
+	DBGprint(DBG_DATA, ("buf=0x%p cnt=%d  ", buf, cnt));
 
 	GPIBout(imr1, 0);
 	GPIBout(imr2, 0);		/* clear any previously arrived bits */
@@ -135,7 +132,6 @@ extern int eosmodes;
 		bdWaitOut();
 		if( TimedOut() ) break;
 	}
-wrtdone:
 
 	DBGprint(DBG_BRANCH, ("send EOI  "));
         /*send EOI */

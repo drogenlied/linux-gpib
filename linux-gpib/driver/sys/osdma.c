@@ -1,4 +1,5 @@
 #include <ibsys.h>
+#include <board.h>
 
 #if DMAOP
 /*

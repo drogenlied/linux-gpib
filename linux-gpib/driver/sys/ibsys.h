@@ -19,9 +19,7 @@
 #include <asm/segment.h>
 #include <asm/irq.h>
 #include <asm/dma.h>
-#ifdef LINUX2_2
 #include <asm/uaccess.h>
-#endif
 #include <asm/system.h>
 
 

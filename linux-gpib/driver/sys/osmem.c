@@ -17,12 +17,7 @@
 
 
 
-#if (defined(GFP_DMA) && (defined(LINUX2_0) )) && defined(USE_DMA) 
-#define GFP_DMA_DEFINED
-#define MEMORY_PRIORITY (GFP_KERNEL | GFP_DMA)
-#else
 #define MEMORY_PRIORITY (GFP_KERNEL)
-#endif
 #ifndef DEFAULT_GPIB_DMA_SIZE
 #define DEFAULT_GPIB_DMA_SIZE 0
 #endif

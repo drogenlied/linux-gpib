@@ -21,7 +21,6 @@ ibregs_t *ib = ((ibregs_t *) 0);
 IBLCL int bdonl(int v)
 {
 	uint8		s;
-	int		i;           
 	extern uint32	osRegAddr();
 
 	DBGin("bdonl");
@@ -80,14 +79,7 @@ IBLCL int bdonl(int v)
 	GPIBout(auxmr, auxrabits);
 
 	GPIBout(auxmr, AUXRB | 0);                  /* set INT pin to active high */
-#if 0
-	GPIBout(auxmr, AUXRB | HR_TRI);
-#endif
 	GPIBout(auxmr, AUXRE | 0);
-
-#if 0 
-	GPIBout(timer, 0xC4);                       /* 0xC4 = 7.5 usec (60 * 0.125) */
-#endif
 
 	if (v) GPIBout(auxmr, AUX_PON);	/* release pon state to bring online */
 

@@ -1,4 +1,5 @@
 #include <ibsys.h>
+#include <board.h>
 
 
 struct timer_list ibtimer_list;
@@ -40,20 +41,12 @@ IBLCL void osStartTimer(int v)
 	noTimo = INITTIMO;
 #if USEINTS
 	if (!(pgmstat & PS_NOINTS))
-  #ifdef LINUX2_2
                 sema_init( &espsemid, 0);
-  #else
-	        espsemid.count = 0;
-  #endif
 #endif
 	if (v > 0) {
 		DBGprint(DBG_DATA, ("timo=%ld  ", timeTable[v]));
 #if SYSTIMO
-#ifdef LINUX2_0
 		ibtimer_list.expires = jiffies + timeTable[v];   /* set number of ticks */
-#else
-		ibtimer_list.expires = timeTable[v];   /* set number of ticks */
-#endif
 		ibtimer_list.function = ibtmintr;
 		/*ibtimer_list.data    = (long) espwdid;*/
 		add_timer(&ibtimer_list);              /* add timer           */

@@ -8,7 +8,7 @@ extern uint8 ibirq;
  */
 IBLCL void bdwait(unsigned int mask)
 {
-	uint8 s1, s2,  f, imr2mask;
+	uint8 s1, s2 = 0, imr2mask = 0;
 
 	DBGin("bdwait");
 
@@ -47,8 +47,6 @@ IBLCL void bdwait(unsigned int mask)
 	else
 #endif
 
-waitdone:
-
 	while (!(s2 & imr2mask) && NotTimedOut())
 		ibsta = CMPL;
 	DBGout();
@@ -64,30 +62,11 @@ waitdone:
 
 IBLCL int bdWaitIn(void)
 {
-uint8 isreg1,s;
+uint8 isreg1;
 DBGin("bdWaitIn");
 
-#if 0
-    if( !(pgmstat & PS_NOINTS)){
-		DBGprint(DBG_BRANCH, ("use ints  "));
-		s = GPIBin(isr1);           /* clear ISRs by reading */
-		s = GPIBin(isr2);
-	        isreg1=0;
-		while( !(isreg1 & HR_END) &&  !( isreg1 & HR_DI )   ){
-		  GPIBout( imr1, (HR_ENDIE | HR_DIIE )); /* set read/end mask bits */
-		  osWaitForInt(0);
-		  GPIBout( imr1, 0);
-                  s=GPIBin(isr2);
-		  isreg1=GPIBin( isr1 );
-	        }
-    }
-
-     
-
-#else
     /* polling */
     while (!((isreg1 = GPIBin(isr1)) & HR_DI) && !(isreg1 & HR_END ) && NotTimedOut());
-#endif			
     /*DBGprint(DBG_DATA, ("***isr1 =0x%x", isreg1 ));*/
 DBGout();
     if ( (isreg1 & HR_END) || TimedOut() ) 

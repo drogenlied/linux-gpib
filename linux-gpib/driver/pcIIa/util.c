@@ -92,7 +92,7 @@ IBLCL uint8 bdCheckEOI(void)
 static int eosbyte = 0x0a; /*default eos byte for write operations*/
 
 
-IBLCL uint8 bdSetEOS(int ebyte)
+IBLCL void bdSetEOS(int ebyte)
 {
   DBGin("bdSetEOS");
   GPIBout(eosr, ebyte);

@@ -132,7 +132,7 @@ IBLCL void bdPIOread(ibio_op_t *rdop)
 
 	buf = rdop->io_vbuf;
 	cnt = rdop->io_cnt;
-	DBGprint(DBG_DATA, ("bdread: buf=0x%x cnt=%d  ", buf, cnt));
+	DBGprint(DBG_DATA, ("bdread: buf=0x%p cnt=%d  ", buf, cnt));
 
 	GPIBout(imr1, 0);
 	GPIBout(imr2, 0);		/* clear any previously arrived bits */
@@ -216,7 +216,6 @@ IBLCL void bdPIOread(ibio_op_t *rdop)
 	GPIBout(auxmr, auxrabits | HR_HLDA );/* avoid last byte getting lost */
         buf[ibcnt++]=GPIBin(dir);           /* read last byte on end */
 
-rddone:
 	DBGprint(DBG_BRANCH, ("done  "));
 
 	GPIBout(imr1, 0);		/* clear ENDIE if set */
