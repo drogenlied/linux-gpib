@@ -77,12 +77,6 @@ o) cd to your linux-gpib directory and run the './configure' script.
 	so that ld can find libgpib.so.  If the directory is not listed,
 	add it and then run 'ldconfig'.
 
-	If you are using a PCMCIA board, copy the files in the etc/pcmcia
-	subdirectory to /etc/pcmcia.  You may need to send a SIGHUP signal
-	to the cardmgr daemon to force it to reload the files in 
-	/etc/pcmcia (alternatively you could use your pcmcia init.d script
-	to restart the cardmgr, or you could just reboot).
-
 	To give a user access to the computer's gpib board you will have to add
 	them to the group 'gpib' (you can use the 'usermod' tool to change the
 	groups a user belongs to).  Or, you could change the
@@ -99,6 +93,8 @@ C) Configuring the GPIB-Library
 D) Loading the driver module
 -----------------------------
 
+o) PCI and ISA boards
+
 	You can load the driver module by typing
 
 		modprobe <driver name>
@@ -113,7 +109,7 @@ D) Loading the driver module
 		gpib_config --minor 0
 
 	You can also set up the modules to load automatically by adding lines
-	something like (this does NOT apply to PCMCIA cards)
+	something like 
 
 	alias char-major-160 gpib_common
 	alias gpib0 tnt4882
@@ -124,13 +120,34 @@ D) Loading the driver module
 	is modified by adding a file to the /etc/modprobe.d directory, and then running
 	'update-modules'.
 
-	For PCMCIA cards, you may need to edit the gpib_config call in the
+o) PCMCIA cards
+
+	If you are using a PCMCIA board, copy the files in the etc/pcmcia
+	subdirectory to /etc/pcmcia.  You may need to send a SIGHUP signal
+	to the cardmgr daemon to force it to reload the files in 
+	/etc/pcmcia (alternatively you could use your pcmcia init.d script
+	to restart the cardmgr, or you could just reboot).  The driver
+	module will be loaded as needed by the cardmgr.
+	You may wish to edit the options passed to the gpib_config call in the
 	/etc/pcmcia/linux-gpib-pcmcia script.
+
+o) USB devices
+
+	USB hotplug scripts will be installed into /etc/hotplug/usb if they do not already exist.
+	You may wish to edit the GPIB_CONFIG_OPTIONS in the hotplug script for your device. 
+	You will also need to install firmware files for your device, a tarball is available from
+	http://linux-gpib.sourceforge.net/firmware/.  Make sure you have
+	the "hotplug" and "fxload" packages installed on your computer.  The hotplug system
+	will automatically upload the firmware to your device and load the driver module when
+	needed.
+
+E) Trying it out
+----------------
 
 	You may find the examples/ibtest program useful as a starting point in trying
 	out your setup.
 
-E) Bindings for other languages
+F) Bindings for other languages
 -------------------------------
 
 	The bindings to other languages will be enabled by default in the
