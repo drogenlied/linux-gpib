@@ -124,11 +124,7 @@ IBLCL int ibeot(int v)
  */
 IBLCL int ibeos(int v)
 {
-#if 0
 	int ebyte, emodes;
-#if defined(HP82335) || defined(NIPCII) || defined(TMS9914)
-	extern int eosmodes;
-#endif
 	DBGin("ibeos");
 	if (fnInit(0) & ERR) {
 		DBGout();
@@ -140,21 +136,17 @@ IBLCL int ibeos(int v)
 		DBGprint(DBG_BRANCH, ("bad EOS modes  "));
 		ibsta |= ERR;
 		iberr = EARG;
-	}
-	else {
-#if !defined(HP82335) && !defined(TMS9914)
-		auxrabits = AUXRA | emodes;
-#endif
-#if defined(HP82335) || defined(TMS9914) || defined(NIPCII)
-		eosmodes = emodes;
-#endif
+	}else 
+	{
 		DBGprint(DBG_DATA, ("byte=0x%x modes=0x%x  ", ebyte, emodes));
-		bdSetEOS(ebyte);
-		bdSendAuxACmd(0);
+		if(emodes & REOS)
+		{
+			board.enable_eos(ebyte, emodes & BIN);
+		}else
+			board.disable_eos();
 	}
 	ibstat();
 	DBGout();
-#endif
 	return ibsta;
 }
 

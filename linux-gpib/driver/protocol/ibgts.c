@@ -14,7 +14,7 @@ IBLCL int ibgts(void)
 		DBGout();
 		return ibsta;
 	}
-	bdSendAuxCmd(AUX_GTS);                    /* go to standby */
+	board.go_to_standby();                    /* go to standby */
 	ibstat();
 	DBGout();
 	return ibsta;

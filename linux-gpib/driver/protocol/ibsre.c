@@ -16,7 +16,7 @@ IBLCL int ibsre(int v)
 	  }
 	  pgmstat |= PS_SAC;
 	  bdsc();
-	  bdSendAuxCmd((v ? AUX_SREN : AUX_CREN)); /* set or clear REN */
+	board.remote_enable(v);	/* set or clear REN */
           if( !v ) drvstat &= ~DRV_REN;
           else     drvstat |= DRV_REN;
         }

@@ -14,7 +14,6 @@ int myPAD		= PAD;		/* current primary address */
 int mySAD		= SAD;		/* current secondary address */
 
 #if !defined(HP82335) && !defined(TMS9914)
-int auxrabits	= AUXRA;	/* static bits for AUXRA (EOS modes) */
 #else
 int ccrbits	= 0;	/* static bits for AUXRA (EOS modes) */
 #endif
@@ -76,7 +75,6 @@ IBLCL int ibonl(int v)
 	      myPAD = PAD;
 	      mySAD = SAD;
 #if !defined(HP82335) && !defined(TMS9914)
-	      auxrabits = AUXRA;
 #else
 	      ccrbits = 0;
 #endif

@@ -14,8 +14,6 @@ extern int drvstat,ib_opened;
  */
 IBLCL int ibsic(void)
 {
-	int	i;
-
 	DBGin("ibsic");
 	if( !(drvstat & DRV_IFC) || (ib_opened <= 1)){ 
 	if (fnInit(0) & ERR) {
@@ -25,9 +23,9 @@ IBLCL int ibsic(void)
 	pgmstat |= PS_SAC;
         /* set controller state */
 	bdsc();
-	bdSendAuxCmd(AUX_SIFC);                   /* assert IFC */
+	board.interface_clear(1);                   /* assert IFC */
 	udelay(100);
-	bdSendAuxCmd(AUX_CIFC);                   /* clear IFC */
+	board.interface_clear(0);                   /* clear IFC */
 	drvstat |= DRV_IFC;
         }
 	ibstat();

@@ -19,11 +19,11 @@ IBLCL int ibcac(int v)
 	}
 	if (v && (pgmstat & PS_HELD) && ( bdGetAdrStat() & HR_LA)) {
 		DBGprint(DBG_BRANCH, ("sync  "));
-		bdSendAuxCmd(AUX_TCS);            /* assert ATN synchronously */
+		board.take_control(1);            /* assert ATN synchronously */
 	}
 	else {
 		DBGprint(DBG_BRANCH, ("async  "));
-		bdSendAuxCmd(AUX_TCA);            /* assert ATN asynchronously */
+		board.take_control(0);            /* assert ATN asynchronously */
 	}
 	ibstat();
 	DBGout();

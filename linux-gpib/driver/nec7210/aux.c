@@ -81,3 +81,11 @@ void nec7210_interface_clear(int assert)
 	else
 		bdSendAuxCmd(AUX_CIFC);
 }
+
+void nec7210_remote_enable(int enable)
+{
+	if(enable)
+		bdSendAuxCmd(AUX_SREN);
+	else
+		bdSendAuxCmd(AUX_CREN);
+}

@@ -84,12 +84,23 @@ IBLCL uint8_t bdCheckEOI(void)
 static int eosbyte = 0x0a; /*default eos byte for write operations*/
 
 
-IBLCL void bdSetEOS(int ebyte)
+void nec7210_enable_eos(uint8_t eos_byte, int compare_8_bits)
 {
-  DBGin("bdSetEOS");
-  GPIBout(EOSR, ebyte);
-  eosbyte = ebyte;
-  DBGout();
+	DBGin("bdSetEOS");
+	GPIBout(EOSR, eos_byte);
+	auxa_bits |= HR_REOS;
+	if(compare_8_bits)
+		auxa_bits |= HR_BIN;
+	else
+		auxa_bits &= ~HR_BIN;
+	GPIBout(AUXMR, auxa_bits);
+	DBGout();
+}
+
+void nec7210_disable_eos(void)
+{
+	auxa_bits &= ~HR_REOS;
+	GPIBout(AUXMR, auxa_bits);
 }
 
 IBLCL uint8_t bdGetEOS(void)

@@ -15,10 +15,9 @@
  *          calling ibcmd.
  */
 
-IBLCL int ibrd(uint8_t *buf, unsigned int cnt)
+IBLCL int ibrd(uint8_t *buf, size_t cnt)
 {
-	ibio_op_t	rdop;
-	unsigned int	requested_cnt;
+	size_t requested_cnt;
 	ssize_t ret;
 
 	DBGin("ibrd");

@@ -49,8 +49,6 @@ typedef struct {
  * between the board-specific details dealt with in the drivers
  * and generic interface provided by gpib-common.
  *
- * need to add EOS manipulation functions, perhaps more queries,
- * and remote enable set/clear
  */
 typedef struct
 {
@@ -85,6 +83,17 @@ typedef struct
 	 * boolean value of 'assert'
 	 */
 	void (*interface_clear)(int assert);
+	/* Sends remote enable command if 'enable' is nonzero, disables remote mode
+	 * if 'enable' is zero
+	 */
+	void (*remote_enable)(int enable);
+	/* enable END for reads, when byte 'eos' is received.  If
+	 * 'compare_8_bits' is nonzero, then all 8 bits are compared
+	 * with the eos bytes.  Otherwise only the 7 least significant
+	 * bits are compared. */
+	void (*enable_eos)(uint8_t eos, int compare_8_bits);
+	/* disable END on eos byte (END on EOI only)*/
+	void (*disable_eos)(void);
 	/* suspend until one of the conditions specified by 'status_mask' is
 	 * true.  The meaning of the bits in the 'status_mask' is the same
 	 * as the meaning of the bits in the 'status' variable below.

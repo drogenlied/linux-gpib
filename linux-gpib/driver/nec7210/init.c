@@ -39,6 +39,9 @@ gpib_board_t board =
 	take_control:	nec7210_take_control,
 	go_to_standby:	nec7210_go_to_standby,
 	interface_clear:	nec7210_interface_clear,
+	remote_enable:	nec7210_remote_enable,
+	enable_eos:	nec7210_enable_eos,
+	disable_eos:	nec7210_disable_eos,
 	wait:	nec7210_wait,
 	serial_poll:	NULL,	// XXX
 	parallel_poll:	NULL,	// XXX
@@ -63,6 +66,9 @@ static unsigned int ioports_allocated = 0, iomem_allocated = 0,
 
 // bits written to interrupt mask registers
 volatile int imr1_bits, imr2_bits;
+/* bits written to auxillary register A, excluding handshaking bits.  Used to
+ * hold EOS information */
+int auxa_bits = AUXRA;
 
 // nec7210 has 8 registers
 static const int nec7210_num_registers = 8;
@@ -98,7 +104,7 @@ void board_reset(void)
 	GPIBout(EOSR, 0);
 	GPIBout(AUXMR, ICR | 5);                    /* set internal counter register N= 8 */
 	GPIBout(AUXMR, PPR | HR_PPU);               /* parallel poll unconfigure */
-	GPIBout(AUXMR, auxrabits);
+	GPIBout(AUXMR, auxa_bits);
 
 	GPIBout(AUXMR, AUXRB | 0);                  /* set INT pin to active high */
 	GPIBout(AUXMR, AUXRE | 0);

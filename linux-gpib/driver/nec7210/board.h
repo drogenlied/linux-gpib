@@ -13,6 +13,11 @@ extern void nec7210_take_control(int syncronous);
 extern void nec7210_go_to_standby(void);
 extern void nec7210_interface_clear(int assert);
 extern unsigned int nec7210_wait(unsigned int status_mask);
+extern void nec7210_remote_enable(int enable);
+extern void nec7210_enable_eos(uint8_t eos_bytes, int compare_8_bits);
+extern void nec7210_disable_eos(void);
+
+extern void bdSendAuxCmd(int cmd);
 
 extern unsigned long ibbase;	/* base addr of GPIB interface registers  */
 extern unsigned long remapped_ibbase;	// ioremapped memory io address
@@ -23,7 +28,7 @@ extern struct pci_dev *ib_pci_dev;	// pci_dev for plug and play boards
 
 extern volatile int noTimo;     /* timeout flag */
 extern int          pgmstat;    /* Program state */
-extern int          auxrabits;  /* static bits for AUXRA (EOS modes) */
+extern int          auxa_bits;  /* static bits for AUXRA (EOS modes) */
 
 extern gpib_buffer_t *read_buffer, *write_buffer;
 

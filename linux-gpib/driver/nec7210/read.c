@@ -11,14 +11,14 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, uint8_t eos) // XXX eos bro
 	if(length == 0) return 0;
 
 	if (pgmstat & PS_HELD) {
-		GPIBout(AUXMR, auxrabits | HR_HLDA);
+		GPIBout(AUXMR, auxa_bits | HR_HLDA);
 		GPIBout(AUXMR, AUX_FH);	/* set HLDA in AUXRA to ensure FH works */
 		pgmstat &= ~PS_HELD;
 	}
 /*
  *	holdoff on END
  */
-	GPIBout(AUXMR, auxrabits | HR_HLDE );
+	GPIBout(AUXMR, auxa_bits | HR_HLDE);
 
 #if DMAOP		// ISA DMA transfer
 	flags = claim_dma_lock();
@@ -87,7 +87,7 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, uint8_t eos) // XXX eos bro
 #endif
 
 	pgmstat |= PS_HELD;
-	GPIBout(AUXMR, auxrabits | HR_HLDA);
+	GPIBout(AUXMR, auxa_bits | HR_HLDA);
 
 	if (!noTimo)
 	{

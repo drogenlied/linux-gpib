@@ -13,6 +13,5 @@ extern int timeidx;
 extern int pollTimeidx;
 extern int myPAD;
 extern int mySAD;
-extern int auxrabits;
 
 extern uint32_t timeTable[];

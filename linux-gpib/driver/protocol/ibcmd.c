@@ -18,8 +18,7 @@
  */
 IBLCL int ibcmd(uint8_t *buf, size_t cnt)
 {
-	ibio_op_t	cmdop;
-	unsigned int	requested_cnt;
+	size_t	requested_cnt;
 	ssize_t ret;
 
 	DBGin("ibcmd");

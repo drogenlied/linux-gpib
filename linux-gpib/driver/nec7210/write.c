@@ -9,7 +9,7 @@ ssize_t nec7210_write(uint8_t *buffer, size_t length, int send_eoi)
 
 	if(length == 0) return 0;
 
-	GPIBout(AUXMR, auxrabits);	/* normal handshaking, XXX necessary?*/
+	GPIBout(AUXMR, auxa_bits);	/* normal handshaking, XXX necessary?*/
 
 	if(send_eoi)
 	{
