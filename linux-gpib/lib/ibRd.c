@@ -2,14 +2,21 @@
 #include <ib.h>
 #include <ibP.h>
 
-int ibrd(int ud, char *rd, unsigned long cnt)
+int ibrd(int ud, uint8_t *rd, unsigned long cnt)
 {
-  iblcleos(ud);
-  ibtmo(ud, CONF(ud,tmo));
+	ibConf_t *conf = ibConfigs[ud];
 
-  return ibBoardFunc(  CONF(ud,board),
-                       ( CONF(ud,flags) & CN_ISCNTL  ? IBRD : DVRD ),
-                       CONF(ud,padsad), rd, cnt);
+	if(ibCheckDescriptor(ud) < 0)
+		return ibsta | ERR;
+
+	// set eos mode
+	iblcleos(ud);
+	// set timeout
+	ibBoardFunc(conf->board, IBTMO, conf->tmo);
+
+	return ibBoardFunc(conf->board,
+		( conf->flags & CN_ISCNTL ? IBRD : DVRD ),
+		conf->padsad, rd, cnt);
 }
 
 

@@ -20,6 +20,7 @@ typedef struct ibConfStruct
 	int  eosflags;
 	int  flags;                         /* some flags                       */
 	int tmo;
+	unsigned int is_interface : 1;	// is interface board
 } ibConf_t;
 
 /*---------------------------------------------------------------------- */

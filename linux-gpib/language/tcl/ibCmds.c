@@ -121,8 +121,6 @@ int ibFind  _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,cha
 
   if( ! Gpib_find_called ){
 
-    sprintf((char *)tmpbuf,"%d",ibGetNrDev());
-    Tcl_SetVar(interp,"Gpib_Devices",(char *)tmpbuf, TCL_GLOBAL_ONLY);
     sprintf((char *)tmpbuf,"%d",ibGetNrBoards());
     Tcl_SetVar(interp,"Gpib_Boards",(char *)tmpbuf, TCL_GLOBAL_ONLY);
 

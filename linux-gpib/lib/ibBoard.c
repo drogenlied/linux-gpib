@@ -28,7 +28,7 @@ void ibBoardDefaultValues(void)
 		ibBoard[i].irq = 0;
 		ibBoard[i].dma = 0;
 		ibBoard[i].ifc = 0;
-		ibBoard[i].fileno = 0;
+		ibBoard[i].fileno = -1;
 		strcpy(ibBoard[i].device, "");
 	}
 }
@@ -38,7 +38,7 @@ int ibBoardOpen(int bd,int flags)
 {
 	int fd;
 
-	if( ibBoard[bd].fileno == 0 )
+	if( ibBoard[bd].fileno < 0 )
 	{
 		if((fd = open(ibBoard[bd].device, O_RDWR | flags)) < 0 )
 		{
@@ -59,7 +59,7 @@ int ibBoardClose(int bd)
 	if(ibBoard[bd].fileno > 0)
 	{
 		close(ibBoard[bd].fileno);
-		ibBoard[bd].fileno = 0;
+		ibBoard[bd].fileno = -1;
 	}
 	return 0;
 }
@@ -144,7 +144,7 @@ int ibBoardFunc (int bd, int code, ...)
 }
 
 
-// XXX global!
+// XXX global! (and wrong)
 int ibGetNrBoards(void)
 {
 	extern int bdid;

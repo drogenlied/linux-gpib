@@ -3,9 +3,11 @@
 
 #define UD_REMOTE  (1<<16)            /* UD is a network handle */
 
- 
+#define FIND_CONFIGS_LENGTH 31	// max number of devices we can read from config file
+
 extern ibBoard_t ibBoard[];
 extern ibConf_t *ibConfigs[];
+extern ibConf_t ibFindConfigs[FIND_CONFIGS_LENGTH];
 extern ibarg_t ibarg;
 
 #include <errno.h>

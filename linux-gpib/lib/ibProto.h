@@ -24,7 +24,7 @@ extern  int ibchbase(int ud, int base);
 extern  int ibchirq(int ud, int base);
 extern  int ibchdma(int ud, int base);
 extern  int ibpad(int ud, int v);
-extern  int ibrd(int ud, char *rd, unsigned long cnt);
+extern  int ibrd(int ud, uint8_t *rd, unsigned long cnt);
 extern  int ibrpp(int ud, char *ppr);
 extern  int ibrsp(int ud, char *spr);
 extern  int ibrsv(int ud, int v);
@@ -37,7 +37,7 @@ extern  int ibtrg(int ud);
 extern  int ibwait(int ud, int mask);
 extern  int ibwrt(int ud, char *rd, unsigned long cnt);
 /***** Private Functions ******/
-extern int check_descriptor(int ud);
+extern int ibCheckDescriptor(int ud);
 extern  int ibBdChrConfig(int ud, int base, int irq, int dma);
 extern  void ibBoardDefaultValues(void);
 extern  int ibBoardOpen(int bd,int flags);
@@ -51,8 +51,7 @@ extern  char *ibVerbCode(int code);
 extern  void ibPutMsg (char *format,...); 
 extern  void ibPutErrlog(int ud,char *routine);
 extern  int ibParseConfigFile(char *filename);
-extern  int ibInstallConfigItem(ibConf_t *p);
-extern  int ibGetNrDev(void );
+extern  int ibGetDescriptor(ibConf_t *p);
 extern  int ibFindDevIndex(char *name);
 #ifdef __cplusplus
 }

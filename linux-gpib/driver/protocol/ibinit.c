@@ -81,9 +81,10 @@ int ibonl(gpib_device_t *device, int v)
 				return -1;
 			}
 		}
-
 		/* initialize system support functions */
 		device->online = 1;
+		if(device->master)
+			ibsic(device);
 	}else
 	{		/* OFFLINE: leave SYSFAIL red */
 		if( ib_opened <= 1)

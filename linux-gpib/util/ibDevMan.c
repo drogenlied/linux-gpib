@@ -67,8 +67,9 @@ int ibDumpConfiguration(int format,char *filename)
 			{
 				/* dump board information */
 				fprintf(outfile,"set ibBoard(%d,devices) { ",bd);
-				for(ud = 0; ud < ibGetNrDev(); ud++)
+				for(ud = 0; ud < NUM_CONFIGS; ud++)
 				{
+					if(ibConfigs[ud] == NULL) continue;
 					if( CONF(ud,board) == bd )
 					{ /* only current board */
 						fprintf(outfile,"%s ",ibConfigs[ud]->name);
@@ -89,8 +90,9 @@ int ibDumpConfiguration(int format,char *filename)
 
 				fprintf(outfile,"set ibBoard(%d,ifc)  %d\n" ,bd,ibBoard[bd].ifc  );
 				/* dump devices information */
-				for(ud = 0; ud < ibGetNrDev(); ud++)
+				for(ud = 0; ud < NUM_CONFIGS; ud++)
 				{
+					if(ibConfigs[ud] == NULL) continue;
 					if( CONF(ud,board) == bd )
 					{ /* only current board */
 						fprintf(outfile,"set %s(pad) %d\n", ibConfigs[ud]->name, CONF(ud,padsad) & 0xff );
@@ -153,8 +155,9 @@ int ibDumpConfiguration(int format,char *filename)
 				fprintf(outfile,"         set-ifc = %s \n",yesno[ibBoard[bd].ifc] );
 
 				fprintf(outfile,"}\n");
-				for(ud=0;ud<ibGetNrDev();ud++)
+				for(ud = 0; ud < NUM_CONFIGS; ud++)
 				{
+					if(ibConfigs[ud] == NULL) continue;
 					if( CONF(ud,board) == bd )
 					{	/* only current board */
 						fprintf(outfile,"device { name        = %s\n",ibConfigs[ud]->name ); /* begin header */

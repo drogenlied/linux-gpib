@@ -4,22 +4,19 @@
 
 int ibtmo(int ud,int v)
 {
-    static int current_timeout = -1;
+	ibConf_t *conf = ibConfigs[ud];
 
-  if ((v < TNONE) || (v > T1000s)) {
-    ibsta = CMPL | ERR;
-    iberr = EARG;
-    return ibsta;
-  }
+	if ((v < TNONE) || (v > T1000s) || ibCheckDescriptor(ud) < 0)
+	{
+		ibsta = CMPL | ERR;
+		iberr = EARG;
+		return ibsta;
+	}
 
-  CONF(ud,tmo) = v;
-  if (v != current_timeout) {
-    return ibBoardFunc(CONF(ud,board),IBTMO ,v);
-  }
-  else {
-    ibsta = CMPL;
-    return ibsta;
-  }                
+	conf->tmo = v;
 
+	ibsta = CMPL;
+	return ibsta;
 }
+
 

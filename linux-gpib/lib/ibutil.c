@@ -6,7 +6,7 @@
 #include <string.h>
 #include "parse.h"
 
-static int num_devices = 0;
+ibConf_t *ibConfigs[NUM_CONFIGS];
 
 int ibParseConfigFile(char *filename)
 {
@@ -23,9 +23,12 @@ int ibParseConfigFile(char *filename)
 	/*ibPutMsg("Parse Config %s",filename); */
 	gpib_yyin = infile;
 	gpib_yyrestart(gpib_yyin); /* Hmm ? */
+
 	// initialize line counter to 1 before calling yyparse
 	yylloc.first_line = 1;
-	if(gpib_yyparse()<0) stat=-1 ;
+	// initialize variables used in yyparse() - see ibConfYacc.y
+	findIndex = 0;
+	if(gpib_yyparse() < 0) stat = -1 ;
 
 	fclose(infile);
 
@@ -34,7 +37,7 @@ int ibParseConfigFile(char *filename)
 
 /**********************************************************************/
 
-int ibInstallConfigItem(ibConf_t *p)
+int ibGetDescriptor(ibConf_t *p)
 {
 	ibConf_t *conf;
 	int ib_ndev;
@@ -70,13 +73,7 @@ int ibInstallConfigItem(ibConf_t *p)
 	conf->tmo = p->tmo;
 
 	strncpy(conf->init_string, p->init_string, sizeof(conf->init_string));
-	num_devices++;
 	return ib_ndev;
-}
-
-int ibGetNrDev(void)
-{
-return num_devices;
 }
 
 /**********************************************************************/
@@ -84,12 +81,17 @@ int ibFindDevIndex(char *name)
 {
 	int i;
 
-	for(i = 0; i < NUM_CONFIGS; i++)
+	for(i = 0; i < FIND_CONFIGS_LENGTH; i++)
 	{
-		if(ibConfigs[i] == NULL) continue;
-		if(!strcmp(ibConfigs[i]->name, name)) return i;
+		if(!strcmp(ibFindConfigs[i].name, name)) return i;
 	}
 
 	return -1;
 }
 
+int ibCheckDescriptor(int ud)
+{
+	if(ud < 0 || ud > NUM_CONFIGS || ibConfigs[ud] == NULL)
+		return -1;
+	return 0;
+}

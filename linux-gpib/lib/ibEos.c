@@ -4,9 +4,20 @@
 
 int ibeos(int ud, int v)
 {
+	ibConf_t *conf = ibConfigs[ud];
 
-return ibBoardFunc(CONF(ud,board), IBEOS, v);
+	ibsta &= ~ERR;
 
+	if(ibCheckDescriptor(ud) < 0)
+	{
+		ibsta |= ERR;
+		return ibsta;
+	}
+
+	conf->eos = v & 0xff;
+	conf->eosflags = (v >> 8) & 0xff;
+
+	return ibsta;
 }
 
 /*
@@ -18,13 +29,16 @@ return ibBoardFunc(CONF(ud,board), IBEOS, v);
 
 int iblcleos(int ud)
 {
+	ibConf_t *conf = ibConfigs[ud];
+	int eosmode;
 
-  if( CONF(ud,eos) | CONF(ud,eosflags) ){  /* set only if unit description has been changed*/
-    return ibBoardFunc(CONF(ud,board),IBEOS, CONF(ud,eos) | (CONF(ud,eosflags) << 8 ));
-  }
-  else
-    return ibBoardFunc(CONF(ud,board),IBEOS,ibBoard[CONF(ud,board)].eos 
-		 | (ibBoard[CONF(ud,board)].eosflags << 8) );
-
+	if(conf->eos || conf->eosflags)
+	{
+		eosmode = conf->eos | (conf->eosflags << 8);
+	}else
+	{
+		eosmode = ibBoard[conf->board].eos | (ibBoard[conf->board].eosflags << 8);
+	}
+	return ibBoardFunc(conf->board, IBEOS, eosmode);
 }
 

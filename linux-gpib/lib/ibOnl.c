@@ -4,30 +4,35 @@
 
 int ibonl(int ud, int onl)
 {
-  extern char ibfind_called;
-  int oflags=0;
+	int oflags=0;
+	ibConf_t *conf = ibConfigs[ud];
 
-  if ( ud == ERR )
-    return ibsta;
+	if(ibCheckDescriptor(ud) < 0)
+	{
+		ibsta |= ERR;
+		return ibsta;
+	}
 
-  if( CONF(ud,flags) & CN_ISCNTL || CONF(ud,flags) & CN_EXCLUSIVE )
-    oflags |= O_EXCL;
+	if(conf->flags & CN_EXCLUSIVE )
+		oflags |= O_EXCL;
 
+	if((ibBoard[conf->board].fileno < 0)
+		&& (ibBoardOpen(conf->board, oflags) & ERR))
+	{
+		ibsta = ibarg.ib_ibsta | ERR;
+		iberr = EDVR;
+		ibcnt = errno;
+		return ibsta;
+	}
 
-  if ( (ibBoard[ CONF(ud,board) ].fileno <=0) 
-      && ( ibBoardOpen( CONF(ud,board),oflags ) & ERR ) ){
-          ibsta = ibarg.ib_ibsta | ERR;
-	  iberr = EDVR;
-	  ibcnt = errno;
-  } else {
-    ibBoardFunc( CONF(ud,board), IBONL, onl );
-    if(!(ibsta & ERR) && !onl){
-      ibBoardClose( CONF(ud,board) );
-      ibfind_called=0;
-    }
-  }
+	ibBoardFunc(conf->board, IBONL, onl );
+	if(onl == 0)
+	{
+		if(conf->is_interface)
+			ibBoardClose(conf->board);
+	}
 
-  return ibsta;
+	return ibsta;
 }
 
 

@@ -8,10 +8,10 @@
 
 #define YYERROR_VERBOSE
 
-static ibConf_t temp;
-
-ibConf_t *ibConfigs[NUM_CONFIGS];
+ibConf_t ibFindConfigs[FIND_CONFIGS_LENGTH];
+unsigned int findIndex = 0;
 int bdid = 0;
+
 %}
 
 %union
@@ -22,8 +22,8 @@ char bval;
 char cval;
 }
 
-%token T_INTERFACE T_DEVICE T_NAME T_MINOR T_BASE T_IRQ T_DMA 
-%token T_PAD T_SAD T_TIMO T_EOSBYTE 
+%token T_INTERFACE T_DEVICE T_NAME T_MINOR T_BASE T_IRQ T_DMA
+%token T_PAD T_SAD T_TIMO T_EOSBYTE
 %token T_REOS T_BIN T_INIT_S T_DCL T_IFC
 %token T_MASTER T_LLO T_DCL T_EXCL T_INIT_F T_AUTOPOLL
 
@@ -47,90 +47,84 @@ char cval;
 
 	interface: T_INTERFACE '{' minor parameter '}'
 			{
-				if(ibInstallConfigItem(&temp) < 0)
+				ibFindConfigs[findIndex].is_interface = 1;
+				if(++findIndex > FIND_CONFIGS_LENGTH)
 				{
-					fprintf(stderr, "ibInstallConfigItem() failed\n");
+					fprintf(stderr, " too many devices in config file\n");
 					return -1;
 				}
-				// reinit temp
-				temp.padsad=0;
-				temp.board=0;
-				temp.init_string[0]='\0';
-				temp.eos=0;
-				temp.eosflags=0;
-				temp.flags = 0;
 			}
 		;
 
 	minor : T_MINOR '=' T_NUMBER {
-				bdid = $3; temp.board = $3;
-				if(bdid < MAX_BOARDS)  
-					sprintf(ibBoard[bdid].device,"/dev/gpib%i", bdid);
+				bdid = $3; ibFindConfigs[findIndex].board = $3;
+				if(bdid < MAX_BOARDS)
+					snprintf(ibBoard[bdid].device, sizeof(ibBoard[bdid].device), "/dev/gpib%i", bdid);
 				else
 					return -1;
 			}
 		;
 
-	parameter: /* empty */ 
+	parameter: /* empty */
 		| statement parameter
 		| error
- 			{	
- 				fprintf(stderr, "parameter error on line %i of %s\n", @1.first_line, DEFAULT_CONFIG_FILE);
+			{
+				fprintf(stderr, "parameter error on line %i of %s\n", @1.first_line, DEFAULT_CONFIG_FILE);
 				return -1;
 			}
 		;
 
-	statement: T_PAD '=' T_NUMBER      { ibBoard[bdid].padsad |=  $3; temp.padsad |= $3;}
-		| T_SAD '=' T_NUMBER      { ibBoard[bdid].padsad |= ($3<<8); temp.padsad |= ($3<<8);}
-                 | T_EOSBYTE '=' T_NUMBER  { ibBoard[bdid].eos = $3; temp.eos = $3;}
-		| T_REOS T_BOOL           { ibBoard[bdid].eosflags |= $2 * REOS; temp.eosflags |= $2 * REOS;}
-                 | T_BIN  T_BOOL           { ibBoard[bdid].eosflags |= $2 * BIN; temp.eosflags |= $2 * BIN;}
-		| T_IFC  T_BOOL           { ibBoard[bdid].ifc = $2 ; temp.flags |= CN_ISCNTL;}
+	statement: T_PAD '=' T_NUMBER      { ibBoard[bdid].padsad |=  $3; ibFindConfigs[findIndex].padsad |= $3;}
+		| T_SAD '=' T_NUMBER      { ibBoard[bdid].padsad |= ($3<<8); ibFindConfigs[findIndex].padsad |= ($3<<8);}
+                 | T_EOSBYTE '=' T_NUMBER  { ibBoard[bdid].eos = $3; ibFindConfigs[findIndex].eos = $3;}
+		| T_REOS T_BOOL           { ibBoard[bdid].eosflags |= $2 * REOS; ibFindConfigs[findIndex].eosflags |= $2 * REOS;}
+                 | T_BIN  T_BOOL           { ibBoard[bdid].eosflags |= $2 * BIN; ibFindConfigs[findIndex].eosflags |= $2 * BIN;}
+		| T_IFC  T_BOOL           { ibBoard[bdid].ifc = $2 ; ibFindConfigs[findIndex].flags |= CN_ISCNTL;}
 		| T_TIMO '=' T_TIVAL      { ibBoard[bdid].timeout = $3; }
 		| T_BASE '=' T_NUMBER     { ibBoard[bdid].base = $3; }
 		| T_IRQ  '=' T_NUMBER     { ibBoard[bdid].irq = $3; }
 		| T_DMA  '=' T_NUMBER     { ibBoard[bdid].dma = $3; }
-		| T_NAME '=' T_STRING	{ strncpy(ibBoard[bdid].name,$3,30); strncpy(temp.name,$3,30);}
+		| T_NAME '=' T_STRING
+			{
+				strncpy(ibBoard[bdid].name, $3,
+					sizeof(ibBoard[bdid].name));
+				strncpy(ibFindConfigs[findIndex].name, $3,
+					sizeof(ibFindConfigs[findIndex].name));
+			}
 		;
 
 	device: T_DEVICE '{' option '}'
 			{
-				if(ibInstallConfigItem(&temp) < 0)
+				ibFindConfigs[findIndex].is_interface = 0;
+				if(++findIndex > FIND_CONFIGS_LENGTH)
 				{
-					fprintf(stderr, "ibInstallConfigItem() failed\n");
+					fprintf(stderr, "too many devices in config file\n");
 					return -1;
 				}
-				// reinit temp
-				temp.padsad=0;
-				temp.board=0;
-				temp.init_string[0]='\0';
-				temp.eos=0;
-				temp.eosflags=0;
-				temp.flags = 0;
 			}
 		;
 
         option: /* empty */
-	        | assign option 
-		| error 
- 			{	
+	        | assign option
+		| error
+ 			{
  				fprintf(stderr, "option error on line %i of %s\n", @1.first_line, DEFAULT_CONFIG_FILE);
 				return -1;
 			}
 		;
 
 	assign:
-		T_PAD '=' T_NUMBER { temp.padsad  |= $3; }
-		| T_SAD '=' T_NUMBER { temp.padsad |= ($3<<8); }
-		| T_INIT_S '=' T_STRING { strncpy(temp.init_string,$3,60); }
-		| T_EOSBYTE '=' T_NUMBER  { temp.eos = $3; }
-		| T_REOS T_BOOL           { temp.eosflags |= $2 * REOS;}
-		| T_BIN  T_BOOL           { temp.eosflags |= $2 * BIN; }
-		| T_MASTER                { temp.flags |= CN_ISCNTL; }
-		| T_AUTOPOLL              { temp.flags |= CN_AUTOPOLL; }
+		T_PAD '=' T_NUMBER { ibFindConfigs[findIndex].padsad  |= $3; }
+		| T_SAD '=' T_NUMBER { ibFindConfigs[findIndex].padsad |= ($3<<8); }
+		| T_INIT_S '=' T_STRING { strncpy(ibFindConfigs[findIndex].init_string,$3,60); }
+		| T_EOSBYTE '=' T_NUMBER  { ibFindConfigs[findIndex].eos = $3; }
+		| T_REOS T_BOOL           { ibFindConfigs[findIndex].eosflags |= $2 * REOS;}
+		| T_BIN  T_BOOL           { ibFindConfigs[findIndex].eosflags |= $2 * BIN; }
+		| T_MASTER                { ibFindConfigs[findIndex].flags |= CN_ISCNTL; }
+		| T_AUTOPOLL              { ibFindConfigs[findIndex].flags |= CN_AUTOPOLL; }
 		| T_INIT_F '=' flags
-		| T_NAME '=' T_STRING	{ strncpy(temp.name,$3,30);}
-		| T_MINOR '=' T_NUMBER	{ temp.board = $3;}
+		| T_NAME '=' T_STRING	{ strncpy(ibFindConfigs[findIndex].name,$3, sizeof(ibFindConfigs[findIndex].name));}
+		| T_MINOR '=' T_NUMBER	{ ibFindConfigs[findIndex].board = $3;}
 		;
 
 	flags: /* empty */
@@ -138,9 +132,9 @@ char cval;
 	        | oneflag flags
 		;
 
-	oneflag: T_LLO       { temp.flags |= CN_SLLO; }
-		| T_DCL       { temp.flags |= CN_SDCL; }
-		| T_EXCL      { temp.flags |= CN_EXCLUSIVE; }
+	oneflag: T_LLO       { ibFindConfigs[findIndex].flags |= CN_SLLO; }
+		| T_DCL       { ibFindConfigs[findIndex].flags |= CN_SDCL; }
+		| T_EXCL      { ibFindConfigs[findIndex].flags |= CN_EXCLUSIVE; }
 		;
 
 %%
