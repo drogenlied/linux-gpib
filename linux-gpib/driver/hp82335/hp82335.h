@@ -78,4 +78,23 @@ enum hp_write_regs
 	HPREG_CCR = HPREG_CSR,
 };
 
+enum ccr_bits
+{
+	DMA_ENABLE = ( 1 << 0 ),   /* DMA enable                  */
+	DMA_CHAN_SELECT = ( 1 << 1 ),   /* DMA channel select  O=3,1=2 */
+	INTR_ENABLE = ( 1 << 2 ),   /* interrupt enable            */
+	SYS_DISABLE = ( 1 << 3 ),   /* system controller disable   */
+};
+
+enum csr_bits
+{
+	SWITCH6 = ( 1 << 0 ),   /* switch 6 position           */
+	SWITCH5 = ( 1 << 1 ),   /* switch 5 position           */
+	SYS_CONTROLLER = ( 1 << 2 ),   /* system controller bit       */
+	DMA_ENABLE_STATUS = ( 1 << 4 ),   /* DMA enabled                 */
+	DMA_CHAN_STATUS = ( 1 << 5 ),   /* DMA channel   0=3,1=2       */
+	INTR_ENABLE_STATUS = ( 1 << 6 ),   /* Interrupt enable            */
+	INTR_PENDING = ( 1 << 7 ),   /* Interrupt Pending           */
+};
+
 #endif	// _HP82335_H

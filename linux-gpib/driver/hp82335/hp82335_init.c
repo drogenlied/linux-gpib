@@ -239,6 +239,8 @@ int hp82335_attach( gpib_board_t *board )
 
 	tms9914_board_reset(tms_priv);
 
+	write_byte( tms_priv, INTR_ENABLE, HPREG_CCR );
+
 	// enable tms9914 interrupts
 	tms_priv->imr0_bits = HR_MACIE | HR_RLCIE | HR_ENDIE | HR_BOIE | HR_BIIE;
 	tms_priv->imr1_bits = HR_MAIE | HR_SRQIE | HR_UNCIE | HR_ERRIE;
@@ -248,7 +250,7 @@ int hp82335_attach( gpib_board_t *board )
 
 	hp82335_clear_interrupt( hp_priv );
 
-	write_byte(tms_priv, AUX_CR, AUXCR);
+	write_byte( tms_priv, AUX_CR, AUXCR );
 
 	return 0;
 }
@@ -267,6 +269,7 @@ void hp82335_detach(gpib_board_t *board)
 		}
 		if( tms_priv->iobase )
 		{
+			write_byte( tms_priv, 0, HPREG_CCR );
 			tms9914_board_reset( tms_priv );
 			iounmap( ( void * ) tms_priv->iobase );
 		}
