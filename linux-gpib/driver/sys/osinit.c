@@ -2,6 +2,10 @@
 #include <linux/version.h>
 #include <linux/module.h>
 
+// early 2.4.x kernels don't define MODULE_LICENSE
+#ifndef MODULE_LICENSE
+#define MODULE_LICENSE(x)
+#endif
 MODULE_LICENSE("GPL");
 
 /* default debugging level */
