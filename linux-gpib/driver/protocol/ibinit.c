@@ -20,7 +20,7 @@ int auxrabits	= AUXRA;	/* static bits for AUXRA (EOS modes) */
 int ccrbits	= 0;	/* static bits for AUXRA (EOS modes) */
 #endif
 
-uint32 timeTable[] = {
+uint32_t timeTable[] = {
 /*
  *	Since timeTable[0] is never used, store the
  *	current timing factor at this location...

@@ -1,7 +1,7 @@
 #include <ibsys.h>
 #include <board.h>
 
-extern uint8       CurHSMode;
+extern uint8_t       CurHSMode;
 
 /*
  * There is a Problem with Linux Semaphores:

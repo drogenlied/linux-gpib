@@ -17,14 +17,14 @@ extern struct pci_dev *ib_pci_dev;	// pci_dev for plug and play boards
 #define CBI_PCI_GPIB         3
 
 
-extern uint8       board_type;
+extern uint8_t       board_type;
 
 
 extern volatile int noTimo;     /* timeout flag */
 extern int          pgmstat;    /* Program state */
 extern int          auxrabits;  /* static bits for AUXRA (EOS modes) */
 
-extern uint8       CurHSMode;
+extern uint8_t       CurHSMode;
 
 #define FIFO_SIZE 1024
 

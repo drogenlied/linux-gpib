@@ -20,7 +20,7 @@ IBLCL void bdDMAwrt(ibio_op_t *wrtop)
 { 
 	faddr_t		buf;
 	unsigned	cnt;
-	uint8		s1, s2;		/* software copies of HW status regs */
+	uint8_t		s1, s2;		/* software copies of HW status regs */
 
 	DBGin("bdwrt(dma)");
 	buf = wrtop->io_vbuf;
@@ -136,9 +136,9 @@ IBLCL void bdPIOwrt(ibio_op_t *wrtop)
 { 
 	faddr_t		buf;
 	unsigned	cnt;
-	uint8		s1, s2;		/* software copies of HW status regs... */
+	uint8_t		s1, s2;		/* software copies of HW status regs... */
 	int		cfgbits;
-	uint8		lsb;		/* unsigned residual LSB */
+	uint8_t		lsb;		/* unsigned residual LSB */
 	char		msb;		/* signed residual MSB */
 
 	DBGin("bdwrt");

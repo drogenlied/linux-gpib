@@ -12,7 +12,7 @@
 IBLCL void bdwait(unsigned int mask)
 
 {
-	uint8 s, imr2mask;
+	uint8_t s, imr2mask;
 
 	DBGin("bdwait");
 #if USEINTS
@@ -56,9 +56,9 @@ IBLCL void bdwait(unsigned int mask)
  *
  */
 
-IBLCL uint8 bdWaitIn(void)
+IBLCL uint8_t bdWaitIn(void)
 {
-uint8 isreg1;
+uint8_t isreg1;
 DBGin("bdWaitIn");
 udelay(2);
 while (!((isreg1 = GPIBin(ISR1)) & HR_DI) && NotTimedOut())

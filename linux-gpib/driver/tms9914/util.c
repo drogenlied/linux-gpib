@@ -37,7 +37,7 @@ IBLCL void bdsc(void)
 /* -- bdGetDataByte()
  * get last byte from bus
  */
-IBLCL uint8 bdGetDataByte(void)
+IBLCL uint8_t bdGetDataByte(void)
 {
   DBGin("bdGetDataByte");
   DBGout();
@@ -48,7 +48,7 @@ IBLCL uint8 bdGetDataByte(void)
  * get last Cmd byte from bus
  */
 
-IBLCL uint8 bdGetCmdByte(void)
+IBLCL uint8_t bdGetCmdByte(void)
 {
   DBGin("bdGetCmdByte");
   DBGout();
@@ -59,10 +59,10 @@ IBLCL uint8 bdGetCmdByte(void)
  * get address status
  */
 
-IBLCL uint8 bdGetAdrStat(void)
+IBLCL uint8_t bdGetAdrStat(void)
 {
 
-  uint8 stat;
+  uint8_t stat;
 
   DBGin("bdGetAdrStatus");
 
@@ -78,7 +78,7 @@ IBLCL uint8 bdGetAdrStat(void)
  *
  */
 
-IBLCL uint8 bdCheckEOI(void)
+IBLCL uint8_t bdCheckEOI(void)
 {
   DBGin("bdCheckEOI not implemented");
   DBGout();
@@ -105,7 +105,7 @@ IBLCL void bdSetEOS(int ebyte)
   DBGout();
 }
 
-IBLCL uint8 bdGetEOS(void)
+IBLCL uint8_t bdGetEOS(void)
 {
   DBGin("bdGetEOS");
   DBGout();

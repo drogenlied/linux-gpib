@@ -45,7 +45,7 @@
 
 extern int pgmstat;
 extern volatile int noTimo;
-extern uint32 timeTable[];
+extern uint32_t timeTable[];
 
 extern struct wait_queue *ibwait_queue;
 

@@ -71,7 +71,7 @@ IBLCL int dvclr(int padsad)
 IBLCL int dvrsp(int padsad,char *spb)
 {
 	char spdString[3];
-	uint8 isreg1;
+	uint8_t isreg1;
 	int sp_noTimo;
 	
 	DBGin("dvrsp");
@@ -180,7 +180,7 @@ IBLCL int receive_setup(int padsad,int spoll)
 
 				/* spoll = TRUE if this is for a serial poll */
 {
-	uint8 pad, sad;
+	uint8_t pad, sad;
 	char cmdString[8];
 	unsigned int i = 0;
 
@@ -219,7 +219,7 @@ IBLCL int receive_setup(int padsad,int spoll)
 
 IBLCL int send_setup(int padsad)
 {
-	uint8 pad, sad;
+	uint8_t pad, sad;
 	char cmdString[8];
 	unsigned i = 0;
 

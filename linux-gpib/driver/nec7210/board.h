@@ -22,12 +22,17 @@ extern gpib_buffer_t *read_buffer, *write_buffer;
 // interrupt service routine
 void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
-extern volatile int write_in_progress;	// boolean value that signals whether data can be sent
-extern volatile int command_out_ready;	// boolean value that signals when command can be sent
+// boolean values that signal various conditions
+extern volatile int write_in_progress;	// data can be sent
+extern volatile int command_out_ready;	// command can be sent
+extern volatile int dma_transfer_complete;	// dma transfer is done
 
 extern wait_queue_head_t nec7210_write_wait;
 extern wait_queue_head_t nec7210_read_wait;
 extern wait_queue_head_t nec7210_status_wait;
+
+// software copies of bits written to interrupt mask registers
+extern volatile int imr1_bits, imr2_bits;
 
 #define LOW_PORT 0x2e1
 

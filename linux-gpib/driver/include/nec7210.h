@@ -14,7 +14,6 @@
 #define HR_CPT          (1<<7)
 
 // IMR1: interrupt mask register 1
-#define IMR1_ENABLE_INTR_MASK	0xff	// all the bits in this register that enable interrupts
 #define HR_DIIE         (1<<0)
 #define HR_DOIE         (1<<1)
 #define HR_ERRIE        (1<<2)

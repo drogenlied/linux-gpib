@@ -13,7 +13,7 @@ IBLCL int osDoDMA(ibio_op_t *rwop)
 
 	DBGin("osDoDMA");
 
-	rwop->io_pbuf = (uint32) rwop->io_vbuf;
+	rwop->io_pbuf = virt_to_bus(rwop->io_vbuf);
 
 	DBGprint(DBG_DATA, ("pbuf=0x%x cnt=%d  ", (unsigned int)rwop->io_pbuf, rwop->io_cnt));
 

@@ -16,4 +16,4 @@ extern int mySAD;
 extern int auxrabits;
 extern int ifcDelay;
 
-extern uint32 timeTable[];
+extern uint32_t timeTable[];

@@ -77,7 +77,7 @@ void board_reset(void)
 // initialize hardware
 int board_attach(void)
 {
-	uint8		s;
+	uint8_t		s;
 	int		i;
 
 	// nothing is allocated yet
@@ -151,7 +151,7 @@ int board_attach(void)
 
 			for(i = 0; i < 20; i++)
 			{
-				if ( (uint8)((i+42)^(i-488)) != GPIBin(FIFOB))
+				if ( (uint8_t)((i+42)^(i-488)) != GPIBin(FIFOB))
 				{
 					return -1;
 					/* Fifo not working or not NI board */

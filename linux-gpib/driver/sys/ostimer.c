@@ -44,7 +44,7 @@ IBLCL void osStartTimer(int v)
                 sema_init( &espsemid, 0);
 #endif
 	if (v > 0) {
-		DBGprint(DBG_DATA, ("timo=%ld  ", timeTable[v]));
+		DBGprint(DBG_DATA, ("timo=%d  ", timeTable[v]));
 #if SYSTIMO
 		ibtimer_list.expires = jiffies + timeTable[v];   /* set number of ticks */
 		ibtimer_list.function = ibtmintr;

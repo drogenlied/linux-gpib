@@ -52,8 +52,8 @@ IBLCL void bdDMAstart(ibio_op_t *rwop)
  */
 IBLCL int bdDMAstop(ibio_op_t *rwop)
 {
-	uint8	lsb;			/* unsigned residual LSB */
-	char	msb;			/* signed residual MSB */
+	uint8_t	lsb;			/* unsigned residual LSB */
+	int8_t	msb;			/* signed residual MSB */
 	int	resid;			/* signed residual value */
 
 	DBGin("bdDMAstop");

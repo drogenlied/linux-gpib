@@ -3,10 +3,9 @@
 #include <linux/wait.h>
 #include <asm/bitops.h>
 
-extern uint8       CurHSMode;
-
 volatile int write_in_progress = 0;
 volatile int command_out_ready = 0;
+volatile int dma_transfer_complete = 0;
 
 DECLARE_WAIT_QUEUE_HEAD(nec7210_read_wait);
 DECLARE_WAIT_QUEUE_HEAD(nec7210_write_wait);
@@ -61,8 +60,8 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 		wake_up_interruptible(&nec7210_status_wait); /* wake up sleeping process */
 	}
 
-	// get incoming data
-	if(status1 & HR_DI)
+	// get incoming data in PIO mode
+	if((status1 & HR_DI) & (imr1_bits & HR_DIIE))
 	{
 		data.value = GPIBin(DIR);
 		if(status1 & HR_END)
@@ -76,8 +75,13 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 			printk("read buffer full\n");	//XXX
 		wake_up_interruptible(&nec7210_read_wait); /* wake up sleeping process */
 	}
-	if(status1 & HR_END && (status1 & HR_DI) == 0)
-		printk("bug in isr\n");
+
+	// check for dma read transfer complete
+	if((status1 & HR_END) && (imr2_bits & HR_DMAI))
+	{
+		set_bit(0, &dma_transfer_complete);
+		wake_up_interruptible(&nec7210_read_wait); /* wake up sleeping process */
+	}
 
 	// outgoing data can be sent
 	if(status1 & HR_DO)
@@ -97,6 +101,12 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	if(status1 & HR_CPT)
 	{
 		printk("gpib command pass thru 0x%x\n", GPIBin(CPTR));
+	}
+
+	// output byte has been lost
+	if(status1 & HR_ERR)
+	{
+		printk("gpib output error\n");
 	}
 
 //	printk("isr1 0x%x, isr2 0x%x, ibsta 0x%x\n", status1, status2, ibsta);

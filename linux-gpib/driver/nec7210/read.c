@@ -1,110 +1,16 @@
-
 #include "board.h"
+#include <asm/dma.h>
 
 /*
  *  BDREAD (DMA)
  *  This function performs a single DMA read operation.
  *  Note that the hand-shake is held off at the end of every read.
  */
-#if DMAOP
 
 IBLCL void bdDMAread(ibio_op_t *rdop)
 {
-
-	faddr_t		buf;
-	unsigned	cnt;
-
-	DBGin("bdread(dma)");
-	buf = rdop->io_vbuf;
-	cnt = rdop->io_cnt;
-	DBGprint(DBG_DATA, ("bdread: buf=0x%p cnt=%d  ", buf, cnt));
-	if (pgmstat & PS_HELD) {
-		DBGprint(DBG_BRANCH, ("finish handshake  "));
-		GPIBout(AUXMR, auxrabits | HR_HLDA);
-		GPIBout(AUXMR, AUX_FH);	/* set HLDA in AUXRA to ensure FH works */
-		pgmstat &= ~PS_HELD;
-	}else
-	{
-		if ((s1 & HR_DI) && (s1 & HR_END))
-		{
-			DBGprint(DBG_BRANCH, ("one-byte read with END  "));
-			GPIBout(AUXMR, auxrabits | HR_HLDA);
-			pgmstat |= PS_HELD;
-			buf[0] = GPIBin(DIR);
-			ibsta |= END;
-			ibcnt = 1;
-			DBGout();
-			return;
-		}
-	}
-	DBGprint(DBG_BRANCH, ("set-up EOS modes  "));
-/*
- *	Set EOS modes, holdoff on END, and holdoff on all carry cycle...
- */
-	GPIBout(AUXMR, auxrabits | HR_HLDE ); /*| HR_REOS );*/
-                                              /* no longer hardwired */
-
-
-	if ( cnt == 1 ){   /* Use PIO Transfer  */
-
-	  /* if first data byte availiable read once */
-	  /*
-	   * This is a relatively clean solution for the EOS detection problem
-	   *
-	   */
-
-	  if( s1 & HR_DI )
-	    buf[ibcnt++] = GPIBin(DIR);
-
-
-	  DBGprint(DBG_BRANCH, ("begin PIO loop  "));
-	  while (ibcnt < cnt-1) {
-
-	    if( bdWaitIn() < 0 ) {         
-              /* end is set with EOS byte so wait first */
-	      ibsta |= END;
-	      break;
-	    }
-	    buf[ibcnt++] = GPIBin(DIR);
-	    /*printk("buf[%d]='%c'",ibcnt-1,buf[ibcnt-1]);*/
-	  }
-	  GPIBout(AUXMR, auxrabits | HR_HLDA);
-	  buf[ibcnt++]=GPIBin(DIR);           /* read last byte on end */
-//	  s1 = GPIBin(ISR1);
-
-	} else {        /* Use DMA */
-	  DBGprint(DBG_BRANCH, ("start DMA cycle  "));
-
-	  rdop->io_cnt = rdop->io_cnt - 1;
-	  cnt = rdop->io_cnt;
-
-	  ibcnt = cnt - osDoDMA(rdop);
-
-//	  s1 = GPIBin(ISR1);
-	  if ( s1 & HR_ENDIE ){
-	    ibsta |= END;
-	  } else {
-	    buf[ibcnt++]=GPIBin(DIR);           /* read last byte on end */
-	  }
-        }
-
-	if ((ibsta & END) || (ibcnt == cnt)) {
-		pgmstat |= PS_HELD;
-        }
-
-	if (!noTimo) {
-		DBGprint(DBG_BRANCH, ("timeout  "));
-		ibsta |= (ERR | TIMO);
-		iberr = EABO;
-	}
-
-
-	DBGout();
+	bdPIOread(rdop);
 }
-
-
-
-#endif
 
 /*
  *  BDREAD (PIO)
@@ -134,34 +40,83 @@ IBLCL void bdPIOread(ibio_op_t *rdop)
 /*
  *	Set EOS modes, holdoff on END, and holdoff on all carry cycle...
  */
-//	GPIBout(AUXMR, auxrabits | HR_HLDE );
-	GPIBout(AUXMR, auxrabits );	//normal handshaking
+	GPIBout(AUXMR, auxrabits | HR_HLDE );
 
-	DBGprint(DBG_BRANCH, ("begin PIO loop  "));
-	while (ibcnt < cnt )
+	if(ibdma == 0)	// PIO transfer
 	{
-		spin_lock_irqsave(&read_buffer->lock, flags);
-		ret = gpib_buffer_get(read_buffer, &data);
-		spin_unlock_irqrestore(&read_buffer->lock, flags);
-		if(ret < 0)
+		DBGprint(DBG_BRANCH, ("begin PIO loop  "));
+
+		// enable 'data in' interrupt
+		imr1_bits |= HR_DIIE;
+		GPIBout(IMR1, imr1_bits);
+
+		while (ibcnt < cnt )
 		{
-			if(wait_event_interruptible(nec7210_read_wait, atomic_read(&read_buffer->size) > 0))
+			spin_lock_irqsave(&read_buffer->lock, flags);
+			ret = gpib_buffer_get(read_buffer, &data);
+			spin_unlock_irqrestore(&read_buffer->lock, flags);
+			if(ret < 0)
 			{
-				printk("wait failed\n");
-				// XXX
+				if(wait_event_interruptible(nec7210_read_wait, atomic_read(&read_buffer->size) > 0))
+				{
+					printk("wait failed\n");
+					// XXX
+					break;
+				};
+				continue;
+			}
+			buf[ibcnt++] = data.value;
+			if(data.end)
+			{
+				set_bit(END_NUM, &ibsta);
 				break;
-			};
-			continue;
+			}
 		}
-		buf[ibcnt++] = data.value;
-		if(data.end)
-		{
-			ibsta |= END;
-			break;
-		}
+
+		// disable 'data in' interrupt
+		imr1_bits &= ~HR_DIIE;
+		GPIBout(IMR1, imr1_bits);
+
+		DBGprint(DBG_BRANCH, ("done  "));
+	}else	// ISA DMA transfer
+	{
+		flags = claim_dma_lock();
+		disable_dma(ibdma);
+		rdop->io_pbuf = virt_to_bus(rdop->io_vbuf);
+
+		/* program dma controller */
+		clear_dma_ff ( ibdma );
+		// XXX what if io_cnt is too big?
+		set_dma_count( ibdma, rdop->io_cnt );
+		set_dma_addr ( ibdma, rdop->io_pbuf);
+		set_dma_mode( ibdma, DMA_MODE_READ );
+		release_dma_lock(flags);
+
+		enable_dma(ibdma);
+
+		// enable nec7210 dma
+		imr2_bits |= HR_DMAI;
+		GPIBout(IMR2, imr2_bits);
+
+		// wait for data to transfer
+		wait_event_interruptible(nec7210_read_wait, test_and_clear_bit(0, &dma_transfer_complete));
+
+		// disable nec7210 dma
+		imr2_bits &= ~HR_DMAI;
+		GPIBout(IMR2, imr2_bits);
+
+		// record how many bytes we transferred
+		flags = claim_dma_lock();
+		clear_dma_ff ( ibdma );
+		disable_dma(ibdma);
+		ibcnt += rdop->io_cnt - get_dma_residue(ibdma);
+		release_dma_lock(flags);
+
+		set_bit(END_NUM, &ibsta);
 	}
 
-	DBGprint(DBG_BRANCH, ("done  "));
+	pgmstat |= PS_HELD;
+	GPIBout(AUXMR, auxrabits | HR_HLDA);
 
 	if (!noTimo)
 	{

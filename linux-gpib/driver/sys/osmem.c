@@ -15,7 +15,7 @@
  *
  */
 
-#if defined(GFP_DMA) && defined(USE_DMA)
+#if defined(USE_DMA)
 #define GFP_DMA_DEFINED
 #define MEMORY_PRIORITY (GFP_KERNEL | GFP_DMA)
 #else

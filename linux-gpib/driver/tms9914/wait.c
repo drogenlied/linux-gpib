@@ -6,7 +6,7 @@
  */
 IBLCL void bdwait(unsigned int mask)
 {
-	uint8 s1, s2 = 0, imr2mask = 0;
+	uint8_t s1, s2 = 0, imr2mask = 0;
 
 	DBGin("bdwait");
 
@@ -57,7 +57,7 @@ IBLCL void bdwait(unsigned int mask)
 
 IBLCL int bdWaitIn(void)
 {
-uint8 isreg1,s;
+uint8_t isreg1,s;
 DBGin("bdWaitIn");
 
     /* polling */

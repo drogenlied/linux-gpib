@@ -20,7 +20,6 @@ IBLCL int ibpad(int v)
 	else {
 		myPAD = v;
 		DBGprint(DBG_DATA, ("pad=0x%x  ", myPAD));
-		/*GPIBout(adr, (myPAD & LOMASK));*/
 		bdSetPAD( myPAD );
 	}
 	ibstat();

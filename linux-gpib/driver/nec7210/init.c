@@ -43,6 +43,9 @@ MODULE_PARM_DESC(ibdma, "dma channel");
 static unsigned int ioports_allocated = 0, iomem_allocated = 0,
 	irq_allocated = 0, dma_allocated = 0, pcmcia_initialized = 0;
 
+// bits written to interrupt mask registers
+volatile int imr1_bits, imr2_bits;
+
 // nec7210 has 8 registers
 static const int nec7210_num_registers = 8;
 // size of modbus pci memory io region
@@ -182,8 +185,11 @@ int board_attach(void)
 	board_reset();
 
 	// enable interrupts
-	GPIBout(IMR1, IMR1_ENABLE_INTR_MASK);
-	GPIBout(IMR2, IMR2_ENABLE_INTR_MASK);
+	imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
+		HR_DETIE | HR_APTIE | HR_CPTIE;
+	imr2_bits = IMR2_ENABLE_INTR_MASK;
+	GPIBout(IMR1, imr1_bits);
+	GPIBout(IMR2, imr2_bits);
 
 	GPIBout(AUXMR, AUX_PON);
 

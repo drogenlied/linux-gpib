@@ -16,9 +16,9 @@ MODULE_PARM_DESC(ibirq, "interrupt request line");
 MODULE_PARM(ibdma, "i");
 MODULE_PARM_DESC(ibdma, "dma channel");
 
-uint8       board_type = CBI_ISA_GPIB;
-uint8       CurHSMode = 0;      /* hs mode register value */
-uint8       CurIRQreg = 0;      /* hs IRQ register value */
+uint8_t       board_type = CBI_ISA_GPIB;
+uint8_t       CurHSMode = 0;      /* hs mode register value */
+uint8_t       CurIRQreg = 0;      /* hs IRQ register value */
 
 // flags to indicate if various resources have been allocated
 static unsigned int ioports_allocated = 0, irq_allocated = 0, dma_allocated = 0, pcmcia_initialized = 0;

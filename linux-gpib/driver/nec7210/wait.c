@@ -22,7 +22,7 @@ IBLCL void bdwait(unsigned int mask)
 
 IBLCL int bdWaitIn(void)
 {
-uint8 isreg1;
+uint8_t isreg1;
 DBGin("bdWaitIn");
 
     /* polling */

@@ -37,8 +37,7 @@ IBLCL int ibcmd(faddr_t buf, unsigned int cnt)
 		DBGprint(DBG_BRANCH, ("take control  "));
 		bdSendAuxCmd(AUX_TCA);
 		bdWaitOut();
-		/*while (!(GPIBin(isr2) & HR_CO) && NotTimedOut())*/
-					/* so Turbo488 boards won't jump the gun */
+		/* so Turbo488 boards won't jump the gun */
 	}
 	requested_cnt = cnt;
 	cmdop.io_vbuf = buf;

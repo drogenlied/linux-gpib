@@ -14,7 +14,7 @@ IBLCL void bdDMAread(ibio_op_t *rdop)
 
 	faddr_t		buf;
 	unsigned	cnt;
-	uint8		s1, s2;		/* software copies of HW status regs */
+	uint8_t		s1, s2;		/* software copies of HW status regs */
 
 	DBGin("bdread(dma)");
 	buf = rdop->io_vbuf;
@@ -125,7 +125,7 @@ IBLCL void bdPIOread(ibio_op_t *rdop)
 {
 	faddr_t		buf;
 	unsigned	cnt;
-	uint8		s1, s2;		/* software copies of HW status regs */
+	uint8_t		s1, s2;		/* software copies of HW status regs */
 	int             isreg1 = 0;
 
 	DBGin("bdread");

@@ -18,10 +18,11 @@
 #endif
 
 #ifndef IBDMA
-#define IBDMA	 5		/* DMA channel				*/
+#define IBDMA	 0		/* DMA channel				*/
 #endif
 
 #define DFLTTIMO T1s		/* Default timeout for I/O operations	*/
+// this shouldn't be defined here! you can get this from linux headers
 #define HZ	 100		/* System clock ticks per second	*/
 
 #ifdef BUILD_DEBUG
