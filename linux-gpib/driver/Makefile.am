@@ -25,7 +25,7 @@ all-local:
 		SUBDIRS="$(GPIB_ABS_MODULE_SUBDIRS)"
 
 clean-local:
-	find $(builddir) \( -name '*.[oas]' -o -name core -o -name '.*.flags' \) -type f \
+	find $(srcdir) \( -name '*.[oas]' -o -name core -o -name '.*.flags' \) -type f \
 		-exec $(RM) {} \;
 
 install-data-hook: device-file-check /etc/gpib.conf
@@ -62,3 +62,7 @@ device-file-check: /dev/gpib0
 /etc/gpib.conf:
 	$(INSTALL_DATA) -D $(top_srcdir)/util/templates/gpib.conf /etc/gpib.conf
 
+#make sure compiled files don't make it into distribution tarballs
+dist-hook:
+	find $(distdir) \( -name '*.[oas]' -o -name core -o -name '.*.flags' \) -type f \
+		-exec $(RM) {} \;
