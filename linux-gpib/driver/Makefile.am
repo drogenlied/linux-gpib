@@ -10,7 +10,7 @@
 GPIB_MODULE_SUBDIRS :=cb7210 cec hp82335 ines nec7210 pc2 sys tms9914 tnt4882
 GPIB_ABS_MODULE_SUBDIRS :=$(patsubst %, @abs_srcdir@/%/, $(GPIB_MODULE_SUBDIRS))
 GPIB_MODULES :=cb7210/cb7210.ko cec/cec_gpib.ko hp82335/hp82335.ko \
-	ines/ines_gpib.ko pc2/pc2_gpib.ko tms9914/tms9914.ko tnt4882/tnt4882.ko \
+	ines/ines_gpib.ko pc2/pc2_gpib.ko tnt4882/tnt4882.ko \
 	nec7210/nec7210.ko tms9914/tms9914.ko sys/gpib_common.ko
 
 EXTRA_DIST = $(GPIB_MODULE_SUBDIRS) tnt4882-tms
@@ -19,13 +19,15 @@ SUBDIRS = include
 
 -include $(top_srcdir)/util/linux_flags/flags
 
+#overriding MODVERDIR is required to make 2.6 kernel's modpost script work right
 all-local:
-	$(MAKE) -C $(LINUX_SRCDIR) modules V=1 \
+	$(MAKE) -C $(LINUX_SRCDIR) V=1 modules\
 		CC="$(LINUX_CC) -I@abs_top_srcdir@ -I@abs_top_srcdir@/driver/include -I@abs_top_srcdir@/include" \
-		SUBDIRS="$(GPIB_ABS_MODULE_SUBDIRS)"
+		SUBDIRS="$(GPIB_ABS_MODULE_SUBDIRS)" \
+		MODVERDIR="$(LINUX_SRCDIR)/.tmp_versions"
 
 clean-local:
-	find $(srcdir) \( -name '*.[oas]' -o -name core -o -name '.*.flags' \) -type f \
+	find $(srcdir) \( -name '*.[oas]' -o -name '*.ko' -o -name core -o -name '.*.flags' \) -type f \
 		-exec $(RM) {} \;
 
 install-data-hook: device-file-check /etc/gpib.conf
