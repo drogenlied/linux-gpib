@@ -31,7 +31,7 @@ int tnt4882_line_status( const gpib_board_t *board )
 
 	tnt_priv = board->private_data;
 
-	bcsr_bits = tnt_readb( tnt_priv, tnt_priv->nec7210_priv.iobase + BSR );
+	bcsr_bits = tnt_readb( tnt_priv, BSR );
 
 	if( bcsr_bits & BCSR_REN_BIT )
 		status |= BusREN;
@@ -65,10 +65,10 @@ unsigned int tnt4882_t1_delay( gpib_board_t *board, unsigned int nano_sec )
 	
 	if( nano_sec <= 350 )
 	{
-		tnt_writeb( tnt_priv, MSTD, iobase + KEYREG );
+		tnt_writeb( tnt_priv, MSTD, KEYREG );
 		retval = 350;
 	}else
-		tnt_writeb( tnt_priv, 0, iobase + KEYREG );
+		tnt_writeb( tnt_priv, 0, KEYREG );
 
 	if( nano_sec > 500 && nano_sec <= 1100 )
 	{

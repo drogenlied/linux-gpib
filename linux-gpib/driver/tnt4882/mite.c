@@ -179,7 +179,7 @@ void mite_list_devices(void)
 {
 	struct mite_struct *mite,*next;
 
-	printk("Available NI device IDs:");
+	printk("Available NI PCI device IDs:");
 	if(mite_devices)for(mite=mite_devices;mite;mite=next){
 		next=mite->next;
 		printk(" 0x%04x",mite_device_id(mite));

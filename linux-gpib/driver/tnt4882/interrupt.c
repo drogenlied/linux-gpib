@@ -28,7 +28,6 @@ void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
 	gpib_board_t *board = arg;
 	tnt4882_private_t *priv = board->private_data;
-	const nec7210_private_t *nec_priv = &priv->nec7210_priv;
 	int isr0_bits, isr3_bits, imr3_bits;
 	unsigned long flags;
 
@@ -36,8 +35,8 @@ void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp)
 
 	nec7210_interrupt(board, &priv->nec7210_priv);
 
-	isr0_bits = tnt_readb( priv, nec_priv->iobase + ISR0 );
-	isr3_bits = tnt_readb( priv, nec_priv->iobase + ISR3 );
+	isr0_bits = tnt_readb( priv, ISR0 );
+	isr3_bits = tnt_readb( priv, ISR3 );
 	imr3_bits = priv->imr3_bits;
 
 	if( isr0_bits & TNT_IFCI_BIT )
@@ -62,7 +61,7 @@ void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	{
 		GPIB_DPRINTK( "tnt4882: isr3 0x%x imr3 0x%x\n", isr3_bits,
 			imr3_bits );
-		tnt_writeb( priv, priv->imr3_bits, nec_priv->iobase + IMR3 );
+		tnt_writeb( priv, priv->imr3_bits, IMR3 );
 		wake_up_interruptible( &board->wait );
 	}
 

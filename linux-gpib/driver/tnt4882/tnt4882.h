@@ -1,5 +1,5 @@
 /***************************************************************************
-                              nec7210/tnt4882.h
+                              tnt4882.h
                              -------------------
 
     begin                : Jan 2002
@@ -282,21 +282,27 @@ enum auxi_bits
 };
 
 /* paged io */
-static inline unsigned int tnt_paged_readb( tnt4882_private_t *priv, unsigned long address )
+static inline unsigned int tnt_paged_readb( tnt4882_private_t *priv, unsigned long offset )
 {
+	unsigned long address = priv->nec7210_priv.iobase + offset;
+
 	write_byte( &priv->nec7210_priv, AUX_PAGEIN, AUXMR );
 	return priv->io_readb( address );
 }
-static inline void tnt_paged_writeb(tnt4882_private_t *priv, unsigned int value, unsigned long address )
+static inline void tnt_paged_writeb(tnt4882_private_t *priv, unsigned int value, unsigned long offset )
 {
+	unsigned long address = priv->nec7210_priv.iobase + offset;
+
 	write_byte( &priv->nec7210_priv, AUX_PAGEIN, AUXMR );
 	priv->io_writeb( value, address );
 }
 
 /* readb/writeb wrappers */
-static inline unsigned int tnt_readb( tnt4882_private_t *priv, unsigned long address )
+static inline unsigned int tnt_readb( tnt4882_private_t *priv, unsigned long offset )
 {
-	switch( address )
+	unsigned long address = priv->nec7210_priv.iobase + offset;
+
+	switch( offset )
 	{
 	case CSR:
 	case SASR:
@@ -308,7 +314,7 @@ static inline unsigned int tnt_readb( tnt4882_private_t *priv, unsigned long add
 			return priv->io_readb( address );
 			break;
 		case NAT4882:
-			return tnt_paged_readb( priv, address - tnt_pagein_offset );
+			return tnt_paged_readb( priv, offset - tnt_pagein_offset );
 			break;
 		case NEC7210:
 			return 0;
@@ -325,9 +331,11 @@ static inline unsigned int tnt_readb( tnt4882_private_t *priv, unsigned long add
 	return priv->io_readb( address );
 }
 
-static inline void tnt_writeb( tnt4882_private_t *priv, unsigned int value, unsigned long address)
+static inline void tnt_writeb( tnt4882_private_t *priv, unsigned int value, unsigned long offset)
 {
-	switch( address )
+	unsigned long address = priv->nec7210_priv.iobase + offset;
+
+	switch( offset )
 	{
 	case KEYREG:
 	case IMR0:
@@ -338,7 +346,7 @@ static inline void tnt_writeb( tnt4882_private_t *priv, unsigned int value, unsi
 			priv->io_writeb( value, address );
 			break;
 		case NAT4882:
-			tnt_paged_writeb( priv, value, address - tnt_pagein_offset );
+			tnt_paged_writeb( priv, value, offset - tnt_pagein_offset );
 			break;
 		case NEC7210:
 			break;

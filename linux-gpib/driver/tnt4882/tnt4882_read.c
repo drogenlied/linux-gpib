@@ -20,11 +20,10 @@
 
 static int fifo_word_available( tnt4882_private_t *tnt_priv )
 {
-	unsigned long iobase = tnt_priv->nec7210_priv.iobase;
 	int status2;
 	int retval;
 
-	status2 = tnt_readb( tnt_priv, iobase + STS2 );
+	status2 = tnt_readb( tnt_priv, STS2 );
 	retval = ( status2 & AEFN ) && ( status2 & BEFN );
 
 	return retval;
@@ -32,11 +31,10 @@ static int fifo_word_available( tnt4882_private_t *tnt_priv )
 
 static int fifo_byte_available( tnt4882_private_t *tnt_priv )
 {
-	unsigned long iobase = tnt_priv->nec7210_priv.iobase;
 	int status2;
 	int retval;
 
-	status2 = tnt_readb( tnt_priv, iobase + STS2 );
+	status2 = tnt_readb( tnt_priv, STS2 );
 	retval = ( status2 & AEFN ) || ( status2 & BEFN );
 
 	return retval;
@@ -44,11 +42,10 @@ static int fifo_byte_available( tnt4882_private_t *tnt_priv )
 
 static int fifo_xfer_done( tnt4882_private_t *tnt_priv )
 {
-	unsigned long iobase = tnt_priv->nec7210_priv.iobase;
 	int status1;
 	int retval;
 
-	status1 = tnt_readb( tnt_priv, iobase + STS1 );
+	status1 = tnt_readb( tnt_priv, STS1 );
 	retval = status1 & ( S_DONE | S_HALT );
 
 	return retval;
@@ -74,26 +71,26 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 	nec7210_set_reg_bits( nec_priv, IMR1, 0xff, HR_ENDIE | HR_DECIE );
 	nec7210_set_reg_bits( nec_priv, IMR2, 0xff, HR_DMAI );
 
-	tnt_writeb( tnt_priv, RESET_FIFO, iobase + CMDR );
+	tnt_writeb( tnt_priv, RESET_FIFO, CMDR );
 	udelay(1);
 
-	tnt_writeb( tnt_priv, nec_priv->auxa_bits | HR_HLDA, iobase + CCR );
+	tnt_writeb( tnt_priv, nec_priv->auxa_bits | HR_HLDA, CCR );
 	bits = TNT_TLCHE | TNT_B_16BIT | TNT_IN | TNT_CCEN;
-	tnt_writeb( tnt_priv, bits, iobase + CFG );
+	tnt_writeb( tnt_priv, bits, CFG );
 
 	// load 2's complement of count into hardware counters
 	hw_count = -length;
-	tnt_writeb( tnt_priv, hw_count & 0xff, iobase + CNT0 );
-	tnt_writeb( tnt_priv, ( hw_count >> 8 ) & 0xff, iobase + CNT1 );
-	tnt_writeb( tnt_priv, ( hw_count >> 16 ) & 0xff, iobase + CNT2 );
-	tnt_writeb( tnt_priv, ( hw_count >> 24 ) & 0xff, iobase + CNT3 );
+	tnt_writeb( tnt_priv, hw_count & 0xff, CNT0 );
+	tnt_writeb( tnt_priv, ( hw_count >> 8 ) & 0xff, CNT1 );
+	tnt_writeb( tnt_priv, ( hw_count >> 16 ) & 0xff, CNT2 );
+	tnt_writeb( tnt_priv, ( hw_count >> 24 ) & 0xff, CNT3 );
 
-	tnt_writeb( tnt_priv, GO, iobase + CMDR );
+	tnt_writeb( tnt_priv, GO, CMDR );
 	udelay(1);
 
 	spin_lock_irqsave( &board->spinlock, flags );
 	tnt_priv->imr3_bits |= HR_DONE | HR_NEF;
-	tnt_writeb( tnt_priv, tnt_priv->imr3_bits, iobase + IMR3 );
+	tnt_writeb( tnt_priv, tnt_priv->imr3_bits, IMR3 );
 	spin_unlock_irqrestore( &board->spinlock, flags );
 
 	while( count + 1 < length &&
@@ -132,7 +129,7 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 			buffer[ count++ ] = ( word >> 8 ) & 0xff;
 		}
 		tnt_priv->imr3_bits |= HR_NEF;
-		tnt_writeb( tnt_priv, tnt_priv->imr3_bits, iobase + IMR3 );
+		tnt_writeb( tnt_priv, tnt_priv->imr3_bits, IMR3 );
 		spin_unlock_irqrestore( &board->spinlock, flags );
 
 		if( current->need_resched )
@@ -161,7 +158,7 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 		}
 		if( fifo_byte_available( tnt_priv ) )
 		{
-			buffer[ count++ ] = tnt_readb( tnt_priv, iobase + FIFOB );
+			buffer[ count++ ] = tnt_readb( tnt_priv, FIFOB );
 		}
 	}
 	if( test_and_clear_bit( RECEIVED_END_BN, &nec_priv->state ) )
@@ -169,7 +166,7 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 		*end = 1;
 	}
 
-	tnt_writeb( tnt_priv, STOP, iobase + CMDR );
+	tnt_writeb( tnt_priv, STOP, CMDR );
 	udelay(1);
 
 	nec7210_set_reg_bits( nec_priv, IMR1, 0xff, imr1_bits );
