@@ -162,8 +162,8 @@ struct gpib_board_struct
 	int sad;
 	// timeout for io operations, in microseconds
 	unsigned int usec_timeout;
-	/* Flag that indicates whether board is up and running or not */
-	unsigned online : 1;
+	/* Count that keeps track of whether board is up and running or not */
+	unsigned int online;
 	/* Flag that indicates whether board is system controller of the bus */
 	unsigned master : 1;
 	/* Flag board has been opened for exclusive access */
