@@ -21,8 +21,6 @@
 ssize_t nec7210_command(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length)
 {
 	size_t count = 0;
-	const int timeout = 1000;
-	int i;
 	ssize_t retval = 0;
 
 	// enable command out interrupt
@@ -31,21 +29,12 @@ ssize_t nec7210_command(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t 
 
 	while(count < length)
 	{
-		// try a busy wait first before we suspend
-		for(i = 0; i < timeout; i++)
+		if(wait_event_interruptible(driver->wait, test_and_clear_bit(COMMAND_READY_BN, &priv->state) ||
+			test_bit(TIMO_NUM, &driver->status)))
 		{
-			if(test_and_clear_bit(COMMAND_READY_BN, &priv->state))
-				break;
-		}
-		if(i == timeout)
-		{
-			if(wait_event_interruptible(driver->wait, test_and_clear_bit(COMMAND_READY_BN, &priv->state) ||
-				test_bit(TIMO_NUM, &driver->status)))
-			{
-				printk("gpib command wait interrupted\n");
-				retval = -EINTR;
-				break;
-			}
+			printk("gpib command wait interrupted\n");
+			retval = -EINTR;
+			break;
 		}
 		if(test_bit(TIMO_NUM, &driver->status))
 		{

@@ -23,6 +23,8 @@ static ssize_t pio_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t
 {
 	size_t count = 0;
 	ssize_t retval = 0;
+	static spinlock_t lock = SPIN_LOCK_UNLOCKED;
+	unsigned long flags;
 
 	// enable 'data out' interrupts
 	priv->imr1_bits |= HR_DOIE;
@@ -30,10 +32,12 @@ static ssize_t pio_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t
 
 	while(count < length)
 	{
+		spin_lock_irqsave(&lock, flags);
 		clear_bit(WRITE_READY_BN, &priv->state);
 		priv->write_byte(priv, buffer[count++], CDOR);
-		// XXX should try busy wait
-		// suspend until byte is sent
+		spin_unlock_irqrestore(&lock, flags);
+
+		// wait until byte is sent
 		if(wait_event_interruptible(driver->wait, test_bit(WRITE_READY_BN, &priv->state) ||
 			test_bit(TIMO_NUM, &driver->status)))
 		{
@@ -141,7 +145,6 @@ ssize_t nec7210_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *b
 			else count += retval;
 		}
 	}
-
 	if(send_eoi)
 	{
 		/*send EOI */

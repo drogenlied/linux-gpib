@@ -30,7 +30,6 @@
 IBLCL int ibwait(unsigned int mask)
 {
 	int retval = 0;
-	DECLARE_WAIT_QUEUE_HEAD(wait);
 
 	if (mask == 0)
 	{
@@ -44,7 +43,7 @@ IBLCL int ibwait(unsigned int mask)
 	osStartTimer(timeidx);
 	while((ibstatus() & mask) == 0)
 	{
-		if(interruptible_sleep_on_timeout(&wait, 1))
+		if(interruptible_sleep_on_timeout(&driver->wait, 1))
 		{
 			printk("wait interrupted\n");
 			retval = -1;

@@ -17,6 +17,7 @@
 
 
 #include <stdio.h>
+#include <unistd.h>
 #include <ib.h>
 
 extern int ibsta,ibcnt,iberr;
@@ -129,7 +130,6 @@ int main(int argc,char **argv){
 
 
   for(i=0;i<READS;i++){
-
 
 #if USE_SRQ
 

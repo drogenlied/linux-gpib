@@ -72,10 +72,6 @@ void nec7210_interrupt(gpib_driver_t *driver, nec7210_private_t *priv)
 	int status1, status2, address_status;
 	unsigned long flags;
 
-	/* interrupt should also update RDF_HOLDOFF in state
-	 * by checking auxa_bits and END, but I need to make
-	 * auxa_bits store handshaking bits first */
-
 	// read interrupt status (also clears status)
 	status1 = priv->read_byte(priv, ISR1);
 	status2 = priv->read_byte(priv, ISR2);
@@ -133,7 +129,7 @@ void nec7210_interrupt(gpib_driver_t *driver, nec7210_private_t *priv)
 	// record reception of END
 	if(status1 & HR_END)
 	{
-		set_bit(END_NUM, &driver->status);
+		set_bit(RECEIVED_END_BN, &priv->state);
 	}
 
 	// get incoming data in PIO mode
@@ -201,7 +197,6 @@ void nec7210_interrupt(gpib_driver_t *driver, nec7210_private_t *priv)
 	}
 
 printk("isr1 0x%x, imr1 0x%x, isr2 0x%x, imr2 0x%x, status 0x%x\n", status1, priv->imr1_bits, status2, priv->imr2_bits, driver->status);
-
 }
 
 

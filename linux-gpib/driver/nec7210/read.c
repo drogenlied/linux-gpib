@@ -18,20 +18,21 @@
 
 #include "board.h"
 #include <asm/dma.h>
+#include <linux/spinlock.h>
 
 static ssize_t pio_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length)
 {
 	size_t count = 0;
 	ssize_t retval = 0;
+	unsigned long flags;
+	static spinlock_t lock = SPIN_LOCK_UNLOCKED;
 
 	// enable 'data in' and 'end' interrupt
 	priv->imr1_bits |= HR_DIIE | HR_ENDIE;
 	priv->write_byte(priv, priv->imr1_bits, IMR1);
 
-
 	while(count < length)
 	{
-		// try busy wait XXX
 		if(wait_event_interruptible(driver->wait,
 			test_bit(READ_READY_BN, &priv->state) ||
 			test_bit(TIMO_NUM, &driver->status)))
@@ -43,8 +44,13 @@ static ssize_t pio_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t 
 		if(test_bit(TIMO_NUM, &driver->status))
 			break;
 
+		spin_lock_irqsave(&lock, flags);
 		clear_bit(READ_READY_BN, &priv->state);
 		buffer[count++] = priv->read_byte(priv, DIR);
+		spin_unlock_irqrestore(&lock, flags);
+
+		if(test_bit(RECEIVED_END_BN, &priv->state))
+			break;
 	}
 
 	// disable 'data in' and 'end' interrupt
@@ -114,6 +120,7 @@ ssize_t nec7210_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *bu
 {
 	size_t	count = 0;
 	ssize_t retval = 0;
+
 	*end = 0;
 
 	if(length == 0) return 0;
@@ -146,7 +153,7 @@ ssize_t nec7210_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *bu
 	}
 
 	// read last byte if we havn't received an END yet
-	if(test_bit(END_NUM, &driver->status) == 0)
+	if(test_bit(RECEIVED_END_BN, &priv->state) == 0)
 	{
 		// make sure we holdoff after last byte read
 		priv->write_byte(priv, priv->auxa_bits | HR_HLDA, AUXMR);
@@ -157,7 +164,7 @@ ssize_t nec7210_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *bu
 			count++;
 	}
 
-	if(test_and_clear_bit(END_NUM, &driver->status))
+	if(test_and_clear_bit(RECEIVED_END_BN, &priv->state))
 		*end = 1;
 
 	set_bit(RFD_HOLDOFF_BN, &priv->state);

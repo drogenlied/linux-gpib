@@ -45,6 +45,7 @@ enum
 	READ_READY_BN,	// board has data byte available to read
 	WRITE_READY_BN,	// board is ready to send a data byte
 	COMMAND_READY_BN,	// board is ready to send a command byte
+	RECEIVED_END_BN,	// received END
 	RFD_HOLDOFF_BN,	// board is asserting a request for data holdoff
 };
 
