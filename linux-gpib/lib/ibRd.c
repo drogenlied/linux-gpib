@@ -4,32 +4,36 @@
 #include <ibP.h>
 
 // sets up bus to receive data from device with address pad/sad
-int receive_setup( ibConf_t *conf )
+int InternalReceiveSetup( ibConf_t *conf, Addr4882_t address )
 {
 	ibBoard_t *board;
 	uint8_t cmdString[8];
 	unsigned int i = 0;
-	int pad = conf->pad;
-	int sad = conf->sad;
+	int pad;
+	int sad;
 
-	board = interfaceBoard( conf );
-
-	if( pad < 0 || pad > gpib_addr_max || sad > gpib_addr_max)
+	if( addressIsValid( address ) == 0 ||
+		address == NOADDR )
 	{
-		fprintf(stderr, "receive_setup: bad gpib address\n");
+		setIberr( EARG );
 		return -1;
 	}
 
-	cmdString[i++] = UNL;
+	board = interfaceBoard( conf );
 
-	cmdString[i++] = MLA(board->pad);	/* controller's listen address */
+	pad = extractPAD( address );
+	sad = extractSAD( address );
+
+	cmdString[ i++ ] = UNL;
+
+	cmdString[ i++ ] = MLA( board->pad );	/* controller's listen address */
 	if ( board->sad >= 0 )
-		cmdString[i++] = MSA(board->sad);
-	cmdString[i++] = MTA(pad);
-	if(sad >= 0)
-		cmdString[i++] = MSA(sad);
+		cmdString[ i++ ] = MSA( board->sad );
+	cmdString[ i++ ] = MTA( pad );
+	if( sad >= 0 )
+		cmdString[ i++ ] = MSA( sad );
 
-	if ( my_ibcmd( conf, cmdString, i) < 0)
+	if ( my_ibcmd( conf, cmdString, i ) < 0)
 	{
 		fprintf(stderr, "receive_setup: command failed\n");
 		return -1;
@@ -82,7 +86,7 @@ ssize_t my_ibrd( ibConf_t *conf, uint8_t *buffer, size_t count )
 	if( conf->is_interface == 0 )
 	{
 		// set up addressing
-		if( receive_setup( conf ) < 0 )
+		if( InternalReceiveSetup( conf, packAddress( conf->pad, conf->sad ) ) < 0 )
 		{
 			return -1;
 		}
@@ -114,25 +118,16 @@ int ibrd(int ud, void *rd, long cnt)
 	return exit_library( ud, 0 );
 }
 
-void RcvRespMsg( int boardID, void *buffer, long count, int termination )
+int InternalRcvRespMsg( ibConf_t *conf, void *buffer, long count, int termination )
 {
-	ibConf_t *conf;
 	ibBoard_t *board;
 	int retval;
 	int use_eos;
 
-	conf = enter_library( boardID );
-	if( conf == NULL )
-	{
-		exit_library( boardID, 1 );
-		return;
-	}
-
 	if( conf->is_interface == 0 )
 	{
 		setIberr( EDVR );
-		exit_library( boardID, 1 );
-		return;
+		return -1;
 	}
 
 	board = interfaceBoard( conf );
@@ -140,16 +135,14 @@ void RcvRespMsg( int boardID, void *buffer, long count, int termination )
 	if( board->is_system_controller == 0 )
 	{
 		setIberr( ECIC );
-		exit_library( boardID, 1 );
-		return;
+		return -1;
 	}
 
 	if( termination != ( termination & 0xff ) &&
 		termination != STOPend )
 	{
 		setIberr( EARG );
-		exit_library( boardID, 1 );
-		return;
+		return -1;
 	}
 	// XXX check for listener active state
 
@@ -158,19 +151,88 @@ void RcvRespMsg( int boardID, void *buffer, long count, int termination )
 	retval = config_read_eos( board, use_eos, termination, 1 );
 	if( retval < 0 )
 	{
-		exit_library( boardID, 1 );
-		return;
+		return retval;
 	}
 
 	retval = read_data( conf, buffer, count );
 	if( retval != count )
+	{
+		return -1;
+	}
+
+	return 0;
+}
+
+void RcvRespMsg( int boardID, void *buffer, long count, int termination )
+{
+	ibConf_t *conf;
+	int retval;
+
+	conf = enter_library( boardID );
+	if( conf == NULL )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	retval = InternalRcvRespMsg( conf, buffer, count, termination );
+	if( retval < 0 )
 	{
 		exit_library( boardID, 1 );
 		return;
 	}
 
 	exit_library( boardID, 0 );
-
 }
 
+void ReceiveSetup( int boardID, Addr4882_t address )
+{
+	ibConf_t *conf;
+	int retval;
 
+	conf = enter_library( boardID );
+	if( conf == NULL )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	retval = InternalReceiveSetup( conf, address );
+	if( retval < 0 )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	exit_library( boardID, 0 );
+}
+
+void Receive( int boardID, Addr4882_t address,
+	void *buffer, long count, int termination )
+{
+	ibConf_t *conf;
+	int retval;
+
+	conf = enter_library( boardID );
+	if( conf == NULL )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	retval = InternalReceiveSetup( conf, address );
+	if( retval < 0 )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	retval = InternalRcvRespMsg( conf, buffer, count, termination );
+	if( retval < 0 )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	exit_library( boardID, 0 );
+}

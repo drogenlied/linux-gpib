@@ -53,6 +53,10 @@ extern void PPoll( int boardID, short *result );
 extern void PPollConfig( int boardID, Addr4882_t address, int dataLine, int lineSense );
 extern void PPollUnconfig( int boardID, Addr4882_t addressList[] );
 extern void RcvRespMsg( int boardID, void *buffer, long count, int termination );
+extern void ReadStatusByte( int boardID, Addr4882_t address, short *result );
+extern void Receive( int boardID, Addr4882_t address,
+	void *buffer, long count, int termination );
+extern void ReceiveSetup( int boardID, Addr4882_t address );
 extern void SendSetup( int boardID, Addr4882_t addressList[] );
 extern int ThreadIbsta( void );
 extern int ThreadIberr( void );

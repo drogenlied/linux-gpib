@@ -13,6 +13,9 @@ GPIB_DUMMY_VERSION {
 		PPollConfig;
 		PPollUnconfig;
 		RcvRespMsg;
+		ReadStatusByte;
+		Receive;
+		ReceiveSetup;
 		SendSetup;
 		ThreadIbsta;
 		ThreadIberr;

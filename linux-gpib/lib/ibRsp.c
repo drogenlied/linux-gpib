@@ -181,3 +181,52 @@ void FindRQS( int boardID, Addr4882_t addressList[], short *result )
 	if( retval < 0 ) exit_library( boardID, 1 );
 	else exit_library( boardID, 0 );
 }
+
+void ReadStatusByte( int boardID, Addr4882_t address, short *result )
+{
+	ibConf_t *conf;
+	ibBoard_t *board;
+	char byte_result;
+	int retval;
+
+	conf = enter_library( boardID );
+	if( conf == NULL )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+	if( addressIsValid( address ) == 0 )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	if( conf->is_interface == 0 )
+	{
+		setIberr( EDVR );
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	board = interfaceBoard( conf );
+
+	if( board->is_system_controller == 0 )
+	{
+		setIberr( ECIC );
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	retval = serial_poll( board, extractPAD( address ),
+		extractSAD( address ), conf->spoll_usec_timeout, &byte_result );
+	if( retval < 0 )
+	{
+		if( errno == ETIMEDOUT )
+			conf->timed_out = 1;
+		exit_library( boardID, 1 );
+		return;
+	}
+	*result = byte_result & 0xff;
+
+	exit_library( boardID, 0 );
+}
