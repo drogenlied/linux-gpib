@@ -2,7 +2,7 @@
                           ib.h  -  header file for gpib library
                              -------------------
 
-	copyright            : (C) 2002 by Frank Mori Hess
+    copyright            : (C) 2002 by Frank Mori Hess
     email                : fmhess@users.sourceforge.net
  ***************************************************************************/
 
@@ -67,11 +67,15 @@ extern void ReceiveSetup( int boardID, Addr4882_t address );
 extern void ResetSys( int boardID, Addr4882_t addressList[] );
 extern void Send( int boardID, Addr4882_t address, void *buffer,
 	long count, int eotmode );
+extern void SendCmds( int boardID, void *buffer, long count );
 extern void SendDataBytes( int boardID, void *buffer,
 	long count, int eotmode );
+extern void SendIFC( int boardID );
+extern void SendLLO( int boardID );
 extern void SendList( int boardID, Addr4882_t addressList[], void *buffer,
 	long count, int eotmode );
 extern void SendSetup( int boardID, Addr4882_t addressList[] );
+extern void SetRWLS( int boardID, Addr4882_t addressList[] );
 extern int ThreadIbsta( void );
 extern int ThreadIberr( void );
 extern int ThreadIbcnt( void );

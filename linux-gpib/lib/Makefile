@@ -37,7 +37,7 @@ SRCS =  ibCac.c ibClr.c ibCmd.c ibConfYacc.c ibConfLex.c  ibEos.c ibEot.c \
 	ibSad.c ibSic.c ibSre.c ibTmo.c ibTrg.c ibWait.c ibWrt.c ibBdChrConfig.c\
 	ibGts.c ibBoard.c ibError.c ibutil.c globals.c ibask.c ibppc.c \
 	ibLoc.c ibDma.c ibdev.c ibbna.c async.c ibconfig.c ibFindLstn.c \
-	ibEvent.c
+	ibEvent.c local_lockout.c
 
 
 OBJS =  $(SRCS:.c=.o) 

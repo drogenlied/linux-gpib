@@ -65,32 +65,21 @@ int ibsre(int ud, int v)
 	return exit_library( ud, 0 );
 }
 
-extern void EnableRemote( int boardID, Addr4882_t addressList[] )
+int InternalEnableRemote( ibConf_t *conf, Addr4882_t addressList[] )
 {
 	int i;
-	ibConf_t *conf;
 	ibBoard_t *board;
 	uint8_t *cmd;
 	int count;
 	int retval;
 
-	conf = enter_library( boardID );
-	if( conf == NULL )
-	{
-		exit_library( boardID, 1 );
-		return;
-	}
 	if( addressListIsValid( addressList ) == 0 )
-	{
-		exit_library( boardID, 1 );
-		return;
-	}
+		return -1;
 
 	if( conf->is_interface == 0 )
 	{
 		setIberr( EDVR );
-		exit_library( boardID, 1 );
-		return;
+		return -1;
 	}
 
 	board = interfaceBoard( conf );
@@ -98,30 +87,21 @@ extern void EnableRemote( int boardID, Addr4882_t addressList[] )
 	if( board->is_system_controller == 0 )
 	{
 		setIberr( ECIC );
-		exit_library( boardID, 1 );
-		return;
+		return -1;
 	}
 
 	retval = remote_enable( board, 1 );
-	if( retval < 0 )
-	{
-		exit_library( boardID, 1 );
-		return;
-	}
+	if( retval < 0 ) return -1;
 
 	if( numAddresses( addressList ) == 0 )
-	{
-		exit_library( boardID, 0 );
-		return;
-	}
+		return 0;
 
 	cmd = malloc( 16 + 2 * numAddresses( addressList ) );
 	if( cmd == NULL )
 	{
 		setIberr( EDVR );
 		setIbcnt( ENOMEM );
-		exit_library( boardID, 1 );
-		return;
+		return -1;
 	}
 
 	i = create_send_setup( board, addressList, cmd );
@@ -132,7 +112,27 @@ extern void EnableRemote( int boardID, Addr4882_t addressList[] )
 	free( cmd );
 	cmd = NULL;
 
-	if(count != i)
+	if( count != i )
+		return -1;
+
+	return 0;
+}
+
+
+void EnableRemote( int boardID, Addr4882_t addressList[] )
+{
+	ibConf_t *conf;
+	int retval;
+
+	conf = enter_library( boardID );
+	if( conf == NULL )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	retval = InternalEnableRemote( conf, addressList );
+	if( retval < 0 )
 	{
 		exit_library( boardID, 1 );
 		return;

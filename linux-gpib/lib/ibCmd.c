@@ -26,7 +26,6 @@ void* start_async_cmd( void *arg );
 int ibcmd(int ud, void *cmd_buffer, long cnt)
 {
 	ibConf_t *conf;
-	ibBoard_t *board;
 	ssize_t count;
 
 	conf = enter_library( ud );
@@ -37,14 +36,6 @@ int ibcmd(int ud, void *cmd_buffer, long cnt)
 	if( conf->is_interface == 0 )
 	{
 		setIberr( EARG );
-		return exit_library( ud, 1 );
-	}
-
-	board = interfaceBoard( conf );
-
-	if( board->is_system_controller == 0 )
-	{
-		setIberr( ECIC );
 		return exit_library( ud, 1 );
 	}
 
@@ -315,4 +306,9 @@ void SendSetup( int boardID, Addr4882_t addressList[] )
 	}
 
 	exit_library( boardID, 0 );
+}
+
+void SendCmds( int boardID, void *buffer, long count )
+{
+	ibcmd( boardID, buffer, count );
 }

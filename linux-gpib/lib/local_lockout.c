@@ -1,5 +1,5 @@
 /***************************************************************************
-                             lib/ibSic.c
+                             lib/local_lockout.c
                              -------------------
 
     copyright            : (C) 2002 by Frank Mori Hess
@@ -18,61 +18,68 @@
 #include "ib_internal.h"
 #include "ibP.h"
 
-int assert_ifc( ibBoard_t *board, unsigned int usec_duration )
+static int local_lockout( ibConf_t *conf, Addr4882_t addressList[] )
 {
+	uint8_t cmd;
 	int retval;
 
-	retval = ioctl( board->fileno, IBSIC, &usec_duration );
-	if( retval < 0 )
-	{
-		setIberr( EDVR );
-		setIbcnt( errno );
-	}
-	return retval;
+	retval = InternalEnableRemote( conf, addressList );
+	if( retval < 0 ) return retval;
+
+	cmd = LLO;
+	retval = my_ibcmd( conf, &cmd, 1 );
+	if( retval < 0 ) return retval;
+
+	return 0;
 }
 
-int internal_ibsic( ibConf_t *conf )
-{
-	ibBoard_t *board;
-
-	if( conf->is_interface == 0 )
-	{
-		setIberr( EDVR );
-		return -1;
-	}
-
-	board = interfaceBoard( conf );
-
-	if( board->is_system_controller == 0 )
-	{
-		setIberr( ECIC );
-		return -1;
-	}
-
-	return assert_ifc( board, 100 );
-}
-
-int ibsic(int ud)
+void SendLLO( int boardID )
 {
 	ibConf_t *conf;
 	int retval;
 
-	conf = enter_library( ud );
+	conf = enter_library( boardID );
 	if( conf == NULL )
-		return exit_library( ud, 1 );
-
-	retval = internal_ibsic( conf );
-	if( retval < 0 )
 	{
-		return exit_library( ud, 1 );
+		exit_library( boardID, 1 );
+		return;
 	}
 
-	return exit_library( ud, 0 );
+	retval = local_lockout( conf, NULL );
+	if( retval < 0 )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	exit_library( boardID, 0 );
 }
 
-void SendIFC( int boardID )
+void SetRWLS( int boardID, Addr4882_t addressList[] )
 {
-	ibsic( boardID );
+	ibConf_t *conf;
+	int retval;
+
+	conf = enter_library( boardID );
+	if( conf == NULL )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	if( numAddresses( addressList ) == 0 )
+	{
+		setIberr( EARG );
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	retval = local_lockout( conf, addressList );
+	if( retval < 0 )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	exit_library( boardID, 0 );
 }
-
-
