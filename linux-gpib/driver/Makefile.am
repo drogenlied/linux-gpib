@@ -14,17 +14,17 @@ GPIB_MODULES :=cb7210/cb7210.ko cec/cec_gpib.ko hp82335/hp82335.ko \
 	nec7210/nec7210.ko tms9914/tms9914.ko sys/gpib_common.ko
 
 EXTRA_DIST = $(GPIB_MODULE_SUBDIRS) tnt4882-tms
-
+GPIB_MODVERDIR=@abs_srcdir@/.tmp_versions
 SUBDIRS = include
 
 -include $(top_srcdir)/util/linux_flags/flags
 
-#overriding MODVERDIR is required to make 2.6 kernel's modpost script work right
 all-local:
+	$(RM) $(GPIB_MODVERDIR)/*
 	$(MAKE) -C $(LINUX_SRCDIR) V=1 modules\
 		CC="$(LINUX_CC) -I@abs_top_srcdir@ -I@abs_top_srcdir@/driver/include -I@abs_top_srcdir@/include" \
 		SUBDIRS="$(GPIB_ABS_MODULE_SUBDIRS)" \
-		MODVERDIR="$(LINUX_SRCDIR)/.tmp_versions"
+		MODVERDIR="$(GPIB_MODVERDIR)"
 
 clean-local:
 	find $(srcdir) \( -name '*.[oas]' -o -name '*.ko' -o -name core -o -name '.*.flags' \) -type f \
