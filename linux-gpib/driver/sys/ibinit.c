@@ -79,12 +79,6 @@ int ibonline( gpib_board_t *board )
 
 	if( board->online ) return -EBUSY;
 
-	board->autospoll_pid = kernel_thread(autospoll_thread, board, 0);
-	if(board->autospoll_pid < 0)
-	{
-		printk("gpib: failed to create autospoll thread\n");
-		return board->autospoll_pid;
-	}
 	retval = gpib_allocate_board( board );
 	if( retval < 0 ) return retval;
 
@@ -94,14 +88,19 @@ int ibonline( gpib_board_t *board )
 		printk("gpib: interface attach failed\n");
 		return -1;
 	}
+	board->autospoll_pid = kernel_thread(autospoll_thread, board, 0);
+	if(board->autospoll_pid < 0)
+	{
+		printk("gpib: failed to create autospoll thread\n");
+		return board->autospoll_pid;
+	}
 	board->online = 1;
 	GPIB_DPRINTK( "gpib: board online\n" );
 
 	return 0;
 }
 
-/* XXX need to make sure autopoll is not in progress,
- * and board is generaly not in use (grab board lock?) */
+/* XXX need to make sure board is generaly not in use (grab board lock?) */
 int iboffline( gpib_board_t *board )
 {
 	int retval;
@@ -111,8 +110,6 @@ int iboffline( gpib_board_t *board )
 		return 0;
 	}
 
-	board->interface->detach( board );
-	gpib_deallocate_board( board );
 	if(board->autospoll_pid <= 0)
 		printk("gpib: bug! autospoll_pid is not positive\n");
 	else
@@ -123,6 +120,8 @@ int iboffline( gpib_board_t *board )
 		/* wait for autospoll thread to finish */
 		down(&board->autospoll_completion);
 	}
+	board->interface->detach( board );
+	gpib_deallocate_board( board );
 	board->online = 0;
 	GPIB_DPRINTK( "gpib: board offline\n" );
 
