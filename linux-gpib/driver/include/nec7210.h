@@ -243,7 +243,7 @@ enum adsr_bits
 	HR_LA = ( 1 << 2 ),
 	HR_TPAS = ( 1 << 3 ),
 	HR_LPAS = ( 1 << 4 ),
-	HR_SPMS = ( 1 << 5 ),
+	HR_SPMS = ( 1 << 5 ), /*serial poll mode state, use this! XXX*/
 	HR_NATN = ( 1 << 6 ),
 	HR_CIC = ( 1 << 7 ),
 };
