@@ -35,21 +35,20 @@ void agilent_82350b_detach( gpib_board_t *board );
 
 int read_transfer_counter(agilent_82350b_private_t *a_priv)
 {
-	int lo, mid, hi, value;
+	int lo, mid, value;
 	lo = readb(a_priv->gpib_base + XFER_COUNT_LO_REG);
 	mid =readb(a_priv->gpib_base + XFER_COUNT_MID_REG);
-	hi = readb(a_priv->gpib_base + XFER_COUNT_HI_REG);
-	value = ~0xfffff;
-	value |= lo | ((mid << 8) & 0xff00) | ((hi << 16) & 0xf0000);
-	value = -value;
+	value = (lo & 0xff)| ((mid << 8) & 0x7f00);
+	value = ~(value - 1) & 0x7fff;
 	return value;
 }
 	
 void set_transfer_counter(agilent_82350b_private_t *a_priv, int count)
 {
-	int complement = -count;;
+	int complement = -count;
 	writeb(complement & 0xff, a_priv->gpib_base + XFER_COUNT_LO_REG);
 	writeb((complement >> 8) & 0xff, a_priv->gpib_base + XFER_COUNT_MID_REG);
+	//I don't think the hi count reg is even used, but oh well
 	writeb((complement >> 16) & 0xf, a_priv->gpib_base + XFER_COUNT_HI_REG);
 }
 
