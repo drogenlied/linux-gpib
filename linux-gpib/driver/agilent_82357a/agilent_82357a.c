@@ -359,8 +359,8 @@ ssize_t agilent_82357a_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 		return -EIO;
 	}
 	memcpy(buffer, in_data, length);
-	printk("%s: %s: received response:\n", __FILE__, __FUNCTION__);
-	agilent_82357a_dump_raw_block(in_data, in_data_length);
+	//printk("%s: %s: received response:\n", __FILE__, __FUNCTION__);
+	//agilent_82357a_dump_raw_block(in_data, in_data_length);
 	trailing_flags = in_data[bytes_read - 1];
 	kfree(in_data);
 	*nbytes = bytes_read - 1;
@@ -401,7 +401,7 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 	out_data[i++] = (length >> 24) & 0xff;
 	for(j = 0; j < length; j++)
 		out_data[i++] = buffer[j];
-	printk("%s: sending bulk msg(), send_commands=%i\n", __FUNCTION__, send_commands);
+	//printk("%s: sending bulk msg(), send_commands=%i\n", __FUNCTION__, send_commands);
 	clear_bit(AIF_WRITE_COMPLETE_BN, &a_priv->interrupt_flags);
 	jiffie_timeout = usec_to_jiffies(board->usec_timeout);
 	retval = agilent_82357a_send_bulk_msg(a_priv, out_data, i, &bytes_written, jiffie_timeout);
@@ -417,7 +417,7 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 		printk("%s: agilent_82357a_send_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, bytes_written, i);		
 		return -EIO;
 	}
-	printk("%s: waiting for write complete\n", __FUNCTION__);
+	//printk("%s: waiting for write complete\n", __FUNCTION__);
 	retval = wait_event_interruptible(board->wait, test_bit(AIF_WRITE_COMPLETE_BN, &a_priv->interrupt_flags) ||
 		test_bit(TIMO_NUM, &board->status));
 	if(retval)
@@ -430,7 +430,7 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 		agilent_82357a_abort(a_priv, 0);
 		write_aborted = 1;
 	}
-	printk("%s: receiving control msg\n", __FUNCTION__);
+	//printk("%s: receiving control msg\n", __FUNCTION__);
 	retval = agilent_82357a_receive_control_msg(a_priv, agilent_82357a_control_request, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE, 
 		XFER_STATUS, 0, status_data, sizeof(status_data), HZ / 10);
 	if(retval < 0)
@@ -442,7 +442,7 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 	bytes_completed |= status_data[3] << 8;
 	bytes_completed |= status_data[4] << 16;
 	bytes_completed |= status_data[5] << 24;
-	printk("%s: write completed, bytes_completed=%i\n", __FUNCTION__, bytes_completed);
+	//printk("%s: write completed, bytes_completed=%i\n", __FUNCTION__, bytes_completed);
 	return bytes_completed;
 }
 
@@ -801,6 +801,7 @@ void agilent_82357a_interrupt_complete(struct urb *urb, struct pt_regs *regs)
 	uint8_t *transfer_buffer = urb->transfer_buffer;
 	unsigned long interrupt_flags;
 	
+#if 0
 	printk("debug: %s: %s: status=0x%x, error_count=%i, actual_length=%i transfer_buffer:\n", __FILE__, __FUNCTION__,
 		urb->status, urb->error_count, urb->actual_length); 
 	for(i = 0; i < urb->actual_length; ++i)
@@ -808,6 +809,7 @@ void agilent_82357a_interrupt_complete(struct urb *urb, struct pt_regs *regs)
 		printk("%2x ", transfer_buffer[i]); 
 	}
 	printk("\n");
+#endif
 	// don't resubmit if urb was unlinked
 	if(urb->status) return;
 	interrupt_flags = transfer_buffer[0];
