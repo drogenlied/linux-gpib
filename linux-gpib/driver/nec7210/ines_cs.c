@@ -1,16 +1,22 @@
-/*======================================================================
+/***************************************************************************
+                          nec7210/ines_cs.c  -  description
+                             -------------------
+   support for ines PCMCIA GPIB boards.  Based on Claus Schroeter's
+   pcmcia gpib driver, which used the skeleton example (David Hinds probably).
 
-    A gpib PCMCIA client driver
+    copyright            : (C) 1999 Axel Dziemba (axel.dziemba@ines.de)
+                           (C) 2002 by Frank Mori Hess
+    email                : fmhess@users.sourceforge.net
+ ***************************************************************************/
 
-    Written by Claus Schroeter (clausi@chemie.fu-berlin.de)
-    adapted from the skeleton example
- 
-    adapted from ../cbi4882/gpib_cs.c 
-    for ines GPIB-PCMCIA card 
-    13.1.99 Axel Dziemba (axel.dziemba@ines.de)
- 
-======================================================================*/
-
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
 
 #include "board.h"
 
@@ -646,9 +652,9 @@ int ines_pcmcia_attach(gpib_device_t *device)
 	nec_priv->iobase = dev_list->io.BasePort1;
 
 	/* CBI 4882 reset */
-	nec_priv->write_byte(nec_priv, HS_RESET7210, HS_INT_LEVEL);
-	nec_priv->write_byte(nec_priv, 0, HS_INT_LEVEL);
-	nec_priv->write_byte(nec_priv, 0, HS_MODE); /* disable system control */
+	write_byte(nec_priv, HS_RESET7210, HS_INT_LEVEL);
+	write_byte(nec_priv, 0, HS_INT_LEVEL);
+	write_byte(nec_priv, 0, HS_MODE); /* disable system control */
 
 	if(request_irq(dev_list->irq.AssignedIRQ, ines_interrupt, isr_flags, "pcmcia-gpib", device))
 	{
@@ -660,16 +666,16 @@ int ines_pcmcia_attach(gpib_device_t *device)
 	nec7210_board_reset(nec_priv);
 
 	// XXX set clock register for 20MHz? driving frequency
-	nec_priv->write_byte(nec_priv, ICR | 8, AUXMR);
+	write_byte(nec_priv, ICR | 8, AUXMR);
 
 	// enable interrupts
 	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
 		HR_DETIE | HR_APTIE | HR_CPTIE;
 	nec_priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
-	nec_priv->write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
-	nec_priv->write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
+	write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
+	write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
 
-	nec_priv->write_byte(nec_priv, AUX_PON, AUXMR);
+	write_byte(nec_priv, AUX_PON, AUXMR);
 
 	return 0;
 }

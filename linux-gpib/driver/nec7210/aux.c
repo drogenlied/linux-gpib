@@ -30,22 +30,22 @@ int nec7210_take_control(gpib_device_t *device, nec7210_private_t *priv, int syn
 		// make sure we aren't asserting rfd holdoff
 		if(test_and_clear_bit(RFD_HOLDOFF_BN, &priv->state))
 		{
-			priv->write_byte(priv, AUX_FH, AUXMR);
+			write_byte(priv, AUX_FH, AUXMR);
 		}
-		priv->write_byte(priv, AUX_TCS, AUXMR);
+		write_byte(priv, AUX_TCS, AUXMR);
 	}else
-		priv->write_byte(priv, AUX_TCA, AUXMR);
+		write_byte(priv, AUX_TCA, AUXMR);
 	// busy wait until ATN is asserted
 	for(i = 0; i < timeout; i++)
 	{
-		if((priv->read_byte(priv, ADSR) & HR_NATN) == 0)
+		if((read_byte(priv, ADSR) & HR_NATN) == 0)
 			break;
 		udelay(1);
 	}
 	// suspend if we still don't have ATN
 	if(i == timeout)
 	{
-		while((priv->read_byte(priv, ADSR) & HR_NATN) &&
+		while((read_byte(priv, ADSR) & HR_NATN) &&
 			test_bit(TIMO_NUM, &device->status) == 0)
 		{
 			if(interruptible_sleep_on_timeout(&device->wait, 1))
@@ -70,11 +70,11 @@ int nec7210_go_to_standby(gpib_device_t *device, nec7210_private_t *priv)
 	int i;
 	const int timeout = 1000;
 
-	priv->write_byte(priv, AUX_GTS, AUXMR);
+	write_byte(priv, AUX_GTS, AUXMR);
 	// busy wait until ATN is released
 	for(i = 0; i < timeout; i++)
 	{
-		if(priv->read_byte(priv, ADSR) & HR_NATN)
+		if(read_byte(priv, ADSR) & HR_NATN)
 			break;
 		udelay(1);
 	}
@@ -89,15 +89,15 @@ int nec7210_go_to_standby(gpib_device_t *device, nec7210_private_t *priv)
 void nec7210_interface_clear(gpib_device_t *device, nec7210_private_t *priv, int assert)
 {
 	if(assert)
-		priv->write_byte(priv, AUX_SIFC, AUXMR);
+		write_byte(priv, AUX_SIFC, AUXMR);
 	else
-		priv->write_byte(priv, AUX_CIFC, AUXMR);
+		write_byte(priv, AUX_CIFC, AUXMR);
 }
 
 void nec7210_remote_enable(gpib_device_t *device, nec7210_private_t *priv, int enable)
 {
 	if(enable)
-		priv->write_byte(priv, AUX_SREN, AUXMR);
+		write_byte(priv, AUX_SREN, AUXMR);
 	else
-		priv->write_byte(priv, AUX_CREN, AUXMR);
+		write_byte(priv, AUX_CREN, AUXMR);
 }

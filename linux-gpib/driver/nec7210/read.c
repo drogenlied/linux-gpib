@@ -28,7 +28,7 @@ static ssize_t pio_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t 
 
 	// enable 'data in' and 'end' interrupt
 	priv->imr1_bits |= HR_DIIE | HR_ENDIE;
-	priv->write_byte(priv, priv->imr1_bits, IMR1);
+	write_byte(priv, priv->imr1_bits, IMR1);
 
 	while(count < length)
 	{
@@ -45,7 +45,7 @@ static ssize_t pio_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t 
 
 		spin_lock_irqsave(&device->spinlock, flags);
 		clear_bit(READ_READY_BN, &priv->state);
-		buffer[count++] = priv->read_byte(priv, DIR);
+		buffer[count++] = read_byte(priv, DIR);
 		spin_unlock_irqrestore(&device->spinlock, flags);
 
 		if(test_bit(RECEIVED_END_BN, &priv->state))
@@ -54,7 +54,7 @@ static ssize_t pio_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t 
 
 	// disable 'data in' and 'end' interrupt
 	priv->imr1_bits &= ~HR_DIIE & ~HR_ENDIE;
-	priv->write_byte(priv, priv->imr1_bits, IMR1);
+	write_byte(priv, priv->imr1_bits, IMR1);
 
 	return retval ? retval : count;
 }
@@ -88,11 +88,11 @@ static ssize_t dma_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t 
 
 	// enable 'data in' and 'end' interrupt
 	priv->imr1_bits |= HR_DIIE | HR_ENDIE;
-	priv->write_byte(priv, priv->imr1_bits, IMR1);
+	write_byte(priv, priv->imr1_bits, IMR1);
 
 	// enable nec7210 dma
 	priv->imr2_bits |= HR_DMAI;
-	priv->write_byte(priv, priv->imr2_bits, IMR2);
+	write_byte(priv, priv->imr2_bits, IMR2);
 
 	spin_unlock_irqrestore(&device->spinlock, flags);
 
@@ -106,11 +106,11 @@ static ssize_t dma_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t 
 
 	// disable nec7210 dma
 	priv->imr2_bits &= ~HR_DMAI;
-	priv->write_byte(priv, priv->imr2_bits, IMR2);
+	write_byte(priv, priv->imr2_bits, IMR2);
 
 	// disable 'data in' and 'end' interrupt
 	priv->imr1_bits &= ~HR_DIIE & ~HR_ENDIE;
-	priv->write_byte(priv, priv->imr1_bits, IMR1);
+	write_byte(priv, priv->imr1_bits, IMR1);
 
 	// record how many bytes we transferred
 	flags = claim_dma_lock();
@@ -133,13 +133,13 @@ ssize_t nec7210_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t *bu
 
 	if(test_and_clear_bit(RFD_HOLDOFF_BN, &priv->state))
 	{
-		priv->write_byte(priv, priv->auxa_bits | HR_HLDA, AUXMR);
-		priv->write_byte(priv, AUX_FH, AUXMR);
+		write_byte(priv, priv->auxa_bits | HR_HLDA, AUXMR);
+		write_byte(priv, AUX_FH, AUXMR);
 	}
 /*
  *	holdoff on END
  */
-	priv->write_byte(priv, priv->auxa_bits | HR_HLDE, AUXMR);
+	write_byte(priv, priv->auxa_bits | HR_HLDE, AUXMR);
 
 	// transfer data (except for last byte)
 	length--;
@@ -162,7 +162,7 @@ ssize_t nec7210_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t *bu
 	if(test_bit(RECEIVED_END_BN, &priv->state) == 0)
 	{
 		// make sure we holdoff after last byte read
-		priv->write_byte(priv, priv->auxa_bits | HR_HLDA, AUXMR);
+		write_byte(priv, priv->auxa_bits | HR_HLDA, AUXMR);
 		retval = pio_read(device, priv, &buffer[count], 1);
 		if(retval < 0)
 			return retval;

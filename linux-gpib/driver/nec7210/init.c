@@ -41,48 +41,48 @@ void nec7210_board_reset(nec7210_private_t *priv)
 	GPIBout(0x20, 0xff); /* enable controller mode */
 #endif
 	/* 7210 chip reset */
-	priv->write_byte(priv, AUX_CR, AUXMR);
+	write_byte(priv, AUX_CR, AUXMR);
 
 	/* clear registers by reading */
-	priv->read_byte(priv, CPTR);
-	priv->read_byte(priv, ISR1);
-	priv->read_byte(priv, ISR2);
+	read_byte(priv, CPTR);
+	read_byte(priv, ISR1);
+	read_byte(priv, ISR2);
 
 	/* disable all interrupts */
 	priv->imr1_bits = 0;
-	priv->write_byte(priv, priv->imr1_bits, IMR1);
+	write_byte(priv, priv->imr1_bits, IMR1);
 	priv->imr2_bits = 0;
-	priv->write_byte(priv, priv->imr2_bits, IMR2);
-	priv->write_byte(priv, 0, SPMR);
+	write_byte(priv, priv->imr2_bits, IMR2);
+	write_byte(priv, 0, SPMR);
 
-	priv->write_byte(priv, 0, EOSR);
+	write_byte(priv, 0, EOSR);
 	/* set internal counter register 8 for 8 MHz input clock */
-	priv->write_byte(priv, ICR + 8, AUXMR);
+	write_byte(priv, ICR + 8, AUXMR);
 	/* parallel poll unconfigure */
-	priv->write_byte(priv, PPR | HR_PPU, AUXMR);
+	write_byte(priv, PPR | HR_PPU, AUXMR);
 
 	/* set GPIB address; MTA=PAD|100, MLA=PAD|040 */
-	priv->write_byte(priv, PAD & ADDRESS_MASK, ADR);
+	write_byte(priv, PAD & ADDRESS_MASK, ADR);
 	priv->admr_bits = HR_TRM0 | HR_TRM1;
 #if (SAD)
 	/* enable secondary addressing */
-	priv->write_byte(priv, HR_ARS | (SAD & ADDRESS_MASK), ADR);
+	write_byte(priv, HR_ARS | (SAD & ADDRESS_MASK), ADR);
 	priv->admr_bits |= HR_ADM1;
-	priv->write_byte(priv, priv->admr_bits, ADMR);
+	write_byte(priv, priv->admr_bits, ADMR);
 #else
 	/* disable secondary addressing */
-	priv->write_byte(priv, HR_ARS | HR_DT | HR_DL, ADR);
+	write_byte(priv, HR_ARS | HR_DT | HR_DL, ADR);
 	priv->admr_bits |= HR_ADM0;
-	priv->write_byte(priv, priv->admr_bits, ADMR);
+	write_byte(priv, priv->admr_bits, ADMR);
 #endif
 
 	// holdoff on all data	XXX record current handshake state somewhere
 	priv->auxa_bits = AUXRA;
-	priv->write_byte(priv, priv->auxa_bits | HR_HLDA, AUXMR);
+	write_byte(priv, priv->auxa_bits | HR_HLDA, AUXMR);
 
 	/* set INT pin to active high */
-	priv->write_byte(priv, AUXRB, AUXMR);
-	priv->write_byte(priv, AUXRE, AUXMR);
+	write_byte(priv, AUXRB, AUXMR);
+	write_byte(priv, AUXRE, AUXMR);
 }
 
 // wrapper for inb
@@ -118,12 +118,14 @@ int init_module(void)
 	INIT_LIST_HEAD(&cb_pci_interface.list);
 	INIT_LIST_HEAD(&cb_isa_interface.list);
 	INIT_LIST_HEAD(&ines_pci_interface.list);
+	INIT_LIST_HEAD(&ni_isa_interface.list);
 
 	gpib_register_driver(&pc2_interface);
 	gpib_register_driver(&pc2a_interface);
 	gpib_register_driver(&cb_pci_interface);
 	gpib_register_driver(&cb_isa_interface);
 	gpib_register_driver(&ines_pci_interface);
+	gpib_register_driver(&ni_isa_interface);
 
 #ifdef CONFIG_PCMCIA
 	INIT_LIST_HEAD(&cb_pcmcia_interface.list);
@@ -147,6 +149,7 @@ void cleanup_module(void)
 	gpib_unregister_driver(&cb_pci_interface);
 	gpib_unregister_driver(&cb_isa_interface);
 	gpib_unregister_driver(&ines_pci_interface);
+	gpib_unregister_driver(&ni_isa_interface);
 #ifdef CONFIG_PCMCIA
 	gpib_unregister_driver(&cb_pcmcia_interface);
 	gpib_unregister_driver(&cb_pcmcia_interface);

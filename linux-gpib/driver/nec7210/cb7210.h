@@ -21,10 +21,6 @@
 
 #include "amccs5933.h"
 
-#if DMAOP && defined(CBI_PCI)
-#error pci-gpib does not support ISA DMA, run make config again
-#endif
-
 #define PCI_DEVICE_ID_CBOARDS_PCI_GPIB 0x6
 
 // struct which defines private_data for cb7210 devices
@@ -82,10 +78,10 @@ static const int cb7210_iosize = 10;
 
 // cb7210 specific registers and bits
 
-#define HS_MODE	(0x8 * NEC7210_REG_OFFSET)	/* HS_MODE register */
-#define HS_INT_LEVEL	(0x9 * NEC7210_REG_OFFSET)	/* HS_INT_LEVEL register */
+#define HS_MODE	0x8	/* HS_MODE register */
+#define HS_INT_LEVEL	0x9	/* HS_INT_LEVEL register */
 
-#define HS_STATUS	(0x8 * NEC7210_REG_OFFSET)	/* HS_STATUS register */
+#define HS_STATUS	0x8	/* HS_STATUS register */
 
 /* CBI 488.2 HS control */
 
@@ -123,4 +119,4 @@ static const int cb7210_iosize = 10;
 #define AUX_LOSPEED     0x40
 
 
-#endif _CB7210_H
+#endif	// _CB7210_H

@@ -23,7 +23,7 @@ typedef struct
 {
 	nec7210_private_t nec7210_priv;
 	struct pci_dev *pci_device;
-	// base address for plx pci chip
+	// base address for plx9052 pci chip
 	unsigned long plx_iobase;
 	unsigned int irq;
 } ines_private_t;
@@ -49,7 +49,6 @@ int ines_parallel_poll(gpib_device_t *device, uint8_t *result);
 int ines_serial_poll_response(gpib_device_t *device, uint8_t status);
 
 // interrupt service routines
-void ines_pci_interrupt(int irq, void *arg, struct pt_regs *registerp);
 void ines_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
 // utility functions
@@ -71,8 +70,8 @@ enum
 
 enum
 {
-	INTCSR_ENABLE_INTR = 0x63,
-	INTCSR_DISABLE_INTR = 0x62,
+	INTCSR_ENABLE_INTR = 0x43,
+	INTCSR_DISABLE_INTR = 0x0,
 };
 
-#endif _INES_GPIB_H
+#endif	// _INES_GPIB_H

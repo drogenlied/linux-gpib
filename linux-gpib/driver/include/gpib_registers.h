@@ -14,35 +14,6 @@
 #define	IO_NOEOI	(1 << 2)	/* don't send EOI w/last byte	*/
 #define	IO_LAST		(1 << 3)	/* last "chunk" in I/O transfer	*/
 
-#ifdef NIAT
-
-/*
- * Extra registers for NI AT-GPIB board
- *
- */
-#define GPIBC	0x1
-#define GPIBD	0x3
-#define KEYPRT	0x5
-#define INTRT 0x7
-/* TURBO488...                          */
-#define CFG	0x10
-#define IMR3	0x12
-#define CNTL	0x14
-#define CNTH	0x16
-#define FIFO	0x18	// fifo can be single 16 bit register or two 8 bit
-#define FIFOB	0x18
-#define FIFOA	0x19
-#define CCRG	0x1a	// carry cycle register
-#define CMDR	0x1c	// command register
-#define TIMER	0x1e	// timer register
-
-#define STS1	0x10		/* T488 Status Register 1 */
-#define STS2	0x1c	        /* T488 Status Register 2 */
-#define ISR3	0x1a		/* T488 Interrupt Status Register 3 */
-#define DMA_EN	0x5		/* DMA Enable Register (Key Port) */
-
-#endif
-
 #if defined(NIPCII) || defined(NIAT)
 
 /*
@@ -50,16 +21,8 @@
  *
  */
 
-#if defined(NIPCIIa)
-#define NEC7210_REG_OFFSET 0x400
-#endif
-
-#if defined(MODBUS_PCI) || defined(NIAT)
+#if defined(MODBUS_PCI)
 #define NEC7210_REG_OFFSET 0x2
-#endif
-
-#ifndef NEC7210_REG_OFFSET
-#define NEC7210_REG_OFFSET 0x1
 #endif
 
 /* NAT4882 "Paged In" read- and write-only registers (must use GPIBpg__ macros) */
@@ -159,14 +122,10 @@
 #define	HR_DONE          (1<<0)	/* DMA done			*/
 
 /* CMDR -- Command Register */
-#define	CLRSC		0x2	/* clear the SC bit 		*/
-#define	SETSC		0x3	/* set the SC bit 		*/
 #define	GO		(1<<2)	/* start DMA 			*/
 #define	STOP		(1<<3)	/* stop DMA 			*/
 #define	RSTFIFO		(1<<4)	/* reset the FIFO 		*/
-#define SFTRST		(1<<5)	/* issue a software reset 	*/
-#define	DU_ADD		(1<<6)	/* Motorola mode dual 	  	*/
-#define	DDU_ADD		(1<<7)	/* Disable dual addressing 	*/
+#define SFTRST		0x22	/* issue a software reset 	*/
 
 /* STS2 -- Status Register 2 */
 #define AFFN		(1<<3)	/* "A full FIFO NOT"  (0=FIFO full)  */

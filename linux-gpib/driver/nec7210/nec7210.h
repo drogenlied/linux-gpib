@@ -38,6 +38,16 @@ struct nec7210_private_struct
  register_number);
 };
 
+// slightly shorter way to access read_byte and write_byte
+extern inline uint8_t read_byte(nec7210_private_t *priv, unsigned int register_number)
+{
+	return priv->read_byte(priv, register_number);
+}
+extern inline void write_byte(nec7210_private_t *priv, uint8_t byte, unsigned int register_number)
+{
+	priv->write_byte(priv, byte, register_number);
+}
+
 // nec7210_private_t.state bit numbers
 enum
 {
@@ -73,7 +83,7 @@ extern void nec7210_secondary_address(gpib_device_t *device, nec7210_private_t *
 extern int nec7210_parallel_poll(gpib_device_t *device, nec7210_private_t *priv, uint8_t *result);
 extern int nec7210_serial_poll_response(gpib_device_t *device, nec7210_private_t *priv, uint8_t status);
 
-// utility function
+// utility functions
 extern void nec7210_board_reset(nec7210_private_t *priv);
 
 // wrappers for io functions

@@ -26,7 +26,7 @@ ssize_t nec7210_command(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 
 	// enable command out interrupt
 	priv->imr2_bits |= HR_COIE;
-	priv->write_byte(priv, priv->imr2_bits, IMR2);
+	write_byte(priv, priv->imr2_bits, IMR2);
 
 	while(count < length)
 	{
@@ -43,13 +43,13 @@ ssize_t nec7210_command(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 			retval = -ETIMEDOUT;
 			break;
 		}
-		priv->write_byte(priv, buffer[count], CDOR);
+		write_byte(priv, buffer[count], CDOR);
 		count++;
 	}
 
 	// disable command out interrupt
 	priv->imr2_bits |= HR_COIE;
-	priv->write_byte(priv, priv->imr2_bits, IMR2);
+	write_byte(priv, priv->imr2_bits, IMR2);
 
 	return count ? count : retval;
 }

@@ -213,10 +213,10 @@ int pc2_attach(gpib_device_t *device)
 	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE |
 		HR_DETIE | HR_APTIE | HR_CPTIE;
 	nec_priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
-	nec_priv->write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
-	nec_priv->write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
+	write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
+	write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
 
-	nec_priv->write_byte(nec_priv, AUX_PON, AUXMR);
+	write_byte(nec_priv, AUX_PON, AUXMR);
 
 	return 0;
 }
@@ -329,10 +329,10 @@ int pc2a_attach(gpib_device_t *device)
 	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
 		HR_DETIE | HR_APTIE | HR_CPTIE;
 	nec_priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
-	nec_priv->write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
-	nec_priv->write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
+	write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
+	write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
 
-	nec_priv->write_byte(nec_priv, AUX_PON, AUXMR);
+	write_byte(nec_priv, AUX_PON, AUXMR);
 
 	return 0;
 }

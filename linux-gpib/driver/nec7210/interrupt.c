@@ -76,23 +76,21 @@ void cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	nec7210_interrupt(device, nec_priv);
 }
 
-void ines_pci_interrupt(int irq, void *arg, struct pt_regs *registerp)
-{
-	gpib_device_t *device = arg;
-	ines_private_t *priv = device->private_data;
-
-	/* reset interrupt circuit */
-	outb(INTCSR_ENABLE_INTR, priv->plx_iobase + PLX_INTCSR_REG);
-
-	ines_interrupt(irq, arg, registerp);
-}
-
 void ines_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
 	gpib_device_t *device = arg;
 	ines_private_t *priv = device->private_data;
 
 	nec7210_interrupt(device, &priv->nec7210_priv);
+}
+
+void nat4882_interrupt(int irq, void *arg, struct pt_regs *registerp)
+{
+	gpib_device_t *device = arg;
+	nat4882_private_t *priv = device->private_data;
+
+	nec7210_interrupt(device, &priv->nec7210_priv);
+
 }
 
 void nec7210_interrupt(gpib_device_t *device, nec7210_private_t *priv)
@@ -103,8 +101,8 @@ void nec7210_interrupt(gpib_device_t *device, nec7210_private_t *priv)
 	spin_lock(&device->spinlock);
 
 	// read interrupt status (also clears status)
-	status1 = priv->read_byte(priv, ISR1);
-	status2 = priv->read_byte(priv, ISR2);
+	status1 = read_byte(priv, ISR1);
+	status2 = read_byte(priv, ISR2);
 
 	// record service request in status
 	if(status2 & HR_SRQI)
@@ -134,7 +132,7 @@ void nec7210_interrupt(gpib_device_t *device, nec7210_private_t *priv)
 	// record address status change in status
 	if(status2 & HR_ADSC)
 	{
-		address_status = priv->read_byte(priv, ADSR);
+		address_status = read_byte(priv, ADSR);
 		// check if we are controller in charge
 		if(address_status & HR_CIC)
 			set_bit(CIC_NUM, &device->status);
@@ -221,7 +219,7 @@ void nec7210_interrupt(gpib_device_t *device, nec7210_private_t *priv)
 	// command pass through received
 	if(status1 & HR_CPT)
 	{
-		printk("gpib command pass thru 0x%x\n", priv->read_byte(priv, CPTR));
+		printk("gpib command pass thru 0x%x\n", read_byte(priv, CPTR));
 	}
 
 	// output byte has been lost

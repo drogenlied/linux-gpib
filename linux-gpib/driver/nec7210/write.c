@@ -27,7 +27,7 @@ static ssize_t pio_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 
 	// enable 'data out' interrupts
 	priv->imr1_bits |= HR_DOIE;
-	priv->write_byte(priv, priv->imr1_bits, IMR1);
+	write_byte(priv, priv->imr1_bits, IMR1);
 
 	while(count < length)
 	{
@@ -46,7 +46,7 @@ static ssize_t pio_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 
 		spin_lock_irqsave(&device->spinlock, flags);
 		clear_bit(WRITE_READY_BN, &priv->state);
-		priv->write_byte(priv, buffer[count++], CDOR);
+		write_byte(priv, buffer[count++], CDOR);
 		spin_unlock_irqrestore(&device->lock, flags);
 	}
 	// wait till last byte gets sent
@@ -63,7 +63,7 @@ static ssize_t pio_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 
 	// disable 'data out' interrupts
 	priv->imr1_bits &= ~HR_DOIE;
-	priv->write_byte(priv, priv->imr1_bits, IMR1);
+	write_byte(priv, priv->imr1_bits, IMR1);
 
 	if(retval)
 		return retval;
@@ -90,14 +90,14 @@ static ssize_t dma_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 
 	// enable board's dma for output
 	priv->imr2_bits |= HR_DMAO;
-	priv->write_byte(priv, priv->imr2_bits, IMR2);
+	write_byte(priv, priv->imr2_bits, IMR2);
 
 	clear_bit(WRITE_READY_BN, &priv->state);
 	set_bit(DMA_IN_PROGRESS_BN, &priv->state);
 
 	// enable 'data out' interrupts
 	priv->imr1_bits |= HR_DOIE;
-	priv->write_byte(priv, priv->imr1_bits, IMR1);
+	write_byte(priv, priv->imr1_bits, IMR1);
 
 	spin_lock_irqsave(&device->spinlock, flags);
 
@@ -110,11 +110,11 @@ static ssize_t dma_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 
 	// disable board's dma
 	priv->imr2_bits &= ~HR_DMAO;
-	priv->write_byte(priv, priv->imr2_bits, IMR2);
+	write_byte(priv, priv->imr2_bits, IMR2);
 
 	// disable 'data out' interrupts
 	priv->imr1_bits &= ~HR_DOIE;
-	priv->write_byte(priv, priv->imr1_bits, IMR1);
+	write_byte(priv, priv->imr1_bits, IMR1);
 
 	flags = claim_dma_lock();
 	clear_dma_ff(priv->dma_channel);
@@ -136,7 +136,7 @@ ssize_t nec7210_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t *b
 	if(length == 0) return 0;
 
 	/* normal handshaking, XXX necessary?*/
-//	priv->write_byte(priv, priv->auxa_bits, AUXMR);
+//	write_byte(priv, priv->auxa_bits, AUXMR);
 
 	if(send_eoi)
 	{
@@ -162,7 +162,7 @@ ssize_t nec7210_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t *b
 	if(send_eoi)
 	{
 		/*send EOI */
-		priv->write_byte(priv, AUX_SEOI, AUXMR);
+		write_byte(priv, AUX_SEOI, AUXMR);
 
 		retval = pio_write(device, priv, &buffer[count], 1);
 		if(retval < 0)
