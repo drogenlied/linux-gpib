@@ -14,7 +14,7 @@ OBJS = ibtest.o
 
 
 
-all:  depend ibtest raw_access
+all:  depend ibtest
 
 
 ibtest:	ibtest.o

@@ -35,6 +35,10 @@ printk("plx intcsr 0x%x\n", inl(priv->plx_iobase + PLX_INTCSR_REG));
 
 // crash safety : if interrupt didn't clear, disable it
 if(inl(priv->plx_iobase + PLX_INTCSR_REG) & LINTR1_STATUS_BIT) 
+{
+	printk("cec-gpib: ack, interrupt didn't clear.  Disabling interrupt.\n");
 	outl(0, priv->plx_iobase + PLX_INTCSR_REG);
+}
+
 }
 
