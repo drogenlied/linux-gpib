@@ -26,34 +26,54 @@
 ibConf_t *ibConfigs[ GPIB_CONFIGS_LENGTH ] = {NULL};
 ibConf_t ibFindConfigs[ FIND_CONFIGS_LENGTH ];
 
-int insert_descriptor( ibConf_t p )
+int insert_descriptor( ibConf_t p, int ud )
 {
 	ibConf_t *conf;
 	int i;
 
-	for( i = GPIB_MAX_NUM_BOARDS; i < GPIB_CONFIGS_LENGTH; i++ )
+	if( ud < 0 )
 	{
-		if( ibConfigs[ i ] == NULL ) break;
-	}
-	if( i == GPIB_CONFIGS_LENGTH )
+		for( i = GPIB_MAX_NUM_BOARDS; i < GPIB_CONFIGS_LENGTH; i++ )
+		{
+			if( ibConfigs[ i ] == NULL ) break;
+		}
+		if( i == GPIB_CONFIGS_LENGTH )
+		{
+			setIberr( ENEB );
+			return -1;
+		}
+		ud = i;
+	}else
 	{
-		setIberr( ENEB );
-		return -1;
+		if( ud >= GPIB_CONFIGS_LENGTH )
+		{
+			fprintf( stderr, "libgpib: bug! tried to allocate past end if ibConfigs array\n" );
+			setIberr( EDVR );
+			setIbcnt( EINVAL );
+			return -1;
+		}
+		if( ibConfigs[ ud ] )
+		{
+			fprintf( stderr, "libgpib: bug! tried to allocate board descriptor twice\n" );
+			setIberr( EDVR );
+			setIbcnt( EINVAL );
+			return -1;
+		}
 	}
-	ibConfigs[ i ] = malloc( sizeof( ibConf_t ) );
-	if( ibConfigs[ i ] == NULL )
+	ibConfigs[ ud ] = malloc( sizeof( ibConf_t ) );
+	if( ibConfigs[ ud ] == NULL )
 	{
 		setIberr( EDVR );
 		setIbcnt( ENOMEM );
 		return -1;
 	}
-	conf = ibConfigs[ i ];
+	conf = ibConfigs[ ud ];
 
 	/* put entry to the table */
 	*conf = p;
 	init_async_op( &conf->async );
 
-	return i;
+	return ud;
 }
 
 int setup_global_board_descriptors( void )
@@ -65,13 +85,16 @@ int setup_global_board_descriptors( void )
 	{
 		if( ibFindConfigs[ i ].is_interface )
 		{
-			if( insert_descriptor( ibFindConfigs[ i ] ) < 0 )
+			if( insert_descriptor( ibFindConfigs[ i ], ibFindConfigs[ i ].settings.board ) < 0 )
 			{
 				fprintf( stderr, "libgpib: failed to insert board descriptor\n" );
 				retval = -1;
 			}
 		}
 	}
+	for( i = 0; i < GPIB_MAX_NUM_BOARDS; i++ )
+		if( ibConfigs[ i ] )
+			ibConfigs[ i ]->handle = 0;
 	return retval;
 }
 
@@ -122,7 +145,7 @@ int ibGetDescriptor( ibConf_t p )
 		return -1;
 	}
 
-	retval = insert_descriptor( p );
+	retval = insert_descriptor( p, -1 );
 	if( retval < 0 )
 		return retval;
 
@@ -353,13 +376,12 @@ ibConf_t * general_enter_library( int ud, int no_lock_board, int ignore_eoip )
 	setIberr( 0 );
 	setIbcnt( 0 );
 
-	conf = ibConfigs[ ud ];
-
 	if( ibCheckDescriptor( ud ) < 0 )
 	{
 		setIberr( EDVR );
 		return NULL;
 	}
+	conf = ibConfigs[ ud ];
 
 	retval = conf_online( ibConfigs[ ud ], 1 );
 	if( retval < 0 ) return NULL;

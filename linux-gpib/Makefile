@@ -6,7 +6,7 @@ ROOT = $(PWD)
 MAKE = make 
 
 INCDIR  = include
-SUBDIRS = driver lib examples applications
+SUBDIRS = driver lib examples test
 
 PKG_SRC = $(SUBDIRS) include Makefile
 DOCDIRS = doc

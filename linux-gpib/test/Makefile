@@ -1,6 +1,6 @@
 ######################################################################
 #
-#   Makefile for Example files
+#   Makefile for test files
 #
 #   (c) C.Schroeter 1994
 #   (c) Frank Mori Hess 2002,2003
@@ -12,8 +12,7 @@
 CFLAGS= -I. -I../include -I ../driver/include -Wall -D_REENTRANT -g3 -O -ansi -pedantic
 LDFLAGS = -L../lib -lgpib -lpthread
 
-BINS = ibtest master_write_from_file slave_read_to_file master_read_to_file \
-	slave_write_from_file
+BINS = libgpib_test
 SRCS = $(BINS:%=%.c)
 
 all: $(BINS) .depend
@@ -28,7 +27,7 @@ clean:
 	$(CPP) $(CFLAGS) -MM $(SRCS)  >./.depend
 
 install:
-	@echo Install in examples
+	@echo Install in test
 
 -include .depend
 
