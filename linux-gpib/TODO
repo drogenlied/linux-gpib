@@ -25,3 +25,9 @@ add query to ibask() for support of IFC events
 fix support parallel poll timeout support (should be hardware-based)
 
 better error message when gpib_config has not been run
+
+specifying config file with gpib_config --file can cause problems,
+since library doesn't know anything about it unless IB_CONFIG
+is set in the environment as well.  Should warn about this somewhere.
+
+
