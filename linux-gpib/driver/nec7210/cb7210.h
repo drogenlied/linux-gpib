@@ -71,8 +71,8 @@ int cb7210_allocate_private(gpib_device_t *device);
 void cb7210_free_private(gpib_device_t *device);
 
 // pcmcia init/cleanup
-int pcmcia_init_module(void);
-void pcmcia_cleanup_module(void);
+int cb_pcmcia_init_module(void);
+void cb_pcmcia_cleanup_module(void);
 
 // pci-gpib register offset
 static const int cb7210_reg_offset = 1;

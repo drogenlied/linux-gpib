@@ -109,11 +109,15 @@ void iomem_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int regist
 
 int init_module(void)
 {
+	int err = 0;
+
 	EXPORT_NO_SYMBOLS;
 
 	INIT_LIST_HEAD(&pc2_interface.list);
 	INIT_LIST_HEAD(&pc2a_interface.list);
 	INIT_LIST_HEAD(&cb_pci_interface.list);
+	INIT_LIST_HEAD(&cb_isa_interface.list);
+	INIT_LIST_HEAD(&ines_pci_interface.list);
 
 	gpib_register_driver(&pc2_interface);
 	gpib_register_driver(&pc2a_interface);
@@ -123,9 +127,15 @@ int init_module(void)
 
 #ifdef CONFIG_PCMCIA
 	INIT_LIST_HEAD(&cb_pcmcia_interface.list);
+	INIT_LIST_HEAD(&ines_pcmcia_interface.list);
+
 	gpib_register_driver(&cb_pcmcia_interface);
-	return pcmcia_init_module();
+	gpib_register_driver(&ines_pcmcia_interface);
+	err += cb_pcmcia_init_module();
+	err += ines_pcmcia_init_module();
 #endif
+	if(err)
+		return -1;
 
 	return 0;
 }
@@ -139,7 +149,9 @@ void cleanup_module(void)
 	gpib_unregister_driver(&ines_pci_interface);
 #ifdef CONFIG_PCMCIA
 	gpib_unregister_driver(&cb_pcmcia_interface);
-	pcmcia_cleanup_module();
+	gpib_unregister_driver(&cb_pcmcia_interface);
+	cb_pcmcia_cleanup_module();
+	ines_pcmcia_cleanup_module();
 #endif
 }
 

@@ -551,7 +551,7 @@ static int gpib_event(event_t event, int priority,
 
 /*====================================================================*/
 
-int pcmcia_init_module(void)
+int cb_pcmcia_init_module(void)
 {
     servinfo_t serv;
 #ifdef PCMCIA_DEBUG
@@ -568,7 +568,7 @@ int pcmcia_init_module(void)
     return 0;
 }
 
-void pcmcia_cleanup_module(void)
+void cb_pcmcia_cleanup_module(void)
 {
 #ifdef PCMCIA_DEBUG
     if (pc_debug)

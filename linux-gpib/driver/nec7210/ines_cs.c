@@ -108,8 +108,6 @@ static void gpib_detach(dev_link_t *);
    less on other parts of the kernel.
 */
 
-void gpib_interrupt(int reg);
-
 /*
    The dev_info variable is the "key" that is used to match up this
    device driver with appropriate cards, through the card configuration
@@ -201,7 +199,7 @@ static dev_link_t *gpib_attach(void)
     link->irq.Attributes = IRQ_TYPE_EXCLUSIVE;
     link->irq.IRQInfo1 = IRQ_INFO2_VALID|IRQ_LEVEL_ID;
     link->irq.IRQInfo2 = irq_mask;
-    link->irq.Handler = gpib_interrupt;
+    link->irq.Handler = NULL;
     
     /* General socket configuration */
     link->conf.Attributes = CONF_ENABLE_IRQ;
@@ -279,13 +277,13 @@ static void gpib_detach(dev_link_t *link)
     /* Break the link with Card Services */
     if (link->handle)
 	CardServices(DeregisterClient, link->handle);
-    
+
     /* Unlink device structure, free pieces */
     *linkp = link->next;
     if (link->priv) {
 	kfree(link->priv);
     }
-    
+
 } /* gpib_detach */
 
 /*======================================================================
@@ -293,7 +291,7 @@ static void gpib_detach(dev_link_t *link)
     gpib_config() is scheduled to run after a CARD_INSERTION event
     is received, to configure the PCMCIA socket, and to make the
     ethernet device available to the system.
-    
+
 ======================================================================*/
 /*@*/
 static void gpib_config(dev_link_t *link)
@@ -302,10 +300,9 @@ static void gpib_config(dev_link_t *link)
     tuple_t tuple;
     cisparse_t parse;
     local_info_t *dev;
-    int i, j;
+    int i;
     u_char buf[64];
     win_req_t req;
-    modwin_t mod;
     memreq_t mem;
     u_char *virt;
     handle = link->handle;
@@ -346,43 +343,42 @@ static void gpib_config(dev_link_t *link)
         /*
 	 * try to get manufacturer and card  ID
 	 */
-       
+
         tuple.DesiredTuple = CISTPL_MANFID;
         tuple.Attributes   = TUPLE_RETURN_COMMON;
         if( first_tuple(handle,&tuple,&parse) == CS_SUCCESS ) {
 	   dev->manfid = parse.manfid.manf;
-	   dev->cardid = parse.manfid.card; 
-#ifdef PCMCIA_DEBUG	   
+	   dev->cardid = parse.manfid.card;
+#ifdef PCMCIA_DEBUG
 	  printk(KERN_DEBUG "ines_cs: manufacturer: 0x%x card: 0x%x\n",
 		 dev->manfid,dev->cardid);
-#endif       
+#endif
 	}
         /* try to get board information from CIS */
-       
+
          tuple.DesiredTuple = CISTPL_CFTABLE_ENTRY;
          tuple.Attributes = 0;
          if( first_tuple(handle,&tuple,&parse) == CS_SUCCESS ) {
 	    while(1) {
-	      /*if this tuple has an IRQ info, keep it for later use */ 
+	      /*if this tuple has an IRQ info, keep it for later use */
 	      if( parse.cftable_entry.irq.IRQInfo1 & IRQ_INFO2_VALID ) {
 		printk(KERN_DEBUG "ines_cs: irqmask=0x%x\n",
 		       parse.cftable_entry.irq.IRQInfo2 );
 		link->irq.IRQInfo2 = parse.cftable_entry.irq.IRQInfo2;
 	      }
 
-	      if( parse.cftable_entry.io.nwin > 0) {   
+	      if( parse.cftable_entry.io.nwin > 0) {
 	         link->io.BasePort1 = parse.cftable_entry.io.win[0].base;
 	         link->io.NumPorts1 = parse.cftable_entry.io.win[0].len;
-	         link->io.BasePort2 = 0; 
+	         link->io.BasePort2 = 0;
 	         link->io.NumPorts2 = 0;
 	         i = CardServices(RequestIO, link->handle, &link->io);
 	         if (i == CS_SUCCESS) {
 		     printk( KERN_DEBUG "ines_cs: base=0x%x len=%d registered\n",
   	               link->io.BasePort1,
 		       parse.cftable_entry.io.win[0].len
-		       );  
-                     ibbase = link->io.BasePort1;
-		     break;	
+		       );
+		     break;
 	         }
 	      }
 	      if ( next_tuple(handle,&tuple,&parse) != CS_SUCCESS ) break;
@@ -406,7 +402,6 @@ static void gpib_config(dev_link_t *link)
 	    break;
 	}
         printk(KERN_DEBUG "ines_cs: IRQ_Line=%d\n",link->irq.AssignedIRQ);
-        ibirq = link->irq.AssignedIRQ;	 
 
 	/*
 	   This actually configures the PCMCIA socket -- setting up
@@ -450,7 +445,7 @@ static void gpib_config(dev_link_t *link)
     dev->node.major = GPIB_MAJOR;
     dev->node.minor = 0;
     link->dev = &dev->node;
-    
+
     link->state &= ~DEV_CONFIG_PENDING;
     /* If any step failed, release any partially configured state */
     if (i != 0) {
@@ -466,13 +461,12 @@ static void gpib_config(dev_link_t *link)
     After a card is removed, gpib_release() will unregister the net
     device, and release the PCMCIA configuration.  If the device is
     still open, this will be postponed until it is closed.
-    
+
 ======================================================================*/
 
 static void gpib_release(u_long arg)
 {
     dev_link_t *link = (dev_link_t *)arg;
-    local_info_t *local = link->priv;
 
 #ifdef PCMCIA_DEBUG
     if (pc_debug)
@@ -570,14 +564,7 @@ static int gpib_event(event_t event, int priority,
 
 /*====================================================================*/
 
-void gpib_interrupt(int reg)
-{
-    printk("ines_cs: interrupt\n");
-} /* gpib_interrupt */
-
-/*====================================================================*/
-
-IBLCL int pcmcia_init_module(void)
+int ines_pcmcia_init_module(void)
 {
     servinfo_t serv;
 #ifdef PCMCIA_DEBUG
@@ -594,7 +581,7 @@ IBLCL int pcmcia_init_module(void)
     return 0;
 }
 
-IBLCL void pcmcia_cleanup_module(void)
+void ines_pcmcia_cleanup_module(void)
 {
 #ifdef PCMCIA_DEBUG
     if (pc_debug)
@@ -607,4 +594,94 @@ IBLCL void pcmcia_cleanup_module(void)
 	gpib_detach(dev_list);
     }
 }
+
+int ines_pcmcia_attach(gpib_device_t *device);
+void ines_pcmcia_detach(gpib_device_t *device);
+
+gpib_interface_t ines_pcmcia_interface =
+{
+	name: "ines_pcmcia",
+	attach: ines_pcmcia_attach,
+	detach: ines_pcmcia_detach,
+	read: ines_read,
+	write: ines_write,
+	command: ines_command,
+	take_control: ines_take_control,
+	go_to_standby: ines_go_to_standby,
+	interface_clear: ines_interface_clear,
+	remote_enable: ines_remote_enable,
+	enable_eos: ines_enable_eos,
+	disable_eos: ines_disable_eos,
+	parallel_poll: ines_parallel_poll,
+	line_status: NULL,	//XXX
+	update_status: ines_update_status,
+	primary_address: ines_primary_address,
+	secondary_address: ines_secondary_address,
+	serial_poll_response: ines_serial_poll_response,
+};
+
+int ines_pcmcia_attach(gpib_device_t *device)
+{
+	ines_private_t *ines_priv;
+	nec7210_private_t *nec_priv;
+	int isr_flags = 0;
+//	int bits;
+
+	if(dev_list == NULL)
+	{
+		printk("no cb pcmcia cards found\n");
+		return -1;
+	}
+
+	device->status = 0;
+
+	if(ines_allocate_private(device))
+		return -ENOMEM;
+	ines_priv = device->private_data;
+	nec_priv = &ines_priv->nec7210_priv;
+	nec_priv->read_byte = ioport_read_byte;
+	nec_priv->write_byte = ioport_write_byte;
+	nec_priv->offset = ines_reg_offset;
+
+	nec_priv->iobase = dev_list->io.BasePort1;
+
+	/* CBI 4882 reset */
+	nec_priv->write_byte(nec_priv, HS_RESET7210, HS_INT_LEVEL);
+	nec_priv->write_byte(nec_priv, 0, HS_INT_LEVEL);
+	nec_priv->write_byte(nec_priv, 0, HS_MODE); /* disable system control */
+
+	if(request_irq(dev_list->irq.AssignedIRQ, ines_interrupt, isr_flags, "pcmcia-gpib", device))
+	{
+		printk("gpib: can't request IRQ %d\n", dev_list->irq.AssignedIRQ);
+		return -1;
+	}
+	ines_priv->irq = dev_list->irq.AssignedIRQ;
+
+	nec7210_board_reset(nec_priv);
+
+	// XXX set clock register for 20MHz? driving frequency
+	nec_priv->write_byte(nec_priv, ICR | 8, AUXMR);
+
+	// enable interrupts
+	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
+		HR_DETIE | HR_APTIE | HR_CPTIE;
+	nec_priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
+	nec_priv->write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
+	nec_priv->write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
+
+	nec_priv->write_byte(nec_priv, AUX_PON, AUXMR);
+
+	return 0;
+}
+
+void ines_pcmcia_detach(gpib_device_t *device)
+{
+	ines_private_t *priv = device->private_data;
+
+	if(priv && priv->irq)
+		free_irq(priv->irq, device);
+
+	ines_free_private(device);
+}
+
 #endif /* CONFIG_PCMCIA */
