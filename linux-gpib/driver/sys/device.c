@@ -117,7 +117,6 @@ int serial_poll_all( gpib_board_t *board, unsigned int usec_timeout )
 	const struct list_head *head = &board->device_list;
 	gpib_device_t *device;
 	uint8_t result;
-	static const int request_service_bit = 0x40;
 
 	retval = setup_serial_poll( board, usec_timeout );
 	if( retval < 0 ) return retval;

@@ -24,7 +24,7 @@ int find_eos( uint8_t *buffer, size_t length, int eos, int eos_flags )
 	unsigned int i;
 	unsigned int compare_mask;
 
-	if( eos_flags & EOS_BIN ) compare_mask = 0xff;
+	if( eos_flags & BIN ) compare_mask = 0xff;
 	else compare_mask = 0x7f;
 
 	for( i = 0; i < length; i++ )
@@ -62,7 +62,7 @@ ssize_t my_ibwrt( ibBoard_t *board, ibConf_t *conf,
 		int eos_on_eoi;
 		int eos_found = 0;
 
-		eos_on_eoi = conf->eos_flags & EOS_EOI;
+		eos_on_eoi = conf->eos_flags & XEOS;
 
 		block_size = count;
 

@@ -47,7 +47,6 @@ typedef struct
 	unsigned int pad;
 	int sad;
 	uint8_t status_byte;
-	unsigned int usec_timeout;
 } serial_poll_ioctl_t;
 
 typedef struct

@@ -66,9 +66,9 @@ int ibeos( gpib_board_t *board, int eos, int eosflags )
 		return -EINVAL;
 	}else
 	{
-		if( eosflags & EOS_RD )
+		if( eosflags & REOS )
 		{
-			board->interface->enable_eos( board, eos, eosflags & EOS_BIN );
+			board->interface->enable_eos( board, eos, eosflags & BIN );
 		}else
 			board->interface->disable_eos( board );
 	}

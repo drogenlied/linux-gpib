@@ -98,15 +98,15 @@ int ibask( int ud, int option, int *value )
 			return exit_library( ud, 0 );
 			break;
 		case IbaEOSrd:
-			*value = conf->eos_flags & EOS_RD;
+			*value = conf->eos_flags & REOS;
 			return exit_library( ud, 0 );
 			break;
 		case IbaEOSwrt:
-			*value = conf->eos_flags & EOS_EOI;
+			*value = conf->eos_flags & XEOS;
 			return exit_library( ud, 0 );
 			break;
 		case IbaEOScmp:
-			*value = conf->eos_flags & EOS_BIN;
+			*value = conf->eos_flags & BIN;
 			return exit_library( ud, 0 );
 			break;
 		case IbaEOSchar:

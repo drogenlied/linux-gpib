@@ -110,9 +110,9 @@ enum gpib_timeout
 enum eos_flags
 {
 	EOS_MASK = 0x1c00,
-	EOS_RD = 0x0400,		/* Terminate reads on EOS	*/
-	EOS_EOI = 0x800,	/* assert EOI when EOS char is sent */
-	EOS_BIN = 0x1000		/* Do 8-bit compare on EOS	*/
+	REOS = 0x0400,		/* Terminate reads on EOS	*/
+	XEOS = 0x800,	/* assert EOI when EOS char is sent */
+	BIN = 0x1000		/* Do 8-bit compare on EOS	*/
 };
 
 /* GPIB Bus Control Lines bit vector */
@@ -276,5 +276,7 @@ enum ibconfig_option
 	IbcIst = 0x20,	/* board only */
 	IbcRsv = 0x21	/* board only */
 };
+
+static const int request_service_bit = 0x40;
 
 #endif	/* _GPIB_USER_H */

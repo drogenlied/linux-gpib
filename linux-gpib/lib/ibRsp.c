@@ -46,7 +46,7 @@ int ibrsp(int ud, char *spr)
 	board = interfaceBoard( conf );
 
 	retval = serial_poll( board, conf->pad, conf->sad,
-		conf->usec_timeout, spr );
+		conf->spoll_usec_timeout, spr );
 	if(retval < 0)
 	{
 		if( errno == ETIMEDOUT )
@@ -98,7 +98,7 @@ void AllSPoll( int boardID, Addr4882_t addressList[], short resultList[] )
 	{
 		char result;
 		retval = serial_poll( board, extractPAD( addressList[ i ] ),
-			extractSAD( addressList[ i ] ), conf->usec_timeout, &result );
+			extractSAD( addressList[ i ] ), conf->spoll_usec_timeout, &result );
 		if( retval < 0 )
 		{
 			if( errno == ETIMEDOUT )
@@ -116,4 +116,68 @@ void AllSPoll( int boardID, Addr4882_t addressList[], short resultList[] )
 void AllSpoll( int boardID, Addr4882_t addressList[], short resultList[] )
 {
 	AllSPoll( boardID, addressList, resultList );
+}
+
+void FindRQS( int boardID, Addr4882_t addressList[], short *result )
+{
+	int i;
+	ibConf_t *conf;
+	ibBoard_t *board;
+	int retval;
+
+	conf = enter_library( boardID );
+	if( conf == NULL )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+	if( addressListIsValid( addressList ) == 0 )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	if( conf->is_interface == 0 )
+	{
+		setIberr( EDVR );
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	board = interfaceBoard( conf );
+
+	if( board->is_system_controller == 0 )
+	{
+		setIberr( ECIC );
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	retval = 0;
+	for( i = 0; i < numAddresses( addressList ); i++ )
+	{
+		char spoll_byte;
+		retval = serial_poll( board, extractPAD( addressList[ i ] ),
+			extractSAD( addressList[ i ] ), conf->usec_timeout, &spoll_byte );
+		if( retval < 0 )
+		{
+			if( errno == ETIMEDOUT )
+				conf->timed_out = 1;
+			break;
+		}
+		if( spoll_byte & request_service_bit )
+		{
+			*result = spoll_byte & 0xff;
+			break;
+		}
+	}
+	setIbcnt( i );
+	if( i == numAddresses( addressList ) )
+	{
+		setIberr( ETAB );
+		retval = -1;
+	}
+
+	if( retval < 0 ) exit_library( boardID, 1 );
+	else exit_library( boardID, 0 );
 }

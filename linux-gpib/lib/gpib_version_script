@@ -8,6 +8,8 @@ GPIB_DUMMY_VERSION {
 		EnableLocal;
 		EnableRemote;
 		FindLstn;
+		FindRQS;
+		PPoll;
 		SendSetup;
 		ThreadIbsta;
 		ThreadIberr;

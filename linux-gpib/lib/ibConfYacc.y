@@ -78,8 +78,8 @@ char cval;
 	statement: T_PAD '=' T_NUMBER      { ibBoard[bdid].pad =  $3; ibFindConfigs[findIndex].pad = $3;}
 		| T_SAD '=' T_NUMBER      { ibBoard[bdid].sad = $3 - sad_offset; ibFindConfigs[findIndex].sad = $3 - sad_offset;}
 		| T_EOSBYTE '=' T_NUMBER  { ibFindConfigs[findIndex].eos = $3;}
-		| T_REOS T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $2 * EOS_RD;}
-		| T_BIN  T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $2 * EOS_BIN;}
+		| T_REOS T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $2 * REOS;}
+		| T_BIN  T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $2 * BIN;}
 		| T_TIMO '=' T_TIVAL      { ibFindConfigs[findIndex].usec_timeout = $3; }
 		| T_BASE '=' T_NUMBER     { ibBoard[bdid].base = $3; }
 		| T_IRQ  '=' T_NUMBER     { ibBoard[bdid].irq = $3; }
@@ -123,8 +123,8 @@ char cval;
 		| T_SAD '=' T_NUMBER { ibFindConfigs[findIndex].sad = $3 - sad_offset; }
 		| T_INIT_S '=' T_STRING { strncpy(ibFindConfigs[findIndex].init_string,$3,60); }
 		| T_EOSBYTE '=' T_NUMBER  { ibFindConfigs[findIndex].eos = $3; }
-		| T_REOS T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $2 * EOS_RD;}
-		| T_BIN  T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $2 * EOS_BIN; }
+		| T_REOS T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $2 * REOS;}
+		| T_BIN  T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $2 * BIN; }
 		| T_AUTOPOLL              { ibFindConfigs[findIndex].flags |= CN_AUTOPOLL; }
 		| T_INIT_F '=' flags
 		| T_NAME '=' T_STRING	{ strncpy(ibFindConfigs[findIndex].name,$3, sizeof(ibFindConfigs[findIndex].name));}

@@ -76,23 +76,23 @@ int ibconfig( int ud, int option, int value )
 			break;
 		case IbcEOSrd:
 			if( value )
-				conf->eos_flags |= EOS_RD;
+				conf->eos_flags |= REOS;
 			else
-				conf->eos_flags &= ~EOS_RD;
+				conf->eos_flags &= ~REOS;
 			return exit_library( ud, 0 );
 			break;
 		case IbcEOSwrt:
 			if( value )
-				conf->eos_flags |= EOS_EOI;
+				conf->eos_flags |= XEOS;
 			else
-				conf->eos_flags &= ~EOS_EOI;
+				conf->eos_flags &= ~XEOS;
 			return exit_library( ud, 0 );
 			break;
 		case IbcEOScmp:
 			if( value )
-				conf->eos_flags |= EOS_BIN;
+				conf->eos_flags |= BIN;
 			else
-				conf->eos_flags &= ~EOS_BIN;
+				conf->eos_flags &= ~BIN;
 			return exit_library( ud, 0 );
 			break;
 		case IbcEOSchar:
