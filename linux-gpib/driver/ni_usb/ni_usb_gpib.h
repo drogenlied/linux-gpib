@@ -49,6 +49,8 @@ enum endpoint_addresses
 typedef struct
 {
 	struct usb_interface *bus_interface;
+	uint8_t eos_char;
+	unsigned short eos_mode;
 } ni_usb_private_t;
 
 struct ni_usb_status_block
@@ -65,8 +67,11 @@ enum ni_usb_bulk_ids
 	NIUSB_UNKNOWN3_ID = 0x3,
 	NIUSB_TERM_ID = 0x4,
 	NIUSB_IBGTS_ID = 0x6,
+	NIUSB_REG_READ_ID = 0x8,
 	NIUSB_REG_WRITE_ID = 0x9,
 	NIUSB_IBSIC_ID = 0xf,
+	NIUSB_REGISTER_READ_DATA_START_ID = 0x34,
+	NIUSB_REGISTER_READ_DATA_END_ID = 0x35,
 	NIUSB_IBRD_DATA_ID = 0x36,
 	NIUSB_IBRD_STATUS_ID = 0x38
 };
@@ -103,6 +108,24 @@ static inline int ni_usb_bulk_register_write(uint8_t *buffer, int device, int ad
 	buffer[i++] = device;
 	buffer[i++] = address;
 	buffer[i++] = value;
+	return i;	
+}
+
+static inline int ni_usb_bulk_register_read_header(uint8_t *buffer, int num_reads)
+{
+	int i = 0;
+	
+	buffer[i++] = NIUSB_REG_READ_ID;
+	buffer[i++] = num_reads;
+	return i;	
+}
+
+static inline int ni_usb_bulk_register_read(uint8_t *buffer, int device, int address)
+{
+	int i = 0;
+	
+	buffer[i++] = device;
+	buffer[i++] = address;
 	return i;	
 }
 

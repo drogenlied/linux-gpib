@@ -28,6 +28,20 @@ MODULE_LICENSE("GPL");
 #define MAX_NUM_NI_USB_INTERFACES 128
 static struct usb_interface *ni_usb_driver_interfaces[MAX_NUM_NI_USB_INTERFACES];
 
+void ni_usb_soft_update_status(gpib_board_t *board, unsigned int ni_usb_ibsta, unsigned int clear_mask)
+{
+	static const unsigned int ni_usb_ibsta_mask = SRQI | ATN | CIC | REM | LACS | TACS;
+	
+	board->status &= ~clear_mask;
+	board->status &= ~ni_usb_ibsta_mask;
+	board->status |= ni_usb_ibsta & ni_usb_ibsta_mask;	
+	if(ni_usb_ibsta & ~ni_usb_ibsta_mask)
+	{
+		printk("%s: debug: ibsta from ni gpib usb adapter is 0x%x\n", __FILE__, ni_usb_ibsta);
+	}
+	return;
+}
+
 int ni_usb_parse_status_block(const uint8_t *buffer, struct ni_usb_status_block *status)
 {
 	uint16_t count;
@@ -39,7 +53,7 @@ int ni_usb_parse_status_block(const uint8_t *buffer, struct ni_usb_status_block 
 	count = ~count;
 	count++;
 	status->count = count;
-#if 1
+#if 0
 printk("status->id 0x%x\n", status->id);
 printk("status->ibsta 0x%x\n", status->ibsta);
 printk("status->error_code 0x%x\n", status->error_code);
@@ -47,6 +61,48 @@ printk("status->count %i\n", status->count);
 #endif	
 	return 8;
 };
+
+// this should work when reading from the tnt4882, but the format is different when reading
+// from mystery device #3	
+int ni_usb_parse_register_read_block(const uint8_t *raw_data, unsigned int *results, int num_results)
+{
+	int i = 0;
+	int j;
+	
+	if(raw_data[i++] != NIUSB_REGISTER_READ_DATA_START_ID)
+	{
+		printk("%s: %s: parse error: wrong start id\n", __FILE__, __FUNCTION__);
+	}
+	for(j = 0; j < num_results; j++)
+	{
+		results[j] = raw_data[i++];
+	}
+	while(i % 4)
+	{
+		if(raw_data[i++] != 0)
+		{
+			printk("%s: unexpected data: raw_data[%i]=%i, expected 0\n", 
+				__FILE__, i - 1, (int)raw_data[i - 1]);
+		}
+	}
+	if(raw_data[i++] != NIUSB_REGISTER_READ_DATA_END_ID)
+	{
+		printk("%s: %s: parse error: wrong end id\n", __FILE__, __FUNCTION__);
+	}
+	if(raw_data[i++] != num_results)
+	{
+		printk("%s: %s: parse error: wrong N\n", __FILE__, __FUNCTION__);
+	}
+	while(i % 4)
+	{
+		if(raw_data[i++] != 0)
+		{
+			printk("%s: unexpected data: raw_data[%i]=%i, expected 0\n", 
+				__FILE__, i - 1, (int)raw_data[i - 1]);
+		}
+	}
+	return i;
+}
 
 int ni_usb_parse_termination_block(const uint8_t *buffer)
 {
@@ -56,7 +112,7 @@ int ni_usb_parse_termination_block(const uint8_t *buffer)
 		buffer[i++] != 0x0 ||
 		buffer[i++] != 0x0 ||
 		buffer[i++] != 0x0)
-		printk("%s: bug: invalid termination block\n", __FILE__);
+		printk("%s: received invalid termination block\n", __FILE__);
 	return i;	
 };
 
@@ -132,8 +188,6 @@ ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *en
 	struct ni_usb_status_block status;
 	int timeout_code = 0xd;	//FIXME
 	static const int max_read_length = 0xffff;
-	int eos_mode = 0x0; // FIXME
-	int eos_char = 0x0; // FIXME
 	
 	if(length > max_read_length)
 	{
@@ -146,8 +200,8 @@ ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *en
 	out_data = kmalloc(out_data_length, GFP_KERNEL);
 	if(out_data == NULL) return -ENOMEM;
 	out_data[i++] = 0x0a;
-	out_data[i++] = eos_mode >> 8;
-	out_data[i++] = eos_char;
+	out_data[i++] = ni_priv->eos_mode >> 8;
+	out_data[i++] = ni_priv->eos_char;
 	out_data[i++] = 0xf0 | timeout_code;
 	complement_count = length;
 	complement_count = length - 1;
@@ -182,9 +236,9 @@ ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *en
 	}
 	parse_board_ibrd_readback(in_data, &status, buffer, length);
 		kfree(in_data);
+	ni_usb_soft_update_status(board, status.ibsta, 0);
 	if(status.ibsta & END) *end = 1;
 	else *end = 0;
-	//FIXME update ibsta using status info
 	return length - status.count;
 }
 
@@ -253,7 +307,7 @@ static ssize_t ni_usb_write(gpib_board_t *board, uint8_t *buffer, size_t length,
 	}
 	ni_usb_parse_status_block(in_data, &status);
 	kfree(in_data);
-	//FIXME update ibsta using status info
+	ni_usb_soft_update_status(board, status.ibsta, 0);
 	return length - status.count;
 }
 ssize_t ni_usb_command(gpib_board_t *board, uint8_t *buffer, size_t length)
@@ -309,7 +363,7 @@ ssize_t ni_usb_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 	}
 	ni_usb_parse_status_block(in_data, &status);
 	kfree(in_data);
-	//FIXME update ibsta using status info
+	ni_usb_soft_update_status(board, status.ibsta, 0);
 	return length - status.count;
 }
 
@@ -366,7 +420,7 @@ int ni_usb_take_control(gpib_board_t *board, int synchronous)
 	}
 	ni_usb_parse_status_block(in_data, &status);
 	kfree(in_data);
-	//FIXME update ibsta using status info
+	ni_usb_soft_update_status(board, status.ibsta, 0);
 	return 0;
 }
 int ni_usb_go_to_standby(gpib_board_t *board)
@@ -423,7 +477,7 @@ int ni_usb_go_to_standby(gpib_board_t *board)
 	{
 		printk("%s: %s: bug: status.id 0x%x != INUSB_IBGTS_ID\n", __FILE__, __FUNCTION__, status.id);
 	}
-	//FIXME update ibsta using status info
+	ni_usb_soft_update_status(board, status.ibsta, 0);
 	return 0;
 }
 //FIXME should change prototype to return int
@@ -489,7 +543,7 @@ void ni_usb_request_system_control( gpib_board_t *board, int request_control )
 	ni_usb_parse_status_block(in_data, &status);
 	//FIXME parse extra 09 status bits and termination
 	kfree(in_data);
-	//FIXME update ibsta using status info
+	ni_usb_soft_update_status(board, status.ibsta, 0);
 	return;// 0;
 }
 //FIXME maybe the interface should have a "pulse interface clear" function that can return an error?
@@ -543,15 +597,9 @@ void ni_usb_interface_clear(gpib_board_t *board, int assert)
 		kfree(in_data);
 		return;
 	}
-printk("ifc response: ");
-for(i=0;i<bytes_read;i++)
-{
-printk(" 0x%x", (int)in_data[i]);
-}	
-printk("\n");
 	ni_usb_parse_status_block(in_data, &status);
 	kfree(in_data);
-	//FIXME update ibsta using status info
+	ni_usb_soft_update_status(board, status.ibsta, 0);
 	return;
 }
 void ni_usb_remote_enable(gpib_board_t *board, int enable)
@@ -611,14 +659,25 @@ void ni_usb_remote_enable(gpib_board_t *board, int enable)
 	ni_usb_parse_status_block(in_data, &status);
 	//FIXME parse extra 09 status bits and termination
 	kfree(in_data);
-	//FIXME update ibsta using status info
+	ni_usb_soft_update_status(board, status.ibsta, 0);
 	return;// 0;
 }
 void ni_usb_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits)
 {
+	ni_usb_private_t *ni_priv = board->private_data;
+
+	ni_priv->eos_char = eos_byte;
+	ni_priv->eos_mode |= REOS;
+	if(compare_8_bits)
+		ni_priv->eos_mode |= BIN;
+	else
+		ni_priv->eos_mode &= ~BIN;
 }
 void ni_usb_disable_eos(gpib_board_t *board)
 {
+	ni_usb_private_t *ni_priv = board->private_data;
+
+	ni_priv->eos_mode &= ~REOS;
 }
 unsigned int ni_usb_update_status( gpib_board_t *board, unsigned int clear_mask )
 {
@@ -629,7 +688,6 @@ unsigned int ni_usb_update_status( gpib_board_t *board, unsigned int clear_mask 
 	static const int bufferLength = 8;
 	uint8_t *buffer;
 	struct ni_usb_status_block status;
-	static const unsigned int ni_usb_ibsta_mask = SRQI | ATN | CIC | REM | LACS | TACS;
 	
 	usb_dev = interface_to_usbdev(ni_priv->bus_interface);
 	pipe = usb_rcvctrlpipe(usb_dev, 0);
@@ -649,13 +707,7 @@ unsigned int ni_usb_update_status( gpib_board_t *board, unsigned int clear_mask 
 	}
 	ni_usb_parse_status_block(buffer, &status);
 	kfree(buffer);
-	board->status &= ~clear_mask;
-	board->status &= ~ni_usb_ibsta_mask;
-	board->status |= status.ibsta & ni_usb_ibsta_mask;	
-	if(status.ibsta & ~ni_usb_ibsta_mask)
-	{
-		printk("%s: debug: ibsta from status block is 0x%x\n", __FILE__, status.ibsta);
-	}
+	ni_usb_soft_update_status(board, status.ibsta, clear_mask);
 	return board->status;
 }
 //FIXME: prototype should return int
@@ -710,7 +762,7 @@ void ni_usb_primary_address(gpib_board_t *board, unsigned int address)
 	}
 	ni_usb_parse_status_block(in_data, &status);
 	kfree(in_data);
-	//FIXME update ibsta using status info
+	ni_usb_soft_update_status(board, status.ibsta, 0);
 	return;// 0;
 }
 void ni_usb_secondary_address(gpib_board_t *board, unsigned int address, int enable)
@@ -778,7 +830,7 @@ void ni_usb_secondary_address(gpib_board_t *board, unsigned int address, int ena
 	}
 	ni_usb_parse_status_block(in_data, &status);
 	kfree(in_data);
-	//FIXME update ibsta using status info
+	ni_usb_soft_update_status(board, status.ibsta, 0);
 	return; // 0;
 }
 int ni_usb_parallel_poll(gpib_board_t *board, uint8_t *result)
@@ -803,7 +855,80 @@ void ni_usb_return_to_local( gpib_board_t *board )
 }
 int ni_usb_line_status( const gpib_board_t *board )
 {
-	return 0;
+	int retval;
+	ni_usb_private_t *ni_priv = board->private_data;
+	struct usb_device *usb_dev;
+	int out_pipe, in_pipe;
+	uint8_t *out_data, *in_data;
+	int out_data_length, in_data_length;
+	int bytes_written, bytes_read;
+	int i = 0;
+	unsigned int bsr_bits;
+	int line_status = ValidALL;
+	// NI windows driver reads 0xd(HSSEL), 0xc (ARD0), 0x1f (BSR)
+		
+	usb_dev = interface_to_usbdev(ni_priv->bus_interface);
+	out_pipe = usb_sndbulkpipe(usb_dev, NIUSB_BULK_OUT_ENDPOINT);
+	out_data_length = 0x20;
+	out_data = kmalloc(out_data_length, GFP_KERNEL);
+	if(out_data == NULL)
+	{	
+		printk("%s: kmalloc failed\n", __FILE__);
+		return -ENOMEM;
+	}
+	i += ni_usb_bulk_register_read_header(&out_data[i], 1);
+	i += ni_usb_bulk_register_read(&out_data[i], NIUSB_SUBDEV_TNT4882, BSR);
+	while(i % 4)
+		out_data[i++] = 0x0;
+	i += ni_usb_bulk_termination(&out_data[i]);
+	retval = usb_bulk_msg(usb_dev, out_pipe, out_data, i, &bytes_written, HZ /*FIXME set timeout properly */);
+	kfree(out_data);
+	if(retval || bytes_written != i)
+	{
+		printk("%s: usb_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, bytes_written, i);		
+		return retval;
+	}
+	in_data_length = 0x20;
+	in_data = kmalloc(in_data_length, GFP_KERNEL);
+	if(in_data == NULL)
+	{
+		printk("%s: kmalloc failed\n", __FILE__);
+		return -ENOMEM;
+	}
+	in_pipe = usb_rcvbulkpipe(usb_dev, NIUSB_BULK_IN_ENDPOINT);
+	retval = usb_bulk_msg(usb_dev, in_pipe, in_data, in_data_length, &bytes_read, HZ /*FIXME set timeout properly */);
+	if(retval)
+	{
+		printk("%s: %s: usb_bulk_msg returned %i, bytes_read=%i\n", __FILE__, __FUNCTION__, retval, bytes_read);		
+		kfree(in_data);
+		return retval;
+	}
+{
+int k;
+printk("reg read response:\n");
+for(k=0;k<bytes_read;k++)
+	printk("%.2x ", in_data[k]);
+printk("\n");
+}
+	ni_usb_parse_register_read_block(in_data, &bsr_bits, 1);
+	kfree(in_data);
+	if(bsr_bits & BCSR_REN_BIT)
+		line_status |= BusREN;
+	if(bsr_bits & BCSR_IFC_BIT)
+		line_status |= BusIFC;
+	if(bsr_bits & BCSR_SRQ_BIT)
+		line_status |= BusSRQ;
+	if(bsr_bits & BCSR_EOI_BIT)
+		line_status |= BusEOI;
+	if(bsr_bits & BCSR_NRFD_BIT)
+		line_status |= BusNRFD;
+	if(bsr_bits & BCSR_NDAC_BIT)
+		line_status |= BusNDAC;
+	if(bsr_bits & BCSR_DAV_BIT)
+		line_status |= BusDAV;
+	if(bsr_bits & BCSR_ATN_BIT)
+		line_status |= BusATN;
+	return line_status;
 }
 unsigned int ni_usb_t1_delay( gpib_board_t *board, unsigned int nano_sec )
 {
@@ -830,7 +955,7 @@ int ni_usb_init(gpib_board_t *board)
 	uint8_t *out_data, *in_data;
 	int out_data_length, in_data_length;
 	int bytes_written, bytes_read;
-	int i = 0, j;
+	int i = 0;
 	struct ni_usb_status_block status;
 	
 /*
@@ -901,12 +1026,6 @@ then reads back: 34 01 0a c3 34 e2 0a c3 35 01 00 00 04 00 00 00
 #endif
 	i += ni_usb_bulk_termination(&out_data[i]);
 	retval = usb_bulk_msg(usb_dev, out_pipe, out_data, i, &bytes_written, HZ /*FIXME set timeout properly */);
-printk("out_data:\n");
-for(j=0;j<i;j++)	
-{
-	printk("%.2x ", (int)out_data[j]);
-}
-printk("\n");
 	kfree(out_data);
 	if(retval || bytes_written != i)
 	{
@@ -930,7 +1049,7 @@ printk("\n");
 	}
 	ni_usb_parse_status_block(in_data, &status);
 	kfree(in_data);
-	//FIXME update ibsta using status info
+	ni_usb_soft_update_status(board, status.ibsta, 0);
 	return 0;
 }
 
@@ -959,38 +1078,6 @@ int ni_usb_attach(gpib_board_t *board)
 		printk("no NI usb-b gpib adapters found\n");
 		return -1;
 	}
-#if 0
-{
-int in_pipe;
-uint8_t in_data[0x20];
-int out_pipe;
-uint8_t out_data[0x20];
-int bytes_read, bytes_written;
-int i = 0, j;
-struct usb_device *usb_dev;
-
-usb_dev = interface_to_usbdev(ni_priv->bus_interface);
-out_pipe = usb_sndbulkpipe(usb_dev, NIUSB_BULK_OUT_ENDPOINT);
-out_data[i++] = 0x3;
-out_data[i++] = 0x0;
-out_data[i++] = 0x0;
-out_data[i++] = 0x0;
-out_data[i++] = 0x4;
-out_data[i++] = 0x0;
-out_data[i++] = 0x0;
-out_data[i++] = 0x0;
-retval = usb_bulk_msg(usb_dev, out_pipe, out_data, 8, &bytes_written, HZ);
-printk("%s: %s: write of unknown3 to bulk pipe returned %i, bytes_written=%i\n", __FILE__, __FUNCTION__, retval, bytes_written);
-in_pipe = usb_rcvbulkpipe(usb_dev, NIUSB_BULK_IN_ENDPOINT);
-retval = usb_bulk_msg(usb_dev, in_pipe, in_data, 16, &bytes_read, HZ);
-printk("%s: %s: read of bulk pipe returned %i, bytes_read=%i\n", __FILE__, __FUNCTION__, retval, bytes_read);
-for(j=0;j<bytes_read;j++)
-{
-	printk("%.2x ", (int)in_data[j]);
-}
-printk("\n");
-}
-#endif
 	return ni_usb_init(board);
 }
 
