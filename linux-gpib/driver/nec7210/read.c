@@ -47,6 +47,8 @@ static ssize_t pio_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t 
 		if(test_bit(RECEIVED_END_BN, &priv->state))
 			break;
 	}
+	if(test_bit(TIMO_NUM, &device->status))
+		retval -ETIMEDOUT;
 
 	return retval ? retval : count;
 }
