@@ -1424,6 +1424,63 @@ volatile int ibsta;
 </refsect1>
 </refentry>
 
+<refentry ID="reference-function-ibcmda">
+<refmeta>
+	<refentrytitle>ibcmda</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibcmda</refname>
+	<refpurpose>write command bytes asynchronously (board)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibcmda</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>const void *<parameter>commands</parameter></paramdef>
+		<paramdef>long <parameter>num_bytes</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibcmda() is similar to
+	<link LINKEND="reference-function-ibcmd">ibcmd()</link>
+	except it operates asynchronously.  ibcmda() does not
+	wait for the sending of the command bytes to complete, but
+	rather returns immediately.
+	</para>
+	<para>
+	While an asynchronous
+	operation is in progress, most library functions will
+	fail with an EOIP error.  In order to sucessfully
+	complete an
+	asynchronous operation, you must call
+	<link LINKEND="reference-function-ibwait">ibwait()</link>
+	until the CMPL bit is set ibsta.  Asynchronous
+	operations
+	may also be aborted with an
+	<link LINKEND="reference-function-ibstop">ibstop()</link>
+	or
+	<link LINKEND="reference-function-ibonl">ibonl()</link>
+	call.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
 <refentry ID="reference-function-ibconfig">
 <refmeta>
 	<refentrytitle>ibconfig</refentrytitle>
@@ -2613,6 +2670,63 @@ volatile int ibsta;
 </refsect1>
 </refentry>
 
+<refentry ID="reference-function-ibrda">
+<refmeta>
+	<refentrytitle>ibrda</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibrda</refname>
+	<refpurpose>read data bytes asynchronously (board or device)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibrda</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>void *<parameter>buffer</parameter></paramdef>
+		<paramdef>long <parameter>num_bytes</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibrda() is similar to
+	<link LINKEND="reference-function-ibrd">ibrd()</link>
+	except it operates asynchronously.  ibrda() does not
+	wait for the reception of the data bytes to complete, but
+	rather returns immediately.
+	</para>
+	<para>
+	While an asynchronous
+	operation is in progress, most library functions will
+	fail with an EOIP error.  In order to sucessfully
+	complete an
+	asynchronous operation, you must call
+	<link LINKEND="reference-function-ibwait">ibwait()</link>
+	until the CMPL bit is set ibsta.  Asynchronous
+	operations
+	may also be aborted with an
+	<link LINKEND="reference-function-ibstop">ibstop()</link>
+	or
+	<link LINKEND="reference-function-ibonl">ibonl()</link>
+	call.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
 <refentry ID="reference-function-ibrdf">
 <refmeta>
 	<refentrytitle>ibrdf</refentrytitle>
@@ -2637,7 +2751,7 @@ volatile int ibsta;
 	Description
 	</title>
 	<para>
-	ibrdf() is similar to <link LINKEND="reference-function-ibwrt">ibrd()</link>
+	ibrdf() is similar to <link LINKEND="reference-function-ibrd">ibrd()</link>
 	except that the data bytes read are stored in a file instead
 	of an array in memory.  <parameter>file_path</parameter> specifies
 	the save file.  If the file already exists, the data will be appended
@@ -2963,6 +3077,56 @@ volatile int ibsta;
 </refsect1>
 </refentry>
 
+<refentry ID="reference-function-ibstop">
+<refmeta>
+	<refentrytitle>ibstop</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibstop</refname>
+	<refpurpose>abort asynchronous i/o operation (board or device)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibstop</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibstop() aborts an asynchronous i/o operation (for example, one
+	started with
+	<link LINKEND="reference-function-ibcmda">ibcmda()</link>,
+	<link LINKEND="reference-function-ibrda">ibrda()</link>, or
+	<link LINKEND="reference-function-ibwrta">ibwrta()</link>).
+	</para>
+	<para>
+	The return value of ibstop() is counter-intuitive.  On successfully
+	aborting an asynchronous operation, the ERR bit is set in
+	<link LINKEND="reference-globals-ibsta">ibsta</link>, and
+	<link LINKEND="reference-globals-iberr">iberr</link> is
+	set to EABO.  If the ERR bit is not set in ibsta, then
+	there was no asynchronous i/o operation in progress.  If the
+	function failed, the ERR bit will be set and iberr will be
+	set to some value other than EABO.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
 <refentry ID="reference-function-ibtmo">
 <refmeta>
 	<refentrytitle>ibtmo</refentrytitle>
@@ -3246,6 +3410,63 @@ volatile int ibsta;
 	<para>
 	After the ibwrt() call, ibcnt and ibcntl are set to the number of bytes
 	written.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-ibwrta">
+<refmeta>
+	<refentrytitle>ibwrta</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibwrta</refname>
+	<refpurpose>write data bytes asynchronously (board or device)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibwrta</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>const void *<parameter>buffer</parameter></paramdef>
+		<paramdef>long <parameter>num_bytes</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibwrta() is similar to
+	<link LINKEND="reference-function-ibwrt">ibwrt()</link>
+	except it operates asynchronously.  ibwrta() does not
+	wait for the sending of the data bytes to complete, but
+	rather returns immediately.
+	</para>
+	<para>
+	While an asynchronous
+	operation is in progress, most library functions will
+	fail with an EOIP error.  In order to sucessfully
+	complete an
+	asynchronous operation, you must call
+	<link LINKEND="reference-function-ibwait">ibwait()</link>
+	and until the CMPL bit is set ibsta.  Asynchronous
+	operations
+	may also be aborted with an
+	<link LINKEND="reference-function-ibstop">ibstop()</link>
+	or
+	<link LINKEND="reference-function-ibonl">ibonl()</link>
+	call.
 	</para>
 </refsect1>
 <refsect1>
