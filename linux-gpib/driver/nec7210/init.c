@@ -35,7 +35,6 @@ gpib_board_t board =
 	name:	"nec7210",	//XXX
 	read:	nec7210_read,
 	write:	nec7210_write,
-	command:	nec7210_command,
 	take_control:	nec7210_take_control,
 	go_to_standby:	nec7210_go_to_standby,
 	interface_clear:	nec7210_interface_clear,

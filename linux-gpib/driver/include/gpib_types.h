@@ -69,14 +69,13 @@ typedef struct
 	 * written or negative value on error.
 	 */
 	ssize_t (*write)(uint8_t *buffer, size_t length, int send_eoi);
-	/* Sends the command bytes in 'buffer' to the bus. 
-	 */
-	ssize_t (*command)(uint8_t *buffer, size_t length);
 	/* Take control (assert ATN).  If 'asyncronous' is nonzero, take
 	 * control asyncronously (assert ATN immediately without waiting
-	 * for other processes to complete first).
+	 * for other processes to complete first).  Should not return
+	 * until board becomes controller in charge.  Returns zero no success,
+	 * nonzero on error.
 	 */
-	void (*take_control)(int asyncronous);
+	int (*take_control)(int asyncronous);
 	/* De-assert ATN. */
 	void (*go_to_standby)(void);
 	/* Asserts or de-asserts 'interface clear' (IFC) depending on

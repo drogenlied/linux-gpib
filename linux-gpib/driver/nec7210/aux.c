@@ -1,5 +1,7 @@
 
 #include "board.h"
+#include <linux/wait.h>
+#include <asm/bitops.h>
 
 /* -- bdSendAuxCmd(int cmd)
  * Performs single auxiliary commands (nec7210)
@@ -61,31 +63,34 @@ void bdSendAuxCmd(int cmd)
   DBGout();
 }
 
-void nec7210_take_control(int syncronous)
+int nec7210_take_control(int syncronous)
 {
 	if(syncronous)
-		bdSendAuxCmd(AUX_TCS);
+		GPIBout(AUXMR, AUX_TCS);
 	else
-		bdSendAuxCmd(AUX_TCA);
+		GPIBout(AUXMR, AUX_TCA);
+	// wait until we have control
+	return wait_event_interruptible(nec7210_status_wait,
+		test_bit(ATN_NUM, &ibsta) && test_bit(CIC_NUM, &ibsta));
 }
 
 void nec7210_go_to_standby(void)
 {
-	bdSendAuxCmd(AUX_GTS);
+	GPIBout(AUXMR, AUX_GTS);
 }
 
 void nec7210_interface_clear(int assert)
 {
 	if(assert)
-		bdSendAuxCmd(AUX_SIFC);
+		GPIBout(AUXMR, AUX_SIFC);
 	else
-		bdSendAuxCmd(AUX_CIFC);
+		GPIBout(AUXMR, AUX_CIFC);
 }
 
 void nec7210_remote_enable(int enable)
 {
 	if(enable)
-		bdSendAuxCmd(AUX_SREN);
+		GPIBout(AUXMR, AUX_SREN);
 	else
-		bdSendAuxCmd(AUX_CREN);
+		GPIBout(AUXMR, AUX_CREN);
 }

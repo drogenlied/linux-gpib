@@ -35,13 +35,15 @@ IBLCL int ibcmd(uint8_t *buf, size_t cnt)
 #endif
 
 		DBGprint(DBG_BRANCH, ("take control  "));
-		board.take_control(0);
-//		bdWaitOut();	XXX
-		/* so Turbo488 boards won't jump the gun */
+		if(board.take_control(0))
+		{
+			printk("gpib error while becoming active controller\n");
+			return ibsta;
+		}
 	}
 	requested_cnt = cnt;
 	while ((cnt > 0) && !(ibsta & (ERR | TIMO))) {
-		ret = board.command(buf, cnt);
+		ret = board.write(buf, cnt, 0);
 		if(ret < 0)
 		{
 			printk("error writing gpib command bytes\n");
