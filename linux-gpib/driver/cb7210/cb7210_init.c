@@ -132,6 +132,7 @@ gpib_interface_t cb_pci_interface =
 	primary_address: cb7210_primary_address,
 	secondary_address: cb7210_secondary_address,
 	serial_poll_response: cb7210_serial_poll_response,
+	provider_module: &__this_module,
 };
 
 gpib_interface_t cb_isa_interface =
@@ -154,6 +155,7 @@ gpib_interface_t cb_isa_interface =
 	primary_address: cb7210_primary_address,
 	secondary_address: cb7210_secondary_address,
 	serial_poll_response: cb7210_serial_poll_response,
+	provider_module: &__this_module,
 };
 
 int cb7210_allocate_private(gpib_board_t *board)
@@ -171,8 +173,6 @@ void cb7210_generic_detach(gpib_board_t *board)
 	{
 		kfree(board->private_data);
 		board->private_data = NULL;
-
-		MOD_DEC_USE_COUNT;
 	}
 }
 
@@ -191,8 +191,6 @@ int cb7210_generic_attach(gpib_board_t *board)
 	nec_priv->read_byte = nec7210_ioport_read_byte;
 	nec_priv->write_byte = nec7210_ioport_write_byte;
 	nec_priv->offset = cb7210_reg_offset;
-
-	MOD_INC_USE_COUNT;
 
 	return 0;
 }

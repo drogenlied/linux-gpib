@@ -126,6 +126,7 @@ gpib_interface_t cec_pci_interface =
 	primary_address: cec_primary_address,
 	secondary_address: cec_secondary_address,
 	serial_poll_response: cec_serial_poll_response,
+	provider_module: &__this_module,
 };
 
 int cec_allocate_private(gpib_board_t *board)

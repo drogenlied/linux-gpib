@@ -163,6 +163,7 @@ gpib_interface_t ines_pci_interface =
 	primary_address: ines_primary_address,
 	secondary_address: ines_secondary_address,
 	serial_poll_response: ines_serial_poll_response,
+	provider_module: &__this_module,
 };
 
 int ines_allocate_private(gpib_board_t *board)

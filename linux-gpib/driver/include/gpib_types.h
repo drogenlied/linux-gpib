@@ -101,15 +101,18 @@ struct gpib_interface_struct
 	/* Sets primary address 0-30 for gpib interface card.
 	 */
 	void (*primary_address)(gpib_board_t *board, unsigned int address);
-	/* Sets and enables, or disables secondary address 0-30 for gpib interface
- card.
+	/* Sets and enables, or disables secondary address 0-30
+	 * for gpib interface card.
 	 */
-	void (*secondary_address)(gpib_board_t *board, unsigned int address, int
- enable);
+	void (*secondary_address)(gpib_board_t *board, unsigned int address,
+	int enable);
 	/* Sets the byte the board should send in response to a serial poll.  Returns
 	 * zero on success.  Function should also request service if appropriate.
 	 */
 	int (*serial_poll_response)(gpib_board_t *board, uint8_t status);
+	/* Pointer to module whose use count we should increment when this
+	 * interface is in use */
+	struct module *provider_module;
 };
 
 /* One gpib_board_t is allocated for each physical board in the computer.

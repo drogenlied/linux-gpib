@@ -130,6 +130,7 @@ gpib_interface_t ni_pci_interface =
 	primary_address: tnt4882_primary_address,
 	secondary_address: tnt4882_secondary_address,
 	serial_poll_response: tnt4882_serial_poll_response,
+	provider_module: &__this_module,
 };
 
 gpib_interface_t ni_isa_interface =
@@ -152,6 +153,7 @@ gpib_interface_t ni_isa_interface =
 	primary_address: tnt4882_primary_address,
 	secondary_address: tnt4882_secondary_address,
 	serial_poll_response: tnt4882_serial_poll_response,
+	provider_module: &__this_module,
 };
 
 int tnt4882_allocate_private(gpib_board_t *board)

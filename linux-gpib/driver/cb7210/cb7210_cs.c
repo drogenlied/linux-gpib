@@ -603,6 +603,7 @@ gpib_interface_t cb_pcmcia_interface =
 	primary_address: cb7210_primary_address,
 	secondary_address: cb7210_secondary_address,
 	serial_poll_response: cb7210_serial_poll_response,
+	provider_module: &__this_module,
 };
 
 int cb_pcmcia_attach(gpib_board_t *board)

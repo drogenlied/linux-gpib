@@ -128,6 +128,7 @@ gpib_interface_t pc2_interface =
 	primary_address:	pc2_primary_address,
 	secondary_address:	pc2_secondary_address,
 	serial_poll_response:	pc2_serial_poll_response,
+	provider_module: &__this_module,
 };
 
 gpib_interface_t pc2a_interface =
@@ -150,6 +151,7 @@ gpib_interface_t pc2a_interface =
 	primary_address:	pc2_primary_address,
 	secondary_address:	pc2_secondary_address,
 	serial_poll_response:	pc2_serial_poll_response,
+	provider_module: &__this_module,
 };
 
 static int allocate_private(gpib_board_t *board)
@@ -228,8 +230,6 @@ int pc2_attach(gpib_board_t *board)
 	nec7210_private_t *nec_priv;
 	int retval;
 
-	MOD_INC_USE_COUNT;
-
 	retval = pc2_generic_attach(board);
 	if(retval) return retval;
 
@@ -286,8 +286,6 @@ void pc2_detach(gpib_board_t *board)
 		}
 	}
 	free_private(board);
-
-	MOD_DEC_USE_COUNT;
 }
 
 int pc2a_attach(gpib_board_t *board)
@@ -297,8 +295,6 @@ int pc2a_attach(gpib_board_t *board)
 	pc2_private_t *pc2_priv;
 	nec7210_private_t *nec_priv;
 	int retval;
-
-	MOD_INC_USE_COUNT;
 
 	retval = pc2_generic_attach(board);
 	if(retval) return retval;
@@ -398,7 +394,6 @@ void pc2a_detach(gpib_board_t *board)
 	}
 	free_private(board);
 
-	MOD_DEC_USE_COUNT;
 }
 
 int init_module(void)

@@ -2,6 +2,7 @@
 #include "gpibP.h"
 #include <linux/kernel.h>
 #include <linux/vmalloc.h>
+#include <linux/module.h>
 
 /*
 * IBONL
@@ -18,8 +19,6 @@ int ibonline( gpib_board_t *board, int master )
 	if( !board->online )
 	{
 		board->buffer_length = 0x1000;
-		if( board->buffer )
-			vfree( board->buffer );
 		board->buffer = vmalloc( board->buffer_length );
 		if(board->buffer == NULL)
 			return -ENOMEM;
@@ -30,7 +29,7 @@ int ibonline( gpib_board_t *board, int master )
 			printk("GPIB Hardware Error! (Chip type not found or wrong Base Address?)\n");
 			return -1;
 		}
-		/* initialize system support functions */
+		__MOD_INC_USE_COUNT( board->interface->provider_module );
 		board->online = 1;
 
 		if( master )
@@ -52,11 +51,13 @@ int iboffline( gpib_board_t *board )
 	if( board->open_count <= 1 && board->online )
 	{
 		board->interface->detach( board );
+		__MOD_DEC_USE_COUNT( board->interface->provider_module );
+		board->online = 0;
 		if( board->buffer )
 		{
 			vfree( board->buffer );
+			board->buffer = NULL;
 		}
-		init_gpib_board( board );
 	}
 	return 0;
 }
