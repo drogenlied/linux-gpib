@@ -103,7 +103,7 @@ int board_attach(void)
 #if defined(CBI_PCI)
 	isr_flags |= SA_SHIRQ;
 #endif
-	if( request_irq(ibirq, ibintr, isr_flags, "gpib", NULL))
+	if( request_irq(ibirq, ibintr, isr_flags, "gpib", &ibbase))
 	{
 		printk("gpib: can't request IRQ %d\n", ibirq);
 		return -1;

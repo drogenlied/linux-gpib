@@ -163,7 +163,7 @@ int board_attach(void)
 #if defined(MODBUS_PCI) || defined(INES_PCI)
 	isr_flags |= SA_SHIRQ;
 #endif
-	if( request_irq(ibirq, nec7210_interrupt, isr_flags, "gpib", NULL))
+	if( request_irq(ibirq, nec7210_interrupt, isr_flags, "gpib", &ibbase))
 	{
 		printk("gpib: can't request IRQ %d\n", ibirq);
 		return -1;
