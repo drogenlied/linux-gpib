@@ -357,6 +357,9 @@ ibConf_t * general_enter_library( int ud, int no_lock_board, int ignore_eoip )
 		return NULL;
 	}
 
+	setIberr( 0 );
+	setIbcnt( 0 );
+	
 	conf = ibConfigs[ ud ];
 
 	if( ibCheckDescriptor( ud ) < 0 )
