@@ -7,9 +7,7 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
-SYMLINKS = gpib gpib_ioctl.h gpib_types.h gpib_user.h ib.h ibConf.h ibP.h
-
-all-local: $(SYMLINKS)
+BUILT_SOURCES = gpib gpib_ioctl.h gpib_types.h gpib_user.h ib.h ibConf.h ibP.h
 
 gpib:
 	ln -s . gpib
@@ -32,5 +30,3 @@ ibConf.h:
 ibP.h:
 	ln -s $(top_srcdir)/lib/ibP.h
 
-clean-local:
-	rm -f $(SYMLINKS)
