@@ -86,12 +86,13 @@ enum cfg_bits
 /* CMDR -- Command Register */
 enum cmdr_bits
 {
-	CLRSC = 0x2,	/* clear the SC bit */
-	SETSC = 0x3,	/* set the SC bit */
+	SETSC = 0x2,	/* set the system controller bit */
+	CLRSC = 0x3,	/* clear the system controller bit */
 	GO = 0x4,	/* start fifos */
 	STOP = 0x8,	/* stop fifos */
 	RESET_FIFO = 0x10,	/* reset the FIFOs 		*/
 	SOFT_RESET = 0x22,	/* issue a software reset 	*/
+	HARD_RESET = 0x40	/* 500x only? */
 };
 
 /* HSSEL -- handshake select register (write only) */
