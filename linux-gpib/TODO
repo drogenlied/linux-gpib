@@ -24,3 +24,4 @@ add query to ibask() for support of IFC events
 
 fix support parallel poll timeout support (should be hardware-based)
 
+better error message when gpib_config has not been run
