@@ -7,5 +7,5 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
-SUBDIRS = ni_usb_gpib
+SUBDIRS = agilent_82357a ni_usb_gpib
 

@@ -182,6 +182,7 @@ AC_OUTPUT([\
 	language/tcl/Makefile \
 	usb/Makefile \
 	usb/ni_usb_gpib/Makefile \
+	usb/agilent_82357a/Makefile \
 ]
 )
 
