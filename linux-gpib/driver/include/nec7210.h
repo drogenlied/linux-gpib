@@ -255,6 +255,10 @@ enum admr_bits
 	HR_ADM1 = ( 1 << 1 ),
 	HR_TRM0 = ( 1 << 4 ),
 	HR_TRM1 = ( 1 << 5 ),
+	HR_TRM_EOIOE_TRIG = 0,
+	HR_TRM_CIC_TRIG = HR_TRM0,
+	HR_TRM_CIC_EOIOE = HR_TRM1,
+	HR_TRM_CIC_PE = HR_TRM0 | HR_TRM1,
 	HR_LON = ( 1 << 6 ),
 	HR_TON = ( 1 << 7 ),
 };
