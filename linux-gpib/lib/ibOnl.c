@@ -162,7 +162,10 @@ int ibonl( int ud, int onl )
 
 	status = general_exit_library( ud, 0, 0, 0, 0, CMPL, 1 );
 
-	retval = close_gpib_handle( conf );
+	if( onl == 0 )
+		retval = close_gpib_handle( conf );
+	else
+		retval = 0;
 	conf_unlock_board( conf );
 	if( retval < 0 )
 	{
