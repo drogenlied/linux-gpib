@@ -319,9 +319,11 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 	int retval;
 	agilent_82357a_private_t *a_priv = board->private_data;
 	uint8_t *out_data;
-	int out_data_length;
+	uint8_t status_data[0x6];;
+	int out_data_length;	
 	int bytes_written;
 	int i = 0, j;
+	unsigned int bytes_completed;
 	
 	out_data_length = length + 0x8;
 	out_data = kmalloc(out_data_length, GFP_KERNEL);
@@ -349,8 +351,21 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 		printk("%s: agilent_82357a_send_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, bytes_written, i);		
 		return -EIO;
 	}
-	//FIXME wait for write done interrupt
-	return length;
+	if(wait_event_interruptible(board->wait, test_bit(AIF_WRITE_COMPLETE_BN, &a_priv->interrupt_flags)))
+	{
+		printk("%s: %s: wait interrupted\n", __FILE__, __FUNCTION__);
+	}
+	retval = agilent_82357a_receive_control_msg(a_priv, agilent_82357a_control_request, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE, 
+		XFER_STATUS, 0, status_data, sizeof(status_data), HZ);
+	if(retval)
+	{
+		printk("%s: %s: agilent_82357a_receive_control_msg() returned %i\n", __FILE__, __FUNCTION__, retval);
+	}
+	bytes_completed = status_data[2];
+	bytes_completed |= status_data[3] << 8;
+	bytes_completed |= status_data[4] << 16;
+	bytes_completed |= status_data[5] << 24;
+	return bytes_completed;
 }
 
 static ssize_t agilent_82357a_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi)
@@ -486,17 +501,25 @@ void agilent_82357a_interrupt_complete(struct urb *urb, struct pt_regs *regs)
 	agilent_82357a_private_t *a_priv = board->private_data;
 	int retval;
 	int i;
+	uint8_t *transfer_buffer = urb->transfer_buffer;
+	unsigned long interrupt_flags;
 	
 	printk("debug: %s: %s: status=0x%x, error_count=%i, actual_length=%i transfer_buffer:\n", __FILE__, __FUNCTION__,
 		urb->status, urb->error_count, urb->actual_length); 
 	for(i = 0; i < urb->actual_length; i++)
 	{
-		printk("%2x ", ((uint8_t*)urb->transfer_buffer)[i]); 
+		printk("%2x ", transfer_buffer[i]); 
 	}
 	printk("\n");
 	// don't resubmit if urb was unlinked
 	if(urb->status) return;
-	
+	interrupt_flags = transfer_buffer[0];
+	if(test_bit(AIF_READ_COMPLETE_BN, &interrupt_flags))
+		set_bit(AIF_READ_COMPLETE_BN, &a_priv->interrupt_flags);
+	if(test_bit(AIF_WRITE_COMPLETE_BN, &interrupt_flags))
+		set_bit(AIF_WRITE_COMPLETE_BN, &a_priv->interrupt_flags);
+	if(test_bit(AIF_SRQ_BN, &interrupt_flags))
+		set_bit(AIF_SRQ_BN, &a_priv->interrupt_flags);
 	retval = usb_submit_urb(a_priv->interrupt_urb, GFP_ATOMIC);
 	if(retval)
 	{

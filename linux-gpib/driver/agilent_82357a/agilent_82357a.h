@@ -21,6 +21,7 @@
 
 #include <linux/usb.h>
 #include "gpibP.h"
+#include "tms9914.h"
 
 enum usb_vendor_ids
 {
@@ -67,6 +68,13 @@ enum agilent_82357a_write_flags
 	AWF_SEPARATE_HEADER = 0x80
 };
                         
+enum agilent_82357a_interrupt_flag_bit_numbers
+{
+	AIF_SRQ_BN = 0,
+	AIF_WRITE_COMPLETE_BN = 1,
+	AIF_READ_COMPLETE_BN = 2,
+};
+
 enum agilent_82357_error_codes
 {
 	UGP_SUCCESS = 0,
@@ -81,6 +89,30 @@ enum agilent_82357_error_codes
 	UGP_ERR_OTHER  = 9
 };
 
+enum agilent_82357_control_values
+{
+	XFER_ABORT = 0xa000,
+	XFER_STATUS = 0xb000,
+};
+
+enum xfer_status_bits
+{
+	XS_COMPLETED = 0x1,
+	XS_READ = 0x2,
+};
+
+enum xfer_status_completion_bits
+{
+	XSC_EOI = 0x1,
+	XSC_ATN = 0x2,
+	XSC_IFC = 0x4,
+	XSC_EOS = 0x8,
+	XSC_ABORT = 0x10,
+	XSC_COUNT = 0x20,
+	XSC_DEAD_BUS = 0x40,
+	XSC_BUS_NOT_ADDRESSED = 0x80
+};
+
 // struct which defines local data for each 82357 device
 typedef struct
 {
@@ -88,6 +120,7 @@ typedef struct
 	unsigned short eos_char;
 	unsigned short eos_mode;
 	unsigned short hw_control_bits;
+	unsigned long interrupt_flags;
 	struct urb *interrupt_urb;
 	uint8_t interrupt_buffer[0x8];	
 	struct semaphore bulk_transfer_lock;
@@ -115,5 +148,7 @@ enum hardware_control_bits
 	OUTPUT_5V_ON = 0x20,
 	CPLD_3V_ON = 0x80,
 };
+
+static const int agilent_82357a_control_request = 0x4;
 
 #endif	// _AGILENT_82357_H
