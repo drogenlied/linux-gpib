@@ -196,7 +196,9 @@ int ni_pci_attach(gpib_board_t *board)
 
 	for(tnt_priv->mite = mite_devices; tnt_priv->mite; tnt_priv->mite = tnt_priv->mite->next)
 	{
-		if(mite_device_id(tnt_priv->mite) == PCI_DEVICE_ID_NI_GPIB) break;
+		if( mite_device_id( tnt_priv->mite ) == PCI_DEVICE_ID_NI_GPIB ||
+			mite_device_id( tnt_priv->mite ) == PCI_DEVICE_ID_NI_GPIB_PLUS )
+			break;
 	}
 	if(tnt_priv->mite == NULL)
 	{
