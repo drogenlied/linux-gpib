@@ -35,9 +35,9 @@ SRCS = ibCmds.c
 OBJS = ibCmds.o 
 
 
-all: libgpib.so
+all: libgpib-tcl.so
 
-libgpib.so: $(OBJS)
+libgpib-tcl.so: $(OBJS)
 	$(CC) -shared $(OBJS) $(LIBS) -o $@
 
 clean: 
@@ -49,7 +49,7 @@ realclean:
 	set -e;for i in $(SUBDIRS) ./modules; do make -C $$i clean; done
 
 install:
-	install ./libgpib.so $(INSTALLDIR)	
+	install ./libgpib-tcl.so $(INSTALLDIR)	
 
 make.config:
 	tclsh config.tcl >make.config
