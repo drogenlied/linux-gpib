@@ -54,6 +54,11 @@ int agilent_82357a_send_bulk_msg(agilent_82357a_private_t *a_priv, void *data, i
 		up(&a_priv->bulk_transfer_lock);
 		return -ENODEV;
 	}
+	if(a_priv->bulk_urb) 
+	{
+		up(&a_priv->bulk_transfer_lock);
+		return -EAGAIN;
+	}
 	a_priv->bulk_urb = usb_alloc_urb(0, GFP_KERNEL);
 	if(a_priv->bulk_urb == NULL)
 	{
@@ -110,6 +115,11 @@ int agilent_82357a_receive_bulk_msg(agilent_82357a_private_t *a_priv, void *data
 	{
 		up(&a_priv->bulk_transfer_lock);
 		return -ENODEV;
+	}
+	if(a_priv->bulk_urb) 
+	{
+		up(&a_priv->bulk_transfer_lock);
+		return -EAGAIN;
 	}
 	a_priv->bulk_urb = usb_alloc_urb(0, GFP_KERNEL);
 	if(a_priv->bulk_urb == NULL)
