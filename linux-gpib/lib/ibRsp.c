@@ -62,6 +62,11 @@ int ibrsp(int ud, char *spr)
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 
+	if( conf->is_interface )
+	{
+		setIberr( EARG );
+		return exit_library( ud, 1 );
+	}
 	board = interfaceBoard( conf );
 
 	retval = serial_poll( board, conf->pad, conf->sad,
