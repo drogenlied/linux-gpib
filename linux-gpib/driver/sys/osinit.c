@@ -90,7 +90,7 @@ void gpib_unregister_driver(gpib_interface_t *interface)
 		gpib_board_t *board = &board_array[i];
 		if (board->interface == interface)
 		{
-			if( board->open_count > 0 )
+			if( board->use_count > 0 )
 				printk("gpib: Warning:"
 					" deregistered interface %s in use\n",
 					interface->name);
@@ -132,7 +132,7 @@ void init_gpib_board( gpib_board_t *board )
 	board->pci_bus = -1;
 	board->pci_slot = -1;
 	board->private_data = NULL;
-	board->open_count = 0;
+	board->use_count = 0;
 	INIT_LIST_HEAD( &board->device_list );
 	board->pad = 0;
 	board->sad = -1;
@@ -146,7 +146,6 @@ void init_gpib_board( gpib_board_t *board )
 	board->minor = -1;
 	init_gpib_pseudo_irq(&board->pseudo_irq);
 	board->master = 1;
-	board->exclusive = 0;
 	board->stuck_srq = 0;
 }
 

@@ -213,8 +213,8 @@ struct gpib_board_struct
 	/* 'private_data' can be used as seen fit by the driver to
 	 * store additional variables for this board */
 	void *private_data;
-	/* Number of open file descriptors for this board */
-	unsigned int open_count;
+	/* Number of open file descriptors using this board */
+	unsigned int use_count;
 	/* list of open devices connected to this board */
 	struct list_head device_list;
 	/* primary address */
@@ -243,8 +243,6 @@ struct gpib_board_struct
 	struct gpib_pseudo_irq pseudo_irq;
 	/* Flag that indicates whether board is system controller of the bus */
 	unsigned master : 1;
-	/* Flag board has been opened for exclusive access */
-	unsigned exclusive : 1;
 	/* error dong autopoll */
 	unsigned stuck_srq : 1;
 	/* individual status bit */
@@ -296,6 +294,7 @@ typedef struct
 {
 	volatile short holding_mutex;
 	gpib_descriptor_t *descriptors[ GPIB_MAX_NUM_DESCRIPTORS ];
+	unsigned got_module : 1;
 } gpib_file_private_t;
 
 #endif	/* __KERNEL__ */

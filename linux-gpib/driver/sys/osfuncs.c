@@ -21,7 +21,7 @@
 #include <linux/fcntl.h>
 #include <linux/kmod.h>
 
-static int board_type_ioctl(gpib_board_t *board, unsigned long arg);
+static int board_type_ioctl(gpib_file_private_t *file_priv, gpib_board_t *board, unsigned long arg);
 static int read_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
 	unsigned long arg);
 static int write_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
@@ -76,8 +76,7 @@ static gpib_descriptor_t* handle_to_descriptor( const gpib_file_private_t *file_
 
 static int init_gpib_file_private( gpib_file_private_t *priv )
 {
-	priv->holding_mutex = 0;
-	memset( priv->descriptors, 0, sizeof( priv->descriptors ) );
+	memset(priv, 0, sizeof(*priv));
 	priv->descriptors[ 0 ] = kmalloc( sizeof( gpib_descriptor_t ), GFP_KERNEL );
 	if( priv->descriptors[ 0 ] == NULL )
 	{
@@ -93,6 +92,7 @@ int ibopen(struct inode *inode, struct file *filep)
 {
 	unsigned int minor = MINOR(inode->i_rdev);
 	gpib_board_t *board;
+	gpib_file_private_t *priv;
 
 	if(minor >= GPIB_MAX_NUM_BOARDS)
 	{
@@ -102,30 +102,17 @@ int ibopen(struct inode *inode, struct file *filep)
 
 	board = &board_array[minor];
 
-	if( board->exclusive )
-	{
-		return -EBUSY;
-	}
-
-	if ( filep->f_flags & O_EXCL )
-	{
-		if ( board->open_count )
-		{
-			return -EBUSY;
-		}
-		board->exclusive = 1;
-	}
-
 	filep->private_data = kmalloc( sizeof( gpib_file_private_t ), GFP_KERNEL );
 	if( filep->private_data == NULL )
 	{
 		return -ENOMEM;
 	}
+	priv = filep->private_data;
 	init_gpib_file_private( ( gpib_file_private_t * ) filep->private_data );
 
 	GPIB_DPRINTK( "gpib: opening minor %d\n", minor );
 
-	if( board->open_count == 0 )
+	if(board->use_count == 0)
 	{
 		char module_string[ 32 ];
 		int retval;
@@ -138,9 +125,16 @@ int ibopen(struct inode *inode, struct file *filep)
 		}
 	}
 	if(board->interface)
+	{
+		printk("%s: board=%p, use_count=%i calling try_module_get()\n", __FUNCTION__, board, board->use_count);
 		if(!try_module_get(board->provider_module))
+		{
+			printk("gpib: try_module_get() failed\n");
 			return -ENOSYS;
-	board->open_count++;
+		}
+		board->use_count++;
+		priv->got_module = 1;
+	}
 	return 0;
 }
 
@@ -166,17 +160,16 @@ int ibclose(struct inode *inode, struct file *filep)
 		cleanup_open_devices( priv, board );
 		if( priv->holding_mutex )
 			up( &board->mutex );
-
+		
+		if(priv->got_module && board->use_count)
+		{
+			printk("%s: board=%p, use_count=%i, calling module_put()\n", __FUNCTION__, board, board->use_count);
+			module_put(board->provider_module);
+			--board->use_count;
+		}
 		kfree( filep->private_data );
 		filep->private_data = NULL;
 	}
-
-	board->open_count--;
-	if(board->interface)
-		module_put(board->provider_module);
-
-	if( board->exclusive )
-		board->exclusive = 0;
 
 	return 0;
 }
@@ -187,6 +180,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 {
 	unsigned int minor = MINOR(inode->i_rdev);
 	gpib_board_t *board;
+	gpib_file_private_t *file_priv = filep->private_data;
 
 	if( minor >= GPIB_MAX_NUM_BOARDS )
 	{
@@ -195,27 +189,35 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 	}
 	board = &board_array[ minor ];
 
-	GPIB_DPRINTK( "pid %i, minor %i, ioctl %d, interface=%s, open=%d, onl=%d\n",
+	GPIB_DPRINTK( "pid %i, minor %i, ioctl %d, interface=%s, use=%d, onl=%d\n",
 		current->pid, minor, cmd & 0xff,
 		board->interface ? board->interface->name : "",
-		board->open_count,
+		board->use_count,
 		board->online );
 
 	switch( cmd )
 	{
 		case CFCBOARDTYPE:
-			return board_type_ioctl(board, arg);
+			return board_type_ioctl(file_priv, board, arg);
 			break;
 		default:
 			break;
 	}
-
 	if( board->interface == NULL )
 	{
 		printk("gpib: no gpib board configured on /dev/gpib%i\n", minor);
 		return -ENODEV;
 	}
-
+	if(file_priv->got_module == 0)
+	{
+		if(!try_module_get(board->provider_module))
+		{
+			printk("gpib: try_module_get() failed\n");
+			return -ENOSYS;
+		}
+		file_priv->got_module = 1;
+		board->use_count++;
+	}
 	switch( cmd )
 	{
 		case CFCBASE:
@@ -234,16 +236,16 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			return board_info_ioctl( board, arg );
 			break;
 		case IBMUTEX:
-			return mutex_ioctl( board, filep->private_data, arg );
+			return mutex_ioctl( board, file_priv, arg );
 			break;
 		case IBONL:
 			return online_ioctl( board, arg );
 			break;
 		case IBPAD:
-			return pad_ioctl( board, filep->private_data, arg );
+			return pad_ioctl( board, file_priv, arg );
 			break;
 		case IBSAD:
-			return sad_ioctl( board, filep->private_data, arg );
+			return sad_ioctl( board, file_priv, arg );
 			break;
 		case IBSELECT_PCI:
 			return select_pci_ioctl( board, arg );
@@ -268,7 +270,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			return status_bytes_ioctl( board, arg );
 			break;
 		case IBWAIT:
-			return wait_ioctl( filep->private_data, board, arg );
+			return wait_ioctl( file_priv, board, arg );
 			break;
 		case IBLINES:
 			return line_status_ioctl( board, arg );
@@ -300,7 +302,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			return close_dev_ioctl( filep, board, arg );
 			break;
 		case IBCMD:
-			return command_ioctl( filep->private_data, board, arg );
+			return command_ioctl( file_priv, board, arg );
 			break;
 		case IBEOS:
 			return eos_ioctl( board, arg );
@@ -318,7 +320,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			return query_board_rsv_ioctl( board, arg );
 			break;
 		case IBRD:
-			return read_ioctl( filep->private_data, board, arg );
+			return read_ioctl( file_priv, board, arg );
 			break;
 		case IBRPP:
 			return parallel_poll_ioctl( board, arg );
@@ -342,7 +344,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			return timeout_ioctl( board, arg );
 			break;
 		case IBWRT:
-			return write_ioctl( filep->private_data, board, arg );
+			return write_ioctl( file_priv, board, arg );
 			break;
 		default:
 			return -ENOTTY;
@@ -352,7 +354,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 	return -ENOTTY;
 }
 
-static int board_type_ioctl(gpib_board_t *board, unsigned long arg)
+static int board_type_ioctl(gpib_file_private_t *file_priv, gpib_board_t *board, unsigned long arg)
 {
 	struct list_head *list_ptr;
 	board_type_ioctl_t cmd;
@@ -374,17 +376,39 @@ static int board_type_ioctl(gpib_board_t *board, unsigned long arg)
 		entry = list_entry(list_ptr, gpib_interface_list_t, list);
 		if(strcmp(entry->interface->name, cmd.name) == 0)
 		{
-			if(board->interface)
+			int i;
+			int had_module = file_priv->got_module;
+			if(board->use_count)
 			{
-				module_put(board->provider_module);
+				for(i = 0; i < board->use_count; ++i)
+				{
+					printk("%s: board=%p, use_count=%i, calling module_put()\n", __FUNCTION__, board, board->use_count);
+					module_put(board->provider_module);
+				}
 				board->interface = NULL;
-			}
-			if(!try_module_get(entry->module))
-			{
-				return -ENOSYS;
+				file_priv->got_module = 0;
 			}
 			board->interface = entry->interface;
 			board->provider_module = entry->module;
+			for(i = 0; i < board->use_count; ++i)
+			{
+				printk("%s: board=%p, use_count=%i calling try_module_get()\n", __FUNCTION__, board, board->use_count);
+				if(!try_module_get(entry->module))
+				{
+					board->use_count = i;
+					return -ENOSYS;
+				}
+			}
+			if(had_module == 0)
+			{
+				printk("%s: board=%p, use_count=%i calling try_module_get()\n", __FUNCTION__, board, board->use_count);
+				if(!try_module_get(entry->module))
+				{
+					return -ENOSYS;
+				}
+				++board->use_count;
+			}
+			file_priv->got_module = 1;
 			return 0;
 		}
 	}
