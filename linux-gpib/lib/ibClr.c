@@ -86,12 +86,16 @@ int InternalDevClearList( ibConf_t *conf, const Addr4882_t addressList[] )
 		return -1;
 	}
 
-	i = create_send_setup( board, addressList, cmd );
+	i = 0;
 	if( numAddresses( addressList ) )
+	{
+		i += create_send_setup( board, addressList, cmd );
 		cmd[ i++ ] = SDC;
+	}
 	else
+	{
 		cmd[ i++ ] = DCL;
-
+	}
 	//XXX detect no listeners (EBUS) error
 	count = my_ibcmd( conf, cmd, i );
 
