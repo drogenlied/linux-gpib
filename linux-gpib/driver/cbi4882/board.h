@@ -5,6 +5,10 @@
 #include <asm/io.h>
 #include <gpibP.h>
 
+#if DMAOP
+#error DMA is not supported with this board
+#endif
+
 extern unsigned long ibbase;	/* base addr of GPIB interface registers  */
 extern unsigned long remapped_ibbase;	// ioremapped base address for memory mapped boards
 extern unsigned int ibirq;	/* interrupt request line for GPIB (1-7)  */

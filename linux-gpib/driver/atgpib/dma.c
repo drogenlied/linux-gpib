@@ -1,4 +1,6 @@
-#include <board.h>
+#include <ibsys.h>
+#include "board.h"
+
 /*
  *  BdDMAwait
  *  This function checks or waits for "DMA operation complete".
@@ -66,4 +68,59 @@ IBLCL int bdDMAstop(ibio_op_t *rwop)
 	DBGout();
 	return resid;
 }
+
+
+#if DMAOP
+/*
+ * Start a DMA operation and wait on its completion.
+ */
+
+IBLCL int osDoDMA(ibio_op_t *rwop)
+{
+	unsigned long flags;
+	int		resid;		/* residual transfer count */
+
+	DBGin("osDoDMA");
+
+	rwop->io_pbuf = virt_to_bus(rwop->io_vbuf);
+
+	DBGprint(DBG_DATA, ("pbuf=0x%x cnt=%d  ", (unsigned int)rwop->io_pbuf, rwop->io_cnt));
+
+
+	/* program dma controller */
+
+	flags = claim_dma_lock();
+        disable_dma( ibdma );
+	clear_dma_ff ( ibdma );
+	set_dma_count( ibdma, rwop->io_cnt );
+	set_dma_addr ( ibdma, rwop->io_pbuf);
+
+	if (rwop->io_flags & IO_READ) {
+		DBGprint(DBG_BRANCH, ("enabling DMA READ  "));
+		set_dma_mode( ibdma, DMA_MODE_READ );
+	}
+	else {
+		DBGprint(DBG_BRANCH, ("enabling DMA WRITE  "));
+		set_dma_mode( ibdma, DMA_MODE_WRITE );
+	}
+
+	GPIBout(DMA_EN, (GPIBin(DMA_EN) | HR_DMAEN));
+
+	enable_dma( ibdma );/* enable Host side DMA transfers */
+	release_dma_lock(flags);
+
+	bdDMAstart(rwop);
+	bdDMAwait(rwop, 0);
+	resid = bdDMAstop(rwop);
+
+	disable_dma( ibdma );/* disable DMA transfers */
+	GPIBout(DMA_EN, (GPIBin(DMA_EN) & ~HR_DMAEN));
+	DBGout();
+	return resid;
+}
+
+#endif /* dmaop */
+
+
+
 
