@@ -334,6 +334,13 @@ static int serial_poll_test( const struct board_descriptors *boards )
 		}
 	}
 
+	if( ibconfig( boards->master, IbcAUTOPOLL, 1 ) & ERR )
+	{
+		fprintf( stderr, "FAILED: failed to enable autopolling\n" );
+		ibonl( ud, 0 );
+		return -1;
+	}
+
 	ibrsv( boards->slave, status_byte );
 	if( ThreadIbsta() & ERR )
 	{
