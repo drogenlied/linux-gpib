@@ -22,8 +22,6 @@ check that REN is asserted when it should be
 
 implement newer NI api
 
-add devfs support
-
 fix setting of TIMO status
 
 a kcontrol module for configuring boards might be nice
