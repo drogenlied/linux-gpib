@@ -2176,6 +2176,31 @@ volatile int ibsta;
 	Description
 	</title>
 	<para>
+	ibln() checks for the presence of a device, by attempting to address
+	it as a listener.  <parameter>ud</parameter> specifies the GPIB
+	interface board which should check for listeners.  If <parameter>ud</parameter>
+	is a device descriptor, then the device's access board is used.
+	<para>
+	The GPIB address to check is specified by the
+	<parameter>pad</parameter> and <parameter>sad</parameter> arguments.
+	<parameter>pad</parameter> specifies the primary address, 0 through 30
+	are valid values.  <parameter>sad</parameter> gives the secondary
+	address, and may be a value from 0x60 through 0x7e (96 through 126), or
+	one of the constants NO_SAD or ALL_SAD.  NO_SAD indicates that no
+	secondary addressing is to be used, and ALL_SAD indicates that
+	all secondary addresses should be checked.
+	</para>
+	<para>
+	If the board finds a listener at the specified GPIB address(es), then the
+	variable specified by the pointer <parameter>found_listener</parameter>
+	is set to a nonzero value.  If no listener is found, the variable is set
+	to zero.
+	</para>
+	<para>
+	The board must be controller-in-charge to perform this function.  Also,
+	it must have the capability to monitor the NDAC
+	<link LINKEND="gpib-protocol-bus-lines">bus line</link>
+	(see <link LINKEND="reference-function-iblines">iblines()</link>).
 	</para>
 </refsect1>
 <refsect1>
