@@ -636,7 +636,7 @@ int ines_pcmcia_attach(gpib_board_t *board)
 
 	if(dev_list == NULL)
 	{
-		printk("no cb pcmcia cards found\n");
+		printk("no ines pcmcia cards found\n");
 		return -1;
 	}
 
