@@ -28,6 +28,7 @@ computer, on the same GPIB bus, and one of which is the system controller.
 #include <pthread.h>
 #include <unistd.h>
 #include <string.h>
+#include <getopt.h>
 
 #include "gpib/ib.h"
 
@@ -35,6 +36,11 @@ struct board_descriptors
 {
 	int master;
 	int slave;
+};
+
+struct program_options
+{
+	short daemonize;
 };
 
 #define PRINT_FAILED() \
@@ -468,7 +474,7 @@ static int do_eos_pass(const struct board_descriptors *boards,
 	if( ThreadIbsta() & ERR )
 	{
 		PRINT_FAILED();
-		fprintf( stderr, "ibrd status 0x%x, error %i, count %i\n", ThreadIbsta(),
+		fprintf( stderr, "ibrd status 0x%x, error %i, count %li\n", ThreadIbsta(),
 			ThreadIberr(), ThreadIbcntl());
 		return -1;
 	}
@@ -531,10 +537,84 @@ static int eos_test( const struct board_descriptors *boards )
 	return 0;
 }
 
+static void daemonize(void)
+{
+	pid_t my_pid;
+
+	my_pid = fork();
+	if(my_pid)
+	{
+		exit(0);
+	}else
+	{
+		my_pid = setsid();
+		if(my_pid < 0)
+		{
+			fprintf(stderr, "setsid() failed\n");
+			exit(1);
+		}
+		my_pid = fork();
+		if(my_pid)
+		{
+			exit(0);
+		}else
+		{
+			if(chdir("/"))
+			{
+				fprintf(stderr, "failed to chdir to root directory\n");
+				exit(1);
+			}
+			umask(0);
+			if(freopen("/dev/null", "r", stdin) == NULL)
+				exit(1);
+			if(freopen("/dev/console", "w", stdout) == NULL)
+				exit(1);
+			if(freopen("/dev/console", "w", stderr) == NULL)
+				exit(1);
+		}
+	}
+}
+
+int parse_program_options(int argc, char *argv[], struct program_options *options)
+{
+	static struct option long_options[] =
+	{
+		{"daemonize", 0, NULL, 'd'},
+		{0, 0, 0, 0}
+	};
+	int c;
+	int option_index = 0;
+
+	memset(options, 0, sizeof(*options));
+	while(1)
+	{
+		c = getopt_long(argc, argv, "d", long_options, &option_index);
+		if(c < 0) break;
+		switch(c)
+		{
+		case 'd':
+			fprintf(stdout, "option: daemonize\n");
+			options->daemonize = 1;
+			break;
+		default:
+			fprintf(stderr, "bad option?\n");
+			return -1;
+			break;
+		}
+	}
+	return 0;
+}
+
 int main( int argc, char *argv[] )
 {
 	struct board_descriptors boards;
 	int retval;
+	struct program_options options;
+
+	if(parse_program_options(argc, argv, &options) < 0)
+		return -1;
+	if(options.daemonize)
+		daemonize();
 
 	retval = find_boards( &boards );
 	if( retval < 0 ) return retval;
