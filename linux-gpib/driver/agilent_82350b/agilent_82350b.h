@@ -22,12 +22,20 @@
 #include "gpibP.h"
 
 
+enum pci_vendor_ids
+{
+	PCI_VENDOR_ID_AGILENT = 0x0,
+};
+
+enum pci_device_ids
+{
+	PCI_DEVICE_ID_82350B = 0x0,
+};
+
 // struct which defines private_data for board
 typedef struct
 {
 	tms9914_private_t tms9914_priv;
-	unsigned int irq;
-	unsigned int raw_iobase;
 } agilent_82350b_private_t;
 
 // interfaces
@@ -64,40 +72,5 @@ void agilent_82350b_free_private(gpib_board_t *board);
 
 // register offset for tms9914 compatible registers
 static const int atgpib_reg_offset = 2;
-
-// size of io memory region used
-static const int agilent_82350b_iomem_size = 0x4000;
-static const int agilent_82350b_rom_size = 0x2000;
-
-// hp82335 register offsets
-enum hp_read_regs
-{
-	HPREG_CSR = 0x37f8,
-	HPREG_STATUS = 0x3ffc,
-};
-enum hp_write_regs
-{
-	HPREG_INTR_CLEAR = 0x37f7,
-	HPREG_CCR = HPREG_CSR,
-};
-
-enum ccr_bits
-{
-	DMA_ENABLE = ( 1 << 0 ),   /* DMA enable                  */
-	DMA_CHAN_SELECT = ( 1 << 1 ),   /* DMA channel select  O=3,1=2 */
-	INTR_ENABLE = ( 1 << 2 ),   /* interrupt enable            */
-	SYS_DISABLE = ( 1 << 3 ),   /* system controller disable   */
-};
-
-enum csr_bits
-{
-	SWITCH6 = ( 1 << 0 ),   /* switch 6 position           */
-	SWITCH5 = ( 1 << 1 ),   /* switch 5 position           */
-	SYS_CONTROLLER = ( 1 << 2 ),   /* system controller bit       */
-	DMA_ENABLE_STATUS = ( 1 << 4 ),   /* DMA enabled                 */
-	DMA_CHAN_STATUS = ( 1 << 5 ),   /* DMA channel   0=3,1=2       */
-	INTR_ENABLE_STATUS = ( 1 << 6 ),   /* Interrupt enable            */
-	INTR_PENDING = ( 1 << 7 ),   /* Interrupt Pending           */
-};
 
 #endif	// _AGILENT_82350B_H
