@@ -7,6 +7,8 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
+EXTRA_DIST = gpib.n examples
+
 lib_LTLIBRARIES = libgpib_tcl.la
 
 libgpib_tcl_la_SOURCES = ibCmds.c

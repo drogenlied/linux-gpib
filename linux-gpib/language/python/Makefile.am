@@ -7,6 +7,8 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
+EXTRA_DIST = gpibtest.py setup.py Gpib.py
+
 all-local: binding
 
 binding:

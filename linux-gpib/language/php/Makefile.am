@@ -7,6 +7,10 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
+SUBDIRS = TESTS
+
+EXTRA_DIST = sample-php.ini run
+
 lib_LTLIBRARIES = gpib_php.la
 
 gpib_php_la_SOURCES = gpib.c

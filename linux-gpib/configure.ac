@@ -182,6 +182,7 @@ AC_OUTPUT([\
 	language/Makefile \
 	language/guile/Makefile \
 	language/php/Makefile \
+	language/php/TESTS/Makefile \
 	language/python/Makefile \
 	language/tcl/Makefile \
 ]

@@ -9,5 +9,7 @@
 
 SUBDIRS = include lib examples test driver doc language
 
-EXTRA_DIST = etc driver util
+EXTRA_DIST = etc util README.HAMEG README.hp82335 bootstrap
 
+dist-hook:
+	rm -rf `find $(distdir) -name CVS`

@@ -7,6 +7,8 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
+EXTRA_DIST = gpib.scm
+
 lib_LTLIBRARIES = libgpib_guile.la
 
 noinst_HEADERS = gpib.h

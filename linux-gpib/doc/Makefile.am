@@ -8,7 +8,7 @@
 #   (at your option) any later version.
 
 SGML = linux-gpib.sgml gpib_version.txt
-EXTRA_DIST = linux-gpib.sgml
+EXTRA_DIST = linux-gpib.sgml fdl.xml
 
 if HAVE_DOCBOOK
 all-local: html linux-gpib.pdf #man

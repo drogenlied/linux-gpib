@@ -1,5 +1,11 @@
 #!/bin/sh
 #run this script to create the 'configure' script
+if [ ! -f NEWS ] ; then
+	touch NEWS
+fi
+if [ ! -f ChangeLog ] ; then
+	touch ChangeLog
+fi
 
 aclocal -I m4 && \
 libtoolize --copy --force && \
