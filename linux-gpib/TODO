@@ -22,6 +22,3 @@ stuck SRQ handling
 
 add query to ibask() for support of IFC events
 
-interface clear seems to clear rfd holdoffs... maybe we should
-give up on trying to assert rfd holdoffs?
-

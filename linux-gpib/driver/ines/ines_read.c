@@ -88,11 +88,12 @@ ssize_t ines_accel_read( gpib_board_t *board, uint8_t *buffer,
 		ines_set_xfer_counter(ines_priv, length);
 		ines_priv->extend_mode_bits |= XFER_COUNTER_ENABLE_BIT;
 		ines_outb( ines_priv, ines_priv->extend_mode_bits, EXTEND_MODE );
+
+		// holdoff on END
+		nec7210_set_handshake_mode( board, nec_priv, HR_HLDE );
+		/* release rfd holdoff */
+		write_byte( nec_priv, AUX_FH, AUXMR );
 	}
-	// holdoff on END
-	nec7210_set_handshake_mode( board, nec_priv, HR_HLDE );
-	/* release rfd holdoff */
-	write_byte( nec_priv, AUX_FH, AUXMR );
 
 	retval = pio_read( board, ines_priv, buffer, length );
 	ines_priv->extend_mode_bits &= ~XFER_COUNTER_ENABLE_BIT;

@@ -129,7 +129,7 @@ static inline uint8_t cb7210_paged_read_byte( cb7210_private_t *cb_priv,
 
 	spin_lock_irqsave( &nec_priv->register_page_lock, flags );
 	outb( cb7210_page_in_bits( page ), nec_priv->iobase + AUXMR * nec_priv->offset );
-	udelay( 1 );
+	udelay(1);
 	retval = inb( nec_priv->iobase + register_num * nec_priv->offset);
 	spin_unlock_irqrestore( &nec_priv->register_page_lock, flags );
 	return retval;
@@ -142,7 +142,7 @@ static inline void cb7210_paged_write_byte( cb7210_private_t *cb_priv,
 
 	spin_lock_irqsave( &nec_priv->register_page_lock, flags );
 	outb( cb7210_page_in_bits( page ), nec_priv->iobase + AUXMR * nec_priv->offset );
-	udelay( 1 );
+	udelay(1);
 	outb(data, nec_priv->iobase + register_num * nec_priv->offset);
 	spin_unlock_irqrestore( &nec_priv->register_page_lock, flags );
 }
