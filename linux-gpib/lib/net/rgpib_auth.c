@@ -21,7 +21,7 @@ return 0;
  * 
  *
  ***********************************************************************/
-int ibCheckAuth(int ud,char *client)
+PRIVATE int ibCheckAuth(int ud,char *client)
 {
   int i,retval;
   char *hlist;

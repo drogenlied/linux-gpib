@@ -12,12 +12,13 @@
  */
 
 #include <stdio.h>
+#include <unistd.h>
 
 FILE *dr,*dw;
 
 char s[512];
 
-main(){
+int main(){
 
   if(( dr = fopen("/dev/gpib0/dvm","r")) == NULL){
     printf("Error opening /dev/gpib0/dvm for reading\n");
@@ -41,6 +42,7 @@ main(){
 
   fclose(dr);
   fclose(dw);
- 
+
+	return 0; 
 }
 

@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <rpc/rpc.h>
+#include <rpc/pmap_clnt.h>
 #include <getopt.h>
 
 #include "rgpib.h"
@@ -52,7 +53,7 @@ if( rqstp->rq_proc == RGPIB_GETHANDLE ){
     break;
   default:
     DB(fprintf(stderr,"No authentication Packets sent, Request rejected\n"));
-    ibPutMsg("Illegal Request from <%s>, Rejected",unix_cred->aup_machname);
+    ibPutMsg("Illegal Request Rejected");
     svcerr_weakauth(transp);
     return;
   }
@@ -63,7 +64,7 @@ rgpibprog_1(rqstp, transp);
 }
 
 
-usage() {
+void usage() {
   printf("Remote GPIB server (c)1994,1995,1996,1997 C.Schroeter \n\
   Usage:\n\
   \t --debug, -d  Switch Debugging on \n\
@@ -79,7 +80,7 @@ usage() {
  * 
  *
  ***********************************************************************/
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 
         char *envptr;
@@ -158,7 +159,7 @@ main(int argc, char **argv)
 	gpib_server();  /* start server */
 
 	fprintf(stderr, "Fatal Error: gpib_server returned\n");
-	exit(1);
+	return 1;
 }
 
 /***********************************************************************

@@ -9,8 +9,9 @@
 #include <stdio.h>
 #include <ib.h>
 
+extern void gpiberr(char*);
 
-main(int argc,char **argv){
+int main(int argc,char **argv){
 
 
 int dev;
@@ -64,6 +65,7 @@ char res[1024];
 
 
   ibonl(dev,0);
+	return 0;
 }
 
 

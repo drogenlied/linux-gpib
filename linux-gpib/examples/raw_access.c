@@ -16,11 +16,10 @@
 char cmd[130];
 char res[1024];
 
-main(int argc,char **argv){
+int main(int argc,char **argv){
 
   int dev;
   unsigned long  i=0;
-  extern int errno;
 
   /*
    *  Open device 'gpib0' 
@@ -145,7 +144,7 @@ getchar();
   ibsre(dev,0);
 
   ibonl(dev,0);
-
+	return 0;
 }
 
  
