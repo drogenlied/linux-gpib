@@ -7,6 +7,8 @@ int ibonl(int ud, int onl)
 	int oflags=0;
 	ibConf_t *conf = ibConfigs[ud];
 
+	ibsta &= ~ERR;
+
 	if(ibCheckDescriptor(ud) < 0)
 	{
 		ibsta |= ERR;

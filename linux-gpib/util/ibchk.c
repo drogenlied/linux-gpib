@@ -30,7 +30,7 @@
 int main(int argc,char **argv)
 {
 	char *envptr;
-	int fd;
+	int fd, ud;
 	int ind=0;
 	char str[30];
 
@@ -75,6 +75,12 @@ int main(int argc,char **argv)
 
 	/************/
 	fprintf(stderr, "**Check if Board present....                         ");
+	ud = ibfind(NULL);
+	if(ud < 0)
+	{
+		fprintf(stderr, "failed to get gpib descriptor\n");
+		exit(1);
+	}
 	if(ibBdChrConfig(ind, ibBoard[CONF(ind,board)].base,
 		ibBoard[CONF(ind,board)].irq,
 		ibBoard[CONF(ind,board)].dma) & ERR )

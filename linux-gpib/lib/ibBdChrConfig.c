@@ -3,10 +3,22 @@
 #include <sys/ioctl.h>
 #include <string.h>
 
-int ibBdChrConfig(int ud, int base, int irq, int dma)
+int ibBdChrConfig(int ud)
 {
+	ibConf_t *conf = ibConfigs[ud];
+	ibBoard_t *board;
 	board_type_ioctl_t boardtype;
-	if(ibBoardOpen(CONF(ud,board),0) & ERR)
+
+	if(ibCheckDescriptor(ud) < 0)
+	{
+		return ibsta | ERR;
+	}
+
+	board = &ibBoard[conf->board];
+
+	if(board->fileno >= 0) return ibsta;
+
+	if(ibBoardOpen(conf->board, 0) & ERR)
 	{
 		ibsta = ibarg.ib_ibsta | ERR;
 		iberr = EDVR;
@@ -14,11 +26,11 @@ int ibBdChrConfig(int ud, int base, int irq, int dma)
 		ibPutErrlog(ud,"ibBdChrConfig");
 	}else 
 	{
-		strncpy(boardtype.name, ibBoard[CONF(ud, board)].name, 100);
-		ioctl(ibBoard[CONF(ud,board)].fileno, CFCBOARDTYPE, &boardtype); 
-		if(base != 0) ibBoardFunc(CONF(ud,board), CFCBASE, base);
-		if(irq  != 0) ibBoardFunc(CONF(ud,board), CFCIRQ , irq);
-		if(dma  != 0) ibBoardFunc(CONF(ud,board), CFCDMA , dma);
+		strncpy(boardtype.name, board->name, sizeof(board->name));
+		ioctl(board->fileno, CFCBOARDTYPE, &boardtype); 
+		if(board->base != 0) ibBoardFunc(conf->board, CFCBASE, board->base);
+		if(board->irq  != 0) ibBoardFunc(conf->board, CFCIRQ , board->irq);
+		if(board->dma  != 0) ibBoardFunc(conf->board, CFCDMA , board->dma);
 
 		if(!(ibsta & ERR)) 
 		{
@@ -26,7 +38,7 @@ int ibBdChrConfig(int ud, int base, int irq, int dma)
 			ibcnt = 0;
 			ibPutErrlog(ud,"ibBdChrConfig");
 		}
-		ibBoardClose( CONF(ud,board) );
+		ibBoardClose(conf->board);
 	}
 	return ibsta;
 }

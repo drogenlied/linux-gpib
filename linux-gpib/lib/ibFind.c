@@ -26,7 +26,8 @@ int ibfind(char *dev)
 		return -1;
 	}
 
-	if((index = ibFindDevIndex(dev)) < 0 )
+	if(dev == NULL) index = 0;	// XXX temporary hack to get ibchk working
+	else if((index = ibFindDevIndex(dev)) < 0)
 	{     /* find desired entry */
 		iberr = ENSD;
 		ibsta = ERR;
@@ -41,6 +42,9 @@ int ibfind(char *dev)
 		return -1;
 	}
 	conf = ibConfigs[uDesc];
+
+	if(ibBdChrConfig(uDesc) & ERR)
+		return -1;
 
 	if(ibonl(uDesc, 1) & ERR)
 	{

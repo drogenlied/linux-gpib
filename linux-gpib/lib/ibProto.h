@@ -38,7 +38,7 @@ extern  int ibwait(int ud, int mask);
 extern  int ibwrt(int ud, char *rd, unsigned long cnt);
 /***** Private Functions ******/
 extern int ibCheckDescriptor(int ud);
-extern  int ibBdChrConfig(int ud, int base, int irq, int dma);
+extern  int ibBdChrConfig(int ud);
 extern  void ibBoardDefaultValues(void);
 extern  int ibBoardOpen(int bd,int flags);
 extern  int ibBoardClose(int bd);

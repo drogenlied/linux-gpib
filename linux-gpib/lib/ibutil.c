@@ -26,6 +26,7 @@ int ibParseConfigFile(char *filename)
 
 	// initialize line counter to 1 before calling yyparse
 	yylloc.first_line = 1;
+	ibBoardDefaultValues();
 	// initialize variables used in yyparse() - see ibConfYacc.y
 	findIndex = 0;
 	if(gpib_yyparse() < 0) stat = -1 ;
