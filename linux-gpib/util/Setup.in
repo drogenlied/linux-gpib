@@ -1,5 +1,4 @@
 
-
 CONFIG=.tmpconfig
 CONFIG_H=.tmpconfig.h
 
@@ -31,8 +30,8 @@ dialog --clear --title "Linux-GPIB Configuration" --msgbox "\
 \n\
  Welcome to the Linux-GPIB Configuration and Setup Program\n\
 \n\
-      (c) 1995-1999 by C.Schroeter (clausi@chemie.fu-berlin.de)\n\
-      (c) 2001 by Frank Mori Hess (fmhess@users.sourceforge.net)
+ (c) 1995-1999 by C.Schroeter (clausi@chemie.fu-berlin.de)\n\
+ (c) 2001,2002 by Frank Mori Hess (fmhess@users.sourceforge.net)
 \n\
 This Utility configures the Compile Time Options of the Package\n\
 And sets up the necessary things to run the software diagnostic\n\
@@ -49,7 +48,7 @@ On initial Installation you should do a 'make clean' first\n" 20 70
 
 #load old setting for LINUXDIR if available
 LINUXDIR="/usr/src/linux"
-if [ -f ".config" ];then 
+if [ -f ".config" ];then
 	source .config
 fi
 
@@ -91,295 +90,20 @@ fi
 #
 ##########
 
-
-dialog --clear --title "Board Type Selection" \
---menu "Please select Your GPIB Board" \
-       17 70 10 \
-       "ni_pci" "National Instruments PCI-GPIB Board" \
-       "atgpib" "National Instruments AT GPIB Board (16bit)" \
-       "pcIIa"  "National Instruments PCIIa Board (8bit)   " \
-       "pcII"   "National Instruments PCII  Board (8bit)   " \
-       "hp82335" "Hewlett Packard HP82335 and HP27209 boards " \
-       "cbi4882" "ComputerBoards Inc CBI-GPIB CBI-GPIB/LC " \
-       "cbi_pci" "ComputerBoards Inc CBI-GPIB PCI " \
-       "cbi_pcmcia" "ComputerBoards Inc CBI-PCMCIA " \
-       "ines_pcmcia" "ines GPIB PCMCIA Board" \
-       "ines_pci"    "ines GPIB PCI Board" 2>/tmp/reply
-#       "ziatech" "Ziatech ZT1444A or ZT1488A (untested alpha) " \
-#       "modbus_pci" "Janz VMOD-GPIB on MODBUS PCI " \
-
-get_reply $?
-set_svar BOARD_TYPE $REPLY
-
-         dmasupport=off
-	 auto_recog=off
-	IBBASE=0
-	IBIRQ=0
-	IBDMA=0
-         case $BOARD_TYPE in 
-	
-	       ni_pci) auto_recog=on
-                       ;;
-	       atgpib) IBBASE=0x2c0
-		       IBIRQ=11
-		       IBDMA=7
-		       ;;
-	       pcII)   IBBASE=0x2b8
-		       IBIRQ=5
-		       IBDMA=1
-		       ;;
-	       pcIIa|ibm) IBBASE=0x02e1
-		       IBIRQ=5
-		       IBDMA=1
-                       ;;
-	       hp82335) IBBASE=0xDC000
-		        IBIRQ=3
-		        IBDMA=1
-                       ;;
-	       ziatech) IBBASE=0x210
-		        IBIRQ=3
-		        IBDMA=1
-                       ;;
-	       cbi4882) IBBASE=0x300
-		        IBIRQ=5
-		        IBDMA=1
-                       ;;
-	       cbi_pcmcia) auto_recog=on
-                       ;;
-	       cbi_pci) auto_recog=on
-                       ;;
-
-	       modbus_pci) auto_recog=on
-                       ;;
-              ines_pci) auto_recog=on
-                       ;;
-
-              ines_pcmcia) auto_recog=on
-                       ;;
-               *) echo "Error: no such board !"
-               exit 1 ;;
-         esac
-
-
-##########
-#
-# other options
-#
-##########
-
-USE_DMA=0
-BUILD_DEBUG=0
-DEFAULT_DEBUG=0
-
-dialog --title "Driver Options" --checklist "Select the following Options" 17 70 10 \
-	USE_DMA "Use DMA Mode for Transfers" "$dmasupport" \
-	BUILD_DEBUG "Build Driver With Debugging Code" "on"\
-	DEFAULT_DEBUG "Set Default Debugging Mode to 'none'" "on" 2>/tmp/reply
+dialog --title "Board Type Selection" \
+--checklist "Select desired drivers" \
+	17 76 10 \
+	"PC2"  "National Instruments PCII, PCIIa, and compatible" "on" \
+	"TNT4882" "National Instruments boards with tnt4882 chip" "on" \
+	"CB7210" "Measurement Computing (Computer Boards) boards" "on" \
+	"INES" "Ines boards" "on" \
+	"TNT4882TMS" "NI PCI-GPIB in tms9914 mode (for testing only)" "off" \
+	2>/tmp/reply
 
 if [ $? = 0 ]; then
-for i in `cat /tmp/reply | sed 's!\"!!g' `; do
-set_var $i 1
-done
-fi
-
-##########
-#
-# change base/irq/dma
-#
-##########
-
-if [ $auto_recog = off ];then
-
-	dialog --clear --yesno " 
-  Do you want to change the Default \n\
-  Board characteristics \n\
-  as base address or IRQ ?\n" 10 50
-
-  if [ $? = 0 ]; then
-         ####################### Base address selection #################################
-         case $BOARD_TYPE in 
-         atgpib)	
-         	dialog --menu \
-                "Select Your Base Address Default is 0x2c0" \
-                17 70 10 \
-                "0x2c0" "Default 2c0-2df" "0x100" "100-11f" "0x120" "120-13f" "0x140" "140-15f" \
-                "0x160" "160-17f" "0x180" "180-19f" "0x1a0" "1a0-1bf" "0x1c0" "1c0-1df" \
-                "0x1e0" "1e0-1ff" "0x200" "200-21f" "0x220" "220-23f" "0x240" "240-25f" \
-                "0x260" "260-27f" "0x280" "280-29f" "0x2a0" "2a0-2bf" "0x2e0" "2e0-2ff" \
-                "0x300" "300-31f" "0x320" "320-33f" "0x340" "340-35f" "0x360" "360-37f" \
-                "0x380" "380-39f" "0x3c0" "3c0-3bf" "0x3e0" "3e0-3ff" 2>/tmp/reply
-	 ;;
-	 pcIIa)
-         	dialog --menu \
-                "Select Your Base Address Default is 0x02e1" \
-                17 70 10 \
-                "0x02e1" "A14=0,A13=0 (Factory Default)" \
-                "0x22e1" "A14=0,A13=1" \
-                "0x42e1" "A14=1,A13=0" \
-                "0x62e1" "A14=1,A13=1" 2>/tmp/reply
-	 ;; 
-	 pcII )
-         	dialog --menu \
-                "Select Your Base Address Default is 0x2b8" \
-                17 70 10 \
-                "0x2b8" "(Factory Default)" \
-                "other" "Custom Setting" 2>/tmp/reply
-
-	 ;;
-	 cbi4882 )
-         	dialog --menu \
-                "Select Your Base Address Default is 0x300" \
-                17 70 10 \
-                "0x300" "(Factory Default)" \
-                "0x320" " - " \
-                "0x340" " - " \
-                "0x360" " - " \
-                "0x380" " - " \
-                "0x200" " - " \
-                "0x220" " - " \
-                "0x240" " - " \
-                "0x260" " - " \
-                "0x280" " - " \
-                "other" "Custom Setting" 2>/tmp/reply
-
-	 ;;
-	 ziatech)
-         	dialog --menu \
-                "Select Your Base Address Default is 0x210" \
-                17 70 10 \
-                "0x210" "(Factory Default)" \
-                "other" "Custom Setting" 2>/tmp/reply
-
-	 ;;
-	 hp82335)
-         	dialog --menu \
-                "Select Your Base Address Range matching your select code" \
-                17 70 10 \
-                "0xDC00" "SC=7 (Factory Default)" \
-                "0xC000" "SC=16      used by VGA/EGA ?" \
-                "0xC400" "SC=1       used by VGA ?" \
-                "0xC800" "SC=2       used by HDD controller ?" \
-                "0xCC00" "SC=3       (recommended)" \
-                "0xD000" "SC=4       " \
-                "0xD400" "SC=5       (recommended)" \
-                "0xD800" "SC=6       (recommended)" \
-                "0xDC00" "SC=7                    " \
-                "0xE000" "SC=8                    " \
-                "0xE400" "SC=9                    " \
-                "0xE800" "SC=10                   " \
-                "0xEC00" "SC=11                   " \
-                "0xF000" "SC=12       System ROM ?" \
-                "0xF400" "SC=13           ''      " \
-                "0xF800" "SC=14           ''      " \
-                "0xFC00" "SC=15           ''      " 2>/tmp/reply
-	 ;; 
-	 esac
-	
-
-	 if [ $? = 0 ]; then
-	     get_result 0
-	     if [ $RESULT = "other" ]; then
-			dialog --title "Selecting IRQ-Level" --inputbox \
-                          "\n\n Custom Base Adress:" 17 70 10 2>/tmp/reply
-		if [ $? = 0 ]; then
-		    get_result 0
-		    set_var IBBASE $RESULT
-		else
-		   dialog --msgbox "
-\n\
-            No Value Specified \n\
-\n\
-      Exiting...\n" 10 60
-		exit 1 		
-		fi
-	     else
-	     set_var IBBASE $RESULT
-	     fi
-	 fi
-
-         ############################# IRQ Selection #######################################
-
-	case $BOARD_TYPE in
-	cbi4882)
-	 dialog --title "Selecting IRQ-Level" --menu \
-                "Select Your Interrupt Setting" 17 70 10\
-		"2"  " IRQ 2 " \
-		"3"  " IRQ 3 " \
-		"4"  " IRQ 4 " \
-		"5"  " IRQ 5 " \
-		"7"  " IRQ 7 " \
-		"10"  " IRQ 10 " \
-		"11" " IRQ 11" 2>/tmp/reply
-	  ;;
-	*)	
-	 dialog --title "Selecting IRQ-Level" --menu \
-                "Select Your Interrupt Setting" 17 70 10\
-		"2"  " (pcIIa,atgpib)" \
-		"3"  " (pcIIa,atgpib,hp82335)" \
-		"4"  " (pcIIa,atgpib,hp82335)" \
-		"5"  " (pcIIa,atgpib,hp82335)" \
-		"6"  " (pcIIa,atgpib,hp82335)" \
-		"7"  " (pcIIa,atgpib,hp82335)" \
-		"9"  " (atgpib only)" \
-		"10" " (atgpib only)" \
-		"11" " (atgpib only)" \
-		"12" " (atgpib only)" \
-		"13" " (atgpib only)" \
-		"14" " (atgpib only)" \
-		"15" " (atgpib only)" 2>/tmp/reply
-	;;
-	esac	
-
-
-
-	 if [ $? = 0 ]; then
-	     get_result 0
-	     grep -q $RESULT: /proc/interrupts
-	     if [ $? = 0 ]; then
-		dialog --title "Warning Message" --msgbox "\
-         \n\
-         The desired IRQ-Level is used by another driver\n\
-         Please Use another IRQ and set your Board      \n\
-         Jumpers Correctly " 10 70
-	     fi
-	     set_var IBIRQ $RESULT
-	 fi
-
-         ############################# DMA Selection #######################################
-
-      if [ $USE_DMA = 1 ];then         
-  	case $BOARD_TYPE in
-         pcII*)
-	 dialog --title "Selecting DMA channel" --menu \
-                "Select Your DMA Setting" 17 70 10\
-		"1" " (pcIIa) Default" \
-		"2" " (pcIIa)" \
-		"3" " (pcIIa)" 2>/tmp/reply
-	 ;;
-	 atgpib)
-	 dialog --title "Selecting DMA channel" --menu \
-                "Select Your DMA Setting" 17 70 10\
-		"5" " (atgpib) Default" \
-		"6" " (atgpib)" \
-		"7" " (atgpib)" 2>/tmp/reply
-         ;;
-	 esac
-	 if [ $? = 0 ]; then
-	     get_result 0
-	     grep -q $RESULT: /proc/dma
-	     if [ $? = 0 ]; then
-		dialog --title "Warning Message" --msgbox "\
-         \n\
-         The desired DMA-Channel is used by another driver\n\
-         Please Use another IRQ and set your Board        \n\
-         Jumpers Correctly " 10 70
-	     fi
-	     set_var IBDMA $RESULT
-	 fi
-       fi
-
-  fi
-
+	for i in `cat /tmp/reply | sed 's!\"!!g' `; do
+		set_var $i 1
+	done
 fi
 
 ##########
@@ -411,7 +135,7 @@ dialog --msgbox "
 \n\
             Configuration Finished ! \n\
 \n\
-      Now Type 'make' to start compilation\n" 10 60 
+      Now Type 'make' to start compilation\n" 10 60
 
 
 

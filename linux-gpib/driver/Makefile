@@ -37,8 +37,23 @@ EXP_INC = $(EXPORTED_INCLUDES:%=$(ROOT)/include/%)
 CWD := `pwd`
 
 MAKE = make OPTIONS="$(OPTIONS) " -C
-SUBDIRS = nec7210 tms9914 protocol sys cb7210 ines tnt4882 pc2 tnt4882-tms
 
+SUBDIRS = nec7210 tms9914 protocol sys 
+ifdef CB7210
+SUBDIRS += cb7210
+endif
+ifdef INES
+SUBDIRS += ines
+endif
+ifdef TNT4882
+SUBDIRS += tnt4882
+endif
+ifdef PC2
+SUBDIRS += pc2
+endif
+ifdef TNT4882TMS
+SUBDIRS += tnt4882-tms
+endif
 
 all : $(EXP_INC) subdirs gpib-common.o
 
