@@ -15,19 +15,16 @@
 all: html man pdf
 
 html: linux-gpib.sgml
-	mkdir -p html
-	touch html
 	docbook2html -o html linux-gpib.sgml
+	touch html
 
 man: linux-gpib.sgml
-	mkdir -p man
-	touch man
 	docbook2man -o man linux-gpib.sgml
+	touch man
 
 pdf: linux-gpib.sgml
-	mkdir -p pdf
-	touch pdf
 	docbook2pdf -o pdf linux-gpib.sgml
+	touch pdf
 
 clean:
 	rm -rf html
