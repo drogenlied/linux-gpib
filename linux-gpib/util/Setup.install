@@ -40,7 +40,9 @@ if [ ! -r /dev/gpib0/master ]; then
                 if [ ! -d /dev/gpib0 ]; then
                         mkdir /dev/gpib0
                 fi
-                mknod /dev/gpib0/master c $IBMAJOR 0
+                mknod --mode=u+rw,g+rw,o-rw /dev/gpib0/master c $IBMAJOR 0 || exit 1
+		groupadd gpib
+		chown root.gpib /dev/gpib0/master
         fi
 else
         ls -l /dev/gpib0/master | grep -q "$IBMAJOR",
@@ -50,7 +52,9 @@ else
                Update ?" 8 60
                 if [ $? = 0 ];then
                         rm -f /dev/gpib0/master
-                        mknod --mode=a+w /dev/gpib0/master c $IBMAJOR 0 || exit 1
+                	mknod --mode=u+rw,g+rw,o-rw /dev/gpib0/master c $IBMAJOR 0 || exit 1
+			groupadd gpib
+			chown root.gpib /dev/gpib0/master
                 fi
         fi
 fi
