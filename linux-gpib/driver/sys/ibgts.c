@@ -25,7 +25,7 @@
 
 int ibgts( gpib_board_t *board )
 {
-	int status = ibstatus( board, 0 );
+	int status = ibstatus( board );
 	int retval;
 
 	if( ( status & CIC ) == 0 )

@@ -142,10 +142,15 @@ int ibonl( int ud, int onl )
 	ibConf_t *conf;
 	int retval;
 	ibBoard_t *board;
+	int status;
 
 	conf = enter_library( ud );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
+
+	/* XXX need to execute stop _before_ waiting for
+	library lock */
+	internal_ibstop( conf );
 
 	if( onl )
 	{
@@ -165,14 +170,15 @@ int ibonl( int ud, int onl )
 		return exit_library( ud, 1 );
 	}
 
+	status = exit_library( ud, 0 );
+
 	if( ud >= GPIB_MAX_NUM_BOARDS )
 	{
 		// need to take more care to clean up before freeing XXX
 		free( ibConfigs[ ud ] );
 		ibConfigs[ ud ] = NULL;
 	}
-	setIbsta( 0 );
-	return 0;
+	return status;
 }
 
 

@@ -133,7 +133,8 @@ void * run_autopoll( void *arg )
 int create_autopoll_thread( ibBoard_t *board )
 {
 	int retval;
-
+	pthread_attr_t attributes;
+	
 	pthread_mutex_lock( &board->autopoll_lock );
 
 	if( board->autopoll_thread )
@@ -149,7 +150,10 @@ int create_autopoll_thread( ibBoard_t *board )
 		return -1;
 	}
 
+	pthread_attr_init( &attributes );
+	pthread_attr_setstacksize( &attributes, 0x10000 );
 	retval = pthread_create( board->autopoll_thread, NULL, run_autopoll, board );
+	pthread_attr_destroy( &attributes );
 	if( retval )
 	{
 		fprintf( stderr, "libgpib: failed to create autopoll thread, retval=%i\n", retval );

@@ -417,46 +417,13 @@ ibConf_t * general_enter_library( int ud, int no_lock_board, int ignore_eoip )
 int ibstatus( ibConf_t *conf, int error, int clear_mask )
 {
 	int status = 0;
-	int retval;
 
-	if( conf->is_interface )
-	{
-		int board_status;
-
-		board_status = clear_mask;
-		retval = ioctl( interfaceBoard( conf )->fileno, IBSTATUS, &board_status );
-		if( retval < 0 )
-		{
-			error++;
-			setIberr( EDVR );
-		}else
-			status |= board_status & board_status_mask;
-		if( interfaceBoard(conf)->use_event_queue )
-		{
-			status &= ~DTAS & ~DCAS;
-		}else
-		{
-			status %= ~EVENT;
-		}
-	}else
-	{
-		spoll_bytes_ioctl_t cmd;
-		cmd.pad = conf->settings.pad;
-		cmd.sad = conf->settings.sad;
-		retval = ioctl( interfaceBoard( conf )->fileno, IBSPOLL_BYTES, &cmd );
-		if( retval < 0 )
-		{
-			error++;
-			setIberr( EDVR );
-		}else
-		{
-			if( cmd.num_bytes > 0 )
-				status |= RQS;
-		}
-	}
-
+// XXX gut and replace with my_ibwait
 	pthread_mutex_lock( &conf->async.lock );
-	if( conf->async.in_progress == 0 )
+	if( conf->async.in_progress )
+	{
+		status &= ~CMPL;
+	}else
 	{
 		status |= CMPL;
 	}
@@ -474,10 +441,11 @@ int ibstatus( ibConf_t *conf, int error, int clear_mask )
 
 int exit_library( int ud, int error )
 {
-	return general_exit_library( ud, error, 0, 0 );
+	return general_exit_library( ud, error, 0, 0, 0 );
 }
 
-int general_exit_library( int ud, int error, int no_sync_globals, int status_clear_mask )
+int general_exit_library( int ud, int error, int no_sync_globals, int no_update_ibsta,
+	int status_clear_mask )
 {
 	ibConf_t *conf = ibConfigs[ ud ];
 	ibBoard_t *board;
@@ -486,14 +454,19 @@ int general_exit_library( int ud, int error, int no_sync_globals, int status_cle
 	if( ibCheckDescriptor( ud ) < 0 )
 	{
 		setIberr( EDVR );
+//XXX		setIbcnt(  );
 		setIbsta( ERR );
-		sync_globals();
+		if( no_sync_globals == 0 )
+			sync_globals();
 		return ERR;
 	}
 
 	board = interfaceBoard( conf );
 
-	status = ibstatus( conf, error, status_clear_mask );
+	if( no_update_ibsta )
+		status = ThreadIbsta();
+	else
+		status = ibstatus( conf, error, status_clear_mask );
 
 	if( conf->has_lock )
 		conf_unlock_board( conf );
@@ -595,16 +568,23 @@ unsigned int numAddresses( const Addr4882_t addressList[] )
 int is_cic( const ibBoard_t *board )
 {
 	int retval;
-	int board_status;
+	wait_ioctl_t cmd;
 
-	retval = ioctl( board->fileno, IBSTATUS, &board_status );
+	cmd.usec_timeout = 0;
+	cmd.wait_mask = 0;
+	cmd.clear_mask = 0;
+	cmd.pad = NOADDR;
+	cmd.sad = NOADDR;
+	retval = ioctl( board->fileno, IBWAIT, &cmd );
 	if( retval < 0 )
 	{
+		setIberr( EDVR );
+		setIbcnt( errno );
 		fprintf( stderr, "libgpib: error in is_cic()!\n");
-		return retval;
+		return -1;
 	}
 
-	if( board_status & CIC )
+	if( cmd.ibsta & CIC )
 		return 1;
 
 	return 0;

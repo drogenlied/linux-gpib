@@ -48,6 +48,8 @@ int ibParseConfigFile( void );
 int ibGetDescriptor(ibConf_t conf);
 int ibFindDevIndex( const char *name );
 ssize_t my_ibcmd( ibConf_t *conf, const uint8_t *buffer, size_t length);
+ssize_t my_ibrd( ibConf_t *conf, uint8_t *buffer, size_t count );
+ssize_t my_ibwrt( ibConf_t *conf, const uint8_t *buffer, size_t count );
 unsigned int send_setup_string( const ibConf_t *conf, uint8_t *cmdString );
 unsigned int create_send_setup( const ibBoard_t *board,
 	const Addr4882_t addressList[], uint8_t *cmdString );
@@ -69,7 +71,8 @@ int unlock_board_mutex( ibBoard_t *board );
 int conf_lock_board( ibConf_t *conf );
 void conf_unlock_board( ibConf_t *conf );
 int exit_library( int ud, int error );
-int general_exit_library( int ud, int error, int no_sync_globals, int status_clear_mask );
+int general_exit_library( int ud, int error, int no_sync_globals, int no_update_ibsta,
+	int status_clear_mask );
 ibConf_t * enter_library( int ud );
 ibConf_t * general_enter_library( int ud, int no_lock_board, int ignore_eoip );
 void setIbsta( int status );
@@ -111,6 +114,7 @@ int internal_iblines( ibConf_t *conf, short *line_status );
 int internal_ibgts( ibConf_t *conf, int shadow_handshake );
 int internal_ibrsc( ibConf_t *conf, int request_control );
 int internal_ibsic( ibConf_t *conf );
+int internal_ibstop( ibConf_t *conf );
 int InternalDevClearList( ibConf_t *conf, const Addr4882_t addressList[] );
 int InternalReceiveSetup( ibConf_t *conf, Addr4882_t address );
 int InternalSendSetup( ibConf_t *conf, const Addr4882_t addressList[] );
@@ -132,5 +136,16 @@ void gpib_yyrestart( FILE* );
 int parse_gpib_conf( const char *filename, ibConf_t *configs,
 	unsigned int configs_length, ibBoard_t *boards, unsigned int boards_length );
 #define YY_DECL int gpib_yylex( YYSTYPE *gpib_lvalp, YYLTYPE *gpib_llocp )
+
+/* support for async io (ibrda() ibwrta(), etc.) */
+enum gpib_aio_varieties
+{
+	GPIB_AIO_COMMAND,
+	GPIB_AIO_READ,
+	GPIB_AIO_WRITE,
+};
+int gpib_aio_launch( int ud, ibConf_t *conf, int gpib_aio_type,
+	void *buffer, long cnt );
+int gpib_aio_join( struct async_operation *async );
 
 #endif	/* _IB_INTERNAL_H */

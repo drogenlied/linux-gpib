@@ -75,34 +75,35 @@ int ibeos( gpib_board_t *board, int eos, int eosflags )
 	return 0;
 }
 
-unsigned int ibstatus( gpib_board_t *board, unsigned int clear_mask )
+int ibstatus( gpib_board_t *board )
 {
-	if( board->private_data == NULL )
-		return 0;
-
-	return board->interface->update_status( board, clear_mask );
+	return general_ibstatus( board, NULL, 0, 0 );
 }
 
-unsigned int full_ibstatus( gpib_board_t *board, const gpib_device_t *device )
+int general_ibstatus( gpib_board_t *board, const gpib_device_t *device,
+	int clear_mask, pid_t cmpl_pid )
 {
-	unsigned int status;
+	int status = 0;
 
-	status = ibstatus( board, 0 );
-
-	// fixup RQS, CMPL bits
-
+	if( board->private_data )
+	{
+		status = board->interface->update_status( board, clear_mask );
+		/* XXX should probably stop having drivers use TIMO bit in
+		 * board->status to avoid confusion */
+		status &= ~TIMO;
+	}
 	if( device )
 		if( num_status_bytes( device ) ) status |= RQS;
 
-	if( ( status & CMPL ) == 0 )
-	{
-		if( board->locking_pid != current->pid ) status |= CMPL;
-	}
+	if( cmpl_pid && board->locking_pid == cmpl_pid )
+		status &= ~CMPL;
+	else
+		status |= CMPL;
 
 	if( num_gpib_events( &board->event_queue ) )
 		status |= EVENT;
 	else
 		status &= ~EVENT;
-		
+
 	return status;
 }

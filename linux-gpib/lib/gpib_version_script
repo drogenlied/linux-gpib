@@ -70,6 +70,7 @@ GPIB_DUMMY_VERSION {
 		ibsic;
 		ibsre;
 		ibsta;
+		ibstop;
 		ibtmo;
 		ibtrg;
 		ibwait;

@@ -18,7 +18,18 @@
 #include "ib_internal.h"
 #include <pthread.h>
 
-int my_wait( ibConf_t *conf, int mask )
+void fixup_status_bits( const ibConf_t *conf, int *status )
+{
+	if( interfaceBoard(conf)->use_event_queue )
+	{
+		*status &= ~DTAS & ~DCAS;
+	}else
+	{
+		*status &= ~EVENT;
+	}
+}
+
+int my_wait( ibConf_t *conf, int mask, int *status )
 {
 	ibBoard_t *board;
 	int retval;
@@ -38,20 +49,23 @@ int my_wait( ibConf_t *conf, int mask )
 	}
 
 	cmd.usec_timeout = conf->settings.usec_timeout;
-	cmd.mask = mask;
+	cmd.wait_mask = mask;
+	fixup_status_bits( conf, &cmd.wait_mask );
+	cmd.clear_mask = mask & ( DTAS | DCAS );
 	if( conf->is_interface == 0 )
 	{
 		cmd.pad = conf->settings.pad;
 		cmd.sad = conf->settings.sad;
-		cmd.mask &= device_wait_mask;
+		cmd.wait_mask &= device_wait_mask;
 	}else
 	{
 		cmd.pad = NOADDR;
 		cmd.sad = NOADDR;
-		cmd.mask &= board_wait_mask;
+//XXX additionally, clear wait mask depending on event queue enabled, etc */
+		cmd.wait_mask &= board_wait_mask;
 	}
 
-	if( mask != cmd.mask )
+	if( mask != cmd.wait_mask )
 	{
 		setIberr( EARG );
 		return -1;
@@ -60,20 +74,15 @@ int my_wait( ibConf_t *conf, int mask )
 	retval = ioctl( board->fileno, IBWAIT, &cmd );
 	if( retval < 0 )
 	{
-		switch( errno )
-		{
-			case ETIMEDOUT:
-				conf->timed_out = 1;
-				return 0;
-				break;
-			default:
-				break;
-		}
 		setIberr( EDVR );
 		setIbcnt( errno );
 		return -1;
 	}
-
+	fixup_status_bits( conf, &cmd.ibsta );
+	if( conf->end ) //XXX
+		*status |= END;
+	setIbsta( cmd.ibsta );
+	*status = cmd.ibsta;
 	return 0;
 }
 
@@ -88,23 +97,29 @@ int ibwait( int ud, int mask )
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 
-	retval = my_wait( conf, mask );
+	retval = my_wait( conf, mask, &status );
 	if( retval < 0 )
 		return exit_library( ud, 1 );
 
-	if( conf->async.in_progress && ( mask & CMPL ) )
+//XXX
+	if( conf->async.in_progress )
 	{
+		if( gpib_aio_join( &conf->async ) )
+			error++;
 		pthread_mutex_lock( &conf->async.lock );
 		if( conf->async.ibsta & CMPL )
 			conf->async.in_progress = 0;
 		setIbcnt( conf->async.ibcntl );
 		setIberr( conf->async.iberr );
 		if( conf->async.ibsta & ERR )
+		{
 			error++;
+			setIberr( conf->async.iberr );
+		}
 		pthread_mutex_unlock( &conf->async.lock );
 	}
 
-	status = general_exit_library( ud, error, 0, mask & ( DTAS | DCAS ) );
+	general_exit_library( ud, error, 0, 1, 0 );
 
 	return status;
 }
@@ -114,6 +129,7 @@ void WaitSRQ( int boardID, short *result )
 	ibConf_t *conf;
 	int retval;
 	int wait_mask;
+	int status;
 
 	conf = enter_library( boardID );
 	if( conf == NULL )
@@ -129,7 +145,7 @@ void WaitSRQ( int boardID, short *result )
 	}
 
 	wait_mask = SRQI | TIMO;
-	retval = my_wait( conf, wait_mask );
+	retval = my_wait( conf, wait_mask, &status );
 	if( retval < 0 )
 	{
 		exit_library( boardID, 1 );

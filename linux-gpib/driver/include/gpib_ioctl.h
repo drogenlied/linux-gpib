@@ -64,10 +64,13 @@ typedef struct
 
 typedef struct
 {
-	int mask;
-	unsigned int pad;
+	int wait_mask;
+	int clear_mask;
+	int ibsta;
+	int pad;
 	int sad;
 	unsigned long usec_timeout;
+	pid_t cmpl_pid;
 } wait_ioctl_t;
 
 typedef struct
@@ -130,7 +133,7 @@ enum gpib_ioctl
 	IBCMD = _IOWR( GPIB_CODE, 2, read_write_ioctl_t ),
 	IBOPENDEV = _IOWR( GPIB_CODE, 3, open_dev_ioctl_t ),
 	IBCLOSEDEV = _IOW( GPIB_CODE, 4, close_dev_ioctl_t ),
-	IBWAIT = _IOW( GPIB_CODE, 5, wait_ioctl_t ),
+	IBWAIT = _IOWR( GPIB_CODE, 5, wait_ioctl_t ),
 	IBRPP = _IOWR( GPIB_CODE, 6, uint8_t ),
 
 	IBONL = _IOW( GPIB_CODE, 8, online_ioctl_t ),
@@ -138,7 +141,6 @@ enum gpib_ioctl
 	IBSRE = _IOW( GPIB_CODE, 10, int ),
 	IBGTS = _IO( GPIB_CODE, 11 ),
 	IBCAC = _IOW( GPIB_CODE, 12, int ),
-	IBSTATUS = _IOWR( GPIB_CODE, 13, int ),
 	IBLINES = _IOR( GPIB_CODE, 14, short ),
 	IBPAD = _IOW( GPIB_CODE, 15, pad_ioctl_t ),
 	IBSAD = _IOW( GPIB_CODE, 16, sad_ioctl_t ),

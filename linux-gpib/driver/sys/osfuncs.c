@@ -24,7 +24,6 @@ static int board_type_ioctl(gpib_board_t *board, unsigned long arg);
 static int read_ioctl(gpib_board_t *board, unsigned long arg);
 static int write_ioctl(gpib_board_t *board, unsigned long arg);
 static int command_ioctl(gpib_board_t *board, unsigned long arg);
-static int status_ioctl(gpib_board_t *board, unsigned long arg);
 static int open_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned long arg );
 static int close_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned long arg );
 static int serial_poll_ioctl( gpib_board_t *board, unsigned long arg );
@@ -240,9 +239,6 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			break;
 		case IBSPOLL_BYTES:
 			return status_bytes_ioctl( board, arg );
-			break;
-		case IBSTATUS:
-			return status_ioctl( board, arg );
 			break;
 		case IBWAIT:
 			return wait_ioctl( board, arg );
@@ -515,24 +511,6 @@ static int status_bytes_ioctl( gpib_board_t *board, unsigned long arg )
 	return 0;
 }
 
-static int status_ioctl(gpib_board_t *board, unsigned long arg)
-{
-	int retval;
-	int status, clear_mask;
-
-	retval = copy_from_user( &clear_mask, (void *) arg, sizeof( clear_mask ) );
-	if( retval )
-		return -EFAULT;
-
-	status = ibstatus( board, clear_mask );
-
-	retval = copy_to_user( (void *) arg, &status, sizeof( status ) );
-	if( retval )
-		return -EFAULT;
-
-	return 0;
-}
-
 static int increment_open_device_count( struct list_head *head, unsigned int pad, int sad )
 {
 	struct list_head *list_ptr;
@@ -724,9 +702,14 @@ static int wait_ioctl( gpib_board_t *board, unsigned long arg )
 	if( retval )
 		return -EFAULT;
 
-	retval = ibwait( board, wait_cmd.mask, wait_cmd.pad,
-		wait_cmd.sad, wait_cmd.usec_timeout );
+	retval = ibwait( board, wait_cmd.wait_mask, wait_cmd.clear_mask,
+		&wait_cmd.ibsta, wait_cmd.pad, wait_cmd.sad, wait_cmd.usec_timeout,
+		wait_cmd.cmpl_pid );
 	if( retval < 0 ) return retval;
+
+	retval = copy_to_user( ( void * ) arg, &wait_cmd, sizeof( wait_cmd ) );
+	if( retval )
+		return -EFAULT;
 
 	return 0;
 }
@@ -1016,7 +999,6 @@ static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 		}
 		board->locking_pid = current->pid;
 		file_priv->holding_mutex = 1;
-		clear_bit( CMPL_NUM, &board->status );
 		GPIB_DPRINTK( "locked board mutex\n" );
 	}else
 	{
@@ -1027,7 +1009,6 @@ static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 		}
 		file_priv->holding_mutex = 0;
 		board->locking_pid = 0;
-		set_bit( CMPL_NUM, &board->status );
 		if( atomic_read( &board->mutex.count ) > 0 )
 		{
 			printk( "gpib: bug! board->mutex.count %i before releasing lock!\n",

@@ -73,6 +73,23 @@ int find_boards( struct board_descriptors *boards )
 	}
 }
 
+int open_slave_device_descriptor( const struct board_descriptors *boards,
+	int timeout, int eot, int eos )
+{
+	int pad, sad;
+	int ud;
+	int status;
+
+	status = ibask( boards->slave, IbaPAD, &pad );
+	if( status & ERR )
+		return -1;
+	status = ibask( boards->slave, IbaSAD, &sad );
+	if( status & ERR )
+		return -1;
+	ud = ibdev( boards->master, pad, sad, timeout, eot, eos );
+	return ud;
+}
+
 const char read_write_string1[] = "dig8esdfas sdf\n";
 const char read_write_string2[] = "DFLIJFES8F3	";
 
@@ -91,6 +108,7 @@ void* read_write_slave_thread( void *arg )
 
 	for( i = 0; i < 2; i++ )
 	{
+		memset( buffer, 0, sizeof( buffer ) );
 		status = ibrd( param->slave_board, buffer, sizeof( buffer ) );
 		if( status & ERR )
 		{
@@ -122,27 +140,14 @@ int read_write_test( const struct board_descriptors *boards )
 	pthread_t slave_thread;
 	volatile struct read_write_slave_parameters param;
 	int status;
-	int pad, sad;
 	char buffer[ 1000 ];
 	int i;
 
 	fprintf( stderr, "%s...", __FUNCTION__ );
-	status = ibask( boards->slave, IbaPAD, &pad );
-	if( status & ERR )
-	{
-		fprintf( stderr, "FAILED: could not query slave pad\n" );
-		return -1;
-	}
-	status = ibask( boards->slave, IbaSAD, &sad );
-	if( status & ERR )
-	{
-		fprintf( stderr, "FAILED: could not query slave sad\n" );
-		return -1;
-	}
-	ud = ibdev( boards->master, pad, sad, T1s, 1, 0 );
+	ud = open_slave_device_descriptor( boards, T1s, 1, 0 );
 	if( ud < 0 )
 	{
-		fprintf( stderr, "FAILED: could not open device descriptor\n" );
+		fprintf( stderr, "FAILED: could not open slave device descriptor\n" );
 		return -1;
 	}
 	param.slave_board = boards->slave;
@@ -155,17 +160,20 @@ int read_write_test( const struct board_descriptors *boards )
 	for( i = 0; i < 2; i++ )
 	{
 		status = ibwrt( ud, read_write_string1, strlen( read_write_string1 ) + 1 );
-		if( status & ERR )
+		if( ( status & ERR ) || !( status & CMPL ) )
 		{
-			fprintf( stderr, "FAILED: write error %i\n", ThreadIberr() );
+			fprintf( stderr, "FAILED: write status 0x%x, error %i\n", ThreadIbsta(),
+				ThreadIberr() );
 			pthread_join( slave_thread, NULL );
 			ibonl( ud, 0 );
 			return -1;
 		}
+		memset( buffer, 0, sizeof( buffer ) );
 		status = ibrd( ud, buffer, sizeof( buffer ) );
-		if( status & ERR )
+		if( ( status & ERR ) || !( status & CMPL ) || !( status & END ) )
 		{
-			fprintf( stderr, "FAILED: read error %i\n", ThreadIberr() );
+			fprintf( stderr, "FAILED: read status 0x%x, error %i\n", ThreadIbsta(),
+				ThreadIberr() );
 			pthread_join( slave_thread, NULL );
 			ibonl( ud, 0 );
 			return -1;
@@ -195,6 +203,66 @@ int read_write_test( const struct board_descriptors *boards )
 	return 0;
 }
 
+int async_read_write_test( const struct board_descriptors *boards )
+{
+	int ud;
+	char buffer[ 1000 ];
+	int i;
+	int status;
+	
+	fprintf( stderr, "%s...", __FUNCTION__ );
+	ud = open_slave_device_descriptor( boards, T1s, 1, 0 );
+	if( ud < 0 )
+	{
+		fprintf( stderr, "FAILED: could not open device descriptor\n" );
+		return -1;
+	}
+	for( i = 0; i < 2; i++ )
+	{
+		status = ibwrta( ud, read_write_string1, strlen( read_write_string1 ) + 1 );
+		if( status & ERR )
+		{
+			fprintf( stderr, "FAILED: write error %i\n", ThreadIberr() );
+			ibonl( ud, 0 );
+			return -1;
+		}
+		memset( buffer, 0, sizeof( buffer ) );
+		status = ibrda( boards->slave, buffer, sizeof( buffer ) );
+		if( status & ERR )
+		{
+			fprintf( stderr, "FAILED: read error %i\n", ThreadIberr() );
+			ibonl( ud, 0 );
+			return -1;
+		}
+		status = ibwait( ud, CMPL );
+		if( ( status & ERR ) || !( status & CMPL ) )
+		{
+			fprintf( stderr, "FAILED: write status 0x%x, error %i\n", ThreadIbsta(),
+				ThreadIberr() );
+			ibonl( ud, 0 );
+			return -1;
+		}
+		status = ibwait( boards->slave, CMPL );
+		if( ( status & ERR ) || !( status & CMPL ) )
+		{
+			fprintf( stderr, "FAILED: write status 0x%x, error %i\n", ThreadIbsta(),
+				ThreadIberr() );
+			ibonl( ud, 0 );
+			return -1;
+		}
+		if( strcmp( buffer, read_write_string1 ) )
+		{
+			fprintf( stderr, "FAILED: got bad data from ibrd\n" );
+			fprintf( stderr, "received %i bytes:%s\n", ThreadIbcnt(), buffer );
+			ibonl( ud, 0 );
+			return -1;
+		}
+	}
+	fprintf( stderr, "OK\n" );
+	ibonl( ud, 0 );
+	return 0;
+}
+
 int main( int argc, char *argv[] )
 {
 	struct board_descriptors boards;
@@ -204,6 +272,9 @@ int main( int argc, char *argv[] )
 	if( retval < 0 ) return retval;
 
 	retval = read_write_test( &boards );
+	if( retval < 0 ) return retval;
+
+	retval = async_read_write_test( &boards );
 	if( retval < 0 ) return retval;
 
 	return 0;

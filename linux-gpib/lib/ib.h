@@ -119,6 +119,7 @@ int ibrsv( int ud, int v );
 int ibsad( int ud, int v );
 int ibsic( int ud );
 int ibsre( int ud, int v );
+int ibstop( int ud );
 int ibtmo( int ud, int v );
 int ibtrg( int ud );
 int ibwait( int ud, int mask );

@@ -33,7 +33,7 @@ ssize_t ibcmd( gpib_board_t *board, uint8_t *buf, size_t length )
 {
 	size_t	count = 0;
 	ssize_t ret = 0;
-	int status = ibstatus( board, 0 );
+	int status = ibstatus( board );
 
 	if(length == 0) return 0;
 

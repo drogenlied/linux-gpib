@@ -35,12 +35,14 @@ struct async_operation
 {
 	pthread_t thread;	/* thread used for asynchronous io operations */
 	pthread_mutex_t lock;
+	pthread_mutex_t join_lock;
 	uint8_t *buffer;
 	volatile long buffer_length;
 	volatile int iberr;
 	volatile int ibsta;
 	volatile long ibcntl;
 	volatile short in_progress;
+	volatile short abort;
 };
 
 typedef struct
