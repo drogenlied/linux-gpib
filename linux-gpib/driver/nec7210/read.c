@@ -62,7 +62,6 @@ static ssize_t pio_read( gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 		if( count < length )
 			nec7210_release_rfd_holdoff( priv );
 	}
-
 	return retval ? retval : count;
 }
 
@@ -158,7 +157,7 @@ ssize_t nec7210_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buff
 	{
 		if( 0 /* priv->dma_channel */ )
 		{	// ISA DMA transfer
-			retval = dma_read(board, priv, buffer, length);
+//			retval = dma_read(board, priv, buffer, length);
 		}else
 		{	// PIO transfer
 			retval = pio_read( board, priv, buffer, length, end );

@@ -49,7 +49,7 @@ void cb7210_internal_interrupt( gpib_board_t *board )
 
 	hs_status = inb( nec_priv->iobase + HS_STATUS );
 
-	if( ( priv->hs_mode_bits & HS_ENABLE_MASK )  )
+	if( ( priv->hs_mode_bits & HS_RX_ENABLE )  )
 		status1 = 0;
 	else
 	{
@@ -58,10 +58,9 @@ void cb7210_internal_interrupt( gpib_board_t *board )
 		status1 = read_byte( nec_priv, ISR1 );
 //		if( ( priv->hs_mode_bits & HS_ENABLE_MASK ) )
 //			outb( priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
-		status2 = read_byte( nec_priv, ISR2 );
-
-		nec7210_interrupt_have_status( board, nec_priv, status1, status2 );
 	}
+	status2 = read_byte( nec_priv, ISR2 );
+	nec7210_interrupt_have_status( board, nec_priv, status1, status2 );
 
 	GPIB_DPRINTK( "cb7210: status 0x%x, mode 0x%x\n", hs_status, priv->hs_mode_bits );
 
