@@ -76,16 +76,14 @@ ssize_t ines_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end)
 	ines_private_t *priv = board->private_data;
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 	ssize_t retval;
-	unsigned long flags;
+	int dummy;
 
 	retval = nec7210_read(board, &priv->nec7210_priv, buffer, length, end);
 	if( retval < 0 )
 	{
 		write_byte( nec_priv, INES_RFD_HLD_IMMEDIATE, AUXMR );
-		spin_lock_irqsave( &board->spinlock, flags );
-		read_byte( nec_priv, DIR );
-		clear_bit( READ_READY_BN, &nec_priv->state );
-		spin_unlock_irqrestore( &board->spinlock, flags );
+		set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
+		nec7210_read_data_in( board, nec_priv, &dummy );
 	}
 	return retval;
 }
@@ -269,6 +267,7 @@ void ines_online( ines_private_t *ines_priv, const gpib_board_t *board, int use_
 	write_byte( nec_priv, INES_AUX_CLR_IN_FIFO, AUXMR );
 	write_byte( nec_priv, INES_AUX_CLR_OUT_FIFO, AUXMR );
 	write_byte( nec_priv, INES_RFD_HLD_IMMEDIATE, AUXMR );
+	set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
 	write_byte( nec_priv, INES_AUXD | 0, AUXMR );
 	outb( 0, nec_priv->iobase + XDMA_CONTROL );
 	ines_priv->extend_mode_bits = 0;

@@ -73,12 +73,16 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 	if(status1 & HR_END)
 	{
 		set_bit(RECEIVED_END_BN, &priv->state);
+		if( ( priv->auxa_bits & HR_HANDSHAKE_MASK ) == HR_HLDE )
+			set_bit( RFD_HOLDOFF_BN, &priv->state);
 	}
 
 	// get incoming data in PIO mode
 	if((status1 & HR_DI))
 	{
 		set_bit(READ_READY_BN, &priv->state);
+		if( ( priv->auxa_bits & HR_HANDSHAKE_MASK ) == HR_HLDA )
+			set_bit( RFD_HOLDOFF_BN, &priv->state);
 	}
 
 	// check for dma read transfer complete

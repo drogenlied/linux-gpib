@@ -51,8 +51,6 @@ static inline void input_fifo_enable( gpib_board_t *board, int enable )
 		cb_priv->hs_mode_bits |= HS_RX_ENABLE;
 		outb( cb_priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
 
-		clear_bit( READ_READY_BN, &nec_priv->state );
-
 		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAI, 1 );
 	}else
 	{
@@ -61,6 +59,7 @@ static inline void input_fifo_enable( gpib_board_t *board, int enable )
 		cb_priv->hs_mode_bits &= ~HS_ENABLE_MASK;
 		outb( cb_priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
 
+		clear_bit( READ_READY_BN, &nec_priv->state );
 		cb7210_internal_interrupt( board );
 	}
 
@@ -102,15 +101,9 @@ static ssize_t fifo_read( gpib_board_t *board, cb7210_private_t *cb_priv, uint8_
 			nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAI, 0 );
 			break;
 		}
-		if( test_bit( TIMO_NUM, &board->status ) )
-		{
-			retval = -ETIMEDOUT;
-			nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAI, 0 );
-			break;
-		}
+		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAI, 0 );
 
 		spin_lock_irqsave( &board->spinlock, flags );
-		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAI, 0 );
 
 		while( have_fifo_word( cb_priv ) )
 		{
@@ -132,10 +125,12 @@ printk("hs 0x%x, cnt %i\n", inb( nec_priv->iobase + HS_STATUS ), count );
 			printk("end or ff hs 0x%x\n", hs_status );
 			break;
 		}
+		if( test_bit( TIMO_NUM, &board->status ) )
+		{
+			retval = -ETIMEDOUT;
+			break;
+		}
 	}
-
-	nec7210_set_handshake_mode( nec_priv, HR_HLDA );
-
 	hs_status = inb( nec_priv->iobase + HS_STATUS );
 	if( hs_status & HS_RX_LSB_NOT_EMPTY )
 	{
@@ -143,14 +138,11 @@ printk("hs 0x%x, cnt %i\n", inb( nec_priv->iobase + HS_STATUS ), count );
 		buffer[ count++ ] = word & 0xff;
 	}
 
+	nec7210_set_handshake_mode( board, nec_priv, HR_HLDA );
 	input_fifo_enable( board, 0 );
 
-	spin_lock_irqsave( &board->spinlock, flags );
-	if( test_and_clear_bit( RECEIVED_END_BN, &nec_priv->state ) )
-		*end = 1;
-	if( test_and_clear_bit( READ_READY_BN, &nec_priv->state ) )
-		buffer[ count++ ] = read_byte( nec_priv, DIR );
-	spin_unlock_irqrestore( &board->spinlock, flags );
+	if( test_bit( READ_READY_BN, &nec_priv->state ) )
+		buffer[ count++ ] = nec7210_read_data_in( board, nec_priv, end );
 
 printk("done hs 0x%x, cnt %i\n", inb( nec_priv->iobase + HS_STATUS ), count);
 
@@ -171,9 +163,8 @@ ssize_t cb7210_accel_read( gpib_board_t *board, uint8_t *buffer,
 	}
 	*end = 0;
 
-	/* release rfd holdoff */
-	nec7210_set_handshake_mode( nec_priv, HR_HLDE );
-	write_byte( nec_priv, AUX_FH, AUXMR );
+	nec7210_set_handshake_mode( board, nec_priv, HR_HLDA );
+	nec7210_release_rfd_holdoff( board, nec_priv);
 
 	if( wait_event_interruptible( board->wait,
 		test_bit( READ_READY_BN, &nec_priv->state ) ||
@@ -183,11 +174,21 @@ ssize_t cb7210_accel_read( gpib_board_t *board, uint8_t *buffer,
 		return -ERESTARTSYS;
 	}
 	if( test_bit( TIMO_NUM, &board->status ) )
+	{
 		return -ETIMEDOUT;
+	}
 
-	count = fifo_read( board, cb_priv, buffer, length - 1, end );
+	buffer[ count++ ] = nec7210_read_data_in( board, nec_priv, end );
+	if( *end ) return count;
+
+	nec7210_set_handshake_mode( board, nec_priv, HR_HLDE );
+	nec7210_release_rfd_holdoff( board, nec_priv );
+
+	count = fifo_read( board, cb_priv, &buffer[ count ], length - count - 1, end );
 	if( count < 0 )
+	{
 		return count;
+	}
 
 	if( *end ) return count;
 

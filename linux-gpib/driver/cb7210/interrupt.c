@@ -81,13 +81,8 @@ void cb7210_internal_interrupt( gpib_board_t *board )
 	if( ( hs_status & HS_EOI_INT ) )
 	{
 		clear_bits |= HS_CLR_EOI_EMPTY_INT;
-		set_bit( RECEIVED_END_BN, &nec_priv->state );
-		if( ( priv->hs_mode_bits & HS_ENABLE_MASK ) )
-		{
-			outb( priv->hs_mode_bits & ~HS_ENABLE_MASK, nec_priv->iobase + HS_MODE );
-			status1 = read_byte( nec_priv, ISR1 );
-			outb( priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
-		}
+		if( ( nec_priv->auxa_bits & HR_HANDSHAKE_MASK ) == HR_HLDE )
+			set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
 	}
 
 	if( ( priv->hs_mode_bits & HS_TX_ENABLE ) &&

@@ -42,17 +42,15 @@ ssize_t tnt4882_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *e
 	tnt4882_private_t *priv = board->private_data;
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 	ssize_t retval;
-	unsigned long flags;
-	
+	int dummy;
+
 	retval = nec7210_read(board, &priv->nec7210_priv, buffer, length, end);
 
 	if( retval < 0 )
 	{	// force immediate holdoff
 		write_byte( nec_priv, AUX_HLDI, AUXMR );
-		spin_lock_irqsave( &board->spinlock, flags );
-		read_byte( nec_priv, DIR );
-		clear_bit( READ_READY_BN, &nec_priv->state );
-		spin_unlock_irqrestore( &board->spinlock, flags );
+		set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
+		nec7210_read_data_in( board, nec_priv, &dummy );
 	}
 	return retval;
 }
@@ -249,6 +247,7 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 
 	// force immediate holdoff
 	write_byte( nec_priv, AUX_HLDI, AUXMR );
+	set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
 
 	nec7210_board_online( nec_priv, board );
 	// enable interface clear interrupt for event queue

@@ -166,11 +166,32 @@ unsigned int nec7210_set_reg_bits( nec7210_private_t *priv, unsigned int reg,
 	return priv->reg_bits[ reg ];
 }
 
-void nec7210_set_handshake_mode( nec7210_private_t *priv, int mode )
+void nec7210_set_handshake_mode( gpib_board_t *board, nec7210_private_t *priv, int mode )
 {
+	unsigned long flags;
+
+	spin_lock_irqsave( &board->spinlock, flags );
 	priv->auxa_bits &= ~HR_HANDSHAKE_MASK;
 	priv->auxa_bits |= ( mode & HR_HANDSHAKE_MASK );
 	write_byte( priv, priv->auxa_bits, AUXMR );
+	spin_unlock_irqrestore( &board->spinlock, flags );
+}
+
+uint8_t nec7210_read_data_in( gpib_board_t *board, nec7210_private_t *priv, int *end )
+{
+	unsigned long flags;
+	uint8_t data;
+
+	spin_lock_irqsave( &board->spinlock, flags );
+	data = read_byte( priv, DIR );
+	clear_bit( READ_READY_BN, &priv->state );
+	if( test_and_clear_bit( RECEIVED_END_BN, &priv->state ) )
+		*end = 1;
+	else
+		*end = 0;
+	spin_unlock_irqrestore( &board->spinlock, flags );
+
+	return data;
 }
 
 EXPORT_SYMBOL( nec7210_enable_eos );
@@ -184,4 +205,5 @@ EXPORT_SYMBOL( nec7210_secondary_address );
 EXPORT_SYMBOL( nec7210_update_status );
 EXPORT_SYMBOL( nec7210_set_reg_bits );
 EXPORT_SYMBOL( nec7210_set_handshake_mode );
+EXPORT_SYMBOL( nec7210_read_data_in );
 

@@ -64,6 +64,7 @@ enum
 	COMMAND_READY_BN,	// board is ready to send a command byte
 	RECEIVED_END_BN,	// received END
 	BUS_ERROR_BN,	// output error has occurred
+	RFD_HOLDOFF_BN,	// rfd holdoff in effect
 };
 
 // interface functions
@@ -100,8 +101,9 @@ extern void nec7210_board_reset( nec7210_private_t *priv, const gpib_board_t *bo
 extern void nec7210_board_online( nec7210_private_t *priv, const gpib_board_t *board );
 extern unsigned int nec7210_set_reg_bits( nec7210_private_t *priv, unsigned int reg,
 	unsigned int mask, int set );
-extern void nec7210_set_handshake_mode( nec7210_private_t *priv, int mode );
-extern void nec7210_release_rfd_holdoff( nec7210_private_t *priv );
+extern void nec7210_set_handshake_mode( gpib_board_t *board, nec7210_private_t *priv, int mode );
+extern void nec7210_release_rfd_holdoff( gpib_board_t *board, nec7210_private_t *priv );
+extern uint8_t nec7210_read_data_in( gpib_board_t *board, nec7210_private_t *priv, int *end );
 
 // wrappers for io functions
 extern uint8_t nec7210_ioport_read_byte(nec7210_private_t *priv, unsigned int register_num);

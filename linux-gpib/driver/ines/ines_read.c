@@ -78,10 +78,10 @@ ssize_t ines_accel_read( gpib_board_t *board, uint8_t *buffer,
 
 	*end = 0;
 
+	// holdoff on END
+	nec7210_set_handshake_mode( board, nec_priv, HR_HLDE );
 	/* release rfd holdoff */
 	write_byte( nec_priv, AUX_FH, AUXMR );
-	// holdoff on END
-	nec7210_set_handshake_mode( nec_priv, HR_HLDE );
 
 	retval = pio_read( board, ines_priv, buffer, length );
 	if( retval < 0 )

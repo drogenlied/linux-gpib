@@ -25,7 +25,6 @@ static ssize_t pio_read( gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 {
 	size_t count = 0;
 	ssize_t retval = 0;
-	unsigned long flags;
 
 	*end = 0;
 
@@ -42,16 +41,9 @@ static ssize_t pio_read( gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 
 		if( test_bit(READ_READY_BN, &priv->state) )
 		{
-			spin_lock_irqsave(&board->spinlock, flags);
-			clear_bit(READ_READY_BN, &priv->state);
-			buffer[count++] = read_byte(priv, DIR);
-			if(test_and_clear_bit( RECEIVED_END_BN, &priv->state))
-			{
-				*end = 1;
-				spin_unlock_irqrestore(&board->spinlock, flags);
+			buffer[ count++ ] = nec7210_read_data_in( board, priv, end );
+			if( *end )
 				break;
-			}
-			spin_unlock_irqrestore(&board->spinlock, flags);
 		}
 		if(test_bit(TIMO_NUM, &board->status))
 		{
@@ -60,7 +52,7 @@ static ssize_t pio_read( gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 		}
 
 		if( count < length )
-			nec7210_release_rfd_holdoff( priv );
+			nec7210_release_rfd_holdoff( board, priv );
 	}
 	return retval ? retval : count;
 }
@@ -150,8 +142,8 @@ ssize_t nec7210_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buff
 
 	*end = 0;
 
-	nec7210_set_handshake_mode( priv, HR_HLDA );
-	nec7210_release_rfd_holdoff( priv );
+	nec7210_set_handshake_mode( board, priv, HR_HLDA );
+	nec7210_release_rfd_holdoff( board, priv );
 
 	if(length)
 	{
