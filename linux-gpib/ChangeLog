@@ -9,7 +9,7 @@ underscores.  Fixed compilation of TCL binding
 against several TCL versions.  Fixed support of
 NI AT-GPIB cards with older chipsets.  Fixed
 ISAPNP support for AT-GPIB/TNT where board would
-not be deactivated after first use.  Fixed
+not be reactivated after first use.  Fixed
 regression in 3.1.94 where bus errors occur due
 to writing too soon after ATN is asserted/released.
 Catch bus errors on writing command bytes.
