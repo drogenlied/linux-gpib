@@ -20,11 +20,14 @@
 #include <asm/dma.h>
 #include <linux/spinlock.h>
 
-static ssize_t pio_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer, size_t length)
+static ssize_t pio_read( gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer,
+	size_t length, int *end )
 {
 	size_t count = 0;
 	ssize_t retval = 0;
 	unsigned long flags;
+
+	*end = 0;
 
 	while( count < length )
 	{
@@ -36,21 +39,25 @@ static ssize_t pio_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *b
 			retval = -ERESTARTSYS;
 			break;
 		}
+
+		if( test_bit(READ_READY_BN, &priv->state) )
+		{
+			spin_lock_irqsave(&board->spinlock, flags);
+			clear_bit(READ_READY_BN, &priv->state);
+			buffer[count++] = read_byte(priv, DIR);
+			if(test_and_clear_bit( RECEIVED_END_BN, &priv->state))
+			{
+				*end = 1;
+				spin_unlock_irqrestore(&board->spinlock, flags);
+				break;
+			}
+			spin_unlock_irqrestore(&board->spinlock, flags);
+		}
 		if(test_bit(TIMO_NUM, &board->status))
 		{
 			retval = -ETIMEDOUT;
 			break;
 		}
-
-		spin_lock_irqsave(&board->spinlock, flags);
-		clear_bit(READ_READY_BN, &priv->state);
-		buffer[count++] = read_byte(priv, DIR);
-		if(test_bit(RECEIVED_END_BN, &priv->state))
-		{
-			spin_unlock_irqrestore(&board->spinlock, flags);
-			break;
-		}
-		spin_unlock_irqrestore(&board->spinlock, flags);
 
 		if( count < length )
 			nec7210_release_rfd_holdoff( priv );
@@ -134,7 +141,8 @@ static ssize_t dma_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *b
 	return length - remain;
 }
 
-ssize_t nec7210_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer, size_t length, int *end)
+ssize_t nec7210_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer,
+	size_t length, int *end)
 {
 	size_t	count = 0;
 	ssize_t retval = 0;
@@ -153,16 +161,13 @@ ssize_t nec7210_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buff
 			retval = dma_read(board, priv, buffer, length);
 		}else
 		{	// PIO transfer
-			retval = pio_read(board, priv, buffer, length);
+			retval = pio_read( board, priv, buffer, length, end );
 		}
 		if(retval < 0)
 			return retval;
 		else
 			count += retval;
 	}
-
-	if(test_and_clear_bit(RECEIVED_END_BN, &priv->state))
-		*end = 1;
 
 	return count;
 }
