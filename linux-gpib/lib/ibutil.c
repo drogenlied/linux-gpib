@@ -463,7 +463,7 @@ int general_exit_library( int ud, int error, int no_sync_globals, int no_update_
 	else
 		status = ibstatus( conf, error, status_clear_mask, status_set_mask );
 
-	if( no_unlock_board == 0 )
+	if( no_unlock_board == 0 && conf->has_lock )
 		conf_unlock_board( conf );
 
 	if( no_sync_globals == 0 )
