@@ -56,6 +56,7 @@ int send_setup( ibConf_t *conf );
 void init_ibconf( ibConf_t *conf );
 int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout,
 	int send_eoi, int eos, int eosflags);
+int my_ibbna( ibConf_t *conf, unsigned int new_board_index );
 unsigned int timeout_to_usec( enum gpib_timeout timeout );
 unsigned int ppoll_timeout_to_usec( unsigned int timeout );
 unsigned int usec_to_ppoll_timeout( unsigned int usec );

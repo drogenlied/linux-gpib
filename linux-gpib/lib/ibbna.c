@@ -17,49 +17,38 @@
 
 #include "ib_internal.h"
 
-int ibbna( int ud, char *board_name )
+int my_ibbna( ibConf_t *conf, unsigned int new_board_index )
 {
-	ibConf_t *conf, *board_conf;
 	ibBoard_t *board;
+	ibConf_t *board_conf;
 	int retval;
-	int find_index;
 	int old_board_index;
-
-	conf = enter_library( ud );
-	if( conf == NULL )
-		return exit_library( ud, 1 );
 
 	board = interfaceBoard( conf );
 
 	if( conf->is_interface )
 	{
 		setIberr( EARG );
-		return exit_library( ud, 1 );
+		return -1;
 	}
 
 	retval = close_gpib_device( conf );
 	if( retval < 0 )
 	{
 		setIberr( EDVR );
-		return exit_library( ud, 1 );
+		return -1;
 	}
 
-	if( ( find_index = ibFindDevIndex( board_name ) ) < 0 )
-	{
-		setIberr( EARG );
-		return exit_library( ud, 1 );
-	}
-
-	board_conf = &ibFindConfigs[ find_index ];
+	board_conf = &ibFindConfigs[ new_board_index ];
 	if( board_conf->is_interface == 0 )
 	{
 		setIberr( EARG );
-		return exit_library( ud, 1 );
+		return -1;
 	}
 	if( is_cic( interfaceBoard( board_conf ) ) == 0 )
 	{
 		setIberr( ECIC );
-		return exit_library( ud, 1 );
+		return -1;
 	}
 
 	old_board_index = conf->board;
@@ -68,17 +57,39 @@ int ibbna( int ud, char *board_name )
 	if( ibBoardOpen( interfaceBoard( conf ) ) < 0 )
 	{
 		setIberr( EDVR );
-		return exit_library( ud, 1 );
+		return -1;
 	}
 
 	retval = open_gpib_device( conf );
 	if( retval < 0 )
 	{
 		setIberr( EDVR );
-		return exit_library( ud, 1 );
+		return -1;
 	}
 
 	setIberr( old_board_index );
-	
+	return 0;
+}
+
+int ibbna( int ud, char *board_name )
+{
+	ibConf_t *conf;
+	int retval;
+	int find_index;
+
+	conf = enter_library( ud );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
+
+	if( ( find_index = ibFindDevIndex( board_name ) ) < 0 )
+	{
+		setIberr( EARG );
+		return exit_library( ud, 1 );
+	}
+
+	retval = my_ibbna( conf, find_index );
+	if( retval < 0 )
+		return exit_library( ud, 1 );
+
 	return exit_library( ud, 0 );
 }

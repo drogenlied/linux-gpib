@@ -31,6 +31,7 @@ int ibloc(int ud)
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 
+	// XXX need to fix board descriptor case
 	board = interfaceBoard( conf );
 
 	i = send_setup_string( conf, cmd );

@@ -338,6 +338,13 @@ int ibconfig( int ud, int option, int value )
 				}else
 					return exit_library( ud, 0 );
 				break;
+			case IbcBNA:
+				retval = my_ibbna( conf, value );
+				if( retval < 0 )
+					return exit_library( ud, 1 );
+				else
+					return exit_library( ud, 0 );
+				break;
 			default:
 				break;
 		}
