@@ -15,7 +15,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 dist-hook:
 	-find $(distdir) -name CVS -exec $(RM) -r {} \;
-	-find $(distdir) \( -name '*~' -o -name '.#*' \) -exec $(RM) {} \;
+	-find $(distdir) \( -name '*~' -o -name '.#*' -o -name '*.mod.c' \) -exec $(RM) {} \;
 	$(RM) $(distdir)/util/linux_flags/fake.* 
 	$(RM) $(distdir)/util/linux_flags/.*.cmd
 
