@@ -30,7 +30,7 @@ IBLCL ssize_t nec7210_command(gpib_driver_t *driver, uint8_t *buffer, size_t len
 	priv->imr2_bits |= HR_COIE;
 	priv->write_byte(priv, priv->imr2_bits, IMR2);
 
-	while(count < length && (driver->status & TIMO) == 0)
+	while(count < length && test_bit(TIMO_NUM, &driver->status) == 0)
 	{
 		// try a busy wait first before we suspend
 		for(i = 0; i < timeout; i++)
@@ -47,7 +47,7 @@ IBLCL ssize_t nec7210_command(gpib_driver_t *driver, uint8_t *buffer, size_t len
 				break;
 			}
 		}
-		if(test_bit(TIMO_NUM, &driver->status))
+		if(test_bit(TIMO_NUM, &driver->status) == 0)
 		{
 			priv->write_byte(priv, buffer[count], CDOR);
 			count++;

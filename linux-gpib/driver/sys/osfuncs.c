@@ -75,6 +75,8 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, uns
 	ssize_t ret;
 	int end_flag = 0;
 
+printk("ioclt %i\n", cmd);
+
 	ibargp = (ibarg_t *) &m_ibarg;
 
 	/* Check the arg buffer is readable & writable by the current process */
