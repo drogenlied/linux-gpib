@@ -115,4 +115,8 @@
 
  ;; public Gpib commands
  GTL SDC PPC GET TCT LLO DCL PPU SPE SPD UNL UNT PPD
+
+ ;; timeout constants
+ TNONE T10us T30us T100us T300us T1ms T3ms T10ms T30ms T100ms T300ms T1s
+ T3s   T10s  T30s  T100s  T300s  T1000s
 )

@@ -349,6 +349,25 @@ gpib_bindings (void)
   scm_c_define ("ESTB", scm_int2num (ESTB));
   scm_c_define ("ESRQ", scm_int2num (ESRQ));
   scm_c_define ("ETAB", scm_int2num (ETAB));
+
+  scm_c_define ("TNONE",  scm_int2num (TNONE));
+  scm_c_define ("T10us",  scm_int2num (T10us));
+  scm_c_define ("T30us",  scm_int2num (T30us));
+  scm_c_define ("T100us", scm_int2num (T100us));
+  scm_c_define ("T300us", scm_int2num (T300us));
+  scm_c_define ("T1ms",   scm_int2num (T1ms));
+  scm_c_define ("T3ms",   scm_int2num (T3ms));
+  scm_c_define ("T10ms",  scm_int2num (T10ms));
+  scm_c_define ("T30ms",  scm_int2num (T30ms));
+  scm_c_define ("T100ms", scm_int2num (T100ms));
+  scm_c_define ("T300ms", scm_int2num (T300ms));
+  scm_c_define ("T1s",    scm_int2num (T1s));
+  scm_c_define ("T3s",    scm_int2num (T3s));
+  scm_c_define ("T10s",   scm_int2num (T10s));
+  scm_c_define ("T30s",   scm_int2num (T30s));
+  scm_c_define ("T100s",  scm_int2num (T100s));
+  scm_c_define ("T300s",  scm_int2num (T300s));
+  scm_c_define ("T1000s", scm_int2num (T1000s));
 }
 
 extern void

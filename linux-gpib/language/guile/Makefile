@@ -1,7 +1,7 @@
 ######################################################################
 #
 #   Makefile for the gpib guile extension
-#   (C) Stefan Jahn <stefan@lkcc.org>
+#   Copyright (C) 2003 Stefan Jahn <stefan@lkcc.org>
 #
 #####################################################################
 
@@ -18,7 +18,7 @@ INSTALLDIR = /usr/local/lib
 LIBS =  $(GPIBLIBS) $(GUILELIBS)
 INCLUDES = -I. -I$(ROOT)/include -I$(ROOT)/driver/include $(GUILEINCLUDE)
 CFLAGS = -fpic $(INCLUDES) $(DEFINES) -Wall
-
+CC = gcc -O2
 
 SRCS = gpib.c
 
@@ -28,13 +28,10 @@ OBJS = gpib.o
 all: libgpib-guile.so
 
 libgpib-guile.so: $(OBJS)
-	$(CC) -shared $(OBJS) $(LIBS) -o $@
+	$(CC) -shared $(OBJS) $(LIBS) -o $@ -Wl,-rpath $(GUILEDIR)/lib -Wl,-rpath $(INSTALLDIR)
 
 clean: 
-	rm -f *.o *.so make.config *~
-
-realclean: 
-	rm -f *.o
+	rm -f *.o *.so *~
 
 install:
 	install -D ./libgpib-guile.so $(INSTALLDIR)/libgpib-guile.so
