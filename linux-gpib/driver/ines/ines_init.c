@@ -33,18 +33,24 @@ int ines_isa_attach(gpib_board_t *board);
 void ines_pci_detach(gpib_board_t *board);
 void ines_isa_detach(gpib_board_t *board);
 
+enum pci_vendor_ids
+{
+	PCI_VENDOR_ID_QUANCOM = 0x8008,
+};
+
 enum ines_pci_chip
 {
 	PCI_CHIP_PLX9050,
 	PCI_CHIP_AMCC5920,
+	PCI_CHIP_UNKNOWN,
 };
 
 typedef struct
 {
 	unsigned int vendor_id;
 	unsigned int device_id;
-	unsigned int subsystem_vendor_id;
-	unsigned int subsystem_device_id;
+	int subsystem_vendor_id;
+	int subsystem_device_id;
 	unsigned int gpib_region;
 	enum ines_pci_chip pci_chip_type;
 } ines_pci_id;
@@ -66,6 +72,14 @@ ines_pci_id pci_ids[] =
 		subsystem_device_id: 0x1072,
 		gpib_region: 1,
 		pci_chip_type: PCI_CHIP_AMCC5920,
+	},
+	{
+		vendor_id: PCI_VENDOR_ID_QUANCOM,
+		device_id: 0x3302,
+		subsystem_vendor_id: -1,
+		subsystem_device_id: -1,
+		gpib_region: 0,
+		pci_chip_type: PCI_CHIP_UNKNOWN,
 	},
 };
 
@@ -321,6 +335,7 @@ int ines_common_pci_attach( gpib_board_t *board )
 	int retval;
 	ines_pci_id found_id;
 	unsigned int i;
+	struct pci_dev *pdev;
 
 	retval = ines_generic_attach(board);
 	if(retval) return retval;
@@ -329,29 +344,33 @@ int ines_common_pci_attach( gpib_board_t *board )
 	nec_priv = &ines_priv->nec7210_priv;
 
 	// find board
-	ines_priv->pci_device = NULL;
-	for(i = 0; i < num_pci_chips && ines_priv->pci_device == NULL; i++)
+	pdev = NULL;
+	for(i = 0; i < num_pci_chips; i++)
 	{
 		do
 		{
-			ines_priv->pci_device = pci_find_subsys(pci_ids[i].vendor_id, pci_ids[i].device_id,
-				pci_ids[i].subsystem_vendor_id, pci_ids[i].subsystem_device_id, ines_priv->pci_device);
-			if( ines_priv->pci_device == NULL )
+			if( pci_ids[i].subsystem_vendor_id >= 0 && pci_ids[i].subsystem_device_id >= 0 )
+				pdev = pci_find_subsys(pci_ids[i].vendor_id, pci_ids[i].device_id,
+					pci_ids[i].subsystem_vendor_id, pci_ids[i].subsystem_device_id, pdev);
+			else
+				pdev = pci_find_device(pci_ids[i].vendor_id, pci_ids[i].device_id, pdev);
+			if( pdev == NULL )
 				break;
-			if( board->pci_bus >=0 && board->pci_bus != ines_priv->pci_device->bus->number )
+			if( board->pci_bus >=0 && board->pci_bus != pdev->bus->number )
 				continue;
 			if( board->pci_slot >= 0 && board->pci_slot !=
-				PCI_SLOT( ines_priv->pci_device->devfn ) )
+				PCI_SLOT( pdev->devfn ) )
 				continue;
 			found_id = pci_ids[i];
 			break;
 		}while( 1 );
 	}
-	if(ines_priv->pci_device == NULL)
+	if(pdev == NULL)
 	{
 		printk("gpib: could not find ines PCI board\n");
 		return -1;
 	}
+	ines_priv->pci_device = pdev;
 
 	if(pci_enable_device(ines_priv->pci_device))
 	{
@@ -370,8 +389,10 @@ int ines_common_pci_attach( gpib_board_t *board )
 		case PCI_CHIP_AMCC5920:
 			ines_priv->amcc_iobase = pci_resource_start(ines_priv->pci_device, 0);
 			break;
+		case PCI_CHIP_UNKNOWN:
+			break;
 		default:
-			printk("gpib: unknown chip type? (bug)\n");
+			printk("gpib: unspecified chip type? (bug)\n");
 			pci_release_regions(ines_priv->pci_device);
 			return -1;
 			break;
