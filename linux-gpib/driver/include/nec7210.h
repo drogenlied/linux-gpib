@@ -25,14 +25,14 @@
 #define HR_CPTIE        (1<<7)
 
 // ISR2, interrupt status register 2
-#define HR_ADSC         (1<<0)
-#define HR_REMC         (1<<1)
-#define HR_LOKC         (1<<2)
-#define HR_CO           (1<<3)
-#define HR_REM          (1<<4)
-#define HR_LOK          (1<<5)
-#define HR_SRQI         (1<<6)
-#define HR_INT          (1<<7)
+#define HR_ADSC         (1 << 0)
+#define HR_REMC         (1 << 1)
+#define HR_LOKC         (1 << 2)
+#define HR_CO           (1 << 3)
+#define HR_REM          (1 << 4)
+#define HR_LOK          (1 << 5)
+#define HR_SRQI         (1 << 6)
+#define HR_INT          (1 << 7)
 
 // IMR2, interrupt mask register 2
 #define IMR2_ENABLE_INTR_MASK	0x4f	// all the bits in this register that enable interrupts

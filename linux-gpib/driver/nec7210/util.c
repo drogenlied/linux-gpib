@@ -12,8 +12,8 @@ IBLCL int bdSRQstat(void)
 
 	DBGin("bdSRQstat");
 
-	// XXX
-	
+// SRQI bit of ibsta is set by interrupt handler
+
 	DBGout();
 	return result;
 }

@@ -84,8 +84,8 @@ IBLCL void bdPIOwrt( ibio_op_t *wrtop)
 { 
 	faddr_t		buf;
 	unsigned	cnt;
-extern int eosmodes;
-        int bytes=0;
+	extern int eosmodes;
+	int bytes=0;
 
 	DBGin("bdwrt");
 
@@ -96,57 +96,56 @@ extern int eosmodes;
 
 	GPIBout(AUXMR, auxrabits);	/* send EOI w/EOS if requested */
 
-#define FIX_EOS_BUG 1 
-
 	DBGprint(DBG_BRANCH, ("begin PIO loop  "));
 
-#if FIX_EOS_BUG
-        cnt-- ; /* save the last byte for sending EOI */
-#endif
+	cnt-- ; /* save the last byte for sending EOI */
 
-	while (ibcnt < cnt) {
-		GPIBout(CDOR, buf[ibcnt]); 
-                bytes++;
-                /*printk("out=%c\n",buf[ibcnt]);*/
-                ibcnt++;
-		bdWaitOut();
+	while (ibcnt < cnt)
+	{
+		// XXX check for failure
+		wait_event_interruptible(nec7210_write_wait, test_bit(0, &write_in_progress) == 0);
+		set_bit(0, &write_in_progress);
+		GPIBout(CDOR, buf[ibcnt]);
+		bytes++;
+		ibcnt++;
 		if( TimedOut() ) break;
 	}
 
 	DBGprint(DBG_BRANCH, ("send EOI  "));
         /*send EOI */
 
-#if FIX_EOS_BUG
-	if( eosmodes & XEOS ) {
-          DBGprint(DBG_BRANCH, ("send EOS with EOI  "));
-	  GPIBout(CDOR, buf[ibcnt]);
-	  bdWaitOut();
-	  bytes++; ibcnt++;
-	  bdSendAuxCmd(AUX_SEOI);
-	  GPIBout(CDOR, bdGetEOS() );
+	if( eosmodes & XEOS )
+	{
+		DBGprint(DBG_BRANCH, ("send EOS with EOI  "));
+		// XXX check for failure
+		wait_event_interruptible(nec7210_write_wait, test_bit(0, &write_in_progress) == 0);
+		set_bit(0, &write_in_progress);
+		GPIBout(CDOR, buf[ibcnt]);
+		bytes++; ibcnt++;
+		wait_event_interruptible(nec7210_write_wait, test_bit(0, &write_in_progress) == 0);
+		set_bit(0, &write_in_progress);
+		bdSendAuxCmd(AUX_SEOI);
+		GPIBout(CDOR, bdGetEOS() );
 	} else {
-	  DBGprint(DBG_BRANCH, ("send EOI with last byte "));
-	  bdSendAuxCmd(AUX_SEOI);
-	  GPIBout(CDOR, buf[ibcnt]);
-	  bytes++; ibcnt++;
+		DBGprint(DBG_BRANCH, ("send EOI with last byte "));
+		wait_event_interruptible(nec7210_write_wait, test_bit(0, &write_in_progress) == 0);
+		set_bit(0, &write_in_progress);
+		bdSendAuxCmd(AUX_SEOI);
+		GPIBout(CDOR, buf[ibcnt]);
+		bytes++; ibcnt++;
 	}
-#else
-	bdSendAuxCmd(AUX_SEOI);
-	GPIBout(CDOR, bdGetEOS() );
-#endif
-
-	bdWaitOut();
-
+	wait_event_interruptible(nec7210_write_wait, test_bit(0, &write_in_progress) == 0);
 
 	DBGprint(DBG_BRANCH, ("done  "));
 
+/*
 	if (GPIBin(ISR1) & HR_ERR) {
 		DBGprint(DBG_BRANCH, ("no listeners  "));
 		ibsta |= ERR;
 		iberr = ENOL;
-	}
-
-	else if (!noTimo) {
+	}else
+*/
+	if (!noTimo) {
 		DBGprint(DBG_BRANCH, ("timeout  "));
 		ibsta |= (ERR | TIMO);
 		iberr = EABO;

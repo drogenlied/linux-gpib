@@ -1,36 +1,10 @@
 #include "board.h"
 #include <linux/sched.h>
 
-/*
- * BDWAIT
- * Wait for a GPIB event to occur ('mask' must be non-zero).
- */
 IBLCL void bdwait(unsigned int mask)
 {
-	uint8_t imr2mask = 0;
-
 	DBGin("bdwait");
 
-#if USEINTS
-	if (!(pgmstat & PS_NOINTS))
-	{
-		DBGprint(DBG_BRANCH, ("use ints  "));
-
-		imr2mask = 0;
-		if (mask & SRQI)
-			imr2mask |= HR_SRQIE;
-		if (mask & (CIC | TACS | LACS))
-			imr2mask |= HR_ACIE;
-		DBGprint(DBG_DATA, ("imr2mask=0x%x  ", imr2mask));
-
-		ibsta = CMPL;
-		printk("sleep on\n");
-		// XXX test for failure
-		interruptible_sleep_on(&nec7210_wait);
-		printk("woke\n");
-	}
-	else
-#endif
 		ibsta = CMPL;
 
 	DBGout();

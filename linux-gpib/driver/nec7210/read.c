@@ -1,6 +1,5 @@
 
-#include <board.h>
-
+#include "board.h"
 
 /*
  *  BDREAD (DMA)
@@ -118,105 +117,63 @@ IBLCL void bdPIOread(ibio_op_t *rdop)
 {
 	faddr_t		buf;
 	unsigned	cnt;
-	uint8		s1 = 0, s2;		/* software copies of HW status regs */
-	int             isreg1;
+	gpib_char_t data;
+	int ret;
+	unsigned long flags;
 
 	DBGin("bdread");
 
 	buf = rdop->io_vbuf;
 	cnt = rdop->io_cnt;
 	DBGprint(DBG_DATA, ("bdread: buf=0x%p cnt=%d  ", buf, cnt));
-#if 0
-	s2 = GPIBin(ISR2);		/* clear the status registers... */
-	s1 = GPIBin(ISR1) | GPIBin(ISR1);
-					/* read ISR1 twice in case of END delay */
-
-	DBGprint(DBG_DATA, ("ISR1=0x%x ISR2=0x%x  ", s1, s2));
-#endif
 	if (pgmstat & PS_HELD) {
 		DBGprint(DBG_BRANCH, ("finish handshake  "));
 		GPIBout(AUXMR, auxrabits | HR_HLDA);
 		GPIBout(AUXMR, AUX_FH);	/* set HLDA in AUXRA to ensure FH works */
 		pgmstat &= ~PS_HELD;
 	}
-	else if ((s1 & HR_DI) && (s1 & HR_END)) {
-		DBGprint(DBG_BRANCH, ("one-byte read with END  "));
-		GPIBout(AUXMR, auxrabits | HR_HLDA);
-		pgmstat |= PS_HELD;
-		buf[0] = GPIBin(DIR);
-		ibsta |= END;
-		ibcnt = 1;
-		DBGout();
-		return;
-	}
 	DBGprint(DBG_BRANCH, ("set-up EOS modes  "));
 /*
  *	Set EOS modes, holdoff on END, and holdoff on all carry cycle...
  */
-	GPIBout(AUXMR, auxrabits | HR_HLDE ); /*| HR_REOS );*/
-                                              /* no longer hardwired */
+	GPIBout(AUXMR, auxrabits | HR_HLDE );
 
-        /* if first data byte availiable read once */
-        /*
-         * This is a relatively clean solution for the EOS detection problem
-         *
-         */
-
-        if( s1 & HR_DI )
-		  buf[ibcnt++] = GPIBin(DIR);
-
+	/* if first data byte availiable read once */
+	/*
+	* This is a relatively clean solution for the EOS detection problem
+	*
+	*/
 
 	DBGprint(DBG_BRANCH, ("begin PIO loop  "));
-	/*@*/
-#ifndef GREG_BUGFIX
-	while (ibcnt < cnt - 1 ) { 
-
-		if( bdWaitIn() < 0 ) {         /* end is set with EOS byte so wait first */
-		  ibsta |= END;
-		  break;
+	while (ibcnt < cnt )
+	{
+		spin_lock_irqsave(&read_buffer->lock, flags);
+		ret = gpib_buffer_get(read_buffer, &data);
+		spin_unlock_irqrestore(&read_buffer->lock, flags);
+		if(ret < 0)
+		{
+			printk("gpib:no data\n");
+			if(wait_event_interruptible(nec7210_read_wait, read_buffer->size > 0))
+			{
+				printk("wait failed\n");
+				// XXX
+			};
+			continue;
 		}
-		buf[ibcnt++] = GPIBin(DIR);
-                /*printk("buf[%d]='%c'",ibcnt-1,buf[ibcnt-1]);*/
+		buf[ibcnt++] = data.value;
+		if(data.end)
+		{
+			ibsta |= END;
+			break;
+		}
 	}
-#else
-	while (ibcnt < cnt ) {
-
-	  isreg1 = bdWaitIn();
-	  if ( isreg1 == 0 ) {
-	    ibsta |= END;
-	    break;
-	  } else if ( isreg1 & HR_END ) {
-	    ibsta |= END;
-	    buf[ibcnt++] = GPIBin(DIR);
-	    break;
-	  }
-	  if ( ibcnt >= cnt-1 ) {
-	    GPIBout(AUXMR, auxrabits | HR_HLDA ); 
-	  }
-	  buf[ibcnt++] = GPIBin(DIR);
-	}
-
-        if ( isreg1 & HR_END || ibcnt == cnt ) {
-          pgmstat |= PS_HELD;
-        }
-
-        
-#endif
-        /*@*/
-	GPIBout(AUXMR, auxrabits | HR_HLDA );/* avoid last byte getting lost */
-        buf[ibcnt++]=GPIBin(DIR);           /* read last byte on end */
+	GPIBout(AUXMR, auxrabits | HR_HLDA );
+	pgmstat |= PS_HELD;
 
 	DBGprint(DBG_BRANCH, ("done  "));
 
-	if (GPIBin(ISR1) & HR_END)
-		ibsta |= END;
-#ifndef GREG_BUGFIX
-	if ((ibsta & END) || (ibcnt == cnt))
-#else
-	if ((ibsta & END) || (ibcnt >= cnt))
-#endif
-		pgmstat |= PS_HELD;
-	if (!noTimo) {
+	if (!noTimo)
+	{
 		DBGprint(DBG_BRANCH, ("timeout  "));
 		ibsta |= (ERR | TIMO);
 		iberr = EABO;

@@ -21,12 +21,16 @@
 #include <linux/ioport.h>
 #include <linux/sched.h>
 #include <linux/module.h>
+#include <linux/slab.h>
 #include <asm/dma.h>
+#include <gpib_buffer.h>
 
 unsigned long ibbase = IBBASE;
 unsigned int ibirq = IBIRQ;
 unsigned int ibdma = IBDMA;
 unsigned long remapped_ibbase = 0;
+
+gpib_buffer_t *read_buffer = NULL, *write_buffer = NULL;
 
 MODULE_PARM(ibbase, "l");
 MODULE_PARM_DESC(ibbase, "base io address");
@@ -84,10 +88,15 @@ int board_attach(void)
 	unsigned int i, err;
 	int isr_flags = 0;
 
-printk("use ints %i\n", USEINTS);
 	// nothing is allocated yet
-	ioports_allocated = iomem_allocated = irq_allocated = 
+	ioports_allocated = iomem_allocated = irq_allocated =
 		dma_allocated = pcmcia_initialized = 0;
+
+	read_buffer = kmalloc(sizeof(gpib_buffer_t), GFP_KERNEL);
+	gpib_buffer_init(read_buffer);
+	write_buffer = kmalloc(sizeof(gpib_buffer_t), GFP_KERNEL);
+	gpib_buffer_init(write_buffer);
+
 #ifdef INES_PCMCIA
 	pcmcia_init_module();
 	pcmcia_initialized = 1;
@@ -219,6 +228,16 @@ void board_detach(void)
 		pcmcia_cleanup_module();
 #endif
 		pcmcia_initialized = 0;
+	}
+	if(read_buffer)
+	{
+		kfree(read_buffer);
+		read_buffer = NULL;
+	}
+	if(write_buffer)
+	{
+		kfree(write_buffer);
+		write_buffer = NULL;
 	}
 }
 

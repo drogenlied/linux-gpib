@@ -4,6 +4,7 @@
 
 #include <gpibP.h>
 #include <asm/io.h>
+#include <gpib_buffer.h>
 
 extern unsigned long ibbase;	/* base addr of GPIB interface registers  */
 extern unsigned long remapped_ibbase;	// ioremapped memory io address
@@ -16,10 +17,15 @@ extern volatile int noTimo;     /* timeout flag */
 extern int          pgmstat;    /* Program state */
 extern int          auxrabits;  /* static bits for AUXRA (EOS modes) */
 
+extern gpib_buffer_t *read_buffer, *write_buffer;
+
 // interrupt service routine
 void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
-extern wait_queue_head_t nec7210_wait;
+extern volatile int write_in_progress;	// boolean value that signals whether data can be sent
+
+extern wait_queue_head_t nec7210_write_wait;
+extern wait_queue_head_t nec7210_read_wait;
 
 #define LOW_PORT 0x2e1
 

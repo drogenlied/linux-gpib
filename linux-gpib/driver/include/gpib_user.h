@@ -4,7 +4,8 @@
 #define ERR	 (1 << 15)	/* Function call terminated on error */
 #define TIMO	 (1 << 14)	/* Time limit on I/O or wait function exceeded */
 #define END	 (1 << 13)	/* EOI terminated the ibrd call */
-#define SRQI	 (1 << 12)	/* SRQ is asserted */
+#define SRQI_NUM	12
+#define SRQI	 (1 << SRQI_NUM)	/* SRQ is asserted */
 #define RQS      (1 << 11)      /* Device requesting Service */
 #define CMPL	 (1 <<  8)	/* I/O is complete (should always be set) */
 #define CIC	 (1 <<  5)	/* GPIB interface is Controller-in-Charge */
