@@ -283,6 +283,7 @@ int ines_generic_attach(gpib_board_t *board)
 	nec_priv->read_byte = nec7210_ioport_read_byte;
 	nec_priv->write_byte = nec7210_ioport_write_byte;
 	nec_priv->offset = ines_reg_offset;
+	ines_priv->pci_chip_type = PCI_CHIP_NONE;
 
 	return 0;
 }
@@ -484,8 +485,20 @@ void ines_pci_detach(gpib_board_t *board)
 		nec_priv = &ines_priv->nec7210_priv;
 		if(ines_priv->irq)
 		{
-			// disable amcc interrupts
-			outl(0, ines_priv->plx_iobase + PLX_INTCSR_REG );
+			// disable interrupts
+			switch( ines_priv->pci_chip_type )
+			{
+			case PCI_CHIP_AMCC5920:
+				if( ines_priv->plx_iobase )
+					outl( 0, ines_priv->plx_iobase + PLX_INTCSR_REG );
+				break;
+			case PCI_CHIP_QUANCOM:
+				if( nec_priv->iobase )
+					outb( 0, nec_priv->iobase + QUANCOM_IRQ_CONTROL_REG );
+				break;
+			default:
+				break;
+			}
 			free_irq(ines_priv->irq, board);
 		}
 		if(nec_priv->iobase)

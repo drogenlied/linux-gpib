@@ -27,6 +27,7 @@
 
 enum ines_pci_chip
 {
+	PCI_CHIP_NONE,
 	PCI_CHIP_PLX9050,
 	PCI_CHIP_AMCC5920,
 	PCI_CHIP_QUANCOM,
