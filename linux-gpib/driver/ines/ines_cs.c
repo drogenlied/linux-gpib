@@ -28,6 +28,7 @@
 #include <linux/slab.h>
 #include <linux/string.h>
 #include <linux/timer.h>
+#include <linux/module.h>
 #include <asm/io.h>
 #include <asm/system.h>
 
