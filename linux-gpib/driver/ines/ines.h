@@ -219,6 +219,8 @@ enum ines_auxd_bits
 	INES_INITIAL_T1_2000ns = 0x0,
 	INES_INITIAL_T1_1100ns = 0x4,
 	INES_INITIAL_T1_700ns = 0x8,
+	INES_T6_2us = 0x0,
+	INES_T6_50us = 0x10,
 };
 
 /* quancom registers */
