@@ -80,7 +80,13 @@ if test $JW_PATH == no ; then
 	AC_MSG_NOTICE([docbook-tools (jw) not found, disabling documentation])
 	BUILD_DOCS="no"
 fi
-AM_PATH_PYTHON([2.0])
+AM_PATH_PYTHON()
+PYTHON_MAJOR_VERSION=$(echo $PYTHON_VERSION | cut -d. -f1 )
+PYTHON_MINOR_VERSION=$(echo $PYTHON_VERSION | cut -d. -f2 )
+if (( $PYTHON_MAJOR_VERSION < 2 )); then
+	AC_MSG_WARN([python version less than 2.0, disabling python binding])
+	BIND_PYTHON="no"
+fi
 AC_PATH_PROG([PERL], [perl], [no], [])
 if test $PERL == "no"; then
 	AC_MSG_WARN([perl not found, disabling perl binding])
