@@ -651,6 +651,42 @@ volatile int ibsta;
 	'Traditional' API Functions
 </title>
 
+<refentry ID="reference-function-ibclr">
+<refmeta>
+	<refentrytitle>ibclr</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibclr</refname>
+	<refpurpose>clear device (device)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibclr</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibclr() sends the clear command to the device specified by <parameter>ud</parameter>.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
 <refentry ID="reference-function-ibdev">
 <refmeta>
 	<refentrytitle>ibdev</refentrytitle>
@@ -1403,6 +1439,73 @@ volatile int ibsta;
 </refsect1>
 </refentry>
 
+<refentry ID="reference-function-devclear">
+<refmeta>
+	<refentrytitle>DevClear</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>DevClear</refname>
+	<refpurpose>Clear a device</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>DevClear</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>Addr4882_t <parameter>address</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	DevClear() causes the interface board specified by <parameter>board_desc</parameter>
+	to send the clear command to the GPIB addresses specified by <parameter>address</parameter>.  The results of the serial polls are stored into <parameter>resultList</parameter>.
+	If you wish to clear multiple devices simultaneously, use
+	<link LINKEND="reference-function-devclearlist">DevClearList()</link>
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-devclearlist">
+<refmeta>
+	<refentrytitle>DevClearList</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>DevClearList</refname>
+	<refpurpose>Clear multiple devices</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>DevClearList</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>Addr4882_t* <parameter>addressList</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	DevClear() causes the interface board specified by <parameter>board_desc</parameter>
+	to send the clear command simultaneously to all the GPIB addresses specified by the
+	<parameter>addressList</parameter> array.  The results of the serial polls are stored into <parameter>resultList</parameter>.
+	If you only wish to clear a single device,
+	<link LINKEND="reference-function-devclear">DevClear()</link>
+	or <link LINKEND="reference-function-ibclr">ibclr()</link> may
+	be more convenient.
+	</para>
+</refsect1>
+</refentry>
+
 <refentry ID="reference-function-enablelocal">
 <refmeta>
 	<refentrytitle>EnableLocal</refentrytitle>
@@ -1685,7 +1788,7 @@ of how they are used follow:
 	<entry>NRFD</entry>
 	<entry>Not ready for data.  NRFD is a handshaking line asserted by
 	listeners to indicate
-	they are not ready to receive a data byte.</entry>
+	they are not ready to receive a new data byte.</entry>
 	<entry>7</entry>
 	</row>
 	<row>
@@ -1720,9 +1823,11 @@ of how they are used follow:
 	</row>
 	<row>
 	<entry>REN</entry>
-	<entry>Remote enable.  Asserted by the system controller to put
-	devices into remote mode.  When REN is asserted, a device will
-	enter remote mode when it is addressed by the controller.</entry>
+	<entry>Remote enable.  Asserted by the system controller, it enables
+	devices to enter remote mode.  When REN is asserted, a device will
+	enter remote mode when it is addressed by the controller.  When
+	REN is false, all devices will immediately return to local mode.
+	</entry>
 	<entry>17</entry>
 	</row>
 	</tbody>
