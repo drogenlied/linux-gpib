@@ -40,15 +40,7 @@
 #include <pcmcia/cisreg.h>
 
 
-/*
-   All the PCMCIA modules use PCMCIA_DEBUG to control debugging.  If
-   you do not define PCMCIA_DEBUG at all, all the debug code will be
-   left out.  If you compile with PCMCIA_DEBUG=0, the debug code will
-   be present but disabled -- but it can then be enabled for specific
-   modules at load time with a 'pc_debug=#' option to insmod.
-*/
-
-static int pc_debug = PCMCIA_DEBUG;
+static int pc_debug = 1;
 static char *version =
 	"$Id$";
 
