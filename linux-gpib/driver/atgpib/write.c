@@ -1,15 +1,6 @@
 
-#include <board.h>
+#include "board.h"
 
-/* @BEGIN-MAN
-
-\routine{  bdwrt(wrtop) ibio_op_t *wrtop  }
-\synopsis{  }
-\description{  This function performs a single write operation. }
-\returns{   }
-\bugs{   }
-
-   @END-MAN */
 
 #if DMAOP
 /*

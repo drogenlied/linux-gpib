@@ -36,7 +36,6 @@ IBLCL int ibrd(faddr_t buf, unsigned int cnt)
 	while ((cnt > 0) && !(ibsta & (ERR | TIMO | END))) {
 		ibcnt = 0;
 		rdop.io_cnt = cnt;
-		bdAdjCnt(&rdop);
 		bdread(&rdop);
 		rdop.io_vbuf += ibcnt;
 		cnt -= ibcnt;

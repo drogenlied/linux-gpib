@@ -40,7 +40,6 @@ IBLCL int ibwrt(faddr_t buf, unsigned int cnt, unsigned int more)
 	while ((cnt > 0) && !(ibsta & (ERR | TIMO))) {
 		ibcnt = 0;
 		wrtop.io_cnt = cnt;
-		bdAdjCnt(&wrtop);
 		bdwrt(&wrtop);
 		wrtop.io_vbuf += ibcnt;
 		cnt -= ibcnt;

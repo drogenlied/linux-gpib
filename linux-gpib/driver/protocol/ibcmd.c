@@ -45,7 +45,6 @@ IBLCL int ibcmd(faddr_t buf, unsigned int cnt)
 	while ((cnt > 0) && !(ibsta & (ERR | TIMO))) {
 		ibcnt = 0;
 		cmdop.io_cnt = cnt;
-		bdAdjCnt(&cmdop);
 		bdcmd(&cmdop);
 		cmdop.io_vbuf += ibcnt;
 		cnt -= ibcnt;

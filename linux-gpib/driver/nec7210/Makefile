@@ -3,7 +3,7 @@
 #
 include $(ROOT)/util/.config
 
-SRCS =  adjcount.c cmd.c init.c lines.c read.c util.c \
+SRCS =  cmd.c init.c lines.c read.c util.c \
 	wait.c write.c aux.c gpib_pci.c ines_pci.c ines_cs.c \
 	interrupt.c
 

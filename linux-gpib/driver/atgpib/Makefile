@@ -2,7 +2,7 @@
 # Makefile for directory driver/atgpib
 #
 
-SRCS =  adjcount.c cmd.c dma.c init.c lines.c read.c util.c \
+SRCS =  cmd.c dma.c init.c lines.c read.c util.c \
 	wait.c write.c aux.c interrupt.c
 OBJS =  $(SRCS:.c=.o)
 
