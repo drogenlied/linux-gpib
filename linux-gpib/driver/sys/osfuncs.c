@@ -43,7 +43,8 @@ static int iobase_ioctl( gpib_board_t *board, unsigned long arg );
 static int irq_ioctl( gpib_board_t *board, unsigned long arg );
 static int dma_ioctl( gpib_board_t *board, unsigned long arg );
 static int autopoll_ioctl( gpib_board_t *board);
-static int mutex_ioctl( gpib_board_t *board, unsigned long arg );
+static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
+	unsigned long arg );
 
 static int cleanup_open_devices( gpib_file_private_t *file_priv, gpib_board_t *board );
 
@@ -172,7 +173,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			return dma_ioctl( board, arg );
 			break;
 		case IBMUTEX:
-			return mutex_ioctl( board, arg );
+			return mutex_ioctl( board, filep->private_data, arg );
 			break;
 		case IBONL:
 			return online_ioctl( board, arg );
@@ -818,7 +819,8 @@ static int autopoll_ioctl( gpib_board_t *board )
 	return retval;
 }
 
-static int mutex_ioctl( gpib_board_t *board, unsigned long arg )
+static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
+	unsigned long arg )
 {
 	int retval, lock_mutex;
 
@@ -834,8 +836,10 @@ static int mutex_ioctl( gpib_board_t *board, unsigned long arg )
 			printk("gpib: ioctl interrupted while waiting on lock\n");
 			return -ERESTARTSYS;
 		}
+		file_priv->holding_mutex = 1;
 	}else
 	{
+		file_priv->holding_mutex = 0;
 		up( &board->mutex );
 	}
 
