@@ -29,9 +29,9 @@ int ibBdChrConfig(int ud)
 	{
 		strncpy(boardtype.name, board->board_type, sizeof(boardtype.name));
 		ioctl(board->fileno, CFCBOARDTYPE, &boardtype); 
-		if(board->base != 0) ibBoardFunc(conf->board, CFCBASE, board->base);
-		if(board->irq  != 0) ibBoardFunc(conf->board, CFCIRQ , board->irq);
-		if(board->dma  != 0) ibBoardFunc(conf->board, CFCDMA , board->dma);
+		ibBoardFunc(conf->board, CFCBASE, board->base);
+		ibBoardFunc(conf->board, CFCIRQ , board->irq);
+		ibBoardFunc(conf->board, CFCDMA , board->dma);
 
 		if(!(ibsta & ERR)) 
 		{
