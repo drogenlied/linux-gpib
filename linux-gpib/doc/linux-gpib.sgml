@@ -3994,6 +3994,105 @@ volatile int ibsta;
 </refsect1>
 </refentry>
 
+<refentry ID="reference-function-trigger">
+<refmeta>
+	<refentrytitle>Trigger</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>Trigger</refname>
+	<refpurpose>trigger a device</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>Trigger</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>Addr4882_t <parameter>address</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	Trigger() is equivalent to a
+	<link LINKEND="reference-function-triggerlist">TriggerList()</link>
+	call with a single address.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-triggerlist">
+<refmeta>
+	<refentrytitle>TriggerList</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>Trigger</refname>
+	<refpurpose>trigger multiple devices</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>TriggerList</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>Addr4882_t <parameter>addressList[]</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	TriggerList() sends a GET (group execute trigger)
+	<link LINKEND="reference-command-bytes">command byte</link> to all
+	the
+	devices specified in the <parameter>addressList</parameter> array.
+	If no addresses are specified in <parameter>addressList</parameter>
+	then the GET command byte is sent without performing any addressing.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-waitsrq">
+<refmeta>
+	<refentrytitle>WaitSRQ</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>WaitSRQ</refname>
+	<refpurpose>sleep until the SRQ bus line is asserted</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>WaitSRQ</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>short *<parameter>result</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	WaitSRQ() sleeps until either the SRQ
+	<link LINKEND="gpib-protocol-bus-lines">bus lines</link> is
+	asserted, or a timeout (see <link LINKEND="reference-function-ibtmo">ibtmo()</link>)
+	occurs.  A '1' will be written to the location specified by
+	<parameter>result</parameter> if SRQ was asserted, and a
+	'0' will be written if the function timed out.
+	</para>
+</refsect1>
+</refentry>
+
 </section>
 
 <section>
