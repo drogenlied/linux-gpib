@@ -30,6 +30,7 @@ void ibBoardDefaultValues(void)
 		ibBoard[i].is_system_controller = 0;
 		ibBoard[i].fileno = -1;
 		strcpy(ibBoard[i].device, "");
+		strcpy(ibBoard[i].board_type, "");
 	}
 }
 

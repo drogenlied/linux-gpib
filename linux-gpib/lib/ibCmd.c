@@ -31,7 +31,7 @@ int ibcmd(int ud, void *cmd, unsigned long cnt)
 
 	board = &ibBoard[conf->board];
 
-	__ibtmo(board, conf->tmo);
+	__ibtmo( board, conf->timeout );
 
 	count = __ibcmd(board, cmd, cnt);
 

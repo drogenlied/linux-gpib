@@ -37,7 +37,7 @@ int ibwrt(int ud, void *rd, unsigned long cnt)
 	board = &ibBoard[conf->board];
 
 	iblcleos(ud);
-	__ibtmo(board, conf->tmo);
+	__ibtmo(board, conf->timeout);
 
 	if(conf->is_interface == 0)
 	{

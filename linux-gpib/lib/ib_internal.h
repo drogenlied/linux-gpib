@@ -33,6 +33,7 @@ extern int __ibtmo(ibBoard_t *board, int timeout);
 extern int config_parsed;
 extern int send_setup(ibBoard_t *board, int pad, int sad);
 extern ssize_t device_command(ibBoard_t *board, uint8_t *cmd, size_t length, int pad, int sad);
+extern void init_ibconf( ibConf_t *conf );
 
 #include <stdio.h>
 int gpib_yyparse(void);

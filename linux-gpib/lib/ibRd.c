@@ -55,7 +55,7 @@ int ibrd(int ud, void *rd, unsigned long cnt)
 	// set eos mode
 	iblcleos(ud);
 	// set timeout XXX need to init conf with board default when not set
-	__ibtmo(board, conf->tmo);
+	__ibtmo(board, conf->timeout);
 
 	if(conf->is_interface == 0)
 	{

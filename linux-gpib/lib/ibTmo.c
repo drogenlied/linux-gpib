@@ -14,7 +14,7 @@ int ibtmo(int ud,int v)
 		return ibsta;
 	}
 
-	conf->tmo = v;
+	conf->timeout = v;
 
 	ibsta = CMPL;
 	return ibsta;

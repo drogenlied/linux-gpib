@@ -76,7 +76,9 @@ int ibGetDescriptor(ibConf_t p)
 	conf->flags = p.flags;
 	conf->eos = p.eos;
 	conf->eosflags = p.eosflags;
-	conf->tmo = p.tmo;
+	conf->timeout = p.timeout;
+	conf->send_eoi = p.send_eoi;
+	conf->is_interface = p.is_interface;
 
 	strncpy(conf->init_string, p.init_string, sizeof(conf->init_string));
 	return ib_ndev;
@@ -110,4 +112,19 @@ ssize_t device_command(ibBoard_t *board, uint8_t *cmd, size_t count, int pad, in
 	}
 
 	return __ibcmd(board, cmd, count);
+}
+
+void init_ibconf( ibConf_t *conf )
+{
+	conf->name[0] = 0;
+	conf->pad = -1;
+	conf->sad = -1;
+	conf->init_string[0] = 0;     
+	conf->board = -1;           
+	conf->eos = 0;             
+	conf->eosflags = 0;
+	conf->flags = 0;                
+	conf->timeout = T3s;
+	conf->send_eoi = 1;
+	conf->is_interface = 0;
 }

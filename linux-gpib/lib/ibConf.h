@@ -19,7 +19,7 @@ typedef struct ibConfStruct
 	char eos;                           /* local eos modes                  */
 	int eosflags;
 	int flags;                         /* some flags                       */
-	int tmo;
+	int timeout;
 	unsigned int send_eoi : 1;	// assert EOI at end of writes
 	unsigned int is_interface : 1;	// is interface board
 } ibConf_t;
@@ -30,7 +30,6 @@ typedef struct ibBoardStruct {
 	char board_type[100];	// name (model) of interface board
 	int pad;		// device primary address
 	int sad;		// device secodnary address (negative disables)
-	int timeout;                       /* timeout                          */
 	int base;                          /* base configuration               */
 	int irq;
 	int dma;

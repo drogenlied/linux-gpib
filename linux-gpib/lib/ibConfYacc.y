@@ -47,6 +47,7 @@ char cval;
 
 	interface: T_INTERFACE '{' minor parameter '}'
 			{
+				init_ibconf( &ibFindConfigs[ findIndex ] );
 				ibFindConfigs[findIndex].is_interface = 1;
 				ibFindConfigs[findIndex].send_eoi = 1;
 				if(++findIndex > FIND_CONFIGS_LENGTH)
@@ -80,7 +81,7 @@ char cval;
 		| T_EOSBYTE '=' T_NUMBER  { ibFindConfigs[findIndex].eos = $3;}
 		| T_REOS T_BOOL           { ibFindConfigs[findIndex].eosflags |= $2 * REOS;}
 		| T_BIN  T_BOOL           { ibFindConfigs[findIndex].eosflags |= $2 * BIN;}
-		| T_TIMO '=' T_TIVAL      { ibBoard[bdid].timeout = $3; }
+		| T_TIMO '=' T_TIVAL      { ibFindConfigs[findIndex].timeout = $3; }
 		| T_BASE '=' T_NUMBER     { ibBoard[bdid].base = $3; }
 		| T_IRQ  '=' T_NUMBER     { ibBoard[bdid].irq = $3; }
 		| T_DMA  '=' T_NUMBER     { ibBoard[bdid].dma = $3; }
@@ -99,6 +100,7 @@ char cval;
 
 	device: T_DEVICE '{' option '}'
 			{
+				init_ibconf( &ibFindConfigs[ findIndex ] );
 				ibFindConfigs[findIndex].is_interface = 0;
 				ibFindConfigs[findIndex].send_eoi = 1;
 				if(++findIndex > FIND_CONFIGS_LENGTH)
@@ -129,6 +131,7 @@ char cval;
 		| T_INIT_F '=' flags
 		| T_NAME '=' T_STRING	{ strncpy(ibFindConfigs[findIndex].name,$3, sizeof(ibFindConfigs[findIndex].name));}
 		| T_MINOR '=' T_NUMBER	{ ibFindConfigs[findIndex].board = $3;}
+		| T_TIMO '=' T_TIVAL      { ibFindConfigs[findIndex].timeout = $3; }
 		;
 
 	flags: /* empty */

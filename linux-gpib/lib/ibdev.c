@@ -47,13 +47,14 @@ int ibdev(int minor, int pad, int sad, int timo, int eot, int eos)
 		config_parsed = 1;
 	}
 
+	conf.name[0] = 0;
 	conf.pad = pad;
 	conf.sad = sad - sad_offset;                        /* device address                   */
 	conf.init_string[0] = 0;               /* initialization string (optional) */
 	conf.board = minor;                         /* board number                     */
 	conf.eos = eos & 0xff;                           /* local eos modes                  */
 	conf.eosflags = (eos >> 8) & 0xff;
-	conf.tmo = timo;
+	conf.timeout = timo;
 	if(eot)
 		conf.send_eoi = 1;
 	else
