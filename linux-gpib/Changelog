@@ -1,6 +1,10 @@
 Linux GPIB Package changelog
 
-2.4.0: Completed first pass at port to 2.4 kernel, and cleaned up a lot of little things. 
+3.0.0: Completed first pass at port to 2.4 kernel, and cleaned up a lot of little things. 
 	Still needs a lot of work, but should have all the capabilities/limitations
 	of version 2.05-alpha which it was based on. 
+
+3.0.1: (in progress) Fixed installation of gpib0.o module.  Fixed driver module for use
+	with kernels that use module versioning.  Got rid of all usage of pointers to
+	store io addresses.
 

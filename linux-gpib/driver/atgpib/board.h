@@ -2,52 +2,46 @@
 #include <gpibP.h>
 #include <asm/io.h>
 
-extern unsigned int      ibbase;	/* base addr of GPIB interface registers  */
+extern unsigned long      ibbase;	/* base addr of GPIB interface registers  */
 extern uint8       ibirq;	/* interrupt request line for GPIB (1-7)  */
 extern uint8       ibdma ;      /* DMA channel                            */
-
-
-extern ibregs_t *ib;            /* Local pointer to IB registers */
-
 
 extern volatile int noTimo;     /* timeout flag */
 extern int          pgmstat;    /* Program state */
 extern int          auxrabits;  /* static bits for AUXRA (EOS modes) */
-
-#define IB ib
 
 /* this routines are 'wrappers' for the outb() macros */
 
 /*
  * Input a one-byte value from the specified I/O port
  */
-extern inline uint8 bdP8in(void * in_addr)
+extern inline uint8_t bdP8in(unsigned long in_addr)
 {
-	return inb_p((unsigned int) in_addr);
+	return inb_p(ibbase + in_addr);
 }
 
 /*
  * Output a one-byte value to the specified I/O port
  */
 
-extern inline void bdP8out(void * out_addr, uint8 out_value)
+extern inline void bdP8out(unsigned long out_addr, uint8_t out_value)
 {
-	outb_p(out_value, (unsigned int) out_addr);
+	outb_p(out_value, ibbase + out_addr);
 }
 
 /*
  * Input a two-byte value from the specified I/O port
  */
-extern inline uint16 bdP16in(void * in_addr)
+extern inline uint16_t bdP16in(unsigned long in_addr)
 {
-	return inw_p((unsigned int) in_addr);
+	return inw_p(ibbase + in_addr);
 }
 
 /*
  * Output a two-byte value to the specified I/O port
  */
-extern inline void bdP16out(void * out_addr, uint16 out_value)
+extern inline void bdP16out(unsigned long out_addr, uint16_t out_value)
 {
-	outw_p(out_value, (unsigned int) out_addr);
+	outw_p(out_value, ibbase + out_addr);
 }
 

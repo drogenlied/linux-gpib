@@ -2,17 +2,6 @@
 
 #include <board.h>
 
-
-unsigned int      ibbase = IBBASE;	/* base addr of GPIB interface registers  */
-uint8       ibirq  = IBIRQ;	/* interrupt request line for GPIB (1-7)  */
-uint8       ibdma  = IBDMA;     /* DMA channel                            */
-
-
-ibregs_t *ib = ((ibregs_t *) 0);
-				/* Local pointer to IB registers */
-
-
-
 /*
  * BDONL
  * Initialize the interface hardware.
@@ -20,17 +9,15 @@ ibregs_t *ib = ((ibregs_t *) 0);
 IBLCL int bdonl(int v)
 {
 	uint8		s;
-	int		i;           
 
 	DBGin("bdonl");
 
         /*printk("base=0x%lx\n",ibbase);*/
 
 #if defined(ZIATECH)
-	ib = (struct ibregs *) ( ibbase );          /* setting base address */
-	printk("Ziatech: set base to 0x%p \n ",ib);
-	printk("Ziatech: isr1 = 0x%p \n ",&IB->isr1);
-	printk("Ziatech: adswr= 0x%p \n ",&IB->adswr);
+	printk("Ziatech: set base to 0x%lx \n ",ibbase);
+	printk("Ziatech: ISR1 = 0x%lx \n ",ibbase + ISR1);
+	printk("Ziatech: adswr= 0x%lx \n ",ibbase + ADSWR);
 #endif
 #if defined(HP82335)
         switch( ibbase ){
@@ -54,7 +41,7 @@ IBLCL int bdonl(int v)
 
              break;
 	   default:
-	     printk("hp82335 base range 0x%x invalid, see Hardware Manual\n",ibbase);
+	     printk("hp82335 base range 0x%lx invalid, see Hardware Manual\n",ibbase);
              DBGout(); return(0);
            break;
 	}
@@ -65,34 +52,34 @@ IBLCL int bdonl(int v)
           DBGout(); return(0);
 	}
 
-	
-	ib = (struct ibregs *) ioremap(ibbase, sizeof(struct ibregs));          /* setting base address */
-        /*printk("ib=0x%x\n",ib);*/
+
+	ibbase = (unsigned long) ioremap(ibbase, 0x4000);          /* setting base address */
+        /*printk("io remap=0x%x\n",ibbase);*/
 
 #endif
 
-	GPIBout(auxcr, AUX_CR | AUX_CS);   /* enable 9914 chip reset state */
+	GPIBout(AUXCR, AUX_CR | AUX_CS);   /* enable 9914 chip reset state */
 
-	GPIBout(imr0, 0);                              /* disable all interrupts */
-	GPIBout(imr1, 0);
-	s = GPIBin(isr0);
-	s = GPIBin(isr1);  /* clear status registers by reading */
+	GPIBout(IMR0, 0);                              /* disable all interrupts */
+	GPIBout(IMR1, 0);
+	s = GPIBin(ISR0);
+	s = GPIBin(ISR1);  /* clear status registers by reading */
 
-	GPIBout(adr,(PAD & LOMASK));                   /* set GPIB address; 
+	GPIBout(ADR,(PAD & LOMASK));                   /* set GPIB address; 
                                                           MTA=PAD|100, MLA=PAD|040*/
-	GPIBout(auxcr, AUX_CR );   /* release 9914 chip reset state */
+	GPIBout(AUXCR, AUX_CR );   /* release 9914 chip reset state */
 
-	GPIBin(dir);
-	GPIBout(auxcr, AUX_HLDA | AUX_CS); /* Holdoff on all data */
+	GPIBin(DIR);
+	GPIBout(AUXCR, AUX_HLDA | AUX_CS); /* Holdoff on all data */
 
 #if defined(HP82335)
 #if USEINTS
 	ccrbits |= HR_INTEN;
-	GPIBout(ccr[0],ccrbits);
+	GPIBout(CCR,ccrbits);
 #if 1
-	GPIBout(imr0,0);
-	GPIBout(imr1,0);
-	GPIBout(auxcr,AUX_DAI);
+	GPIBout(IMR0,0);
+	GPIBout(IMR1,0);
+	GPIBout(AUXCR,AUX_DAI);
 #endif
 
 #endif	
@@ -106,7 +93,7 @@ IBLCL int bdonl(int v)
 IBLCL void bdDetach(void)
 {
 #if defined(HP82335)
-	iounmap(ib);
+	iounmap((void*)ibbase);
 #endif
 }
 

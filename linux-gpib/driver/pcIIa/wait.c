@@ -15,10 +15,10 @@ IBLCL void bdwait(unsigned int mask)
 #if USEINTS
 	if (!(pgmstat & PS_NOINTS)) {
 		DBGprint(DBG_BRANCH, ("use ints  "));
-		s1 = GPIBin(isr1)  ;           /* clear ISRs by reading */
-		s2 = GPIBin(isr2)  ;
+		s1 = GPIBin(ISR1)  ;           /* clear ISRs by reading */
+		s2 = GPIBin(ISR2)  ;
 
-   		GPIBout(imr2, 0);   /* clear imr2 IE bits */
+   		GPIBout(IMR2, 0);   /* clear IMR2 IE bits */
 #ifdef NIPCIIa
                 /* clear interrupt logic */
                 outb(0xff, (0x2f0 | ibirq ));
@@ -35,12 +35,12 @@ IBLCL void bdwait(unsigned int mask)
 			ibsta = CMPL;
 			osWaitForInt(imr2mask); 
                            /* the imr3mask is imr2 for PCII */
-			s2 = GPIBin(isr2);
-			DBGprint(DBG_DATA, ("***isr2=0x%x ", s2));
-			s1 = GPIBin(isr1);   /* clear isr2 status bits */
-			DBGprint(DBG_DATA, ("***isr1=0x%x ", s1));
-   			GPIBout(imr1, 0);   /* clear imr1 IE bits */
-   			GPIBout(imr2, 0);   /* clear imr2 IE bits */
+			s2 = GPIBin(ISR2);
+			DBGprint(DBG_DATA, ("***ISR2=0x%x ", s2));
+			s1 = GPIBin(ISR1);   /* clear ISR2 status bits */
+			DBGprint(DBG_DATA, ("***ISR1=0x%x ", s1));
+   			GPIBout(IMR1, 0);   /* clear IMR1 IE bits */
+   			GPIBout(IMR2, 0);   /* clear IMR2 IE bits */
 
 		}
 	}
@@ -66,8 +66,8 @@ uint8 isreg1;
 DBGin("bdWaitIn");
 
     /* polling */
-    while (!((isreg1 = GPIBin(isr1)) & HR_DI) && !(isreg1 & HR_END ) && NotTimedOut());
-    /*DBGprint(DBG_DATA, ("***isr1 =0x%x", isreg1 ));*/
+    while (!((isreg1 = GPIBin(ISR1)) & HR_DI) && !(isreg1 & HR_END ) && NotTimedOut());
+    /*DBGprint(DBG_DATA, ("***ISR1 =0x%x", isreg1 ));*/
 DBGout();
     if ( (isreg1 & HR_END) || TimedOut() ) 
       return (-1);
@@ -86,7 +86,7 @@ DBGout();
 IBLCL void bdWaitOut(void)
 {
 DBGin("bdWaitOut");
-while (!((GPIBin(isr2) & HR_CO) || (GPIBin(isr1) & HR_DO) ) && NotTimedOut());
+while (!((GPIBin(ISR2) & HR_CO) || (GPIBin(ISR1) & HR_DO) ) && NotTimedOut());
 DBGout();
 }
 
@@ -98,7 +98,7 @@ DBGout();
 IBLCL void bdWaitATN(void)
 {
 DBGin("bdWaitATN");
-while ((GPIBin(adsr) & HR_NATN) && NotTimedOut());
+while ((GPIBin(ADSR) & HR_NATN) && NotTimedOut());
 DBGout();
 }
 

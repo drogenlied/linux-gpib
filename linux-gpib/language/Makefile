@@ -5,12 +5,11 @@
 #  Subdirectories will be automagically scanned
 #
 
-
+export
 
 SUBDIRS = `../util/subdirs`
 
-GPIB_HOME= `(cd ..;pwd)`
-MAKE = make GPIB_HOME=$(GPIB_HOME) -C
+MAKE = make -C
 
 all: subdirs
 

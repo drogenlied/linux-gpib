@@ -11,7 +11,7 @@ BINDIR = /usr/local/bin
 
 
 LIBS =  -L../lib -lgpib -lfl
-INCLUDES = -I. -I../include  
+INCLUDES = -I. -I../include -I../driver/include 
 
 CFLAGS = $(INCLUDES) $(DEFINES) -Wall -O2
 

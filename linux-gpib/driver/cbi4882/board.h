@@ -1,7 +1,7 @@
 #include <asm/io.h>
 #include <gpibP.h>
 
-extern unsigned int      ibbase;	/* base addr of GPIB interface registers  */
+extern unsigned long ibbase;	/* base addr of GPIB interface registers  */
 extern uint8       ibirq;	/* interrupt request line for GPIB (1-7)  */
 extern uint8       ibdma ;      /* DMA channel                            */
 extern struct pci_dev *ib_pci_dev;	// pci_dev for plug and play boards
@@ -19,20 +19,9 @@ extern volatile int noTimo;     /* timeout flag */
 extern int          pgmstat;    /* Program state */
 extern int          auxrabits;  /* static bits for AUXRA (EOS modes) */
 
-extern ibregs_t *ib;            /* Local pointer to IB registers */
-#define IB ib
-
 extern uint8       CurHSMode;
 
 #define FIFO_SIZE 1024
-
-#if 0
-#if DMAOP
-
-#error board does not support DMA
-
-#endif
-#endif
 
 #define LOW_PORT 0x2e1
 
@@ -41,12 +30,12 @@ extern uint8       CurHSMode;
 /*
  * Input a one-byte value from the specified I/O port
  */
-extern inline uint8 bdP8in(faddr_t in_addr)
+extern inline uint8_t bdP8in(unsigned long in_addr)
 {
 #if defined(CBI_PCI)
-	return readb((unsigned int)in_addr);
+	return readb(+ ibbase + in_addr);
 #else
-	return inb((unsigned int)in_addr);
+	return inb(ibbase + in_addr);
 #endif
 }
 
@@ -54,12 +43,12 @@ extern inline uint8 bdP8in(faddr_t in_addr)
 /*
  * Output a one-byte value to the specified I/O port
  */
-extern inline void bdP8out(faddr_t out_addr, uint8 out_value)
+extern inline void bdP8out(unsigned long out_addr, uint8_t out_value)
 {
 #if defined(CBI_PCI)
-	writeb(out_value, (unsigned int) out_addr);
+	writeb(out_value, ibbase + out_addr);
 #else
-	outb(out_value, (unsigned int) out_addr);
+	outb(out_value, ibbase + out_addr);
 #endif
 }
 

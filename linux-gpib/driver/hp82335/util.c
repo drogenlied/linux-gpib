@@ -11,9 +11,9 @@ IBLCL int bdSRQstat(void)
 
 	DBGin("bdSRQstat");
 #if 0
-	result = (GPIBin(isr3) & HR_SRQI_CIC) ? SRQI : 0;
+	result = (GPIBin(ISR3) & HR_SRQI_CIC) ? SRQI : 0;
 //XXX
-	result = (GPIBin(isr2) & HR_SRQI) ? SRQI : 0;
+	result = (GPIBin(ISR2) & HR_SRQI) ? SRQI : 0;
         /*result=0;*/       
          /* quick and dirty hack */
 #endif
@@ -41,7 +41,7 @@ IBLCL uint8 bdGetDataByte(void)
 {
   DBGin("bdGetDataByte");
   DBGout();
-  return GPIBin(dir);
+  return GPIBin(DIR);
 }
 
 /* -- bdGetCmdByte()
@@ -52,7 +52,7 @@ IBLCL uint8 bdGetCmdByte(void)
 {
   DBGin("bdGetCmdByte");
   DBGout();
-  return (GPIBin(cptr));
+  return (GPIBin(CPTR));
 }
 
 /* -- bdGetAdrStat()
@@ -66,15 +66,15 @@ IBLCL uint8 bdGetAdrStat(void)
 
   DBGin("bdGetAdrStatus");
 
-  stat = GPIBin(adsr);
-  DBGprint(DBG_DATA,("adsr=0x%x",stat));
+  stat = GPIBin(ADSR);
+  DBGprint(DBG_DATA,("ADSR=0x%x",stat));
   DBGout();
   return stat;
 }
 
 
 /* -- bdCheckEOI()
- * Checks if EOI is set in adr1
+ * Checks if EOI is set in ADR1
  *
  */
 
@@ -83,7 +83,7 @@ IBLCL uint8 bdCheckEOI(void)
   DBGin("bdCheckEOI not implemented");
   DBGout();
 #if 0
-  return ( GPIBin(adr1) & HR_EOI );
+  return ( GPIBin(ADR1) & HR_EOI );
 #endif
 	return 0;
 }
@@ -121,8 +121,8 @@ IBLCL uint8 bdGetEOS(void)
 IBLCL void bdSetSPMode(int v)
 {
   DBGin("bdSetSPMode");
-	GPIBout(spmr, 0);		/* clear current serial poll status */
-	GPIBout(spmr, v);		/* set new status to v */
+	GPIBout(SPMR, 0);		/* clear current serial poll status */
+	GPIBout(SPMR, v);		/* set new status to v */
   DBGout();
 }
 
@@ -135,7 +135,7 @@ IBLCL void bdSetSPMode(int v)
 IBLCL void bdSetPAD(int v)
 {
   DBGin("bdSetPAD");
-  GPIBout(adr,( v & LOMASK ));
+  GPIBout(ADR,( v & LOMASK ));
   DBGout();
 }
 
@@ -149,11 +149,11 @@ IBLCL void bdSetSAD(int mySAD,int enable)
   DBGin("bdSetSAD");
   if(enable){
     DBGprint(DBG_DATA, ("sad=0x%x  ", mySAD));
-    GPIBout(adr, HR_EDPA | (mySAD & LOMASK));
-    /*GPIBout(admr, HR_TRM1 | HR_TRM0 | HR_ADM1);*/
+    GPIBout(ADR, HR_EDPA | (mySAD & LOMASK));
+    /*GPIBout(ADMR, HR_TRM1 | HR_TRM0 | HR_ADM1);*/
   } else {
-    GPIBout(adr, HR_EDPA | HR_DAT | HR_DAL);
-    /*GPIBout(admr, HR_TRM1 | HR_TRM0 | HR_ADM0);*/
+    GPIBout(ADR, HR_EDPA | HR_DAT | HR_DAL);
+    /*GPIBout(ADMR, HR_TRM1 | HR_TRM0 | HR_ADM0);*/
   }
   DBGout();
 }

@@ -19,17 +19,17 @@ IBLCL void osSendEOI(void)
 }
 #endif
 
-IBLCL void osChngBase(int new_base)
+IBLCL void osChngBase(unsigned long new_base)
 {
   DBGin("osChngBase");
 
-#if !defined(CBI_PCMCIA) && !defined(CBI_PCI) && !defined(MODBUS_PCI) && !defined(INES_PCMCIA) && !defined(INES_PCI) 
+#if !defined(CBI_PCMCIA) && !defined(CBI_PCI) && !defined(MODBUS_PCI) && !defined(INES_PCMCIA) && !defined(INES_PCI)
   if( !(pgmstat & PS_SYSRDY ) && ibbase != new_base ){
-      printk("GPIB: Change Base from 0x%x to 0x%x\n",ibbase,new_base);
+      printk("GPIB: Change Base from 0x%lx to 0x%lx\n",ibbase,new_base);
       ibbase = new_base;
   }
 #else
-      printk("GPIB: PCMCIA/PCI base address: 0x%x\n",ibbase);
+      printk("GPIB: PCMCIA/PCI base address: 0x%lx\n",ibbase);
 #endif
   DBGout();
 }

@@ -241,11 +241,11 @@ int init_module(void)
 #endif
 #ifdef INES_PCI
    bd_PCIInfo();
-#endif   
+#endif
 
         printk("Linux-GPIB Driver Board=%s -- Major=%d ",BOARD_TYPE,ibmajor);
-#if !defined(CBI_PCMCIA) && !defined(INES_PCMCIA)  
-        printk("Base=0x%x ",ibbase );
+#if !defined(CBI_PCMCIA) && !defined(INES_PCMCIA)
+        printk("Base=0x%lx ",ibbase );
 #if USEINTS
 	printk("Irq=%d ",ibirq );
 #endif

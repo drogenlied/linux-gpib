@@ -22,26 +22,26 @@ IBLCL void bdDMAread(ibio_op_t *rdop)
 	cnt = rdop->io_cnt;
 	DBGprint(DBG_DATA, ("bdread: buf=0x%x cnt=%d  ", buf, cnt));
 
-	GPIBout(imr1, 0);
-	GPIBout(imr2, 0);		/* clear any previously arrived bits */
+	GPIBout(IMR1, 0);
+	GPIBout(IMR2, 0);		/* clear any previously arrived bits */
 
-	s2 = GPIBin(isr2);		/* clear the status registers... */
-	s1 = GPIBin(isr1);
-					/* read isr1 twice in case of END delay */
+	s2 = GPIBin(ISR2);		/* clear the status registers... */
+	s1 = GPIBin(ISR1);
+					/* read ISR1 twice in case of END delay */
 
-	DBGprint(DBG_DATA, ("isr1=0x%x isr2=0x%x  ", s1, s2));
+	DBGprint(DBG_DATA, ("ISR1=0x%x ISR2=0x%x  ", s1, s2));
 
 	if (pgmstat & PS_HELD) {
 		DBGprint(DBG_BRANCH, ("finish handshake  "));
-		GPIBout(auxmr, auxrabits | HR_HLDA);
-		GPIBout(auxmr, AUX_FH);	/* set HLDA in AUXRA to ensure FH works */
+		GPIBout(AUXMR, auxrabits | HR_HLDA);
+		GPIBout(AUXMR, AUX_FH);	/* set HLDA in AUXRA to ensure FH works */
 		pgmstat &= ~PS_HELD;
 	}
 	else if ((s1 & HR_DI) && (s1 & HR_END)) {
 		DBGprint(DBG_BRANCH, ("one-byte read with END  "));
-		GPIBout(auxmr, auxrabits | HR_HLDA);
+		GPIBout(AUXMR, auxrabits | HR_HLDA);
 		pgmstat |= PS_HELD;
-		buf[0] = GPIBin(dir);
+		buf[0] = GPIBin(DIR);
 		ibsta |= END;
 		ibcnt = 1;
 		DBGout();
@@ -51,7 +51,7 @@ IBLCL void bdDMAread(ibio_op_t *rdop)
 /*
  *	Set EOS modes, holdoff on END, and holdoff on all carry cycle...
  */
-	GPIBout(auxmr, auxrabits | HR_HLDE ); /*| HR_REOS );*/
+	GPIBout(AUXMR, auxrabits | HR_HLDE ); /*| HR_REOS );*/
                                               /* no longer hardwired */
 
 
@@ -64,7 +64,7 @@ IBLCL void bdDMAread(ibio_op_t *rdop)
 	   */
 
 	  if( s1 & HR_DI )
-	    buf[ibcnt++] = GPIBin(dir);
+	    buf[ibcnt++] = GPIBin(DIR);
 
 
 	  DBGprint(DBG_BRANCH, ("begin PIO loop  "));
@@ -75,13 +75,13 @@ IBLCL void bdDMAread(ibio_op_t *rdop)
 	      ibsta |= END;
 	      break;
 	    }
-	    buf[ibcnt++] = GPIBin(dir);
+	    buf[ibcnt++] = GPIBin(DIR);
 	    /*printk("buf[%d]='%c'",ibcnt-1,buf[ibcnt-1]);*/
 	  }
-	  GPIBout(auxmr, auxrabits | HR_HLDA);
-	  buf[ibcnt++]=GPIBin(dir);           /* read last byte on end */
-	  s1 = GPIBin(isr1);
-	  GPIBout(imr1, 0);
+	  GPIBout(AUXMR, auxrabits | HR_HLDA);
+	  buf[ibcnt++]=GPIBin(DIR);           /* read last byte on end */
+	  s1 = GPIBin(ISR1);
+	  GPIBout(IMR1, 0);
 
 	} else {        /* Use DMA */
 	  DBGprint(DBG_BRANCH, ("start DMA cycle  "));
@@ -91,11 +91,11 @@ IBLCL void bdDMAread(ibio_op_t *rdop)
 
 	  ibcnt = cnt - osDoDMA(rdop);
 
-	  s1 = GPIBin(isr1);
+	  s1 = GPIBin(ISR1);
 	  if ( s1 & HR_ENDIE ){
 	    ibsta |= END;
 	  } else {
-	    buf[ibcnt++]=GPIBin(dir);           /* read last byte on end */
+	    buf[ibcnt++]=GPIBin(DIR);           /* read last byte on end */
 	  }
         }
 
@@ -121,7 +121,7 @@ IBLCL void bdPIOread(ibio_op_t *rdop)
 {
 	faddr_t		buf;
 	unsigned	cnt;
-	int8		s1, s2;		/* software copies of HW status regs */
+	int8		s1;		/* software copies of HW status regs */
         uint8           eos;
 
 
@@ -137,7 +137,7 @@ IBLCL void bdPIOread(ibio_op_t *rdop)
 	DBGprint(DBG_BRANCH, ("begin PIO loop  "));
 	while (ibcnt < cnt ) 
 	  { 
-	    if (pgmstat & PS_HELD) GPIBout(auxcr,AUX_RHDF);       
+	    if (pgmstat & PS_HELD) GPIBout(AUXCR,AUX_RHDF);
 	    else pgmstat |= PS_HELD;
 	    
 	    if( (s1=bdWaitIn()) < 0 ) 
@@ -145,13 +145,13 @@ IBLCL void bdPIOread(ibio_op_t *rdop)
 		if (!noTimo) /* Read timed out */
 		  break;
 		/* Read ended with EOI, so read last byte */
-		buf[ibcnt++] = GPIBin(dir);
-		DBGprint(DBG_DATA,("buf[%d]='%u' / isr0=0x%x\n",ibcnt-1,buf[ibcnt-1],s1));
+		buf[ibcnt++] = GPIBin(DIR);
+		DBGprint(DBG_DATA,("buf[%d]='%u' / ISR0=0x%x\n",ibcnt-1,buf[ibcnt-1],s1));
 		break;
 	      }
 
-	    buf[ibcnt++] = GPIBin(dir);
-	    DBGprint(DBG_DATA,("buf[%d]='%u' / isr0=0x%x\n",ibcnt-1,buf[ibcnt-1],s1));
+	    buf[ibcnt++] = GPIBin(DIR);
+	    DBGprint(DBG_DATA,("buf[%d]='%u' / ISR0=0x%x\n",ibcnt-1,buf[ibcnt-1],s1));
 	    
 	    if((eosmodes & REOS) && (buf[ibcnt-1] == eos ))  
 	      break;

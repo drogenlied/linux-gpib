@@ -21,7 +21,6 @@
 
 extern int ibsta,ibcnt,iberr;
 
-char spr;
 char cmd[130];
 char res[1024];
 
@@ -30,9 +29,7 @@ void gpiberr(char *msga);
 int main(int argc,char **argv){
 
   register int i=0;
-  char spr;
   int dev;
-  char eosbyte = 0x0a;
 
 
   /* 

@@ -25,7 +25,6 @@ typedef     u_long          vm_offset_t;
 #define MODBUS_DEV_ID    0x9050
 
 
-unsigned int pci_base_reg = 0x0000;
 unsigned int pci_config_reg = 0x0000;
 unsigned int pci_status_reg = 0x0000;
 
@@ -77,20 +76,19 @@ IBLCL void bd_PCIInfo(void)
 
 
       pci_config_reg = remap_pci_mem( pci_ioaddr[0], 128 ) ;
-      pci_base_reg   = remap_pci_mem( pci_ioaddr[2], 0x2000 ) ;
+      ibbase   = remap_pci_mem( pci_ioaddr[2], 0x2000 ) ;
       pci_status_reg = remap_pci_mem( pci_ioaddr[4], 0x2000 ) ;
 
       printk("GPIB: On Board Reg: 0x%x=0x%x 0x%x=0x%x\n",pci_status_reg+0x1,readb(pci_status_reg+0x1),pci_status_reg+0x3,readb(pci_status_reg+0x3));
       printk("GPIB: Config Reg: 0x%x=0x%x 0x%x=0x%x\n",pci_config_reg,readb(pci_config_reg),pci_config_reg+1,readb(pci_config_reg+1));
 
-      ibbase = 0x000;
       ibirq  = ib_pci_dev->irq;
 
-      writeb( 0xff, (pci_base_reg+ibbase+0x20)); /* enable controller mode */
+      writeb( 0xff, ibbase + 0x20); /* enable controller mode */
 
       pci_DisableIRQ ();
 
-      printk("GPIB: MODBUS PCI base=0x%x config=0x%x irq=0x%x \n",pci_base_reg ,pci_config_reg, ibirq );
+      printk("GPIB: MODBUS PCI base=0x%lx config=0x%x irq=0x%x \n",ibbase ,pci_config_reg, ibirq );
 
   DBGout();
 }
@@ -100,7 +98,7 @@ IBLCL void bdPCIDetach(void)
 {
 	DBGin("bdPCIDetach");
 	unmap_pci_mem( pci_config_reg) ;
-	unmap_pci_mem( pci_base_reg) ;
+	unmap_pci_mem( ibbase) ;
 	unmap_pci_mem( pci_status_reg) ;
 	DBGout();
 }

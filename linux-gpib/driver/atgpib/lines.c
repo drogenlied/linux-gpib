@@ -13,11 +13,11 @@ IBLCL int bdlines(void)
 	int	state;			/* current bus state vector */
 
 	DBGin("bdlines");
-	bus = GPIBin(gpibc);
-	DBGprint(DBG_DATA, ("gpibc=0x%x  ", bus));
+	bus = GPIBin(GPIBC);
+	DBGprint(DBG_DATA, ("GPIBC=0x%x  ", bus));
 /*
  *	On the AT-GPIB, all control lines are valid and readable at all
- *	times using the 'gpibc' control register.
+ *	times using the 'GPIBC' control register.
  *
  *	+=====+=====+===================================================+
  *	| SAC | CIC | Lines that can be monitored...                    |

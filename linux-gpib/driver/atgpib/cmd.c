@@ -16,41 +16,41 @@ IBLCL void bdcmd(ibio_op_t *cmdop)
 	cnt = cmdop->io_cnt;
 	DBGprint(DBG_DATA, ("buf=0x%p cnt=%d  ", buf, cnt));
 
-	GPIBout(imr1, 0);
-	GPIBout(imr2, 0);		/* clear any previously arrived bits */
+	GPIBout(IMR1, 0);
+	GPIBout(IMR2, 0);		/* clear any previously arrived bits */
 
-	s2 = GPIBin(isr2);		/* clear the status registers... */
-	s1 = GPIBin(isr1);
-	DBGprint(DBG_DATA, ("isr1=0x%x isr2=0x%x  ", s1, s2));
+	s2 = GPIBin(ISR2);		/* clear the status registers... */
+	s1 = GPIBin(ISR1);
+	DBGprint(DBG_DATA, ("ISR1=0x%x ISR2=0x%x  ", s1, s2));
 
 	DBGprint(DBG_BRANCH, ("reset FIFO, configure TURBO  "));
-	GPIBout(cmdr, RSTFIFO);
+	GPIBout(CMDR, RSTFIFO);
 /*
  *	The configuration register in the gate-array is configured for
  *	- BYTE (8 bit) transfers
  */
-	GPIBout(cntl, -cnt);
-	GPIBout(cnth, -cnt >> 8);
-	GPIBout(cfg, C_CMD);
-	GPIBout(cmdr, GO);
-	GPIBout(imr2, HR_COIE);
+	GPIBout(CNTL, -cnt);
+	GPIBout(CNTH, -cnt >> 8);
+	GPIBout(CFG, C_CMD);
+	GPIBout(CMDR, GO);
+	GPIBout(IMR2, HR_COIE);
 
 	DBGprint(DBG_BRANCH, ("begin PIO loop  "));
 	while (ibcnt < cnt) {
-		DBGprint(DBG_DATA, ("isr3=0x%x  ibcnt=%d(a)", GPIBin(isr3),ibcnt));
-		while (!(GPIBin(isr3) & HR_NFF)) {
-			if ((GPIBin(isr3) & HR_DONE) || TimedOut())
+		DBGprint(DBG_DATA, ("ISR3=0x%x  ibcnt=%d(a)", GPIBin(ISR3),ibcnt));
+		while (!(GPIBin(ISR3) & HR_NFF)) {
+			if ((GPIBin(ISR3) & HR_DONE) || TimedOut())
 				goto cmddone;
 			WaitingFor(HR_NFF | HR_DONE);
 		}
-		GPIBout(fifo.f8.b, buf[ibcnt++]);
+		GPIBout(FIFOB, buf[ibcnt++]);
 	}
 	DBGprint(DBG_BRANCH, ("wait for DONE  "));
 /*
  *	If end of count then wait for done...
  */
-	while (!(GPIBin(isr3) & HR_DONE) && NotTimedOut()) {
-		DBGprint(DBG_DATA, ("isr3=0x%x  (b)", GPIBin(isr3)));
+	while (!(GPIBin(ISR3) & HR_DONE) && NotTimedOut()) {
+		DBGprint(DBG_DATA, ("ISR3=0x%x  (b)", GPIBin(ISR3)));
 		WaitingFor(HR_DONE);
 	}
 cmddone:
@@ -60,9 +60,9 @@ cmddone:
 		iberr = EABO;
 	}
 	DBGprint(DBG_BRANCH, ("done  "));
-	GPIBout(cmdr, STOP);
-	GPIBout(imr2, 0);		/* clear COIE if set */
-	ibcnt = cnt + (GPIBin(cntl) | (GPIBin(cnth)<<8));
+	GPIBout(CMDR, STOP);
+	GPIBout(IMR2, 0);		/* clear COIE if set */
+	ibcnt = cnt + (GPIBin(CNTL) | (GPIBin(CNTH)<<8));
 	DBGout();
 }
 

@@ -15,5 +15,5 @@ GPIB_HOME = `(cd ../../../ ; pwd)`
 
 
 clean: 
-	-rm *.bak *.dat* *~
+	rm -f *.bak *.dat* *~
 

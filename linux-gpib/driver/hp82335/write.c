@@ -27,13 +27,13 @@ IBLCL void bdDMAwrt(ibio_op_t *wrtop)
 
 	DBGprint(DBG_DATA, ("buf=0x%x cnt=%d  ", buf, cnt));
 
-	GPIBout(imr0, 0);
-	GPIBout(imr1, 0);		/* clear any previously arrived bits */
+	GPIBout(IMR0, 0);
+	GPIBout(IMR1, 0);		/* clear any previously arrived bits */
 
-	s2 = GPIBin(isr1);		/* clear the status registers... */
-	s1 = GPIBin(isr0);
+	s2 = GPIBin(ISR1);		/* clear the status registers... */
+	s1 = GPIBin(ISR0);
 
-	DBGprint(DBG_DATA, ("isr1=0x%x isr2=0x%x  ", s1, s2));
+	DBGprint(DBG_DATA, ("ISR1=0x%x ISR2=0x%x  ", s1, s2));
 
 	/* GPIBout(auxmr, auxrabits);*/	/* send EOI w/EOS if requested */
 
@@ -41,7 +41,7 @@ IBLCL void bdDMAwrt(ibio_op_t *wrtop)
 
 	  DBGprint(DBG_BRANCH, ("begin PIO loop  "));
 	  while (ibcnt < cnt) {
-	    GPIBout(cdor, buf[ibcnt]); 
+	    GPIBout(CDOR, buf[ibcnt]); 
 	    bytes++;
 	    ibcnt++;
 	    bdWaitOut();
@@ -61,13 +61,13 @@ IBLCL void bdDMAwrt(ibio_op_t *wrtop)
 	  DBGprint(DBG_BRANCH, ("send EOI  "));
 	  GPIBout(auxmr, AUX_SEOI);
 	}
-	GPIBout(cdor, bdGetEOS() );
+	GPIBout(CDOR, bdGetEOS() );
 	bdWaitOut();
 
 	DBGprint(DBG_BRANCH, ("done  "));
-	GPIBout(imr1, 0);		/* clear ERRIE if set */
+	GPIBout(IMR1, 0);		/* clear ERRIE if set */
 
-	if (GPIBin(isr1) & HR_ERR) {
+	if (GPIBin(ISR1) & HR_ERR) {
 		DBGprint(DBG_BRANCH, ("no listeners  "));
 		ibsta |= ERR;
 		iberr = ENOL;
@@ -111,13 +111,13 @@ extern  int eosmodes;
 
 	DBGprint(DBG_DATA, ("buf=0x%p cnt=%d  ", buf, cnt));
 
-	GPIBout(imr0, 0);
-	GPIBout(imr1, 0);		/* clear any previously arrived bits */
+	GPIBout(IMR0, 0);
+	GPIBout(IMR1, 0);		/* clear any previously arrived bits */
 
-	s2 = GPIBin(isr1);		/* clear the status registers... */
-	s1 = GPIBin(isr0);
+	s2 = GPIBin(ISR1);		/* clear the status registers... */
+	s1 = GPIBin(ISR0);
 
-	DBGprint(DBG_DATA, ("isr1=0x%x isr2=0x%x  ", s1, s2));
+	DBGprint(DBG_DATA, ("ISR1=0x%x ISR2=0x%x  ", s1, s2));
 #if 0
 	GPIBout(auxmr, auxrabits);	/* send EOI w/EOS if requested */
 #endif
@@ -133,7 +133,7 @@ extern  int eosmodes;
 
 
 	while (ibcnt < cnt) {
-		GPIBout(cdor, buf[ibcnt]); 
+		GPIBout(CDOR, buf[ibcnt]); 
                 bytes++;
                 /*printk("out=%c\n",buf[ibcnt]);*/
                 ibcnt++;
@@ -145,29 +145,29 @@ wrtdone:
 #if FIX_EOS_BUG
 	if( eosmodes & XEOS ) {
           DBGprint(DBG_BRANCH, ("send EOS with EOI  "));
-	  GPIBout(cdor, buf[ibcnt]);
+	  GPIBout(CDOR, buf[ibcnt]);
 	  bdWaitOut();
 	  bytes++; ibcnt++;
 	  bdSendAuxCmd(AUX_SEOI);
-	  GPIBout(cdor, bdGetEOS() );
+	  GPIBout(CDOR, bdGetEOS() );
 	} else {
 	  DBGprint(DBG_BRANCH, ("send EOI with last byte "));
 	  bdSendAuxCmd(AUX_SEOI);
-	  GPIBout(cdor, buf[ibcnt]);
+	  GPIBout(CDOR, buf[ibcnt]);
 	  bytes++; ibcnt++;
 	}
 #else
-	GPIBout(auxcr, AUX_SEOI);
-	GPIBout(cdor, bdGetEOS() );
+	GPIBout(AUXCR, AUX_SEOI);
+	GPIBout(CDOR, bdGetEOS() );
 #endif
 
 	bdWaitOut();
 
 
 	DBGprint(DBG_BRANCH, ("done  "));
-	GPIBout(imr1, 0);		/* clear ERRIE if set */
+	GPIBout(IMR1, 0);		/* clear ERRIE if set */
 
-	if (GPIBin(isr1) & HR_ERR) {
+	if (GPIBin(ISR1) & HR_ERR) {
 		DBGprint(DBG_BRANCH, ("no listeners  "));
 		ibsta |= ERR;
 		iberr = ENOL;

@@ -5,21 +5,14 @@
 #
 #####################################################################
 
-#####################################################################
-# 
-# The Path where your GPIB stuff lives
-# This is normally set by the toplevel Makefile
-#
-GPIB_HOME = `(cd ../.. ; pwd)`
-
 -include make.config
 
 #######################################################################
 # The switches for your GPIB library
 #
 #
-GPIBLIBS 	= -L$(GPIB_HOME)/lib -lgpib
-GPIBINCLUDE 	= -I$(GPIB_HOME)/include
+GPIBLIBS 	= -L$(ROOT)/lib -lgpib
+GPIBINCLUDE 	= -I$(ROOT)/include 
 
 ######################################################################
 ################### End Editable Parameters ##########################
@@ -28,11 +21,11 @@ MAKE = make -C
 #
 #
 
-SUBDIRS = $(EXTSUBDIRS) 
+SUBDIRS = examples 
 
 
 LIBS =  $(GPIBLIBS) -lfl -lm
-INCLUDES = -I. -I$(GPIB_HOME)/include -I/usr/include/tcl8.3 
+INCLUDES = -I. -I$(ROOT)/include -I$(ROOT)/driver/include -I/usr/include/tcl8.3 
 
 CFLAGS = -fpic $(INCLUDES) $(DEFINES) -Wall
 

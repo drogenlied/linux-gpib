@@ -6,7 +6,7 @@
 #
 #######################################################################
 
-export ROOT
+export 
 TARGET_ROOT = /usr/local
 
 SUBDIRS = net
@@ -37,7 +37,7 @@ DEFAULT_BUILD= $(LIBNAME)
 
 export JUMP_DIR=./jump-dir
 
-CFLAGS= -Wall -O2 -I. -I../include -DDEFAULT_CONFIG_FILE=\"$(LIB_CONFIG_FILE)\"  \
+CFLAGS= -Wall -O2 -I. -I../include -I../driver/include -DDEFAULT_CONFIG_FILE=\"$(LIB_CONFIG_FILE)\"  \
 	$(SHARED_FLAGS)
 LDFLAGS = -L.
 

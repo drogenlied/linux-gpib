@@ -166,6 +166,7 @@ set_svar BOARD_TYPE $REPLY
                        ;;
 
 	       ziatech) echo "#define ZIATECH " >>../driver/include/gpib_board.h 
+                       echo "#define TMS9914 " >>../driver/include/gpib_board.h 
          	       ln -s ./hp82335 ../driver/board
                         IBBASE=0x210
 		        IBIRQ=3

@@ -35,7 +35,7 @@ IBLCL int osDoDMA(ibio_op_t *rwop)
 	}
 
 #ifdef NIAT
-	GPIBout(dmaEn, (GPIBin(dmaEn) | HR_DMAEN));
+	GPIBout(DMA_EN, (GPIBin(DMA_EN) | HR_DMAEN));
 #endif
 
 	enable_dma( ibdma );/* enable Host side DMA transfers */
@@ -47,7 +47,7 @@ IBLCL int osDoDMA(ibio_op_t *rwop)
 
         disable_dma( ibdma );/* disable DMA transfers */
 #ifdef NIAT
-	GPIBout(dmaEn, (GPIBin(dmaEn) & ~HR_DMAEN));
+	GPIBout(DMA_EN, (GPIBin(DMA_EN) & ~HR_DMAEN));
 #endif
 	DBGout();
 	return resid;

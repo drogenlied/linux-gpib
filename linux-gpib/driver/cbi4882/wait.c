@@ -15,10 +15,10 @@ IBLCL void bdwait(unsigned int mask)
 #if USEINTS
 	if (!(pgmstat & PS_NOINTS)) {
 		DBGprint(DBG_BRANCH, ("use ints  "));
-		s1 = GPIBin(isr1)  ;           /* clear ISRs by reading */
-		s2 = GPIBin(isr2)  ;
+		s1 = GPIBin(ISR1)  ;           /* clear ISRs by reading */
+		s2 = GPIBin(ISR2)  ;
 
-   		GPIBout(imr2, 0);   /* clear imr2 IE bits */
+   		GPIBout(IMR2, 0);   /* clear IMR2 IE bits */
 #ifdef NIPCIIa
                 /* clear interrupt logic */
                 osP8out( (0x2f0 | ibirq ),0xff );
@@ -34,20 +34,18 @@ IBLCL void bdwait(unsigned int mask)
                           /* was ibstat() & mask */
 			ibsta = CMPL;
 			osWaitForInt(imr2mask); 
-                           /* the imr3mask is imr2 for PCII */
-			s2 = GPIBin(isr2);
-			DBGprint(DBG_DATA, ("***isr2=0x%x ", s2));
-			s1 = GPIBin(isr1);   /* clear isr2 status bits */
-			DBGprint(DBG_DATA, ("***isr1=0x%x ", s1));
-   			GPIBout(imr1, 0);   /* clear imr1 IE bits */
-   			GPIBout(imr2, 0);   /* clear imr2 IE bits */
+                           /* the imr3mask is IMR2 for PCII */
+			s2 = GPIBin(ISR2);
+			DBGprint(DBG_DATA, ("***ISR2=0x%x ", s2));
+			s1 = GPIBin(ISR1);   /* clear ISR2 status bits */
+			DBGprint(DBG_DATA, ("***ISR1=0x%x ", s1));
+   			GPIBout(IMR1, 0);   /* clear IMR1 IE bits */
+   			GPIBout(IMR2, 0);   /* clear IMR2 IE bits */
 
 		}
 	}
 	else
 #endif
-
-waitdone:
 
 	while (!(s2 & imr2mask) && NotTimedOut())
 		ibsta = CMPL;
@@ -64,35 +62,17 @@ waitdone:
 
 IBLCL int bdWaitIn(void)
 {
-uint8 isreg1,s;
+uint8 isreg1;
 DBGin("bdWaitIn");
 
-#if 0
-    if( !(pgmstat & PS_NOINTS)){
-		DBGprint(DBG_BRANCH, ("use ints  "));
-		s = GPIBin(isr1);           /* clear ISRs by reading */
-		s = GPIBin(isr2);
-	        isreg1=0;
-		while( !(isreg1 & HR_END) &&  !( isreg1 & HR_DI ) && NotTimedOut() ){
-		  GPIBout( imr1, (HR_ENDIE | HR_DIIE )); /* set read/end mask bits */
-		  osWaitForInt(0);
-		  GPIBout( imr1, 0);
-                  s=GPIBin(isr2);
-		  isreg1=GPIBin( isr1 );
-	        }
-    }
-
-     
-
-#else
     /* polling */
-    while (!((isreg1 = GPIBin(isr1)) & HR_DI) && !(isreg1 & HR_END ) && NotTimedOut());
-#endif			
-    /*DBGprint(DBG_DATA, ("***isr1 =0x%x", isreg1 ));*/
+    while (!((isreg1 = GPIBin(ISR1)) & HR_DI) && !(isreg1 & HR_END ) && NotTimedOut());
+
+	 /*DBGprint(DBG_DATA, ("***ISR1 =0x%x", isreg1 ));*/
 DBGout();
-    if ( (isreg1 & HR_END) || TimedOut() ) 
+    if ( (isreg1 & HR_END) || TimedOut() )
       return (-1);
-    else 
+    else
       return (isreg1);
 }
 
@@ -100,14 +80,14 @@ DBGout();
 /***********************************************************************/
 
 /* -- bdWaitOut(void)
- * Wait for Output 
+ * Wait for Output
  *
  */
 
 IBLCL void bdWaitOut(void)
 {
 DBGin("bdWaitOut");
-while (!((GPIBin(isr2) & HR_CO) || (GPIBin(isr1) & HR_DO) ) && NotTimedOut());
+while (!((GPIBin(ISR2) & HR_CO) || (GPIBin(ISR1) & HR_DO) ) && NotTimedOut());
 DBGout();
 }
 
@@ -119,7 +99,7 @@ DBGout();
 IBLCL void bdWaitATN(void)
 {
 DBGin("bdWaitATN");
-while ((GPIBin(adsr) & HR_NATN) && NotTimedOut());
+while ((GPIBin(ADSR) & HR_NATN) && NotTimedOut());
 DBGout();
 }
 

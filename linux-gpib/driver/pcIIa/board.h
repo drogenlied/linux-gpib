@@ -5,16 +5,16 @@
 #include <gpibP.h>
 #include <asm/io.h>
 
-extern unsigned int      ibbase;	/* base addr of GPIB interface registers  */
+extern unsigned long      ibbase;	/* base addr of GPIB interface registers  */
 extern uint8       ibirq;	/* interrupt request line for GPIB (1-7)  */
 extern uint8       ibdma ;      /* DMA channel                            */
-extern struct pci_dev *ib_pci_dev;	// pci_dev for plug and play boards	
+extern struct pci_dev *ib_pci_dev;	// pci_dev for plug and play boards
 
 extern volatile int noTimo;     /* timeout flag */
 extern int          pgmstat;    /* Program state */
 extern int          auxrabits;  /* static bits for AUXRA (EOS modes) */
 
-extern ibregs_t *ib;            /* Local pointer to IB registers */
+extern void *ib;            /* Local pointer to IB registers */
 #define IB ib
 
 
@@ -26,49 +26,27 @@ extern ibregs_t *ib;            /* Local pointer to IB registers */
  * Input a one-byte value from the specified I/O port
  */
 
-extern unsigned int pci_base_reg;
-
+extern inline uint8_t bdP8in(unsigned long in_addr)
+{
 #if defined(MODBUS_PCI)
-extern inline uint8 bdP8in(faddr_t in_addr)
-{
-	int		retval;
-        unsigned int         addr = pci_base_reg + ( (unsigned long) in_addr << 0x1 );
-	retval = readw(addr);
-	return (uint8) (retval & 0xff );
-}
+	return readw(ibbase + in_addr) & 0xff;
 #else
-extern inline uint8 bdP8in(faddr_t in_addr)
-{
-	uint8		retval;
-#if !defined(NIPCIIa)
-	retval = inb_p((unsigned int) in_addr);
-#else
-	retval = inb_p( ((unsigned int)in_addr << 10) | ibbase  );
+	return inb_p(ibbase + in_addr);
 #endif
-	return retval;
 }
-#endif
 
 
 /*
  * Output a one-byte value to the specified I/O port
  */
+extern inline void bdP8out(unsigned long out_addr, uint8_t out_value)
+{
 #if defined(MODBUS_PCI)
-extern inline void bdP8out(faddr_t out_addr, uint8 out_value)
-{
-        unsigned int addr = pci_base_reg + ((unsigned long) out_addr << 0x1 );
-	writeb(out_value, addr );
-}
+	writeb(out_value, ibbase + out_addr );
 #else
-extern inline void bdP8out(faddr_t out_addr, uint8 out_value)
-{
-#if !defined(NIPCIIa)
-	outb_p(out_value, (unsigned int)out_addr);
-#else
-	outb_p(out_value, (((unsigned int)(out_addr) << 10) | ibbase ));
+	outb_p(out_value, ibbase + out_addr);
 #endif
 }
-#endif
 
 /************************************************************************/
 

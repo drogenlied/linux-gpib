@@ -9,7 +9,7 @@ IBLCL int bdSRQstat(void)
 	int	result;
 
 	DBGin("bdSRQstat");
-	result = (GPIBin(isr3) & HR_SRQI_CIC) ? SRQI : 0;
+	result = (GPIBin(ISR3) & HR_SRQI_CIC) ? SRQI : 0;
 	DBGout();
 	return result;
 }
@@ -22,7 +22,7 @@ IBLCL int bdSRQstat(void)
 IBLCL void bdsc(void)
 {
 	DBGin("bdsc");
-	GPIBout(cmdr, SETSC);		/* set system controller */
+	GPIBout(CMDR, SETSC);		/* set system controller */
 	DBGout();
 }
 
@@ -34,7 +34,7 @@ IBLCL uint8 bdGetDataByte(void)
   DBGin("bdGetDataByte");
   DBGout();
 
-  return GPIBin(dir);
+  return GPIBin(DIR);
 }
 
 /* -- bdGetCmdByte()
@@ -45,7 +45,7 @@ IBLCL uint8 bdGetCmdByte(void)
 {
   DBGin("bdGetCmdByte");
   DBGout();
-  return (GPIBin(cptr));
+  return (GPIBin(CPTR));
 }
 
 /* -- bdGetAdrStat()
@@ -56,11 +56,11 @@ IBLCL uint8 bdGetAdrStat(void)
 {
   DBGin("bdGetAdrStatus");
   DBGout();
-  return (GPIBin(adsr));
+  return (GPIBin(ADSR));
 }
 
 /* -- bdCheckEOI()
- * Checks if EOI is set in adr1
+ * Checks if EOI is set in ADR1
  *
  */
 
@@ -68,7 +68,7 @@ IBLCL uint8 bdCheckEOI(void)
 {
   DBGin("bdCheckEOI");
   DBGout();
-  return ( GPIBin(adr1) & HR_EOI );
+  return ( GPIBin(ADR1) & HR_EOI );
 }
 
 
@@ -81,7 +81,7 @@ IBLCL uint8 bdCheckEOI(void)
 IBLCL void bdSetEOS(int ebyte)
 {
   DBGin("bdSetEOS");
-  GPIBout(eosr, ebyte);
+  GPIBout(EOSR, ebyte);
   DBGout();
 }
 
@@ -93,8 +93,8 @@ IBLCL void bdSetEOS(int ebyte)
 IBLCL void bdSetSPMode(int v)
 {
   DBGin("bdSetSPMode");
-	GPIBout(spmr, 0);		/* clear current serial poll status */
-	GPIBout(spmr, v);		/* set new status to v */
+	GPIBout(SPMR, 0);		/* clear current serial poll status */
+	GPIBout(SPMR, v);		/* set new status to v */
   DBGout();
 }
 
@@ -108,7 +108,7 @@ IBLCL void bdSetSPMode(int v)
 IBLCL void bdSetPAD(int v)
 {
   DBGin("bdSetPAD");
-  GPIBout(adr,( v & LOMASK ));
+  GPIBout(ADR,( v & LOMASK ));
   DBGout();
 }
 
@@ -122,11 +122,11 @@ IBLCL void bdSetSAD(int mySAD,int enable)
   DBGin("bdSetSPMode");
   if(enable){
     DBGprint(DBG_DATA, ("sad=0x%x  ", mySAD));
-    GPIBout(adr, HR_ARS | (mySAD & LOMASK));
-    GPIBout(admr, HR_TRM1 | HR_TRM0 | HR_ADM1);
+    GPIBout(ADR, HR_ARS | (mySAD & LOMASK));
+    GPIBout(ADMR, HR_TRM1 | HR_TRM0 | HR_ADM1);
   } else {
-    GPIBout(adr, HR_ARS | HR_DT | HR_DL);
-    GPIBout(admr, HR_TRM1 | HR_TRM0 | HR_ADM0);
+    GPIBout(ADR, HR_ARS | HR_DT | HR_DL);
+    GPIBout(ADMR, HR_TRM1 | HR_TRM0 | HR_ADM0);
   }
   DBGout();
 }

@@ -1,5 +1,5 @@
 
-INCLUDES = -I. -I$(ROOT)/include
+INCLUDES = -I. -I$(ROOT)/include -I$(ROOT)/driver/include
 LIBS = -L.. -lgpib -lfl
 
 

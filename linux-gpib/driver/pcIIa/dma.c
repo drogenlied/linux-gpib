@@ -8,7 +8,7 @@
  *  BdDMAwait
  *  This function checks or waits for "DMA operation complete".
  */
-IBLCL int bdDMAwait(ibio_op_t *rwop, int noWait)
+IBLCL void bdDMAwait(ibio_op_t *rwop, int noWait)
 {
 	DBGin("bdDMAwait");
 	if (rwop->io_flags & IO_READ){
@@ -32,16 +32,16 @@ IBLCL void bdDMAstart(ibio_op_t *rwop)
          */
 
         if (rwop->io_flags & IO_READ) {
-		GPIBout(imr2, HR_DMAI);
-		GPIBout(imr1, HR_ENDIE);
+		GPIBout(IMR2, HR_DMAI);
+		GPIBout(IMR1, HR_ENDIE);
 	} else {
-		GPIBout(imr1, HR_ERRIE);  /* set imr1 before imr2 */
-		GPIBout(imr2, HR_DMAO);
+		GPIBout(IMR1, HR_ERRIE);  /* set IMR1 before IMR2 */
+		GPIBout(IMR2, HR_DMAO);
         }
 
-        GPIBout(auxmr, auxrabits | HR_HLDA); /* RFD Hold off on all Data */
-        GPIBout(auxmr, AUX_FH );             /* Finish hand shake   */
-        GPIBout(auxmr, auxrabits | HR_HLDE); /* RFD Hold Off on End */
+        GPIBout(AUXMR, auxrabits | HR_HLDA); /* RFD Hold off on all Data */
+        GPIBout(AUXMR, AUX_FH );             /* Finish hand shake   */
+        GPIBout(AUXMR, auxrabits | HR_HLDE); /* RFD Hold Off on End */
 
 	DBGout();
 }
@@ -62,12 +62,12 @@ IBLCL int bdDMAstop(ibio_op_t *rwop)
         /*
          * Set RFD hold off on All data
          */
-        GPIBout(auxmr, auxrabits | HR_HLDA);  
+        GPIBout(AUXMR, auxrabits | HR_HLDA);
         /*
          * Clear all interrupt enable bits
          */
-	GPIBout(imr2, 0);
-	GPIBout(imr1, 0);
+	GPIBout(IMR2, 0);
+	GPIBout(IMR1, 0);
         /*
          * get the number of byte remaining
          */ 

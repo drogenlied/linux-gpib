@@ -10,11 +10,9 @@ char ibfind_called = 0;       /* first call = setup board */
 PUBLIC int ibfind(char *dev)
 {
 
-int padsad;
 int ind;
 char *envptr;
 char *s;
-int i;
 
 char server[60];
 char *device;

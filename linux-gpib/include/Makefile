@@ -9,7 +9,6 @@ MAKE = make -C
 all:	gpib
 
 gpib:
-	$(ECHO) --- Creating softlink $(BOLD)gpib$(NBOLD)...
 	ln -s . gpib
 
 

@@ -44,10 +44,10 @@ package:
 	tar cvf /dev/fd1 $(PKG_SRC)
 
 
-includes:
-	-for i in $(SUBDIRS); do \
-		ln -s $$i/*.h ./include; \
-	done
+#includes:
+#	-for i in $(SUBDIRS); do \
+#		ln -s $$i/*.h ./include; \
+#	done
 
 load:
 	set -e ;make -C driver load

@@ -160,9 +160,6 @@ int ibFind  _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,cha
 /**********************************************************************/
 int ibInfo  _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,char *argv[])){
 
-  int dev;
-  char res[10];
-    char *tmpbuf[120];
     int i;
     extern ibConf_t  ibConfigs[];
 
@@ -416,8 +413,6 @@ int gpibCmd _ANSI_ARGS_(( ClientData clientData,
 			       char *argv[]
 			       )) 
 {
-
-char result[100];
 
 if( *argv[1]=='f' && !strcmp(argv[1],"find")){
   return ibFind( clientData, interp, argc-1,argv+1 );

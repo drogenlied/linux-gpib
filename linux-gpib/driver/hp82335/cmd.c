@@ -16,13 +16,12 @@ int cmdstat=0x0;
  *  Note that ATN must already be asserted when this function is called.
  */
 IBLCL void bdcmd(ibio_op_t *cmdop)
-{ 
+{
 	faddr_t		buf;
 	unsigned	cnt;
 	uint8		s1, s2;		/* software copies of HW status regs */
 	int             bytes=0;
-extern  int             myPAD;
-        int i;
+	extern  int             myPAD;
 
 	DBGin("bdcmd");
 	buf = cmdop->io_vbuf;
@@ -30,12 +29,12 @@ extern  int             myPAD;
 	DBGprint(DBG_DATA, ("buf=0x%p cnt=%d  ", buf, cnt));
 
 
-	GPIBout(imr0, 0);
-	GPIBout(imr1, 0);		/* clear any previously arrived bits */
+	GPIBout(IMR0, 0);
+	GPIBout(IMR1, 0);		/* clear any previously arrived bits */
 
-	s2 = GPIBin(isr1);		/* clear the status registers... */
-	s1 = GPIBin(isr0);
-	DBGprint(DBG_DATA, ("isr0=0x%x isr1=0x%x  ", s1, s2));
+	s2 = GPIBin(ISR1);		/* clear the status registers... */
+	s1 = GPIBin(ISR0);
+	DBGprint(DBG_DATA, ("ISR0=0x%x ISR1=0x%x  ", s1, s2));
 
 
 
@@ -49,36 +48,36 @@ extern  int             myPAD;
            *
 	   */
 
-	  /*DBGprint(DBG_DATA,("adsr(in)=0x%x",GPIBin(adsr)));*/
+	  /*DBGprint(DBG_DATA,("ADSR(in)=0x%x",GPIBin(ADSR)));*/
 
 	  if( buf[ibcnt] == UNL || buf[ibcnt] == UNT ){
-	    if( GPIBin(adsr) & HR_TA ){
+	    if( GPIBin(ADSR) & HR_TA ){
 	      DBGprint(DBG_BRANCH,
 		       ("*** disable talker state "));
-	      GPIBout(auxcr,AUX_TON ); /* enable talker */
+	      GPIBout(AUXCR,AUX_TON ); /* enable talker */
 	    } 
-	    if( GPIBin(adsr) & HR_LA ){
+	    if( GPIBin(ADSR) & HR_LA ){
 	      DBGprint(DBG_BRANCH, 
 		       ("*** disable listener state"));
-	      GPIBout(auxcr,AUX_LON ); /* enable talker */
+	      GPIBout(AUXCR,AUX_LON ); /* enable talker */
 	    }
 	  } 
 	  if( buf[ibcnt] == (myPAD|TAD) ){ 
 	      DBGprint(DBG_BRANCH, 
 		       ("*** enable talker state "));
-	      GPIBout(auxcr,AUX_TON | AUX_CS); /* enable talker */
+	      GPIBout(AUXCR,AUX_TON | AUX_CS); /* enable talker */
 	  }  
 	  if (buf[ibcnt] == (myPAD|LAD)) {
 		DBGprint(DBG_BRANCH, 
 			 ("*** enable listener state "));
-		GPIBout(auxcr,AUX_LON | AUX_CS); /* enable listener */
+		GPIBout(AUXCR,AUX_LON | AUX_CS); /* enable listener */
 	  } 
 
-          /*DBGprint(DBG_DATA,("adsr=0x%x",GPIBin(adsr)));*/
+          /*DBGprint(DBG_DATA,("ADSR=0x%x",GPIBin(ADSR)));*/
 
 	  { /* put other commands on the bus */
                 DBGprint(DBG_DATA,("cmd=0x%x",buf[ibcnt]));
-		GPIBout(cdor, buf[ibcnt]); 
+		GPIBout(CDOR, buf[ibcnt]); 
 		bdWaitOut();
 	  }
 
@@ -87,8 +86,7 @@ extern  int             myPAD;
 	}
 	DBGprint(DBG_BRANCH, ("wait for DONE  "));
 
-cmddone:
-        DBGprint(DBG_DATA,("Adress adsr=0x%x",GPIBin(adsr)));
+	DBGprint(DBG_DATA,("Adress ADSR=0x%x",GPIBin(ADSR)));
 	bdSendAuxCmd(AUX_GTS);	/* go to standby */
 
 	if (!noTimo) {
@@ -97,7 +95,7 @@ cmddone:
 		iberr = EABO;
 	}
 	DBGprint(DBG_BRANCH, ("done  "));
-	GPIBout(imr0, 0);		/* clear COIE if set */
+	GPIBout(IMR0, 0);		/* clear COIE if set */
 	ibcnt = bytes;
 	DBGout();
 

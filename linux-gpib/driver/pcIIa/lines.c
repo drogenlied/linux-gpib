@@ -10,11 +10,11 @@
  */
 IBLCL int bdlines(void)
 {
-	int	bus;			/* bus control line status */
+	int	bus = 0;			/* bus control line status */
 	int	state = 0;			/* current bus state vector */
 
 	DBGin("bdlines");
-#ifndef NIPCII 
+#ifndef NIPCII
 
 	bus = GPIBin(gpibc);
 	DBGprint(DBG_DATA, ("gpibc=0x%x  ", bus));

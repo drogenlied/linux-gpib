@@ -40,18 +40,18 @@ void ibintr(int irq, struct pt_regs *registerp )
 #endif
 
 #ifdef NIAT
-	GPIBout(imr3, 0);		                /* disable interrupts */
+	GPIBout(IMR3, 0);		                /* disable interrupts */
 #endif
 #ifdef NIPCII
-	GPIBout(imr2, 0);
-	GPIBout(imr1, 0);
+	GPIBout(IMR2, 0);
+	GPIBout(IMR1, 0);
 #endif
 #ifdef NIPCIIa
 /*
- * Seem to need both imr1 and imr2 to be  reset to avoid getting in loop.
+ * Seem to need both IMR1 and IMR2 to be  reset to avoid getting in loop.
  */
-	GPIBout(imr2, 0);
-	GPIBout(imr1, 0);
+	GPIBout(IMR2, 0);
+	GPIBout(IMR1, 0);
 #if DEBUG
         if(dbgMask & DBG_INTR) printk("GPIB-IRQ nipcii\n");
 #endif
@@ -60,12 +60,12 @@ void ibintr(int irq, struct pt_regs *registerp )
 
 #endif
 #ifdef HP82335
-	GPIBout(imr1, 0);
-	GPIBout(imr0, 0);
+	GPIBout(IMR1, 0);
+	GPIBout(IMR0, 0);
 
-	GPIBout(ccr, ccrbits & ~HR_INTEN);  /* disable interrupt */
-        GPIBout(ccir[0x37f7], 0x0);        /* clear card interrupt IP bit */
-        GPIBout(ccr, ccrbits);              /* re-enable interrupts if set */
+	GPIBout(CCR, ccrbits & ~HR_INTEN);  /* disable interrupt */
+        GPIBout(CCIR, 0x0);        /* clear card interrupt IP bit */
+        GPIBout(CCR, ccrbits);              /* re-enable interrupts if set */
 #if DEBUG
         if(dbgMask & DBG_INTR) printk("GPIB-IRQ hp82335\n");
 #endif
@@ -105,37 +105,37 @@ IBLCL void osWaitForInt( int imr3mask )
 		pci_EnableIRQ();
 #endif
 #if defined(CBI_4882)
-		GPIBout( hs_mode, HS_CLR_SRQ_INT );
-		GPIBout( hs_mode, CurHSMode );
+		GPIBout( HS_MODE, HS_CLR_SRQ_INT );
+		GPIBout( HS_MODE, CurHSMode );
 		/*
 		*/
 #endif
 
 #ifdef NIAT
 	        DBGprint(DBG_DATA, ("imr3mask=0x%x  ", imr3mask));
-                GPIBout(imr3, imr3mask);
+                GPIBout(IMR3, imr3mask);
 #endif
 #ifdef NIPCII
                 DBGprint(DBG_DATA, ("imr3mask=0x%x  ", imr3mask));
-		GPIBout(imr2, imr3mask); /* sorry */
+		GPIBout(IMR2, imr3mask); /* sorry */
 #endif
 #ifdef HP82335
 #if 0
-	        GPIBout(ccr, ccrbits & ~HR_INTEN);/* disable interrupt */
-                GPIBout(ccir[0x37f7], 0x0);      /* clear card interrupt IP bit */
-                GPIBout(ccr, ccrbits);            /* re-enable interrupts if set */
+	        GPIBout(CCR, ccrbits & ~HR_INTEN);/* disable interrupt */
+                GPIBout(CCIR, 0x0);      /* clear card interrupt IP bit */
+                GPIBout(CCR, ccrbits);            /* re-enable interrupts if set */
                 DBGprint(DBG_DATA,("===>csr=0x%x",GPIBin(csr)));
 #endif
                 DBGprint(DBG_DATA, ("imr3mask=0x%x  ", imr3mask));
-		GPIBout(imr1, imr3mask); /* sorry */
+		GPIBout(IMR1, imr3mask); /* sorry */
 #endif
 		/* now push process to sleep */
 		down(&espsemid);
 		up(&espsemid); /* wakeup process */
 
 #if defined(CBI_PCI)
-		printk("wait: hs_status=0x%x \n",GPIBin(hs_status));
-		/*GPIBout(hs_mode, HS_CLR_HF_INT | HS_CLR_SRQ_INT | HS_CLR_EOI_INT | CurHSMode );*/
+		printk("wait: hs_status=0x%x \n",GPIBin(HS_STATUS));
+		/*GPIBout(HS_MODE, HS_CLR_HF_INT | HS_CLR_SRQ_INT | HS_CLR_EOI_INT | CurHSMode );*/
 #endif
 
 	}

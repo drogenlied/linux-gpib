@@ -22,7 +22,7 @@ IBLCL void ibtmintr(unsigned long unused)
 	if (!(pgmstat & PS_NOINTS)) {
 
 #ifdef NIAT
-		GPIBout(imr3, 0);	                /* disable interrupts */
+		GPIBout(IMR3, 0);	                /* disable interrupts */
 #endif
 		up(&espsemid);
 	}

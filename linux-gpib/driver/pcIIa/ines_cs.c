@@ -378,11 +378,9 @@ static void gpib_config(dev_link_t *link)
 	         i = CardServices(RequestIO, link->handle, &link->io);
 	         if (i == CS_SUCCESS) {
 		     printk( KERN_DEBUG "ines_cs: base=0x%x len=%d registered\n",
-//	       parse.cftable_entry.io.win[0].base, // not updated! (ax)
   	               link->io.BasePort1,
 		       parse.cftable_entry.io.win[0].len
 		       );  
-//                     ibbase = parse.cftable_entry.io.win[0].base;//not updated! (ax)
                      ibbase = link->io.BasePort1;
 		     break;	
 	         }

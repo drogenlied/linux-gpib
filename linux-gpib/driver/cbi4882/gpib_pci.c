@@ -25,9 +25,6 @@ unsigned int pci_config_reg = 0x0000;
 
 IBLCL void bd_PCIInfo(void) 
 {
-	extern unsigned int      ibbase;	/* base addr of GPIB interface registers  */
-	extern uint8       ibirq;	/* interrupt request line for GPIB (1-7)  */
-
 	DBGin("bd_PCIInfo");
 
 	ib_pci_dev = pci_find_device(CBI_VENDOR_ID, CBI_DEV_ID, NULL);
@@ -48,7 +45,7 @@ IBLCL void bd_PCIInfo(void)
 
 	pci_DisableIRQ ();
 
-	printk("GPIB: PCI base=0x%x config=0x%x irq=0x%x \n",ibbase,pci_config_reg, ibirq );
+	printk("GPIB: PCI base=0x%lx config=0x%x irq=0x%x \n",ibbase,pci_config_reg, ibirq );
 
 	DBGout();
 }
