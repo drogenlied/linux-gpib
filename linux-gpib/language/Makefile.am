@@ -8,7 +8,11 @@
 #   (at your option) any later version.
 
 SUBDIRS = $(PYTHON_SUBDIR) $(PHP_SUBDIR) $(GUILE_SUBDIR) $(TCL_SUBDIR)
-EXTRA_DIST = perl
+EXTRA_DIST = $(PERL_DIST)
+
+PERL_DIST = perl/Changes perl/LinuxGpib.pm perl/LinuxGpib.xs \
+	perl/MANIFEST perl/Makefile.PL perl/README perl/test.pl \
+	perl/typemap perl/examples/
 
 if BIND_PERL
 ALL_PERL = all-perl
