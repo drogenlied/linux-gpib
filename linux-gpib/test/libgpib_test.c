@@ -171,7 +171,6 @@ static int open_slave_device_descriptor(int board, const struct program_options 
 {
 	int sad;
 	int ud;
-	int status;
 
 	if(options->sad >= 0)
 		sad = MSA(options->sad);
@@ -281,7 +280,6 @@ static int read_write_test(int board, const struct program_options *options)
 static int master_async_read_write_test(int board, const struct program_options *options)
 {
 	int ud;
-	char buffer[ 1000 ];
 	int i;
 	int status;
 
@@ -429,7 +427,6 @@ static int master_serial_poll_test(int board, const struct program_options *opti
 
 static int slave_serial_poll_test(int board, const struct program_options *options)
 {
-	char result;
 	fprintf( stderr, "%s...", __FUNCTION__ );
 
 	if(receive_sync_message(board))
@@ -495,10 +492,6 @@ static int master_parallel_poll_test(int board, const struct program_options *op
 
 static int slave_parallel_poll_test(int board, const struct program_options *options)
 {
-	int ud;
-	char result;
-	int ist;
-
 	fprintf( stderr, "%s...", __FUNCTION__ );
 
 	fprintf( stderr, "OK\n" );
@@ -519,7 +512,6 @@ static int do_master_eos_pass(int board, const struct program_options *options,
 {
 	int ud;
 	char buffer[1024];
-	int status;
 
 	ud = open_slave_device_descriptor(board, options, T3s, 0, eosmode );
 	if( ud < 0 )
@@ -570,9 +562,6 @@ static int do_slave_eos_pass(int board, const struct program_options *options,
 	int eosmode, const char *test_message, const char *first_read_result,
 	const char *second_read_result)
 {
-	char buffer[1024];
-	int status;
-
 	ibwrt(board, test_message, strlen(test_message));
 	if( ThreadIbsta() & ERR )
 	{
