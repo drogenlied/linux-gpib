@@ -61,8 +61,8 @@ static char *version =
 /* Parameters that can be set with 'insmod' */
 
 /* Bit map of interrupts to choose from */
-/* This means pick from 15, 14, 12, 11, 10, 9, 7, 5, 4, and 3 */
 static u_long irq_mask = 0xdeb8;
+//static u_long irq_mask = 0xffff;
 
 /*====================================================================*/
 
@@ -390,17 +390,6 @@ static void gpib_config(dev_link_t *link)
 			printk("ines_cs: can't get card information\n");
 		}
 
-		/*
-		Now allocate an interrupt line.  Note that this does not
-		actually assign a handler to the interrupt.
-		*/
-		i = CardServices(RequestIRQ, link->handle, &link->irq);
-		if (i != CS_SUCCESS) {
-			cs_error(link->handle, RequestIRQ, i);
-			break;
-		}
-		printk(KERN_DEBUG "ines_cs: IRQ_Line=%d\n",link->irq.AssignedIRQ);
-
 		link->conf.Status = CCSR_IOIS8;
 
 		/*  for the ines card we have to setup the configuration registers in
@@ -430,6 +419,18 @@ static void gpib_config(dev_link_t *link)
 //		CardServices(ReleaseWindow,handle);
 
 	} while (0);
+
+	/*
+	Now allocate an interrupt line.
+	*/
+	if (link->conf.Attributes & CONF_ENABLE_IRQ)
+	{
+		i = CardServices(RequestIRQ, link->handle, &link->irq);
+		if (i != CS_SUCCESS) {
+			cs_error(link->handle, RequestIRQ, i);
+		}
+		printk(KERN_DEBUG "ines_cs: IRQ_Line=%d\n",link->irq.AssignedIRQ);
+	}
 
 	/*
 	This actually configures the PCMCIA socket -- setting up
