@@ -7,7 +7,7 @@
 #
 #######################################################################
 
-CFLAGS= -I. -I../include -I ../driver/include -Wall -O2 -D_REENTRANT 
+CFLAGS= -I. -I../include -I ../driver/include -Wall -O2 -D_REENTRANT -ansi -pedantic
 LDFLAGS = -L../lib -lgpib -lpthread
 
 BINS = ibtest master_write_from_file slave_read_to_file master_read_to_file \

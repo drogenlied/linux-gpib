@@ -38,7 +38,7 @@ enum Action
 	GPIB_TIMEOUT,
 	GPIB_WAIT,
 	GPIB_WRITE,
-	GPIB_LINE_STATUS,
+	GPIB_LINE_STATUS
 };
 
 void descriptor_type( int ud, int *is_board, int *is_master )
@@ -80,7 +80,7 @@ int descriptor_is_master( int ud )
 	return is_board && is_master;
 }
 
-// returns a device descriptor after prompting user for primary address
+/* returns a device descriptor after prompting user for primary address */
 int prompt_for_device(void)
 {
 	int ud, pad;
@@ -112,7 +112,7 @@ int prompt_for_device(void)
 	return ud;
 }
 
-// returns a device descriptor after prompting user for primary address
+/* returns a device descriptor after prompting user for primary address */
 int prompt_for_board( void )
 {
 	int ud;
@@ -164,7 +164,7 @@ int prompt_for_descriptor( void )
 	return -1;
 }
 
-// asks user what they want to do next
+/* asks user what they want to do next */
 int prompt_for_action(void)
 {
 	char input[100];
@@ -246,7 +246,7 @@ int perform_read(int ud)
 	{
 		return -1;
 	}
-	// make sure string is null-terminated
+	/* make sure string is null-terminated */
 	buffer[ibcnt] = 0;
 	printf("received string: '%s'\n"
 		"number of bytes read: %i\n", buffer, ibcnt);

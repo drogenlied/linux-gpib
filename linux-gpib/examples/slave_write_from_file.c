@@ -21,6 +21,8 @@ to separate gpib transfer speed and disk io speed in my benchmarking.
  *                                                                         *
  ***************************************************************************/
 
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <sys/time.h>
 #include <sys/types.h>
