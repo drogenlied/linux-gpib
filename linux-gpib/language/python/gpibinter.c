@@ -4,7 +4,7 @@
 
 #include "Python.h"
 
-#include <ib.h>
+#include <gpib/ib.h>
 
 static PyObject *GpibError;
 
