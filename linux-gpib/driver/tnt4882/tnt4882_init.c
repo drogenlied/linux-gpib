@@ -82,11 +82,16 @@ void tnt4882_request_system_control( gpib_board_t *board, int request_control )
 	tnt4882_private_t *priv = board->private_data;
 
 	if(request_control)
+	{
 		tnt_writeb( priv, SETSC, CMDR );
+		udelay(1);
+	}
 	nec7210_request_system_control( board, &priv->nec7210_priv, request_control );
 	if(!request_control)
+	{
 		tnt_writeb( priv, CLRSC, CMDR );
-	udelay(1);
+		udelay(1);
+	}
 }
 void tnt4882_interface_clear(gpib_board_t *board, int assert)
 {
