@@ -34,6 +34,7 @@ int ibonline( gpib_board_t *board )
 		return -1;
 	}
 	board->online = 1;
+	GPIB_DPRINTK( "gpib: board online\n" );
 
 	return 0;
 }
@@ -49,9 +50,9 @@ int iboffline( gpib_board_t *board )
 
 	board->interface->detach( board );
 	gpib_deallocate_board( board );
-	GPIB_DPRINTK( "gpib: board offline\n" );
 
 	board->online = 0;
+	GPIB_DPRINTK( "gpib: board offline\n" );
 
 	return 0;
 }
