@@ -25,6 +25,8 @@ interface 	     { return (T_INTERFACE);}
 base         { return (T_BASE);}
 irq          { return (T_IRQ);}
 dma          { return (T_DMA);}
+pci_bus      { return (T_PCI_BUS);}
+pci_slot      { return (T_PCI_SLOT);}
 
 device	     { return(T_DEVICE);}
 

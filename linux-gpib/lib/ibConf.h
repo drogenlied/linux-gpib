@@ -78,6 +78,8 @@ typedef struct ibBoardStruct {
 	unsigned long base;                          /* base configuration               */
 	unsigned int irq;
 	unsigned int dma;
+	int pci_bus;
+	int pci_slot;
 	int fileno;                        /* device file descriptor           */
 	char device[100];	// name of device file ( /dev/gpib0, etc.)
 	pthread_t *autopoll_thread;

@@ -51,6 +51,7 @@ static int board_info_ioctl( const gpib_board_t *board, unsigned long arg );
 static int ppc_ioctl( gpib_board_t *board, unsigned long arg );
 static int query_board_rsv_ioctl( gpib_board_t *board, unsigned long arg );
 static int interface_clear_ioctl( gpib_board_t *board, unsigned long arg );
+static int select_pci_ioctl( gpib_board_t *board, unsigned long arg );
 
 static int cleanup_open_devices( gpib_file_private_t *file_priv, gpib_board_t *board );
 
@@ -201,6 +202,9 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			break;
 		case IBSAD:
 			return sad_ioctl( board, arg );
+			break;
+		case IBSELECT_PCI:
+			return select_pci_ioctl( board, arg );
 			break;
 		default:
 			break;
@@ -962,4 +966,18 @@ static int interface_clear_ioctl( gpib_board_t *board, unsigned long arg )
 		return -EFAULT;
 
 	return ibsic( board, usec_duration );
+}
+
+static int select_pci_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	select_pci_ioctl_t selection;
+	int retval;
+
+	retval = copy_from_user( &selection, ( void * ) arg, sizeof( selection ) );
+	if( retval ) return -EFAULT;
+
+	board->pci_bus = selection.pci_bus;
+	board->pci_slot = selection.pci_slot;
+	
+	return 0;
 }

@@ -7,6 +7,7 @@
 int ibBdChrConfig( ibBoard_t *board )
 {
 	board_type_ioctl_t boardtype;
+	select_pci_ioctl_t pci_selection;
 	int retval;
 
 	if( board->fileno < 0 )
@@ -28,6 +29,12 @@ int ibBdChrConfig( ibBoard_t *board )
 	if( retval < 0 ) return retval;
 	retval = ioctl( board->fileno, IBSAD, &board->sad );
 	if( retval < 0 ) return retval;
+
+	pci_selection.pci_bus = board->pci_bus;
+	pci_selection.pci_slot = board->pci_slot;
+	retval = ioctl( board->fileno, IBSELECT_PCI, &pci_selection );
+	if( retval < 0 ) return retval;
+
 
 	return 0;
 }

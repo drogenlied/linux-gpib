@@ -156,6 +156,12 @@ struct gpib_board_struct
 	unsigned int ibirq;
 	/* dma channel to use for non-pnp cards (set by core, driver should make local copy) */
 	unsigned int ibdma;
+	/* pci bus of card, useful for distinguishing multiple identical pci cards
+	 * (negative means don't care) */
+	int pci_bus;
+	/* pci slot of card, useful for distinguishing multiple identical pci cards
+	 * (negative means don't care) */
+	int pci_slot;
 	/* 'private_data' can be used as seen fit by the driver to
 	 * store additional variables for this board */
 	void *private_data;

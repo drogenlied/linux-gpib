@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "ib_internal.h"
 #undef EXTERN
-#include <ibP.h>
+#include "ibP.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -23,7 +23,7 @@ char cval;
 }
 
 %token T_INTERFACE T_DEVICE T_NAME T_MINOR T_BASE T_IRQ T_DMA
-%token T_PAD T_SAD T_TIMO T_EOSBYTE T_BOARD_TYPE
+%token T_PAD T_SAD T_TIMO T_EOSBYTE T_BOARD_TYPE T_PCI_BUS T_PCI_SLOT
 %token T_REOS T_BIN T_INIT_S T_DCL 
 %token T_MASTER T_LLO T_DCL T_EXCL T_INIT_F T_AUTOPOLL
 
@@ -84,6 +84,8 @@ char cval;
 		| T_BASE '=' T_NUMBER     { ibBoard[bdid].base = $3; }
 		| T_IRQ  '=' T_NUMBER     { ibBoard[bdid].irq = $3; }
 		| T_DMA  '=' T_NUMBER     { ibBoard[bdid].dma = $3; }
+		| T_PCI_BUS  '=' T_NUMBER     { ibBoard[bdid].pci_bus = $3; }
+		| T_PCI_SLOT  '=' T_NUMBER     { ibBoard[bdid].pci_slot = $3; }
 		| T_MASTER T_BOOL	{ ibBoard[bdid].is_system_controller = $2; }
 		| T_BOARD_TYPE '=' T_STRING
 			{

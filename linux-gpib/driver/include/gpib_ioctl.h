@@ -84,6 +84,12 @@ typedef struct
 	int autopolling;
 } board_info_ioctl_t;
 
+typedef struct
+{
+	int pci_bus;
+	int pci_slot;
+} select_pci_ioctl_t;
+
 /* Standard functions. */
 #define IBRD _IOWR( GPIB_CODE, 0, read_write_ioctl_t )
 #define IBWRT _IOWR( GPIB_CODE, 1, read_write_ioctl_t )
@@ -117,5 +123,6 @@ typedef struct
 #define IBBOARD_INFO _IOR( GPIB_CODE, 29, board_info_ioctl_t )
 
 #define IBQUERY_BOARD_RSV _IOR( GPIB_CODE, 31, int )
+#define IBSELECT_PCI _IOWR( GPIB_CODE, 32, select_pci_ioctl_t )
 
 #endif	/* _GPIB_IOCTL_H */

@@ -48,6 +48,8 @@ void ibBoardDefaultValues( void )
 		strcpy( ibBoard[ i ].device, "" );
 		strcpy( ibBoard[ i ].board_type, "" );
 		ibBoard[ i ].autopoll_thread = NULL;
+		ibBoard[ i ].pci_bus = -1;
+		ibBoard[ i ].pci_slot = -1;
 	}
 }
 

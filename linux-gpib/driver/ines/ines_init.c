@@ -245,20 +245,26 @@ int ines_pci_attach(gpib_board_t *board)
 
 	// find board
 	ines_priv->pci_device = NULL;
-
-	for(i = 0; i < num_pci_chips; i++)
+	for(i = 0; i < num_pci_chips && ines_priv->pci_device == NULL; i++)
 	{
-		ines_priv->pci_device = pci_find_subsys(pci_ids[i].vendor_id, pci_ids[i].device_id,
-			pci_ids[i].subsystem_vendor_id, pci_ids[i].subsystem_device_id, ines_priv->pci_device);
-		if(ines_priv->pci_device)
+		do
 		{
+			ines_priv->pci_device = pci_find_subsys(pci_ids[i].vendor_id, pci_ids[i].device_id,
+				pci_ids[i].subsystem_vendor_id, pci_ids[i].subsystem_device_id, ines_priv->pci_device);
+			if( ines_priv->pci_device == NULL )
+				break;
+			if( board->pci_bus >=0 && board->pci_bus != ines_priv->pci_device->bus->number )
+				continue;
+			if( board->pci_slot >= 0 && board->pci_slot !=
+				PCI_SLOT( ines_priv->pci_device->devfn ) )
+				continue;
 			found_id = pci_ids[i];
 			break;
-		}
+		}while( 1 );
 	}
 	if(ines_priv->pci_device == NULL)
 	{
-		printk("gpib: no ines PCI board found\n");
+		printk("gpib: could not find ines PCI board\n");
 		return -1;
 	}
 

@@ -113,6 +113,8 @@ void init_gpib_board( gpib_board_t *board )
 	board->ibbase = 0;
 	board->ibirq = 0;
 	board->ibdma = 0;
+	board->pci_bus = -1;
+	board->pci_slot = -1;
 	board->master = 1;
 	board->online = 0;
 	board->exclusive = 0;
