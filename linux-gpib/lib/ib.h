@@ -44,84 +44,84 @@ enum send_eotmode
 	NLend
 };
 
-extern volatile int ibsta, ibcnt, iberr;
-extern volatile long ibcntl;
+volatile int ibsta, ibcnt, iberr;
+volatile long ibcntl;
 
-extern void AllSPoll( int boardID, Addr4882_t addressList[], short resultList[] );
-extern void AllSpoll( int boardID, Addr4882_t addressList[], short resultList[] );
-extern void DevClear( int boardID, Addr4882_t address );
-extern void DevClearList( int boardID, Addr4882_t addressList[] );
-extern void EnableLocal( int boardID, Addr4882_t addressList[] );
-extern void EnableRemote( int boardID, Addr4882_t addressList[] );
-extern void FindLstn( int boardID, Addr4882_t padList[],
+void AllSPoll( int board_desc, Addr4882_t addressList[], short resultList[] );
+void AllSpoll( int board_desc, Addr4882_t addressList[], short resultList[] );
+void DevClear( int board_desc, Addr4882_t address );
+void DevClearList( int board_desc, Addr4882_t addressList[] );
+void EnableLocal( int board_desc, Addr4882_t addressList[] );
+void EnableRemote( int board_desc, Addr4882_t addressList[] );
+void FindLstn( int board_desc, Addr4882_t padList[],
 	Addr4882_t resultList[], int maxNumResults );
-extern void FindRQS( int boardID, Addr4882_t addressList[], short *result );
-extern void PassControl( int boardID, Addr4882_t address );
-extern void PPoll( int boardID, short *result );
-extern void PPollConfig( int boardID, Addr4882_t address, int dataLine, int lineSense );
-extern void PPollUnconfig( int boardID, Addr4882_t addressList[] );
-extern void RcvRespMsg( int boardID, void *buffer, long count, int termination );
-extern void ReadStatusByte( int boardID, Addr4882_t address, short *result );
-extern void Receive( int boardID, Addr4882_t address,
+void FindRQS( int board_desc, Addr4882_t addressList[], short *result );
+void PassControl( int board_desc, Addr4882_t address );
+void PPoll( int board_desc, short *result );
+void PPollConfig( int board_desc, Addr4882_t address, int dataLine, int lineSense );
+void PPollUnconfig( int board_desc, Addr4882_t addressList[] );
+void RcvRespMsg( int board_desc, void *buffer, long count, int termination );
+void ReadStatusByte( int board_desc, Addr4882_t address, short *result );
+void Receive( int board_desc, Addr4882_t address,
 	void *buffer, long count, int termination );
-extern void ReceiveSetup( int boardID, Addr4882_t address );
-extern void ResetSys( int boardID, Addr4882_t addressList[] );
-extern void Send( int boardID, Addr4882_t address, void *buffer,
+void ReceiveSetup( int board_desc, Addr4882_t address );
+void ResetSys( int board_desc, Addr4882_t addressList[] );
+void Send( int board_desc, Addr4882_t address, void *buffer,
 	long count, int eotmode );
-extern void SendCmds( int boardID, void *buffer, long count );
-extern void SendDataBytes( int boardID, void *buffer,
+void SendCmds( int board_desc, void *buffer, long count );
+void SendDataBytes( int board_desc, void *buffer,
 	long count, int eotmode );
-extern void SendIFC( int boardID );
-extern void SendLLO( int boardID );
-extern void SendList( int boardID, Addr4882_t addressList[], void *buffer,
+void SendIFC( int board_desc );
+void SendLLO( int board_desc );
+void SendList( int board_desc, Addr4882_t addressList[], void *buffer,
 	long count, int eotmode );
-extern void SendSetup( int boardID, Addr4882_t addressList[] );
-extern void SetRWLS( int boardID, Addr4882_t addressList[] );
-extern void TestSRQ( int boardID, short *result );
-extern void TestSys( int boardID, Addr4882_t addressList[],
+void SendSetup( int board_desc, Addr4882_t addressList[] );
+void SetRWLS( int board_desc, Addr4882_t addressList[] );
+void TestSRQ( int board_desc, short *result );
+void TestSys( int board_desc, Addr4882_t addressList[],
 	short resultList[] );
-extern int ThreadIbsta( void );
-extern int ThreadIberr( void );
-extern int ThreadIbcnt( void );
-extern long ThreadIbcntl( void );
-extern void Trigger( int boardID, Addr4882_t address );
-extern void TriggerList( int boardID, Addr4882_t addressList[] );
-extern void WaitSRQ( int boardID, short *result );
-extern int ibask( int ud, int option, int *value );
-extern int ibbna( int ud, char *board_name );
-extern int ibcac( int ud, int v );
-extern int ibclr( int ud );
-extern int ibcmd( int ud, void *cmd, long cnt );
-extern int ibcmda( int ud, void *cmd, long cnt );
-extern int ibconfig( int ud, int option, int value );
-extern int ibdev( int boardID, int pad, int sad, int timo, int eot, int eos );
-extern int ibdma( int ud, int v );
-extern int ibeot( int ud, int v );
-extern int ibeos( int ud, int v );
-extern int ibevent( int ud, short *event );
-extern int ibfind( const char *dev );
-extern int ibgts(int ud, int v);
-extern int iblines( int ud, short *line_status );
-extern int ibloc( int ud );
-extern int ibonl( int ud, int onl );
-extern int ibpad( int ud, int v );
-extern int ibpct( int ud );
-extern int ibppc( int ud, int v );
-extern int ibrd( int ud, void *rd, long count );
-extern int ibrdf( int ud, const char *file_path );
-extern int ibrpp( int ud, char *ppr );
-extern int ibrsc( int ud, int v );
-extern int ibrsp( int ud, char *spr );
-extern int ibrsv( int ud, int v );
-extern int ibsad( int ud, int v );
-extern int ibsic( int ud );
-extern int ibsre( int ud, int v );
-extern int ibtmo( int ud,int v );
-extern int ibtrg( int ud );
-extern int ibwait( int ud, int mask );
-extern int ibwrt( int ud, void *rd, long count );
-extern int ibwrtf( int ud, const char *file_path );
-extern const char* gpib_error_string( int iberr );
+int ThreadIbsta( void );
+int ThreadIberr( void );
+int ThreadIbcnt( void );
+long ThreadIbcntl( void );
+void Trigger( int board_desc, Addr4882_t address );
+void TriggerList( int board_desc, Addr4882_t addressList[] );
+void WaitSRQ( int board_desc, short *result );
+int ibask( int ud, int option, int *value );
+int ibbna( int ud, char *board_name );
+int ibcac( int ud, int v );
+int ibclr( int ud );
+int ibcmd( int ud, void *cmd, long cnt );
+int ibcmda( int ud, void *cmd, long cnt );
+int ibconfig( int ud, int option, int value );
+int ibdev( int board_index, int pad, int sad, int timo, int send_eoi, int eos );
+int ibdma( int ud, int v );
+int ibeot( int ud, int v );
+int ibeos( int ud, int v );
+int ibevent( int ud, short *event );
+int ibfind( const char *dev );
+int ibgts(int ud, int v);
+int iblines( int ud, short *line_status );
+int ibloc( int ud );
+int ibonl( int ud, int onl );
+int ibpad( int ud, int v );
+int ibpct( int ud );
+int ibppc( int ud, int v );
+int ibrd( int ud, void *rd, long count );
+int ibrdf( int ud, const char *file_path );
+int ibrpp( int ud, char *ppr );
+int ibrsc( int ud, int v );
+int ibrsp( int ud, char *spr );
+int ibrsv( int ud, int v );
+int ibsad( int ud, int v );
+int ibsic( int ud );
+int ibsre( int ud, int v );
+int ibtmo( int ud,int v );
+int ibtrg( int ud );
+int ibwait( int ud, int mask );
+int ibwrt( int ud, void *rd, long count );
+int ibwrtf( int ud, const char *file_path );
+const char* gpib_error_string( int iberr );
 
 static __inline__ Addr4882_t MakeAddr( unsigned int pad, unsigned int sad )
 {
