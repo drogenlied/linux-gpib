@@ -304,7 +304,6 @@ static void gpib_config(dev_link_t *link)
 
 	handle = link->handle;
 	dev = link->priv;
-	unsigned long virt;
 
 #ifdef PCMCIA_DEBUG
 	if (pc_debug)
