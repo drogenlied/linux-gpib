@@ -176,17 +176,26 @@ IBLCL void osReset(void)
 
 ****************************************************************************************/
 
-struct file_operations ib_fops = {
-  owner: THIS_MODULE,
-  llseek: NULL,
-  read: ibVFSread,
-  write: ibVFSwrite,
-  readdir: NULL,
-  ioctl: ibioctl,
-  mmap: NULL,
-  open: ibopen,
-  flush: NULL,
-  release: ibclose,
+struct file_operations ib_fops = 
+{
+	owner: THIS_MODULE,
+	llseek: NULL,
+	read: ibVFSread,
+	write: ibVFSwrite,
+	readdir: NULL,
+	poll: NULL,
+	ioctl: ibioctl,
+	mmap: NULL,
+	open: ibopen,
+	flush: NULL,
+	release: ibclose,
+	fsync: NULL,
+	fasync: NULL,
+	lock: NULL,
+	readv: NULL,
+	writev: NULL,
+	sendpage: NULL,
+	get_unmapped_area: NULL,
 };
 
 
