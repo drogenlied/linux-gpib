@@ -48,14 +48,9 @@
    modules at load time with a 'pc_debug=#' option to insmod.
 */
 
-#define PCMCIA_DEBUG 1
-
-#ifdef PCMCIA_DEBUG
 static int pc_debug = PCMCIA_DEBUG;
 static char *version =
-"ines_cs.c 0.12";
-#endif
-
+	"$Id$";
 
 /* Parameters that can be set with 'insmod' */
 
@@ -179,11 +174,9 @@ static dev_link_t *gpib_attach(void)
 	local_info_t *local;
 	int ret;
 	int i;
-	
-#ifdef PCMCIA_DEBUG
+
 	if (pc_debug)
 		printk(KERN_DEBUG "gpib_attach()\n");
-#endif
 
 	/* Initialize the dev_link_t structure */
 	link = kmalloc(sizeof(struct dev_link_t), GFP_KERNEL);
@@ -199,8 +192,8 @@ static dev_link_t *gpib_attach(void)
 	link->io.IOAddrLines = 5;
 
 	/* Interrupt setup */
-	link->irq.Attributes = IRQ_TYPE_EXCLUSIVE;
-	link->irq.IRQInfo1 = IRQ_INFO2_VALID|IRQ_LEVEL_ID;
+	link->irq.Attributes = IRQ_TYPE_EXCLUSIVE | IRQ_FORCED_PULSE;
+	link->irq.IRQInfo1 = IRQ_INFO2_VALID | IRQ_PULSE_ID;
 	if(irq_list[0] == -1)
 		link->irq.IRQInfo2 = irq_mask;
 	else
@@ -257,10 +250,8 @@ static void gpib_detach(dev_link_t *link)
 {
 	dev_link_t **linkp;
 
-#ifdef PCMCIA_DEBUG
 	if (pc_debug)
 		printk(KERN_DEBUG "gpib_detach(0x%p)\n", link);
-#endif
 
 	/* Locate device structure */
 	for (linkp = &dev_list; *linkp; linkp = &(*linkp)->next)
@@ -274,10 +265,8 @@ static void gpib_detach(dev_link_t *link)
 		detach().
 	*/
 	if (link->state & DEV_CONFIG) {
-#ifdef PCMCIA_DEBUG
 		printk(KERN_DEBUG "ines_cs: detach postponed, '%s' "
 			"still locked\n", link->dev->dev_name);
-#endif
 		link->state |= DEV_STALE_LINK;
 		return;
 	}
@@ -316,10 +305,8 @@ static void gpib_config(dev_link_t *link)
 	handle = link->handle;
 	dev = link->priv;
 
-#ifdef PCMCIA_DEBUG
 	if (pc_debug)
 		printk(KERN_DEBUG "gpib_config(0x%p)\n", link);
-#endif
 
 	/*
 		This reads the card's CONFIG tuple to find its configuration
@@ -356,10 +343,8 @@ static void gpib_config(dev_link_t *link)
 		if( first_tuple(handle,&tuple,&parse) == CS_SUCCESS ) {
 			dev->manfid = parse.manfid.manf;
 			dev->cardid = parse.manfid.card;
-#ifdef PCMCIA_DEBUG
 			printk(KERN_DEBUG "ines_cs: manufacturer: 0x%x card: 0x%x\n",
 			dev->manfid, dev->cardid);
-#endif
 		}
 		/* try to get board information from CIS */
 
@@ -466,21 +451,17 @@ static void gpib_release(u_long arg)
 {
     dev_link_t *link = (dev_link_t *)arg;
 
-#ifdef PCMCIA_DEBUG
     if (pc_debug)
 	printk(KERN_DEBUG "gpib_release(0x%p)\n", link);
-#endif
 
     /*
        If the device is currently in use, we won't release until it
        is actually closed.
     */
     if (link->open) {
-#ifdef PCMCIA_DEBUG
 	if (pc_debug)
 	    printk(KERN_DEBUG "ines_cs: release postponed, '%s' "
 		   "still open\n", link->dev->dev_name);
-#endif
        link->state |= DEV_STALE_CONFIG;
 	return;
     }
@@ -519,18 +500,14 @@ static int gpib_event(event_t event, int priority,
 {
     dev_link_t *link = args->client_data;
 
-#ifdef PCMCIA_DEBUG
     if (pc_debug)
 	printk(KERN_DEBUG "gpib_event()\n");
-#endif
-    
+
     switch (event) {
-#ifdef PCMCIA_DEBUG
     case CS_EVENT_REGISTRATION_COMPLETE:
 	if (pc_debug)
 	    printk(KERN_DEBUG "ines_cs: registration complete\n");
 	break;
-#endif
     case CS_EVENT_CARD_REMOVAL:
 	link->state &= ~DEV_PRESENT;
 	if (link->state & DEV_CONFIG) {
@@ -564,12 +541,10 @@ static int gpib_event(event_t event, int priority,
 int ines_pcmcia_init_module(void)
 {
 	servinfo_t serv;
-#ifdef PCMCIA_DEBUG
 	if (pc_debug)
 		printk(KERN_INFO "%s\n", version);
-#endif
 	CardServices(GetCardServicesInfo, &serv);
-	if (serv.Revision != CS_RELEASE_CODE) 
+	if (serv.Revision != CS_RELEASE_CODE)
 	{
 		printk(KERN_NOTICE "gpib: Card Services release "
 			"does not match!\n");
@@ -581,10 +556,8 @@ int ines_pcmcia_init_module(void)
 
 void ines_pcmcia_cleanup_module(void)
 {
-#ifdef PCMCIA_DEBUG
 	if (pc_debug)
 		printk(KERN_DEBUG "ines_cs: unloading\n");
-#endif
 	unregister_pcmcia_driver(&dev_info);
 	while (dev_list != NULL) 
 	{
