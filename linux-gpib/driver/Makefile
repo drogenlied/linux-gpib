@@ -46,18 +46,7 @@ MAKE = make OPTIONS="$(OPTIONS) " -C
 SUBDIRS = board protocol sys
 
 
-all : .proto_stamp $(EXP_INC) subdirs gpib$(DRIVER_DEVICE_ID).o
-
-
-.proto_stamp: 
-	set -e; \
-	for i in $(SUBDIRS); do \
-		$(ROOT)/util/mkproto.sh $$i >./include/"$$i"_proto.h; \
-	done	
-	touch .proto_stamp
-
-
-
+all : $(EXP_INC) subdirs gpib$(DRIVER_DEVICE_ID).o
 
 subdirs:
 	set -e; \
