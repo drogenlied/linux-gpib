@@ -57,7 +57,6 @@ ssize_t agilent_82350b_accel_write( gpib_board_t *board, uint8_t *buffer, size_t
 			((event_status = read_and_clear_event_status(board)) & TERM_COUNT_STATUS_BIT) ||
 			test_bit(DEV_CLEAR_BN, &tms_priv->state) ||
 			test_bit(TIMO_NUM, &board->status)))
-
 		{
 			printk("%s: write wait interrupted\n", __FILE__);
 			retval = -ERESTARTSYS;
