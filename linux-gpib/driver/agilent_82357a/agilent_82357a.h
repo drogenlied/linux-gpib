@@ -137,6 +137,9 @@ struct agilent_82357a_register_pairlet
 enum firmware_registers
 {
 	HW_CONTROL = 0xa,
+	LED_CONTROL = 0xb,
+	RESET_TO_POWERUP = 0xc,
+	PROTOCOL_CONTROL = 0xd,
 };
 
 enum hardware_control_bits
@@ -147,6 +150,24 @@ enum hardware_control_bits
 	OSCILLATOR_5V_ON = 0x8,
 	OUTPUT_5V_ON = 0x20,
 	CPLD_3V_ON = 0x80,
+};
+
+enum led_control_bits
+{
+	FIRMWARE_LED_CONTROL = 0x1,
+	FAIL_LED_ON = 0x20,
+	READY_LED_ON = 0x40,
+	ACCESS_LED_ON = 0x80
+};
+
+enum reset_to_powerup_bits
+{
+	RESET_SPACEBALL = 0x1,	// wait 2 millisec after sending
+};
+
+enum protocol_control_bits
+{
+	WRITE_COMPLETE_INTERRUPT_EN = 0x1,
 };
 
 static const int agilent_82357a_control_request = 0x4;

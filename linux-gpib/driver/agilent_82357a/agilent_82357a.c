@@ -597,8 +597,25 @@ static int agilent_82357a_init(gpib_board_t *board)
 {
 	agilent_82357a_private_t *a_priv = board->private_data;
 	struct agilent_82357a_register_pairlet hw_control;
+	struct agilent_82357a_register_pairlet writes[0x2];
 	int retval;
+	int i = 0;
 	
+	writes[i].address = PROTOCOL_CONTROL;
+	writes[i].value = WRITE_COMPLETE_INTERRUPT_EN;
+	i++;
+	writes[i].address = LED_CONTROL;
+	writes[i].value = FIRMWARE_LED_CONTROL;
+	i++;
+	if(i > sizeof(writes))
+	{
+		printk("%s: %s: bug! writes[] overflow\n", __FILE__, __FUNCTION__);
+	}
+	retval = agilent_82357a_write_registers(a_priv, writes, i);
+	if(retval)
+	{
+		printk("%s: %s: agilent_82357a_write_registers() returned error\n", __FILE__, __FUNCTION__);
+	}
 	hw_control.address = HW_CONTROL;
 	retval = agilent_82357a_read_registers(a_priv, &hw_control, 1);
 	if(retval)
