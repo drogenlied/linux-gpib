@@ -15,6 +15,8 @@
  *                                                                         *
  ***************************************************************************/
 
+#define _GNU_SOURCE
+
 #include "ib_internal.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -98,11 +100,51 @@ int setup_global_board_descriptors( void )
 	return retval;
 }
 
+static pthread_mutex_t config_lock = PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP;
+
+static void gpib_atfork_prepare(void)
+{
+	int i;
+
+	for(i = 0; i < GPIB_CONFIGS_LENGTH; i++)
+		if(ibConfigs[i])
+		{
+			pthread_mutex_lock(&ibConfigs[i]->async.lock);
+			pthread_mutex_lock(&ibConfigs[i]->async.join_lock);
+		}
+	pthread_mutex_lock(&config_lock);
+}
+
+static void gpib_atfork_parent(void)
+{
+	int i;
+
+	pthread_mutex_unlock(&config_lock);
+	for(i = 0; i < GPIB_CONFIGS_LENGTH; i++)
+		if(ibConfigs[i])
+		{
+			pthread_mutex_unlock(&ibConfigs[i]->async.join_lock);
+			pthread_mutex_unlock(&ibConfigs[i]->async.lock);
+		}
+}
+
+static void gpib_atfork_child(void)
+{
+	int i;
+
+	pthread_mutex_init(&config_lock, NULL);
+	for(i = 0; i < GPIB_CONFIGS_LENGTH; i++)
+		if(ibConfigs[i])
+		{
+			pthread_mutex_init(&ibConfigs[i]->async.join_lock, NULL);
+			pthread_mutex_init(&ibConfigs[i]->async.lock, NULL);
+		}
+}
+
 int ibParseConfigFile( void )
 {
 	int retval = 0;
 	static volatile int config_parsed = 0;
-	static pthread_mutex_t config_lock = PTHREAD_MUTEX_INITIALIZER;//PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP;
 	char *filename, *envptr;
 
 	pthread_mutex_lock( &config_lock );
@@ -126,6 +168,9 @@ int ibParseConfigFile( void )
 	retval = setup_global_board_descriptors();
 
 	config_parsed = 1;
+	/* be extra safe about dealing with forks */
+	pthread_atfork(gpib_atfork_prepare, gpib_atfork_parent,
+		gpib_atfork_child);
 	pthread_mutex_unlock( &config_lock );
 
 	return retval;
