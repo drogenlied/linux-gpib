@@ -19,9 +19,7 @@ int ibcac(gpib_board_t *board, int sync)
 		return -1;
 	}
 
-	board->interface->take_control(board, sync);
-
-	return 0;
+	return board->interface->take_control(board, sync);
 }
 
 

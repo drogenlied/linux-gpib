@@ -29,9 +29,6 @@ int nec7210_take_control(gpib_board_t *board, nec7210_private_t *priv, int syncr
 
 	if(syncronous)
 	{
-		// XXX make sure we aren't asserting rfd holdoff
-//		write_byte(priv, AUX_FH, AUXMR);
-
 		write_byte(priv, AUX_TCS, AUXMR);
 	}else
 		write_byte(priv, AUX_TCA, AUXMR);
@@ -45,26 +42,9 @@ int nec7210_take_control(gpib_board_t *board, nec7210_private_t *priv, int syncr
 		}
 		udelay(1);
 	}
-	// suspend if we still don't have ATN
-	if(i == timeout)
-	{
-		while(((adsr_bits = read_byte(priv, ADSR)) & HR_NATN) &&
-			test_bit(TIMO_NUM, &board->status) == 0)
-		{
-			if(interruptible_sleep_on_timeout(&board->wait, 1))
-			{
-				printk("interupted waiting for ATN\n");
-				retval = -EINTR;
-				break;
-			}
-		}
-	}
-
-	if(test_bit(TIMO_NUM, &board->status))
-	{
-		printk("gpib: take control timed out\n");
+	if( i == timeout )
 		retval = -ETIMEDOUT;
-	}
+
 	if(adsr_bits & HR_NATN)
 		clear_bit(ATN_NUM, &board->status);
 	else

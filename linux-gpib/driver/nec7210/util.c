@@ -40,19 +40,11 @@ int nec7210_parallel_poll(gpib_board_t *board, nec7210_private_t *priv, uint8_t 
 {
 	int ret;
 
-	// enable command out interrupts
-	priv->imr2_bits |= HR_COIE;
-	write_byte(priv, priv->imr2_bits, IMR2);
-
 	// execute parallel poll
 	write_byte(priv, AUX_EPP, AUXMR);
 
 	// wait for result
 	ret = wait_event_interruptible(board->wait, test_bit(COMMAND_READY_BN, &priv->state));
-
-	// disable command out interrupts
-	priv->imr2_bits &= ~HR_COIE;
-	write_byte(priv, priv->imr2_bits, IMR2);
 
 	if(ret)
 	{

@@ -28,16 +28,11 @@ static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 
 	while( count < length )
 	{
-		spin_lock_irqsave(&board->spinlock, flags);
-		clear_bit(WRITE_READY_BN, &priv->state);
-		clear_bit(DMA_IN_PROGRESS_BN, &priv->state);
-		write_byte(priv, buffer[count++], CDOR);
-		spin_unlock_irqrestore(&board->spinlock, flags);
 
 		// wait until byte is ready to be sent
 		if( wait_event_interruptible( board->wait,
-			test_bit( WRITE_READY_BN, &priv->state) ||
-			test_bit(TIMO_NUM, &board->status ) ) )
+			test_bit( WRITE_READY_BN, &priv->state ) ||
+			test_bit( TIMO_NUM, &board->status ) ) )
 		{
 			printk("gpib write interrupted\n");
 			retval = -EINTR;
@@ -48,6 +43,23 @@ static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 			retval = -ETIMEDOUT;
 			break;
 		}
+
+		spin_lock_irqsave(&board->spinlock, flags);
+		clear_bit(WRITE_READY_BN, &priv->state);
+		write_byte(priv, buffer[ count++ ], CDOR);
+		spin_unlock_irqrestore(&board->spinlock, flags);
+	}
+	// wait last byte has been sent
+	if( wait_event_interruptible( board->wait,
+		test_bit( WRITE_READY_BN, &priv->state ) ||
+		test_bit( TIMO_NUM, &board->status ) ) )
+	{
+		printk("gpib write interrupted\n");
+		retval = -EINTR;
+	}
+	if( test_bit( TIMO_NUM, &board->status ) )
+	{
+		retval = -ETIMEDOUT;
 	}
 
 	if(retval)
@@ -78,7 +90,6 @@ static ssize_t __dma_write(gpib_board_t *board, nec7210_private_t *priv, dma_add
 	priv->imr2_bits |= HR_DMAO;
 	write_byte(priv, priv->imr2_bits, IMR2);
 
-	clear_bit(WRITE_READY_BN, &priv->state);
 	set_bit(DMA_IN_PROGRESS_BN, &priv->state);
 
 	spin_unlock_irqrestore(&board->spinlock, flags);
@@ -91,6 +102,8 @@ static ssize_t __dma_write(gpib_board_t *board, nec7210_private_t *priv, dma_add
 	}
 	if(test_bit(TIMO_NUM, &board->status))
 		retval = -ETIMEDOUT;
+
+	clear_bit(DMA_IN_PROGRESS_BN, &priv->state);
 
 	// disable board's dma
 	priv->imr2_bits &= ~HR_DMAO;

@@ -86,10 +86,6 @@ int dvrsp( gpib_board_t *board, unsigned int pad, int sad,
 
 	board->interface->take_control( board, 0 );
 
-	/* we need this delay here to prevent bus errors from
-	 * occuring, but I don't know why */
-	udelay( 2 );
-
 	cmd_string[0] = SPD;	/* disable serial poll bytes */
 	cmd_string[1] = UNT;
 	if( board->interface->command(board, cmd_string, 2) < 2 )

@@ -111,6 +111,7 @@ void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv)
 
 	if((status1 & HR_DO))
 	{
+		set_bit(WRITE_READY_BN, &priv->state);
 		if(test_bit(DMA_IN_PROGRESS_BN, &priv->state))	// write data, isa dma mode
 		{
 			// check if dma transfer is complete
@@ -120,27 +121,26 @@ void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv)
 			if(get_dma_residue(priv->dma_channel) == 0)
 			{
 				clear_bit(DMA_IN_PROGRESS_BN, &priv->state);
-				set_bit(WRITE_READY_BN, &priv->state);
 				wake_up_interruptible(&board->wait);
 			}else
 			{
-				clear_bit(WRITE_READY_BN, &priv->state);
 				enable_dma(priv->dma_channel);
 			}
 			release_dma_lock(flags);
 		}else
 		{
-			set_bit(WRITE_READY_BN, &priv->state);
 			wake_up_interruptible(&board->wait);
 		}
-	}
+	}else
+		clear_bit(WRITE_READY_BN, &priv->state);
 
 	// outgoing command can be sent
 	if(status2 & HR_CO)
 	{
 		set_bit(COMMAND_READY_BN, &priv->state);
 		wake_up_interruptible(&board->wait); /* wake up sleeping process */
-	}
+	}else
+		clear_bit(COMMAND_READY_BN, &priv->state);
 
 	// command pass through received
 	if(status1 & HR_CPT)
