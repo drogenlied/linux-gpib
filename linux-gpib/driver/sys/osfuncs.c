@@ -958,15 +958,30 @@ static int timeout_ioctl( gpib_board_t *board, unsigned long arg )
 
 static int ppc_ioctl( gpib_board_t *board, unsigned long arg)
 {
-	int configuration;
+	ppoll_config_ioctl_t cmd;
 	int retval;
 
-	retval = copy_from_user( &configuration, ( void * ) arg, sizeof( configuration ) );
+	retval = copy_from_user( &cmd, ( void * ) arg, sizeof( cmd ) );
 	if( retval )
 		return -EFAULT;
 
-	return ibppc( board, configuration );
+	if( cmd.set_ist )
+	{
+		board->ist = 1;
+		board->interface->parallel_poll_response( board, board->ist );
+	}else if( cmd.clear_ist )
+	{
+		board->ist = 0;
+		board->interface->parallel_poll_response( board, board->ist );
+	}
 
+	if( cmd.config )
+	{
+		retval = ibppc( board, cmd.config );
+		if( retval < 0 ) return retval;
+	}
+
+	return 0;
 }
 
 static int query_board_rsv_ioctl( gpib_board_t *board, unsigned long arg )
@@ -997,6 +1012,7 @@ static int board_info_ioctl( const gpib_board_t *board, unsigned long arg)
 	else
 		info.autopolling = 0;
 	info.t1_delay = board->t1_nano_sec;
+	info.ist = board->ist;
 	
 	retval = copy_to_user( ( void * ) arg, &info, sizeof( info ) );
 	if( retval )

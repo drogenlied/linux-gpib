@@ -17,6 +17,22 @@
 
 #include "ib_internal.h"
 
+int query_ist( const ibBoard_t *board )
+{
+	int retval;
+	board_info_ioctl_t info;
+
+	retval = ioctl( board->fileno, IBBOARD_INFO, &info );
+	if( retval < 0 )
+	{
+		setIberr( EDVR );
+		setIbcnt( errno );
+		return retval;
+	}
+
+	return info.ist;
+}
+
 int query_ppc( const ibBoard_t *board )
 {
 	int retval;
@@ -220,8 +236,9 @@ int ibask( int ud, int option, int *value )
 				*value = 0;
 				return exit_library( ud, 0 );
 			case IbaIst:
-				// XXX ist support not implemented yet
-				*value = 0;
+				retval = query_ist( board );
+				if( retval < 0 ) return exit_library( ud, 1 );
+				*value = retval;
 				return exit_library( ud, 0 );
 			case IbaRsv:
 				retval = query_board_rsv( board );

@@ -78,7 +78,7 @@ void tms9914_parallel_poll_configure( gpib_board_t *board,
 void tms9914_parallel_poll_response( gpib_board_t *board,
 	tms9914_private_t *priv, int ist )
 {
-	set_ppoll_reg( priv, priv->ppoll_enable, priv->ppoll_line, priv->ppoll_sense, board->ist );
+	set_ppoll_reg( priv, priv->ppoll_enable, priv->ppoll_line, priv->ppoll_sense, ist );
 }
 
 void tms9914_serial_poll_response(gpib_board_t *board, tms9914_private_t *priv, uint8_t status)

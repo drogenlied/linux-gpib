@@ -72,6 +72,7 @@ int board_ppc( ibConf_t *conf, int ppc_configuration )
 {
 	ibBoard_t *board;
 	int retval;
+	ppoll_config_ioctl_t cmd;
 
 	board = interfaceBoard( conf );
 
@@ -85,7 +86,10 @@ int board_ppc( ibConf_t *conf, int ppc_configuration )
 	if( retval < 0 ) return retval;
 	conf->ppoll_config = retval;	// store old value
 
-	retval = ioctl( board->fileno, IBPPC, &ppc_configuration );
+	cmd.config = ppc_configuration;
+	cmd.set_ist = 0;
+	cmd.clear_ist = 0;
+	retval = ioctl( board->fileno, IBPPC, &cmd );
 	if( retval < 0 )
 	{
 		setIberr( EDVR );

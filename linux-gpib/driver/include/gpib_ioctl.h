@@ -83,6 +83,7 @@ typedef struct
 	int autopolling;
 	int is_system_controller;
 	unsigned int t1_delay;
+	unsigned ist : 1;
 } board_info_ioctl_t;
 
 typedef struct
@@ -90,6 +91,13 @@ typedef struct
 	int pci_bus;
 	int pci_slot;
 } select_pci_ioctl_t;
+
+typedef struct
+{
+	uint8_t config;
+	unsigned set_ist : 1;
+	unsigned clear_ist : 1;
+}	ppoll_config_ioctl_t;
 
 typedef short event_ioctl_t;
 typedef int rsc_ioctl_t;
@@ -126,7 +134,7 @@ enum gpib_ioctl
 	IBAUTOPOLL = _IO( GPIB_CODE, 25 ),
 	IBMUTEX = _IOW( GPIB_CODE, 26, int ),
 	IBSPOLL_BYTES = _IOWR( GPIB_CODE, 27, spoll_bytes_ioctl_t ),
-	IBPPC = _IOW( GPIB_CODE, 28, int ),
+	IBPPC = _IOW( GPIB_CODE, 28, ppoll_config_ioctl_t ),
 	IBBOARD_INFO = _IOR( GPIB_CODE, 29, board_info_ioctl_t ),
 
 	IBQUERY_BOARD_RSV = _IOR( GPIB_CODE, 31, int ),
