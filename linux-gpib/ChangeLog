@@ -1,5 +1,15 @@
 Linux GPIB Package changelog
 
+3.2.03: Fixed compilation problems against 2.6.10 and later kernels, 
+due to removal of urb->timeout from kernel.  Added module device 
+tables for pci and isapnp boards, so they can be autoloaded by hotplug 
+daemon.  Added support for hardware fifos on Agilent 82350b.  Fixed 
+clearing of various ibsta status bits in the ni_usb_gpib driver,
+and improved its error handling.
+Fixed possibility of losing first byte of reads in certain cases
+for tms9914 based boards.  Fixed some corner cases where module
+use count was incremented/decremented incorrectly.
+
 3.2.02: Some cleanups to automake files (Robert Jordens).
 New drivers for Agilent 82357A (usb) and 82350B (pci).
 Fixed problem in ni_usb_gpib driver with reads when the number of
