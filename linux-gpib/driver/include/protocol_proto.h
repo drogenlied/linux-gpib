@@ -25,4 +25,5 @@ extern  int ibeot(int send_eoi);
 extern  int ibeos(int v);
 extern  int ibwait(unsigned int mask);
 extern  ssize_t ibwrt(uint8_t *buf, size_t cnt, int more);
+extern unsigned int ibstatus(void);
 

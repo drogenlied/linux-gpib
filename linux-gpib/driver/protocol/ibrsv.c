@@ -8,7 +8,7 @@
  */
 IBLCL int ibrsv(uint8_t poll_status)
 {
-	int status = driver->update_status(driver);
+	int status = ibstatus();
 
 	if((status & CIC))
 	{

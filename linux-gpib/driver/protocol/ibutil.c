@@ -112,3 +112,10 @@ IBLCL int ibeos(int v)
 	return 0;
 }
 
+IBLCL unsigned int ibstatus()
+{
+	if(driver->private_data == NULL)
+		return 0;
+
+	return driver->update_status(driver);
+}

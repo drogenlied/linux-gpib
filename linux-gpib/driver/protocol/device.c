@@ -28,7 +28,7 @@
 IBLCL int dvtrg(int padsad)
 {
 	uint8_t cmdString[2];
-	int status = driver->update_status(driver);
+	int status = ibstatus();
 
 	if((status & CIC) == 0)
 	{
@@ -55,7 +55,7 @@ IBLCL int dvtrg(int padsad)
 IBLCL int dvclr(int padsad)
 {
 	uint8_t cmdString[2];
-	int status = driver->update_status(driver);
+	int status = ibstatus();
 
 	if((status & CIC ) == 0)
 	{
@@ -87,7 +87,7 @@ IBLCL int dvclr(int padsad)
 IBLCL int dvrsp(int padsad, uint8_t *result)
 {
 	uint8_t cmd_string[8];
-	int status = driver->update_status(driver);
+	int status = ibstatus();
 	int end_flag;
 	ssize_t ret;
 	unsigned int pad, sad;
@@ -157,7 +157,7 @@ IBLCL int dvrsp(int padsad, uint8_t *result)
  */
 IBLCL ssize_t dvwrt(int padsad, uint8_t *buf, unsigned int cnt)
 {
-	int status = driver->update_status(driver);
+	int status = ibstatus();
 	if((status & CIC) == 0)
 	{
 		return -1;

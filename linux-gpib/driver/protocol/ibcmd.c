@@ -18,7 +18,7 @@ IBLCL ssize_t ibcmd(uint8_t *buf, size_t length)
 {
 	size_t	count = 0;
 	ssize_t ret = 0;
-	int status = driver->update_status(driver);
+	int status = ibstatus();
 
 	if((status & CIC) == 0)
 	{
@@ -32,7 +32,7 @@ IBLCL ssize_t ibcmd(uint8_t *buf, size_t length)
 	{
 		printk("gpib error while becoming active controller\n");
 	}else while ((count < length) &&
-		((status = driver->update_status(driver)) & TIMO) == 0)
+		((status = ibstatus()) & TIMO) == 0)
 	{
 		ret = driver->command(driver, buf, length - count);
 		if(ret < 0)

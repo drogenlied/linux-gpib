@@ -200,7 +200,7 @@ printk("ioclt %i\n", cmd);
 			/* Write DMA buffer loads till we empty the user supplied buffer */
 			userbuf = ibargp->ib_buf;
 			remain = ibargp->ib_cnt;
-			while (remain > 0 && !(driver->update_status(driver) & (TIMO)))
+			while (remain > 0 && !(ibstatus() & (TIMO)))
 			{
 				copy_from_user( buf, userbuf, (bufsize < remain) ? bufsize : remain );
 				ret = ibcmd( buf, (bufsize < remain) ? bufsize : remain );
@@ -335,7 +335,7 @@ printk("ioclt %i\n", cmd);
 				copy_to_user( userbuf, buf, ret );
 				remain -= ret;
 				userbuf += ret;
-			}while (remain > 0  && end_flag == 0);	//!(driver->update_status(driver) & TIMO));
+			}while (remain > 0  && end_flag == 0);	//!(ibstatus() & TIMO));
 			ibargp->ib_ibcnt = ibargp->ib_cnt - remain;
 			/* Free the DMA buffer */
 			osFreeDMABuffer( buf );
@@ -356,7 +356,7 @@ printk("ioclt %i\n", cmd);
 			/* Write DMA buffer loads till we empty the user supplied buffer */
 			userbuf = ibargp->ib_buf;
 			remain = ibargp->ib_cnt;
-			while (remain > 0  && !(driver->update_status(driver) & (TIMO)))
+			while (remain > 0  && !(ibstatus() & (TIMO)))
 			{
 				copy_from_user( buf, userbuf, (bufsize < remain) ? bufsize : remain );
 				ret = dvwrt( ibargp->ib_arg, buf, (bufsize < remain) ? bufsize : remain );
@@ -407,7 +407,7 @@ printk("ioclt %i\n", cmd);
 	}
 
 	// return status bits
-	ibargp->ib_ibsta = driver->update_status(driver);
+	ibargp->ib_ibsta = ibstatus();
 	if(retval)
 		ibargp->ib_ibsta |= ERR;
 	else
