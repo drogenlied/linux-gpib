@@ -507,11 +507,16 @@ static int status_bytes_ioctl( gpib_board_t *board, unsigned long arg )
 static int status_ioctl(gpib_board_t *board, unsigned long arg)
 {
 	int retval;
-	int status;
+	int status, clear_mask;
 
-	status = ibstatus( board );
+	retval = copy_from_user( &clear_mask, (void *) arg, sizeof( clear_mask ) );
+	if( retval )
+		return -EFAULT;
+
+	status = ibstatus( board, clear_mask );
+
 	retval = copy_to_user( (void *) arg, &status, sizeof( status ) );
-	if (retval)
+	if( retval )
 		return -EFAULT;
 
 	return 0;

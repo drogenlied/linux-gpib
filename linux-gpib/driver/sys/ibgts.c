@@ -25,7 +25,7 @@
 
 int ibgts( gpib_board_t *board )
 {
-	int status = ibstatus(board);
+	int status = ibstatus( board, 0 );
 	int retval;
 
 	if( ( status & CIC ) == 0 )
@@ -38,7 +38,7 @@ int ibgts( gpib_board_t *board )
 	if( retval < 0 )
 		printk( "gpib: error while going to standby\n");
 
-	board->interface->update_status( board );
+	board->interface->update_status( board, 0 );
 
 	return retval;
 }

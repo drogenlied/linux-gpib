@@ -97,10 +97,10 @@ void cb7210_disable_eos(gpib_board_t *board)
 	cb7210_private_t *priv = board->private_data;
 	nec7210_disable_eos(board, &priv->nec7210_priv);
 }
-unsigned int cb7210_update_status(gpib_board_t *board)
+unsigned int cb7210_update_status( gpib_board_t *board, unsigned int clear_mask )
 {
 	cb7210_private_t *priv = board->private_data;
-	return nec7210_update_status(board, &priv->nec7210_priv);
+	return nec7210_update_status( board, &priv->nec7210_priv, clear_mask );
 }
 void cb7210_primary_address(gpib_board_t *board, unsigned int address)
 {

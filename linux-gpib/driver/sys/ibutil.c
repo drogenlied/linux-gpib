@@ -75,19 +75,19 @@ int ibeos( gpib_board_t *board, int eos, int eosflags )
 	return 0;
 }
 
-unsigned int ibstatus( gpib_board_t *board )
+unsigned int ibstatus( gpib_board_t *board, unsigned int clear_mask )
 {
 	if( board->private_data == NULL )
 		return 0;
 
-	return board->interface->update_status( board );
+	return board->interface->update_status( board, clear_mask );
 }
 
 unsigned int full_ibstatus( gpib_board_t *board, const gpib_device_t *device )
 {
 	unsigned int status;
 
-	status = ibstatus( board );
+	status = ibstatus( board, 0 );
 
 	// fixup RQS, CMPL bits
 

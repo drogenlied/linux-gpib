@@ -91,7 +91,7 @@ int ibwait( int ud, int mask )
 	if( retval < 0 )
 		return exit_library( ud, 1 );
 
-	status = exit_library( ud, 0 );
+	status = general_exit_library( ud, 0, 0, mask & ( DTAS | DCAS ) );
 
 	if( conf->async.in_progress && ( status & CMPL ) )
 	{

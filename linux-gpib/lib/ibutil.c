@@ -389,7 +389,7 @@ ibConf_t * general_enter_library( int ud, int no_lock_board, int ignore_eoip )
 	return conf;
 }
 
-int ibstatus( ibConf_t *conf, int error )
+int ibstatus( ibConf_t *conf, int error, int clear_mask )
 {
 	int status = 0;
 	int retval;
@@ -397,6 +397,8 @@ int ibstatus( ibConf_t *conf, int error )
 	if( conf->is_interface )
 	{
 		int board_status;
+
+		board_status = clear_mask;
 		retval = ioctl( interfaceBoard( conf )->fileno, IBSTATUS, &board_status );
 		if( retval < 0 )
 		{
@@ -404,6 +406,13 @@ int ibstatus( ibConf_t *conf, int error )
 			setIberr( EDVR );
 		}else
 			status |= board_status & board_status_mask;
+		if( interfaceBoard(conf)->use_event_queue )
+		{
+			status &= ~DTAS & ~DCAS;
+		}else
+		{
+			status %= ~EVENT;
+		}
 	}else
 	{
 		spoll_bytes_ioctl_t cmd;
@@ -436,10 +445,10 @@ int ibstatus( ibConf_t *conf, int error )
 
 int exit_library( int ud, int error )
 {
-	return general_exit_library( ud, error, 0 );
+	return general_exit_library( ud, error, 0, 0 );
 }
 
-int general_exit_library( int ud, int error, int keep_lock )
+int general_exit_library( int ud, int error, int keep_lock, int status_clear_mask )
 {
 	ibConf_t *conf = ibConfigs[ ud ];
 	ibBoard_t *board;
@@ -456,7 +465,7 @@ int general_exit_library( int ud, int error, int keep_lock )
 
 	board = interfaceBoard( conf );
 
-	status = ibstatus( conf, error );
+	status = ibstatus( conf, error, status_clear_mask );
 
 	if( !keep_lock )
 	{
@@ -464,7 +473,8 @@ int general_exit_library( int ud, int error, int keep_lock )
 		if( retval < 0 )
 		{
 			setIberr( EDVR );
-			status = ibstatus( conf, error );
+			status |= ERR;
+			setIbsta( status );
 		}
 	}
 

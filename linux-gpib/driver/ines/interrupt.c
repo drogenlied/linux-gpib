@@ -39,7 +39,7 @@ void ines_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	isr4_bits = inb( nec_priv->iobase + ISR4 );
 	if( isr3_bits & IFC_ACTIVE_BIT )
 	{
-		push_gpib_event( &board->event_queue, EventIFC );
+		push_gpib_event( board, EventIFC );
 		wake_up_interruptible( &board->wait );
 	}
 	if( isr3_bits & FIFO_ERROR_BIT )

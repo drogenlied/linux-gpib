@@ -81,6 +81,7 @@ void init_ibboard( ibBoard_t *board )
 	pthread_mutex_init( &board->autopoll_lock, NULL );
 	board->pci_bus = -1;
 	board->pci_slot = -1;
+	board->use_event_queue = 0;
 }
 
 int initIbBoardAtFork( void )

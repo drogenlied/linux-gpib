@@ -127,7 +127,7 @@ int ibrd(int ud, void *rd, long cnt)
 
 	setIbcnt( count );
 
-	return exit_library( ud, 0 );
+	return general_exit_library( ud, 0, 0, DCAS );
 }
 
 int ibrdf(int ud, const char *file_path )
@@ -192,8 +192,9 @@ int ibrdf(int ud, const char *file_path )
 		setIbcnt( errno );
 		return exit_library( ud, 1 );
 	}
+	if( error ) return exit_library( ud, error );
 
-	return exit_library( ud, error );
+	return general_exit_library( ud, 0, 0, DCAS );
 }
 
 int InternalRcvRespMsg( ibConf_t *conf, void *buffer, long count, int termination )
@@ -262,7 +263,7 @@ void RcvRespMsg( int boardID, void *buffer, long count, int termination )
 		return;
 	}
 
-	exit_library( boardID, 0 );
+	general_exit_library( boardID, 0, 0, DCAS );
 }
 
 void ReceiveSetup( int boardID, Addr4882_t address )
@@ -321,5 +322,5 @@ void Receive( int boardID, Addr4882_t address,
 		return;
 	}
 
-	exit_library( boardID, 0 );
+	general_exit_library( boardID, 0, 0, DCAS );
 }

@@ -96,7 +96,7 @@ int ibcmda( int ud, const void *cmd_buffer, long cnt )
 	}
 	pthread_detach( conf->async.thread );
 
-	return general_exit_library( ud, 0, 1 );
+	return general_exit_library( ud, 0, 1, 0 );
 }
 
 void* start_async_cmd( void *arg )

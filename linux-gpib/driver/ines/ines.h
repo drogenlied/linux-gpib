@@ -56,7 +56,7 @@ void ines_interface_clear(gpib_board_t *board, int assert);
 void ines_remote_enable(gpib_board_t *board, int enable);
 void ines_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits);
 void ines_disable_eos(gpib_board_t *board);
-unsigned int ines_update_status(gpib_board_t *board);
+unsigned int ines_update_status( gpib_board_t *board, unsigned int clear_mask );
 void ines_primary_address(gpib_board_t *board, unsigned int address);
 void ines_secondary_address(gpib_board_t *board, unsigned int address, int enable);
 int ines_parallel_poll(gpib_board_t *board, uint8_t *result);

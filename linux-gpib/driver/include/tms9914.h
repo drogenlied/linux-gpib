@@ -88,7 +88,8 @@ void tms9914_remote_enable(gpib_board_t *board, tms9914_private_t *priv, int ena
 void tms9914_enable_eos(gpib_board_t *board, tms9914_private_t *priv,
 	uint8_t eos_bytes, int compare_8_bits);
 void tms9914_disable_eos(gpib_board_t *board, tms9914_private_t *priv);
-unsigned int tms9914_update_status(gpib_board_t *board, tms9914_private_t *priv);
+unsigned int tms9914_update_status( gpib_board_t *board, tms9914_private_t *priv,
+	unsigned int clear_mask );
 void tms9914_primary_address(gpib_board_t *board,
 	tms9914_private_t *priv, unsigned int address);
 void tms9914_secondary_address(gpib_board_t *board, tms9914_private_t *priv,

@@ -145,13 +145,13 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 
 	if( status1 & HR_DEC )
 	{
-		push_gpib_event( &board->event_queue, EventDevClr );
+		push_gpib_event( board, EventDevClr );
 		// XXX should clear buffers, etc.
 	}
 
 	if( status1 & HR_DET )
 	{
-		push_gpib_event( &board->event_queue, EventDevTrg );
+		push_gpib_event( board, EventDevTrg );
 	}
 
 	if( ( status1 & priv->reg_bits[ IMR1 ] ) ||

@@ -83,10 +83,10 @@ void tnt4882_disable_eos(gpib_board_t *board)
 	tnt4882_private_t *priv = board->private_data;
 	tms9914_disable_eos(board, &priv->tms9914_priv);
 }
-unsigned int tnt4882_update_status(gpib_board_t *board)
+unsigned int tnt4882_update_status( gpib_board_t *board, unsigned int clear_mask )
 {
 	tnt4882_private_t *priv = board->private_data;
-	return tms9914_update_status(board, &priv->tms9914_priv);
+	return tms9914_update_status( board, &priv->tms9914_priv, clear_mask );
 }
 void tnt4882_primary_address(gpib_board_t *board, unsigned int address)
 {

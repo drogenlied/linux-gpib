@@ -19,7 +19,7 @@
 
 #include "gpibP.h"
 
-static int push_gpib_event_nolock( gpib_event_queue_t *queue, short event_type );
+static int push_gpib_event_nolock( gpib_board_t *board, short event_type );
 static int pop_gpib_event_nolock( gpib_event_queue_t *queue, short *event_type );
 
 unsigned int num_gpib_events( const gpib_event_queue_t *queue )
@@ -28,19 +28,26 @@ unsigned int num_gpib_events( const gpib_event_queue_t *queue )
 }
 
 // push event onto back of event queue
-int push_gpib_event( gpib_event_queue_t *queue, short event_type )
+int push_gpib_event( gpib_board_t *board, short event_type )
 {
 	unsigned long flags;
 	int retval;
 
-	spin_lock_irqsave( &queue->lock, flags );
-	retval = push_gpib_event_nolock( queue, event_type );
-	spin_unlock_irqrestore( &queue->lock, flags );
+	spin_lock_irqsave( &board->event_queue.lock, flags );
+	retval = push_gpib_event_nolock( board, event_type );
+	spin_unlock_irqrestore( &board->event_queue.lock, flags );
+
+	spin_lock_irqsave( &board->spinlock, flags );
+	if( event_type == EventDevTrg ) board->status |= DTAS;
+	if( event_type == EventDevClr ) board->status |= DCAS;
+	spin_unlock_irqrestore( &board->spinlock, flags );
+
 	return retval;
 }
 
-static int push_gpib_event_nolock( gpib_event_queue_t *queue, short event_type )
+static int push_gpib_event_nolock( gpib_board_t *board, short event_type )
 {
+	gpib_event_queue_t *queue = &board->event_queue;
 	struct list_head *head = &queue->event_head;
 	gpib_event_t *event;
 	static const unsigned int max_num_events = 1024;

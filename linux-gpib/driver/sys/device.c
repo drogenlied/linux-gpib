@@ -166,7 +166,7 @@ int serial_poll_all( gpib_board_t *board, unsigned int usec_timeout )
 int dvrsp( gpib_board_t *board, unsigned int pad, int sad,
 	unsigned int usec_timeout, uint8_t *result )
 {
-	int status = ibstatus( board );
+	int status = ibstatus( board, 0 );
 	int retval;
 
 	if( ( status & CIC ) == 0 )

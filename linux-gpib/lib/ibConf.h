@@ -91,6 +91,7 @@ typedef struct ibBoardStruct {
 	pthread_mutex_t autopoll_lock;
 	unsigned int open_count;	/* reference count */
 	unsigned is_system_controller : 1;	/* board is busmaster or not */
+	unsigned use_event_queue : 1;	/* use event queue, or DTAS/DCAS */
 } ibBoard_t;
 
 #endif	/* _IBCONF_H */

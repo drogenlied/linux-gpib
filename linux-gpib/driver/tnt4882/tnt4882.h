@@ -73,7 +73,7 @@ void tnt4882_remote_enable(gpib_board_t *board, int enable);
 void tnt4882_enable_eos(gpib_board_t *board, uint8_t eos_byte, int
  compare_8_bits);
 void tnt4882_disable_eos(gpib_board_t *board);
-unsigned int tnt4882_update_status(gpib_board_t *board);
+unsigned int tnt4882_update_status( gpib_board_t *board, unsigned int clear_mask );
 void tnt4882_primary_address(gpib_board_t *board, unsigned int address);
 void tnt4882_secondary_address(gpib_board_t *board, unsigned int address, int
  enable);

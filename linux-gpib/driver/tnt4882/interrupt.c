@@ -42,7 +42,7 @@ void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp)
 
 	if( isr0_bits & TNT_IFCI_BIT )
 	{
-		push_gpib_event( &board->event_queue, EventIFC );
+		push_gpib_event( board, EventIFC );
 		wake_up_interruptible( &board->wait );
 	}
 

@@ -265,7 +265,7 @@ int ibask( int ud, int option, int *value )
 				return exit_library( ud, 0 );
 				break;
 			case IbaEventQueue:
-				*value = 1;	// event queue is always enabled
+				*value = board->use_event_queue;
 				return exit_library( ud, 0 );
 			case IbaSPollBit:
 				// XXX no support for SPOLL status yet

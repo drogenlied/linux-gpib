@@ -119,7 +119,7 @@ enum gpib_ioctl
 	IBSRE = _IOW( GPIB_CODE, 10, int ),
 	IBGTS = _IO( GPIB_CODE, 11 ),
 	IBCAC = _IOW( GPIB_CODE, 12, int ),
-	IBSTATUS = _IOR( GPIB_CODE, 13, int ),
+	IBSTATUS = _IOWR( GPIB_CODE, 13, int ),
 	IBLINES = _IOR( GPIB_CODE, 14, short ),
 	IBPAD = _IOW( GPIB_CODE, 15, unsigned int ),
 	IBSAD = _IOW( GPIB_CODE, 16, int ),

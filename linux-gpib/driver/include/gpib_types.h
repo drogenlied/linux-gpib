@@ -103,7 +103,7 @@ struct gpib_interface_struct
 	 * in the IBSTA section.  The driver does not need to
 	 * worry about setting the CMPL, END, TIMO, or ERR bits.
 	 */
-	unsigned int (*update_status)(gpib_board_t *board);
+	unsigned int (*update_status)( gpib_board_t *board, unsigned int clear_mask );
 	/* Sets primary address 0-30 for gpib interface card.
 	 */
 	void (*primary_address)(gpib_board_t *board, unsigned int address);

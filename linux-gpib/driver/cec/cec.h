@@ -48,7 +48,7 @@ void cec_interface_clear(gpib_board_t *board, int assert);
 void cec_remote_enable(gpib_board_t *board, int enable);
 void cec_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits);
 void cec_disable_eos(gpib_board_t *board);
-unsigned int cec_update_status(gpib_board_t *board);
+unsigned int cec_update_status( gpib_board_t *board, unsigned int clear_mask );
 void cec_primary_address(gpib_board_t *board, unsigned int address);
 void cec_secondary_address(gpib_board_t *board, unsigned int address, int enable);
 int cec_parallel_poll(gpib_board_t *board, uint8_t *result);

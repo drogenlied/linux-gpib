@@ -119,13 +119,15 @@ void tms9914_secondary_address(gpib_board_t *board, tms9914_private_t *priv, uns
 	write_byte( priv, priv->imr1_bits, IMR1 );
 }
 
-unsigned int tms9914_update_status(gpib_board_t *board, tms9914_private_t *priv)
+unsigned int tms9914_update_status( gpib_board_t *board, tms9914_private_t *priv,
+	unsigned int clear_mask )
 {
 	unsigned long flags;
 	unsigned int retval;
 
 	spin_lock_irqsave( &board->spinlock, flags );
 	retval = update_status_nolock( board, priv );
+	board->status &= ~clear_mask;
 	spin_unlock_irqrestore( &board->spinlock, flags );
 
 	return retval;

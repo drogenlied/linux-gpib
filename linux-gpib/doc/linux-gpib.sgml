@@ -530,8 +530,12 @@ volatile int ibsta;
 	(that is, the
 	SDC or DCL <link LINKEND="reference-command-bytes">command byte</link>).
 	It is cleared on the next 'traditional' or
-	'multidevice' function call following ibwait(), or following a read
-	or write (ibrd(), ibwrt(), Receive(), etc.).</entry>
+	'multidevice' function call following ibwait() (with DCAS set in the
+	wait mask), or following a read
+	or write (ibrd(), ibwrt(), Receive(), etc.).
+	The DCAS and DTAS bits will only be set if the event queue is disabled.
+	The event queue may be disabled with
+	<link LINKEND="reference-function-ibconfig">ibconfig()</link>.</entry>
 	<entry>board</entry>
 	</row>
 	<row>
@@ -541,8 +545,11 @@ volatile int ibsta;
 	(that is,
 	the GET <link LINKEND="reference-command-bytes">command byte</link>).
 	It is cleared on the next 'traditional' or
-	'multidevice' function call following ibwait(), or following a read
-	or write (ibrd(), ibwrt(), Receive(), etc.).</entry>
+	'multidevice' function call following ibwait() (with DTAS in the wait
+	mask).
+	The DCAS and DTAS bits will only be set if the event queue is disabled.
+	The event queue may be disabled with
+	<link LINKEND="reference-function-ibconfig">ibconfig()</link>.</entry>
 	<entry>board</entry>
 	</row>
 	<row>
@@ -594,7 +601,10 @@ volatile int ibsta;
 	<entry>0x200</entry>
 	<entry>One or more clear, trigger, or interface clear events have been received,
 	and are available in the event queue
-	(see <link LINKEND="reference-function-ibevent">ibevent()</link>).</entry>
+	(see <link LINKEND="reference-function-ibevent">ibevent()</link>).
+	The EVENT bit will only be set if the event queue is enabled.  The
+	event queue may be enabled with
+	<link LINKEND="reference-function-ibconfig">ibconfig()</link>.</entry>
 	<entry>board</entry>
 	</row>
 	<row>
@@ -1330,7 +1340,8 @@ volatile int ibsta;
 	<row>
 	<entry>IbcEventQueue</entry>
 	<entry>0x15</entry>
-	<entry>If setting is nonzero then the event queue is enabled.</entry>
+	<entry>If setting is nonzero then the event queue is enabled.  The
+	event queue is disabled by default.</entry>
 	<entry>board</entry>
 	</row>
 	<row>
@@ -1667,6 +1678,8 @@ volatile int ibsta;
 	</table>
 	</para>
 	<para>
+	The event queue is disabled by default.  It may be enabled by a call to
+	<link LINKEND="reference-function-ibconfig">ibconfig()</link>.
 	Each interface board has a single event queue which is shared across
 	all processes and threads. So, only one process can retrieve any given event
 	from the queue.  Also, the queue is of finite size so events may be lost

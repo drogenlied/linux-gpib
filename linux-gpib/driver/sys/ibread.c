@@ -23,7 +23,7 @@ static int gpib_clear_to_read( gpib_board_t *board )
 {
 	unsigned int status;
 
-	status = ibstatus( board );
+	status = ibstatus( board, 0 );
 	if( ( status & ATN ) == 0 && ( status & LACS ) ) return 1;
 
 	return 0;

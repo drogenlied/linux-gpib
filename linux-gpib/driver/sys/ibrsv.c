@@ -9,7 +9,7 @@
  */
 int ibrsv( gpib_board_t *board, uint8_t poll_status )
 {
-	int status = ibstatus(board);
+	int status = ibstatus( board, 0 );
 
 	if( ( status & CIC ) )
 	{

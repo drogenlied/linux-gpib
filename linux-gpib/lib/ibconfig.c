@@ -242,12 +242,12 @@ int ibconfig( int ud, int option, int value )
 				}
 				break;
 			case IbcEventQueue:
-				if( value == 0 )
+				if( value )
 				{
-					fprintf( stderr, "libgpib: event queue can not be disabled\n");
-					setIberr( ECAP );
-					return exit_library( ud, 1 );
-				}
+					interfaceBoard(conf)->use_event_queue = 1;
+				}else
+					interfaceBoard(conf)->use_event_queue = 0;
+				return exit_library( ud, 0 );
 				break;
 			case IbcSPollBit:
 				// XXX

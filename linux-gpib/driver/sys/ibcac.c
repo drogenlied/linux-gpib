@@ -27,7 +27,7 @@
  */
 int ibcac( gpib_board_t *board, int sync )
 {
-	int status = ibstatus( board );
+	int status = ibstatus( board, 0 );
 	int retval;
 
 	if( ( status & CIC ) == 0 )
@@ -40,7 +40,7 @@ int ibcac( gpib_board_t *board, int sync )
 	if( retval < 0 )
 		printk("gpib: error while becoming active controller\n");
 
-	board->interface->update_status( board );
+	board->interface->update_status( board, 0 );
 
 	return retval;
 }

@@ -94,20 +94,20 @@ void tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv,
 
 	if( status1 & HR_IFC )
 	{
-		push_gpib_event( &board->event_queue, EventIFC );
+		push_gpib_event( board, EventIFC );
 		clear_bit(CIC_NUM, &board->status);
 	}
 
 	if( status1 & HR_GET )
 	{
-		push_gpib_event( &board->event_queue, EventDevTrg );
+		push_gpib_event( board, EventDevTrg );
 		// clear dac holdoff
 		write_byte(priv, AUX_VAL, AUXCR);
 	}
 
 	if( status1 & HR_DCAS )
 	{
-		push_gpib_event( &board->event_queue, EventDevClr );
+		push_gpib_event( board, EventDevClr );
 		// clear dac holdoff
 		write_byte(priv, AUX_VAL, AUXCR);
 	}

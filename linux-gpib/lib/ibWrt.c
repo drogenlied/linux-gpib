@@ -166,7 +166,7 @@ int ibwrt( int ud, const void *rd, long cnt )
 		return exit_library( ud, 1 );
 	}
 
-	return exit_library( ud, 0 );
+	return general_exit_library( ud, 0, 0, DCAS );
 }
 
 ssize_t my_ibwrtf( ibConf_t *conf, const char *file_path )
@@ -255,7 +255,7 @@ int ibwrtf( int ud, const char *file_path )
 
 	setIbcnt( count );
 
-	return exit_library( ud, 0 );
+	return general_exit_library( ud, 0, 0, DCAS );
 }
 
 int InternalSendDataBytes( ibConf_t *conf, const void *buffer,
@@ -319,7 +319,7 @@ void SendDataBytes( int boardID, const void *buffer,
 		return;
 	}
 
-	exit_library( boardID, 0 );
+	general_exit_library( boardID, 0, 0, DCAS );
 }
 
 int InternalSendList( ibConf_t *conf, const Addr4882_t addressList[],
@@ -378,7 +378,7 @@ void SendList( int boardID, const Addr4882_t addressList[],
 		return;
 	}
 
-	exit_library( boardID, 0 );
+	general_exit_library( boardID, 0, 0, DCAS );
 }
 
 void Send( int boardID, Addr4882_t address, const void *buffer, long count,
