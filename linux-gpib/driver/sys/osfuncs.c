@@ -107,6 +107,8 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 		return -ERESTARTSYS;
 	}
 
+	GPIB_DPRINTK( "minor %i ioctl %i\n", minor, cmd);
+
 	if(cmd == CFCBOARDTYPE)
 	{
 		retval = board_type_ioctl(board, arg);
@@ -118,8 +120,6 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 		printk("gpib: no gpib board configured on /dev/gpib%i\n", minor);
 		GIVE_UP( -ENODEV );
 	}
-
-//printk("minor %i ioctl %i\n", minor, cmd);
 
 	switch( cmd )
 	{
