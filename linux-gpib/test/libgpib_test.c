@@ -40,6 +40,7 @@ struct program_options
 	int pad;
 	int sad;
 	int verbosity;
+	int minor;
 };
 
 #define PRINT_FAILED() \
@@ -135,6 +136,8 @@ static int find_board(int *board, const struct program_options *options)
 	fprintf( stderr, "Finding board..." );
 	for( i = 0; i < GPIB_MAX_NUM_BOARDS; i++ )
 	{
+		if(options->minor >= 0 && i != options->minor)
+			continue;
 		if(options->verbosity)
 			fprintf(stderr, "\tchecking board %i\n", i);
 		status = ibask( i, IbaSC, &result );
@@ -669,6 +672,7 @@ int parse_program_options(int argc, char *argv[], struct program_options *option
 		{"daemonize", optional_argument, NULL, 'd'},
 		{"num_loops", required_argument, NULL, 'n'},
 		{"master", no_argument, NULL, 'm'},
+		{"minor", required_argument, NULL, 'M'},
 		{"slave", no_argument, NULL, 'S'},
 		{"pad", required_argument, NULL, 'p'},
 		{"sad", required_argument, NULL, 's'},
@@ -683,6 +687,7 @@ int parse_program_options(int argc, char *argv[], struct program_options *option
 	options->num_loops = 1;
 	options->pad = 1;
 	options->sad = -1;
+	options->minor = -1;
 	while(1)
 	{
 		c = getopt_long(argc, argv, "d::n:mSp:s:v", long_options, &option_index);
@@ -703,6 +708,10 @@ int parse_program_options(int argc, char *argv[], struct program_options *option
 		case 'm':
 			options->master = 1;
 			fprintf(stdout, "option: run as bus master\n");
+			break;
+		case 'M':
+			options->minor = strtol(optarg, NULL, 0);
+			fprintf(stdout, "option: minor %i\n", options->minor);
 			break;
 		case 'S':
 			options->master = 0;
