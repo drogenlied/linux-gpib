@@ -112,15 +112,12 @@ ssize_t my_ibrd( ibConf_t *conf, uint8_t *buffer, size_t count )
 
 int ibrd(int ud, void *rd, long cnt)
 {
-	ibConf_t *conf = ibConfigs[ud];
-	ibBoard_t *board;
+	ibConf_t *conf;
 	ssize_t count;
 
 	conf = enter_library( ud );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
-
-	board = interfaceBoard( conf );
 
 	count = my_ibrd( conf, rd, cnt );
 	if( count < 0 )
@@ -131,6 +128,68 @@ int ibrd(int ud, void *rd, long cnt)
 	setIbcnt( count );
 
 	return exit_library( ud, 0 );
+}
+
+int ibrdf(int ud, const char *file_path )
+{
+	ibConf_t *conf;
+	int retval;
+	uint8_t buffer[ 0x1000 ];
+	unsigned long byte_count;
+	FILE *save_file;
+	int error;
+
+	conf = enter_library( ud );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
+
+	save_file = fopen( file_path, "a" );
+	if( save_file == NULL )
+	{
+		setIberr( EFSO );
+		setIbcnt( errno );
+		return exit_library( ud, 1 );
+	}
+
+	if( conf->is_interface == 0 )
+	{
+		// set up addressing
+		if( InternalReceiveSetup( conf, packAddress( conf->pad, conf->sad ) ) < 0 )
+		{
+			return exit_library( ud, 1 );
+		}
+	}
+
+	byte_count = error = 0;
+	do
+	{
+		int fwrite_count;
+
+		retval = read_data( conf, buffer, sizeof( buffer ) );
+		if( retval < 0 )
+		{
+			return exit_library( ud, 1 );
+		}
+		fwrite_count = fwrite( buffer, 1, retval, save_file );
+		if( fwrite_count != retval )
+		{
+			setIberr( EFSO );
+			setIbcnt( errno );
+			error++;
+		}
+		byte_count += fwrite_count;
+	}while( conf->end == 0 && error == 0 );
+
+	setIbcnt( byte_count );
+
+	if( fclose( save_file ) )
+	{
+		setIberr( EFSO );
+		setIbcnt( errno );
+		return exit_library( ud, 1 );
+	}
+
+	return exit_library( ud, error );
 }
 
 int InternalRcvRespMsg( ibConf_t *conf, void *buffer, long count, int termination )

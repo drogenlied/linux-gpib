@@ -108,6 +108,7 @@ extern int ibpad( int ud, int v );
 extern int ibpct( int ud );
 extern int ibppc( int ud, int v );
 extern int ibrd( int ud, void *rd, long count );
+extern int ibrdf( int ud, const char *file_path );
 extern int ibrpp( int ud, char *ppr );
 extern int ibrsc( int ud, int v );
 extern int ibrsp( int ud, char *spr );
@@ -119,6 +120,7 @@ extern int ibtmo( int ud,int v );
 extern int ibtrg( int ud );
 extern int ibwait( int ud, int mask );
 extern int ibwrt( int ud, void *rd, long count );
+extern int ibwrtf( int ud, const char *file_path );
 
 static __inline__ Addr4882_t MakeAddr( unsigned int pad, unsigned int sad )
 {

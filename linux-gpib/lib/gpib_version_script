@@ -58,6 +58,7 @@ GPIB_DUMMY_VERSION {
 		ibpct;
 		ibppc;
 		ibrd;
+		ibrdf;
 		ibrpp;
 		ibrsc;
 		ibrsp;
@@ -70,6 +71,7 @@ GPIB_DUMMY_VERSION {
 		ibtrg;
 		ibwait;
 		ibwrt;
+		ibwrtf;
 	local: *;
 };
 
