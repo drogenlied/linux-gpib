@@ -16,7 +16,6 @@
  ***************************************************************************/
 
 #include "ib_internal.h"
-#include <ibP.h>
 #include <sys/ioctl.h>
 #include <pthread.h>
 

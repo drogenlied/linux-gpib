@@ -66,7 +66,6 @@ typedef struct
 typedef struct
 {
 	int online;
-	int master;
 } online_ioctl_t;
 
 typedef struct
@@ -82,6 +81,7 @@ typedef struct
 	int sad;
 	int parallel_poll_configuration;
 	int autopolling;
+	int is_system_controller;
 } board_info_ioctl_t;
 
 typedef struct
@@ -91,6 +91,7 @@ typedef struct
 } select_pci_ioctl_t;
 
 typedef short event_ioctl_t;
+typedef int rsc_ioctl_t;
 
 /* Standard functions. */
 enum gpib_ioctl
@@ -128,7 +129,8 @@ enum gpib_ioctl
 
 	IBQUERY_BOARD_RSV = _IOR( GPIB_CODE, 31, int ),
 	IBSELECT_PCI = _IOWR( GPIB_CODE, 32, select_pci_ioctl_t ),
-	IBEVENT = _IOR( GPIB_CODE, 33, event_ioctl_t )
+	IBEVENT = _IOR( GPIB_CODE, 33, event_ioctl_t ),
+	IBRSC = _IOW( GPIB_CODE, 34, rsc_ioctl_t )
 };
 
 #endif	/* _GPIB_IOCTL_H */

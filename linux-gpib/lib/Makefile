@@ -1,8 +1,9 @@
 ######################################################################
 #
-#   Makefile for NI4882(tm) compatible GPIB - C language Interface
+#   Makefile for Linux GPIB - C language Interface
 #
 #   (c) C.Schroeter 1994 
+#   (c) Frank Mori Hess 2001,2002 
 #
 #######################################################################
 
@@ -86,7 +87,7 @@ depend:
 
 ifndef NODEPS
 .depend: $(SRCS) $(EXP_INC)
-	$(DEPEND) $(CFLAGS) -M $(SRCS)  >./.depend
+	$(DEPEND) $(CFLAGS) -MM $(SRCS)  >./.depend
 
 -include .depend
 endif

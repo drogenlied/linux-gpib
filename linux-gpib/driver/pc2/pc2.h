@@ -19,8 +19,8 @@
 #ifndef _PC2_H
 #define _PC2_H
 
-#include <nec7210.h>
-#include <gpibP.h>
+#include "nec7210.h"
+#include "gpibP.h"
 
 // struct which defines private_data for pc2 driver
 typedef struct

@@ -58,6 +58,11 @@ int cec_go_to_standby(gpib_board_t *board)
 	cec_private_t *priv = board->private_data;
 	return nec7210_go_to_standby(board, &priv->nec7210_priv);
 }
+void cec_request_system_control( gpib_board_t *board, int request_control )
+{
+	cec_private_t *priv = board->private_data;
+	nec7210_request_system_control( board, &priv->nec7210_priv, request_control );
+}
 void cec_interface_clear(gpib_board_t *board, int assert)
 {
 	cec_private_t *priv = board->private_data;
@@ -124,6 +129,7 @@ gpib_interface_t cec_pci_interface =
 	command: cec_command,
 	take_control: cec_take_control,
 	go_to_standby: cec_go_to_standby,
+	request_system_control: cec_request_system_control,
 	interface_clear: cec_interface_clear,
 	remote_enable: cec_remote_enable,
 	enable_eos: cec_enable_eos,

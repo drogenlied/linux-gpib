@@ -60,6 +60,11 @@ int pc2_go_to_standby(gpib_board_t *board)
 	pc2_private_t *priv = board->private_data;
 	return nec7210_go_to_standby(board, &priv->nec7210_priv);
 }
+void pc2_request_system_control( gpib_board_t *board, int request_control )
+{
+	pc2_private_t *priv = board->private_data;
+	nec7210_request_system_control( board, &priv->nec7210_priv, request_control );
+}
 void pc2_interface_clear(gpib_board_t *board, int assert)
 {
 	pc2_private_t *priv = board->private_data;
@@ -126,6 +131,7 @@ gpib_interface_t pc2_interface =
 	command:	pc2_command,
 	take_control:	pc2_take_control,
 	go_to_standby:	pc2_go_to_standby,
+	request_system_control:	pc2_request_system_control,
 	interface_clear:	pc2_interface_clear,
 	remote_enable:	pc2_remote_enable,
 	enable_eos:	pc2_enable_eos,
@@ -151,6 +157,7 @@ gpib_interface_t pc2a_interface =
 	command:	pc2_command,
 	take_control:	pc2_take_control,
 	go_to_standby:	pc2_go_to_standby,
+	request_system_control:	pc2_request_system_control,
 	interface_clear:	pc2_interface_clear,
 	remote_enable:	pc2_remote_enable,
 	enable_eos:	pc2_enable_eos,

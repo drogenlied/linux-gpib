@@ -16,7 +16,6 @@
  ***************************************************************************/
 
 #include "ib_internal.h"
-#include "ibP.h"
 
 static int local_lockout( ibConf_t *conf, Addr4882_t addressList[] )
 {

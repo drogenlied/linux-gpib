@@ -77,6 +77,8 @@ extern ssize_t nec7210_command(gpib_board_t *board, nec7210_private_t *priv,
 extern int nec7210_take_control(gpib_board_t *board, nec7210_private_t *priv,
 	int syncronous);
 extern int nec7210_go_to_standby(gpib_board_t *board, nec7210_private_t *priv);
+extern void nec7210_request_system_control( gpib_board_t *board,
+	nec7210_private_t *priv, int request_control );
 extern void nec7210_interface_clear(gpib_board_t *board, nec7210_private_t *priv, int assert);
 extern void nec7210_remote_enable(gpib_board_t *board, nec7210_private_t *priv, int enable);
 extern void nec7210_enable_eos(gpib_board_t *board, nec7210_private_t *priv,

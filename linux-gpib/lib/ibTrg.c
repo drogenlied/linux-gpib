@@ -16,7 +16,6 @@
  ***************************************************************************/
 
 #include "ib_internal.h"
-#include "ibP.h"
 #include <stdlib.h>
 
 int my_trigger( ibConf_t *conf, Addr4882_t addressList[] )

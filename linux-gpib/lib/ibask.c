@@ -16,7 +16,6 @@
  ***************************************************************************/
 
 #include "ib_internal.h"
-#include <ibP.h>
 
 int query_ppc( const ibBoard_t *board )
 {

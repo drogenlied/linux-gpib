@@ -16,7 +16,6 @@
  ***************************************************************************/
 
 #include "ib_internal.h"
-#include "ibP.h"
 #include <stdlib.h>
 
 int ibclr( int ud )
@@ -73,7 +72,7 @@ int InternalDevClearList( ibConf_t *conf, Addr4882_t addressList[] )
 
 	board = interfaceBoard( conf );
 
-	if( is_system_controller( board ) == 0 )
+	if( is_cic( board ) == 0 )
 	{
 		setIberr( ECIC );
 		return -1;

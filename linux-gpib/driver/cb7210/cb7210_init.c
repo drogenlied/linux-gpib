@@ -64,6 +64,18 @@ int cb7210_go_to_standby(gpib_board_t *board)
 	cb7210_private_t *priv = board->private_data;
 	return nec7210_go_to_standby(board, &priv->nec7210_priv);
 }
+void cb7210_request_system_control( gpib_board_t *board, int request_control )
+{
+	cb7210_private_t *priv = board->private_data;
+	nec7210_private_t *nec_priv = &priv->nec7210_priv;
+
+	if( request_control )
+		write_byte( nec_priv, HS_SYS_CONTROL, HS_MODE );
+	else
+		write_byte( nec_priv, 0, HS_MODE );
+
+	nec7210_request_system_control( board, &priv->nec7210_priv, request_control );
+}
 void cb7210_interface_clear(gpib_board_t *board, int assert)
 {
 	cb7210_private_t *priv = board->private_data;
@@ -130,6 +142,7 @@ gpib_interface_t cb_pci_interface =
 	command: cb7210_command,
 	take_control: cb7210_take_control,
 	go_to_standby: cb7210_go_to_standby,
+	request_system_control: cb7210_request_system_control,
 	interface_clear: cb7210_interface_clear,
 	remote_enable: cb7210_remote_enable,
 	enable_eos: cb7210_enable_eos,
@@ -155,6 +168,7 @@ gpib_interface_t cb_isa_interface =
 	command: cb7210_command,
 	take_control: cb7210_take_control,
 	go_to_standby: cb7210_go_to_standby,
+	request_system_control: cb7210_request_system_control,
 	interface_clear: cb7210_interface_clear,
 	remote_enable: cb7210_remote_enable,
 	enable_eos: cb7210_enable_eos,
@@ -214,10 +228,6 @@ void cb7210_init(cb7210_private_t *cb_priv, const gpib_board_t *board )
 	// put in nec7210 compatibility mode and configure board irq
 	write_byte(nec_priv, HS_RESET7210, HS_INT_LEVEL);
 	write_byte(nec_priv, 0, HS_INT_LEVEL);
-	if( board->master )
-		write_byte( nec_priv, HS_SYS_CONTROL, HS_MODE );
-	else
-		write_byte( nec_priv, 0, HS_MODE );
 
 	nec7210_board_reset( nec_priv, board );
 

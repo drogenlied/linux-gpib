@@ -51,6 +51,7 @@ ssize_t ines_accel_write(gpib_board_t *board, uint8_t *buffer, size_t length, in
 ssize_t ines_command(gpib_board_t *board, uint8_t *buffer, size_t length);
 int ines_take_control(gpib_board_t *board, int synchronous);
 int ines_go_to_standby(gpib_board_t *board);
+void ines_request_system_control( gpib_board_t *board, int request_control );
 void ines_interface_clear(gpib_board_t *board, int assert);
 void ines_remote_enable(gpib_board_t *board, int enable);
 void ines_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits);

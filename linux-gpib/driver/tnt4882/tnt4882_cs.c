@@ -660,6 +660,7 @@ gpib_interface_t ni_pcmcia_interface =
 	command: tnt4882_command,
 	take_control: tnt4882_take_control,
 	go_to_standby: tnt4882_go_to_standby,
+	request_system_control: tnt4882_request_system_control,
 	interface_clear: tnt4882_interface_clear,
 	remote_enable: tnt4882_remote_enable,
 	enable_eos: tnt4882_enable_eos,

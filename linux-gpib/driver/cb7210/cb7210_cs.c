@@ -593,6 +593,7 @@ gpib_interface_t cb_pcmcia_interface =
 	command: cb7210_command,
 	take_control: cb7210_take_control,
 	go_to_standby: cb7210_go_to_standby,
+	request_system_control: cb7210_request_system_control,
 	interface_clear: cb7210_interface_clear,
 	remote_enable: cb7210_remote_enable,
 	enable_eos: cb7210_enable_eos,

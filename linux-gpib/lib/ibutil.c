@@ -16,7 +16,6 @@
  ***************************************************************************/
 
 #include "ib_internal.h"
-#include "ibP.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -170,7 +169,10 @@ int ibCheckDescriptor( int ud )
 	int retval;
 
 	if( ud < 0 || ud > NUM_CONFIGS || ibConfigs[ud] == NULL )
+	{
+		fprintf( stderr, "libgpib: invalid descriptor\n" );
 		return -1;
+	}
 
 	retval = conf_online( ibConfigs[ ud ], 1 );
 	if( retval < 0 ) return retval;
@@ -201,18 +203,6 @@ void init_ibconf( ibConf_t *conf )
 	conf->timed_out = 0;
 }
 
-int ib_lock_mutex( ibBoard_t *board )
-{
-	int lock = 1;
-	return ioctl( board->fileno, IBMUTEX, &lock );
-}
-
-int ib_unlock_mutex( ibBoard_t *board )
-{
-	int unlock = 0;
-	return ioctl( board->fileno, IBMUTEX, &unlock );
-}
-
 int open_gpib_device( ibConf_t *conf )
 {
 	open_close_dev_ioctl_t open_cmd;
@@ -229,6 +219,7 @@ int open_gpib_device( ibConf_t *conf )
 	retval = ioctl( board->fileno, IBOPENDEV, &open_cmd );
 	if( retval < 0 )
 	{
+		fprintf( stderr, "libgpib: IBOPENDEV ioctl failed\n" );
 		setIberr( EDVR );
 		setIbcnt( errno );
 		return retval;
@@ -557,7 +548,7 @@ unsigned int numAddresses( Addr4882_t addressList[] )
 	return count;
 }
 
-int is_system_controller( const ibBoard_t *board )
+int is_cic( const ibBoard_t *board )
 {
 	int retval;
 	int board_status;
@@ -565,14 +556,27 @@ int is_system_controller( const ibBoard_t *board )
 	retval = ioctl( board->fileno, IBSTATUS, &board_status );
 	if( retval < 0 )
 	{
-		setIberr( EDVR );
-		setIbcnt( errno );
-		fprintf( stderr, "libgpib: error in is_system_controller()\n");
-		return -1;
+		fprintf( stderr, "libgpib: fatal error in is_cic(), aborting\n");
+		abort();
 	}
 
 	if( board_status & CIC )
 		return 1;
 
 	return 0;
+}
+
+int is_system_controller( const ibBoard_t *board )
+{
+	int retval;
+	board_info_ioctl_t info;
+
+	retval = ioctl( board->fileno, IBBOARD_INFO, &info );
+	if( retval < 0 )
+	{
+		fprintf( stderr, "libgpib: fatal error in is_system_controller(), aborting\n");
+		abort();
+	}
+
+	return info.is_system_controller;
 }

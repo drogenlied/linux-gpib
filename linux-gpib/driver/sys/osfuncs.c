@@ -53,6 +53,7 @@ static int query_board_rsv_ioctl( gpib_board_t *board, unsigned long arg );
 static int interface_clear_ioctl( gpib_board_t *board, unsigned long arg );
 static int select_pci_ioctl( gpib_board_t *board, unsigned long arg );
 static int event_ioctl( gpib_board_t *board, unsigned long arg );
+static int request_system_control_ioctl( gpib_board_t *board, unsigned long arg );
 
 static int cleanup_open_devices( gpib_file_private_t *file_priv, gpib_board_t *board );
 
@@ -210,7 +211,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			break;
 	}
 
-	if ( !board->online )
+	if( !board->online )
 	{
 		printk( "gpib: invalid ioctl for offline board\n" );
 		return -EINVAL;
@@ -221,14 +222,38 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 		case IBBOARD_INFO:
 			return board_info_ioctl( board, arg );
 			break;
+		case IBEVENT:
+			return event_ioctl( board, arg );
+			break;
+		case IBSPOLL_BYTES:
+			return status_bytes_ioctl( board, arg );
+			break;
+		case IBSTATUS:
+			return status_ioctl( board, arg );
+			break;
+		case IBWAIT:
+			return wait_ioctl( board, arg );
+			break;
+		case IBLINES:
+			return line_status_ioctl( board, arg );
+			break;
+		default:
+			break;
+	}
+
+	if( current->pid != board->locking_pid )
+	{
+		printk( "gpib: need to hold board lock to perform this ioctl\n" );
+		return -EPERM;
+	}
+
+	switch( cmd )
+	{
 		case IBCLOSEDEV:
 			return close_dev_ioctl( filep, board, arg );
 			break;
 		case IBCMD:
 			return command_ioctl( board, arg );
-			break;
-		case IBEVENT:
-			return event_ioctl( board, arg );
 			break;
 		case IBOPENDEV:
 			return open_dev_ioctl( filep, board, arg );
@@ -245,20 +270,14 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 		case IBRPP:
 			return parallel_poll_ioctl( board, arg );
 			break;
-		case IBSPOLL_BYTES:
-			return status_bytes_ioctl( board, arg );
-			break;
-		case IBSTATUS:
-			return status_ioctl( board, arg );
+		case IBRSC:
+			return request_system_control_ioctl( board, arg );
 			break;
 		case IBWRT:
 			return write_ioctl( board, arg );
 			break;
 		case IBTMO:
 			return timeout_ioctl( board, arg );
-			break;
-		case IBWAIT:
-			return wait_ioctl( board, arg );
 			break;
 		case IBSIC:
 			return interface_clear_ioctl( board, arg );
@@ -271,9 +290,6 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			break;
 		case IBCAC:
 			return take_control_ioctl( board, arg );
-			break;
-		case IBLINES:
-			return line_status_ioctl( board, arg );
 			break;
 		case IBEOS:
 			return eos_ioctl( board, arg );
@@ -688,7 +704,7 @@ static int online_ioctl( gpib_board_t *board, gpib_file_private_t *priv,
 		return -EFAULT;
 
 	if( online_cmd.online )
-		return ibonline( board, priv, online_cmd.master );
+		return ibonline( board, priv );
 	else
 		return iboffline( board, priv );
 
@@ -883,6 +899,10 @@ static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 			printk("gpib: ioctl interrupted while waiting on lock\n");
 			return -ERESTARTSYS;
 		}
+		if( atomic_read( &board->mutex.count ) )
+		{
+			printk( "gpib: bug! board->mutex.count nonzero after lock!\n" );
+		}
 		board->locking_pid = current->pid;
 		file_priv->holding_mutex = 1;
 		clear_bit( CMPL_NUM, &board->status );
@@ -891,6 +911,10 @@ static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 	{
 		file_priv->holding_mutex = 0;
 		set_bit( CMPL_NUM, &board->status );
+		if( atomic_read( &board->mutex.count ) )
+		{
+			printk( "gpib: bug! board->mutex.count nonzero before releasing lock!\n" );
+		}
 		up( &board->mutex );
 		GPIB_DPRINTK( "unlocked board mutex\n" );
 	}
@@ -949,6 +973,7 @@ static int board_info_ioctl( const gpib_board_t *board, unsigned long arg)
 	info.pad = board->pad;
 	info.sad = board->sad;
 	info.parallel_poll_configuration = board->parallel_poll_configuration;
+	info.is_system_controller = board->master;
 	if( board->autopollers )
 		info.autopolling = 1;
 	else
@@ -983,7 +1008,7 @@ static int select_pci_ioctl( gpib_board_t *board, unsigned long arg )
 
 	board->pci_bus = selection.pci_bus;
 	board->pci_slot = selection.pci_slot;
-	
+
 	return 0;
 }
 
@@ -1000,6 +1025,19 @@ static int event_ioctl( gpib_board_t *board, unsigned long arg )
 
 	retval = copy_to_user( (void*) arg, &user_event, sizeof( user_event ) );
 	if( retval ) return -EFAULT;
+
+	return 0;
+}
+
+static int request_system_control_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	rsc_ioctl_t request_control;
+	int retval;
+
+	retval = copy_from_user( &request_control, ( void * ) arg, sizeof( request_control ) );
+	if( retval ) return -EFAULT;
+
+	ibrsc( board, request_control );
 
 	return 0;
 }

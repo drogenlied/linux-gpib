@@ -16,7 +16,6 @@
  ***************************************************************************/
 
 #include "ib_internal.h"
-#include "ibP.h"
 
 static int set_spoll_timeout( ibConf_t *conf, int timeout )
 {

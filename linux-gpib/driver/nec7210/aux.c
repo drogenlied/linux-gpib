@@ -79,6 +79,15 @@ int nec7210_go_to_standby(gpib_board_t *board, nec7210_private_t *priv)
 	return retval;
 }
 
+void nec7210_request_system_control( gpib_board_t *board, nec7210_private_t *priv,
+	int request_control )
+{
+	if( request_control == 0 )
+	{
+		write_byte( priv, AUX_DSC, AUXMR );
+	}
+}
+
 void nec7210_interface_clear(gpib_board_t *board, nec7210_private_t *priv, int assert)
 {
 	if(assert)
@@ -95,8 +104,9 @@ void nec7210_remote_enable(gpib_board_t *board, nec7210_private_t *priv, int ena
 		write_byte(priv, AUX_CREN, AUXMR);
 }
 
-EXPORT_SYMBOL(nec7210_take_control);
-EXPORT_SYMBOL(nec7210_go_to_standby);
-EXPORT_SYMBOL(nec7210_interface_clear);
-EXPORT_SYMBOL(nec7210_remote_enable);
+EXPORT_SYMBOL( nec7210_request_system_control );
+EXPORT_SYMBOL( nec7210_take_control );
+EXPORT_SYMBOL( nec7210_go_to_standby );
+EXPORT_SYMBOL( nec7210_interface_clear );
+EXPORT_SYMBOL( nec7210_remote_enable );
 

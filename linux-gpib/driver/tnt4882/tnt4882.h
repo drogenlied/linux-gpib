@@ -53,6 +53,7 @@ ssize_t tnt4882_write(gpib_board_t *board, uint8_t *buffer, size_t length, int
 ssize_t tnt4882_command(gpib_board_t *board, uint8_t *buffer, size_t length);
 int tnt4882_take_control(gpib_board_t *board, int synchronous);
 int tnt4882_go_to_standby(gpib_board_t *board);
+void tnt4882_request_system_control( gpib_board_t *board, int request_control );
 void tnt4882_interface_clear(gpib_board_t *board, int assert);
 void tnt4882_remote_enable(gpib_board_t *board, int enable);
 void tnt4882_enable_eos(gpib_board_t *board, uint8_t eos_byte, int

@@ -2,7 +2,7 @@
                           lib/ibFindLstn.c
                              -------------------
 
-    copyright            : (C) 2002 by Frank Mori Hess
+    copyright            : (C) 2002,2003 by Frank Mori Hess
     email                : fmhess@users.sourceforge.net
  ***************************************************************************/
 
@@ -16,7 +16,6 @@
  ***************************************************************************/
 
 #include "ib_internal.h"
-#include "ibP.h"
 #include <unistd.h>
 #include <stdlib.h>
 
@@ -114,7 +113,7 @@ void FindLstn( int boardID, Addr4882_t padList[],
 
 	board = interfaceBoard( conf );
 
-	if( is_system_controller( board ) == 0 )
+	if( is_cic( board ) == 0 )
 	{
 		setIberr( ECIC );
 		exit_library( boardID, 1 );

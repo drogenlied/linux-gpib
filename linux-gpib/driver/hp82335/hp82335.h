@@ -41,6 +41,7 @@ ssize_t hp82335_write( gpib_board_t *board, uint8_t *buffer, size_t length, int
 ssize_t hp82335_command( gpib_board_t *board, uint8_t *buffer, size_t length );
 int hp82335_take_control( gpib_board_t *board, int synchronous );
 int hp82335_go_to_standby( gpib_board_t *board );
+void hp82335_request_system_control( gpib_board_t *board, int request_control );
 void hp82335_interface_clear( gpib_board_t *board, int assert );
 void hp82335_remote_enable( gpib_board_t *board, int enable );
 void hp82335_enable_eos( gpib_board_t *board, uint8_t eos_byte, int

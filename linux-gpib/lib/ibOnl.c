@@ -1,6 +1,21 @@
+/***************************************************************************
+                          lib/ibOnl.c
+                             -------------------
+
+    copyright            : (C) 2001,2002,2003 by Frank Mori Hess
+    email                : fmhess@users.sourceforge.net
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
 
 #include "ib_internal.h"
-#include <ibP.h>
 #include <stdlib.h>
 
 int board_online( ibBoard_t *board, int online )
@@ -26,25 +41,55 @@ int board_online( ibBoard_t *board, int online )
 		if( retval < 0 )
 			return retval;
 	}
-	online_cmd.master = board->is_system_controller;
 	online_cmd.online = online;
 	retval = ioctl( board->fileno, IBONL, &online_cmd );
 	if( retval < 0 )
 	{
+		fprintf( stderr, "libgpib: IBONL ioctl failed\n" );
 		setIberr( EDVR );
+		setIbcnt( errno );
 		return -1;
 	}
 
 	if( online )
 	{
+		rsc_ioctl_t rsc_cmd;
+
+		retval = lock_board_mutex( board );
+		if( retval < 0 ) return retval;
+
+		rsc_cmd = board->is_system_controller;
+		retval = ioctl( board->fileno, IBRSC, &rsc_cmd );
+		if( retval < 0 )
+		{
+			fprintf( stderr, "libgpib: IBRSC ioctl failed\n" );
+			unlock_board_mutex( board );
+			setIberr( EDVR );
+			setIbcnt( errno );
+			return retval;
+		}
 		if( board->is_system_controller )
 		{
-			// remote enable should be asserted before IFC XXX
 			retval = remote_enable( board, 1 );
-			if( retval < 0 ) return retval;
+			if( retval < 0 )
+			{
+				unlock_board_mutex( board );
+				return retval;
+			}
+			retval = assert_ifc( board, 100 );
+			if( retval < 0 )
+			{
+				unlock_board_mutex( board );
+				return retval;
+			}
 		}
 		if( create_autopoll_thread( board ) < 0)
+		{
+			unlock_board_mutex( board );
 			return -1;
+		}
+		retval = unlock_board_mutex( board );
+		if( retval < 0 ) return retval;
 	}else ibBoardClose( board );
 
 	return 0;
@@ -67,13 +112,12 @@ int conf_online( ibConf_t *conf, int online )
 	if( online )
 	{
 		conf->board_is_open = 1;
+		retval = open_gpib_device( conf );
+		if( retval < 0 ) return retval;
 	}else
 	{
 		conf->board_is_open = 0;
 	}
-
-	retval = open_gpib_device( conf );
-	if( retval < 0 ) return retval;
 
 	return 0;
 }

@@ -16,7 +16,6 @@
  ***************************************************************************/
 
 #include "ib_internal.h"
-#include "ibP.h"
 #include <pthread.h>
 
 int my_wait( ibConf_t *conf, int mask )
@@ -32,7 +31,7 @@ int my_wait( ibConf_t *conf, int mask )
 	board = interfaceBoard( conf );
 
 	if( conf->is_interface == 0 &&
-		is_system_controller( board ) == 0 )
+		is_cic( board ) == 0 )
 	{
 		setIberr( ECIC );
 		return -1;

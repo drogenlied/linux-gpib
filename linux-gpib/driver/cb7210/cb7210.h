@@ -20,8 +20,8 @@
 #define _CB7210_H
 
 #include <linux/config.h>
-#include <nec7210.h>
-#include <gpibP.h>
+#include "nec7210.h"
+#include "gpibP.h"
 #include "amccs5933.h"
 
 #define PCI_DEVICE_ID_CBOARDS_PCI_GPIB 0x6
@@ -53,6 +53,7 @@ ssize_t cb7210_write(gpib_board_t *board, uint8_t *buffer, size_t length, int
 ssize_t cb7210_command(gpib_board_t *board, uint8_t *buffer, size_t length);
 int cb7210_take_control(gpib_board_t *board, int synchronous);
 int cb7210_go_to_standby(gpib_board_t *board);
+void cb7210_request_system_control( gpib_board_t *board, int request_control );
 void cb7210_interface_clear(gpib_board_t *board, int assert);
 void cb7210_remote_enable(gpib_board_t *board, int enable);
 void cb7210_enable_eos(gpib_board_t *board, uint8_t eos_byte, int

@@ -62,6 +62,11 @@ int tnt4882_go_to_standby(gpib_board_t *board)
 	tnt4882_private_t *priv = board->private_data;
 	return nec7210_go_to_standby(board, &priv->nec7210_priv);
 }
+void tnt4882_request_system_control( gpib_board_t *board, int request_control )
+{
+	tnt4882_private_t *priv = board->private_data;
+	nec7210_request_system_control( board, &priv->nec7210_priv, request_control );
+}
 void tnt4882_interface_clear(gpib_board_t *board, int assert)
 {
 	tnt4882_private_t *priv = board->private_data;
@@ -129,6 +134,7 @@ gpib_interface_t ni_pci_interface =
 	command: tnt4882_command,
 	take_control: tnt4882_take_control,
 	go_to_standby: tnt4882_go_to_standby,
+	request_system_control: tnt4882_request_system_control,
 	interface_clear: tnt4882_interface_clear,
 	remote_enable: tnt4882_remote_enable,
 	enable_eos: tnt4882_enable_eos,
@@ -154,6 +160,7 @@ gpib_interface_t ni_isa_interface =
 	command: tnt4882_command,
 	take_control: tnt4882_take_control,
 	go_to_standby: tnt4882_go_to_standby,
+	request_system_control: tnt4882_request_system_control,
 	interface_clear: tnt4882_interface_clear,
 	remote_enable: tnt4882_remote_enable,
 	enable_eos: tnt4882_enable_eos,

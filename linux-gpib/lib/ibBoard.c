@@ -19,7 +19,6 @@
 #include <stdlib.h>
 
 #include "ib_internal.h"
-#include "ibP.h"
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -196,6 +195,12 @@ int InternalResetSys( ibConf_t *conf, Addr4882_t addressList[] )
 	}
 
 	if( is_system_controller( board ) == 0 )
+	{
+		setIberr( ESAC );
+		return -1;
+	}
+
+	if( is_cic( board ) == 0 )
 	{
 		setIberr( ECIC );
 		return -1;

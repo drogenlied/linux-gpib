@@ -20,11 +20,11 @@
 #ifndef _GPIB_PCIIA_BOARD_H
 #define _GPIB_PCIIA_BOARD_H
 
-#include <gpibP.h>
+#include "gpibP.h"
 #include <asm/io.h>
 #include <linux/module.h>
 
-#include <nec7210.h>
+#include "nec7210.h"
 
 unsigned int update_status_nolock( gpib_board_t *board, nec7210_private_t *priv );
 

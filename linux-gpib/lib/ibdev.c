@@ -16,7 +16,6 @@
  ***************************************************************************/
 
 #include "ib_internal.h"
-#include <ibP.h>
 #include <stdlib.h>
 
 static int is_device_addr( int minor, int pad, int sad )

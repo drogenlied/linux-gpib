@@ -19,9 +19,9 @@
 #ifndef _CEC_GPIB_H
 #define _CEC_GPIB_H
 
-#include <nec7210.h>
-#include <gpibP.h>
-#include <plx9050.h>
+#include "nec7210.h"
+#include "gpibP.h"
+#include "plx9050.h"
 #include <linux/config.h>
 
 typedef struct
@@ -43,6 +43,7 @@ ssize_t cec_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_
 ssize_t cec_command(gpib_board_t *board, uint8_t *buffer, size_t length);
 int cec_take_control(gpib_board_t *board, int synchronous);
 int cec_go_to_standby(gpib_board_t *board);
+void cec_request_system_control( gpib_board_t *board, int request_control );
 void cec_interface_clear(gpib_board_t *board, int assert);
 void cec_remote_enable(gpib_board_t *board, int enable);
 void cec_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits);

@@ -17,7 +17,6 @@
  ***************************************************************************/
 
 #include "ib_internal.h"
-#include <ibP.h>
 #include <pthread.h>
 #include <stdlib.h>
 

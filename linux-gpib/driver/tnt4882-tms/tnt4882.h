@@ -19,8 +19,8 @@
 #ifndef _TNT4882_H
 #define _TNT4882_H
 
-#include <tms9914.h>
-#include <gpibP.h>
+#include "tms9914.h"
+#include "gpibP.h"
 #include "mite.h"
 
 enum

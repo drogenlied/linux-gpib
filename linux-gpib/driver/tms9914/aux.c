@@ -92,8 +92,18 @@ void tms9914_remote_enable(gpib_board_t *board, tms9914_private_t *priv, int ena
 		write_byte(priv, AUX_SRE, AUXCR);
 }
 
-EXPORT_SYMBOL(tms9914_take_control);
-EXPORT_SYMBOL(tms9914_go_to_standby);
-EXPORT_SYMBOL(tms9914_interface_clear);
-EXPORT_SYMBOL(tms9914_remote_enable);
+void tms9914_request_system_control( gpib_board_t *board, tms9914_private_t *priv,
+	int request_control )
+{
+	if( request_control )
+		write_byte(priv, AUX_RQC, AUXCR);
+	else
+		write_byte(priv, AUX_RLC, AUXCR);
+}
+
+EXPORT_SYMBOL( tms9914_request_system_control );
+EXPORT_SYMBOL( tms9914_take_control );
+EXPORT_SYMBOL( tms9914_go_to_standby );
+EXPORT_SYMBOL( tms9914_interface_clear );
+EXPORT_SYMBOL( tms9914_remote_enable );
 

@@ -17,7 +17,6 @@
  ***************************************************************************/
 
 #include "ib_internal.h"
-#include "ibP.h"
 #include <stdlib.h>
 
 int ppoll_configure_device( ibConf_t *conf, Addr4882_t addressList[],
@@ -27,7 +26,7 @@ int ppoll_configure_device( ibConf_t *conf, Addr4882_t addressList[],
 	int i;
 	int retval;
 
-	if( is_system_controller( interfaceBoard( conf ) ) == 0 )
+	if( is_cic( interfaceBoard( conf ) ) == 0 )
 	{
 		setIberr( ECIC );
 		return -1;

@@ -16,7 +16,6 @@
  ***************************************************************************/
 
 #include "ib_internal.h"
-#include <ibP.h>
 
 int ibbna( int ud, char *board_name )
 {
@@ -57,7 +56,7 @@ int ibbna( int ud, char *board_name )
 		setIberr( EARG );
 		return exit_library( ud, 1 );
 	}
-	if( is_system_controller( interfaceBoard( board_conf ) ) == 0 )
+	if( is_cic( interfaceBoard( board_conf ) ) == 0 )
 	{
 		setIberr( ECIC );
 		return exit_library( ud, 1 );

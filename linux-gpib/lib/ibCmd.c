@@ -2,7 +2,7 @@
                           lib/ibCmd.c
                              -------------------
 
-    copyright            : (C) 2001,2002 by Frank Mori Hess
+    copyright            : (C) 2001,2002,2003 by Frank Mori Hess
     email                : fmhess@users.sourceforge.net
  ***************************************************************************/
 
@@ -16,7 +16,6 @@
  ***************************************************************************/
 
 #include "ib_internal.h"
-#include <ibP.h>
 #include <sys/ioctl.h>
 #include <pthread.h>
 #include <stdlib.h>
@@ -74,7 +73,7 @@ int ibcmda( int ud, void *cmd_buffer, long cnt )
 
 	board = interfaceBoard( conf );
 
-	if( is_system_controller( board ) == 0 )
+	if( is_cic( board ) == 0 )
 	{
 		setIberr( ECIC );
 		return exit_library( ud, 1 );
@@ -140,7 +139,7 @@ ssize_t my_ibcmd( ibConf_t *conf, uint8_t *buffer, size_t count)
 
 	board = interfaceBoard( conf );
 
-	if( is_system_controller( board ) == 0 )
+	if( is_cic( board ) == 0 )
 	{
 		setIberr( ECIC );
 		return -1;
@@ -254,7 +253,7 @@ int InternalSendSetup( ibConf_t *conf, Addr4882_t addressList[] )
 
 	board = interfaceBoard( conf );
 
-	if( is_system_controller( board ) == 0 )
+	if( is_cic( board ) == 0 )
 	{
 		setIberr( ECIC );
 		return -1;

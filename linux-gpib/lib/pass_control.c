@@ -16,7 +16,6 @@
  ***************************************************************************/
 
 #include "ib_internal.h"
-#include "ibP.h"
 
 int my_pass_control( ibConf_t *conf, unsigned int pad, int sad )
 {

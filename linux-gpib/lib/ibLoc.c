@@ -80,7 +80,7 @@ void EnableLocal( int boardID, Addr4882_t addressList[] )
 
 	board = interfaceBoard( conf );
 
-	if( is_system_controller( board ) == 0 )
+	if( is_cic( board ) == 0 )
 	{
 		setIberr( ECIC );
 		exit_library( boardID, 1 );

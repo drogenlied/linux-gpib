@@ -71,6 +71,8 @@ struct gpib_interface_struct
 	/* De-assert ATN.  Returns zero on success, nonzer on error.
 	 */
 	int (*go_to_standby)(gpib_board_t *board);
+	/* request/release control of the IFC and REN lines (system controller) */
+	void ( *request_system_control )( gpib_board_t *board, int request_control );
 	/* Asserts or de-asserts 'interface clear' (IFC) depending on
 	 * boolean value of 'assert'
 	 */

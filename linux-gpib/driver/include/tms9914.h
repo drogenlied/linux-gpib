@@ -76,6 +76,8 @@ extern ssize_t tms9914_command(gpib_board_t *board, tms9914_private_t *priv,
 extern int tms9914_take_control(gpib_board_t *board, tms9914_private_t *priv,
 	int syncronous);
 extern int tms9914_go_to_standby(gpib_board_t *board, tms9914_private_t *priv);
+extern void tms9914_request_system_control( gpib_board_t *board, tms9914_private_t *priv,
+	int request_control );
 extern void tms9914_interface_clear(gpib_board_t *board, tms9914_private_t *priv, int assert);
 extern void tms9914_remote_enable(gpib_board_t *board, tms9914_private_t *priv, int enable);
 extern void tms9914_enable_eos(gpib_board_t *board, tms9914_private_t *priv,

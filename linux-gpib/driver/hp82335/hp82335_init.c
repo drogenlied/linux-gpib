@@ -57,6 +57,11 @@ int hp82335_go_to_standby( gpib_board_t *board )
 	hp82335_private_t *priv = board->private_data;
 	return tms9914_go_to_standby( board, &priv->tms9914_priv );
 }
+void hp82335_request_system_control( gpib_board_t *board, int request_control )
+{
+	hp82335_private_t *priv = board->private_data;
+	tms9914_request_system_control( board, &priv->tms9914_priv, request_control );
+}
 void hp82335_interface_clear( gpib_board_t *board, int assert )
 {
 	hp82335_private_t *priv = board->private_data;
@@ -126,6 +131,7 @@ gpib_interface_t hp82335_interface =
 	read: hp82335_read,
 	write: hp82335_write,
 	command: hp82335_command,
+	request_system_control: hp82335_request_system_control,
 	take_control: hp82335_take_control,
 	go_to_standby: hp82335_go_to_standby,
 	interface_clear: hp82335_interface_clear,

@@ -29,7 +29,7 @@ depend:
 
 ifndef NODEPS
 .depend: $(SRCS)
-	$(DEPEND) $(CFLAGS) -M $(SRCS)  >./.depend
+	$(DEPEND) $(CFLAGS) -MM $(SRCS)  >./.depend
 
 -include .depend
 endif

@@ -20,11 +20,11 @@
 #ifndef _TMS9914_BOARD_H
 #define _TMS9914_BOARD_H
 
-#include <gpibP.h>
+#include "gpibP.h"
 #include <asm/io.h>
 #include <linux/module.h>
 
-#include <tms9914.h>
+#include "tms9914.h"
 
 unsigned int update_status_nolock( gpib_board_t *board, tms9914_private_t *priv );
 

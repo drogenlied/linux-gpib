@@ -18,8 +18,7 @@
 #include "ibsys.h"
 #include <linux/vmalloc.h>
 
-int ibonline( gpib_board_t *board, gpib_file_private_t *priv,
-	int master )
+int ibonline( gpib_board_t *board, gpib_file_private_t *priv )
 {
 	int retval;
 
@@ -33,16 +32,6 @@ int ibonline( gpib_board_t *board, gpib_file_private_t *priv,
 			board->interface->detach(board);
 			printk("gpib: interface attach failed\n");
 			return -1;
-		}
-
-		if( master )
-		{
-			board->master = 1;
-			// XXX this should be done by library
-			ibsic( board, 100 );
-		}else
-		{
-			board->master = 0;
 		}
 	}
 

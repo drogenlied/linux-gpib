@@ -60,8 +60,6 @@ extern unsigned int timeout_to_usec( enum gpib_timeout timeout );
 extern unsigned int ppoll_timeout_to_usec( unsigned int timeout );
 extern unsigned int usec_to_ppoll_timeout( unsigned int usec );
 extern int set_timeout( const ibBoard_t *board, unsigned int usec_timeout );
-extern int ib_lock_mutex( ibBoard_t *board );
-extern int ib_unlock_mutex( ibBoard_t *board );
 extern int close_gpib_device( ibConf_t *conf );
 extern int open_gpib_device( ibConf_t *conf );
 extern int gpibi_change_address( ibConf_t *conf,
@@ -92,6 +90,8 @@ extern void sync_globals( void );
 extern int create_autopoll_thread( ibBoard_t *board );
 extern int destroy_autopoll_thread( ibBoard_t *board );
 extern int is_system_controller( const ibBoard_t *board );
+extern int is_cic( const ibBoard_t *board );
+extern int assert_ifc( ibBoard_t *board, unsigned int usec );
 
 extern int internal_ibpad( ibConf_t *conf, unsigned int address );
 extern int internal_ibsad( ibConf_t *conf, int address );

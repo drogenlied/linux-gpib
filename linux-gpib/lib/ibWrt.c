@@ -16,7 +16,6 @@
  ***************************************************************************/
 
 #include "ib_internal.h"
-#include "ibP.h"
 #include <sys/ioctl.h>
 
 int find_eos( uint8_t *buffer, size_t length, int eos, int eos_flags )
@@ -240,7 +239,7 @@ int InternalSendList( ibConf_t *conf, Addr4882_t addressList[],
 
 	board = interfaceBoard( conf );
 
-	if( is_system_controller( board ) == 0 )
+	if( is_cic( board ) == 0 )
 	{
 		setIberr( ECIC );
 		return -1;

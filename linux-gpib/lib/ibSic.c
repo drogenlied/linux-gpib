@@ -16,7 +16,6 @@
  ***************************************************************************/
 
 #include "ib_internal.h"
-#include "ibP.h"
 
 int assert_ifc( ibBoard_t *board, unsigned int usec_duration )
 {
@@ -45,7 +44,7 @@ int internal_ibsic( ibConf_t *conf )
 
 	if( is_system_controller( board ) == 0 )
 	{
-		setIberr( ECIC );
+		setIberr( ESAC );
 		return -1;
 	}
 

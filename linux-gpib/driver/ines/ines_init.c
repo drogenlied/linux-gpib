@@ -96,6 +96,11 @@ int ines_go_to_standby(gpib_board_t *board)
 	ines_private_t *priv = board->private_data;
 	return nec7210_go_to_standby(board, &priv->nec7210_priv);
 }
+void ines_request_system_control( gpib_board_t *board, int request_control )
+{
+	ines_private_t *priv = board->private_data;
+	nec7210_request_system_control( board, &priv->nec7210_priv, request_control );
+}
 void ines_interface_clear(gpib_board_t *board, int assert)
 {
 	ines_private_t *priv = board->private_data;
@@ -162,6 +167,7 @@ gpib_interface_t ines_pci_interface =
 	command: ines_command,
 	take_control: ines_take_control,
 	go_to_standby: ines_go_to_standby,
+	request_system_control: ines_request_system_control,
 	interface_clear: ines_interface_clear,
 	remote_enable: ines_remote_enable,
 	enable_eos: ines_enable_eos,
@@ -187,6 +193,7 @@ gpib_interface_t ines_pci_accel_interface =
 	command: ines_command,
 	take_control: ines_take_control,
 	go_to_standby: ines_go_to_standby,
+	request_system_control: ines_request_system_control,
 	interface_clear: ines_interface_clear,
 	remote_enable: ines_remote_enable,
 	enable_eos: ines_enable_eos,
