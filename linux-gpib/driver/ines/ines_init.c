@@ -69,6 +69,15 @@ ines_pci_id pci_ids[] =
 		pci_chip_type: PCI_CHIP_AMCC5920,
 	},
 	{
+		vendor_id: 0x16da,
+		device_id: 0x0011,
+		subsystem_vendor_id: 0x16da,
+		subsystem_device_id: 0x0011,
+		gpib_region: 1,
+		io_offset: 1,
+		pci_chip_type: PCI_CHIP_UNKNOWN,
+	},
+	{
 		vendor_id: PCI_VENDOR_ID_QUANCOM,
 		device_id: 0x3302,
 		subsystem_vendor_id: -1,
@@ -391,6 +400,8 @@ int ines_common_pci_attach( gpib_board_t *board )
 			break;
 		case PCI_CHIP_QUANCOM:
 			break;
+		case PCI_CHIP_UNKNOWN:
+			break;
 		default:
 			printk("gpib: unspecified chip type? (bug)\n");
 			nec_priv->iobase = 0;
@@ -410,25 +421,36 @@ int ines_common_pci_attach( gpib_board_t *board )
 	ines_priv->irq = ines_priv->pci_device->irq;
 
 	// enable interrupts on pci chip
-	if(ines_priv->plx_iobase)
-		outl(LINTR1_EN_BIT | LINTR1_POLARITY_BIT | PCI_INTR_EN_BIT,
-			ines_priv->plx_iobase + PLX_INTCSR_REG);
-	else if(ines_priv->amcc_iobase)
+	switch(ines_priv->pci_chip_type)
 	{
-		static const int region = 1;
-		static const int num_wait_states = 7;
-		uint32_t bits;
+		case PCI_CHIP_PLX9050:
+			outl(LINTR1_EN_BIT | LINTR1_POLARITY_BIT | PCI_INTR_EN_BIT,
+				ines_priv->plx_iobase + PLX_INTCSR_REG);
+			break;
+		case PCI_CHIP_AMCC5920:
+			{
+				static const int region = 1;
+				static const int num_wait_states = 7;
+				uint32_t bits;
 
-		bits = amcc_prefetch_bits(region, PREFETCH_DISABLED);
-		bits |= amcc_PTADR_mode_bit(region);
-		bits |= amcc_disable_write_fifo_bit(region);
-		bits |= amcc_wait_state_bits(region, num_wait_states);
-		outl(bits, ines_priv->amcc_iobase + AMCC_PASS_THRU_REG);
-		outl(AMCC_ADDON_INTR_ENABLE_BIT, ines_priv->amcc_iobase + AMCC_INTCS_REG);
-	}else if( ines_priv->pci_chip_type == PCI_CHIP_QUANCOM )
-	{
-		outb( QUANCOM_IRQ_ENABLE_BIT, nec_priv->iobase + QUANCOM_IRQ_CONTROL_STATUS_REG );
-	}
+				bits = amcc_prefetch_bits(region, PREFETCH_DISABLED);
+				bits |= amcc_PTADR_mode_bit(region);
+				bits |= amcc_disable_write_fifo_bit(region);
+				bits |= amcc_wait_state_bits(region, num_wait_states);
+				outl(bits, ines_priv->amcc_iobase + AMCC_PASS_THRU_REG);
+				outl(AMCC_ADDON_INTR_ENABLE_BIT, ines_priv->amcc_iobase + AMCC_INTCS_REG);
+			}
+			break;
+		case PCI_CHIP_QUANCOM:
+			outb( QUANCOM_IRQ_ENABLE_BIT, nec_priv->iobase + QUANCOM_IRQ_CONTROL_STATUS_REG );
+			break;
+		case PCI_CHIP_UNKNOWN:
+			break;
+		default:
+			printk("gpib: unspecified chip type? (bug)\n");
+			return -1;
+			break;
+		}
 	ines_online( ines_priv, board, 0 );
 
 	return 0;
