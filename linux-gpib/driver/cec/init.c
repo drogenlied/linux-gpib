@@ -170,12 +170,6 @@ void cec_init(cec_private_t *cec_priv)
 
 	nec7210_board_reset(nec_priv);
 
-#if 0
-	// make interrupt active low
-	nec_priv->auxb_bits |= HR_INV;
-	write_byte(nec_priv, nec_priv->auxb_bits, AUXMR);
-#endif
-
 	// enable interrupts for 7210
 	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
 		HR_DETIE | HR_APTIE | HR_CPTIE | HR_DOIE | HR_DIIE;
@@ -240,7 +234,7 @@ int cec_pci_attach(gpib_board_t *board)
 	cec_init(cec_priv);
 
 	// enable interrupts on plx chip
-	outl(LINTR1_EN_BIT | LINTR2_EN_BIT | PCI_INTR_EN_BIT,
+	outl(LINTR1_EN_BIT | LINTR1_POLARITY_BIT | PCI_INTR_EN_BIT,
 		cec_priv->plx_iobase + PLX_INTCSR_REG);
 
 	return 0;
