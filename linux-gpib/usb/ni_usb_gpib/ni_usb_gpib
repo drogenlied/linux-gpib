@@ -1,18 +1,19 @@
 #!/bin/sh
 
-PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin
+GPIB_CONFIG_OPTIONS="--minor 0"
 DATADIR=/usr/share
+FXLOAD=fxload
+FXLOAD_OPTIONS=
+
+PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin
 FIRMWARE=
 SS_LOADER=
-FLAGS=
-FXLOAD=fxload
-
 
 # pre-renumeration device IDs
 case $PRODUCT in
 # ni-usb-b with firmware already loaded
 3923/702a/*)
-# you could execute gpib_config here 	
+	gpib_config $GPIB_CONFIG_OPTIONS
 	;;
 
 # ni-usb-b without firmware
@@ -59,4 +60,4 @@ if [ -x /usr/bin/logger ]; then
     /usr/bin/logger -t $0 "load $FIRMWARE for $PRODUCT to $DEVICE"
 fi
 
-$FXLOAD $FLAGS -I $FIRMWARE -s $SS_LOADER
+$FXLOAD $FXLOAD_OPTIONS -I $FIRMWARE -s $SS_LOADER
