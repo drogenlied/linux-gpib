@@ -98,7 +98,7 @@ install:
 	for i in $(SUBDIRS); do \
 		$(MAKE) $$i install; \
 	done	
-	depmod -a $(KERNELRELEASE)
+	depmod -ae $(KERNELRELEASE)
 
 
 # make module version matching kernel version
