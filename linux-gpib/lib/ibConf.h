@@ -20,6 +20,7 @@
 
 #include <unistd.h>
 #include <sys/types.h>
+#include <pthread.h>
 
 /* meaning for flags */
 
