@@ -146,6 +146,7 @@ int main(int argc,char **argv)
 	if(ibclr(dev) & ERR)
 	{
 		gpiberr("gpib clear error");
+		ibonl(dev, 0);
 		exit(1);
 	}
 
@@ -157,11 +158,17 @@ int main(int argc,char **argv)
 		{
 			case GPIB_WRITE:
 				if(prompt_for_write(dev) < 0)
+				{
+					ibonl(dev, 0);
 					exit(1);
+				}
 				break;
 			case GPIB_READ:
 				if(perform_read(dev) < 0)
+				{
+					ibonl(dev, 0);
 					exit(1);
+				}
 				break;
 			default:
 				break;
@@ -174,6 +181,7 @@ int main(int argc,char **argv)
 	if( ibrsp(dev, &result) & ERR )
 	{
 		gpiberr("serial poll error");
+		ibonl(dev, 0);
 		exit(1);
 	}
 	fprintf(stderr, "result 0x%x\n", result);
