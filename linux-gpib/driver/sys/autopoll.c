@@ -116,6 +116,7 @@ int get_serial_poll_byte( gpib_board_t *board, unsigned int pad, int sad, unsign
 	}
 }
 
+// XXX need to add timeout, with our own wait queue (see ibwait)
 int autopoll_all_devices( gpib_board_t *board )
 {
 	int retval;
