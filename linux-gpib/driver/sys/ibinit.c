@@ -31,7 +31,7 @@ static int autospoll_thread(void *board_void)
 	 */
 	daemonize();
 	/* set our name for identification purposes */
-	sprintf(current->comm, "gpib_autospoll");
+	sprintf(current->comm, "gpib%d_autospoll", board->minor);
 	unlock_kernel();
 
 	GPIB_DPRINTK("entering autospoll thread\n" );
@@ -49,7 +49,8 @@ static int autospoll_thread(void *board_void)
 
 		if(down_interruptible(&board->autopoll_mutex))
 		{
-			return -ERESTARTSYS;
+			retval = -ERESTARTSYS;
+			break;
 		}
 		/* make sure autopolling is still on now after we have
 		 * lock */
@@ -67,6 +68,7 @@ static int autospoll_thread(void *board_void)
 		up(&board->autopoll_mutex);
 	}
 
+	up(&board->autospoll_completion);
 	GPIB_DPRINTK("exiting autospoll thread\n" );
 	return retval;
 }
@@ -118,6 +120,8 @@ int iboffline( gpib_board_t *board )
 		retval = kill_proc(board->autospoll_pid, SIGKILL, 1);
 		if(retval)
 			printk("gpib: kill_proc returned %i\n", retval);
+		/* wait for autospoll thread to finish */
+		down(&board->autospoll_completion);
 	}
 	board->online = 0;
 	GPIB_DPRINTK( "gpib: board offline\n" );
