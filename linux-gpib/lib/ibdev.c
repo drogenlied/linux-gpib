@@ -44,7 +44,9 @@ int ibdev(int minor, int pad, int sad, int timo, int eot, int eos)
 		return -1;
 	}
 
-	if( is_device_addr( minor, pad, sad - sad_offset ) == 0 )
+	sad -= sad_offset;
+
+	if( is_device_addr( minor, pad, sad ) == 0 )
 	{
 		setIberr( EARG );
 		setIbsta( ERR );
@@ -75,7 +77,7 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 
 	init_ibconf( &new_conf );
 	new_conf.pad = pad;
-	new_conf.sad = sad - sad_offset;                        /* device address                   */
+	new_conf.sad = sad;                        /* device address                   */
 	new_conf.board = minor;                         /* board number                     */
 	new_conf.eos = eos;                           /* local eos modes                  */
 	new_conf.eos_flags = eos_flags;
