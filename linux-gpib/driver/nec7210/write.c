@@ -43,7 +43,6 @@ static ssize_t pio_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 		}
 		if(test_bit(TIMO_NUM, &device->status))
 		{
-			retval = -ETIMEDOUT;
 			break;
 		}
 
@@ -51,6 +50,17 @@ static ssize_t pio_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 		clear_bit(WRITE_READY_BN, &priv->state);
 		priv->write_byte(priv, buffer[count++], CDOR);
 		spin_unlock_irqrestore(&lock, flags);
+	}
+	// wait till last byte gets sent
+	if(wait_event_interruptible(device->wait, test_bit(WRITE_READY_BN, &priv->state) ||
+		test_bit(TIMO_NUM, &device->status)))
+	{
+		printk("gpib write interrupted!\n");
+		retval = -EINTR;
+	}
+	if(test_bit(TIMO_NUM, &device->status))
+	{
+		retval = -ETIMEDOUT;
 	}
 
 	// disable 'data out' interrupts
