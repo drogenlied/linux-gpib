@@ -32,27 +32,64 @@ computer, on the same GPIB bus, and one of which is the system controller.
 
 #include "gpib/ib.h"
 
-struct board_descriptors
-{
-	int master;
-	int slave;
-};
-
 struct program_options
 {
 	int daemonize_index;
 	int num_loops;
+	int master;
+	int pad;
+	int sad;
+	int verbosity;
 };
 
 #define PRINT_FAILED() \
 	fprintf( stderr, "FAILED: %s line %i, ibsta 0x%x, iberr %i, ibcntl %li\n", \
 		__FILE__, __LINE__, ThreadIbsta(), ThreadIberr(), ThreadIbcntl() ); \
 
-static int init_board( int board_desc )
+static int send_sync_message(int ud, const char *message)
+{
+	if(ibwrt(ud, message, strlen(message)) & ERR)
+	{
+		fprintf(stderr, "failed to send sync message: %s\n", message);
+		PRINT_FAILED();
+		return -1;
+	}
+	return 0;
+}
+
+static int receive_sync_message(int ud)
+{
+	char buffer[1024];
+
+	if(ibrd(ud, buffer, sizeof(buffer)) & ERR)
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	return 0;
+}
+
+static int init_board(int board_desc, const struct program_options *options)
 {
 	int status;
 
-	ibtmo( board_desc, T3s );
+	if(options->master == 0)
+	{
+		if(ibpad(board_desc, options->pad) & ERR)
+		{
+			PRINT_FAILED();
+			return -1;
+		}
+		if(options->sad >= 0)
+		{
+			if(ibsad(board_desc, MSA(options->sad)) & ERR)
+			{
+				PRINT_FAILED();
+				return -1;
+			}
+		}
+	}
+	ibtmo( board_desc, T30s );
 	if( ThreadIbsta() & ERR )
 	{
 		PRINT_FAILED();
@@ -77,47 +114,50 @@ static int init_board( int board_desc )
 		PRINT_FAILED();
 		return -1;
 	}
-
+	// for parallel poll test
+	if(options->master == 0)
+	{
+		ibist(board_desc, 1);
+		if( ThreadIbsta() & ERR )
+		{
+			PRINT_FAILED();
+			return -1;
+		}
+	}
 	return 0;
 }
 
-static int find_boards( struct board_descriptors *boards )
+static int find_board(int *board, const struct program_options *options)
 {
 	int i;
 	int status, result;
 
-	boards->master = -1;
-	boards->slave = -1;
-	fprintf( stderr, "Finding boards..." );
+	fprintf( stderr, "Finding board..." );
 	for( i = 0; i < GPIB_MAX_NUM_BOARDS; i++ )
 	{
+		if(options->verbosity)
+			fprintf(stderr, "\tchecking board %i\n", i);
 		status = ibask( i, IbaSC, &result );
 		if( status & ERR )
 			continue;
-		if( boards->master < 0 && result != 0 )
+		if(options->master && result != 0 )
 		{
-			boards->master = i;
-		}else if( boards->slave < 0 && result == 0 )
+			*board = i;
+			break;
+		}else if(options->master == 0 && result == 0)
 		{
-			boards->slave = i;
+			*board = i;
+			break;
 		}
-		if( boards->master >= 0 && boards->slave >= 0 ) break;
 	}
-	if( boards->master < 0 )
-	{
-		PRINT_FAILED();
-		return -1;
-	}else if( boards->slave < 0 )
+	if(i == GPIB_MAX_NUM_BOARDS)
 	{
 		PRINT_FAILED();
 		return -1;
 	}
-	if( init_board( boards->master ) )
-	{
-		PRINT_FAILED();
-		return -1;
-	}
-	if( init_board( boards->slave ) )
+	if(options->verbosity)
+		fprintf(stderr, "\tfound board %i\n", i);
+	if(init_board(*board, options))
 	{
 		PRINT_FAILED();
 		return -1;
@@ -126,26 +166,18 @@ static int find_boards( struct board_descriptors *boards )
 	return 0;
 }
 
-static int open_slave_device_descriptor( const struct board_descriptors *boards,
+static int open_slave_device_descriptor(int board, const struct program_options *options,
 	int timeout, int eot, int eos )
 {
-	int pad, sad;
+	int sad;
 	int ud;
 	int status;
 
-	status = ibask( boards->slave, IbaPAD, &pad );
-	if( status & ERR )
-	{
-		PRINT_FAILED();
-		return -1;
-	}
-	status = ibask( boards->slave, IbaSAD, &sad );
-	if( status & ERR )
-	{
-		PRINT_FAILED();
-		return -1;
-	}
-	ud = ibdev( boards->master, pad, sad, timeout, eot, eos );
+	if(options->sad >= 0)
+		sad = MSA(options->sad);
+	else
+		sad = 0;
+	ud = ibdev( board, options->pad, sad, timeout, eot, eos );
 	if( ud < 0 )
 	{
 		PRINT_FAILED();
@@ -156,76 +188,23 @@ static int open_slave_device_descriptor( const struct board_descriptors *boards,
 static const char read_write_string1[] = "dig8esdfas sdf\n";
 static const char read_write_string2[] = "DFLIJFES8F3	";
 
-struct read_write_slave_parameters
-{
-	int slave_board;
-	int retval;
-};
-
-static void* read_write_slave_thread( void *arg )
-{
-	volatile struct read_write_slave_parameters *param = arg;
-	char buffer[ 1000 ];
-	int status;
-	int i;
-
-	for( i = 0; i < 2; i++ )
-	{
-		memset( buffer, 0, sizeof( buffer ) );
-		status = ibrd( param->slave_board, buffer, sizeof( buffer ) );
-		if( status & ERR )
-		{
-			PRINT_FAILED();
-			param->retval = -1;
-			return NULL;
-		}
-		if( strcmp( buffer, read_write_string1 ) )
-		{
-			PRINT_FAILED();
-			fprintf( stderr, "got bad data from ibrd\n" );
-			fprintf( stderr, "received %i bytes:%s\n", ThreadIbcnt(), buffer );
-			param->retval = -1;
-			return NULL;
-		}
-		status = ibwrt( param->slave_board, read_write_string2, strlen( read_write_string2 ) + 1 );
-		if( status & ERR )
-		{
-			PRINT_FAILED();
-			param->retval = -1;
-			return NULL;
-		}
-	}
-	param->retval = 0;
-	return NULL;
-}
-
-static int read_write_test( const struct board_descriptors *boards )
+static int master_read_write_test(int board, const struct program_options *options)
 {
 	int ud;
-	pthread_t slave_thread;
-	volatile struct read_write_slave_parameters param;
 	int status;
 	char buffer[ 1000 ];
 	int i;
 
 	fprintf( stderr, "%s...", __FUNCTION__ );
-	ud = open_slave_device_descriptor( boards, T3s, 1, 0 );
+	ud = open_slave_device_descriptor( board, options, T30s, 1, 0 );
 	if( ud < 0 )
 		return -1;
-	param.slave_board = boards->slave;
-	if( pthread_create( &slave_thread, NULL, read_write_slave_thread, (void*)&param ) )
-	{
-		PRINT_FAILED();
-		ibonl( ud, 0 );
-		return -1;
-	}
 	for( i = 0; i < 2; i++ )
 	{
 		status = ibwrt( ud, read_write_string1, strlen( read_write_string1 ) + 1 );
 		if( ( status & ERR ) || !( status & CMPL ) )
 		{
 			PRINT_FAILED();
-			pthread_join( slave_thread, NULL );
 			ibonl( ud, 0 );
 			return -1;
 		}
@@ -234,7 +213,6 @@ static int read_write_test( const struct board_descriptors *boards )
 		if( ( status & ERR ) || !( status & CMPL ) || !( status & END ) )
 		{
 			PRINT_FAILED();
-			pthread_join( slave_thread, NULL );
 			ibonl( ud, 0 );
 			return -1;
 		}
@@ -242,22 +220,9 @@ static int read_write_test( const struct board_descriptors *boards )
 		{
 			PRINT_FAILED();
 			fprintf( stderr, "received bytes:%s\n", buffer );
-			pthread_join( slave_thread, NULL );
 			ibonl( ud, 0 );
 			return -1;
 		}
-	}
-	if( pthread_join( slave_thread, NULL ) )
-	{
-		PRINT_FAILED();
-		ibonl( ud, 0 );
-		return -1;
-	}
-	if( param.retval < 0 )
-	{
-		PRINT_FAILED();
-		ibonl( ud, 0 );
-		return -1;
 	}
 	ibonl( ud, 0 );
 	if( ThreadIbsta() & ERR )
@@ -269,7 +234,49 @@ static int read_write_test( const struct board_descriptors *boards )
 	return 0;
 }
 
-static int async_read_write_test( const struct board_descriptors *boards )
+static int slave_read_write_test(int board, const struct program_options *options)
+{
+	char buffer[ 1000 ];
+	int status;
+	int i;
+
+	fprintf( stderr, "%s...", __FUNCTION__ );
+	for( i = 0; i < 2; i++ )
+	{
+		memset( buffer, 0, sizeof( buffer ) );
+		status = ibrd(board, buffer, sizeof( buffer ) );
+		if(status & ERR)
+		{
+			PRINT_FAILED();
+			return -1;
+		}
+		if(strcmp(buffer, read_write_string1))
+		{
+			PRINT_FAILED();
+			fprintf( stderr, "got bad data from ibrd\n" );
+			fprintf( stderr, "received %i bytes:%s\n", ThreadIbcnt(), buffer );
+			return -1;
+		}
+		status = ibwrt(board, read_write_string2, strlen(read_write_string2) + 1);
+		if( status & ERR )
+		{
+			PRINT_FAILED();
+			return -1;
+		}
+	}
+	fprintf( stderr, "OK\n" );
+	return 0;
+}
+
+static int read_write_test(int board, const struct program_options *options)
+{
+	if(options->master)
+		return master_read_write_test(board, options);
+	else
+		return slave_read_write_test(board, options);
+};
+
+static int master_async_read_write_test(int board, const struct program_options *options)
 {
 	int ud;
 	char buffer[ 1000 ];
@@ -277,7 +284,7 @@ static int async_read_write_test( const struct board_descriptors *boards )
 	int status;
 
 	fprintf( stderr, "%s...", __FUNCTION__ );
-	ud = open_slave_device_descriptor( boards, T3s, 1, 0 );
+	ud = open_slave_device_descriptor(board, options, T3s, 1, 0);
 	if( ud < 0 )
 		return -1;
 	for( i = 0; i < 2; i++ )
@@ -286,15 +293,6 @@ static int async_read_write_test( const struct board_descriptors *boards )
 		if( status & ERR )
 		{
 			PRINT_FAILED();
-			ibonl( ud, 0 );
-			return -1;
-		}
-		memset( buffer, 0, sizeof( buffer ) );
-		status = ibrda( boards->slave, buffer, sizeof( buffer ) );
-		if( status & ERR )
-		{
-			PRINT_FAILED();
-			fprintf( stderr, "read error %i\n", ThreadIberr() );
 			ibonl( ud, 0 );
 			return -1;
 		}
@@ -307,23 +305,6 @@ static int async_read_write_test( const struct board_descriptors *boards )
 			ibonl( ud, 0 );
 			return -1;
 		}
-		status = ibwait( boards->slave, CMPL | TIMO );
-		if((status & (ERR | TIMO)) || !(status & CMPL))
-		{
-			PRINT_FAILED();
-			fprintf( stderr, "write status 0x%x, error %i\n", ThreadIbsta(),
-				ThreadIberr() );
-			ibonl( ud, 0 );
-			return -1;
-		}
-		if( strcmp( buffer, read_write_string1 ) )
-		{
-			PRINT_FAILED();
-			fprintf( stderr, "got bad data from ibrd\n" );
-			fprintf( stderr, "received %i bytes:%s\n", ThreadIbcnt(), buffer );
-			ibonl( ud, 0 );
-			return -1;
-		}
 	}
 	ibonl( ud, 0 );
 	if( ThreadIbsta() & ERR )
@@ -335,17 +316,61 @@ static int async_read_write_test( const struct board_descriptors *boards )
 	return 0;
 }
 
-static int serial_poll_test( const struct board_descriptors *boards )
+static int slave_async_read_write_test(int board, const struct program_options *options)
+{
+	char buffer[ 1000 ];
+	int i;
+	int status;
+
+	fprintf( stderr, "%s...", __FUNCTION__ );
+	for( i = 0; i < 2; i++ )
+	{
+		memset( buffer, 0, sizeof( buffer ) );
+		status = ibrda( board, buffer, sizeof( buffer ) );
+		if( status & ERR )
+		{
+			PRINT_FAILED();
+			fprintf( stderr, "read error %i\n", ThreadIberr() );
+			return -1;
+		}
+		status = ibwait( board, CMPL | TIMO );
+		if((status & (ERR | TIMO)) || !(status & CMPL))
+		{
+			PRINT_FAILED();
+			fprintf( stderr, "write status 0x%x, error %i\n", ThreadIbsta(),
+				ThreadIberr() );
+			return -1;
+		}
+		if(strcmp(buffer, read_write_string1))
+		{
+			PRINT_FAILED();
+			fprintf( stderr, "got bad data from ibrd\n" );
+			fprintf( stderr, "received %i bytes:%s\n", ThreadIbcnt(), buffer );
+			return -1;
+		}
+	}
+	fprintf( stderr, "OK\n" );
+	return 0;
+}
+
+static int async_read_write_test(int board, const struct program_options *options)
+{
+	if(options->master)
+		return master_async_read_write_test(board, options);
+	else
+		return slave_async_read_write_test(board, options);
+};
+
+const int status_byte = 0x43;
+static int master_serial_poll_test(int board, const struct program_options *options)
 {
 	int ud;
 	char result;
-	const int status_byte = 0x43;
 
 	fprintf( stderr, "%s...", __FUNCTION__ );
-	ud = open_slave_device_descriptor( boards, T3s, 1, 0 );
+	ud = open_slave_device_descriptor(board, options, T3s, 1, 0 );
 	if( ud < 0 )
 		return -1;
-
 	/* make sure status queue is empty */
 	while( ibwait( ud, 0 ) & RQS )
 	{
@@ -357,23 +382,18 @@ static int serial_poll_test( const struct board_descriptors *boards )
 			return -1;
 		}
 	}
-
-	if( ibconfig( boards->master, IbcAUTOPOLL, 1 ) & ERR )
+	if(ibconfig(board, IbcAUTOPOLL, 1 ) & ERR)
 	{
 		PRINT_FAILED();
 		ibonl( ud, 0 );
 		return -1;
 	}
-
-	ibrsv( boards->slave, status_byte );
-	if( ThreadIbsta() & ERR )
+	if(send_sync_message(ud, "request service"))
 	{
-		PRINT_FAILED();
 		ibonl( ud, 0 );
 		return -1;
 	}
-
-	ibwait( ud, RQS | TIMO );
+	ibwait(ud, RQS | TIMO);
 	if((ThreadIbsta() & (ERR | TIMO)) || !(ThreadIbsta() & RQS))
 	{
 		PRINT_FAILED();
@@ -381,80 +401,117 @@ static int serial_poll_test( const struct board_descriptors *boards )
 		return -1;
 	}
 	result = 0;
-	ibrsp( ud, &result );
+	ibrsp(ud, &result);
 	if( ThreadIbsta() & ERR )
 	{
 		PRINT_FAILED();
 		ibonl( ud, 0 );
 		return -1;
 	}
-
-	if( ( result & 0xff ) != status_byte )
+	if((result & 0xff) != status_byte)
 	{
 		PRINT_FAILED();
 		ibonl( ud, 0 );
 		return -1;
 	}
-
 	ibonl( ud, 0 );
 	if( ThreadIbsta() & ERR )
 	{
 		PRINT_FAILED();
 		return -1;
 	}
-
 	fprintf( stderr, "OK\n" );
 
 	return 0;
 }
 
-static int parallel_poll_test( const struct board_descriptors *boards )
+static int slave_serial_poll_test(int board, const struct program_options *options)
 {
-	int ud;
 	char result;
-	int line, sense;
-	int ist;
-
 	fprintf( stderr, "%s...", __FUNCTION__ );
-	ud = open_slave_device_descriptor( boards, T3s, 1, 0 );
-	if( ud < 0 )
-		return -1;
 
-	ist = 1;
-	ibist( boards->slave, ist );
-
-	line = 2; sense = 1;
-	ibppc( ud, PPE_byte( line, sense ) );
-	if( ibsta & ERR )
+	if(receive_sync_message(board))
 	{
-		PRINT_FAILED();
 		return -1;
 	}
-	ibrpp( boards->master, &result );
+	ibrsv(board, status_byte);
 	if( ThreadIbsta() & ERR )
 	{
 		PRINT_FAILED();
 		return -1;
 	}
-	if( ( result & ( 1 << ( line - 1 ) ) ) == 0 )
+	fprintf( stderr, "OK\n" );
+	return 0;
+}
+
+static int serial_poll_test(int board, const struct program_options *options)
+{
+	if(options->master)
+		return master_serial_poll_test(board, options);
+	else
+		return slave_serial_poll_test(board, options);
+};
+
+static int master_parallel_poll_test(int board, const struct program_options *options)
+{
+	int ud;
+	char result;
+	int line, sense;
+
+	fprintf( stderr, "%s...", __FUNCTION__ );
+	ud = open_slave_device_descriptor(board, options, T3s, 1, 0 );
+	if( ud < 0 )
+		return -1;
+	line = 2; sense = 1;
+	ibppc(ud, PPE_byte(line, sense));
+	if(ibsta & ERR)
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	ibrpp( board, &result );
+	if( ThreadIbsta() & ERR )
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	if((result & (1 << (line - 1))) == 0)
 	{
 		PRINT_FAILED();
 		fprintf( stderr, "parallel poll result: 0x%x\n", (unsigned int)result );
 		return -1;
 	}
-
 	ibonl( ud, 0 );
 	if( ThreadIbsta() & ERR )
 	{
 		PRINT_FAILED();
 		return -1;
 	}
+	fprintf( stderr, "OK\n" );
+	return 0;
+}
+
+static int slave_parallel_poll_test(int board, const struct program_options *options)
+{
+	int ud;
+	char result;
+	int ist;
+
+	fprintf( stderr, "%s...", __FUNCTION__ );
 
 	fprintf( stderr, "OK\n" );
 	return 0;
 }
 
-static int do_eos_pass(const struct board_descriptors *boards,
+static int parallel_poll_test(int board, const struct program_options *options)
+{
+	if(options->master)
+		return master_parallel_poll_test(board, options);
+	else
+		return slave_parallel_poll_test(board, options);
+};
+
+static int do_master_eos_pass(int board, const struct program_options *options,
 	int eosmode, const char *test_message, const char *first_read_result,
 	const char *second_read_result)
 {
@@ -462,15 +519,9 @@ static int do_eos_pass(const struct board_descriptors *boards,
 	char buffer[1024];
 	int status;
 
-	ud = open_slave_device_descriptor( boards, T3s, 0, eosmode );
+	ud = open_slave_device_descriptor(board, options, T3s, 0, eosmode );
 	if( ud < 0 )
 		return -1;
-	ibwrta(boards->slave, test_message, strlen(test_message));
-	if( ThreadIbsta() & ERR )
-	{
-		PRINT_FAILED();
-		return -1;
-	}
 	ibrd(ud, buffer, sizeof(buffer) - 1);
 	if( ThreadIbsta() & ERR )
 	{
@@ -504,14 +555,6 @@ static int do_eos_pass(const struct board_descriptors *boards,
 			return -1;
 		}
 	}
-	status = ibwait(boards->slave, CMPL | TIMO);
-	if((status & (ERR | TIMO)) || !(status & CMPL))
-	{
-		PRINT_FAILED();
-		fprintf( stderr, "write status 0x%x, error %i\n", ThreadIbsta(),
-			ThreadIberr());
-		return -1;
-	}
 	ibonl( ud, 0 );
 	if( ThreadIbsta() & ERR )
 	{
@@ -521,22 +564,63 @@ static int do_eos_pass(const struct board_descriptors *boards,
 	return 0;
 }
 
-static int eos_test( const struct board_descriptors *boards )
+static int do_slave_eos_pass(int board, const struct program_options *options,
+	int eosmode, const char *test_message, const char *first_read_result,
+	const char *second_read_result)
+{
+	char buffer[1024];
+	int status;
+
+	ibwrt(board, test_message, strlen(test_message));
+	if( ThreadIbsta() & ERR )
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	return 0;
+}
+
+static int master_eos_test(int board, const struct program_options *options)
 {
 	int retval;
 	fprintf( stderr, "%s...", __FUNCTION__ );
 
-	retval = do_eos_pass(boards, 'x' | REOS, "adfis\xf8gibblex",
+	retval = do_master_eos_pass(board, options, 'x' | REOS, "adfis\xf8gibblex",
 		"adfis\xf8", "gibblex");
 	if(retval < 0) return retval;
 
-	retval = do_eos_pass(boards, 'x' | REOS | BIN, "adfis\xf8gibblex",
+	retval = do_master_eos_pass(board, options, 'x' | REOS | BIN, "adfis\xf8gibblex",
 		"adfis\xf8gibblex", NULL);
 	if(retval < 0) return retval;
 
 	fprintf( stderr, "OK\n" );
 	return 0;
 }
+
+static int slave_eos_test(int board, const struct program_options *options)
+{
+	int retval;
+	fprintf( stderr, "%s...", __FUNCTION__ );
+
+	retval = do_slave_eos_pass(board, options, 'x' | REOS, "adfis\xf8gibblex",
+		"adfis\xf8", "gibblex");
+	if(retval < 0) return retval;
+
+	retval = do_slave_eos_pass(board, options, 'x' | REOS | BIN, "adfis\xf8gibblex",
+		"adfis\xf8gibblex", NULL);
+	if(retval < 0) return retval;
+
+	fprintf( stderr, "OK\n" );
+	return 0;
+}
+
+static int eos_test(int board, const struct program_options *options)
+{
+	if(options->master)
+		return master_eos_test(board, options);
+	else
+		return slave_eos_test(board, options);
+};
 
 static void daemonize(void)
 {
@@ -593,6 +677,11 @@ int parse_program_options(int argc, char *argv[], struct program_options *option
 	{
 		{"daemonize", optional_argument, NULL, 'd'},
 		{"num_loops", required_argument, NULL, 'n'},
+		{"master", no_argument, NULL, 'm'},
+		{"slave", no_argument, NULL, 'S'},
+		{"pad", required_argument, NULL, 'p'},
+		{"sad", required_argument, NULL, 's'},
+		{"verbose", no_argument, NULL, 'v'},
 		{0, 0, 0, 0}
 	};
 	int c;
@@ -601,9 +690,11 @@ int parse_program_options(int argc, char *argv[], struct program_options *option
 	memset(options, 0, sizeof(*options));
 	options->daemonize_index = -1;
 	options->num_loops = 1;
+	options->pad = 1;
+	options->sad = -1;
 	while(1)
 	{
-		c = getopt_long(argc, argv, "d::n:", long_options, &option_index);
+		c = getopt_long(argc, argv, "d::n:mSp:s:v", long_options, &option_index);
 		if(c < 0) break;
 		switch(c)
 		{
@@ -618,6 +709,26 @@ int parse_program_options(int argc, char *argv[], struct program_options *option
 			options->num_loops = strtol(optarg, NULL, 0);
 			fprintf(stdout, "option: loop %i times\n", options->num_loops);
 			break;
+		case 'm':
+			options->master = 1;
+			fprintf(stdout, "option: run as bus master\n");
+			break;
+		case 'S':
+			options->master = 0;
+			fprintf(stdout, "option: run as slave\n");
+			break;
+		case 'p':
+			options->pad = strtol(optarg, NULL, 0);
+			fprintf(stdout, "option: pad %i\n", options->pad);
+			break;
+		case 's':
+			options->sad = strtol(optarg, NULL, 0);
+			fprintf(stdout, "option: sad %i\n", options->sad);
+			break;
+		case 'v':
+			options->verbosity = 1;
+			fprintf(stdout, "option: verbose\n");
+			break;
 		default:
 			fprintf(stderr, "bad option?\n");
 			return -1;
@@ -629,7 +740,7 @@ int parse_program_options(int argc, char *argv[], struct program_options *option
 
 int main( int argc, char *argv[] )
 {
-	struct board_descriptors boards;
+	int board;
 	int retval;
 	struct program_options options;
 	int i;
@@ -641,19 +752,19 @@ int main( int argc, char *argv[] )
 	{
 		if(i == options.daemonize_index)
 			daemonize();
-		retval = find_boards( &boards );
+		retval = find_board(&board, &options);
 		if( retval < 0 ) return retval;
-		retval = read_write_test( &boards );
+		retval = read_write_test(board, &options);
 		if( retval < 0 ) return retval;
-		retval = async_read_write_test( &boards );
+		retval = async_read_write_test(board, &options);
 		if( retval < 0 ) return retval;
-		retval = serial_poll_test( &boards );
+		retval = serial_poll_test(board, &options);
 		if( retval < 0 ) return retval;
-		retval = parallel_poll_test( &boards );
+		retval = parallel_poll_test(board, &options);
 		if( retval < 0 ) return retval;
-		retval = eos_test( &boards );
+		retval = eos_test(board, &options);
 		if( retval < 0 ) return retval;
-	}
+ }
 	return 0;
 }
 
