@@ -56,7 +56,7 @@ ibConfYacc.c + ibConfYacc.h: ibConfYacc.y
 	bison -d -y -p gpib_yy -o ibConfYacc.c ibConfYacc.y
 
 clean: 
-	$(RM) $(EXP_INC) *.o ibConfYacc.c ibConfLex.c *.a .depend ibConfYacc.h
+	$(RM) $(EXP_INC) *.o ibConfYacc.c ibConfLex.c *.a .depend ibConfYacc.h $(LIBNAME)
 
 
 realclean : clean
@@ -65,7 +65,7 @@ realclean : clean
 
 install:
 	$(INSTALL) $(LIBNAME)     $(LIB_TARGET_DIR)
-	ldconfig -n $(LIB_TARGET_DIR)		
+	ldconfig $(LIB_TARGET_DIR)		
 #	install ib.h           $(INC_TARGET_DIR)		
 #        install ibConf.h       $(INC_TARGET_DIR)		
 

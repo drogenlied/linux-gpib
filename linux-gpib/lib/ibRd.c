@@ -1,21 +1,22 @@
-
+#include <stdio.h>
 #include <ib.h>
 #include <ibP.h>
 
-int ibrd(int ud, uint8_t *rd, unsigned long cnt)
+int ibrd(int ud, void *rd, unsigned long cnt)
 {
 	ibConf_t *conf = ibConfigs[ud];
 
 	if(ibCheckDescriptor(ud) < 0)
 		return ibsta | ERR;
 
+
 	// set eos mode
 	iblcleos(ud);
-	// set timeout
+	// set timeout XXX need to init conf with board default when not set
 	ibBoardFunc(conf->board, IBTMO, conf->tmo);
 
 	return ibBoardFunc(conf->board,
-		( conf->flags & CN_ISCNTL ? IBRD : DVRD ),
+		((conf->flags & CN_ISCNTL) ? IBRD : DVRD),
 		conf->padsad, rd, cnt);
 }
 

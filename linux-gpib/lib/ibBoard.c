@@ -70,7 +70,7 @@ int ibBoardFunc (int bd, int code, ...)
 {
 	va_list ap;
 	static int arg;
-	static char *buf;
+	static uint8_t *buf;
 	static int cnt;
 
 	switch (code)
@@ -83,8 +83,8 @@ int ibBoardFunc (int bd, int code, ...)
 		case IBCMD:
 			va_start(ap, code);
 			arg=va_arg(ap, int);
-			buf=va_arg(ap, char *);
-			cnt=va_arg(ap, int);
+			buf=va_arg(ap, void*);
+			cnt=va_arg(ap, unsigned long);
 			va_end(ap);
 			break;
 		case IBAPRSP:
@@ -106,19 +106,11 @@ int ibBoardFunc (int bd, int code, ...)
 			break;
 	}
 
-	switch (code)
-	{
-		case IBRD:
-		case DVRD:
-			memset(buf, 0, cnt);
-			break;
-	}
-
 	if( ibBoard[bd].fileno > 0 )
 	{
 		ibarg.ib_arg = arg;
 
-		ibarg.ib_buf = (char *) buf;
+		ibarg.ib_buf =  buf;
 
 		ibarg.ib_cnt = cnt;
 		if( ioctl( ibBoard[bd].fileno, code, (ibarg_t *) &ibarg ) < 0)
