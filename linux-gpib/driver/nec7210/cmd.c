@@ -25,16 +25,21 @@ ssize_t nec7210_command(gpib_board_t *board, nec7210_private_t *priv, uint8_t
 	ssize_t retval = 0;
 	unsigned long flags;
 
+	clear_bit( BUS_ERROR_BN, &priv->state );
 	while(count < length)
 	{
 		if(wait_event_interruptible(board->wait, test_bit(COMMAND_READY_BN, &priv->state) ||
-			test_bit(TIMO_NUM, &board->status)))
+			test_bit( BUS_ERROR_BN, &priv->state ) || test_bit(TIMO_NUM, &board->status)))
 		{
 			printk("gpib command wait interrupted\n");
 			retval = -ERESTARTSYS;
 			break;
 		}
 		if(test_bit(TIMO_NUM, &board->status))
+		{
+			break;
+		}
+		if(test_bit( BUS_ERROR_BN, &priv->state))
 		{
 			break;
 		}
@@ -51,7 +56,7 @@ ssize_t nec7210_command(gpib_board_t *board, nec7210_private_t *priv, uint8_t
 	}
 	// wait for last byte to get sent
 	if(wait_event_interruptible(board->wait, test_bit(COMMAND_READY_BN, &priv->state) ||
-		test_bit(TIMO_NUM, &board->status)))
+		test_bit( BUS_ERROR_BN, &priv->state ) || test_bit(TIMO_NUM, &board->status)))
 	{
 		printk("gpib command wait interrupted\n");
 		retval = -ERESTARTSYS;
@@ -60,6 +65,10 @@ ssize_t nec7210_command(gpib_board_t *board, nec7210_private_t *priv, uint8_t
 	{
 		printk("gpib command timed out\n");
 		retval = -ETIMEDOUT;
+	}
+	if(test_bit( BUS_ERROR_BN, &priv->state))
+	{
+		retval = -EIO;
 	}
 
 	return retval ? retval : count;
