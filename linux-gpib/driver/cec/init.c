@@ -230,7 +230,8 @@ int cec_pci_attach(gpib_device_t *device)
 	cec_priv->irq = cec_priv->pci_device->irq;
 
 	// enable interrupts on plx chip
-	outl(LINTR1_EN_BIT | LINTR1_POLARITY_BIT | LINTR2_EN_BIT | LINTR2_POLARITY_BIT | PCI_INTR_EN_BIT, cec_priv->plx_iobase + PLX_INTCSR_REG);
+	outl(LINTR1_EN_BIT | PCI_INTR_EN_BIT,
+		cec_priv->plx_iobase + PLX_INTCSR_REG);
 
 	cec_init(cec_priv);
 
@@ -247,7 +248,7 @@ void cec_pci_detach(gpib_device_t *device)
 		nec_priv = &cec_priv->nec7210_priv;
 		if(cec_priv->irq)
 		{
-			// disable amcc interrupts
+			// disable plx9050 interrupts
 			outl(0, cec_priv->plx_iobase + PLX_INTCSR_REG );
 			free_irq(cec_priv->irq, device);
 		}
