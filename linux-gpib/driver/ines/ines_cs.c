@@ -61,8 +61,7 @@ static char *version =
 /* Parameters that can be set with 'insmod' */
 
 /* Bit map of interrupts to choose from */
-static u_long irq_mask = 0xdeb8;
-//static u_long irq_mask = 0xffff;
+static u_long irq_mask = 0xffff;
 
 /*====================================================================*/
 
@@ -199,7 +198,7 @@ static dev_link_t *gpib_attach(void)
 	link->io.Attributes1 = IO_DATA_PATH_WIDTH_8;
 	link->io.NumPorts2 = 0;
 	link->io.Attributes2 =0;
-	link->io.IOAddrLines = 10;	// XXX 5 lines?
+	link->io.IOAddrLines = 5;
 
 	/* Interrupt setup */
 	link->irq.Attributes = IRQ_TYPE_EXCLUSIVE;
@@ -333,6 +332,7 @@ static void gpib_config(dev_link_t *link)
 		i = CardServices(ParseTuple, handle, &tuple, &parse);
 		if (i != CS_SUCCESS) break;
 		link->conf.ConfigBase = parse.config.base;
+		link->conf.Present = parse.config.rmask[0];
     } while (0);
 	if (i != CS_SUCCESS) {
 		cs_error(link->handle, ParseTuple, i);
@@ -398,7 +398,7 @@ static void gpib_config(dev_link_t *link)
 		req.Attributes=WIN_MEMORY_TYPE_AM | WIN_DATA_WIDTH_8 | WIN_ENABLE;
 		req.Base=0;
 		req.Size=0x1000;
-		req.AccessSpeed=2;
+		req.AccessSpeed=250;
 		i= CardServices(RequestWindow,&handle,&req);
 		if (i != CS_SUCCESS) {
 			cs_error(link->handle, RequestWindow, i);
