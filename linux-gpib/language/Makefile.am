@@ -7,13 +7,5 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
-CLEANDIRS = perl python tcl guile php
+SUBDIRS = perl python tcl guile php
 
-EXTRA_DIST = $(CLEANDIRS)
-
-all-local:
-
-clean-local:
-	-for i in $(CLEANDIRS); do \
-		$(MAKE) -C $$i clean; \
-	done

@@ -49,13 +49,6 @@ if [[ ! -f "$LINUX_SRCDIR/.hdepend" ]];then
 	AC_MSG_ERROR([You need to run \'make dep\' on the kernel source before continuing.])
 fi
 [echo \ ok]
-[echo -n checking for Linux kernel compilation flags... ]
-dnl get compile flags for modules from linux kernel source tree
-(cd util/linux_flags && make --quiet LINUXDIR=$LINUX_SRCDIR)
-if [[ $? != 0 ]]; then
-	AC_MSG_ERROR([Failed to get compile flags from Linux kernel directory.])
-fi
-[echo \ ok]
 
 dnl Checks for programs.
 AC_PROG_INSTALL
@@ -96,6 +89,16 @@ IBMAJOR=160
 AC_SUBST(IBMAJOR)
 AC_DEFINE([IBMAJOR],[160],[Major number of device files])
 
+dnl get compile flags for modules from linux kernel source tree
+AC_CONFIG_COMMANDS([util/linux_flags/flags],[
+	(cd util/linux_flags/ && make --quiet LINUXDIR=$LINUX_SRCDIR)
+	if [[ $? != 0 ]]; then
+		AC_MSG_ERROR([Failed to get compile flags from Linux kernel directory.])
+	fi
+	],[LINUX_SRCDIR=$LINUX_SRCDIR])
+dnl create non-automake makefiles
+AC_CONFIG_COMMANDS([language/perl/Makefile],[(cd language/perl/ && perl Makefile.PL)],[])
+
 AC_OUTPUT([\
 	Makefile \
 	lib/Makefile \
@@ -119,6 +122,7 @@ AC_OUTPUT([\
 	include/Makefile \
 	language/Makefile \
 	language/guile/Makefile \
+	language/php/Makefile \
 	language/python/Makefile \
 	language/tcl/Makefile \
 ]

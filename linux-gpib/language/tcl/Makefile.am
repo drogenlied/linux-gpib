@@ -13,6 +13,7 @@ libgpib_tcl_la_SOURCES = ibCmds.c
 
 TCL_LIBRARY = $(shell echo 'puts $$tcl_library' | tclsh)
 
+#need to do better
 include $(TCL_LIBRARY)/tclConfig.sh
 
 #fix tcl directory for version independence
