@@ -23,7 +23,7 @@
 </author>
 
 <copyright>
-<year>2003</year>
+<year>2003, 2004</year>
 <holder>Frank Mori Hess</holder>
 </copyright>
 </articleinfo>
@@ -442,169 +442,187 @@ Default is <option>--sre</option>.</para>
 	<row>
 	<entry>Capital Equipment Corporation</entry>
 	<entry>PC-488</entry>
-	<entry>pc2_gpib.o</entry>
+	<entry>pc2_gpib.ko</entry>
 	<entry>pcII</entry>
 	</row>
 	<row>
 	<entry>Capital Equipment Corporation</entry>
 	<entry>PCI-488</entry>
-	<entry>cec_gpib.o</entry>
+	<entry>cec_gpib.ko</entry>
 	<entry>cec_pci</entry>
 	</row>
 	<row>
 	<entry>CONTEC</entry>
 	<entry>GP-IB(PC)</entry>
-	<entry>pc2_gpib.o</entry>
+	<entry>pc2_gpib.ko</entry>
 	<entry>pcIIa</entry>
 	</row>
 	<row>
 	<entry>Hewlett Packard</entry>
 	<entry>HP82335</entry>
-	<entry>hp82335.o</entry>
+	<entry>hp82335.ko</entry>
 	<entry>hp82335</entry>
 	</row>
 	<row>
 	<entry>Hewlett Packard</entry>
 	<entry>HP27209</entry>
-	<entry>hp82335.o</entry>
+	<entry>hp82335.ko</entry>
 	<entry>hp82335</entry>
 	</row>
 	<row>
 	<entry>Ines</entry>
 	<entry>GPIB for Compact PCI</entry>
-	<entry>ines_gpib.o</entry>
+	<entry>ines_gpib.ko</entry>
 	<entry>ines_pci, ines_pci_accel</entry>
 	</row>
 	<row>
 	<entry>Ines</entry>
 	<entry>GPIB for PCI</entry>
-	<entry>ines_gpib.o</entry>
+	<entry>ines_gpib.ko</entry>
 	<entry>ines_pci, ines_pci_accel</entry>
 	</row>
 	<row>
 	<entry>Ines</entry>
 	<entry>GPIB for PCMCIA</entry>
-	<entry>ines_gpib.o</entry>
+	<entry>ines_gpib.ko</entry>
 	<entry>ines_pcmcia, ines_pcmcia_accel</entry>
 	</row>
 	<row>
 	<entry>Iotech</entry>
 	<entry>GP488B</entry>
-	<entry>pc2_gpib.o</entry>
+	<entry>pc2_gpib.ko</entry>
 	<entry>pcIIa</entry>
 	</row>
 	<row>
 	<entry>Keithley</entry>
 	<entry>KPCI-488</entry>
-	<entry>cec_gpib.o</entry>
+	<entry>cec_gpib.ko</entry>
 	<entry>cec_pci</entry>
 	</row>
 	<row>
 	<entry>Keithley</entry>
 	<entry>MBC-488</entry>
-	<entry>pc2_gpib.o</entry>
+	<entry>pc2_gpib.ko</entry>
 	<entry>pcII</entry>
 	</row>
 	<row>
 	<entry>Measurement Computing (Computer Boards)</entry>
 	<entry>CPCI-GPIB</entry>
-	<entry>cb7210.o</entry>
+	<entry>cb7210.ko</entry>
 	<entry>cbi_pci, cbi_pci_accel</entry>
 	</row>
 	<row>
 	<entry>Measurement Computing (Computer Boards)</entry>
 	<entry>ISA-GPIB</entry>
-	<entry>cb7210.o</entry>
+	<entry>cb7210.ko</entry>
 	<entry>cbi_isa, cbi_isa_accel</entry>
 	</row>
 	<row>
 	<entry>Measurement Computing (Computer Boards)</entry>
 	<entry>ISA-GPIB/LC</entry>
-	<entry>cb7210.o</entry>
+	<entry>cb7210.ko</entry>
 	<entry>cbi_isa</entry>
 	</row>
 	<row>
 	<entry>Measurement Computing (Computer Boards)</entry>
 	<entry>ISA-GPIB-PC2A</entry>
-	<entry>pc2_gpib.o</entry>
+	<entry>pc2_gpib.ko</entry>
 	<entry>pcIIa (nec7210 chip), pcIIa_cb7210 (cb7210 chip)</entry>
 	</row>
 	<row>
 	<entry>Measurement Computing (Computer Boards)</entry>
 	<entry>PCI-GPIB/1M</entry>
-	<entry>cb7210.o</entry>
+	<entry>cb7210.ko</entry>
 	<entry>cbi_pci, cbi_pci_accel</entry>
 	</row>
 	<row>
 	<entry>Measurement Computing (Computer Boards)</entry>
 	<entry>PCI-GPIB/300K</entry>
-	<entry>cb7210.o</entry>
+	<entry>cb7210.ko</entry>
 	<entry>cbi_pci</entry>
 	</row>
 	<row>
 	<entry>Measurement Computing (Computer Boards)</entry>
 	<entry>PCMCIA-GPIB</entry>
-	<entry>cb7210.o</entry>
+	<entry>cb7210.ko</entry>
 	<entry>cbi_pcmcia, cbi_pcmcia_accel</entry>
 	</row>
 	<row>
 	<entry>National Instruments</entry>
 	<entry>AT-GPIB (with NAT4882 chip)</entry>
-	<entry>tnt4882.o</entry>
+	<entry>tnt4882.ko</entry>
 	<entry>ni_nat4882_isa, ni_nat4882_isa_accel</entry>
 	</row>
 	<row>
 	<entry>National Instruments</entry>
 	<entry>AT-GPIB (with NEC7210 chip)</entry>
-	<entry>tnt4882.o</entry>
+	<entry>tnt4882.ko</entry>
 	<entry>ni_nec_isa, ni_nec_isa_accel</entry>
 	</row>
 	<row>
 	<entry>National Instruments</entry>
 	<entry>AT-GPIB/TNT</entry>
-	<entry>tnt4882.o</entry>
+	<entry>tnt4882.ko</entry>
 	<entry>ni_isa, ni_isa_accel</entry>
 	</row>
 	<row>
 	<entry>National Instruments</entry>
+	<entry>GPIB-USB-B</entry>
+	<entry>ni_usb_gpib.ko</entry>
+	<entry>ni_usb_b</entry>
+	</row>
+	<row>
+	<entry>National Instruments</entry>
 	<entry>PCI-GPIB</entry>
-	<entry>tnt4882.o</entry>
+	<entry>tnt4882.ko</entry>
 	<entry>ni_pci, ni_pci_accel</entry>
 	</row>
 	<row>
 	<entry>National Instruments</entry>
 	<entry>PCI-GPIB+</entry>
-	<entry>tnt4882.o</entry>
+	<entry>tnt4882.ko</entry>
+	<entry>ni_pci, ni_pci_accel</entry>
+	</row>
+	<row>
+	<entry>National Instruments</entry>
+	<entry>PCM-GPIB</entry>
+	<entry>tnt4882.ko</entry>
+	<entry>ni_pci, ni_pci_accel</entry>
+	</row>
+	<row>
+	<entry>National Instruments</entry>
+	<entry>PXI-GPIB</entry>
+	<entry>tnt4882.ko</entry>
 	<entry>ni_pci, ni_pci_accel</entry>
 	</row>
 	<row>
 	<entry>National Instruments</entry>
 	<entry>PCII</entry>
-	<entry>pc2_gpib.o</entry>
+	<entry>pc2_gpib.ko</entry>
 	<entry>pcII</entry>
 	</row>
 	<row>
 	<entry>National Instruments</entry>
 	<entry>PCIIa</entry>
-	<entry>pc2_gpib.o</entry>
+	<entry>pc2_gpib.ko</entry>
 	<entry>pcIIa</entry>
 	</row>
 	<row>
 	<entry>National Instruments</entry>
 	<entry>PCII/IIa</entry>
-	<entry>pc2_gpib.o</entry>
+	<entry>pc2_gpib.ko</entry>
 	<entry>pcII or pcII_IIa (depending on board switch)</entry>
 	</row>
 	<row>
 	<entry>National Instruments</entry>
 	<entry>PCMCIA-GPIB</entry>
-	<entry>tnt4882.o</entry>
+	<entry>tnt4882.ko</entry>
 	<entry>ni_pcmcia, ni_pcmcia_accel</entry>
 	</row>
 	<row>
 	<entry>Quancom</entry>
 	<entry>PCIGPIB-1</entry>
-	<entry>ines_gpib.o</entry>
+	<entry>ines_gpib.ko</entry>
 	<entry>ines_pci, ines_pci_accel</entry>
 	</row>
 	</tbody>
