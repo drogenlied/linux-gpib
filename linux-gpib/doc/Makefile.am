@@ -31,11 +31,11 @@ linux-gpib.pdf: $(SGML)
 
 doc_html/*: $(SGML)
 	$(RM) -r doc_html
-	{ $(JW_PATH) -f docbook -b html -o doc_html linux-gpib.sgml && touch doc_html; } || { $(RM) -r doc_html; exit 1; }
+	{ $(JW_PATH) -f docbook -b html -o doc_html linux-gpib.sgml; } || { $(RM) -r doc_html; exit 1; }
 
-man: $(SGML)
+man/*: $(SGML)
 	$(RM) -r man
-	{ $(JW_PATH) -f docbook -b man -o man linux-gpib.sgml && touch man; } || { $(RM) -r man; exit 1; }
+	{ $(JW_PATH) -f docbook -b man -o man linux-gpib.sgml; } || { $(RM) -r man; exit 1; }
 
 gpib_version.txt: $(top_srcdir)/configure.ac
 	echo $(VERSION) > gpib_version.txt
