@@ -463,7 +463,8 @@ volatile int iberr;
 	<row>
 	<entry>ETAB</entry>
 	<entry>20</entry>
-	<entry>This error can be returned by ibevent(), FindLstn(), or
+	<entry>This error can be returned by
+	<link LINKEND="reference-function-ibevent">ibevent()</link>, FindLstn(), or
 	FindRQS().  See their descriptions for more information.</entry>
 	</row>
 	</tbody>
@@ -581,7 +582,8 @@ volatile int ibsta;
 	<entry>EVENT</entry>
 	<entry>0x200</entry>
 	<entry>One or more clear, trigger, or interface clear events have been received,
-	and are available in the event queue (see ibevent()).</entry>
+	and are available in the event queue
+	(see <link LINKEND="reference-function-ibevent">ibevent()</link>).</entry>
 	<entry>board</entry>
 	</row>
 	<row>
@@ -960,6 +962,49 @@ volatile int ibsta;
 	</para>
 	<para>
 	On success, iberr is set to the board index of the device's old access board.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-ibcac">
+<refmeta>
+	<refentrytitle>ibcac</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibcac</refname>
+	<refpurpose>assert ATN (board)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibcac</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>int <parameter>synchronous</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibcac() causes the board specified by the board descriptor <parameter>ud</parameter>
+	to become active controller by asserting the ATN line.
+	The board must be controller-in-change in order to assert ATN.
+	</para>
+	<para>
+	It is generally not necessary to call ibcac().  It is provided
+	for advanced users who want direct, low-level access to the GPIB bus.
 	</para>
 </refsect1>
 <refsect1>
@@ -1524,6 +1569,93 @@ volatile int ibsta;
 	line will be asserted with the last byte sent by
 	calls to <link LINKEND="reference-function-ibwrt">ibwrt()</link>
 	and related functions.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-ibevent">
+<refmeta>
+	<refentrytitle>ibevent</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibevent</refname>
+	<refpurpose>get events from event queue (board)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibevent</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>short *<parameter>event</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibevent() is used to obtain the oldest event stored in the event
+	queue of the board specified by the board descriptor
+	<parameter>ud</parameter>.  The EVENT bit of
+	<link LINKEND="reference-globals-ibsta">ibsta</link> indicates
+	that the event queue contains 1 or more events.
+	An event may be a clear command, a trigger command, or reception
+	of an interface clear.  The type of event is stored in the location
+	specified by <parameter>event</parameter> and may be set to any of the
+	following values:
+	</para>
+	<para>
+	<table COLSEP="1" ROWSEP="1" ORIENT="port" PGWIDE="0">
+	<title>events</title>
+	<tgroup COLS="3" ALIGN="left" >
+	<thead>
+	<row>
+	<entry>constant</entry>
+	<entry>value</entry>
+	<entry>description</entry>
+	<tbody>
+	<row>
+	<entry>EventNone</entry>
+	<entry>0</entry>
+	<entry>The board's event queue is empty</entry>
+	</row>
+	<row>
+	<entry>EventDevTrg</entry>
+	<entry>1</entry>
+	<entry>The board has received a trigger command from the controller-in-charge.</entry>
+	</row>
+	<row>
+	<entry>EventDevClr</entry>
+	<entry>2</entry>
+	<entry>The board has received a clear command from the controller-in-charge.</entry>
+	</row>
+	<row>
+	<entry>EventIFC</entry>
+	<entry>3</entry>
+	<entry>The board has received an interface clear from the system controller.
+	Note, some models of GPIB interface board lack the ability to report interface
+	clear events.</entry>
+	</row>
+	</tbody>
+	</tgroup>
+	</table>
+	</para>
+	<para>
+	Each interface board has a single event queue which is shared across
+	all processes and threads. So, only one process can retrieve any given event
+	from the queue.  Also, the queue is of finite size so events may be lost
+	(ibevent() will return an error) if it is neglected too long.
 	</para>
 </refsect1>
 <refsect1>
