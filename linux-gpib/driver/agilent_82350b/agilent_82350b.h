@@ -36,6 +36,8 @@ enum pci_device_ids
 typedef struct
 {
 	tms9914_private_t tms9914_priv;
+	struct pci_dev *pci_device;
+	int irq;
 } agilent_82350b_private_t;
 
 // interfaces
@@ -69,8 +71,5 @@ irqreturn_t agilent_82350b_interrupt(int irq, void *arg, struct pt_regs *registe
 // utility functions
 int agilent_82350b_allocate_private(gpib_board_t *board);
 void agilent_82350b_free_private(gpib_board_t *board);
-
-// register offset for tms9914 compatible registers
-static const int atgpib_reg_offset = 2;
 
 #endif	// _AGILENT_82350B_H

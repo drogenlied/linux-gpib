@@ -169,18 +169,18 @@ gpib_interface_t agilent_82350b_interface =
 
 int agilent_82350b_allocate_private( gpib_board_t *board )
 {
-	board->private_data = kmalloc( sizeof( agilent_82350b_private_t ), GFP_KERNEL );
-	if( board->private_data == NULL )
-		return -1;
-	memset( board->private_data, 0, sizeof( agilent_82350b_private_t ) );
+	board->private_data = kmalloc(sizeof(agilent_82350b_private_t), GFP_KERNEL);
+	if(board->private_data == NULL)
+		return -ENOMEM;
+	memset(board->private_data, 0, sizeof(agilent_82350b_private_t));
 	return 0;
 }
 
 void agilent_82350b_free_private( gpib_board_t *board )
 {
-	if( board->private_data )
+	if(board->private_data)
 	{
-		kfree( board->private_data );
+		kfree(board->private_data);
 		board->private_data = NULL;
 	}
 }
@@ -213,7 +213,7 @@ int agilent_82350b_attach( gpib_board_t *board )
 
 	board->status = 0;
 
-	if( agilent_82350b_allocate_private( board ) )
+	if(agilent_82350b_allocate_private(board))
 		return -ENOMEM;
 	a_priv = board->private_data;
 	tms_priv = &a_priv->tms9914_priv;
@@ -221,49 +221,32 @@ int agilent_82350b_attach( gpib_board_t *board )
 	tms_priv->write_byte = agilent_82350b_write_byte;
 	tms_priv->offset = 1;
 
-	switch( board->ibbase )
+	// find board
+	a_priv->pci_device = gpib_pci_find_device(board, PCI_VENDOR_ID_AGILENT,
+		PCI_DEVICE_ID_82350B, NULL);
+	if(a_priv->pci_device == NULL)
 	{
-		case 0xc4000:
-		case 0xc8000:
-		case 0xcc000:
-		case 0xd0000:
-		case 0xd4000:
-		case 0xd8000:
-		case 0xdc000:
-		case 0xe0000:
-		case 0xe4000:
-		case 0xe8000:
-		case 0xec000:
-		case 0xf0000:
-		case 0xf4000:
-		case 0xf8000:
-		case 0xfc000:
-			break;
-		default:
-			printk("%s: invalid base io address 0x%lx\n", __FUNCTION__, board->ibbase );
-			return -1;
-			break;
+		printk("gpib: no 82350B board found\n");
+		return -ENODEV;
 	}
-	if( request_mem_region( board->ibbase + agilent_82350b_rom_size,
-		agilent_82350b_iomem_size - agilent_82350b_rom_size, "agilent_82350b" ) == NULL )
+	if(pci_enable_device(a_priv->pci_device))
 	{
-		printk( "%s: failed to allocate io memory region 0x%lx-0x%lx\n", __FUNCTION__,
-			board->ibbase + agilent_82350b_rom_size,
-			board->ibbase + agilent_82350b_iomem_size - agilent_82350b_rom_size - 1 );
-		return -1;
+		printk("error enabling pci device\n");
+		return -EIO;
 	}
-	a_priv->raw_iobase = board->ibbase;
+	if(pci_request_regions(a_priv->pci_device, "agilent_82350b"))
+		return -EIO;
 	tms_priv->iobase = ( unsigned long ) ioremap( board->ibbase, agilent_82350b_iomem_size );
 	printk("%s: base address 0x%x remapped to 0x%lx\n", __FUNCTION__, a_priv->raw_iobase,
 		tms_priv->iobase );
 
-	if(request_irq( board->ibirq, agilent_82350b_interrupt, SA_SHIRQ, "agilent_82350b", board))
+	if(request_irq(a_priv->pci_device->irq, agilent_82350b_interrupt, SA_SHIRQ, "agilent_82350b", board))
 	{
-		printk( "%s: can't request IRQ %d\n", __FUNCTION__, board->ibirq );
-		return -1;
+		printk("gpib: can't request IRQ %d\n", a_priv->pci_device->irq);
+		return -EIO;
 	}
-	a_priv->irq = board->ibirq;
-	printk( "agilent_82350b: IRQ %d\n", board->ibirq );
+	a_priv->irq = a_priv->pci_device->irq;
+	printk( "agilent_82350b: IRQ %d\n", a_priv->irq );
 
 	tms9914_board_reset(tms_priv);
 
