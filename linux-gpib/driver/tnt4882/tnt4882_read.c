@@ -102,6 +102,8 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 	int32_t hw_count;
 	unsigned long flags;
 
+	// FIXME: really, DEV_CLEAR_BN should happen elsewhere to prevent race
+	clear_bit(DEV_CLEAR_BN, &nec_priv->state);	
 	imr1_bits = nec_priv->reg_bits[ IMR1 ];
 	imr2_bits = nec_priv->reg_bits[ IMR2 ];
 	nec7210_set_reg_bits( nec_priv, IMR1, 0xff, HR_ENDIE | HR_DECIE );

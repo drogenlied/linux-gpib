@@ -85,6 +85,8 @@ static ssize_t generic_write( gpib_board_t *board, uint8_t *buffer, size_t lengt
 	int32_t hw_count;
 	unsigned long flags;
 
+	// FIXME: really, DEV_CLEAR_BN should happen elsewhere to prevent race
+	clear_bit(DEV_CLEAR_BN, &nec_priv->state);	
 	imr1_bits = nec_priv->reg_bits[ IMR1 ];
 	imr2_bits = nec_priv->reg_bits[ IMR2 ];
 	nec7210_set_reg_bits( nec_priv, IMR1, 0xff, HR_ERRIE | HR_DECIE );
