@@ -183,22 +183,23 @@ int pc2_generic_attach(gpib_board_t *board)
 	nec_priv->read_byte = nec7210_ioport_read_byte;
 	nec_priv->write_byte = nec7210_ioport_write_byte;
 
-#if DMAOP
-	nec_priv->dma_buffer_length = 0x1000;
-	nec_priv->dma_buffer = pci_alloc_consistent(NULL, nec_priv->dma_buffer_length,
-		&nec_priv->dma_buffer_addr);
-	if(nec_priv->dma_buffer == NULL)
-		return -ENOMEM;
-
-	// request isa dma channel
-	if( request_dma( board->ibdma, "pc2" ) )
+	if(board->ibdma)
 	{
-		printk("gpib: can't request DMA %d\n", board->ibdma);
-		return -1;
-	}
-	nec_priv->dma_channel = board->ibdma;
-#endif
+		nec_priv->dma_buffer_length = 0x1000;
+		nec_priv->dma_buffer = pci_alloc_consistent(NULL, nec_priv->dma_buffer_length,
+			&nec_priv->dma_buffer_addr);
+		if(nec_priv->dma_buffer == NULL)
+			return -ENOMEM;
 
+		// request isa dma channel
+		if( request_dma( board->ibdma, "pc2" ) )
+		{
+			printk("gpib: can't request DMA %d\n", board->ibdma);
+			return -1;
+		}
+		nec_priv->dma_channel = board->ibdma;
+	}
+	
 	return 0;
 }
 
