@@ -128,31 +128,39 @@ enum bus_status_bits
  *   4 enables TX empty interrupts
  * when both bit 0 and 1 are zero, then the high speed mode is disabled
  */
-#define HS_TX_ENABLE     (1<<0)
-#define HS_RX_ENABLE     (1<<1)
-#define HS_HF_INT_EN     (1<<3)
-#define HS_CLR_SRQ_INT   (1<<4)
-#define HS_CLR_EOI_INT   (1<<5) /* RX enabled */
-#define HS_CLR_EMPTY_INT (1<<5) /* TX enabled */
-#define HS_CLR_HF_INT    (1<<6)
-#define HS_SYS_CONTROL   (1<<7)
+enum hs_mode_bits
+{
+	HS_TX_ENABLE = ( 1 << 0 ),
+	HS_RX_ENABLE = ( 1 << 1 ),
+	HS_HF_INT_EN = ( 1 << 3 ),
+	HS_CLR_SRQ_INT = ( 1 << 4 ),
+	HS_CLR_EOI_INT = ( 1 << 5 ), /* RX enabled */
+	HS_CLR_EMPTY_INT = ( 1 << 5 ), /* TX enabled */
+	HS_CLR_HF_INT = ( 1 << 6 ),
+	HS_SYS_CONTROL = ( 1 << 7 ),
+};
 
 /* CBI 488.2 status */
-
-#define HS_FIFO_FULL        (1<<0)
-#define HS_HALF_FULL        (1<<1)
-#define HS_SRQ_INT          (1<<2)
-#define HS_EOI_INT          (1<<3)
-#define HS_TX_MSB_NOT_EMPTY (1<<4)
-#define HS_RX_MSB_NOT_EMPTY (1<<5)
-#define HS_TX_LSB_NOT_EMPTY (1<<6)
-#define HS_RX_LSB_NOT_EMPTY (1<<7)
+enum hs_status_bits
+{
+	HS_FIFO_FULL = ( 1 << 0 ),
+	HS_HALF_FULL = ( 1 << 1 ),
+	HS_SRQ_INT = ( 1 << 2 ),
+	HS_EOI_INT = ( 1 << 3 ),
+	HS_TX_MSB_NOT_EMPTY = ( 1 << 4 ),
+	HS_RX_MSB_NOT_EMPTY = ( 1 << 5 ),
+	HS_TX_LSB_NOT_EMPTY = ( 1 << 6 ),
+	HS_RX_LSB_NOT_EMPTY = ( 1 << 7 ),
+};
 
 /* CBI488.2 hs_int_level register */
-
-#define HS_RESET7210    (1<<7)
-#define AUX_HISPEED     0x41
-#define AUX_LOSPEED     0x40
-
+enum hs_int_level_bits
+{
+	HS_RESET7210 = ( 1 << 7 ),
+};
+/*
+AUX_HISPEED     0x41
+AUX_LOSPEED     0x40
+*/
 
 #endif	// _CB7210_H

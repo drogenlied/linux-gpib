@@ -628,11 +628,6 @@ int cb_pcmcia_attach(gpib_board_t *board)
 
 	nec_priv->iobase = dev_list->io.BasePort1;
 
-	/* CBI 4882 reset */
-	write_byte(nec_priv, HS_RESET7210, HS_INT_LEVEL);
-	write_byte(nec_priv, 0, HS_INT_LEVEL);
-	write_byte(nec_priv, 0, HS_MODE); /* disable system control */
-
 	if(request_irq(dev_list->irq.AssignedIRQ, cb7210_interrupt, SA_SHIRQ,
 		"pcmcia-gpib", board))
 	{

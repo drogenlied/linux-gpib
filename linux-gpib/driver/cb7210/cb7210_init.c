@@ -211,6 +211,14 @@ void cb7210_init(cb7210_private_t *cb_priv, const gpib_board_t *board )
 {
 	nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
 
+	// put in nec7210 compatibility mode and configure board irq
+	write_byte(nec_priv, HS_RESET7210, HS_INT_LEVEL);
+	write_byte(nec_priv, 0, HS_INT_LEVEL);
+	if( board->master )
+		write_byte( nec_priv, HS_SYS_CONTROL, HS_MODE );
+	else
+		write_byte( nec_priv, 0, HS_MODE );
+
 	nec7210_board_reset( nec_priv, board );
 
 	/* set clock register for maximum (20 MHz) driving frequency
@@ -254,11 +262,6 @@ int cb_pci_attach(gpib_board_t *board)
 
 	cb_priv->amcc_iobase = pci_resource_start(cb_priv->pci_device, 0) & PCI_BASE_ADDRESS_IO_MASK;
 	nec_priv->iobase = pci_resource_start(cb_priv->pci_device, 1) & PCI_BASE_ADDRESS_IO_MASK;
-
-	/* CBI 4882 reset */
-	write_byte(nec_priv, HS_RESET7210, HS_INT_LEVEL);
-	write_byte(nec_priv, 0, HS_INT_LEVEL);
-	write_byte(nec_priv, 0, HS_MODE); /* disable system control */
 
 	isr_flags |= SA_SHIRQ;
 	if(request_irq(cb_priv->pci_device->irq, cb_pci_interrupt, isr_flags, "pci-gpib", board))
@@ -354,11 +357,6 @@ int cb_isa_attach(gpib_board_t *board)
 	{
 		printk("board incapable of using irq %i, try 2-5, 7, 10, or 11\n", board->ibirq);
 	}
-
-	// put in nec7210 compatibility mode and configure board irq
-	write_byte(nec_priv, HS_RESET7210, HS_INT_LEVEL);
-	write_byte(nec_priv, irq_bits, HS_INT_LEVEL);
-	write_byte(nec_priv, 0, HS_MODE); /* disable system control */
 
 	// install interrupt handler
 	if(request_irq(board->ibirq, cb7210_interrupt, isr_flags, "isa-gpib", board))

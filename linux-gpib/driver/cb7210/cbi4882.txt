@@ -8,7 +8,7 @@ ISA-GPIB Card Register Desriptions
 The functions and register widths of Base (0 through 7) R/W are dependent on the
 state of bits 0 and 1 in register Base+8 (T_ENB and R_ENB) respectively.
 
-1. If boath bits are set low then the first eight registers are simply those of
+1. If both bits are set low then the first eight registers are simply those of
 the CBI7210.2 (IEEE488) controller and the board is operating in the STD
 (standard) mode.  For a detailed account of those registers pleas refer to the
 CBI7210.2 data sheet.
