@@ -62,7 +62,6 @@ static void ibcntl_destroy( void *thread_ibcntl )
 static void global_keys_alloc()
 {
 	int retval;
-	int *ibsta_p, *iberr_p, *ibcntl_p;
 
 	retval = pthread_key_create( &ibsta_key, ibsta_destroy );
 	if( retval ) fprintf( stderr, "libgpib: failed to allocate TSD key!\n" );
@@ -70,26 +69,34 @@ static void global_keys_alloc()
 	if( retval ) fprintf( stderr, "libgpib: failed to allocate TSD key!\n" );
 	retval = pthread_key_create( &ibcntl_key, ibcntl_destroy );
 	if( retval ) fprintf( stderr, "libgpib: failed to allocate TSD key!\n" );
-	ibsta_p = malloc( sizeof( int ) );
-	if( ibsta_p == NULL )
-		fprintf( stderr, "libgpib: failed to allocate ibsta!\n" );
-	iberr_p = malloc( sizeof( int ) );
-	if( iberr_p == NULL )
-		fprintf( stderr, "libgpib: failed to allocate iberr!\n" );
-	ibcntl_p = malloc( sizeof( long ) );
-	if( ibcntl_p == NULL )
-		fprintf( stderr, "libgpib: failed to allocate ibcntl!\n" );
-	*ibsta_p = 0;
-	*iberr_p = 0;
-	*ibcntl_p = 0;
-	pthread_setspecific( ibsta_key, ibsta_p );
-	pthread_setspecific( iberr_key, iberr_p );
-	pthread_setspecific( ibcntl_key, ibcntl_p );
+	pthread_setspecific( ibsta_key, NULL );
+	pthread_setspecific( iberr_key, NULL );
+	pthread_setspecific( ibcntl_key, NULL );
 }
 
 void globals_alloc( void )
 {
+	int *ibsta_p, *iberr_p, *ibcntl_p;
+
 	pthread_once( &global_keys_once, global_keys_alloc );
+	if( pthread_getspecific( ibsta_key ) == NULL )
+	{
+		ibsta_p = malloc( sizeof( int ) );
+		if( ibsta_p == NULL )
+		fprintf( stderr, "libgpib: failed to allocate ibsta!\n" );
+		iberr_p = malloc( sizeof( int ) );
+		if( iberr_p == NULL )
+		fprintf( stderr, "libgpib: failed to allocate iberr!\n" );
+		ibcntl_p = malloc( sizeof( long ) );
+		if( ibcntl_p == NULL )
+		fprintf( stderr, "libgpib: failed to allocate ibcntl!\n" );
+		*ibsta_p = 0;
+		*iberr_p = 0;
+		*ibcntl_p = 0;
+		pthread_setspecific( ibsta_key, ibsta_p );
+		pthread_setspecific( iberr_key, iberr_p );
+		pthread_setspecific( ibcntl_key, ibcntl_p );
+	}
 }
 
 void setIbsta( int status )

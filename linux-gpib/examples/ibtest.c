@@ -226,7 +226,7 @@ int prompt_for_action(void)
 
 int perform_read(int ud)
 {
-	char buffer[1024];
+	char buffer[ 1024 ];
 
 	printf("trying to read from device...\n");
 
@@ -438,7 +438,7 @@ void fprint_status( FILE* filep, char *msg )
 	if ( ThreadIbsta() & LACS ) fprintf( filep, "LACS " );
 	fprintf( filep, ">\n" );
 
-	fprintf( filep,"iberr= %d", iberr);
+	fprintf( filep,"iberr= %d\n", iberr);
 	if( ( ThreadIbsta() & ERR ) )
 	{
 		gpib_error_string( ThreadIberr(), buffer, sizeof( buffer ) );
