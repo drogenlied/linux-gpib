@@ -22,6 +22,7 @@ Example program which uses gpib c library, good for initial test of library.
 #include <stdlib.h>
 #include <ib.h>
 #include <stdint.h>
+#include <string.h>
 
 uint8_t buffer[1024];
 
