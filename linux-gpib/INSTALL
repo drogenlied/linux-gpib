@@ -40,9 +40,9 @@ o) Unpacking the Software:
 		'uname -r' produces "2.6.8-1-386" then your EXTRAVERSION should be
 		set as 'EXTRAVERSION=-1-386'.
 	3) run 'make oldconfig' in your kernel source directory.
-	4) run 'make vmlinux' in the kernel source directory.  This will
-		compile the Linux kernel (and take a long time).
-		You can probably get by with just a 'make prepare' instead, and
+	4) run 'make vmlinux' and 'make modules' in the kernel source directory.  This will
+		compile the Linux kernel and modules (and take a long time).
+		You can probably get by with just doing a 'make modules_prepare' instead, and
 		your GPIB driver modules should still work.  However,
 		the GPIB modules will taint your kernel when loaded.  Tainting is
 		a flag to kernel developers that something fishy has been done, and
