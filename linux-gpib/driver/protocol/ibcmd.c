@@ -1,6 +1,5 @@
+
 #include <ibprot.h>
-
-
 
 /*
  * IBCMD
@@ -14,11 +13,11 @@
  *          must be called to initialize the GPIB and enable
  *          the interface to leave the controller idle state.
  */
-ssize_t ibcmd(gpib_device_t *device, uint8_t *buf, size_t length)
+ssize_t ibcmd(gpib_board_t *board, uint8_t *buf, size_t length)
 {
 	size_t	count = 0;
 	ssize_t ret = 0;
-	int status = ibstatus(device);
+	int status = ibstatus(board);
 
 	if(length == 0) return 0;
 
@@ -28,15 +27,15 @@ ssize_t ibcmd(gpib_device_t *device, uint8_t *buf, size_t length)
 		return -1;
 	}
 	// XXX global
-	osStartTimer(device, timeidx);
+	osStartTimer(board, timeidx);
 
-	if((ret = device->interface->take_control(device, 0)))
+	if((ret = board->interface->take_control(board, 0)))
 	{
 		printk("gpib error while becoming active controller\n");
 		ret = -1;
 	}else
 	{
-		ret = device->interface->command(device, buf, length - count);
+		ret = board->interface->command(board, buf, length - count);
 		if(ret < 0)
 		{
 			printk("error writing gpib command bytes\n");
@@ -47,7 +46,7 @@ ssize_t ibcmd(gpib_device_t *device, uint8_t *buf, size_t length)
 		}
 	}
 
-	osRemoveTimer(device);
+	osRemoveTimer(board);
 
 	if(status & TIMO)
 		ret = -ETIMEDOUT;

@@ -1,3 +1,4 @@
+
 #include <ibprot.h>
 #include <linux/kernel.h>
 
@@ -52,14 +53,14 @@ extern int ib_opened;
 
 int drvstat = 0;
 
-int ibonl(gpib_device_t *device, int v)
+int ibonl(gpib_board_t *board, int v)
 {
 	/*
 	* ibonl must be called first time a process is entering the driver
 	* if one process is working on the driver ibonl is dummied
 	*
 	*/
-	if( ib_opened == 1 || !(device->online) )
+	if( ib_opened == 1 || !(board->online) )
 	{
 		timeidx = T1s; /* initialize configuration variables... */
 		myPAD = 0;
@@ -72,25 +73,25 @@ int ibonl(gpib_device_t *device, int v)
 
 	if (v)
 	{
-		if( (ib_opened <= 1) && !(device->online))
+		if( (ib_opened <= 1) && !(board->online))
 		{
-			if(device->interface->attach(device) < 0)
+			if(board->interface->attach(board) < 0)
 			{
-				device->interface->detach(device);
+				board->interface->detach(board);
 				printk("GPIB Hardware Error! (Chip type not found or wrong Base Address?)\n");
 				return -1;
 			}
 		}
 		/* initialize system support functions */
-		device->online = 1;
-		if(device->master)
-			ibsic(device);
+		board->online = 1;
+		if(board->master)
+			ibsic(board);
 	}else
 	{		/* OFFLINE: leave SYSFAIL red */
 		if( ib_opened <= 1)
 		{
-			device->interface->detach(device);
-			device->online = 0;
+			board->interface->detach(board);
+			board->online = 0;
 		}
 	}
 	return 0;

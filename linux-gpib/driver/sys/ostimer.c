@@ -1,3 +1,4 @@
+
 #include <ibsys.h>
 
 extern unsigned long timeTable[];
@@ -8,34 +9,34 @@ extern unsigned long timeTable[];
 void watchdog_timeout(unsigned long arg)
 /* Watchdog timeout routine */
 {
-	gpib_device_t *device = (gpib_device_t*) arg;
-	set_bit(TIMO_NUM, &device->status);
-	wake_up(&device->wait);
+	gpib_board_t *board = (gpib_board_t*) arg;
+	set_bit(TIMO_NUM, &board->status);
+	wake_up(&board->wait);
 }
 
 /* install timer interrupt handler */
-void osStartTimer(gpib_device_t *device, int v)
+void osStartTimer(gpib_board_t *board, int v)
 /* Starts the timeout task  */
 /* v = index into timeTable */
 {
-	clear_bit(TIMO_NUM, &device->status);
+	clear_bit(TIMO_NUM, &board->status);
 
 	if (v > 0)
 	{
-		device->timer.expires = jiffies + timeTable[v];   /* set number of ticks */
-		device->timer.function = watchdog_timeout;
-		device->timer.data = (unsigned long) device;
-		add_timer(&device->timer);              /* add timer           */
+		board->timer.expires = jiffies + timeTable[v];   /* set number of ticks */
+		board->timer.function = watchdog_timeout;
+		board->timer.data = (unsigned long) board;
+		add_timer(&board->timer);              /* add timer           */
 	}
 }
 
 
-void osRemoveTimer(gpib_device_t *device)
+void osRemoveTimer(gpib_board_t *board)
 /* Removes the timeout task */
 {
-	if(timer_pending(&device->timer))
+	if(timer_pending(&board->timer))
 	{
-		del_timer_sync(&device->timer);
+		del_timer_sync(&board->timer);
 	}
 }
 

@@ -30,19 +30,19 @@
  *          well as the interface board itself must be
  *          addressed by calling ibcmd.
  */
-ssize_t ibwrt(gpib_device_t *device, uint8_t *buf, size_t cnt, int send_eoi)
+ssize_t ibwrt(gpib_board_t *board, uint8_t *buf, size_t cnt, int send_eoi)
 {
 	size_t bytes_sent = 0;
 	ssize_t ret = 0;
 
 	if(cnt == 0) return 0;
 
-	device->interface->go_to_standby(device);
+	board->interface->go_to_standby(board);
 	// mark io in progress
-	clear_bit(CMPL_NUM, &device->status);
-	osStartTimer(device, timeidx);
+	clear_bit(CMPL_NUM, &board->status);
+	osStartTimer(board, timeidx);
 
-	ret = device->interface->write(device, buf, cnt, send_eoi);
+	ret = board->interface->write(board, buf, cnt, send_eoi);
 	if(ret < 0)
 	{
 		printk("gpib write error\n");
@@ -52,13 +52,13 @@ ssize_t ibwrt(gpib_device_t *device, uint8_t *buf, size_t cnt, int send_eoi)
 		bytes_sent += ret;
 	}
 
-	if(ibstatus(device) & TIMO)
+	if(ibstatus(board) & TIMO)
 		ret = -ETIMEDOUT;
 
-	osRemoveTimer(device);
+	osRemoveTimer(board);
 
 	// mark io complete
-	set_bit(CMPL_NUM, &device->status);
+	set_bit(CMPL_NUM, &board->status);
 
 	if(ret < 0) return ret;
 	

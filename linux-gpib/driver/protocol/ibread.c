@@ -33,21 +33,21 @@
  *          calling ibcmd.
  */
 
-ssize_t ibrd(gpib_device_t *device, uint8_t *buf, size_t length, int *end_flag)
+ssize_t ibrd(gpib_board_t *board, uint8_t *buf, size_t length, int *end_flag)
 {
 	size_t count = 0;
 	ssize_t ret = 0;
 
 	if(length == 0) return 0;
 
-	device->interface->go_to_standby(device);
-	osStartTimer(device, timeidx);
+	board->interface->go_to_standby(board);
+	osStartTimer(board, timeidx);
 	// mark io in progress
-	clear_bit(CMPL_NUM, &device->status);
+	clear_bit(CMPL_NUM, &board->status);
 	// initialize status to END not yet received
-	clear_bit(END_NUM, &device->status);
+	clear_bit(END_NUM, &board->status);
 
-	ret = device->interface->read(device, buf, length, end_flag);
+	ret = board->interface->read(board, buf, length, end_flag);
 	if(ret < 0)
 	{
 		printk("gpib read error\n");
@@ -57,9 +57,9 @@ ssize_t ibrd(gpib_device_t *device, uint8_t *buf, size_t length, int *end_flag)
 		count += ret;
 	}
 
-	osRemoveTimer(device);
+	osRemoveTimer(board);
 	// mark io completed
-	set_bit(CMPL_NUM, &device->status);
+	set_bit(CMPL_NUM, &board->status);
 
 	return ret ? ret : count;
 }

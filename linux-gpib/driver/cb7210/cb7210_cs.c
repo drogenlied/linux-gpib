@@ -582,8 +582,8 @@ void cb_pcmcia_cleanup_module(void)
     }
 }
 
-int cb_pcmcia_attach(gpib_device_t *device);
-void cb_pcmcia_detach(gpib_device_t *device);
+int cb_pcmcia_attach(gpib_board_t *board);
+void cb_pcmcia_detach(gpib_board_t *board);
 
 gpib_interface_t cb_pcmcia_interface =
 {
@@ -607,7 +607,7 @@ gpib_interface_t cb_pcmcia_interface =
 	serial_poll_response: cb7210_serial_poll_response,
 };
 
-int cb_pcmcia_attach(gpib_device_t *device)
+int cb_pcmcia_attach(gpib_board_t *board)
 {
 	cb7210_private_t *cb_priv;
 	nec7210_private_t *nec_priv;
@@ -620,10 +620,10 @@ int cb_pcmcia_attach(gpib_device_t *device)
 		return -1;
 	}
 
-	retval = cb7210_generic_attach(device);
+	retval = cb7210_generic_attach(board);
 	if(retval) return retval;
 
-	cb_priv = device->private_data;
+	cb_priv = board->private_data;
 	nec_priv = &cb_priv->nec7210_priv;
 
 	nec_priv->iobase = dev_list->io.BasePort1;
@@ -633,7 +633,7 @@ int cb_pcmcia_attach(gpib_device_t *device)
 	write_byte(nec_priv, 0, HS_INT_LEVEL);
 	write_byte(nec_priv, 0, HS_MODE); /* disable system control */
 
-	if(request_irq(dev_list->irq.AssignedIRQ, cb7210_interrupt, isr_flags, "pcmcia-gpib", device))
+	if(request_irq(dev_list->irq.AssignedIRQ, cb7210_interrupt, isr_flags, "pcmcia-gpib", board))
 	{
 		printk("gpib: can't request IRQ %d\n", dev_list->irq.AssignedIRQ);
 		return -1;
@@ -645,13 +645,13 @@ int cb_pcmcia_attach(gpib_device_t *device)
 	return 0;
 }
 
-void cb_pcmcia_detach(gpib_device_t *device)
+void cb_pcmcia_detach(gpib_board_t *board)
 {
-	cb7210_private_t *priv = device->private_data;
+	cb7210_private_t *priv = board->private_data;
 
 	if(priv && priv->irq)
-		free_irq(priv->irq, device);
-	cb7210_free_private(device);
+		free_irq(priv->irq, board);
+	cb7210_free_private(board);
 }
 
 #endif /* CONFIG_PCMCIA */

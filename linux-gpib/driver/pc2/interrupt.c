@@ -26,18 +26,18 @@
 
 void pc2_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
-	gpib_device_t *device = arg;
-	pc2_private_t *priv = device->private_data;
+	gpib_board_t *board = arg;
+	pc2_private_t *priv = board->private_data;
 
-	nec7210_interrupt(device, &priv->nec7210_priv);
+	nec7210_interrupt(board, &priv->nec7210_priv);
 }
 
 void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
-	gpib_device_t *device = arg;
-	pc2_private_t *priv = device->private_data;
+	gpib_board_t *board = arg;
+	pc2_private_t *priv = board->private_data;
 
-	nec7210_interrupt(device, &priv->nec7210_priv);
+	nec7210_interrupt(board, &priv->nec7210_priv);
 
 	/* clear interrupt circuit */
 	outb(0xff , CLEAR_INTR_REG(priv->irq) );

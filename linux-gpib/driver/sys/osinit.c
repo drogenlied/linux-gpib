@@ -125,7 +125,7 @@ struct file_operations ib_fops =
 	get_unmapped_area: NULL,
 };
 
-gpib_device_t device_array[MAX_NUM_GPIB_DEVICES];
+gpib_board_t board_array[MAX_NUM_GPIB_DEVICES];
 
 LIST_HEAD(registered_drivers);
 

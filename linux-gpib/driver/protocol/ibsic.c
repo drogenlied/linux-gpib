@@ -12,19 +12,19 @@ extern int drvstat,ib_opened;
  *          ibcmd in order to initialize the bus and enable the
  *          interface to leave the controller idle state.
  */
-int ibsic(gpib_device_t *device)
+int ibsic(gpib_board_t *board)
 {
-	if(!test_bit(CIC_NUM, &device->status))
+	if(!test_bit(CIC_NUM, &board->status))
 	{
 
-		device->master = 1;
+		board->master = 1;
 		/* set controller state */
-		device->interface->interface_clear(device, 1);                   /* assert IFC */
+		board->interface->interface_clear(board, 1);                   /* assert IFC */
 		udelay(100);
-		device->interface->interface_clear(device, 0);                   /* clear IFC */
+		board->interface->interface_clear(board, 0);                   /* clear IFC */
 	}
 // CIC should be set by driver, this is a temporary hack for tms9914 XXX
-	set_bit(CIC_NUM, &device->status);
+	set_bit(CIC_NUM, &board->status);
 
 	return 0;
 }

@@ -27,8 +27,8 @@
 void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp )
 {
 	int bits;
-	gpib_device_t *device = arg;
-	cb7210_private_t *priv = device->private_data;
+	gpib_board_t *board = arg;
+	cb7210_private_t *priv = board->private_data;
 
 	// read incoming mailbox to clear mailbox full flag
 	inl(priv->amcc_iobase + INCOMING_MAILBOX_REG(3));
@@ -43,8 +43,8 @@ void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp )
 void cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 {
 	int hs_status;
-	gpib_device_t *device = arg;
-	cb7210_private_t *priv = device->private_data;
+	gpib_board_t *board = arg;
+	cb7210_private_t *priv = board->private_data;
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 
 	if((hs_status = inb(nec_priv->iobase + HS_STATUS)))
@@ -54,5 +54,5 @@ void cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 // printk("gpib: cbi488 interrupt 0x%x\n", hs_status);
 	}
 
-	nec7210_interrupt(device, nec_priv);
+	nec7210_interrupt(board, nec_priv);
 }

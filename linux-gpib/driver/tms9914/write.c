@@ -18,7 +18,7 @@
 
 #include "board.h"
 
-static ssize_t pio_write(gpib_device_t *device, tms9914_private_t *priv, uint8_t *buffer, size_t length)
+static ssize_t pio_write(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buffer, size_t length)
 {
 	size_t count = 0;
 	ssize_t retval = 0;
@@ -27,31 +27,31 @@ static ssize_t pio_write(gpib_device_t *device, tms9914_private_t *priv, uint8_t
 	while(count < length)
 	{
 		// wait until byte is ready to be sent
-		if(wait_event_interruptible(device->wait, test_bit(WRITE_READY_BN, &priv->state) ||
-			test_bit(TIMO_NUM, &device->status)))
+		if(wait_event_interruptible(board->wait, test_bit(WRITE_READY_BN, &priv->state) ||
+			test_bit(TIMO_NUM, &board->status)))
 		{
 			printk("gpib write interrupted!\n");
 			retval = -EINTR;
 			break;
 		}
-		if(test_bit(TIMO_NUM, &device->status))
+		if(test_bit(TIMO_NUM, &board->status))
 		{
 			break;
 		}
 
-		spin_lock_irqsave(&device->spinlock, flags);
+		spin_lock_irqsave(&board->spinlock, flags);
 		clear_bit(WRITE_READY_BN, &priv->state);
 		write_byte(priv, buffer[count++], CDOR);
-		spin_unlock_irqrestore(&device->lock, flags);
+		spin_unlock_irqrestore(&board->lock, flags);
 	}
 	// wait till last byte gets sent
-	if(wait_event_interruptible(device->wait, test_bit(WRITE_READY_BN, &priv->state) ||
-		test_bit(TIMO_NUM, &device->status)))
+	if(wait_event_interruptible(board->wait, test_bit(WRITE_READY_BN, &priv->state) ||
+		test_bit(TIMO_NUM, &board->status)))
 	{
 		printk("gpib write interrupted!\n");
 		retval = -EINTR;
 	}
-	if(test_bit(TIMO_NUM, &device->status))
+	if(test_bit(TIMO_NUM, &board->status))
 	{
 		retval = -ETIMEDOUT;
 	}
@@ -63,7 +63,7 @@ static ssize_t pio_write(gpib_device_t *device, tms9914_private_t *priv, uint8_t
 }
 
 
-ssize_t tms9914_write(gpib_device_t *device, tms9914_private_t *priv, uint8_t *buffer, size_t length, int send_eoi)
+ssize_t tms9914_write(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buffer, size_t length, int send_eoi)
 {
 	size_t count = 0;
 	ssize_t retval = 0;
@@ -81,7 +81,7 @@ ssize_t tms9914_write(gpib_device_t *device, tms9914_private_t *priv, uint8_t *b
 	if(length > 0)
 	{
 		// PIO transfer
-		retval = pio_write(device, priv, buffer, length);
+		retval = pio_write(board, priv, buffer, length);
 		if(retval < 0)
 			return retval;
 		else count += retval;
@@ -91,7 +91,7 @@ ssize_t tms9914_write(gpib_device_t *device, tms9914_private_t *priv, uint8_t *b
 		/*send EOI */
 		write_byte(priv, AUX_SEOI, AUXCR);
 
-		retval = pio_write(device, priv, &buffer[count], 1);
+		retval = pio_write(board, priv, &buffer[count], 1);
 		if(retval < 0)
 			return retval;
 		else

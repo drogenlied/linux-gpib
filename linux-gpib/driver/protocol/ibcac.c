@@ -1,5 +1,5 @@
-#include <ibprot.h>
 
+#include <ibprot.h>
 
 /*
  * IBCAC
@@ -10,16 +10,16 @@
  * If v is non-zero, take control synchronously, if
  * possible.  Otherwise, take control asynchronously.
  */
-int ibcac(gpib_device_t *device, int sync)
+int ibcac(gpib_board_t *board, int sync)
 {
-	int status = ibstatus(device);
+	int status = ibstatus(board);
 	if((status & CIC) == 0)
 	{
 		printk("gpib: not CIC during ibcac\n");
 		return -1;
 	}
 
-	device->interface->take_control(device, sync);
+	board->interface->take_control(board, sync);
 
 	return 0;
 }

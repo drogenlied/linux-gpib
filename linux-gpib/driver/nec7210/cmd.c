@@ -18,7 +18,7 @@
 
 #include "board.h"
 
-ssize_t nec7210_command(gpib_device_t *device, nec7210_private_t *priv, uint8_t
+ssize_t nec7210_command(gpib_board_t *board, nec7210_private_t *priv, uint8_t
  *buffer, size_t length)
 {
 	size_t count = 0;
@@ -31,29 +31,29 @@ ssize_t nec7210_command(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 
 	while(count < length)
 	{
-		if(wait_event_interruptible(device->wait, test_bit(COMMAND_READY_BN,
+		if(wait_event_interruptible(board->wait, test_bit(COMMAND_READY_BN,
  &priv->state) ||
-			test_bit(TIMO_NUM, &device->status)))
+			test_bit(TIMO_NUM, &board->status)))
 		{
 			printk("gpib command wait interrupted\n");
 			break;
 		}
-		if(test_bit(TIMO_NUM, &device->status)) break;
-		spin_lock_irqsave(&device->spinlock, flags);
+		if(test_bit(TIMO_NUM, &board->status)) break;
+		spin_lock_irqsave(&board->spinlock, flags);
 		clear_bit(COMMAND_READY_BN, &priv->state);
 		write_byte(priv, buffer[count], CDOR);
-		spin_unlock_irqrestore(&device->spinlock, flags);
+		spin_unlock_irqrestore(&board->spinlock, flags);
 
 		count++;
 	}
 	// wait until last command byte is written
-	if(wait_event_interruptible(device->wait, test_bit(COMMAND_READY_BN,
+	if(wait_event_interruptible(board->wait, test_bit(COMMAND_READY_BN,
  &priv->state) ||
-		test_bit(TIMO_NUM, &device->status)))
+		test_bit(TIMO_NUM, &board->status)))
 	{
 		retval = -EINTR;
 	}
-	if(test_bit(TIMO_NUM, &device->status))
+	if(test_bit(TIMO_NUM, &board->status))
 	{
 		retval = -ETIMEDOUT;
 	}

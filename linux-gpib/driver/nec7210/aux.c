@@ -20,7 +20,7 @@
 #include <linux/delay.h>
 #include <asm/bitops.h>
 
-int nec7210_take_control(gpib_device_t *device, nec7210_private_t *priv, int syncronous)
+int nec7210_take_control(gpib_board_t *board, nec7210_private_t *priv, int syncronous)
 {
 	int i;
 	const int timeout = 1000;
@@ -51,9 +51,9 @@ int nec7210_take_control(gpib_device_t *device, nec7210_private_t *priv, int syn
 	if(i == timeout)
 	{
 		while(((adsr_bits = read_byte(priv, ADSR)) & HR_NATN) &&
-			test_bit(TIMO_NUM, &device->status) == 0)
+			test_bit(TIMO_NUM, &board->status) == 0)
 		{
-			if(interruptible_sleep_on_timeout(&device->wait, 1))
+			if(interruptible_sleep_on_timeout(&board->wait, 1))
 			{
 				printk("interupted waiting for ATN\n");
 				retval = -EINTR;
@@ -62,20 +62,20 @@ int nec7210_take_control(gpib_device_t *device, nec7210_private_t *priv, int syn
 		}
 	}
 
-	if(test_bit(TIMO_NUM, &device->status))
+	if(test_bit(TIMO_NUM, &board->status))
 	{
 		printk("gpib: take control timed out\n");
 		retval = -ETIMEDOUT;
 	}
 	if(adsr_bits & HR_NATN)
-		clear_bit(ATN_NUM, &device->status);
+		clear_bit(ATN_NUM, &board->status);
 	else
-		set_bit(ATN_NUM, &device->status);
+		set_bit(ATN_NUM, &board->status);
 
 	return retval;
 }
 
-int nec7210_go_to_standby(gpib_device_t *device, nec7210_private_t *priv)
+int nec7210_go_to_standby(gpib_board_t *board, nec7210_private_t *priv)
 {
 	int i;
 	const int timeout = 1000;
@@ -97,14 +97,14 @@ int nec7210_go_to_standby(gpib_device_t *device, nec7210_private_t *priv)
 		retval = -ETIMEDOUT;
 	}
 	if(adsr_bits & HR_NATN)
-		clear_bit(ATN_NUM, &device->status);
+		clear_bit(ATN_NUM, &board->status);
 	else
-		set_bit(ATN_NUM, &device->status);
+		set_bit(ATN_NUM, &board->status);
 
 	return retval;
 }
 
-void nec7210_interface_clear(gpib_device_t *device, nec7210_private_t *priv, int assert)
+void nec7210_interface_clear(gpib_board_t *board, nec7210_private_t *priv, int assert)
 {
 	if(assert)
 		write_byte(priv, AUX_SIFC, AUXMR);
@@ -112,7 +112,7 @@ void nec7210_interface_clear(gpib_device_t *device, nec7210_private_t *priv, int
 		write_byte(priv, AUX_CIFC, AUXMR);
 }
 
-void nec7210_remote_enable(gpib_device_t *device, nec7210_private_t *priv, int enable)
+void nec7210_remote_enable(gpib_board_t *board, nec7210_private_t *priv, int enable)
 {
 	if(enable)
 		write_byte(priv, AUX_SREN, AUXMR);

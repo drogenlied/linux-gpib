@@ -19,7 +19,7 @@
 #include "board.h"
 #include <linux/spinlock.h>
 
-static ssize_t pio_read(gpib_device_t *device, tms9914_private_t *priv, uint8_t *buffer, size_t length)
+static ssize_t pio_read(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buffer, size_t length)
 {
 	size_t count = 0;
 	ssize_t retval = 0;
@@ -27,21 +27,21 @@ static ssize_t pio_read(gpib_device_t *device, tms9914_private_t *priv, uint8_t 
 
 	while(count < length)
 	{
-		if(wait_event_interruptible(device->wait,
+		if(wait_event_interruptible(board->wait,
 			test_bit(READ_READY_BN, &priv->state) ||
-			test_bit(TIMO_NUM, &device->status)))
+			test_bit(TIMO_NUM, &board->status)))
 		{
 			printk("gpib: pio read wait interrupted\n");
 			retval = -EINTR;
 			break;
 		};
-		if(test_bit(TIMO_NUM, &device->status))
+		if(test_bit(TIMO_NUM, &board->status))
 			break;
 
-		spin_lock_irqsave(&device->spinlock, flags);
+		spin_lock_irqsave(&board->spinlock, flags);
 		clear_bit(READ_READY_BN, &priv->state);
 		buffer[count++] = read_byte(priv, DIR);
-		spin_unlock_irqrestore(&device->spinlock, flags);
+		spin_unlock_irqrestore(&board->spinlock, flags);
 
 		if(test_bit(RECEIVED_END_BN, &priv->state))
 			break;
@@ -50,7 +50,7 @@ static ssize_t pio_read(gpib_device_t *device, tms9914_private_t *priv, uint8_t 
 	return retval ? retval : count;
 }
 
-ssize_t tms9914_read(gpib_device_t *device, tms9914_private_t *priv, uint8_t *buffer, size_t length, int *end)
+ssize_t tms9914_read(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buffer, size_t length, int *end)
 {
 	size_t	count = 0;
 	ssize_t retval = 0;
@@ -76,7 +76,7 @@ ssize_t tms9914_read(gpib_device_t *device, tms9914_private_t *priv, uint8_t *bu
 	if(length)
 	{
 		// PIO transfer
-		retval = pio_read(device, priv, buffer, length);
+		retval = pio_read(board, priv, buffer, length);
 		if(retval < 0)
 			return retval;
 		else
@@ -88,7 +88,7 @@ ssize_t tms9914_read(gpib_device_t *device, tms9914_private_t *priv, uint8_t *bu
 	{
 		// make sure we holdoff after last byte read
 		write_byte(priv, AUX_HLDA, AUXCR);
-		retval = pio_read(device, priv, &buffer[count], 1);
+		retval = pio_read(board, priv, &buffer[count], 1);
 		if(retval < 0)
 			return retval;
 		else

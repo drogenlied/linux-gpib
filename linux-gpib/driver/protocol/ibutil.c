@@ -5,7 +5,7 @@
  * change the GPIB address of the interface board.  The address
  * must be 0 through 30.  ibonl resets the address to PAD.
  */
-int ibpad(gpib_device_t *device, int v)
+int ibpad(gpib_board_t *board, int v)
 {
 	if ((v < 0) || (v > 30))
 	{
@@ -14,7 +14,7 @@ int ibpad(gpib_device_t *device, int v)
 	}else
 	{
 		myPAD = v;
-		device->interface->primary_address(device, myPAD );
+		board->interface->primary_address(board, myPAD );
 	}
 	return 0;
 }
@@ -26,7 +26,7 @@ int ibpad(gpib_device_t *device, int v)
  * The address must be 0 through 30, or negative disables.  ibonl resets the
  * address to SAD.
  */
-int ibsad(gpib_device_t *device, int v)
+int ibsad(gpib_board_t *board, int v)
 {
 	if (v > 30)
 	{
@@ -36,10 +36,10 @@ int ibsad(gpib_device_t *device, int v)
 	{
 		if ((mySAD = v) >= 0) // mySAD shouldn't be global XXX
 		{
-			device->interface->secondary_address(device, mySAD, 1);
+			board->interface->secondary_address(board, mySAD, 1);
 		}else
 		{
-			device->interface->secondary_address(device, 0,0);
+			board->interface->secondary_address(board, 0,0);
 		}
 	}
 	return 0;
@@ -53,7 +53,7 @@ int ibsad(gpib_device_t *device, int v)
  * of v specifies an index into the array timeTable.
  * If v == 0 then timeouts are disabled.
  */
-int ibtmo(gpib_device_t *device, unsigned int timeout)
+int ibtmo(gpib_board_t *board, unsigned int timeout)
 {
 	if (timeout > T1000s)
 	{
@@ -73,9 +73,9 @@ int ibtmo(gpib_device_t *device, unsigned int timeout)
  * If v == 1 then send EOI with the last byte of each write.
  * If v == 0 then disable the sending of EOI.
  */
-int ibeot(gpib_device_t *device, int send_eoi)
+int ibeot(gpib_board_t *board, int send_eoi)
 {
-	device->send_eoi = send_eoi;
+	board->send_eoi = send_eoi;
 	return 0;
 }
 
@@ -84,7 +84,7 @@ int ibeot(gpib_device_t *device, int send_eoi)
  * Set the end-of-string modes for I/O operations to v.
  *
  */
-int ibeos(gpib_device_t *device, int v)
+int ibeos(gpib_board_t *board, int v)
 {
 	int ebyte, emodes;
 	ebyte = v & 0xFF;
@@ -97,17 +97,17 @@ int ibeos(gpib_device_t *device, int v)
 	{
 		if(emodes & REOS)
 		{
-			device->interface->enable_eos(device, ebyte, emodes & BIN);
+			board->interface->enable_eos(board, ebyte, emodes & BIN);
 		}else
-			device->interface->disable_eos(device);
+			board->interface->disable_eos(board);
 	}
 	return 0;
 }
 
-unsigned int ibstatus(gpib_device_t *device)
+unsigned int ibstatus(gpib_board_t *board)
 {
-	if(device->private_data == NULL)
+	if(board->private_data == NULL)
 		return 0;
 
-	return device->interface->update_status(device);
+	return board->interface->update_status(board);
 }

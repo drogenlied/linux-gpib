@@ -1,5 +1,0 @@
-Sat Jan  6 18:55:45 1996  root  <root@localhost.dialup.fu-berlin.de (root)>
-
-* osmem.c (osGetDMABuffer): isolated memory management from the dma routines
-                            to have a more secure mm. 
-

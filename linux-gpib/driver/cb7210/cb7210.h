@@ -26,7 +26,7 @@
 
 #define PCI_DEVICE_ID_CBOARDS_PCI_GPIB 0x6
 
-// struct which defines private_data for cb7210 devices
+// struct which defines private_data for cb7210 boards
 typedef struct
 {
 	nec7210_private_t nec7210_priv;
@@ -46,28 +46,28 @@ void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp);
 void cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
 // interface functions
-ssize_t cb7210_read(gpib_device_t *device, uint8_t *buffer, size_t length, int
+ssize_t cb7210_read(gpib_board_t *board, uint8_t *buffer, size_t length, int
  *end);
-ssize_t cb7210_write(gpib_device_t *device, uint8_t *buffer, size_t length, int
+ssize_t cb7210_write(gpib_board_t *board, uint8_t *buffer, size_t length, int
  send_eoi);
-ssize_t cb7210_command(gpib_device_t *device, uint8_t *buffer, size_t length);
-int cb7210_take_control(gpib_device_t *device, int synchronous);
-int cb7210_go_to_standby(gpib_device_t *device);
-void cb7210_interface_clear(gpib_device_t *device, int assert);
-void cb7210_remote_enable(gpib_device_t *device, int enable);
-void cb7210_enable_eos(gpib_device_t *device, uint8_t eos_byte, int
+ssize_t cb7210_command(gpib_board_t *board, uint8_t *buffer, size_t length);
+int cb7210_take_control(gpib_board_t *board, int synchronous);
+int cb7210_go_to_standby(gpib_board_t *board);
+void cb7210_interface_clear(gpib_board_t *board, int assert);
+void cb7210_remote_enable(gpib_board_t *board, int enable);
+void cb7210_enable_eos(gpib_board_t *board, uint8_t eos_byte, int
  compare_8_bits);
-void cb7210_disable_eos(gpib_device_t *device);
-unsigned int cb7210_update_status(gpib_device_t *device);
-void cb7210_primary_address(gpib_device_t *device, unsigned int address);
-void cb7210_secondary_address(gpib_device_t *device, unsigned int address, int
+void cb7210_disable_eos(gpib_board_t *board);
+unsigned int cb7210_update_status(gpib_board_t *board);
+void cb7210_primary_address(gpib_board_t *board, unsigned int address);
+void cb7210_secondary_address(gpib_board_t *board, unsigned int address, int
  enable);
-int cb7210_parallel_poll(gpib_device_t *device, uint8_t *result);
-int cb7210_serial_poll_response(gpib_device_t *device, uint8_t status);
+int cb7210_parallel_poll(gpib_board_t *board, uint8_t *result);
+int cb7210_serial_poll_response(gpib_board_t *board, uint8_t status);
 
 // utility functions
-void cb7210_free_private(gpib_device_t *device);
-int cb7210_generic_attach(gpib_device_t *device);
+void cb7210_free_private(gpib_board_t *board);
+int cb7210_generic_attach(gpib_board_t *board);
 void cb7210_init(cb7210_private_t *private);
 
 // pcmcia init/cleanup

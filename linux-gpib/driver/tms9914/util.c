@@ -19,17 +19,17 @@
 #include "board.h"
 #include <linux/delay.h>
 
-void tms9914_enable_eos(gpib_device_t *device, tms9914_private_t *priv, uint8_t eos_byte, int compare_8_bits)
+void tms9914_enable_eos(gpib_board_t *board, tms9914_private_t *priv, uint8_t eos_byte, int compare_8_bits)
 {
 	// XXX
 }
 
-void tms9914_disable_eos(gpib_device_t *device, tms9914_private_t *priv)
+void tms9914_disable_eos(gpib_board_t *board, tms9914_private_t *priv)
 {
 	// XXX
 }
 
-int tms9914_parallel_poll(gpib_device_t *device, tms9914_private_t *priv, uint8_t *result)
+int tms9914_parallel_poll(gpib_board_t *board, tms9914_private_t *priv, uint8_t *result)
 {
 	int ret;
 
@@ -37,7 +37,7 @@ int tms9914_parallel_poll(gpib_device_t *device, tms9914_private_t *priv, uint8_
 	write_byte(priv, AUX_RPP, AUXCR);
 
 	// wait for result
-	ret = wait_event_interruptible(device->wait, test_bit(COMMAND_READY_BN, &priv->state));
+	ret = wait_event_interruptible(board->wait, test_bit(COMMAND_READY_BN, &priv->state));
 
 	if(ret)
 	{
@@ -50,25 +50,25 @@ int tms9914_parallel_poll(gpib_device_t *device, tms9914_private_t *priv, uint8_
 	return 0;
 }
 
-int tms9914_serial_poll_response(gpib_device_t *device, tms9914_private_t *priv, uint8_t status)
+int tms9914_serial_poll_response(gpib_board_t *board, tms9914_private_t *priv, uint8_t status)
 {
 	write_byte(priv, status, SPMR);		/* set new status to v */
 
 	return 0;
 }
 
-void tms9914_primary_address(gpib_device_t *device, tms9914_private_t *priv, unsigned int address)
+void tms9914_primary_address(gpib_board_t *board, tms9914_private_t *priv, unsigned int address)
 {
 	// put primary address in address0
 	write_byte(priv, address & ADDRESS_MASK, ADR);
 }
 
-void tms9914_secondary_address(gpib_device_t *device, tms9914_private_t *priv, unsigned int address, int enable)
+void tms9914_secondary_address(gpib_board_t *board, tms9914_private_t *priv, unsigned int address, int enable)
 {
 	//XXX
 }
 
-unsigned int tms9914_update_status(gpib_device_t *device, tms9914_private_t *priv)
+unsigned int tms9914_update_status(gpib_board_t *board, tms9914_private_t *priv)
 {
 	int address_status;
 
@@ -76,30 +76,30 @@ unsigned int tms9914_update_status(gpib_device_t *device, tms9914_private_t *pri
 
 	// check for remote/local
 	if(address_status & HR_REM)
-		set_bit(REM_NUM, &device->status);
+		set_bit(REM_NUM, &board->status);
 	else
-		clear_bit(REM_NUM, &device->status);
+		clear_bit(REM_NUM, &board->status);
 	// check for lockout
 	if(address_status & HR_LLO)
-		set_bit(LOK_NUM, &device->status);
+		set_bit(LOK_NUM, &board->status);
 	else
-		clear_bit(LOK_NUM, &device->status);
+		clear_bit(LOK_NUM, &board->status);
 	// check for ATN
 	if(address_status & HR_ATN)
-		set_bit(ATN_NUM, &device->status);
+		set_bit(ATN_NUM, &board->status);
 	else
-		clear_bit(ATN_NUM, &device->status);
+		clear_bit(ATN_NUM, &board->status);
 	// check for talker/listener addressed
 	if(address_status & HR_TA)
-		set_bit(TACS_NUM, &device->status);
+		set_bit(TACS_NUM, &board->status);
 	else
-		clear_bit(TACS_NUM, &device->status);
+		clear_bit(TACS_NUM, &board->status);
 	if(address_status & HR_LA)
-		set_bit(LACS_NUM, &device->status);
+		set_bit(LACS_NUM, &board->status);
 	else
-		clear_bit(LACS_NUM, &device->status);
+		clear_bit(LACS_NUM, &board->status);
 
-	return device->status;
+	return board->status;
 }
 
 EXPORT_SYMBOL(tms9914_enable_eos);

@@ -90,7 +90,7 @@ void AP_LocalUnLock(int pad)
 
 int AP_virgin = 1;
 
-int ibAPWait(gpib_device_t *device, int pad)
+int ibAPWait(gpib_board_t *board, int pad)
 {
   int i;
 
@@ -113,29 +113,29 @@ int ibAPWait(gpib_device_t *device, int pad)
        AP_UnLock();
        AP_LocalUnLock(pad);
        /*FIXME: there is no state that can be returned here*/
-       return ibstatus(device);
+       return ibstatus(board);
      }
 
   /* wait for SRQ interrupt */
-     if( ibwait(device, SRQI) & ERR ){
+     if( ibwait(board, SRQI) & ERR ){
        AP_UnLock();
        AP_LocalUnLock(pad);
-       return ibstatus(device);
+       return ibstatus(board);
      }
 
   /* poll all devices with AP_POLL set */
 	//XXX
-     if(down_interruptible(&device->mutex))
+     if(down_interruptible(&board->mutex))
 	printk("interrupted waiting on lock in ibAPWait\n");
 
      for(i=0;i<MAX_DEVICES;i++){
        if( AP_Vector[i].flags & AP_POLL ){
-	 dvrsp(device, i,&(AP_Vector[i].spb ));
-	 AP_Vector[i].stat = ibstatus(device);
+	 dvrsp(board, i,&(AP_Vector[i].spb ));
+	 AP_Vector[i].stat = ibstatus(board);
 	 AP_Vector[i].flags  |= AP_PENDING;
        }
      }
-     up(&device->mutex);
+     up(&board->mutex);
      if(! (AP_Vector[pad].spb & 0x40 ) ) {
        printk("Ouups: No RQS after Autopoll Operation ?\n");
      }
@@ -144,7 +144,7 @@ int ibAPWait(gpib_device_t *device, int pad)
      AP_UnLock();
   /* Unlock device */
      AP_LocalUnLock(pad);
-     return ibstatus(device);
+     return ibstatus(board);
 }
 
 /*
@@ -153,7 +153,7 @@ int ibAPWait(gpib_device_t *device, int pad)
  *
  */
 
-int ibAPrsp(gpib_device_t *device, int padsad, char *spb)
+int ibAPrsp(gpib_board_t *board, int padsad, char *spb)
 {
         int pad = padsad & 0xff;
 
@@ -162,16 +162,16 @@ int ibAPrsp(gpib_device_t *device, int padsad, char *spb)
         if(!(AP_Vector[pad].flags & AP_PENDING) ) {
            printk("Device %d not in AP_PENDING state?\n",pad);
            /* fall back to normal serial poll */
-	   return dvrsp(device, padsad,spb);
+	   return dvrsp(board, padsad,spb);
         }
 
         *spb = AP_Vector[pad].spb;
         AP_Vector[pad].flags &= ~AP_PENDING;
-//	device->status =  AP_Vector[pad].stat;
+//	board->status =  AP_Vector[pad].stat;
 
         AP_UnLock();
 
-	return ibstatus(device); 	/* 980728 TBg */
+	return ibstatus(board); 	/* 980728 TBg */
 }
 
 
@@ -182,7 +182,7 @@ int ibAPrsp(gpib_device_t *device, int padsad, char *spb)
  *
  */
 
-void ibAPE(gpib_device_t *device, int pad, int v)
+void ibAPE(gpib_board_t *board, int pad, int v)
 {
 
   pad &= 0xff;

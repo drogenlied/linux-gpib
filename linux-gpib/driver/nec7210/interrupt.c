@@ -24,12 +24,12 @@
  *  interrupt service routine
  */
 
-void nec7210_interrupt(gpib_device_t *device, nec7210_private_t *priv)
+void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv)
 {
 	int status1, status2, address_status;
 	unsigned long flags;
 
-	spin_lock(&device->spinlock);
+	spin_lock(&board->spinlock);
 
 	// read interrupt status (also clears status)
 	status1 = read_byte(priv, ISR1);
@@ -38,26 +38,26 @@ void nec7210_interrupt(gpib_device_t *device, nec7210_private_t *priv)
 	// record service request in status
 	if(status2 & HR_SRQI)
 	{
-		set_bit(SRQI_NUM, &device->status);
-		wake_up_interruptible(&device->wait);
+		set_bit(SRQI_NUM, &board->status);
+		wake_up_interruptible(&board->wait);
 	}
 
 	// change in lockout status
 	if(status2 & HR_LOKC)
 	{
 		if(status2 & HR_LOK)
-			set_bit(LOK_NUM, &device->status);
+			set_bit(LOK_NUM, &board->status);
 		else
-			clear_bit(LOK_NUM, &device->status);
+			clear_bit(LOK_NUM, &board->status);
 	}
 
 	// change in remote status
 	if(status2 & HR_REMC)
 	{
 		if(status2 & HR_REM)
-			set_bit(REM_NUM, &device->status);
+			set_bit(REM_NUM, &board->status);
 		else
-			clear_bit(REM_NUM, &device->status);
+			clear_bit(REM_NUM, &board->status);
 	}
 
 	// record address status change in status
@@ -66,19 +66,19 @@ void nec7210_interrupt(gpib_device_t *device, nec7210_private_t *priv)
 		address_status = read_byte(priv, ADSR);
 		// check if we are controller in charge
 		if(address_status & HR_CIC)
-			set_bit(CIC_NUM, &device->status);
+			set_bit(CIC_NUM, &board->status);
 		else
-			clear_bit(CIC_NUM, &device->status);
+			clear_bit(CIC_NUM, &board->status);
 		// check for talker/listener addressed
 		if(address_status & HR_TA)
-			set_bit(TACS_NUM, &device->status);
+			set_bit(TACS_NUM, &board->status);
 		else
-			clear_bit(TACS_NUM, &device->status);
+			clear_bit(TACS_NUM, &board->status);
 		if(address_status & HR_LA)
-			set_bit(LACS_NUM, &device->status);
+			set_bit(LACS_NUM, &board->status);
 		else
-			clear_bit(LACS_NUM, &device->status);
-		wake_up_interruptible(&device->wait); /* wake up sleeping process */
+			clear_bit(LACS_NUM, &board->status);
+		wake_up_interruptible(&board->wait); /* wake up sleeping process */
 	}
 
 	// record reception of END
@@ -91,7 +91,7 @@ void nec7210_interrupt(gpib_device_t *device, nec7210_private_t *priv)
 	if((status1 & HR_DI))
 	{
 		set_bit(READ_READY_BN, &priv->state);
-		wake_up_interruptible(&device->wait); /* wake up sleeping process */
+		wake_up_interruptible(&board->wait); /* wake up sleeping process */
 	}
 
 	// check for dma read transfer complete
@@ -103,7 +103,7 @@ void nec7210_interrupt(gpib_device_t *device, nec7210_private_t *priv)
 		if((status1 & HR_END) || get_dma_residue(priv->dma_channel) == 0)
 		{
 			clear_bit(DMA_IN_PROGRESS_BN, &priv->state);
-			wake_up_interruptible(&device->wait); /* wake up sleeping process */
+			wake_up_interruptible(&board->wait); /* wake up sleeping process */
 		}else
 			enable_dma(priv->dma_channel);
 		release_dma_lock(flags);
@@ -121,7 +121,7 @@ void nec7210_interrupt(gpib_device_t *device, nec7210_private_t *priv)
 			{
 				clear_bit(DMA_IN_PROGRESS_BN, &priv->state);
 				set_bit(WRITE_READY_BN, &priv->state);
-				wake_up_interruptible(&device->wait); 
+				wake_up_interruptible(&board->wait); 
 			}else
 			{
 				clear_bit(WRITE_READY_BN, &priv->state);
@@ -131,7 +131,7 @@ void nec7210_interrupt(gpib_device_t *device, nec7210_private_t *priv)
 		}else
 		{
 			set_bit(WRITE_READY_BN, &priv->state);
-			wake_up_interruptible(&device->wait); 
+			wake_up_interruptible(&board->wait); 
 		}
 	}
 
@@ -139,7 +139,7 @@ void nec7210_interrupt(gpib_device_t *device, nec7210_private_t *priv)
 	if(status2 & HR_CO)
 	{
 		set_bit(COMMAND_READY_BN, &priv->state);
-		wake_up_interruptible(&device->wait); /* wake up sleeping process */
+		wake_up_interruptible(&board->wait); /* wake up sleeping process */
 	}else
 		clear_bit(COMMAND_READY_BN, &priv->state);
 
@@ -155,9 +155,9 @@ void nec7210_interrupt(gpib_device_t *device, nec7210_private_t *priv)
 		printk("gpib output error\n");
 	}
 
-	spin_unlock(&device->spinlock);
+	spin_unlock(&board->spinlock);
 
-printk("isr1 0x%x, imr1 0x%x, isr2 0x%x, imr2 0x%x, status 0x%x\n", status1, priv->imr1_bits, status2, priv->imr2_bits, device->status);
+printk("isr1 0x%x, imr1 0x%x, isr2 0x%x, imr2 0x%x, status 0x%x\n", status1, priv->imr1_bits, status2, priv->imr2_bits, board->status);
 }
 
 EXPORT_SYMBOL(nec7210_interrupt);

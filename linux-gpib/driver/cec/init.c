@@ -30,80 +30,80 @@ MODULE_LICENSE("GPL");
 #define CEC_DEV_ID    0x5cec
 #define CEC_SUBID 0x9050
 
-int cec_pci_attach(gpib_device_t *device);
+int cec_pci_attach(gpib_board_t *board);
 
-void cec_pci_detach(gpib_device_t *device);
+void cec_pci_detach(gpib_board_t *board);
 
 // wrappers for interface functions
-ssize_t cec_read(gpib_device_t *device, uint8_t *buffer, size_t length, int *end)
+ssize_t cec_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end)
 {
-	cec_private_t *priv = device->private_data;
-	return nec7210_read(device, &priv->nec7210_priv, buffer, length, end);
+	cec_private_t *priv = board->private_data;
+	return nec7210_read(board, &priv->nec7210_priv, buffer, length, end);
 }
-ssize_t cec_write(gpib_device_t *device, uint8_t *buffer, size_t length, int send_eoi)
+ssize_t cec_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi)
 {
-	cec_private_t *priv = device->private_data;
-	return nec7210_write(device, &priv->nec7210_priv, buffer, length, send_eoi);
+	cec_private_t *priv = board->private_data;
+	return nec7210_write(board, &priv->nec7210_priv, buffer, length, send_eoi);
 }
-ssize_t cec_command(gpib_device_t *device, uint8_t *buffer, size_t length)
+ssize_t cec_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 {
-	cec_private_t *priv = device->private_data;
-	return nec7210_command(device, &priv->nec7210_priv, buffer, length);
+	cec_private_t *priv = board->private_data;
+	return nec7210_command(board, &priv->nec7210_priv, buffer, length);
 }
-int cec_take_control(gpib_device_t *device, int synchronous)
+int cec_take_control(gpib_board_t *board, int synchronous)
 {
-	cec_private_t *priv = device->private_data;
-	return nec7210_take_control(device, &priv->nec7210_priv, synchronous);
+	cec_private_t *priv = board->private_data;
+	return nec7210_take_control(board, &priv->nec7210_priv, synchronous);
 }
-int cec_go_to_standby(gpib_device_t *device)
+int cec_go_to_standby(gpib_board_t *board)
 {
-	cec_private_t *priv = device->private_data;
-	return nec7210_go_to_standby(device, &priv->nec7210_priv);
+	cec_private_t *priv = board->private_data;
+	return nec7210_go_to_standby(board, &priv->nec7210_priv);
 }
-void cec_interface_clear(gpib_device_t *device, int assert)
+void cec_interface_clear(gpib_board_t *board, int assert)
 {
-	cec_private_t *priv = device->private_data;
-	nec7210_interface_clear(device, &priv->nec7210_priv, assert);
+	cec_private_t *priv = board->private_data;
+	nec7210_interface_clear(board, &priv->nec7210_priv, assert);
 }
-void cec_remote_enable(gpib_device_t *device, int enable)
+void cec_remote_enable(gpib_board_t *board, int enable)
 {
-	cec_private_t *priv = device->private_data;
-	nec7210_remote_enable(device, &priv->nec7210_priv, enable);
+	cec_private_t *priv = board->private_data;
+	nec7210_remote_enable(board, &priv->nec7210_priv, enable);
 }
-void cec_enable_eos(gpib_device_t *device, uint8_t eos_byte, int compare_8_bits)
+void cec_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits)
 {
-	cec_private_t *priv = device->private_data;
-	nec7210_enable_eos(device, &priv->nec7210_priv, eos_byte, compare_8_bits);
+	cec_private_t *priv = board->private_data;
+	nec7210_enable_eos(board, &priv->nec7210_priv, eos_byte, compare_8_bits);
 }
-void cec_disable_eos(gpib_device_t *device)
+void cec_disable_eos(gpib_board_t *board)
 {
-	cec_private_t *priv = device->private_data;
-	nec7210_disable_eos(device, &priv->nec7210_priv);
+	cec_private_t *priv = board->private_data;
+	nec7210_disable_eos(board, &priv->nec7210_priv);
 }
-unsigned int cec_update_status(gpib_device_t *device)
+unsigned int cec_update_status(gpib_board_t *board)
 {
-	cec_private_t *priv = device->private_data;
-	return nec7210_update_status(device, &priv->nec7210_priv);
+	cec_private_t *priv = board->private_data;
+	return nec7210_update_status(board, &priv->nec7210_priv);
 }
-void cec_primary_address(gpib_device_t *device, unsigned int address)
+void cec_primary_address(gpib_board_t *board, unsigned int address)
 {
-	cec_private_t *priv = device->private_data;
-	nec7210_primary_address(device, &priv->nec7210_priv, address);
+	cec_private_t *priv = board->private_data;
+	nec7210_primary_address(board, &priv->nec7210_priv, address);
 }
-void cec_secondary_address(gpib_device_t *device, unsigned int address, int enable)
+void cec_secondary_address(gpib_board_t *board, unsigned int address, int enable)
 {
-	cec_private_t *priv = device->private_data;
-	nec7210_secondary_address(device, &priv->nec7210_priv, address, enable);
+	cec_private_t *priv = board->private_data;
+	nec7210_secondary_address(board, &priv->nec7210_priv, address, enable);
 }
-int cec_parallel_poll(gpib_device_t *device, uint8_t *result)
+int cec_parallel_poll(gpib_board_t *board, uint8_t *result)
 {
-	cec_private_t *priv = device->private_data;
-	return nec7210_parallel_poll(device, &priv->nec7210_priv, result);
+	cec_private_t *priv = board->private_data;
+	return nec7210_parallel_poll(board, &priv->nec7210_priv, result);
 }
-int cec_serial_poll_response(gpib_device_t *device, uint8_t status)
+int cec_serial_poll_response(gpib_board_t *board, uint8_t status)
 {
-	cec_private_t *priv = device->private_data;
-	return nec7210_serial_poll_response(device, &priv->nec7210_priv, status);
+	cec_private_t *priv = board->private_data;
+	return nec7210_serial_poll_response(board, &priv->nec7210_priv, status);
 }
 
 gpib_interface_t cec_pci_interface =
@@ -128,34 +128,34 @@ gpib_interface_t cec_pci_interface =
 	serial_poll_response: cec_serial_poll_response,
 };
 
-int cec_allocate_private(gpib_device_t *device)
+int cec_allocate_private(gpib_board_t *board)
 {
-	device->private_data = kmalloc(sizeof(cec_private_t), GFP_KERNEL);
-	if(device->private_data == NULL)
+	board->private_data = kmalloc(sizeof(cec_private_t), GFP_KERNEL);
+	if(board->private_data == NULL)
 		return -1;
-	memset(device->private_data, 0, sizeof(cec_private_t));
+	memset(board->private_data, 0, sizeof(cec_private_t));
 	return 0;
 }
 
-void cec_free_private(gpib_device_t *device)
+void cec_free_private(gpib_board_t *board)
 {
-	if(device->private_data)
+	if(board->private_data)
 	{
-		kfree(device->private_data);
-		device->private_data = NULL;
+		kfree(board->private_data);
+		board->private_data = NULL;
 	}
 }
 
-int cec_generic_attach(gpib_device_t *device)
+int cec_generic_attach(gpib_board_t *board)
 {
 	cec_private_t *cec_priv;
 	nec7210_private_t *nec_priv;
 
-	device->status = 0;
+	board->status = 0;
 
-	if(cec_allocate_private(device))
+	if(cec_allocate_private(board))
 		return -ENOMEM;
-	cec_priv = device->private_data;
+	cec_priv = board->private_data;
 	nec_priv = &cec_priv->nec7210_priv;
 	nec_priv->read_byte = nec7210_ioport_read_byte;
 	nec_priv->write_byte = nec7210_ioport_write_byte;
@@ -184,17 +184,17 @@ void cec_init(cec_private_t *cec_priv)
 	write_byte(nec_priv, AUX_PON, AUXMR);
 }
 
-int cec_pci_attach(gpib_device_t *device)
+int cec_pci_attach(gpib_board_t *board)
 {
 	cec_private_t *cec_priv;
 	nec7210_private_t *nec_priv;
 	int isr_flags = 0;
 	int retval;
 
-	retval = cec_generic_attach(device);
+	retval = cec_generic_attach(board);
 	if(retval) return retval;
 
-	cec_priv = device->private_data;
+	cec_priv = board->private_data;
 	nec_priv = &cec_priv->nec7210_priv;
 
 	// find board
@@ -226,7 +226,7 @@ int cec_pci_attach(gpib_device_t *device)
 	nec_priv->iobase = pci_resource_start(cec_priv->pci_device, 2);
 
 	isr_flags |= SA_SHIRQ;
-	if(request_irq(cec_priv->pci_device->irq, cec_interrupt, isr_flags, "pci-gpib", device))
+	if(request_irq(cec_priv->pci_device->irq, cec_interrupt, isr_flags, "pci-gpib", board))
 	{
 		printk("gpib: can't request IRQ %d\n",cec_priv->pci_device->irq);
 		return -1;
@@ -242,9 +242,9 @@ int cec_pci_attach(gpib_device_t *device)
 	return 0;
 }
 
-void cec_pci_detach(gpib_device_t *device)
+void cec_pci_detach(gpib_board_t *board)
 {
-	cec_private_t *cec_priv = device->private_data;
+	cec_private_t *cec_priv = board->private_data;
 	nec7210_private_t *nec_priv;
 
 	if(cec_priv)
@@ -254,7 +254,7 @@ void cec_pci_detach(gpib_device_t *device)
 		{
 			// disable plx9050 interrupts
 			outl(0, cec_priv->plx_iobase + PLX_INTCSR_REG );
-			free_irq(cec_priv->irq, device);
+			free_irq(cec_priv->irq, board);
 		}
 		if(nec_priv->iobase)
 		{
@@ -262,7 +262,7 @@ void cec_pci_detach(gpib_device_t *device)
 			pci_release_regions(cec_priv->pci_device);
 		}
 	}
-	cec_free_private(device);
+	cec_free_private(board);
 }
 
 int init_module(void)

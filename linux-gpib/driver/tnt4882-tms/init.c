@@ -34,80 +34,80 @@
 MODULE_LICENSE("GPL");
 #endif
 
-int ni_pci_attach(gpib_device_t *device);
+int ni_pci_attach(gpib_board_t *board);
 
-void ni_pci_detach(gpib_device_t *device);
+void ni_pci_detach(gpib_board_t *board);
 
 // wrappers for interface functions
-ssize_t tnt4882_read(gpib_device_t *device, uint8_t *buffer, size_t length, int *end)
+ssize_t tnt4882_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end)
 {
-	tnt4882_private_t *priv = device->private_data;
-	return tms9914_read(device, &priv->tms9914_priv, buffer, length, end);
+	tnt4882_private_t *priv = board->private_data;
+	return tms9914_read(board, &priv->tms9914_priv, buffer, length, end);
 }
-ssize_t tnt4882_write(gpib_device_t *device, uint8_t *buffer, size_t length, int send_eoi)
+ssize_t tnt4882_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi)
 {
-	tnt4882_private_t *priv = device->private_data;
-	return tms9914_write(device, &priv->tms9914_priv, buffer, length, send_eoi);
+	tnt4882_private_t *priv = board->private_data;
+	return tms9914_write(board, &priv->tms9914_priv, buffer, length, send_eoi);
 }
-ssize_t tnt4882_command(gpib_device_t *device, uint8_t *buffer, size_t length)
+ssize_t tnt4882_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 {
-	tnt4882_private_t *priv = device->private_data;
-	return tms9914_command(device, &priv->tms9914_priv, buffer, length);
+	tnt4882_private_t *priv = board->private_data;
+	return tms9914_command(board, &priv->tms9914_priv, buffer, length);
 }
-int tnt4882_take_control(gpib_device_t *device, int synchronous)
+int tnt4882_take_control(gpib_board_t *board, int synchronous)
 {
-	tnt4882_private_t *priv = device->private_data;
-	return tms9914_take_control(device, &priv->tms9914_priv, synchronous);
+	tnt4882_private_t *priv = board->private_data;
+	return tms9914_take_control(board, &priv->tms9914_priv, synchronous);
 }
-int tnt4882_go_to_standby(gpib_device_t *device)
+int tnt4882_go_to_standby(gpib_board_t *board)
 {
-	tnt4882_private_t *priv = device->private_data;
-	return tms9914_go_to_standby(device, &priv->tms9914_priv);
+	tnt4882_private_t *priv = board->private_data;
+	return tms9914_go_to_standby(board, &priv->tms9914_priv);
 }
-void tnt4882_interface_clear(gpib_device_t *device, int assert)
+void tnt4882_interface_clear(gpib_board_t *board, int assert)
 {
-	tnt4882_private_t *priv = device->private_data;
-	tms9914_interface_clear(device, &priv->tms9914_priv, assert);
+	tnt4882_private_t *priv = board->private_data;
+	tms9914_interface_clear(board, &priv->tms9914_priv, assert);
 }
-void tnt4882_remote_enable(gpib_device_t *device, int enable)
+void tnt4882_remote_enable(gpib_board_t *board, int enable)
 {
-	tnt4882_private_t *priv = device->private_data;
-	tms9914_remote_enable(device, &priv->tms9914_priv, enable);
+	tnt4882_private_t *priv = board->private_data;
+	tms9914_remote_enable(board, &priv->tms9914_priv, enable);
 }
-void tnt4882_enable_eos(gpib_device_t *device, uint8_t eos_byte, int compare_8_bits)
+void tnt4882_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits)
 {
-	tnt4882_private_t *priv = device->private_data;
-	tms9914_enable_eos(device, &priv->tms9914_priv, eos_byte, compare_8_bits);
+	tnt4882_private_t *priv = board->private_data;
+	tms9914_enable_eos(board, &priv->tms9914_priv, eos_byte, compare_8_bits);
 }
-void tnt4882_disable_eos(gpib_device_t *device)
+void tnt4882_disable_eos(gpib_board_t *board)
 {
-	tnt4882_private_t *priv = device->private_data;
-	tms9914_disable_eos(device, &priv->tms9914_priv);
+	tnt4882_private_t *priv = board->private_data;
+	tms9914_disable_eos(board, &priv->tms9914_priv);
 }
-unsigned int tnt4882_update_status(gpib_device_t *device)
+unsigned int tnt4882_update_status(gpib_board_t *board)
 {
-	tnt4882_private_t *priv = device->private_data;
-	return tms9914_update_status(device, &priv->tms9914_priv);
+	tnt4882_private_t *priv = board->private_data;
+	return tms9914_update_status(board, &priv->tms9914_priv);
 }
-void tnt4882_primary_address(gpib_device_t *device, unsigned int address)
+void tnt4882_primary_address(gpib_board_t *board, unsigned int address)
 {
-	tnt4882_private_t *priv = device->private_data;
-	tms9914_primary_address(device, &priv->tms9914_priv, address);
+	tnt4882_private_t *priv = board->private_data;
+	tms9914_primary_address(board, &priv->tms9914_priv, address);
 }
-void tnt4882_secondary_address(gpib_device_t *device, unsigned int address, int enable)
+void tnt4882_secondary_address(gpib_board_t *board, unsigned int address, int enable)
 {
-	tnt4882_private_t *priv = device->private_data;
-	tms9914_secondary_address(device, &priv->tms9914_priv, address, enable);
+	tnt4882_private_t *priv = board->private_data;
+	tms9914_secondary_address(board, &priv->tms9914_priv, address, enable);
 }
-int tnt4882_parallel_poll(gpib_device_t *device, uint8_t *result)
+int tnt4882_parallel_poll(gpib_board_t *board, uint8_t *result)
 {
-	tnt4882_private_t *priv = device->private_data;
-	return tms9914_parallel_poll(device, &priv->tms9914_priv, result);
+	tnt4882_private_t *priv = board->private_data;
+	return tms9914_parallel_poll(board, &priv->tms9914_priv, result);
 }
-int tnt4882_serial_poll_response(gpib_device_t *device, uint8_t status)
+int tnt4882_serial_poll_response(gpib_board_t *board, uint8_t status)
 {
-	tnt4882_private_t *priv = device->private_data;
-	return tms9914_serial_poll_response(device, &priv->tms9914_priv, status);
+	tnt4882_private_t *priv = board->private_data;
+	return tms9914_serial_poll_response(board, &priv->tms9914_priv, status);
 }
 
 gpib_interface_t ni_pci_interface =
@@ -132,35 +132,35 @@ gpib_interface_t ni_pci_interface =
 	serial_poll_response: tnt4882_serial_poll_response,
 };
 
-int tnt4882_allocate_private(gpib_device_t *device)
+int tnt4882_allocate_private(gpib_board_t *board)
 {
-	device->private_data = kmalloc(sizeof(tnt4882_private_t), GFP_KERNEL);
-	if(device->private_data == NULL)
+	board->private_data = kmalloc(sizeof(tnt4882_private_t), GFP_KERNEL);
+	if(board->private_data == NULL)
 		return -1;
-	memset(device->private_data, 0, sizeof(tnt4882_private_t));
+	memset(board->private_data, 0, sizeof(tnt4882_private_t));
 	return 0;
 }
 
-void tnt4882_free_private(gpib_device_t *device)
+void tnt4882_free_private(gpib_board_t *board)
 {
-	if(device->private_data)
+	if(board->private_data)
 	{
-		kfree(device->private_data);
-		device->private_data = NULL;
+		kfree(board->private_data);
+		board->private_data = NULL;
 	}
 }
 
-int ni_pci_attach(gpib_device_t *device)
+int ni_pci_attach(gpib_board_t *board)
 {
 	tnt4882_private_t *tnt_priv;
 	tms9914_private_t *tms_priv;
 	int isr_flags = 0;
 
-	device->status = 0;
+	board->status = 0;
 
-	if(tnt4882_allocate_private(device))
+	if(tnt4882_allocate_private(board))
 		return -ENOMEM;
-	tnt_priv = device->private_data;
+	tnt_priv = board->private_data;
 	tms_priv = &tnt_priv->tms9914_priv;
 	tms_priv->read_byte = tms9914_iomem_read_byte;
 	tms_priv->write_byte = tms9914_iomem_write_byte;
@@ -191,9 +191,9 @@ int ni_pci_attach(gpib_device_t *device)
 	tms_priv->iobase = mite_iobase(tnt_priv->mite);
 
 	// get irq
-	if(request_irq(mite_irq(tnt_priv->mite), tnt4882_interrupt, isr_flags, "ni-pci-gpib", device))
+	if(request_irq(mite_irq(tnt_priv->mite), tnt4882_interrupt, isr_flags, "ni-pci-gpib", board))
 	{
-		printk("gpib: can't request IRQ %d\n", device->ibirq);
+		printk("gpib: can't request IRQ %d\n", board->ibirq);
 		return -1;
 	}
 	tnt_priv->irq = mite_irq(tnt_priv->mite);
@@ -247,9 +247,9 @@ printk("CSR 0x%x\n", readb(tms_priv->iobase + 0x17));
 	return 0;
 }
 
-void ni_pci_detach(gpib_device_t *device)
+void ni_pci_detach(gpib_board_t *board)
 {
-	tnt4882_private_t *tnt_priv = device->private_data;
+	tnt4882_private_t *tnt_priv = board->private_data;
 	tms9914_private_t *tms_priv;
 
 	if(tnt_priv)
@@ -257,7 +257,7 @@ void ni_pci_detach(gpib_device_t *device)
 		tms_priv = &tnt_priv->tms9914_priv;
 		if(tnt_priv->irq)
 		{
-			free_irq(tnt_priv->irq, device);
+			free_irq(tnt_priv->irq, board);
 		}
 		if(tms_priv->iobase)
 		{
@@ -266,7 +266,7 @@ void ni_pci_detach(gpib_device_t *device)
 		if(tnt_priv->mite)
 			mite_unsetup(tnt_priv->mite);
 	}
-	tnt4882_free_private(device);
+	tnt4882_free_private(board);
 }
 
 

@@ -1,5 +1,5 @@
-#include <ibprot.h>
 
+#include <ibprot.h>
 
 /*
  * IBGTS
@@ -7,16 +7,16 @@
  * active state, i.e., turn ATN off.
  */
 
-int ibgts(gpib_device_t *device)
+int ibgts(gpib_board_t *board)
 {
-	int status = ibstatus(device);
+	int status = ibstatus(board);
 
 	if((status & CIC) == 0)
 	{
 		printk("gpib: not CIC during ibgts\n");
 		return -1;
 	}
-	device->interface->go_to_standby(device);                    /* go to standby */
+	board->interface->go_to_standby(board);                    /* go to standby */
 	return 0;
 }
 

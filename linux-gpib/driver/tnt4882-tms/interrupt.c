@@ -26,9 +26,9 @@
 
 void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
-	gpib_device_t *device = arg;
-	tnt4882_private_t *priv = device->private_data;
+	gpib_board_t *board = arg;
+	tnt4882_private_t *priv = board->private_data;
 
-	tms9914_interrupt(device, &priv->tms9914_priv);
+	tms9914_interrupt(board, &priv->tms9914_priv);
 }
 

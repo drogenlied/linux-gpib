@@ -40,31 +40,31 @@ typedef struct
 extern gpib_interface_t ni_isa_interface;
 
 // interface functions
-ssize_t tnt4882_read(gpib_device_t *device, uint8_t *buffer, size_t length, int
+ssize_t tnt4882_read(gpib_board_t *board, uint8_t *buffer, size_t length, int
  *end);
-ssize_t tnt4882_write(gpib_device_t *device, uint8_t *buffer, size_t length, int
+ssize_t tnt4882_write(gpib_board_t *board, uint8_t *buffer, size_t length, int
  send_eoi);
-ssize_t tnt4882_command(gpib_device_t *device, uint8_t *buffer, size_t length);
-int tnt4882_take_control(gpib_device_t *device, int synchronous);
-int tnt4882_go_to_standby(gpib_device_t *device);
-void tnt4882_interface_clear(gpib_device_t *device, int assert);
-void tnt4882_remote_enable(gpib_device_t *device, int enable);
-void tnt4882_enable_eos(gpib_device_t *device, uint8_t eos_byte, int
+ssize_t tnt4882_command(gpib_board_t *board, uint8_t *buffer, size_t length);
+int tnt4882_take_control(gpib_board_t *board, int synchronous);
+int tnt4882_go_to_standby(gpib_board_t *board);
+void tnt4882_interface_clear(gpib_board_t *board, int assert);
+void tnt4882_remote_enable(gpib_board_t *board, int enable);
+void tnt4882_enable_eos(gpib_board_t *board, uint8_t eos_byte, int
  compare_8_bits);
-void tnt4882_disable_eos(gpib_device_t *device);
-unsigned int tnt4882_update_status(gpib_device_t *device);
-void tnt4882_primary_address(gpib_device_t *device, unsigned int address);
-void tnt4882_secondary_address(gpib_device_t *device, unsigned int address, int
+void tnt4882_disable_eos(gpib_board_t *board);
+unsigned int tnt4882_update_status(gpib_board_t *board);
+void tnt4882_primary_address(gpib_board_t *board, unsigned int address);
+void tnt4882_secondary_address(gpib_board_t *board, unsigned int address, int
  enable);
-int tnt4882_parallel_poll(gpib_device_t *device, uint8_t *result);
-int tnt4882_serial_poll_response(gpib_device_t *device, uint8_t status);
+int tnt4882_parallel_poll(gpib_board_t *board, uint8_t *result);
+int tnt4882_serial_poll_response(gpib_board_t *board, uint8_t status);
 
 // interrupt service routines
 void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
 // utility functions
-int tnt4882_allocate_private(gpib_device_t *device);
-void tnt4882_free_private(gpib_device_t *device);
+int tnt4882_allocate_private(gpib_board_t *board);
+void tnt4882_free_private(gpib_board_t *board);
 
 // register offset for nec7210 compatible registers
 static const int atgpib_reg_offset = 2;

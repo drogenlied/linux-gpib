@@ -20,7 +20,7 @@
 #include <asm/dma.h>
 #include <linux/spinlock.h>
 
-static ssize_t pio_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t *buffer, size_t length)
+static ssize_t pio_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer, size_t length)
 {
 	size_t count = 0;
 	ssize_t retval = 0;
@@ -28,32 +28,32 @@ static ssize_t pio_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t 
 
 	while(count < length)
 	{
-		if(wait_event_interruptible(device->wait,
+		if(wait_event_interruptible(board->wait,
 			test_bit(READ_READY_BN, &priv->state) ||
-			test_bit(TIMO_NUM, &device->status)))
+			test_bit(TIMO_NUM, &board->status)))
 		{
 			printk("gpib: pio read wait interrupted\n");
 			retval = -EINTR;
 			break;
 		};
-		if(test_bit(TIMO_NUM, &device->status))
+		if(test_bit(TIMO_NUM, &board->status))
 			break;
 
-		spin_lock_irqsave(&device->spinlock, flags);
+		spin_lock_irqsave(&board->spinlock, flags);
 		clear_bit(READ_READY_BN, &priv->state);
 		buffer[count++] = read_byte(priv, DIR);
-		spin_unlock_irqrestore(&device->spinlock, flags);
+		spin_unlock_irqrestore(&board->spinlock, flags);
 
 		if(test_bit(RECEIVED_END_BN, &priv->state))
 			break;
 	}
-	if(test_bit(TIMO_NUM, &device->status))
+	if(test_bit(TIMO_NUM, &board->status))
 		retval = -ETIMEDOUT;
 
 	return retval ? retval : count;
 }
 
-static ssize_t __dma_read(gpib_device_t *device, nec7210_private_t *priv, size_t length)
+static ssize_t __dma_read(gpib_board_t *board, nec7210_private_t *priv, size_t length)
 {
 	ssize_t retval = 0;
 	size_t count = 0;
@@ -62,7 +62,7 @@ static ssize_t __dma_read(gpib_device_t *device, nec7210_private_t *priv, size_t
 	if(length == 0)
 		return 0;
 
-	spin_lock_irqsave(&device->spinlock, flags);
+	spin_lock_irqsave(&board->spinlock, flags);
 
 	dma_irq_flags = claim_dma_lock();
 	disable_dma(priv->dma_channel);
@@ -82,16 +82,16 @@ static ssize_t __dma_read(gpib_device_t *device, nec7210_private_t *priv, size_t
 	priv->imr2_bits |= HR_DMAI;
 	write_byte(priv, priv->imr2_bits, IMR2);
 
-	spin_unlock_irqrestore(&device->spinlock, flags);
+	spin_unlock_irqrestore(&board->spinlock, flags);
 
 	// wait for data to transfer
-	if(wait_event_interruptible(device->wait, test_bit(DMA_IN_PROGRESS_BN, &priv->state) == 0 ||
-		test_bit(TIMO_NUM, &device->status)))
+	if(wait_event_interruptible(board->wait, test_bit(DMA_IN_PROGRESS_BN, &priv->state) == 0 ||
+		test_bit(TIMO_NUM, &board->status)))
 	{
 		printk("gpib: dma read wait interrupted\n");
 		retval = -EINTR;
 	}
-	if(test_bit(TIMO_NUM, &device->status))
+	if(test_bit(TIMO_NUM, &board->status))
 		retval = -ETIMEDOUT;
 
 	// disable nec7210 dma
@@ -108,7 +108,7 @@ static ssize_t __dma_read(gpib_device_t *device, nec7210_private_t *priv, size_t
 	return retval ? retval : count;
 }
 
-static ssize_t dma_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t *buffer, size_t length)
+static ssize_t dma_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer, size_t length)
 {
 	size_t remain = length;
 	size_t transfer_size;
@@ -117,7 +117,7 @@ static ssize_t dma_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t 
 	while(remain > 0)
 	{
 		transfer_size = (priv->dma_buffer_length < remain) ? priv->dma_buffer_length : remain;
-		retval = __dma_read(device, priv, transfer_size);
+		retval = __dma_read(board, priv, transfer_size);
 		if(retval < 0) break;
 		memcpy(buffer, priv->dma_buffer, transfer_size);
 		remain -= retval;
@@ -130,7 +130,7 @@ static ssize_t dma_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t 
 	return length - remain;
 }
 
-ssize_t nec7210_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t *buffer, size_t length, int *end)
+ssize_t nec7210_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer, size_t length, int *end)
 {
 	size_t	count = 0;
 	ssize_t retval = 0;
@@ -155,10 +155,10 @@ ssize_t nec7210_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t *bu
 	{
 		if(priv->dma_channel)
 		{		// ISA DMA transfer
-			retval = dma_read(device, priv, buffer, length);
+			retval = dma_read(board, priv, buffer, length);
 		}else
 		{	// PIO transfer
-			retval = pio_read(device, priv, buffer, length);
+			retval = pio_read(board, priv, buffer, length);
 		}
 		if(retval < 0)
 			return retval;
@@ -171,7 +171,7 @@ ssize_t nec7210_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t *bu
 	{
 		// make sure we holdoff after last byte read
 		write_byte(priv, priv->auxa_bits | HR_HLDA, AUXMR);
-		retval = pio_read(device, priv, &buffer[count], 1);
+		retval = pio_read(board, priv, &buffer[count], 1);
 		if(retval < 0)
 			return retval;
 		else

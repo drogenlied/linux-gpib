@@ -5,11 +5,11 @@ extern  int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, u
 extern  int osInit(void);
 extern  void osReset(void);
 extern  void watchdog_timeout(unsigned long arg);
-extern  void osStartTimer(gpib_device_t *device, int v);
-extern  void osRemoveTimer(gpib_device_t *device);
+extern  void osStartTimer(gpib_board_t *board, int v);
+extern  void osRemoveTimer(gpib_board_t *board);
 extern  void osSendEOI(void);
 extern  void osSendEOI(void);
-extern  void osChngBase(gpib_device_t *device, unsigned long new_base);
-extern  void osChngIRQ(gpib_device_t *device, int new_irq);
-extern  void osChngDMA(gpib_device_t *device, int new_dma);
+extern  void osChngBase(gpib_board_t *board, unsigned long new_base);
+extern  void osChngIRQ(gpib_board_t *board, int new_irq);
+extern  void osChngDMA(gpib_board_t *board, int new_dma);
 

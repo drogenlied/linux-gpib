@@ -20,13 +20,13 @@
 
 #include <linux/fcntl.h>
 
-int board_type_ioctl(gpib_device_t *device, unsigned long arg);
-int read_ioctl(gpib_device_t *device, unsigned long arg);
-int write_ioctl(gpib_device_t *device, unsigned long arg);
-int command_ioctl(gpib_device_t *device, unsigned long arg);
-int status_ioctl(gpib_device_t *device, unsigned long arg);
+int board_type_ioctl(gpib_board_t *board, unsigned long arg);
+int read_ioctl(gpib_board_t *board, unsigned long arg);
+int write_ioctl(gpib_board_t *board, unsigned long arg);
+int command_ioctl(gpib_board_t *board, unsigned long arg);
+int status_ioctl(gpib_board_t *board, unsigned long arg);
 
-#define GIVE_UP(a) {up(&device->mutex); return a;}
+#define GIVE_UP(a) {up(&board->mutex); return a;}
 
 int ib_opened=0;
 int ib_exclusive=0;
@@ -64,17 +64,17 @@ int ibopen(struct inode *inode, struct file *filep)
 int ibclose(struct inode *inode, struct file *file)
 {
 	unsigned int minor = MINOR(inode->i_rdev);
-	gpib_device_t *device;
+	gpib_board_t *board;
 
 	if(minor >= MAX_NUM_GPIB_DEVICES)
 	{
 		printk("gpib: invalid minor number of device file\n");
 		return -ENODEV;
 	}
-	device = &device_array[minor];
+	board = &board_array[minor];
  
-	if (device->online && ib_opened == 1 )
-		ibonl(&device_array[minor], 0);
+	if (board->online && ib_opened == 1 )
+		ibonl(&board_array[minor], 0);
 	ib_opened--;
 
 	if( ib_exclusive )
@@ -90,19 +90,19 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 	char c;
 	int end_flag = 0;
 	unsigned int minor = MINOR(inode->i_rdev);
-	gpib_device_t *device;
+	gpib_board_t *board;
 
 	if(minor >= MAX_NUM_GPIB_DEVICES)
 	{
 		printk("gpib: invalid minor number of device file\n");
 		return -ENODEV;
 	}
-	device = &device_array[minor];
+	board = &board_array[minor];
 	if(cmd == CFCBOARDTYPE)
-		return board_type_ioctl(device, arg);
-	if(device->interface == NULL)
+		return board_type_ioctl(board, arg);
+	if(board->interface == NULL)
 	{
-		printk("gpib: no device configured on /dev/gpib%i\n", minor);
+		printk("gpib: no gpib board configured on /dev/gpib%i\n", minor);
 		return -ENODEV;
 	}
 
@@ -111,26 +111,26 @@ printk("minor %i ioctl %i\n", minor, cmd);
 	switch( cmd )
 	{
 		case IBRD:
-			return read_ioctl(device, arg);
+			return read_ioctl(board, arg);
 			break;
 		case IBWRT:
-			return write_ioctl(device, arg);
+			return write_ioctl(board, arg);
 			break;
 		case IBCMD:
-			return command_ioctl(device, arg);
+			return command_ioctl(board, arg);
 			break;
 		case IBSTATUS:
-			return status_ioctl(device, arg);
+			return status_ioctl(board, arg);
 			break;
 		case IBTMO:
-			retval = ibtmo(device, arg);
+			retval = ibtmo(board, arg);
 			break;
 		default:
 			break;
 	}
 
 	/* XXX lock other processes from performing commands */
-	retval = down_interruptible(&device->mutex);
+	retval = down_interruptible(&board->mutex);
 	if(retval)
 	{
 		printk("gpib: ioctl interrupted while waiting on lock\n");
@@ -175,7 +175,7 @@ printk("minor %i ioctl %i\n", minor, cmd);
 	switch (cmd)
 	{
 		case IBWAIT:
-			retval = ibwait(device, ibargp->ib_arg);
+			retval = ibwait(board, ibargp->ib_arg);
 			break;
 		case IBRPP:
 			/* Check write access to Poll byte */
@@ -183,43 +183,43 @@ printk("minor %i ioctl %i\n", minor, cmd);
 			if (retval)
 				GIVE_UP(retval);
 
-			retval = ibrpp(device, &c);
+			retval = ibrpp(board, &c);
 			put_user( c, ibargp->ib_buf );
 			break;
 		case IBONL:
-			retval = ibonl(device, ibargp->ib_arg);
+			retval = ibonl(board, ibargp->ib_arg);
 			break;
 		case IBAPE:
-			ibAPE(device, ibargp->ib_arg,ibargp->ib_cnt);
+			ibAPE(board, ibargp->ib_arg,ibargp->ib_cnt);
 			break;
 		case IBSIC:
-			retval = ibsic(device);
+			retval = ibsic(board);
 			break;
 		case IBSRE:
-			retval = ibsre(device, ibargp->ib_arg);
+			retval = ibsre(board, ibargp->ib_arg);
 			break;
 		case IBGTS:
-			retval = ibgts(device);
+			retval = ibgts(board);
 			break;
 		case IBCAC:
-			retval = ibcac(device, ibargp->ib_arg);
+			retval = ibcac(board, ibargp->ib_arg);
 			break;
 		case IBSDBG:
 			break;
 		case IBLINES:
-			retval = iblines(device, &ibargp->ib_ret);
+			retval = iblines(board, &ibargp->ib_ret);
 			break;
 		case IBPAD:
-			retval = ibpad(device, ibargp->ib_arg);
+			retval = ibpad(board, ibargp->ib_arg);
 			break;
 		case IBSAD:
-			retval = ibsad(device, ibargp->ib_arg);
+			retval = ibsad(board, ibargp->ib_arg);
 			break;
 		case IBEOS:
-			retval = ibeos(device, ibargp->ib_arg);
+			retval = ibeos(board, ibargp->ib_arg);
 			break;
 		case IBRSV:
-			retval = ibrsv(device, ibargp->ib_arg);
+			retval = ibrsv(board, ibargp->ib_arg);
 			break;
 		case DVRSP:
 			/* Check write access to Poll byte */
@@ -228,7 +228,7 @@ printk("minor %i ioctl %i\n", minor, cmd);
 			{
 				GIVE_UP(retval);
 			}
-			retval = dvrsp(device, ibargp->ib_arg, &c);
+			retval = dvrsp(board, ibargp->ib_arg, &c);
 
 			put_user( c, ibargp->ib_buf );
 
@@ -239,18 +239,18 @@ printk("minor %i ioctl %i\n", minor, cmd);
 			{
 				GIVE_UP(retval);
 			}
-			retval = ibAPrsp(device, ibargp->ib_arg, &c);
+			retval = ibAPrsp(board, ibargp->ib_arg, &c);
 			put_user( c, ibargp->ib_buf );
 			break;
 		/* special configuration options */
 		case CFCBASE:
-			osChngBase(device, ibargp->ib_arg);
+			osChngBase(board, ibargp->ib_arg);
 			break;
 		case CFCIRQ:
-			osChngIRQ(device, ibargp->ib_arg);
+			osChngIRQ(board, ibargp->ib_arg);
 			break;
 		case CFCDMA:
-			osChngDMA(device, ibargp->ib_arg);
+			osChngDMA(board, ibargp->ib_arg);
 			break;
 		default:
 			retval = -ENOTTY;
@@ -258,7 +258,7 @@ printk("minor %i ioctl %i\n", minor, cmd);
 	}
 
 	// return status bits
-	ibargp->ib_ibsta = ibstatus(device);
+	ibargp->ib_ibsta = ibstatus(board);
 	if(retval)
 		ibargp->ib_ibsta |= ERR;
 	else
@@ -275,37 +275,37 @@ printk("minor %i ioctl %i\n", minor, cmd);
 	GIVE_UP(retval);
 }
 
-int board_type_ioctl(gpib_device_t *device, unsigned long arg)
+int board_type_ioctl(gpib_board_t *board, unsigned long arg)
 {
 	struct list_head *list_ptr;
-	board_type_ioctl_t board;
+	board_type_ioctl_t cmd;
 	int retval;
 
-	retval = copy_from_user(&board, (void*)arg, sizeof(board_type_ioctl_t));
+	retval = copy_from_user(&cmd, (void*)arg, sizeof(board_type_ioctl_t));
 	if(retval)
 	{
 		return retval;
 	}
 
-	device->private_data = NULL;
-	device->status = 0;
-	device->ibbase = 0;
-	device->ibirq = 0;
-	device->ibdma = 0;
-	device->send_eoi = 1;
-	device->master = 1;
-	device->online = 0;
-	init_waitqueue_head(&device->wait);
-	init_MUTEX(&device->mutex);
-	spin_lock_init(&device->spinlock);
-	init_timer(&device->timer);
-	device->interface = NULL;
+	board->private_data = NULL;
+	board->status = 0;
+	board->ibbase = 0;
+	board->ibirq = 0;
+	board->ibdma = 0;
+	board->send_eoi = 1;
+	board->master = 1;
+	board->online = 0;
+	init_waitqueue_head(&board->wait);
+	init_MUTEX(&board->mutex);
+	spin_lock_init(&board->spinlock);
+	init_timer(&board->timer);
+	board->interface = NULL;
 
-	device->buffer_length = 0x1000;
-	if(device->buffer)
-		vfree(device->buffer);
-	device->buffer = vmalloc(device->buffer_length);
-	if(device->buffer == NULL)
+	board->buffer_length = 0x1000;
+	if(board->buffer)
+		vfree(board->buffer);
+	board->buffer = vmalloc(board->buffer_length);
+	if(board->buffer == NULL)
 		return -ENOMEM;
 
 	for(list_ptr = registered_drivers.next; list_ptr != &registered_drivers; list_ptr = list_ptr->next)
@@ -313,9 +313,9 @@ int board_type_ioctl(gpib_device_t *device, unsigned long arg)
 		gpib_interface_t *interface;
 
 		interface = list_entry(list_ptr, gpib_interface_t, list);
-		if(strcmp(interface->name, board.name) == 0)
+		if(strcmp(interface->name, cmd.name) == 0)
 		{
-			device->interface = interface;
+			board->interface = interface;
 			return 0;
 		}
 	}
@@ -323,7 +323,7 @@ int board_type_ioctl(gpib_device_t *device, unsigned long arg)
 	return -EINVAL;
 }
 
-int read_ioctl(gpib_device_t *device, unsigned long arg)
+int read_ioctl(gpib_board_t *board, unsigned long arg)
 {
 	read_write_ioctl_t read_cmd;
 	uint8_t *userbuf;
@@ -346,14 +346,14 @@ int read_ioctl(gpib_device_t *device, unsigned long arg)
 	remain = read_cmd.count;
 	while(remain > 0 && end_flag == 0)
 	{
-		ret = ibrd(device, device->buffer, (device->buffer_length < remain) ? device->buffer_length :
+		ret = ibrd(board, board->buffer, (board->buffer_length < remain) ? board->buffer_length :
 			remain, &end_flag);
 		if(ret < 0)
 		{
 			retval = -EIO;
 			break;
 		}
-		copy_to_user(userbuf, device->buffer, ret);
+		copy_to_user(userbuf, board->buffer, ret);
 		remain -= ret;
 		userbuf += ret;
 	}
@@ -366,7 +366,7 @@ int read_ioctl(gpib_device_t *device, unsigned long arg)
 	return 0;
 }
 
-int command_ioctl(gpib_device_t *device, unsigned long arg)
+int command_ioctl(gpib_board_t *board, unsigned long arg)
 {
 	read_write_ioctl_t cmd;
 	uint8_t *userbuf;
@@ -386,12 +386,12 @@ int command_ioctl(gpib_device_t *device, unsigned long arg)
 	/* Write buffer loads till we empty the user supplied buffer */
 	userbuf = cmd.buffer;
 	remain = cmd.count;
-	while (remain > 0 && !(ibstatus(device) & (TIMO)))
+	while (remain > 0 && !(ibstatus(board) & (TIMO)))
 	{
-		copy_from_user(device->buffer, userbuf, (device->buffer_length < remain) ?
-			device->buffer_length : remain );
-		ret = ibcmd(device, device->buffer, (device->buffer_length < remain) ?
-			device->buffer_length : remain );
+		copy_from_user(board->buffer, userbuf, (board->buffer_length < remain) ?
+			board->buffer_length : remain );
+		ret = ibcmd(board, board->buffer, (board->buffer_length < remain) ?
+			board->buffer_length : remain );
 		if(ret < 0)
 		{
 			retval = -EIO;
@@ -409,7 +409,7 @@ int command_ioctl(gpib_device_t *device, unsigned long arg)
 	return 0;
 }
 
-int write_ioctl(gpib_device_t *device, unsigned long arg)
+int write_ioctl(gpib_board_t *board, unsigned long arg)
 {
 	read_write_ioctl_t write_cmd;
 	uint8_t *userbuf;
@@ -432,11 +432,11 @@ int write_ioctl(gpib_device_t *device, unsigned long arg)
 	while(remain > 0)
 	{
 		int send_eoi;
-		send_eoi = device->buffer_length <= remain && write_cmd.end;
-		copy_from_user(device->buffer, userbuf, (device->buffer_length < remain) ?
-			device->buffer_length : remain );
-		ret = ibwrt(device, device->buffer, (device->buffer_length < remain) ?
-			device->buffer_length : remain, send_eoi);
+		send_eoi = board->buffer_length <= remain && write_cmd.end;
+		copy_from_user(board->buffer, userbuf, (board->buffer_length < remain) ?
+			board->buffer_length : remain );
+		ret = ibwrt(board, board->buffer, (board->buffer_length < remain) ?
+			board->buffer_length : remain, send_eoi);
 		if(ret < 0)
 		{
 			retval = -EIO;
@@ -454,12 +454,12 @@ int write_ioctl(gpib_device_t *device, unsigned long arg)
 	return 0;
 }
 
-int status_ioctl(gpib_device_t *device, unsigned long arg)
+int status_ioctl(gpib_board_t *board, unsigned long arg)
 {
 	int status;
 	int retval;
 
-	status = ibstatus(device);
+	status = ibstatus(board);
 
 	retval = put_user(status, (int *) arg);
 	if (retval)

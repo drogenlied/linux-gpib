@@ -51,7 +51,7 @@ typedef struct {
 #include <asm/semaphore.h>
 
 typedef struct gpib_interface_struct gpib_interface_t;
-typedef struct gpib_device_struct gpib_device_t;
+typedef struct gpib_board_struct gpib_board_t;
 
 struct gpib_interface_struct
 {
@@ -60,9 +60,9 @@ struct gpib_interface_struct
 	// name of board
 	char *name;
 	/* attach() initializes board and allocates resources */
-	int (*attach)(gpib_device_t *device);
+	int (*attach)(gpib_board_t *board);
 	/* detach() shuts down board and frees resources */
-	void (*detach)(gpib_device_t *device);
+	void (*detach)(gpib_board_t *board);
 	/* read() should read at most 'length' bytes from the bus into
 	 * 'buffer'.  It should return when it fills the buffer or
 	 * encounters an END (EOI and or EOS if appropriate).  It should set 'end'
@@ -72,76 +72,76 @@ struct gpib_interface_struct
 	 * read.  Positive return value is number of bytes read, negative
 	 * return indicates error.
 	 */
-	ssize_t (*read)(gpib_device_t *device, uint8_t *buffer, size_t length, int *end);
+	ssize_t (*read)(gpib_board_t *board, uint8_t *buffer, size_t length, int *end);
 	/* write() should write 'length' bytes from buffer to the bus.
 	 * If the boolean value send_eoi is nonzero, then EOI should
 	 * be sent along with the last byte.  Returns number of bytes
 	 * written or negative value on error.
 	 */
-	ssize_t (*write)(gpib_device_t *device, uint8_t *buffer, size_t length, int send_eoi);
+	ssize_t (*write)(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi);
 	/* command() writes the command bytes in 'buffer' to the bus
 	 * Returns number of bytes written or negative value on error.
 	 */
-	ssize_t (*command)(gpib_device_t *device, uint8_t *buffer, size_t length);
+	ssize_t (*command)(gpib_board_t *board, uint8_t *buffer, size_t length);
 	/* Take control (assert ATN).  If 'asyncronous' is nonzero, take
 	 * control asyncronously (assert ATN immediately without waiting
 	 * for other processes to complete first).  Should not return
 	 * until board becomes controller in charge.  Returns zero no success,
 	 * nonzero on error.
 	 */
-	int (*take_control)(gpib_device_t *device, int asyncronous);
+	int (*take_control)(gpib_board_t *board, int asyncronous);
 	/* De-assert ATN.  Returns zero on success, nonzer on error.
 	 */
-	int (*go_to_standby)(gpib_device_t *device);
+	int (*go_to_standby)(gpib_board_t *board);
 	/* Asserts or de-asserts 'interface clear' (IFC) depending on
 	 * boolean value of 'assert'
 	 */
-	void (*interface_clear)(gpib_device_t *device, int assert);
+	void (*interface_clear)(gpib_board_t *board, int assert);
 	/* Sends remote enable command if 'enable' is nonzero, disables remote mode
 	 * if 'enable' is zero
 	 */
-	void (*remote_enable)(gpib_device_t *device, int enable);
+	void (*remote_enable)(gpib_board_t *board, int enable);
 	/* enable END for reads, when byte 'eos' is received.  If
 	 * 'compare_8_bits' is nonzero, then all 8 bits are compared
 	 * with the eos bytes.  Otherwise only the 7 least significant
 	 * bits are compared. */
-	void (*enable_eos)(gpib_device_t *device, uint8_t eos, int compare_8_bits);
+	void (*enable_eos)(gpib_board_t *board, uint8_t eos, int compare_8_bits);
 	/* disable END on eos byte (END on EOI only)*/
-	void (*disable_eos)(gpib_device_t *device);
+	void (*disable_eos)(gpib_board_t *board);
 	/* TODO: conduct parallel poll */
-	int (*parallel_poll)(gpib_device_t *device, uint8_t *result);
+	int (*parallel_poll)(gpib_board_t *board, uint8_t *result);
 	/* Returns current status of the bus lines.  Should be set to
 	 * NULL if your board does not have the ability to query the
 	 * state of the bus lines. */
-	int (*line_status)(gpib_device_t *device);
+	int (*line_status)(gpib_board_t *board);
 	/* updates and returns the board's current status.
 	 * The meaning of the bits are specified in gpib_user.h
 	 * in the IBSTA section.  The driver does not need to
 	 * worry about setting the CMPL, END, TIMO, or ERR bits.
 	 */
-	unsigned int (*update_status)(gpib_device_t *device);
+	unsigned int (*update_status)(gpib_board_t *board);
 	/* Sets primary address 0-30 for gpib interface card.
 	 */
-	void (*primary_address)(gpib_device_t *device, unsigned int address);
+	void (*primary_address)(gpib_board_t *board, unsigned int address);
 	/* Sets and enables, or disables secondary address 0-30 for gpib interface
  card.
 	 */
-	void (*secondary_address)(gpib_device_t *device, unsigned int address, int
+	void (*secondary_address)(gpib_board_t *board, unsigned int address, int
  enable);
 	/* Sets the byte the board should send in response to a serial poll.  Returns
 	 * zero on success.  Function should also request service if appropriate.
 	 */
-	int (*serial_poll_response)(gpib_device_t *device, uint8_t status);
+	int (*serial_poll_response)(gpib_board_t *board, uint8_t status);
 };
 
-/* One gpib_device_t is allocated for each physical board in the computer.
+/* One gpib_board_t is allocated for each physical board in the computer.
  * It provides storage for variables local to each board, and interface
  * functions for performing operations on the board */
-struct gpib_device_struct
+struct gpib_board_struct
 {
-	/* functions used by this device */
+	/* functions used by this board */
 	gpib_interface_t *interface;
-	/* buffer used to store read/write data for this device */
+	/* buffer used to store read/write data for this board */
 	uint8_t *buffer;
 	/* length of buffer */
 	unsigned int buffer_length;
@@ -153,7 +153,7 @@ struct gpib_device_struct
 	 * watchdog timer times out.
 	 */
 	wait_queue_head_t wait;
-	/* Lock that only allows one process to access this device at a time */
+	/* Lock that only allows one process to access this board at a time */
 	struct semaphore mutex;
 	/* Spin lock for dealing with races with the interrupt handler */
 	spinlock_t spinlock;
@@ -168,9 +168,9 @@ struct gpib_device_struct
 	/* 'private_data' can be used as seen fit by the driver to
 	 * store additional variables for this board */
 	void *private_data;
-	/* Flag that indicates whether device is up and running or not */
+	/* Flag that indicates whether board is up and running or not */
 	unsigned int online : 1;
-	/* Flag that indicates whether device is system controller of the bus */
+	/* Flag that indicates whether board is system controller of the bus */
 	unsigned int master : 1;
 	/* Flag to send EOI at end of writes */
 	unsigned int send_eoi : 1;

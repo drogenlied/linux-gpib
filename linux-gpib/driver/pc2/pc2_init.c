@@ -30,82 +30,82 @@
 MODULE_LICENSE("GPL");
 #endif
 
-int pc2_attach(gpib_device_t *device);
-int pc2a_attach(gpib_device_t *device);
+int pc2_attach(gpib_board_t *board);
+int pc2a_attach(gpib_board_t *board);
 
-void pc2_detach(gpib_device_t *device);
-void pc2a_detach(gpib_device_t *device);
+void pc2_detach(gpib_board_t *board);
+void pc2a_detach(gpib_board_t *board);
 
 // wrappers for interface functions
-ssize_t pc2_read(gpib_device_t *device, uint8_t *buffer, size_t length, int *end)
+ssize_t pc2_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end)
 {
-	pc2_private_t *priv = device->private_data;
-	return nec7210_read(device, &priv->nec7210_priv, buffer, length, end);
+	pc2_private_t *priv = board->private_data;
+	return nec7210_read(board, &priv->nec7210_priv, buffer, length, end);
 }
-ssize_t pc2_write(gpib_device_t *device, uint8_t *buffer, size_t length, int send_eoi)
+ssize_t pc2_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi)
 {
-	pc2_private_t *priv = device->private_data;
-	return nec7210_write(device, &priv->nec7210_priv, buffer, length, send_eoi);
+	pc2_private_t *priv = board->private_data;
+	return nec7210_write(board, &priv->nec7210_priv, buffer, length, send_eoi);
 }
-ssize_t pc2_command(gpib_device_t *device, uint8_t *buffer, size_t length)
+ssize_t pc2_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 {
-	pc2_private_t *priv = device->private_data;
-	return nec7210_command(device, &priv->nec7210_priv, buffer, length);
+	pc2_private_t *priv = board->private_data;
+	return nec7210_command(board, &priv->nec7210_priv, buffer, length);
 }
-int pc2_take_control(gpib_device_t *device, int synchronous)
+int pc2_take_control(gpib_board_t *board, int synchronous)
 {
-	pc2_private_t *priv = device->private_data;
-	return nec7210_take_control(device, &priv->nec7210_priv, synchronous);
+	pc2_private_t *priv = board->private_data;
+	return nec7210_take_control(board, &priv->nec7210_priv, synchronous);
 }
-int pc2_go_to_standby(gpib_device_t *device)
+int pc2_go_to_standby(gpib_board_t *board)
 {
-	pc2_private_t *priv = device->private_data;
-	return nec7210_go_to_standby(device, &priv->nec7210_priv);
+	pc2_private_t *priv = board->private_data;
+	return nec7210_go_to_standby(board, &priv->nec7210_priv);
 }
-void pc2_interface_clear(gpib_device_t *device, int assert)
+void pc2_interface_clear(gpib_board_t *board, int assert)
 {
-	pc2_private_t *priv = device->private_data;
-	nec7210_interface_clear(device, &priv->nec7210_priv, assert);
+	pc2_private_t *priv = board->private_data;
+	nec7210_interface_clear(board, &priv->nec7210_priv, assert);
 }
-void pc2_remote_enable(gpib_device_t *device, int enable)
+void pc2_remote_enable(gpib_board_t *board, int enable)
 {
-	pc2_private_t *priv = device->private_data;
-	nec7210_remote_enable(device, &priv->nec7210_priv, enable);
+	pc2_private_t *priv = board->private_data;
+	nec7210_remote_enable(board, &priv->nec7210_priv, enable);
 }
-void pc2_enable_eos(gpib_device_t *device, uint8_t eos_byte, int compare_8_bits)
+void pc2_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits)
 {
-	pc2_private_t *priv = device->private_data;
-	nec7210_enable_eos(device, &priv->nec7210_priv, eos_byte, compare_8_bits);
+	pc2_private_t *priv = board->private_data;
+	nec7210_enable_eos(board, &priv->nec7210_priv, eos_byte, compare_8_bits);
 }
-void pc2_disable_eos(gpib_device_t *device)
+void pc2_disable_eos(gpib_board_t *board)
 {
-	pc2_private_t *priv = device->private_data;
-	nec7210_disable_eos(device, &priv->nec7210_priv);
+	pc2_private_t *priv = board->private_data;
+	nec7210_disable_eos(board, &priv->nec7210_priv);
 }
-unsigned int pc2_update_status(gpib_device_t *device)
+unsigned int pc2_update_status(gpib_board_t *board)
 {
-	pc2_private_t *priv = device->private_data;
-	return nec7210_update_status(device, &priv->nec7210_priv);
+	pc2_private_t *priv = board->private_data;
+	return nec7210_update_status(board, &priv->nec7210_priv);
 }
-void pc2_primary_address(gpib_device_t *device, unsigned int address)
+void pc2_primary_address(gpib_board_t *board, unsigned int address)
 {
-	pc2_private_t *priv = device->private_data;
-	nec7210_primary_address(device, &priv->nec7210_priv, address);
+	pc2_private_t *priv = board->private_data;
+	nec7210_primary_address(board, &priv->nec7210_priv, address);
 }
-void pc2_secondary_address(gpib_device_t *device, unsigned int address, int enable)
+void pc2_secondary_address(gpib_board_t *board, unsigned int address, int enable)
 {
-	pc2_private_t *priv = device->private_data;
-	nec7210_secondary_address(device, &priv->nec7210_priv, address, enable);
+	pc2_private_t *priv = board->private_data;
+	nec7210_secondary_address(board, &priv->nec7210_priv, address, enable);
 }
-int pc2_parallel_poll(gpib_device_t *device, uint8_t *result)
+int pc2_parallel_poll(gpib_board_t *board, uint8_t *result)
 {
-	pc2_private_t *priv = device->private_data;
-	return nec7210_parallel_poll(device, &priv->nec7210_priv, result);
+	pc2_private_t *priv = board->private_data;
+	return nec7210_parallel_poll(board, &priv->nec7210_priv, result);
 }
-int pc2_serial_poll_response(gpib_device_t *device, uint8_t status)
+int pc2_serial_poll_response(gpib_board_t *board, uint8_t status)
 {
-	pc2_private_t *priv = device->private_data;
-	return nec7210_serial_poll_response(device, &priv->nec7210_priv, status);
+	pc2_private_t *priv = board->private_data;
+	return nec7210_serial_poll_response(board, &priv->nec7210_priv, status);
 }
 
 gpib_interface_t pc2_interface =
@@ -152,33 +152,33 @@ gpib_interface_t pc2a_interface =
 	serial_poll_response:	pc2_serial_poll_response,
 };
 
-static int allocate_private(gpib_device_t *device)
+static int allocate_private(gpib_board_t *board)
 {
-	device->private_data = kmalloc(sizeof(pc2_private_t), GFP_KERNEL);
-	if(device->private_data == NULL)
+	board->private_data = kmalloc(sizeof(pc2_private_t), GFP_KERNEL);
+	if(board->private_data == NULL)
 		return -1;
-	memset(device->private_data, 0, sizeof(pc2_private_t));
+	memset(board->private_data, 0, sizeof(pc2_private_t));
 	return 0;
 }
 
-static void free_private(gpib_device_t *device)
+static void free_private(gpib_board_t *board)
 {
-	if(device->private_data)
+	if(board->private_data)
 	{
-		kfree(device->private_data);
-		device->private_data = NULL;
+		kfree(board->private_data);
+		board->private_data = NULL;
 	}
 }
 
-int pc2_generic_attach(gpib_device_t *device)
+int pc2_generic_attach(gpib_board_t *board)
 {
 	pc2_private_t *pc2_priv;
 	nec7210_private_t *nec_priv;
 
-	device->status = 0;
-	if(allocate_private(device))
+	board->status = 0;
+	if(allocate_private(board))
 		return -ENOMEM;
-	pc2_priv = device->private_data;
+	pc2_priv = board->private_data;
 	nec_priv = &pc2_priv->nec7210_priv;
 	nec_priv->read_byte = nec7210_ioport_read_byte;
 	nec_priv->write_byte = nec7210_ioport_write_byte;
@@ -191,12 +191,12 @@ int pc2_generic_attach(gpib_device_t *device)
 		return -ENOMEM;
 
 	// request isa dma channel
-	if( request_dma( device->ibdma, "pc2" ) )
+	if( request_dma( board->ibdma, "pc2" ) )
 	{
-		printk("gpib: can't request DMA %d\n", device->ibdma);
+		printk("gpib: can't request DMA %d\n", board->ibdma);
 		return -1;
 	}
-	nec_priv->dma_channel = device->ibdma;
+	nec_priv->dma_channel = board->ibdma;
 #endif
 
 	return 0;
@@ -216,43 +216,43 @@ void pc2_init(nec7210_private_t *nec_priv)
 	write_byte(nec_priv, AUX_PON, AUXMR);
 }
 
-int pc2_attach(gpib_device_t *device)
+int pc2_attach(gpib_board_t *board)
 {
 	int isr_flags = 0;
 	pc2_private_t *pc2_priv;
 	nec7210_private_t *nec_priv;
 	int retval;
 
-	retval = pc2_generic_attach(device);
+	retval = pc2_generic_attach(board);
 	if(retval) return retval;
 
-	pc2_priv = device->private_data;
+	pc2_priv = board->private_data;
 	nec_priv = &pc2_priv->nec7210_priv;
 	nec_priv->offset = pc2_reg_offset;
 
-	if(request_region(device->ibbase, pc2_iosize, "pc2"));
+	if(request_region(board->ibbase, pc2_iosize, "pc2"));
 	{
 		printk("gpib: ioports are already in use");
 		return -1;
 	}
-	nec_priv->iobase = device->ibbase;
+	nec_priv->iobase = board->ibbase;
 
 	// install interrupt handler
-	if( request_irq(device->ibirq, pc2_interrupt, isr_flags, "pc2", device))
+	if( request_irq(board->ibirq, pc2_interrupt, isr_flags, "pc2", board))
 	{
-		printk("gpib: can't request IRQ %d\n", device->ibirq);
+		printk("gpib: can't request IRQ %d\n", board->ibirq);
 		return -1;
 	}
-	pc2_priv->irq = device->ibirq;
+	pc2_priv->irq = board->ibirq;
 
 	pc2_init(nec_priv);
 
 	return 0;
 }
 
-void pc2_detach(gpib_device_t *device)
+void pc2_detach(gpib_board_t *board)
 {
-	pc2_private_t *pc2_priv = device->private_data;
+	pc2_private_t *pc2_priv = board->private_data;
 	nec7210_private_t *nec_priv;
 
 	if(pc2_priv)
@@ -264,7 +264,7 @@ void pc2_detach(gpib_device_t *device)
 		}
 		if(pc2_priv->irq)
 		{
-			free_irq(pc2_priv->irq, device);
+			free_irq(pc2_priv->irq, board);
 		}
 		if(nec_priv->iobase)
 		{
@@ -278,10 +278,10 @@ void pc2_detach(gpib_device_t *device)
 			nec_priv->dma_buffer = NULL;
 		}
 	}
-	free_private(device);
+	free_private(board);
 }
 
-int pc2a_attach(gpib_device_t *device)
+int pc2a_attach(gpib_board_t *board)
 {
 	unsigned int i, err;
 	int isr_flags = 0;
@@ -289,14 +289,14 @@ int pc2a_attach(gpib_device_t *device)
 	nec7210_private_t *nec_priv;
 	int retval;
 
-	retval = pc2_generic_attach(device);
+	retval = pc2_generic_attach(board);
 	if(retval) return retval;
 
-	pc2_priv = device->private_data;
+	pc2_priv = board->private_data;
 	nec_priv = &pc2_priv->nec7210_priv;
 	nec_priv->offset = pc2a_reg_offset;
 
-	switch( device->ibbase ){
+	switch( board->ibbase ){
 
 		case 0x02e1:
 		case 0x22e1:
@@ -304,12 +304,12 @@ int pc2a_attach(gpib_device_t *device)
 		case 0x62e1:
 			break;
 		default:
-			printk("PCIIa base range invalid, must be one of [0246]2e1 is %lx \n", device->ibbase);
+			printk("PCIIa base range invalid, must be one of [0246]2e1 is %lx \n", board->ibbase);
 			return -1;
 			break;
 	}
 
-	if(device->ibirq < 2 || device->ibirq > 7 )
+	if(board->ibirq < 2 || board->ibirq > 7 )
 	{
 		printk("Illegal Interrupt Level \n");
 		return -1;
@@ -318,10 +318,10 @@ int pc2a_attach(gpib_device_t *device)
 	err = 0;
 	for(i = 0; i < nec7210_num_registers; i++)
 	{
-		if(check_region(device->ibbase + i * pc2a_reg_offset, 1))
+		if(check_region(board->ibbase + i * pc2a_reg_offset, 1))
 			err++;
 	}
-	if(check_region(pc2a_clear_intr_iobase + device->ibirq, 1))
+	if(check_region(pc2a_clear_intr_iobase + board->ibirq, 1))
 	{
 		err++;
 	}
@@ -332,18 +332,18 @@ int pc2a_attach(gpib_device_t *device)
 	}
 	for(i = 0; i < nec7210_num_registers; i++)
 	{
-		request_region(device->ibbase + i * pc2a_reg_offset, 1, "pc2a");
+		request_region(board->ibbase + i * pc2a_reg_offset, 1, "pc2a");
 	}
-	nec_priv->iobase = device->ibbase;
-	request_region(pc2a_clear_intr_iobase + device->ibirq, 1, "pc2a");
-	pc2_priv->clear_intr_addr = pc2a_clear_intr_iobase + device->ibirq;
+	nec_priv->iobase = board->ibbase;
+	request_region(pc2a_clear_intr_iobase + board->ibirq, 1, "pc2a");
+	pc2_priv->clear_intr_addr = pc2a_clear_intr_iobase + board->ibirq;
 
-	if(request_irq(device->ibirq, pc2a_interrupt, isr_flags, "pc2a", device))
+	if(request_irq(board->ibirq, pc2a_interrupt, isr_flags, "pc2a", board))
 	{
-		printk("gpib: can't request IRQ %d\n", device->ibirq);
+		printk("gpib: can't request IRQ %d\n", board->ibirq);
 		return -1;
 	}
-	pc2_priv->irq = device->ibirq;
+	pc2_priv->irq = board->ibirq;
 
 	pc2_init(nec_priv);
 
@@ -353,10 +353,10 @@ int pc2a_attach(gpib_device_t *device)
 	return 0;
 }
 
-void pc2a_detach(gpib_device_t *device)
+void pc2a_detach(gpib_board_t *board)
 {
 	int i;
-	pc2_private_t *pc2_priv = device->private_data;
+	pc2_private_t *pc2_priv = board->private_data;
 	nec7210_private_t *nec_priv;
 
 	if(pc2_priv)
@@ -368,7 +368,7 @@ void pc2a_detach(gpib_device_t *device)
 		}
 		if(pc2_priv->irq)
 		{
-			free_irq(pc2_priv->irq, device);
+			free_irq(pc2_priv->irq, board);
 		}
 		if(nec_priv->iobase)
 		{
@@ -385,7 +385,7 @@ void pc2a_detach(gpib_device_t *device)
 			nec_priv->dma_buffer = NULL;
 		}
 	}
-	free_private(device);
+	free_private(board);
 }
 
 int init_module(void)

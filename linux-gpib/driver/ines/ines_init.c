@@ -31,82 +31,82 @@ MODULE_LICENSE("GPL");
 #define INES_DEV_ID    0x9050
 #define INES_SUBID 0x107210b5L
 
-int ines_pci_attach(gpib_device_t *device);
-int ines_isa_attach(gpib_device_t *device);
+int ines_pci_attach(gpib_board_t *board);
+int ines_isa_attach(gpib_board_t *board);
 
-void ines_pci_detach(gpib_device_t *device);
-void ines_isa_detach(gpib_device_t *device);
+void ines_pci_detach(gpib_board_t *board);
+void ines_isa_detach(gpib_board_t *board);
 
 // wrappers for interface functions
-ssize_t ines_read(gpib_device_t *device, uint8_t *buffer, size_t length, int *end)
+ssize_t ines_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end)
 {
-	ines_private_t *priv = device->private_data;
-	return nec7210_read(device, &priv->nec7210_priv, buffer, length, end);
+	ines_private_t *priv = board->private_data;
+	return nec7210_read(board, &priv->nec7210_priv, buffer, length, end);
 }
-ssize_t ines_write(gpib_device_t *device, uint8_t *buffer, size_t length, int send_eoi)
+ssize_t ines_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi)
 {
-	ines_private_t *priv = device->private_data;
-	return nec7210_write(device, &priv->nec7210_priv, buffer, length, send_eoi);
+	ines_private_t *priv = board->private_data;
+	return nec7210_write(board, &priv->nec7210_priv, buffer, length, send_eoi);
 }
-ssize_t ines_command(gpib_device_t *device, uint8_t *buffer, size_t length)
+ssize_t ines_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 {
-	ines_private_t *priv = device->private_data;
-	return nec7210_command(device, &priv->nec7210_priv, buffer, length);
+	ines_private_t *priv = board->private_data;
+	return nec7210_command(board, &priv->nec7210_priv, buffer, length);
 }
-int ines_take_control(gpib_device_t *device, int synchronous)
+int ines_take_control(gpib_board_t *board, int synchronous)
 {
-	ines_private_t *priv = device->private_data;
-	return nec7210_take_control(device, &priv->nec7210_priv, synchronous);
+	ines_private_t *priv = board->private_data;
+	return nec7210_take_control(board, &priv->nec7210_priv, synchronous);
 }
-int ines_go_to_standby(gpib_device_t *device)
+int ines_go_to_standby(gpib_board_t *board)
 {
-	ines_private_t *priv = device->private_data;
-	return nec7210_go_to_standby(device, &priv->nec7210_priv);
+	ines_private_t *priv = board->private_data;
+	return nec7210_go_to_standby(board, &priv->nec7210_priv);
 }
-void ines_interface_clear(gpib_device_t *device, int assert)
+void ines_interface_clear(gpib_board_t *board, int assert)
 {
-	ines_private_t *priv = device->private_data;
-	nec7210_interface_clear(device, &priv->nec7210_priv, assert);
+	ines_private_t *priv = board->private_data;
+	nec7210_interface_clear(board, &priv->nec7210_priv, assert);
 }
-void ines_remote_enable(gpib_device_t *device, int enable)
+void ines_remote_enable(gpib_board_t *board, int enable)
 {
-	ines_private_t *priv = device->private_data;
-	nec7210_remote_enable(device, &priv->nec7210_priv, enable);
+	ines_private_t *priv = board->private_data;
+	nec7210_remote_enable(board, &priv->nec7210_priv, enable);
 }
-void ines_enable_eos(gpib_device_t *device, uint8_t eos_byte, int compare_8_bits)
+void ines_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits)
 {
-	ines_private_t *priv = device->private_data;
-	nec7210_enable_eos(device, &priv->nec7210_priv, eos_byte, compare_8_bits);
+	ines_private_t *priv = board->private_data;
+	nec7210_enable_eos(board, &priv->nec7210_priv, eos_byte, compare_8_bits);
 }
-void ines_disable_eos(gpib_device_t *device)
+void ines_disable_eos(gpib_board_t *board)
 {
-	ines_private_t *priv = device->private_data;
-	nec7210_disable_eos(device, &priv->nec7210_priv);
+	ines_private_t *priv = board->private_data;
+	nec7210_disable_eos(board, &priv->nec7210_priv);
 }
-unsigned int ines_update_status(gpib_device_t *device)
+unsigned int ines_update_status(gpib_board_t *board)
 {
-	ines_private_t *priv = device->private_data;
-	return nec7210_update_status(device, &priv->nec7210_priv);
+	ines_private_t *priv = board->private_data;
+	return nec7210_update_status(board, &priv->nec7210_priv);
 }
-void ines_primary_address(gpib_device_t *device, unsigned int address)
+void ines_primary_address(gpib_board_t *board, unsigned int address)
 {
-	ines_private_t *priv = device->private_data;
-	nec7210_primary_address(device, &priv->nec7210_priv, address);
+	ines_private_t *priv = board->private_data;
+	nec7210_primary_address(board, &priv->nec7210_priv, address);
 }
-void ines_secondary_address(gpib_device_t *device, unsigned int address, int enable)
+void ines_secondary_address(gpib_board_t *board, unsigned int address, int enable)
 {
-	ines_private_t *priv = device->private_data;
-	nec7210_secondary_address(device, &priv->nec7210_priv, address, enable);
+	ines_private_t *priv = board->private_data;
+	nec7210_secondary_address(board, &priv->nec7210_priv, address, enable);
 }
-int ines_parallel_poll(gpib_device_t *device, uint8_t *result)
+int ines_parallel_poll(gpib_board_t *board, uint8_t *result)
 {
-	ines_private_t *priv = device->private_data;
-	return nec7210_parallel_poll(device, &priv->nec7210_priv, result);
+	ines_private_t *priv = board->private_data;
+	return nec7210_parallel_poll(board, &priv->nec7210_priv, result);
 }
-int ines_serial_poll_response(gpib_device_t *device, uint8_t status)
+int ines_serial_poll_response(gpib_board_t *board, uint8_t status)
 {
-	ines_private_t *priv = device->private_data;
-	return nec7210_serial_poll_response(device, &priv->nec7210_priv, status);
+	ines_private_t *priv = board->private_data;
+	return nec7210_serial_poll_response(board, &priv->nec7210_priv, status);
 }
 
 gpib_interface_t ines_pci_interface =
@@ -131,34 +131,34 @@ gpib_interface_t ines_pci_interface =
 	serial_poll_response: ines_serial_poll_response,
 };
 
-int ines_allocate_private(gpib_device_t *device)
+int ines_allocate_private(gpib_board_t *board)
 {
-	device->private_data = kmalloc(sizeof(ines_private_t), GFP_KERNEL);
-	if(device->private_data == NULL)
+	board->private_data = kmalloc(sizeof(ines_private_t), GFP_KERNEL);
+	if(board->private_data == NULL)
 		return -1;
-	memset(device->private_data, 0, sizeof(ines_private_t));
+	memset(board->private_data, 0, sizeof(ines_private_t));
 	return 0;
 }
 
-void ines_free_private(gpib_device_t *device)
+void ines_free_private(gpib_board_t *board)
 {
-	if(device->private_data)
+	if(board->private_data)
 	{
-		kfree(device->private_data);
-		device->private_data = NULL;
+		kfree(board->private_data);
+		board->private_data = NULL;
 	}
 }
 
-int ines_generic_attach(gpib_device_t *device)
+int ines_generic_attach(gpib_board_t *board)
 {
 	ines_private_t *ines_priv;
 	nec7210_private_t *nec_priv;
 
-	device->status = 0;
+	board->status = 0;
 
-	if(ines_allocate_private(device))
+	if(ines_allocate_private(board))
 		return -ENOMEM;
-	ines_priv = device->private_data;
+	ines_priv = board->private_data;
 	nec_priv = &ines_priv->nec7210_priv;
 	nec_priv->read_byte = nec7210_ioport_read_byte;
 	nec_priv->write_byte = nec7210_ioport_write_byte;
@@ -183,17 +183,17 @@ void ines_init(ines_private_t *ines_priv)
 	write_byte(nec_priv, AUX_PON, AUXMR);
 }
 
-int ines_pci_attach(gpib_device_t *device)
+int ines_pci_attach(gpib_board_t *board)
 {
 	ines_private_t *ines_priv;
 	nec7210_private_t *nec_priv;
 	int isr_flags = 0;
 	int retval;
 
-	retval = ines_generic_attach(device);
+	retval = ines_generic_attach(board);
 	if(retval) return retval;
 
-	ines_priv = device->private_data;
+	ines_priv = board->private_data;
 	nec_priv = &ines_priv->nec7210_priv;
 
 	// find board
@@ -225,7 +225,7 @@ int ines_pci_attach(gpib_device_t *device)
 	nec_priv->iobase = pci_resource_start(ines_priv->pci_device, 2) & PCI_BASE_ADDRESS_IO_MASK;
 
 	isr_flags |= SA_SHIRQ;
-	if(request_irq(ines_priv->pci_device->irq, ines_interrupt, isr_flags, "pci-gpib", device))
+	if(request_irq(ines_priv->pci_device->irq, ines_interrupt, isr_flags, "pci-gpib", board))
 	{
 		printk("gpib: can't request IRQ %d\n",ines_priv->pci_device->irq);
 		return -1;
@@ -241,9 +241,9 @@ int ines_pci_attach(gpib_device_t *device)
 	return 0;
 }
 
-void ines_pci_detach(gpib_device_t *device)
+void ines_pci_detach(gpib_board_t *board)
 {
-	ines_private_t *ines_priv = device->private_data;
+	ines_private_t *ines_priv = board->private_data;
 	nec7210_private_t *nec_priv;
 
 	if(ines_priv)
@@ -253,7 +253,7 @@ void ines_pci_detach(gpib_device_t *device)
 		{
 			// disable amcc interrupts
 			outl(0, ines_priv->plx_iobase + PLX_INTCSR_REG );
-			free_irq(ines_priv->irq, device);
+			free_irq(ines_priv->irq, board);
 		}
 		if(nec_priv->iobase)
 		{
@@ -261,7 +261,7 @@ void ines_pci_detach(gpib_device_t *device)
 			pci_release_regions(ines_priv->pci_device);
 		}
 	}
-	ines_free_private(device);
+	ines_free_private(board);
 }
 
 int init_module(void)

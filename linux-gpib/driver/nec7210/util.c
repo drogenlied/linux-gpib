@@ -19,7 +19,7 @@
 #include "board.h"
 #include <linux/delay.h>
 
-void nec7210_enable_eos(gpib_device_t *device, nec7210_private_t *priv, uint8_t eos_byte, int compare_8_bits)
+void nec7210_enable_eos(gpib_board_t *board, nec7210_private_t *priv, uint8_t eos_byte, int compare_8_bits)
 {
 	write_byte(priv, eos_byte, EOSR);
 	priv->auxa_bits |= HR_REOS;
@@ -30,13 +30,13 @@ void nec7210_enable_eos(gpib_device_t *device, nec7210_private_t *priv, uint8_t 
 	write_byte(priv, priv->auxa_bits, AUXMR);
 }
 
-void nec7210_disable_eos(gpib_device_t *device, nec7210_private_t *priv)
+void nec7210_disable_eos(gpib_board_t *board, nec7210_private_t *priv)
 {
 	priv->auxa_bits &= ~HR_REOS;
 	write_byte(priv, priv->auxa_bits, AUXMR);
 }
 
-int nec7210_parallel_poll(gpib_device_t *device, nec7210_private_t *priv, uint8_t *result)
+int nec7210_parallel_poll(gpib_board_t *board, nec7210_private_t *priv, uint8_t *result)
 {
 	int ret;
 
@@ -48,7 +48,7 @@ int nec7210_parallel_poll(gpib_device_t *device, nec7210_private_t *priv, uint8_
 	write_byte(priv, AUX_EPP, AUXMR);
 
 	// wait for result
-	ret = wait_event_interruptible(device->wait, test_bit(COMMAND_READY_BN, &priv->state));
+	ret = wait_event_interruptible(board->wait, test_bit(COMMAND_READY_BN, &priv->state));
 
 	// disable command out interrupts
 	priv->imr2_bits &= ~HR_COIE;
@@ -65,7 +65,7 @@ int nec7210_parallel_poll(gpib_device_t *device, nec7210_private_t *priv, uint8_
 	return 0;
 }
 
-int nec7210_serial_poll_response(gpib_device_t *device, nec7210_private_t *priv, uint8_t status)
+int nec7210_serial_poll_response(gpib_board_t *board, nec7210_private_t *priv, uint8_t status)
 {
 	write_byte(priv, 0, SPMR);		/* clear current serial poll status */
 	write_byte(priv, status, SPMR);		/* set new status to v */
@@ -73,13 +73,13 @@ int nec7210_serial_poll_response(gpib_device_t *device, nec7210_private_t *priv,
 	return 0;
 }
 
-void nec7210_primary_address(gpib_device_t *device, nec7210_private_t *priv, unsigned int address)
+void nec7210_primary_address(gpib_board_t *board, nec7210_private_t *priv, unsigned int address)
 {
 	// put primary address in address0
 	write_byte(priv, address & ADDRESS_MASK, ADR);
 }
 
-void nec7210_secondary_address(gpib_device_t *device, nec7210_private_t *priv, unsigned int address, int enable)
+void nec7210_secondary_address(gpib_board_t *board, nec7210_private_t *priv, unsigned int address, int enable)
 {
 	if(enable)
 	{
@@ -99,41 +99,41 @@ void nec7210_secondary_address(gpib_device_t *device, nec7210_private_t *priv, u
 	write_byte(priv, priv->admr_bits, ADMR);
 }
 
-unsigned int nec7210_update_status(gpib_device_t *device, nec7210_private_t *priv)
+unsigned int nec7210_update_status(gpib_board_t *board, nec7210_private_t *priv)
 {
 	int address_status_bits;
 	unsigned long flags;
 
 	if(priv == NULL) return 0;
 
-	spin_lock_irqsave(&device->spinlock, flags);
+	spin_lock_irqsave(&board->spinlock, flags);
 
 	address_status_bits = read_byte(priv, ADSR);
 
 	if(address_status_bits & HR_CIC)
-		set_bit(CIC_NUM, &device->status);
+		set_bit(CIC_NUM, &board->status);
 	else
-		clear_bit(CIC_NUM, &device->status);
+		clear_bit(CIC_NUM, &board->status);
 	// check for talker/listener addressed
 	if(address_status_bits & HR_TA)
-		set_bit(TACS_NUM, &device->status);
+		set_bit(TACS_NUM, &board->status);
 	else
-		clear_bit(TACS_NUM, &device->status);
+		clear_bit(TACS_NUM, &board->status);
 	if(address_status_bits & HR_LA)
-		set_bit(LACS_NUM, &device->status);
+		set_bit(LACS_NUM, &board->status);
 	else
-		clear_bit(LACS_NUM, &device->status);
+		clear_bit(LACS_NUM, &board->status);
 	if(address_status_bits & HR_NATN)
-		clear_bit(ATN_NUM, &device->status);
+		clear_bit(ATN_NUM, &board->status);
 	else
-		set_bit(ATN_NUM, &device->status);
+		set_bit(ATN_NUM, &board->status);
 
-	spin_unlock_irqrestore(&device->spinlock, flags);
+	spin_unlock_irqrestore(&board->spinlock, flags);
 
 	/* we rely on the interrupt handler to set the
 	 * rest of the status bits */
 
-	return device->status;
+	return board->status;
 }
 
 EXPORT_SYMBOL(nec7210_enable_eos);

@@ -38,27 +38,27 @@ extern gpib_interface_t cec_pci_interface;
 extern gpib_interface_t cec_pcmcia_interface;
 
 // interface functions
-ssize_t cec_read(gpib_device_t *device, uint8_t *buffer, size_t length, int *end);
-ssize_t cec_write(gpib_device_t *device, uint8_t *buffer, size_t length, int send_eoi);
-ssize_t cec_command(gpib_device_t *device, uint8_t *buffer, size_t length);
-int cec_take_control(gpib_device_t *device, int synchronous);
-int cec_go_to_standby(gpib_device_t *device);
-void cec_interface_clear(gpib_device_t *device, int assert);
-void cec_remote_enable(gpib_device_t *device, int enable);
-void cec_enable_eos(gpib_device_t *device, uint8_t eos_byte, int compare_8_bits);
-void cec_disable_eos(gpib_device_t *device);
-unsigned int cec_update_status(gpib_device_t *device);
-void cec_primary_address(gpib_device_t *device, unsigned int address);
-void cec_secondary_address(gpib_device_t *device, unsigned int address, int enable);
-int cec_parallel_poll(gpib_device_t *device, uint8_t *result);
-int cec_serial_poll_response(gpib_device_t *device, uint8_t status);
+ssize_t cec_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end);
+ssize_t cec_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi);
+ssize_t cec_command(gpib_board_t *board, uint8_t *buffer, size_t length);
+int cec_take_control(gpib_board_t *board, int synchronous);
+int cec_go_to_standby(gpib_board_t *board);
+void cec_interface_clear(gpib_board_t *board, int assert);
+void cec_remote_enable(gpib_board_t *board, int enable);
+void cec_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits);
+void cec_disable_eos(gpib_board_t *board);
+unsigned int cec_update_status(gpib_board_t *board);
+void cec_primary_address(gpib_board_t *board, unsigned int address);
+void cec_secondary_address(gpib_board_t *board, unsigned int address, int enable);
+int cec_parallel_poll(gpib_board_t *board, uint8_t *result);
+int cec_serial_poll_response(gpib_board_t *board, uint8_t status);
 
 // interrupt service routines
 void cec_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
 // utility functions
-void cec_free_private(gpib_device_t *device);
-int cec_generic_attach(gpib_device_t *device);
+void cec_free_private(gpib_board_t *board);
+int cec_generic_attach(gpib_board_t *board);
 void cec_init(cec_private_t *priv);
 
 // offset between consecutive nec7210 registers

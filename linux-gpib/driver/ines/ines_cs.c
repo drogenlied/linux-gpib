@@ -601,8 +601,8 @@ void ines_pcmcia_cleanup_module(void)
     }
 }
 
-int ines_pcmcia_attach(gpib_device_t *device);
-void ines_pcmcia_detach(gpib_device_t *device);
+int ines_pcmcia_attach(gpib_board_t *board);
+void ines_pcmcia_detach(gpib_board_t *board);
 
 gpib_interface_t ines_pcmcia_interface =
 {
@@ -626,7 +626,7 @@ gpib_interface_t ines_pcmcia_interface =
 	serial_poll_response: ines_serial_poll_response,
 };
 
-int ines_pcmcia_attach(gpib_device_t *device)
+int ines_pcmcia_attach(gpib_board_t *board)
 {
 	ines_private_t *ines_priv;
 	nec7210_private_t *nec_priv;
@@ -639,15 +639,15 @@ int ines_pcmcia_attach(gpib_device_t *device)
 		return -1;
 	}
 
-	retval = ines_generic_attach(device);
+	retval = ines_generic_attach(board);
 	if(retval) return retval;
 
-	ines_priv = device->private_data;
+	ines_priv = board->private_data;
 	nec_priv = &ines_priv->nec7210_priv;
 
 	nec_priv->iobase = dev_list->io.BasePort1;
 
-	if(request_irq(dev_list->irq.AssignedIRQ, ines_interrupt, isr_flags, "pcmcia-gpib", device))
+	if(request_irq(dev_list->irq.AssignedIRQ, ines_interrupt, isr_flags, "pcmcia-gpib", board))
 	{
 		printk("gpib: can't request IRQ %d\n", dev_list->irq.AssignedIRQ);
 		return -1;
@@ -659,13 +659,13 @@ int ines_pcmcia_attach(gpib_device_t *device)
 	return 0;
 }
 
-void ines_pcmcia_detach(gpib_device_t *device)
+void ines_pcmcia_detach(gpib_board_t *board)
 {
-	ines_private_t *priv = device->private_data;
+	ines_private_t *priv = board->private_data;
 
 	if(priv && priv->irq)
-		free_irq(priv->irq, device);
-	ines_free_private(device);
+		free_irq(priv->irq, board);
+	ines_free_private(board);
 }
 
 #endif /* CONFIG_PCMCIA */

@@ -24,11 +24,11 @@
  *  interrupt service routine
  */
 
-void tms9914_interrupt(gpib_device_t *device, tms9914_private_t *priv)
+void tms9914_interrupt(gpib_board_t *board, tms9914_private_t *priv)
 {
 	int status0, status1, address_status;
 
-	spin_lock(&device->spinlock);
+	spin_lock(&board->spinlock);
 
 	// read interrupt status (also clears status)
 	status0 = read_byte(priv, ISR0);
@@ -37,8 +37,8 @@ void tms9914_interrupt(gpib_device_t *device, tms9914_private_t *priv)
 	// record service request in status
 	if(status1 & HR_SRQ)
 	{
-		set_bit(SRQI_NUM, &device->status);
-		wake_up_interruptible(&device->wait);
+		set_bit(SRQI_NUM, &board->status);
+		wake_up_interruptible(&board->wait);
 	}
 	
 	// have been addressed
@@ -55,29 +55,29 @@ void tms9914_interrupt(gpib_device_t *device, tms9914_private_t *priv)
 		address_status = read_byte(priv, ADSR);
 		// check for remote/local
 		if(address_status & HR_REM)
-			set_bit(REM_NUM, &device->status);
+			set_bit(REM_NUM, &board->status);
 		else
-			clear_bit(REM_NUM, &device->status);
+			clear_bit(REM_NUM, &board->status);
 		// check for lockout
 		if(address_status & HR_LLO)
-			set_bit(LOK_NUM, &device->status);
+			set_bit(LOK_NUM, &board->status);
 		else
-			clear_bit(LOK_NUM, &device->status);
+			clear_bit(LOK_NUM, &board->status);
 		// check for ATN
 		if(address_status & HR_ATN)
-			set_bit(ATN_NUM, &device->status);
+			set_bit(ATN_NUM, &board->status);
 		else
-			clear_bit(ATN_NUM, &device->status);
+			clear_bit(ATN_NUM, &board->status);
 		// check for talker/listener addressed
 		if(address_status & HR_TA)
-			set_bit(TACS_NUM, &device->status);
+			set_bit(TACS_NUM, &board->status);
 		else
-			clear_bit(TACS_NUM, &device->status);
+			clear_bit(TACS_NUM, &board->status);
 		if(address_status & HR_LA)
-			set_bit(LACS_NUM, &device->status);
+			set_bit(LACS_NUM, &board->status);
 		else
-			clear_bit(LACS_NUM, &device->status);
-		wake_up_interruptible(&device->wait); /* wake up sleeping process */
+			clear_bit(LACS_NUM, &board->status);
+		wake_up_interruptible(&board->wait); /* wake up sleeping process */
 	}
 
 	// record reception of END
@@ -90,7 +90,7 @@ void tms9914_interrupt(gpib_device_t *device, tms9914_private_t *priv)
 	if((status0 & HR_BI))
 	{
 		set_bit(READ_READY_BN, &priv->state);
-		wake_up_interruptible(&device->wait); /* wake up sleeping process */
+		wake_up_interruptible(&board->wait); /* wake up sleeping process */
 	}
 
 	if((status0 & HR_BO))
@@ -102,7 +102,7 @@ void tms9914_interrupt(gpib_device_t *device, tms9914_private_t *priv)
 		{
 			set_bit(WRITE_READY_BN, &priv->state);
 		}
-		wake_up_interruptible(&device->wait);
+		wake_up_interruptible(&board->wait);
 	}
 
 	// unrecognized command received
@@ -116,9 +116,9 @@ void tms9914_interrupt(gpib_device_t *device, tms9914_private_t *priv)
 		printk("gpib error detected\n");
 	}
 
-	spin_unlock(&device->spinlock);
+	spin_unlock(&board->spinlock);
 
-printk("isr0 0x%x, imr0 0x%x, isr1 0x%x, imr1 0x%x, status 0x%x\n", status0, priv->imr0_bits, status1, priv->imr1_bits, device->status);
+printk("isr0 0x%x, imr0 0x%x, isr1 0x%x, imr1 0x%x, status 0x%x\n", status0, priv->imr0_bits, status1, priv->imr1_bits, board->status);
 }
 
 EXPORT_SYMBOL(tms9914_interrupt);

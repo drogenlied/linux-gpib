@@ -20,7 +20,7 @@
 #include <linux/string.h>
 #include <asm/dma.h>
 
-static ssize_t pio_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t *buffer, size_t length)
+static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer, size_t length)
 {
 	size_t count = 0;
 	ssize_t retval = 0;
@@ -29,31 +29,31 @@ static ssize_t pio_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 	while(count < length)
 	{
 		// wait until byte is ready to be sent
-		if(wait_event_interruptible(device->wait, test_bit(WRITE_READY_BN, &priv->state) ||
-			test_bit(TIMO_NUM, &device->status)))
+		if(wait_event_interruptible(board->wait, test_bit(WRITE_READY_BN, &priv->state) ||
+			test_bit(TIMO_NUM, &board->status)))
 		{
 			printk("gpib write interrupted!\n");
 			retval = -EINTR;
 			break;
 		}
-		if(test_bit(TIMO_NUM, &device->status))
+		if(test_bit(TIMO_NUM, &board->status))
 		{
 			break;
 		}
 
-		spin_lock_irqsave(&device->spinlock, flags);
+		spin_lock_irqsave(&board->spinlock, flags);
 		clear_bit(WRITE_READY_BN, &priv->state);
 		write_byte(priv, buffer[count++], CDOR);
-		spin_unlock_irqrestore(&device->lock, flags);
+		spin_unlock_irqrestore(&board->lock, flags);
 	}
 	// wait till last byte gets sent
-	if(wait_event_interruptible(device->wait, test_bit(WRITE_READY_BN, &priv->state) ||
-		test_bit(TIMO_NUM, &device->status)))
+	if(wait_event_interruptible(board->wait, test_bit(WRITE_READY_BN, &priv->state) ||
+		test_bit(TIMO_NUM, &board->status)))
 	{
 		printk("gpib write interrupted!\n");
 		retval = -EINTR;
 	}
-	if(test_bit(TIMO_NUM, &device->status))
+	if(test_bit(TIMO_NUM, &board->status))
 	{
 		retval = -ETIMEDOUT;
 	}
@@ -64,13 +64,13 @@ static ssize_t pio_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 	return length;
 }
 
-static ssize_t __dma_write(gpib_device_t *device, nec7210_private_t *priv, dma_addr_t address, size_t length)
+static ssize_t __dma_write(gpib_board_t *board, nec7210_private_t *priv, dma_addr_t address, size_t length)
 {
 	unsigned long flags, dma_irq_flags;
 	int residue = 0;
 	int retval = 0;
 
-	spin_lock_irqsave(&device->spinlock, flags);
+	spin_lock_irqsave(&board->spinlock, flags);
 
 	/* program dma controller */
 	dma_irq_flags = claim_dma_lock();
@@ -89,15 +89,15 @@ static ssize_t __dma_write(gpib_device_t *device, nec7210_private_t *priv, dma_a
 	clear_bit(WRITE_READY_BN, &priv->state);
 	set_bit(DMA_IN_PROGRESS_BN, &priv->state);
 
-	spin_lock_irqsave(&device->spinlock, flags);
+	spin_lock_irqsave(&board->spinlock, flags);
 
 	// suspend until message is sent
-	if(wait_event_interruptible(device->wait, test_bit(DMA_IN_PROGRESS_BN, &priv->state) == 0 ||
-		test_bit(TIMO_NUM, &device->status)))
+	if(wait_event_interruptible(board->wait, test_bit(DMA_IN_PROGRESS_BN, &priv->state) == 0 ||
+		test_bit(TIMO_NUM, &board->status)))
 	{
 		printk("gpib write interrupted!\n");
 	}
-	if(test_bit(TIMO_NUM, &device->status))
+	if(test_bit(TIMO_NUM, &board->status))
 		retval = -ETIMEDOUT;	
 
 	// disable board's dma
@@ -116,7 +116,7 @@ static ssize_t __dma_write(gpib_device_t *device, nec7210_private_t *priv, dma_a
 	return retval ? retval : length;
 }
 
-static ssize_t dma_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t *buffer, size_t length)
+static ssize_t dma_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer, size_t length)
 {
 	size_t remain = length;
 	size_t transfer_size;
@@ -126,7 +126,7 @@ static ssize_t dma_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 	{
 		transfer_size = (priv->dma_buffer_length < remain) ? priv->dma_buffer_length : remain;
 		memcpy(priv->dma_buffer, buffer, transfer_size);
-		retval = __dma_write(device, priv, priv->dma_buffer_addr, transfer_size);
+		retval = __dma_write(board, priv, priv->dma_buffer_addr, transfer_size);
 		if(retval < 0) break;
 		remain -= retval;
 		buffer += retval;
@@ -137,7 +137,7 @@ static ssize_t dma_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 	return length - remain;
 }
 
-ssize_t nec7210_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t *buffer, size_t length, int send_eoi)
+ssize_t nec7210_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer, size_t length, int send_eoi)
 {
 	size_t count = 0;
 	ssize_t retval = 0;
@@ -153,13 +153,13 @@ ssize_t nec7210_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t *b
 	{
 		if(priv->dma_channel)
 		{	// isa dma transfer
-			retval = dma_write(device, priv, buffer, length);
+			retval = dma_write(board, priv, buffer, length);
 			if(retval < 0)
 				return retval;
 			else count += retval;
 		}else
 		{	// PIO transfer
-			retval = pio_write(device, priv, buffer, length);
+			retval = pio_write(board, priv, buffer, length);
 			if(retval < 0)
 				return retval;
 			else count += retval;
@@ -170,7 +170,7 @@ ssize_t nec7210_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t *b
 		/*send EOI */
 		write_byte(priv, AUX_SEOI, AUXMR);
 
-		retval = pio_write(device, priv, &buffer[count], 1);
+		retval = pio_write(board, priv, &buffer[count], 1);
 		if(retval < 0)
 			return retval;
 		else

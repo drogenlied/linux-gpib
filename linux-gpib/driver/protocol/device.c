@@ -27,10 +27,10 @@
  * SPD and UNT are sent at the completion of the poll.
  */
 
-int dvrsp(gpib_device_t *device, int padsad, uint8_t *result)
+int dvrsp(gpib_board_t *board, int padsad, uint8_t *result)
 {
 	uint8_t cmd_string[8];
-	int status = ibstatus(device);
+	int status = ibstatus(board);
 	int end_flag;
 	ssize_t ret;
 	unsigned int pad, sad;
@@ -49,9 +49,9 @@ int dvrsp(gpib_device_t *device, int padsad, uint8_t *result)
 		return -1;
 	}
 
-	osStartTimer(device, pollTimeidx);
+	osStartTimer(board, pollTimeidx);
 
-	device->interface->take_control(device, 0);
+	board->interface->take_control(board, 0);
 
 	i = 0;
 	cmd_string[i++] = UNL;
@@ -64,28 +64,28 @@ int dvrsp(gpib_device_t *device, int padsad, uint8_t *result)
 	if (sad)
 		cmd_string[i++] = sad;
 
-	if (device->interface->command(device, cmd_string, i) < i)
+	if (board->interface->command(board, cmd_string, i) < i)
 		return -1;
 
-	device->interface->go_to_standby(device);
+	board->interface->go_to_standby(board);
 
 	// read poll result
-	ret = device->interface->read(device, result, 1, &end_flag);
+	ret = board->interface->read(board, result, 1, &end_flag);
 	if(ret < 1)
 	{
 		printk("gpib: serial poll failed\n");
 		return -1;
 	}
 
-	device->interface->take_control(device, 0);
+	board->interface->take_control(board, 0);
 
 	cmd_string[0] = SPD;	/* disable serial poll bytes */
 	cmd_string[1] = UNT;
-	if(device->interface->command(device, cmd_string, 2) < 2 )
+	if(board->interface->command(board, cmd_string, 2) < 2 )
 	{
 		return -1;
 	}
-	osRemoveTimer(device);
+	osRemoveTimer(board);
 
 	return 0;
 }

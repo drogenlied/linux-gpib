@@ -1,5 +1,5 @@
-#include <ibprot.h>
 
+#include <ibprot.h>
 
 /*
  * IBLINES
@@ -9,13 +9,13 @@
  * Next LSB (bits 8-15) - STATUS lines mask (lines that are currently set).
  *
  */
-int iblines(gpib_device_t *device, int *buf)
+int iblines(gpib_board_t *board, int *buf)
 {
-	if(device->interface->line_status == NULL)
+	if(board->interface->line_status == NULL)
 	{
 		printk("driver cannot query gpib line status\n");
 		return -1;
 	}
-	*buf = device->interface->line_status(device);
+	*buf = board->interface->line_status(board);
 	return 0;
 }
