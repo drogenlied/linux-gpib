@@ -1,34 +1,18 @@
 Linux GPIB Package changelog
 
-3.0.0: Completed first pass at port to 2.4 kernel, and cleaned up a lot of little things. 
-	Still needs a lot of work, but should have all the capabilities/limitations
-	of version 2.05-alpha which it was based on. 
+3.1.7: Added ibppc(), ibask(), ThreadIbsta(), ThreadIberr(), ThreadIbcnt().
+Added autopolling support (can't be turned off yet).  Fixed ibtrg() and
+ibclr(). ibwait() fixes.  New Perl bindings by Thomas Nisius.  Fixed
+increment of use count for all modules so they can't be unloaded while
+in use.  Fixes for operating boards when board is not system controller.
+Various other bugfixes.
 
-3.0.1: Fixed installation of gpib0.o module.  Fixed driver module for use
-	with kernels that use module versioning.  Got rid of all usage of pointers to
-	store io addresses.
-
-3.1.0: New driver architecture
-
-3.1.1: New format for config file, added ibdev() function. Conditionally
-compiled gpib0 module now split into seperate modules for different board
-families, and several shared modules. Got rid of many global variables, it is
-now about 90% safe to run more than one board at once. Various bugfixes,
-cleanups, and removal of non-essential cruft.  Breaks binary compatibity
-between library and modules from earlier versions.
-
-3.1.2: Same as 3.1.1 except with some annoying debugging messages turned off.
-
-3.1.3: Fixed race in nec7210 read that could cause failure to receive last
-byte on reads. Board-specific fixes for ines pci, ines pcmcia, and
-cec/keithley pci support. 
-
-3.1.4: Added easier setup for python binding from Brian Donovan.
-To compile/install the Python and Tcl bindings you must run 'make', 'make
-install' in the appropriate subdirectory of the 'language' directory.  Enabled
-isa-dma in pc2-gpib driver.  Fixes for ISA boards.  Fixed tcl binding
-for ibdev().  Made devices opened with ibfind() default to sending EOI at end
-of writes.
+3.1.6: Made timeout for serial polls adjustable instead of being hard coded
+to 100 msec.  Removed a couple more global variables.  Fixed some problems 
+with timeout values not being updated.  Added some missing includes of string.h.
+Fixed setting of EOI on writes.  Fixed disabling of dma when dma channel is set 
+to zero after being nonzero.  Fixed ibtrg() and ibclr().  Fixed use of secondary
+addressing and return value for ibloc().
 
 3.1.5: Fixed some problems that showed up with pc2 boards not being able to
 send command bytes.  Added device id for NI GPIB+ boards.  Fixed lockup on
@@ -39,10 +23,33 @@ doesn't work yet).  Allows 'whiptail' to be used instead of 'dialog' for gui
 during configuration.  Fixed locking in ioctl to make it safe for multiple
 processes to access devices through the same interface board.
 
-3.1.6: Made timeout for serial polls adjustable instead of being hard coded
-to 100 msec.  Removed a couple more global variables.  Fixed some problems 
-with timeout values not being updated.  Added some missing includes of string.h.
-Fixed setting of EOI on writes.  Fixed disabling of dma when dma channel is set 
-to zero after being nonzero.  Fixed ibtrg() and ibclr().  Fixed use of secondary
-addressing and return value for ibloc().
+3.1.4: Added easier setup for python binding from Brian Donovan.
+To compile/install the Python and Tcl bindings you must run 'make', 'make
+install' in the appropriate subdirectory of the 'language' directory.  Enabled
+isa-dma in pc2-gpib driver.  Fixes for ISA boards.  Fixed tcl binding
+for ibdev().  Made devices opened with ibfind() default to sending EOI at end
+of writes.
+
+3.1.3: Fixed race in nec7210 read that could cause failure to receive last
+byte on reads. Board-specific fixes for ines pci, ines pcmcia, and
+cec/keithley pci support. 
+
+3.1.2: Same as 3.1.1 except with some annoying debugging messages turned off.
+
+3.1.1: New format for config file, added ibdev() function. Conditionally
+compiled gpib0 module now split into seperate modules for different board
+families, and several shared modules. Got rid of many global variables, it is
+now about 90% safe to run more than one board at once. Various bugfixes,
+cleanups, and removal of non-essential cruft.  Breaks binary compatibity
+between library and modules from earlier versions.
+
+3.1.0: New driver architecture
+
+3.0.1: Fixed installation of gpib0.o module.  Fixed driver module for use
+	with kernels that use module versioning.  Got rid of all usage of pointers to
+	store io addresses.
+
+3.0.0: Completed first pass at port to 2.4 kernel, and cleaned up a lot of little things. 
+	Still needs a lot of work, but should have all the capabilities/limitations
+	of version 2.05-alpha which it was based on. 
 
