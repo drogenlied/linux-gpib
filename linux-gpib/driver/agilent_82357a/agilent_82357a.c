@@ -406,13 +406,23 @@ void agilent_82357a_remote_enable(gpib_board_t *board, int enable)
 	//FIXME: implement
 	return;// 0;
 }
+//FIXME need to be able to return error
 void agilent_82357a_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits)
 {
-	//FIXME: implement
+	agilent_82357a_private_t *a_priv = board->private_data;
+	
+	a_priv->eos_char = eos_byte;
+	a_priv->eos_mode = REOS | BIN;
+	if(compare_8_bits == 0)
+	{
+		printk("%s: %s: warning: hardware only supports 8-bit EOS compare", __FILE__, __FUNCTION__);
+	}
 }
 void agilent_82357a_disable_eos(gpib_board_t *board)
 {
-	//FIXME: implement
+	agilent_82357a_private_t *a_priv = board->private_data;
+	
+	a_priv->eos_mode &= ~REOS;
 }
 unsigned int agilent_82357a_update_status( gpib_board_t *board, unsigned int clear_mask )
 {
