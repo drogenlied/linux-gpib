@@ -49,7 +49,7 @@ int dvrsp(gpib_board_t *board, int padsad, uint8_t *result)
 		return -1;
 	}
 
-	osStartTimer(board, pollTimeidx);
+	osStartTimer( board, timeidx );
 
 	board->interface->take_control(board, 0);
 
@@ -67,6 +67,7 @@ int dvrsp(gpib_board_t *board, int padsad, uint8_t *result)
 	if (board->interface->command(board, cmd_string, i) < i)
 	{
 		printk("gpib: failed to setup serial poll\n");
+		osRemoveTimer(board);
 		return -1;
 	}
 
@@ -77,6 +78,7 @@ int dvrsp(gpib_board_t *board, int padsad, uint8_t *result)
 	if(ret < 1)
 	{
 		printk("gpib: serial poll failed\n");
+		osRemoveTimer(board);
 		return -1;
 	}
 
@@ -87,6 +89,7 @@ int dvrsp(gpib_board_t *board, int padsad, uint8_t *result)
 	if(board->interface->command(board, cmd_string, 2) < 2 )
 	{
 		printk("gpib: failed to disable serial poll\n");
+		osRemoveTimer(board);
 		return -1;
 	}
 	osRemoveTimer(board);

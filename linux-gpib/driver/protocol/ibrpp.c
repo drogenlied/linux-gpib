@@ -16,11 +16,12 @@ int ibrpp(gpib_board_t *board, uint8_t *buf)
 	{
 		return -1;
 	}
-	osStartTimer(board, pollTimeidx);
+	osStartTimer(board, timeidx);
 	board->interface->take_control(board, 0);
 	if(board->interface->parallel_poll(board, buf))
 	{
 		printk("gpib: parallel poll failed\n");
+		osRemoveTimer(board);
 		return -1;
 	}
 //supposed to send rpp local message false at end

@@ -3,8 +3,7 @@
 #include <linux/kernel.h>
 #include <linux/vmalloc.h>
 
-int timeidx	= T1s;	/* timeout index into timeTable */
-int pollTimeidx = T100ms;	/* timeidx for serial and parallel polls */
+int timeidx = T1s;	/* timeout index into timeTable */
 int myPAD = 0;		/* current primary address */
 int mySAD = 0;		/* current secondary address */
 

@@ -3,7 +3,6 @@
 #include <gpibP.h>
 
 extern int timeidx;
-extern int pollTimeidx;
 extern int myPAD;
 extern int mySAD;
 
