@@ -42,6 +42,7 @@ GPIB_DUMMY_VERSION {
 		ibcmd;
 		ibcmda;
 		ibcnt;
+		ibcntl;
 		ibconfig;
 		ibdev;
 		ibdma;
