@@ -16,8 +16,7 @@ INC_TARGET_DIR = $(TARGET_ROOT)/include
 LIB_CONFIG_FILE = /etc/gpib.conf
 
 
-LIBNAME=libgpib.a
-LIB_NAME=libgpib
+LIBNAME=libgpib.so
 
 EXPORTED_INCLUDES = ib.h ibProto.h ibConf.h ibP.h
 EXP_INC = $(EXPORTED_INCLUDES:%=$(ROOT)/include/%)
@@ -25,18 +24,12 @@ CWD := `pwd`
 
 MAKE = make -C
 
-## Uncomment the desired line
-# Build static library
-DEFAULT_BUILD= $(LIBNAME)
-# Build shared Library
-#DEFAULT_BUILD= $(LIBNAME) shared
-
 ######################################################################
 
 export JUMP_DIR=./jump-dir
 
 CFLAGS= -Wall -O2 -I. -I../include -I../driver/include -DDEFAULT_CONFIG_FILE=\"$(LIB_CONFIG_FILE)\"  \
-	$(SHARED_FLAGS)
+	-fpic	
 LDFLAGS = -L.
 
 SRCS =  ibCac.c ibClr.c ibCmd.c ibConfYacc.c ibConfLex.c  ibEos.c ibEot.c \
@@ -50,13 +43,10 @@ SRCS =  ibCac.c ibClr.c ibCmd.c ibConfYacc.c ibConfLex.c  ibEos.c ibEot.c \
 OBJS =  $(SRCS:.c=.o) 
 
 
-
-all: $(EXP_INC) $(DEFAULT_BUILD) 
+all: $(EXP_INC) $(LIBNAME) 
 
 $(LIBNAME):   $(OBJS) 
-	rm -f $(LIBNAME)
-	ar cr $(LIBNAME) $(OBJS)
-	ranlib $(LIBNAME)
+	$(CC) -shared $(OBJS) -o $(LIBNAME)	
 
 ibConfLex.c:  ibConfLex.l ibConfYacc.h 
 	flex -Pgpib_yy -o$@ $<
@@ -74,7 +64,8 @@ realclean : clean
 
 
 install:
-	$(INSTALL) $(LIBNAME)     $(LIB_TARGET_DIR)		
+	$(INSTALL) $(LIBNAME)     $(LIB_TARGET_DIR)
+	ldconfig -n $(LIB_TARGET_DIR)		
 #	install ib.h           $(INC_TARGET_DIR)		
 #        install ibConf.h       $(INC_TARGET_DIR)		
 
@@ -85,60 +76,9 @@ rcsget:
 	for i in  ./RCS/*,v ; do co -l `basename $$i ,v` ;done
 	
 
-######################################################################
-#
-#  building rules for shared libraries
-#
-##
-#
-#  change SHD_ADR if needed
-#
-#  
-
-
-SHD_ADR = 0x80000000
-SHD_JTS = 0x4000
-SHD_GOT = 4096
-SHD_VER = 0.1.1
-SHD_NAME= $(LIB_NAME)
-
-
-shared: shared_1 shared_2
-
-shared_1:
-	make clean
-	-rm ./jump-dir/* *.done
-	-rm lib*.so.*
-	-rm lib*.sa
-	export JUMP_LIB=$(SHD_NAME)
-	export JUMP_DIR=`pwd`/jump-dir
-	make SHARED_FLAGS=-B/usr/dll/jump/ 
-	mv ./jump-dir/jump.log ./jump-dir/jump.log~
-	cat ./jump-dir/jump.log~ | sed 's/libxyzzy/$(SHD_NAME)/' >./jump-dir/jump.log
-	rm ./jump-dir/jump.log~
-	/usr/dll/bin/getvars
-	/usr/dll/bin/getfuncs
-	rm ./jump-dir/jump.log
-	nm --no-cplus -o /usr/lib/libc.sa | grep __GOT_ | sed 's/ __GOT__/_/' >./jump-dir/jump.import
-	touch shared_1.done
-
-shared_2: shared_1.done
-	make clean
-	export JUMP_LIB=$(SHD_NAME)
-	export JUMP_DIR=`pwd`/jump-dir
-	make SHARED_FLAGS=-B/usr/dll/jump/ 
-	/usr/dll/bin/getsize >./jump-dir/jump.vars-new
-	mv ./jump-dir/jump.vars-new ./jump-dir/jump.vars
-	/usr/dll/bin/mkimage -l $(SHD_NAME) -v $(SHD_VER) -a $(SHD_ADR) -j $(SHD_JTS) -g $(SHD_GOT) -- $(OBJS) -lgcc -lc 
-	/usr/dll/bin/mkstubs -l $(SHD_NAME) -v $(SHD_VER) -a $(SHD_ADR) -j $(SHD_JTS) -g $(SHD_GOT) -- $(SHD_NAME)
-	/usr/dll/bin/verify-shlib -l $(SHD_NAME).so.$(SHD_VER) $(SHD_NAME).sa
-	touch shared_2.done
-	
-	
 $(EXP_INC):
 	rm -f $@
 	ln -s $(CWD)/`basename $@` $@
-
 
 
 depend:

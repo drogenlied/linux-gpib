@@ -74,7 +74,10 @@ o) cd to your linux-gpib directory and type 'make config'.  If you
 
 	Type 'make install' (as root).  This will copy the kernel driver to
 	/lib/modules/<kernel version>/misc as well as install the library
-	and headers files into /usr/local.  Lastly the configuration utility looks
+	and headers files into /usr/local.  Make sure the directory you installed
+	the shared library to (/usr/local/lib) is listed in your /etc/ld.so.conf file,
+	so that ld can find libgpib.so.  If it is not listed, add it and then run 'ldconfig'.
+	 Lastly the configuration utility looks
 	for linux-gpib related files on your system and asks if you wish to create
 	them if there aren't any.
 

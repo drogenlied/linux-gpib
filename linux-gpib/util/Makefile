@@ -26,13 +26,13 @@ OBJS = ibchk.o
 all: ibchk ibdump
 
 
-ibchk: $(OBJS) ../lib/libgpib.a
+ibchk: $(OBJS)
 	$(CC) -o ibchk $(CFLAGS) $(OBJS) $(LIBS) 
 
 
 DUMP_OBJS = ibdump.o ibDevMan.o
 
-ibdump: $(DUMP_OBJS) ../lib/libgpib.a
+ibdump: $(DUMP_OBJS)
 	$(CC) -o ibdump $(CFLAGS) $(INCLUDES) $(DUMP_OBJS) $(LIBS) 
 
 clean: 
