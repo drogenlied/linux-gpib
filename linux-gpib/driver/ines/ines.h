@@ -19,6 +19,10 @@
 #ifndef _INES_GPIB_H
 #define _INES_GPIB_H
 
+#include <nec7210.h>
+#include <gpibP.h>
+#include <linux/config.h>
+
 typedef struct
 {
 	nec7210_private_t nec7210_priv;

@@ -17,10 +17,11 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "board.h"
+#include "ines.h"
 
 #include <linux/pci.h>
 #include <asm/io.h>
+#include <linux/module.h>
 
 #define INES_VENDOR_ID 0x10b5
 #define INES_DEV_ID    0x9050
@@ -156,8 +157,8 @@ int ines_pci_attach(gpib_device_t *device)
 		return -ENOMEM;
 	ines_priv = device->private_data;
 	nec_priv = &ines_priv->nec7210_priv;
-	nec_priv->read_byte = ioport_read_byte;
-	nec_priv->write_byte = ioport_write_byte;
+	nec_priv->read_byte = nec7210_ioport_read_byte;
+	nec_priv->write_byte = nec7210_ioport_write_byte;
 	nec_priv->offset = ines_reg_offset;
 
 	// find board
@@ -235,3 +236,43 @@ void ines_pci_detach(gpib_device_t *device)
 	}
 	ines_free_private(device);
 }
+
+int init_module(void)
+{
+	int err = 0;
+
+	EXPORT_NO_SYMBOLS;
+
+	INIT_LIST_HEAD(&ines_pci_interface.list);
+
+	gpib_register_driver(&ines_pci_interface);
+
+#ifdef CONFIG_PCMCIA
+	INIT_LIST_HEAD(&ines_pcmcia_interface.list);
+
+	gpib_register_driver(&ines_pcmcia_interface);
+	err += ines_pcmcia_init_module();
+#endif
+	if(err)
+		return -1;
+
+	return 0;
+}
+
+void cleanup_module(void)
+{
+	gpib_unregister_driver(&ines_pci_interface);
+#ifdef CONFIG_PCMCIA
+	gpib_unregister_driver(&ines_pcmcia_interface);
+	ines_pcmcia_cleanup_module();
+#endif
+}
+
+
+
+
+
+
+
+
+

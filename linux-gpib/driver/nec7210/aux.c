@@ -103,6 +103,7 @@ void nec7210_remote_enable(gpib_device_t *device, nec7210_private_t *priv, int e
 }
 
 EXPORT_SYMBOL(nec7210_take_control);
+EXPORT_SYMBOL(nec7210_go_to_standby);
 EXPORT_SYMBOL(nec7210_interface_clear);
 EXPORT_SYMBOL(nec7210_remote_enable);
 

@@ -18,6 +18,9 @@
 #ifndef _NEC7210_H
 #define _NEC7210_H
 
+#include <linux/types.h>
+#include <gpib_types.h>
+
 /* struct used to provide variables local to a nec7210 chip */
 typedef struct nec7210_private_struct nec7210_private_t;
 struct nec7210_private_struct
@@ -87,10 +90,10 @@ extern int nec7210_serial_poll_response(gpib_device_t *device, nec7210_private_t
 extern void nec7210_board_reset(nec7210_private_t *priv);
 
 // wrappers for io functions
-extern uint8_t ioport_read_byte(nec7210_private_t *priv, unsigned int register_num);
-extern void ioport_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num);
-extern uint8_t iomem_read_byte(nec7210_private_t *priv, unsigned int register_num);
-extern void iomem_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num);
+extern uint8_t nec7210_ioport_read_byte(nec7210_private_t *priv, unsigned int register_num);
+extern void nec7210_ioport_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num);
+extern uint8_t nec7210_iomem_read_byte(nec7210_private_t *priv, unsigned int register_num);
+extern void nec7210_iomem_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num);
 
 // interrupt service routine
 void nec7210_interrupt(gpib_device_t *device, nec7210_private_t *priv);

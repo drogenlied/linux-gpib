@@ -19,6 +19,9 @@
 #ifndef _CB7210_H
 #define _CB7210_H
 
+#include <linux/config.h>
+#include <nec7210.h>
+#include <gpibP.h>
 #include "amccs5933.h"
 
 #define PCI_DEVICE_ID_CBOARDS_PCI_GPIB 0x6

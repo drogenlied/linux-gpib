@@ -47,6 +47,7 @@ typedef struct {
  * This really should be in a different header file.
  */
 #include <linux/wait.h>
+#include <asm/semaphore.h>
 
 typedef struct gpib_interface_struct gpib_interface_t;
 typedef struct gpib_device_struct gpib_device_t;

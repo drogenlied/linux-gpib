@@ -18,7 +18,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "board.h"
+#include "tnt4882.h"
 #include <linux/ioport.h>
 #include <linux/sched.h>
 #include <linux/module.h>
@@ -157,8 +157,8 @@ int ni_isa_attach(gpib_device_t *device)
 		return -ENOMEM;
 	tnt_priv = device->private_data;
 	nec_priv = &tnt_priv->nec7210_priv;
-	nec_priv->read_byte = ioport_read_byte;
-	nec_priv->write_byte = ioport_write_byte;
+	nec_priv->read_byte = nec7210_ioport_read_byte;
+	nec_priv->write_byte = nec7210_ioport_write_byte;
 	nec_priv->offset = atgpib_reg_offset;
 
 	// allocate ioports
@@ -184,11 +184,11 @@ int ni_isa_attach(gpib_device_t *device)
 
 	nec7210_board_reset(nec_priv);
 
-	// enable interrupt
-	outb(1, nec_priv->iobase + INTRT);
+	// enable passing of nec7210 interrupts
+	outb(0x2, nec_priv->iobase + IMR3);
 
-	// XXX set clock register for 20MHz? driving frequency
-	write_byte(nec_priv, ICR | 8, AUXMR);
+	// enable interrupt
+	outb(0x1, nec_priv->iobase + INTRT);
 
 	// enable nec7210 interrupts
 	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
@@ -222,4 +222,28 @@ void ni_isa_detach(gpib_device_t *device)
 	}
 	tnt4882_free_private(device);
 }
+
+int init_module(void)
+{
+	EXPORT_NO_SYMBOLS;
+
+	INIT_LIST_HEAD(&ni_isa_interface.list);
+
+	gpib_register_driver(&ni_isa_interface);
+
+	return 0;
+}
+
+void cleanup_module(void)
+{
+	gpib_unregister_driver(&ni_isa_interface);
+}
+
+
+
+
+
+
+
+
 

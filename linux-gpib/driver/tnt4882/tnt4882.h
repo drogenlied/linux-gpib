@@ -19,6 +19,9 @@
 #ifndef _TNT4882_H
 #define _TNT4882_H
 
+#include <nec7210.h>
+#include <gpibP.h>
+
 // struct which defines private_data for tnt4882 devices
 typedef struct
 {
@@ -85,6 +88,52 @@ static const int atgpib_iosize = 32;
 #define ISR3	0x1a		/* T488 Interrupt Status Register 3 */
 #define DMA_EN	0x5		/* DMA Enable Register (Key Port) */
 
+/*============================================================*/
+
+/* TURBO-488 registers bit definitions */
+
+/* STS1 -- Status Register 1 (read only) */
+#define S_DONE          (0x80)	/* DMA done                           */
+#define S_SC            (0x40)	/* is system contoller                */
+#define S_IN            (0x20)	/* DMA in (to memory)                 */
+#define S_DRQ           (0x10)	/* DRQ line (for diagnostics)         */
+#define S_STOP          (0x08)	/* DMA stopped                        */
+#define S_NDAV          (0x04)	/* inverse of DAV                     */
+#define S_HALT          (0x02)	/* status of transfer machine         */
+#define S_GSYNC         (0x01)	/* indicates if GPIB is in sync w I/O */
+
+/* CFG -- Configuration Register (write only) */
+#define	C_CMD	        (1<<7)	/* FIFO 'bcmd' in progress            */
+#define	C_TLCH	     (1<<6)	/* halt DMA on TLC interrupt          */
+#define	C_IN	        (1<<5)	/* DMA is a GPIB read                 */
+#define	C_A_B	        (1<<4)	/* fifo order 1=motorola, 0=intel     */
+#define	C_CCEN	     (1<<3)	/* enable carry cycle                 */
+#define	C_TMOE	     (1<<2)	/* enable CPU bus time limit          */
+#define	C_T_B	        (1<<1)  	/* tmot reg is: 1=125ns clocks,       */
+						/* 0=num bytes                        */
+#define	C_B16	        (1<<0)  	/* 1=FIFO is 16-bit register, 0=8-bit */
+
+/* ISR3 -- Interrupt Status Register (read only) */
+#define	HR_INTR	        (1<<7)	/* 1=board is interrupting	*/
+#define	HR_SRQI_CIC      (1<<5)	/* SRQ asserted and we are CIC	*/
+#define	HR_STOP          (1<<4)	/* fifo empty or STOP command	*/
+						/* issued			*/
+#define	HR_NFF	        (1<<3)	/* NOT full fifo		*/
+#define	HR_NEF	        (1<<2)	/* NOT empty fifo		*/
+#define	HR_TLCI	        (1<<1)	/* TLC interrupt asserted	*/
+#define	HR_DONE          (1<<0)	/* DMA done			*/
+
+/* CMDR -- Command Register */
+#define	GO		(1<<2)	/* start DMA 			*/
+#define	STOP		(1<<3)	/* stop DMA 			*/
+#define	RSTFIFO		(1<<4)	/* reset the FIFO 		*/
+#define SFTRST		0x22	/* issue a software reset 	*/
+
+/* STS2 -- Status Register 2 */
+#define AFFN		(1<<3)	/* "A full FIFO NOT"  (0=FIFO full)  */
+#define AEFN		(1<<2)	/* "A empty FIFO NOT" (0=FIFO empty) */
+#define BFFN		(1<<1)	/* "B full FIFO NOT"  (0=FIFO full)  */
+#define BEFN		(1<<0)	/* "B empty FIFO NOT" (0=FIFO empty) */
 
 
 #endif	// _TNT4882_H

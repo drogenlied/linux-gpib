@@ -37,7 +37,7 @@ EXP_INC = $(EXPORTED_INCLUDES:%=$(ROOT)/include/%)
 CWD := `pwd`
 
 MAKE = make OPTIONS="$(OPTIONS) " -C
-SUBDIRS = nec7210 protocol sys
+SUBDIRS = nec7210 protocol sys cb7210 ines tnt4882 pc2
 
 
 all : $(EXP_INC) subdirs gpib-common.o
@@ -81,8 +81,11 @@ device:
 
 
 
-install:
-	$(INSTALL) -D nec7210/nec7210.o gpib-common.o $(MODLIB)/misc/
+install: 
+	$(INSTALL) -D gpib-common.o $(MODLIB)/misc/gpib-common.o
+	for i in $(SUBDIRS); do \
+		$(MAKE) $$i install; \
+	done	
 	depmod -a $(KERNELRELEASE)
 
 

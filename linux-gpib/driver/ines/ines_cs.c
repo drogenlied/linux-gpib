@@ -18,7 +18,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "board.h"
+#include "ines.h"
 
 #ifdef CONFIG_PCMCIA
 #include <linux/kernel.h>
@@ -645,16 +645,11 @@ int ines_pcmcia_attach(gpib_device_t *device)
 		return -ENOMEM;
 	ines_priv = device->private_data;
 	nec_priv = &ines_priv->nec7210_priv;
-	nec_priv->read_byte = ioport_read_byte;
-	nec_priv->write_byte = ioport_write_byte;
+	nec_priv->read_byte = nec7210_ioport_read_byte;
+	nec_priv->write_byte = nec7210_ioport_write_byte;
 	nec_priv->offset = ines_reg_offset;
 
 	nec_priv->iobase = dev_list->io.BasePort1;
-
-	/* CBI 4882 reset */
-	write_byte(nec_priv, HS_RESET7210, HS_INT_LEVEL);
-	write_byte(nec_priv, 0, HS_INT_LEVEL);
-	write_byte(nec_priv, 0, HS_MODE); /* disable system control */
 
 	if(request_irq(dev_list->irq.AssignedIRQ, ines_interrupt, isr_flags, "pcmcia-gpib", device))
 	{

@@ -18,7 +18,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "board.h"
+#include "cb7210.h"
 #include <linux/ioport.h>
 #include <linux/sched.h>
 #include <linux/module.h>
@@ -184,8 +184,8 @@ int cb_pci_attach(gpib_device_t *device)
 		return -ENOMEM;
 	cb_priv = device->private_data;
 	nec_priv = &cb_priv->nec7210_priv;
-	nec_priv->read_byte = ioport_read_byte;
-	nec_priv->write_byte = ioport_write_byte;
+	nec_priv->read_byte = nec7210_ioport_read_byte;
+	nec_priv->write_byte = nec7210_ioport_write_byte;
 	nec_priv->offset = cb7210_reg_offset;
 
 	// find board
@@ -310,8 +310,8 @@ int cb_isa_attach(gpib_device_t *device)
 	cb_priv = device->private_data;
 	nec_priv = &cb_priv->nec7210_priv;
 	nec_priv->offset = cb7210_reg_offset;
-	nec_priv->read_byte = ioport_read_byte;
-	nec_priv->write_byte = ioport_write_byte;
+	nec_priv->read_byte = nec7210_ioport_read_byte;
+	nec_priv->write_byte = nec7210_ioport_write_byte;
 
 	if(request_region(device->ibbase, cb7210_iosize, "isa-gpib"));
 	{
@@ -376,3 +376,46 @@ void cb_isa_detach(gpib_device_t *device)
 	}
 	cb7210_free_private(device);
 }
+
+int init_module(void)
+{
+	int err = 0;
+
+	EXPORT_NO_SYMBOLS;
+
+	INIT_LIST_HEAD(&cb_pci_interface.list);
+	INIT_LIST_HEAD(&cb_isa_interface.list);
+
+	gpib_register_driver(&cb_pci_interface);
+	gpib_register_driver(&cb_isa_interface);
+
+#ifdef CONFIG_PCMCIA
+	INIT_LIST_HEAD(&cb_pcmcia_interface.list);
+
+	gpib_register_driver(&cb_pcmcia_interface);
+	err += cb_pcmcia_init_module();
+#endif
+	if(err)
+		return -1;
+
+	return 0;
+}
+
+void cleanup_module(void)
+{
+	gpib_unregister_driver(&cb_pci_interface);
+	gpib_unregister_driver(&cb_isa_interface);
+#ifdef CONFIG_PCMCIA
+	gpib_unregister_driver(&cb_pcmcia_interface);
+	cb_pcmcia_cleanup_module();
+#endif
+}
+
+
+
+
+
+
+
+
+

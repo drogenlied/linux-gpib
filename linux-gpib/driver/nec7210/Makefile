@@ -21,6 +21,9 @@ nec7210.o: $(OBJS)
 clean:
 	$(RM) *.o .depend
 
+install:
+	$(INSTALL) -D nec7210.o $(MODLIB)/misc/nec7210.o
+
 
 include $(ROOT)/makefile.inc
 

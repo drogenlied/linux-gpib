@@ -21,7 +21,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "board.h"
+#include "cb7210.h"
 
 #ifdef CONFIG_PCMCIA
 
@@ -626,8 +626,8 @@ int cb_pcmcia_attach(gpib_device_t *device)
 		return -ENOMEM;
 	cb_priv = device->private_data;
 	nec_priv = &cb_priv->nec7210_priv;
-	nec_priv->read_byte = ioport_read_byte;
-	nec_priv->write_byte = ioport_write_byte;
+	nec_priv->read_byte = nec7210_ioport_read_byte;
+	nec_priv->write_byte = nec7210_ioport_write_byte;
 	nec_priv->offset = cb7210_reg_offset;
 
 	nec_priv->iobase = dev_list->io.BasePort1;

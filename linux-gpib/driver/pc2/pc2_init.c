@@ -17,7 +17,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "board.h"
+#include "pc2.h"
 #include <linux/ioport.h>
 #include <linux/sched.h>
 #include <linux/module.h>
@@ -180,8 +180,8 @@ int pc2_attach(gpib_device_t *device)
 	pc2_priv = device->private_data;
 	nec_priv = &pc2_priv->nec7210_priv;
 	nec_priv->offset = pc2_reg_offset;
-	nec_priv->read_byte = ioport_read_byte;
-	nec_priv->write_byte = ioport_write_byte;
+	nec_priv->read_byte = nec7210_ioport_read_byte;
+	nec_priv->write_byte = nec7210_ioport_write_byte;
 
 	if(request_region(device->ibbase, pc2_iosize, "pc2"));
 	{
@@ -260,8 +260,8 @@ int pc2a_attach(gpib_device_t *device)
 	pc2_priv = device->private_data;
 	nec_priv = &pc2_priv->nec7210_priv;
 	nec_priv->offset = pc2a_reg_offset;
-	nec_priv->read_byte = ioport_read_byte;
-	nec_priv->write_byte = ioport_write_byte;
+	nec_priv->read_byte = nec7210_ioport_read_byte;
+	nec_priv->write_byte = nec7210_ioport_write_byte;
 
 	switch( device->ibbase ){
 
@@ -365,4 +365,31 @@ void pc2a_detach(gpib_device_t *device)
 	}
 	free_private(device);
 }
+
+int init_module(void)
+{
+	EXPORT_NO_SYMBOLS;
+
+	INIT_LIST_HEAD(&pc2_interface.list);
+	INIT_LIST_HEAD(&pc2a_interface.list);
+
+	gpib_register_driver(&pc2_interface);
+	gpib_register_driver(&pc2a_interface);
+
+	return 0;
+}
+
+void cleanup_module(void)
+{
+	gpib_unregister_driver(&pc2_interface);
+	gpib_unregister_driver(&pc2a_interface);
+}
+
+
+
+
+
+
+
+
 
