@@ -27,6 +27,16 @@ AC_ARG_ENABLE([driver-debug],[  --enable-driver-debug	Enable debug spam to conso
 if test $ENABLE_DRIVER_SPAM == yes ; then
 	AC_DEFINE([GPIB_CONFIG_KERNEL_DEBUG],[1],[Define to enable debug spam to console in drivers])
 fi
+AC_ARG_ENABLE([guile-binding],[  --disable-guile-binding	Disable Guile binding to libgpib],
+	[BIND_GUILE=$enableval],[BIND_GUILE="yes"])
+AC_ARG_ENABLE([perl-binding],[  --disable-perl-binding	Disable Perl binding to libgpib],
+	[BIND_PERL=$enableval],[BIND_PERL="yes"])
+AC_ARG_ENABLE([php-binding],[  --disable-php-binding	Disable PHP binding to libgpib],
+	[BIND_PHP=$enableval],[BIND_PHP="yes"])
+AC_ARG_ENABLE([python-binding],[  --disable-python-binding	Disable Python binding to libgpib],
+	[BIND_PYTHON=$enableval],[BIND_PYTHON="yes"])
+AC_ARG_ENABLE([tcl-binding],[  --disable-tcl-binding	Disable TCL binding to libgpib],
+	[BIND_TCL=$enableval],[BIND_TCL="yes"])
 
 dnl check kernel source directory
 AC_ARG_WITH(linux-srcdir,
@@ -56,12 +66,6 @@ if [[ $? != 0 ]]; then
 	AC_MSG_ERROR([Failed to get compile flags from Linux kernel directory.])
 fi
 [echo \ ok]
-
-BIND_PERL="yes"
-BIND_PHP="yes"
-BIND_PYTHON="yes"
-BIND_TCL="yes"
-BIND_GUILE="yes"
 
 dnl Checks for programs.
 AC_PROG_INSTALL
