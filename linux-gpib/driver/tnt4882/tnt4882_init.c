@@ -257,7 +257,15 @@ int ni_pci_attach(gpib_board_t *board)
 	{
 		if( mite_device_id( tnt_priv->mite ) == PCI_DEVICE_ID_NI_GPIB ||
 			mite_device_id( tnt_priv->mite ) == PCI_DEVICE_ID_NI_GPIB_PLUS )
+		{
+			if( board->pci_bus >=0 && board->pci_bus !=
+				tnt_priv->mite->pcidev->bus->number )
+				continue;
+			if( board->pci_slot >= 0 && board->pci_slot !=
+				PCI_SLOT( tnt_priv->mite->pcidev->devfn ) )
+				continue;
 			break;
+		}
 	}
 	if(tnt_priv->mite == NULL)
 	{

@@ -143,6 +143,7 @@ int ibBoardOpen( ibBoard_t *board )
 		setIberr( EDVR );
 		setIbcnt( errno );
 		fprintf( stderr, "libgpib: ibBoardOpen failed to open device file\n" );
+		perror( "libgpib" );
 		return -1;
 	}
 	board->fileno = fd;

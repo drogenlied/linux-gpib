@@ -242,8 +242,8 @@ int cb_pci_attach(gpib_board_t *board)
 	cb_priv = board->private_data;
 	nec_priv = &cb_priv->nec7210_priv;
 	
-	// find board
-	cb_priv->pci_device = pci_find_device(PCI_VENDOR_ID_CBOARDS, PCI_DEVICE_ID_CBOARDS_PCI_GPIB, NULL);
+	cb_priv->pci_device = gpib_pci_find_device( board, PCI_VENDOR_ID_CBOARDS,
+		PCI_DEVICE_ID_CBOARDS_PCI_GPIB, NULL);
 	if(cb_priv->pci_device == NULL)
 	{
 		printk("GPIB: no PCI-GPIB board found\n");

@@ -206,7 +206,8 @@ int cec_pci_attach(gpib_board_t *board)
 
 	// find board
 	cec_priv->pci_device = NULL;
-	while((cec_priv->pci_device = pci_find_device(CEC_VENDOR_ID, CEC_DEV_ID, cec_priv->pci_device)))
+	while( ( cec_priv->pci_device = gpib_pci_find_device( board, CEC_VENDOR_ID,
+		CEC_DEV_ID, cec_priv->pci_device ) ) )
 	{
 		// check for board with plx9050 controller
 		if(cec_priv->pci_device->subsystem_device == CEC_SUBID)

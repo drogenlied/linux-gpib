@@ -23,23 +23,9 @@
 #include <linux/wait.h>
 #include <linux/list.h>
 #include <linux/fs.h>
+#include <linux/pci.h>
 
 MODULE_LICENSE("GPL");
-
-/*
- * Linux initialization functions
- */
-int osInit(void)
-{
-	return 1;
-}
-
-
-void osReset(void)
-{
-}
-
-
 
 /*******************************************************************************
 ********
@@ -178,5 +164,23 @@ void cleanup_module(void)
 	}
 }
 
-EXPORT_SYMBOL(gpib_register_driver);
-EXPORT_SYMBOL(gpib_unregister_driver);
+struct pci_dev* gpib_pci_find_device( const gpib_board_t *board, unsigned int vendor_id,
+	unsigned int device_id, const struct pci_dev *from)
+{
+	struct pci_dev *pci_device = ( struct pci_dev* ) from;
+
+	while( ( pci_device = pci_find_device( vendor_id, device_id, pci_device ) ) )
+	{
+		if( board->pci_bus >=0 && board->pci_bus != pci_device->bus->number )
+			continue;
+		if( board->pci_slot >= 0 && board->pci_slot !=
+			PCI_SLOT( pci_device->devfn ) )
+			continue;
+		return pci_device;
+	}
+	return NULL;
+}
+
+EXPORT_SYMBOL( gpib_register_driver );
+EXPORT_SYMBOL( gpib_unregister_driver );
+EXPORT_SYMBOL( gpib_pci_find_device );
