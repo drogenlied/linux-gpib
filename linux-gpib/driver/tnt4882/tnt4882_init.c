@@ -176,7 +176,7 @@ int ni_pci_attach(gpib_board_t *board)
 {
 	tnt4882_private_t *tnt_priv;
 	nec7210_private_t *nec_priv;
-	int isr_flags = 0;
+	int isr_flags = SA_SHIRQ;
 
 	board->status = 0;
 
@@ -298,12 +298,11 @@ int ni_isa_attach(gpib_board_t *board)
 	nec_priv->offset = atgpib_reg_offset;
 
 	// allocate ioports
-	if(check_region(board->ibbase, atgpib_iosize) < 0)
+	if(request_region(board->ibbase, atgpib_iosize, "atgpib") < 0)
 	{
 		printk("gpib: ioports are already in use");
 		return -1;
 	}
-	request_region(board->ibbase, atgpib_iosize, "atgpib");
 	nec_priv->iobase = board->ibbase;
 
 	// get irq
@@ -318,16 +317,16 @@ int ni_isa_attach(gpib_board_t *board)
 	udelay(1);
 	outb(SFTRST, nec_priv->iobase + CMDR);	/* Turbo488 software reset */
 	udelay(1);
-	writeb(SETSC, nec_priv->iobase + CMDR);	
+	outb(SETSC, nec_priv->iobase + CMDR);	
 
 	// turn off one-chip mode
-	writeb(NODMA, nec_priv->iobase + HSSEL);
+	outb(NODMA, nec_priv->iobase + HSSEL);
 
 	// make sure we are in 7210 mode
-	writeb(AUX_7210, nec_priv->iobase + AUXCR);
+	outb(AUX_7210, nec_priv->iobase + AUXCR);
 	udelay(1);
 	// registers might be swapped, so write it to the swapped address too
-	writeb(AUX_7210, nec_priv->iobase +  SWAPPED_AUXCR);
+	outb(AUX_7210, nec_priv->iobase +  SWAPPED_AUXCR);
 	udelay(1);
 
 	nec7210_board_reset(nec_priv);
