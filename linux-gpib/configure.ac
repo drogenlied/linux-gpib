@@ -49,6 +49,19 @@ if [[ ! -f "$LINUX_SRCDIR/.hdepend" ]];then
 	AC_MSG_ERROR([You need to run \'make dep\' on the kernel source before continuing.])
 fi
 [echo \ ok]
+dnl get compile flags for modules from linux kernel source tree
+[echo -n checking Linux kernel compile flags... ]
+(cd util/linux_flags/ && make --quiet LINUXDIR=$LINUX_SRCDIR)
+if [[ $? != 0 ]]; then
+	AC_MSG_ERROR([Failed to get compile flags from Linux kernel directory.])
+fi
+[echo \ ok]
+
+BIND_PERL="yes"
+BIND_PHP="yes"
+BIND_PYTHON="yes"
+BIND_TCL="yes"
+BIND_GUILE="yes"
 
 dnl Checks for programs.
 AC_PROG_INSTALL
@@ -60,14 +73,46 @@ AC_PATH_PROG(JW_PATH, jw, no)
 if test $JW_PATH == no ; then
   AC_MSG_WARN([docbook-tools (jw) not found, disabling documentation])
 fi
-AM_CONDITIONAL(HAVE_DOCBOOK, [test "$JW_PATH" != no])
 AM_PATH_PYTHON
+AC_PATH_PROG([PERL], [perl], [no], [])
+if test $PERL == "no"; then
+	AC_MSG_WARN([perl not found, disabling perl binding])
+	BIND_PERL="no"
+fi
+AC_PATH_PROG([TCLSH], [tclsh], [no], [])
+if test $TCLSH == "no"; then
+	AC_MSG_WARN([tclsh not found, disabling TCL binding])
+	BIND_TCL="no"
+fi
+AC_PATH_PROG([PHP_CONFIG], [php-config], [no],[])
+if test $PHP_CONFIG == "no"; then
+	AC_MSG_WARN([php-config not found, disabling PHP binding])
+	BIND_PHP="no"
+fi
 
 dnl Checks for libraries.
+AC_CHECK_LIB([guile],[gh_define],[],
+	[BIND_GUILE="no";AC_MSG_WARN([libguile not found, disabling guile binding])],[])
 
 dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS(unistd.h sys/param.h sys/time.h time.h sys/mkdev.h sys/sysmacros.h string.h memory.h fcntl.h dirent.h sys/ndir.h ndir.h alloca.h locale.h )
+AM_CHECK_PYTHON_HEADERS([],[BIND_PYTHON=no;AC_MSG_WARN([python headers not found, disabling python binding])])
+AC_CHECK_HEADER([libguile.h],[],[BIND_GUILE="no";AC_MSG_WARN([libguile headers not found, disabling guile binding])])
+
+if test $TCLSH != "no"; then
+TCL_LIBRARY=$(echo 'puts $tcl_library' | $TCLSH)
+TCL_CONFIG=$TCL_LIBRARY/tclConfig.sh
+TCL_INC_DIR=$(echo 'echo $TCL_INC_DIR' | cat $TCL_CONFIG - | $SHELL)
+AC_CHECK_HEADER([$TCL_INC_DIR/tcl.h],[],[BIND_TCL="no";AC_MSG_WARN([TCL headers not found, disabling TCL binding])])
+fi
+
+if test $PHP_CONFIG != "no"; then
+SAVE_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $($PHP_CONFIG --includes)"
+AC_CHECK_HEADER([php.h],[],[BIND_PHP="no";AC_MSG_WARN([PHP headers not found, disabling TCL binding])])
+CPPFLAGS=$SAVE_CPPFLAGS
+fi
 
 AC_HEADER_MAJOR
 AC_FUNC_ALLOCA
@@ -89,15 +134,24 @@ IBMAJOR=160
 AC_SUBST(IBMAJOR)
 AC_DEFINE([IBMAJOR],[160],[Major number of device files])
 
-dnl get compile flags for modules from linux kernel source tree
-AC_CONFIG_COMMANDS([util/linux_flags/flags],[
-	(cd util/linux_flags/ && make --quiet LINUXDIR=$LINUX_SRCDIR)
-	if [[ $? != 0 ]]; then
-		AC_MSG_ERROR([Failed to get compile flags from Linux kernel directory.])
-	fi
-	],[LINUX_SRCDIR=$LINUX_SRCDIR])
+echo
+echo Configuration:
+AM_CONDITIONAL(HAVE_DOCBOOK, [test "$JW_PATH" != no])
+AM_CONDITIONAL(BIND_GUILE, [test "$BIND_GUILE" == "yes"])
+echo "Guile binding: $BIND_GUILE"
+AM_CONDITIONAL(BIND_PERL, [test "$BIND_PERL" == "yes"])
+echo "Perl binding: $BIND_PERL"
+AM_CONDITIONAL(BIND_PHP, [test "$BIND_PHP" == "yes"])
+echo "PHP binding: $BIND_PHP"
+AM_CONDITIONAL(BIND_PYTHON, [test "$BIND_PYTHON" == "yes"])
+echo "Python binding: $BIND_PYTHON"
+AM_CONDITIONAL(BIND_TCL, [test "$BIND_TCL" == "yes"])
+echo "TCL binding: $BIND_TCL"
+
 dnl create non-automake makefiles
-AC_CONFIG_COMMANDS([language/perl/Makefile],[(cd language/perl/ && perl Makefile.PL)],[])
+if test $BIND_PERL != "no"; then
+	AC_CONFIG_COMMANDS([language/perl/Makefile],[(cd language/perl/ && $PERL Makefile.PL)],[PERL=$PERL])
+fi
 
 AC_OUTPUT([\
 	Makefile \

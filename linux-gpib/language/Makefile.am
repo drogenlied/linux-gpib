@@ -7,5 +7,34 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
-SUBDIRS = perl python tcl guile php
+SUBDIRS = $(PERL_SUBDIR) $(PYTHON_SUBDIR) $(PHP_SUBDIR) $(GUILE_SUBDIR) $(TCL_SUBDIR)
 
+if BIND_PERL
+PERL_SUBDIR=perl
+else
+PERL_SUBDIR=
+endif
+
+if BIND_PYTHON
+PYTHON_SUBDIR=python
+else
+PYTHON_SUBDIR=
+endif
+
+if BIND_PHP
+PHP_SUBDIR=php
+else
+PHP_SUBDIR=
+endif
+
+if BIND_GUILE
+GUILE_SUBDIR=guile
+else
+GUILE_SUBDIR=
+endif
+
+if BIND_TCL
+TCL_SUBDIR=tcl
+else
+TCL_SUBDIR=
+endif

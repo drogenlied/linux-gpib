@@ -41,3 +41,4 @@ device-file-check: /dev/gpib0
 #should move this to util/templates Makefile.am when it exists
 /etc/gpib.conf:
 	$(INSTALL_DATA) -D $(top_srcdir)/util/templates/gpib.conf /etc/gpib.conf
+
