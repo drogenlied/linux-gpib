@@ -105,7 +105,7 @@ device:
 
 
 install:
-	$(INSTALL) gpib$(DRIVER_DEVICE_ID).o /lib/modules/`uname -r`/misc
+	$(INSTALL) -D gpib$(DRIVER_DEVICE_ID).o /lib/modules/`uname -r`/misc/gpib$(DRIVER_DEVICE_ID).o
 
 
 
