@@ -6,7 +6,7 @@
 #
 #######################################################################
 
-CFLAGS= -I. -I../include -I ../driver/include -Wall -O2
+CFLAGS= -I. -I../include -I ../driver/include -Wall -O2 -D_REENTRANT --pedantic
 LDFLAGS = -L../lib
 
 SRCS = ibtest.c

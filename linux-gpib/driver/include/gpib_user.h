@@ -83,7 +83,7 @@ enum gpib_timeout
 	T30s,		/* Timeout of 30 sec (ideal)       */
 	T100s,		/* Timeout of 100 sec (ideal)      */
 	T300s,		/* Timeout of 300 sec (ideal)      */
-	T1000s,		/* Timeout of 1000 sec (maximum)   */
+	T1000s		/* Timeout of 1000 sec (maximum)   */
 };
 
 /* End-of-string (EOS) modes for use with ibeos */
@@ -129,18 +129,18 @@ enum gpib_timeout
 #define LAD 0x20 /* value to be 'ored' in to obtain listen address */
 #define TAD 0x40 /* value to be 'ored' in to obtain talk address   */
 
-extern inline uint8_t MLA( unsigned int addr )
+extern __inline__ uint8_t MLA( unsigned int addr )
 {
 	return addr | 0x20;
-};
+}
 
-extern inline uint8_t MTA( unsigned int addr )
+extern __inline__ uint8_t MTA( unsigned int addr )
 {
 	return addr | 0x40;
-};
+}
 
-extern inline uint8_t MSA( unsigned int addr )
+extern __inline__ uint8_t MSA( unsigned int addr )
 {
 	return addr | 0x60;
-};
+}
 

@@ -32,7 +32,7 @@ enum Action
 {
 	GPIB_WRITE,
 	GPIB_READ,
-	GPIB_QUIT,
+	GPIB_QUIT
 };
 
 // returns a device descriptor after prompting user for primary address
