@@ -45,18 +45,34 @@ IBLCL void bdPIOwrt( ibio_op_t *wrtop)
 #if DMAOP	// isa dma transfer
 	if(ibcnt < cnt)
 	{
+		/* program dma controller */
 		flags = claim_dma_lock();
 		disable_dma(ibdma);
 		wrtop->io_pbuf = virt_to_bus(wrtop->io_vbuf);
-
-		/* program dma controller */
 		clear_dma_ff ( ibdma );
 		// XXX what if io_cnt is too big?
 		set_dma_count( ibdma, cnt );
 		set_dma_addr ( ibdma, wrtop->io_pbuf);
 		set_dma_mode( ibdma, DMA_MODE_WRITE );
+		enable_dma(ibdma);
 		release_dma_lock(flags);
+
+		// enable board's ema
+		imr1_bits |= HR_DMAO;
+		GPIBout(IMR1, imr1_bits);
+
+		// suspend until message is sent
+		if(wait_event_interruptible(nec7210_write_wait, test_bit(0, &write_in_progress) == 0))
+		{
+			printk("gpib write interrupted!\n");
+			// XXX
+		}
+
 		ibcnt += cnt;
+
+		// disable board's ema
+		imr1_bits &= ~HR_DMAO;
+		GPIBout(IMR1, imr1_bits);
 	}
 
 #else	// PIO transfer
@@ -86,16 +102,16 @@ IBLCL void bdPIOwrt( ibio_op_t *wrtop)
 		}
 		// send first byte and let interrupt handler do the rest
 		GPIBout(CDOR, first_byte);
+
+		// suspend until message is sent
+		if(wait_event_interruptible(nec7210_write_wait, test_bit(0, &write_in_progress) == 0))
+		{
+			printk("gpib write interrupted!\n");
+			// XXX
+		}
 	}
 
 #endif	// DMAOP
-
-	// suspend until message is sent
-	if(wait_event_interruptible(nec7210_write_wait, test_bit(0, &write_in_progress) == 0))
-	{
-		printk("gpib write interrupted!\n");
-		// XXX
-	}
 
 	DBGprint(DBG_BRANCH, ("send EOI  "));
         /*send EOI */
