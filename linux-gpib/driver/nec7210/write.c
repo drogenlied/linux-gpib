@@ -21,15 +21,15 @@
 #include <asm/dma.h>
 
 static int pio_write_wait(gpib_board_t *board, nec7210_private_t *priv,
-	int wake_on_lacs_or_atn)
+	short wake_on_lacs, short wake_on_atn, short wake_on_bus_error)
 {
 	// wait until byte is ready to be sent
 	if(wait_event_interruptible(board->wait,
 		test_bit(WRITE_READY_BN, &priv->state) ||
-		test_bit(BUS_ERROR_BN, &priv->state) ||
 		test_bit(DEV_CLEAR_BN, &priv->state) ||
-		(wake_on_lacs_or_atn &&
-			(test_bit(ATN_NUM, &board->status) || test_bit(LACS_NUM, &board->status))) ||
+		(wake_on_bus_error && test_bit(BUS_ERROR_BN, &priv->state)) ||
+		(wake_on_lacs && test_bit(LACS_NUM, &board->status)) ||
+		(wake_on_atn && test_bit(ATN_NUM, &board->status)) ||
 		test_bit(TIMO_NUM, &board->status)))
 	{
 		GPIB_DPRINTK( "gpib write interrupted\n" );
@@ -66,19 +66,16 @@ static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 		if(current->need_resched)
 			schedule();
 
-		retval = pio_write_wait(board, priv, 0);
-		if(retval == -EIO)
+		retval = pio_write_wait(board, priv, 0, 0, priv->type == NEC7210);
+		if(priv->type == NEC7210 && retval == -EIO)
 		{
-			if(priv->type == NEC7210)
-			{
-				/* resend last byte on bus error, not required with cb7210 chip */
-				count--;
-				/* we can get unrecoverable bus errors,
-				 * so give up after a while */
-				bus_error_count++;
-				if(bus_error_count > max_bus_errors) return retval;
-				else continue;
-			}
+			/* resend last byte on bus error, not required with cb7210 chip */
+			count--;
+			/* we can get unrecoverable bus errors,
+			* so give up after a while */
+			bus_error_count++;
+			if(bus_error_count > max_bus_errors) return retval;
+			else continue;
 		}else if( retval < 0 ) return retval;
 
 		spin_lock_irqsave(&board->spinlock, flags);
@@ -86,7 +83,7 @@ static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 		write_byte(priv, buffer[ count++ ], CDOR);
 		spin_unlock_irqrestore(&board->spinlock, flags);
 	}
-	retval = pio_write_wait(board, priv, 1);
+	retval = pio_write_wait(board, priv, 1, 1, priv->type == NEC7210);
 	if( retval < 0 ) return retval;
 
 	return length;
