@@ -91,9 +91,9 @@ uint8_t tms9914_ioport_read_byte(tms9914_private_t *priv, unsigned int register_
 // wrapper for outb
 void tms9914_ioport_write_byte(tms9914_private_t *priv, uint8_t data, unsigned int register_num)
 {
+	outb(data, priv->iobase + register_num * priv->offset);
 	if(register_num == AUXCR)
 		udelay(1);
-	outb(data, priv->iobase + register_num * priv->offset);
 }
 
 // wrapper for readb
@@ -104,9 +104,9 @@ uint8_t tms9914_iomem_read_byte(tms9914_private_t *priv, unsigned int register_n
 // wrapper for writeb
 void tms9914_iomem_write_byte(tms9914_private_t *priv, uint8_t data, unsigned int register_num)
 {
+	writeb(data, priv->iobase + register_num * priv->offset);
 	if(register_num == AUXCR)
 		udelay(1);
-	writeb(data, priv->iobase + register_num * priv->offset);
 }
 
 int init_module(void)

@@ -135,80 +135,43 @@ set_svar BOARD_TYPE $REPLY
 
          case $BOARD_TYPE in 
 	
-	       ni_pci) echo "#define NIAT " >>../driver/include/gpib_board.h 
-			auto_recog=on
+	       ni_pci) auto_recog=on
                        ;;
-	       atgpib) echo "#define NIAT " >>../driver/include/gpib_board.h 
-		       IBBASE=0x2c0
+	       atgpib) IBBASE=0x2c0
 		       IBIRQ=11
 		       IBDMA=7
 		       ;;
-	       pcII) echo "#define NIPCII " >>../driver/include/gpib_board.h
-		       IBBASE=0x2b8
+	       pcII)   IBBASE=0x2b8
 		       IBIRQ=5
 		       IBDMA=1
 		       ;;
-	       pcIIa|ibm) echo "#define NIPCIIa " >>../driver/include/gpib_board.h 
-                      echo "#define NIPCII " >>../driver/include/gpib_board.h 
-		       IBBASE=0x02e1
+	       pcIIa|ibm) IBBASE=0x02e1
 		       IBIRQ=5
 		       IBDMA=1
                        ;;
-	       hp82335) echo "#define HP82335 " >>../driver/include/gpib_board.h 
-                        IBBASE=0xDC000
+	       hp82335) IBBASE=0xDC000
 		        IBIRQ=3
 		        IBDMA=1
                        ;;
-	       ziatech) echo "#define ZIATECH " >>../driver/include/gpib_board.h 
-                       echo "#define TMS9914 " >>../driver/include/gpib_board.h 
-                        IBBASE=0x210
+	       ziatech) IBBASE=0x210
 		        IBIRQ=3
 		        IBDMA=1
                        ;;
-	       cbi4882) echo "#define NIPCII " >>../driver/include/gpib_board.h 
-			echo "#define CBI_4882 " >>../driver/include/gpib_board.h 
-                        IBBASE=0x300
+	       cbi4882) IBBASE=0x300
 		        IBIRQ=5
 		        IBDMA=1
                        ;;
-	       cbi_pcmcia) echo "#define NIPCII " >>../driver/include/gpib_board.h 
-			echo "#define CBI_4882 " >>../driver/include/gpib_board.h 
-			echo "#define CBI_PCMCIA " >>../driver/include/gpib_board.h 
-                        IBBASE=0x200
-		        IBIRQ=5
-		        IBDMA=1
-			auto_recog=on
+	       cbi_pcmcia) auto_recog=on
                        ;;
-	       cbi_pci) echo "#define NIPCII " >>../driver/include/gpib_board.h 
-			echo "#define CBI_4882 " >>../driver/include/gpib_board.h 
-			echo "#define CBI_PCI " >>../driver/include/gpib_board.h 
-                        IBBASE=0x0
-		        IBIRQ=0
-		        IBDMA=0
-			auto_recog=on
+	       cbi_pci) auto_recog=on
                        ;;
 
-	       modbus_pci) echo "#define NIPCII " >>../driver/include/gpib_board.h 
-			echo "#define MODBUS_PCI " >>../driver/include/gpib_board.h 
-                        IBBASE=0x0
-		        IBIRQ=0
-		        IBDMA=0
-			auto_recog=on
+	       modbus_pci) auto_recog=on
                        ;;
-              ines_pci) echo "#define NIPCII " >>../driver/include/gpib_board.h
-                        echo "#define INES_PCI " >>../driver/include/gpib_board.h
-                        IBBASE=0x0
-                        IBIRQ=0
-                        IBDMA=0
-                        auto_recog=on
+              ines_pci) auto_recog=on
                        ;;
 
-              ines_pcmcia) echo "#define NIPCII " >>../driver/include/gpib_board.h
-                        echo "#define INES_PCMCIA " >>../driver/include/gpib_board.h
-                        IBBASE=0x0
-                        IBIRQ=0
-                        IBDMA=0
-                        auto_recog=on
+              ines_pcmcia) auto_recog=on
                        ;;
                *) echo "Error: no such board !"
                exit 1 ;;

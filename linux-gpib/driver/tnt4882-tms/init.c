@@ -1,8 +1,10 @@
 /***************************************************************************
-                          tnt4882_init.c  -  description
+                          tnt4882-tms/init.c  -  description
                              -------------------
  board specific initialization stuff for National Instruments boards
- using tnt4882 or compatible chips (at-gpib, etc).
+ using tnt4882, this driver puts the board into tms9914 compatibility mode
+ so I can test support for tms9914 compatible chips.
+
 
     begin                : Dec 2001
     copyright            : (C) 2001, 2002 by Frank Mori Hess
@@ -198,23 +200,28 @@ int ni_pci_attach(gpib_device_t *device)
 	tnt_priv->irq = mite_irq(tnt_priv->mite);
 
 	/* NAT 4882 reset */
-	udelay(1);
 	writeb(SFTRST, tms_priv->iobase + CMDR);	/* Turbo488 software reset */
 	udelay(1);
+	// enable system control
 	writeb(SETSC, tms_priv->iobase + CMDR);
-
-	// put it in 7210 mode
 	udelay(1);
-	writeb(0x99, tms_priv->iobase + 0xa);
 
-	// set SWAP bit
-	writeb(0x40, tms_priv->iobase + 0x17);
+	// turn off one-chip mode
+	writeb(NODMA, tms_priv->iobase + HSSEL);
 
-printk("CSR 0x%x\n", readb(tms_priv->iobase + 0x17));
+	// make sure we are in 7210 mode
+	write_byte(tms_priv, AUX_7210, AUXCR);
+	// registers might be swapped, so write it to the swapped address too
+	writeb(AUX_7210, tms_priv->iobase +  SWAPPED_AUXCR);
+	udelay(1);
+
+	// clear SWAP bit
+	writeb(0x0, tms_priv->iobase + KEYREG);
+
+printk("CSR 0x%x\n", readb(tms_priv->iobase + KEYREG));
 
 	// put it in 9914 mode
-	udelay(1);
-	writeb(0x15, tms_priv->iobase + 0xa);
+	writeb(AUX_9914, tms_priv->iobase + AUXMR);
 
 	// chip reset command
 	write_byte(tms_priv, 0x1c, AUXCR);

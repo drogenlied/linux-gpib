@@ -107,23 +107,22 @@ static const int tms9914_num_registers = 8;
 // write registers
 enum
 {
-	CDOR = 0,	/* data out register         */
-	PPR = 1,	/* parallel poll             */
-	SPMR = 2,	// serial poll mode register
-	ADR = 3,	// address register
-	AUXCR = 5,	/* auxiliary command         */
-	IMR0 = 6,	/* interrupt mask 0          */
-	IMR1 = 7,	/* interrupt mask 1          */
+	IMR0 = 0,	/* interrupt mask 0          */
+	IMR1 = 1,	/* interrupt mask 1          */
+	AUXCR = 3,	/* auxiliary command         */
+	ADR = 4,	// address register
+	SPMR = 5,	// serial poll mode register
+	PPR = 6,	/* parallel poll             */
+	CDOR = 7,	/* data out register         */
 };
 // read registers
 enum
 {
-	DIR = 0,	/* data in register            */
-	CPTR = 1,	/* command pass thru           */
-	ADSR = 4,	/* address status               */
-	BSR = 5,	/* bus-status                  */
-	ISR0 = 6,	/* interrupt status 0          */
-	ISR1 = 7,	/* interrupt status 1          */
+	ISR0 = 0,	/* interrupt status 0          */
+	ISR1 = 1,	/* interrupt status 1          */
+	ADSR = 2,	/* address status               */
+	CPTR = 6,	/* command pass thru           */
+	DIR = 7,	/* data in register            */
 };
 
 //bit definitions common to tms9914 compatible registers

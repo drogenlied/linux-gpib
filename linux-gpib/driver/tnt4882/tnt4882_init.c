@@ -227,6 +227,16 @@ int ni_pci_attach(gpib_device_t *device)
 	udelay(1);
 	writeb(SETSC, nec_priv->iobase + CMDR);	
 
+	// turn off one-chip mode
+	writeb(NODMA, nec_priv->iobase + HSSEL);
+
+	// make sure we are in 7210 mode
+	writeb(AUX_7210, nec_priv->iobase + AUXCR);
+	udelay(1);
+	// registers might be swapped, so write it to the swapped address too
+	writeb(AUX_7210, nec_priv->iobase +  SWAPPED_AUXCR);
+	udelay(1);
+
 	nec7210_board_reset(nec_priv);
 
 	// turn off one chip mode and dma
@@ -310,6 +320,16 @@ int ni_isa_attach(gpib_device_t *device)
 	outb(SFTRST, nec_priv->iobase + CMDR);	/* Turbo488 software reset */
 	udelay(1);
 	writeb(SETSC, nec_priv->iobase + CMDR);	
+
+	// turn off one-chip mode
+	writeb(NODMA, nec_priv->iobase + HSSEL);
+
+	// make sure we are in 7210 mode
+	writeb(AUX_7210, nec_priv->iobase + AUXCR);
+	udelay(1);
+	// registers might be swapped, so write it to the swapped address too
+	writeb(AUX_7210, nec_priv->iobase +  SWAPPED_AUXCR);
+	udelay(1);
 
 	nec7210_board_reset(nec_priv);
 

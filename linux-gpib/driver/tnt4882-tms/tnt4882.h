@@ -72,31 +72,38 @@ static const int atgpib_reg_offset = 2;
 // number of ioports used
 static const int atgpib_iosize = 32;
 
-// tnt4882 specific registers and bits
-#define GPIBC	0x1
-#define GPIBD	0x3
-#define KEYPRT	0x5
-#define INTRT 0x7
-/* TURBO488...                          */
-#define CFG	0x10
-#define IMR3	0x12
-#define CNTL	0x14
-#define CNTH	0x16
-#define FIFO	0x18	// fifo can be single 16 bit register or two 8 bit
-#define FIFOB	0x18
-#define FIFOA	0x19
-#define CCRG	0x1a	// carry cycle register
-#define CMDR	0x1c	// command register
-#define TIMER	0x1e	// timer register
+// tnt4882 register offsets
+enum
+{
+	ACCWR = 0x5,
+	INTRT = 0x7,
+	// register number for auxilliary command register when swap bit is set (9914 mode)
+	SWAPPED_AUXCR = 0xa,
+	// offset of auxilliary mode register in 7210 mode
+	AUXMR = 0xa,
+	HSSEL = 0xd,	// handshake select register
+	CFG = 0x10,
+	IMR3 = 0x12,
+	CNT0 = 0x14,
+	CNT1 = 0x16,
+	KEYREG = 0x17,	// key control register (7210 mode only)
+	FIFOB = 0x18,
+	FIFOA = 0x19,
+	CCRG = 0x1a,	// carry cycle register
+	CMDR = 0x1c,	// command register
+	TIMER = 0x1e,	// timer register
 
-#define STS1	0x10		/* T488 Status Register 1 */
-#define STS2	0x1c	        /* T488 Status Register 2 */
-#define ISR3	0x1a		/* T488 Interrupt Status Register 3 */
-#define DMA_EN	0x5		/* DMA Enable Register (Key Port) */
+	STS1 = 0x10,		/* T488 Status Register 1 */
+	STS2 = 0x1c,	        /* T488 Status Register 2 */
+	ISR3 = 0x1a,		/* T488 Interrupt Status Register 3 */
+};
 
 /*============================================================*/
 
 /* TURBO-488 registers bit definitions */
+
+/* HSSEL -- handshake select register (write only) */
+#define NODMA 0x10
 
 /* STS1 -- Status Register 1 (read only) */
 #define S_DONE          (0x80)	/* DMA done                           */
@@ -145,5 +152,11 @@ static const int atgpib_iosize = 32;
 #define BFFN		(1<<1)	/* "B full FIFO NOT"  (0=FIFO full)  */
 #define BEFN		(1<<0)	/* "B empty FIFO NOT" (0=FIFO empty) */
 
+// Auxilliary commands
+enum
+{
+	AUX_7210 = 0x99,	// switch to 7210 mode
+	AUX_9914 = 0x15,	// switch to 9914 mode
+};
 
 #endif	// _TNT4882_H
