@@ -35,6 +35,15 @@ int ibonl( int ud, int onl )
 		return status;
 	}
 
+	if( !onl )
+	{
+		retval = close_gpib_device( board, conf );
+		if( retval < 0 )
+		{
+			fprintf( stderr, "libgpib: failed to mark device as closed!\n" );
+		}
+	}
+
 	online_cmd.master = board->is_system_controller;
 	online_cmd.online = onl;
 	retval = ioctl( board->fileno, IBONL, &online_cmd );
@@ -62,11 +71,6 @@ int ibonl( int ud, int onl )
 	{
 		if( conf->is_interface )
 			ibBoardClose( conf->board );
-		retval = close_gpib_device( board, conf );
-		if( retval < 0 )
-		{
-			fprintf( stderr, "libgpib: failed to mark device as closed!\n" );
-		}
 		free( ibConfigs[ ud ] );
 		ibConfigs[ ud ] = NULL;
 	}
