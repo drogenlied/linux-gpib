@@ -36,6 +36,5 @@ Add pthread_atfork() calls for async io safety.
 
 lock on board online/offline
 
-seeing occasional read failure?
-
 libgpib_test: add test for serial poll without autopolling
+

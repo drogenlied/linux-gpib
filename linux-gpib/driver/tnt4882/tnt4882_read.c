@@ -51,13 +51,28 @@ static int fifo_xfer_done( tnt4882_private_t *tnt_priv )
 	return retval;
 }
 
+static int drain_fifo_words(tnt4882_private_t *tnt_priv, uint8_t *buffer, int num_bytes)
+{
+	int count = 0;
+	nec7210_private_t *nec_priv = &tnt_priv->nec7210_priv;
+
+	while(fifo_word_available( tnt_priv ) && count + 2 <= num_bytes)
+	{
+		short word;
+
+		word = tnt_priv->io_readw( nec_priv->iobase + FIFOB );
+		buffer[ count++ ] = word & 0xff;
+		buffer[ count++ ] = ( word >> 8 ) & 0xff;
+	}
+	return count;
+}
+
 ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end )
 {
 	size_t count = 0;
 	ssize_t retval = 0;
 	tnt4882_private_t *tnt_priv = board->private_data;
 	nec7210_private_t *nec_priv = &tnt_priv->nec7210_priv;
-	unsigned long iobase = nec_priv->iobase;
 	unsigned int bits, imr1_bits, imr2_bits;
 	int32_t hw_count;
 	unsigned long flags;
@@ -96,8 +111,8 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 	tnt_writeb( tnt_priv, GO, CMDR );
 	udelay(1);
 
-	while( count + 1 < length &&
-		test_bit( RECEIVED_END_BN, &nec_priv->state ) == 0 )
+	while(count + 1 < length &&
+		test_bit( RECEIVED_END_BN, &nec_priv->state ) == 0)
 	{
 		// wait until byte is ready
 		if( wait_event_interruptible( board->wait,
@@ -123,14 +138,7 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 		}
 
 		spin_lock_irqsave( &board->spinlock, flags );
-		while( fifo_word_available( tnt_priv ) && count + 1 < length )
-		{
-			uint16_t word;
-
-			word = tnt_priv->io_readw( iobase + FIFOB );
-			buffer[ count++ ] = word & 0xff;
-			buffer[ count++ ] = ( word >> 8 ) & 0xff;
-		}
+		count += drain_fifo_words(tnt_priv, &buffer[count], length - count);
 		tnt_priv->imr3_bits |= HR_NEF;
 		tnt_writeb( tnt_priv, tnt_priv->imr3_bits, IMR3 );
 		spin_unlock_irqrestore( &board->spinlock, flags );
@@ -159,7 +167,8 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 		{
 			retval = -EINTR;
 		}
-		if( fifo_byte_available( tnt_priv ) )
+		count += drain_fifo_words(tnt_priv, &buffer[count], length - count);
+		if(fifo_byte_available( tnt_priv ) && count < length)
 		{
 			buffer[ count++ ] = tnt_readb( tnt_priv, FIFOB );
 		}

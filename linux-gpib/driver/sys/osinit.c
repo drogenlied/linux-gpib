@@ -120,6 +120,7 @@ void init_gpib_board( gpib_board_t *board )
 	board->autospollers = 0;
 	board->autospoll_pid = 0;
 	init_event_queue( &board->event_queue );
+	board->minor = -1;
 	board->master = 1;
 	board->exclusive = 0;
 	board->stuck_srq = 0;
@@ -162,6 +163,7 @@ void init_board_array( gpib_board_t *board_array, unsigned int length )
 	for( i = 0; i < length; i++)
 	{
 		init_gpib_board( &board_array[i] );
+		board_array[i].minor = i;
 	}
 }
 

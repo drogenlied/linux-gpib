@@ -47,11 +47,13 @@ static ssize_t pio_read( gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 		}
 		if( test_bit( TIMO_NUM, &board->status ) )
 		{
+			GPIB_DPRINTK("interrupted by timeout\n");
 			retval = -ETIMEDOUT;
 			break;
 		}
 		if( test_bit( DEV_CLEAR_BN, &priv->state) )
 		{
+			GPIB_DPRINTK("interrupted by device clear\n");
 			retval = -EINTR;
 			break;
 		}
@@ -154,7 +156,7 @@ ssize_t nec7210_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buff
 
 	*end = 0;
 
-	clear_bit( DEV_CLEAR_BN, &priv->state );
+	clear_bit( DEV_CLEAR_BN, &priv->state ); // XXX wrong
 
 	nec7210_set_handshake_mode( board, priv, HR_HLDA );
 	nec7210_release_rfd_holdoff( board, priv );

@@ -212,6 +212,8 @@ struct gpib_board_struct
 	long autospoll_pid;
 	/* queue for recording received trigger/clear/ifc events */
 	gpib_event_queue_t event_queue;
+	/* minor number for this board's device file */
+	int minor;
 	/* Flag that indicates whether board is system controller of the bus */
 	unsigned master : 1;
 	/* Flag board has been opened for exclusive access */

@@ -176,6 +176,8 @@ static void* read_write_slave_thread( void *arg )
 		if( strcmp( buffer, read_write_string1 ) )
 		{
 			PRINT_FAILED();
+			fprintf( stderr, "got bad data from ibrd\n" );
+			fprintf( stderr, "received %i bytes:%s\n", ThreadIbcnt(), buffer );
 			param->retval = -1;
 			return NULL;
 		}
