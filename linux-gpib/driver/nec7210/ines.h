@@ -28,6 +28,9 @@ typedef struct
 	unsigned int irq;
 } ines_private_t;
 
+// interfaces
+extern gpib_interface_t ines_pci_interface;
+
 // interrupt service routines
 void ines_pci_interrupt(int irq, void *arg, struct pt_regs *registerp);
 

@@ -119,6 +119,7 @@ int init_module(void)
 	gpib_register_driver(&pc2a_interface);
 	gpib_register_driver(&cb_pci_interface);
 	gpib_register_driver(&cb_isa_interface);
+	gpib_register_driver(&ines_pci_interface);
 
 #ifdef CBI_PCMCIA
 	INIT_LIST_HEAD(&cb_pcmcia_interface.list);
@@ -135,6 +136,7 @@ void cleanup_module(void)
 	gpib_unregister_driver(&pc2a_interface);
 	gpib_unregister_driver(&cb_pci_interface);
 	gpib_unregister_driver(&cb_isa_interface);
+	gpib_unregister_driver(&ines_pci_interface);
 #ifdef CBI_PCMCIA
 	gpib_unregister_driver(&cb_pcmcia_interface);
 	pcmcia_cleanup_module();
