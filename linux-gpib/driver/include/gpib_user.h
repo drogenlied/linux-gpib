@@ -174,6 +174,7 @@ enum cmd_byte
 	UNL = 0x3F,	/* unlisten 			*/
 	TAD = 0x40,	/* value to be 'ored' in to obtain talk address   */
 	UNT = 0x5F,	/* untalk 			*/
+	SAD = 0x60,	/* my secondary address (base) */
 	PPE = 0x60,	/* parallel poll enable (base)	*/
 	PPD = 0x70	/* parallel poll disable	*/
 };
@@ -197,7 +198,7 @@ static __inline__ uint8_t MTA( unsigned int addr )
 
 static __inline__ uint8_t MSA( unsigned int addr )
 {
-	return addr | 0x60;
+	return addr | SAD;
 }
 
 static __inline__ uint8_t PPE_byte( unsigned int dio_line, int sense )

@@ -41,6 +41,8 @@ struct tms9914_private_struct
 	unsigned int ppoll_line;
 	unsigned ppoll_sense : 1;
 	unsigned ppoll_enable : 1;
+	unsigned primary_listen_addressed : 1;
+	unsigned primary_talk_addressed : 1;
 	// wrappers for outb, inb, readb, or writeb
 	uint8_t (*read_byte)(tms9914_private_t *priv, unsigned int register_number);
 	void (*write_byte)(tms9914_private_t *priv, uint8_t byte, unsigned int

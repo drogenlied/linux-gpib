@@ -19,26 +19,43 @@
 #include "board.h"
 #include <linux/delay.h>
 
-void check_my_address_state( gpib_board_t *board, tms9914_private_t *priv, int cmd_byte,
-	int next_cmd_byte )
+void check_my_address_state( gpib_board_t *board, tms9914_private_t *priv, int cmd_byte )
 {
 	if( cmd_byte == MLA( board->pad ) )
 	{
-		if( board->sad < 0 ||
-			( board->sad >= 0 && next_cmd_byte == MSA( board->sad ) ) )
-			// become active listener
+		priv->primary_listen_addressed = 1;
+		// become active listener
+		if( board->sad < 0 )
 			write_byte(priv, AUX_LON | AUX_CS, AUXCR);
+	}else if( board->sad >= 0 && priv->primary_listen_addressed &&
+		cmd_byte == MSA( board->sad ) )
+	{
+		// become active listener
+		write_byte(priv, AUX_LON | AUX_CS, AUXCR);
+	}else if( cmd_byte != MLA( board->pad ) && ( cmd_byte & 0xf0 ) == LAD )
+	{
+		priv->primary_listen_addressed = 0;
 	}else if( cmd_byte == UNL )
 	{
+		priv->primary_listen_addressed = 0;
 		write_byte(priv, AUX_LON, AUXCR);
 	}else if( cmd_byte == MTA( board->pad ) )
 	{
-		if( board->sad < 0 ||
-			( board->sad >= 0 && next_cmd_byte == MSA( board->sad ) ) )
+		priv->primary_talk_addressed = 1;
+		if( board->sad < 0 )
 			//make active talker
 			write_byte(priv, AUX_TON | AUX_CS, AUXCR);
+	}else if( board->sad >= 0 && priv->primary_talk_addressed &&
+		cmd_byte == MSA( board->sad ) )
+	{
+		// become active talker
+		write_byte(priv, AUX_TON | AUX_CS, AUXCR);
+	}else if( cmd_byte != MTA( board->pad ) && ( cmd_byte & 0xf0 ) == TAD )
+	{
+		priv->primary_talk_addressed = 0;
 	}else if( cmd_byte == UNT )
 	{
+		priv->primary_talk_addressed = 0;
 		write_byte(priv, AUX_TON, AUXCR);
 	}
 }
@@ -64,10 +81,7 @@ ssize_t tms9914_command(gpib_board_t *board, tms9914_private_t *priv, uint8_t *b
 		write_byte(priv, buffer[count], CDOR);
 		spin_unlock_irqrestore(&board->spinlock, flags);
 
-		if( count == length - 1 )
-			check_my_address_state( board, priv, buffer[ count ], -1 );
-		else
-			check_my_address_state( board, priv, buffer[ count ], buffer[ count + 1 ] );
+		check_my_address_state( board, priv, buffer[ count ] );
 
 		count++;
 	}

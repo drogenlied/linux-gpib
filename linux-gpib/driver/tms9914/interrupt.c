@@ -31,19 +31,13 @@ void tms9914_interrupt( gpib_board_t *board, tms9914_private_t *priv )
 	// read interrupt status (also clears status)
 	status0 = read_byte( priv, ISR0 );
 	status1 = read_byte( priv, ISR1 );
-	
+
 	tms9914_interrupt_have_status( board, priv, status0, status1 );
 }
 
 void tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv, int status0,
 		int status1)
 {
-	// record address status change
-	if(status0 & HR_RLC || status0 & HR_MAC)
-	{
-//		update_status_nolock( board, priv );
-	}
-
 	// record reception of END
 	if(status0 & HR_END)
 	{
@@ -81,7 +75,6 @@ void tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv,
 	// have been addressed (with secondary addressing disabled)
 	if(status1 & HR_MA)
 	{
-//		update_status_nolock( board, priv );
 		// clear dac holdoff
 		write_byte(priv, AUX_VAL, AUXCR);
 	}
@@ -128,24 +121,9 @@ void tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv,
 		}
 		if( read_byte( priv, CPTR ) == MSA( board->sad ) )
 		{
-			int address_status;
-
-			address_status = read_byte( priv, ADSR );
-
-			/* XXX is this necessary? need to check if AUX_VAL
-			 * handles listen/talk state automatically */
-			if( address_status & HR_TPAS )
-			{
-				write_byte(priv, AUX_TON | AUX_CS, AUXCR);
-			}else if( address_status & HR_LPAS )
-			{
-				write_byte(priv, AUX_LON | AUX_CS, AUXCR);
-			}
-
 			write_byte(priv, AUX_VAL, AUXCR);
 		}else
 			write_byte(priv, AUX_INVAL, AUXCR);
-//		update_status_nolock( board, priv );
 	}
 
 	if( ( status0 & priv->imr0_bits ) || ( status1 & priv->imr1_bits ) )
