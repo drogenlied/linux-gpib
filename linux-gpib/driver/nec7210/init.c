@@ -264,6 +264,7 @@ int pc2_attach(gpib_driver_t *driver)
 	priv = driver->private_data;
 	priv->offset = pc2_reg_offset;
 	priv->read_byte = ioport_read_byte;
+	priv->write_byte = ioport_write_byte;
 
 	if(allocate_buffers())
 		return -ENOMEM;
@@ -343,6 +344,7 @@ int pc2a_attach(gpib_driver_t *driver)
 	priv = driver->private_data;
 	priv->offset = pc2a_reg_offset;
 	priv->read_byte = ioport_read_byte;
+	priv->write_byte = ioport_write_byte;
 
 	if(allocate_buffers())
 		return -ENOMEM;
@@ -456,6 +458,7 @@ int cb_pci_attach(gpib_driver_t *driver)
 		return -ENOMEM;
 	priv = driver->private_data;
 	priv->read_byte = ioport_read_byte;
+	priv->write_byte = ioport_write_byte;
 	priv->offset = cb_pci_reg_offset;
 
 	if(allocate_buffers())
