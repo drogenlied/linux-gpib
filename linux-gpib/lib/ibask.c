@@ -99,6 +99,39 @@ int query_board_rsv( const ibBoard_t *board )
 	return status;
 }
 
+int query_pad( const ibBoard_t *board )
+{
+	int retval;
+	board_info_ioctl_t info;
+
+	retval = ioctl( board->fileno, IBBOARD_INFO, &info );
+	if( retval < 0 )
+	{
+		setIberr( EDVR );
+		setIbcnt( errno );
+		return retval;
+	}
+
+	return info.pad;
+}
+
+int query_sad( const ibBoard_t *board, int *sad )
+{
+	int retval;
+	board_info_ioctl_t info;
+
+	retval = ioctl( board->fileno, IBBOARD_INFO, &info );
+	if( retval < 0 )
+	{
+		setIberr( EDVR );
+		setIbcnt( errno );
+		return retval;
+	}
+
+	*sad = info.sad;
+	return 0;
+}
+
 int ibask( int ud, int option, int *value )
 {
 	ibConf_t *conf;
@@ -114,10 +147,24 @@ int ibask( int ud, int option, int *value )
 	switch( option )
 	{
 		case IbaPAD:
+			if( conf->is_interface )
+			{
+				retval = query_pad( board );
+				if( retval < 0 ) return exit_library( ud, 1 );
+				conf->settings.pad = retval;
+			}
 			*value = conf->settings.pad;
 			return exit_library( ud, 0 );
 			break;
 		case IbaSAD:
+			if( conf->is_interface )
+			{
+				int sad;
+
+				retval = query_sad( board, &sad );
+				if( retval < 0 ) return exit_library( ud, 1 );
+				conf->settings.sad = sad;
+			}
 			if( conf->settings.sad < 0 ) *value = 0;
 			else *value = MSA( conf->settings.sad );
 			return exit_library( ud, 0 );

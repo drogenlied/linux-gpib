@@ -247,28 +247,22 @@ int gpibi_change_address( ibConf_t *conf, unsigned int pad, int sad )
 
 	board = interfaceBoard( conf );
 
-	if ( conf->is_interface )
+	if( conf->is_interface )
 	{
-		if( pad != conf->settings.pad )
+		retval = ioctl( board->fileno, IBPAD, &pad );
+		if( retval < 0 )
 		{
-			retval = ioctl( board->fileno, IBPAD, &pad );
-			if( retval < 0 )
-			{
-				setIberr( EDVR );
-				setIbcnt( errno );
-				return retval;
-			}
+			setIberr( EDVR );
+			setIbcnt( errno );
+			return retval;
 		}
 
-		if( sad != conf->settings.sad )
+		retval = ioctl( board->fileno, IBSAD, &sad );
+		if( retval < 0 )
 		{
-			retval = ioctl( board->fileno, IBSAD, &sad );
-			if( retval < 0 )
-			{
-				setIberr( EDVR );
-				setIbcnt( errno );
-				return retval;
-			}
+			setIberr( EDVR );
+			setIbcnt( errno );
+			return retval;
 		}
 	}
 
