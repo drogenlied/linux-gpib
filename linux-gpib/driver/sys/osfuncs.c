@@ -754,7 +754,7 @@ static int wait_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
 	if( desc == NULL ) return -EINVAL;
 
 	retval = ibwait( board, wait_cmd.wait_mask, wait_cmd.clear_mask,
-		&wait_cmd.ibsta, wait_cmd.usec_timeout, desc );
+		wait_cmd.set_mask, &wait_cmd.ibsta, wait_cmd.usec_timeout, desc );
 	if( retval < 0 ) return retval;
 
 	retval = copy_to_user( ( void * ) arg, &wait_cmd, sizeof( wait_cmd ) );

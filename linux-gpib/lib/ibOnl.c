@@ -144,13 +144,17 @@ int ibonl( int ud, int onl )
 	ibBoard_t *board;
 	int status;
 
-	conf = enter_library( ud );
+	conf = general_enter_library( ud, 1, 1 );
 	if( conf == NULL )
-		return exit_library( ud, 1 );
+		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
 
-	/* XXX need to execute stop _before_ waiting for
-	library lock */
-	internal_ibstop( conf );
+	retval = internal_ibstop( conf );
+	if( retval < 0 )
+		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
+
+	retval = conf_lock_board( conf );
+	if( retval < 0 )
+		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
 
 	if( onl )
 	{
@@ -170,7 +174,7 @@ int ibonl( int ud, int onl )
 		return exit_library( ud, 1 );
 	}
 
-	status = exit_library( ud, 0 );
+	status = general_exit_library( ud, 0, 0, 0, 0, CMPL, 0 );
 
 	if( ud >= GPIB_MAX_NUM_BOARDS )
 	{

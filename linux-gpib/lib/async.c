@@ -46,7 +46,7 @@ static void cleanup_aio( void *varg )
 {
 	struct gpib_aio_arg arg = *((struct gpib_aio_arg*) varg);
 
-	general_exit_library( arg.ud, 0, 1, 0, 0, 0 );
+	general_exit_library( arg.ud, 0, 1, 0, 0, CMPL, 0 );
 }
 
 int gpib_aio_launch( int ud, ibConf_t *conf, int gpib_aio_type,

@@ -68,6 +68,7 @@ typedef struct
 	int handle;
 	int wait_mask;
 	int clear_mask;
+	int set_mask;
 	int ibsta;
 	int pad;
 	int sad;

@@ -34,7 +34,7 @@ enum internal_gpib_addr
 	ADDR_INVALID = -2
 };
 
-int my_wait( ibConf_t *conf, int wait_mask, int clear_maks, int *status );
+int my_wait( ibConf_t *conf, int wait_mask, int clear_mask, int set_mask, int *status );
 void init_async_op( struct async_operation *async );
 int initIbBoardAtFork( void );
 int ibBoardOpen( ibBoard_t *board );
@@ -73,7 +73,7 @@ int conf_lock_board( ibConf_t *conf );
 void conf_unlock_board( ibConf_t *conf );
 int exit_library( int ud, int error );
 int general_exit_library( int ud, int error, int no_sync_globals, int no_update_ibsta,
-	int status_clear_mask, int no_unlock_board );
+	int status_clear_mask, int status_set_mask, int no_unlock_board );
 ibConf_t * enter_library( int ud );
 ibConf_t * general_enter_library( int ud, int no_lock_board, int ignore_eoip );
 void setIbsta( int status );

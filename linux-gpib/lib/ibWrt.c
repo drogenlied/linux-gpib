@@ -174,7 +174,7 @@ int ibwrt( int ud, const void *rd, long cnt )
 		return exit_library( ud, 1 );
 	}
 
-	return general_exit_library( ud, 0, 0, 0, DCAS, 0 );
+	return general_exit_library( ud, 0, 0, 0, DCAS, 0, 0 );
 }
 
 int ibwrta( int ud, const void *buffer, long cnt )
@@ -184,14 +184,14 @@ int ibwrta( int ud, const void *buffer, long cnt )
 
 	conf = general_enter_library( ud, 1, 0 );
 	if( conf == NULL )
-		return general_exit_library( ud, 1, 0, 0, 0, 1 );
+		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
 
 	retval = gpib_aio_launch( ud, conf, GPIB_AIO_WRITE,
 		(void*)buffer, cnt );
 	if( retval < 0 )
-		return general_exit_library( ud, 1, 0, 0, 0, 1 );
+		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
 
-	return general_exit_library( ud, 0, 0, 0, 0, 1 );
+	return general_exit_library( ud, 0, 0, 0, CMPL, 0, 1 );
 }
 
 ssize_t my_ibwrtf( ibConf_t *conf, const char *file_path )
@@ -280,7 +280,7 @@ int ibwrtf( int ud, const char *file_path )
 
 	setIbcnt( count );
 
-	return general_exit_library( ud, 0, 0, 0, DCAS, 0 );
+	return general_exit_library( ud, 0, 0, 0, DCAS, 0, 0 );
 }
 
 int InternalSendDataBytes( ibConf_t *conf, const void *buffer,
@@ -344,7 +344,7 @@ void SendDataBytes( int boardID, const void *buffer,
 		return;
 	}
 
-	general_exit_library( boardID, 0, 0, 0, DCAS, 0 );
+	general_exit_library( boardID, 0, 0, 0, DCAS, 0, 0 );
 }
 
 int InternalSendList( ibConf_t *conf, const Addr4882_t addressList[],
@@ -403,7 +403,7 @@ void SendList( int boardID, const Addr4882_t addressList[],
 		return;
 	}
 
-	general_exit_library( boardID, 0, 0, 0, DCAS, 0 );
+	general_exit_library( boardID, 0, 0, 0, DCAS, 0, 0 );
 }
 
 void Send( int boardID, Addr4882_t address, const void *buffer, long count,

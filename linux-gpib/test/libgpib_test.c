@@ -27,6 +27,7 @@ computer, on the same GPIB bus, and one of which is the system controller.
 #include <stdlib.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <mcheck.h>
 
 #include "gpib/ib.h"
 
@@ -267,6 +268,9 @@ int main( int argc, char *argv[] )
 {
 	struct board_descriptors boards;
 	int retval;
+
+	if( mcheck( 0 ) )
+		fprintf( stderr, "mcheck() failed!\n" );
 
 	retval = find_boards( &boards );
 	if( retval < 0 ) return retval;

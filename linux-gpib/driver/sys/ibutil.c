@@ -77,11 +77,11 @@ int ibeos( gpib_board_t *board, int eos, int eosflags )
 
 int ibstatus( gpib_board_t *board )
 {
-	return general_ibstatus( board, NULL, 0, NULL);
+	return general_ibstatus( board, NULL, 0, 0, NULL);
 }
 
 int general_ibstatus( gpib_board_t *board, const gpib_status_queue_t *device,
-	int clear_mask, const gpib_descriptor_t *desc )
+	int clear_mask, int set_mask, gpib_descriptor_t *desc )
 {
 	int status = 0;
 
@@ -101,6 +101,10 @@ int general_ibstatus( gpib_board_t *board, const gpib_status_queue_t *device,
 			status &= ~CMPL;
 		else
 			status |= CMPL;
+		if( clear_mask & CMPL )
+			desc->io_in_progress = 0;
+		if( set_mask & CMPL )
+			desc->io_in_progress = 1;
 	}
 	if( num_gpib_events( &board->event_queue ) )
 		status |= EVENT;

@@ -59,13 +59,13 @@ int ibcmda( int ud, const void *cmd_buffer, long cnt )
 
 	conf = general_enter_library( ud, 1, 0 );
 	if( conf == NULL )
-		return general_exit_library( ud, 1, 0, 0, 0, 1 );
+		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
 
 	// check that ud is an interface board
 	if( conf->is_interface == 0 )
 	{
 		setIberr( EARG );
-		return general_exit_library( ud, 1, 0, 0, 0, 1 );
+		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
 	}
 
 	board = interfaceBoard( conf );
@@ -73,15 +73,15 @@ int ibcmda( int ud, const void *cmd_buffer, long cnt )
 	if( is_cic( board ) == 0 )
 	{
 		setIberr( ECIC );
-		return general_exit_library( ud, 1, 0, 0, 0, 1 );
+		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
 	}
 
 	retval = gpib_aio_launch( ud, conf, GPIB_AIO_COMMAND,
 		(void*)cmd_buffer, cnt );
 	if( retval < 0 )
-		return general_exit_library( ud, 1, 0, 0, 0, 1 );
+		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
 
-	return general_exit_library( ud, 0, 0, 0, 0, 1 );
+	return general_exit_library( ud, 0, 0, 0, CMPL, 0, 1 );
 }
 
 ssize_t my_ibcmd( ibConf_t *conf, const uint8_t *buffer, size_t count)

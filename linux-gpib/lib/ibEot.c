@@ -32,9 +32,9 @@ int ibeot( int ud, int send_eoi )
 
 	conf = general_enter_library( ud, 1, 0 );
 	if( conf == NULL )
-		return general_exit_library( ud, 1, 0, 0, 0, 1 );
+		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
 
 	internal_ibeot( conf, send_eoi );
 
-	return general_exit_library( ud, 0, 0, 0, 0, 1 );
+	return general_exit_library( ud, 0, 0, 0, 0, 0, 1 );
 }

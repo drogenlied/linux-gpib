@@ -141,15 +141,15 @@ int ibtmo(int ud, int v )
 
 	conf = general_enter_library( ud, 1, 0 );
 	if( conf == NULL )
-		return general_exit_library( ud, 1, 0, 0, 0, 1 );
+		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
 
 	retval = internal_ibtmo( conf, v );
 	if( retval < 0 )
 	{
-		return general_exit_library( ud, 1, 0, 0, 0, 1 );
+		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
 	}
 
-	return general_exit_library( ud, 0, 0, 0, 0, 1 );
+	return general_exit_library( ud, 0, 0, 0, 0, 0, 1 );
 }
 
 int set_timeout( const ibBoard_t *board, unsigned int usec_timeout)

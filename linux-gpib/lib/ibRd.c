@@ -131,7 +131,7 @@ int ibrd(int ud, void *rd, long cnt)
 
 	setIbcnt( count );
 
-	return general_exit_library( ud, 0, 0, 0, DCAS, 0 );
+	return general_exit_library( ud, 0, 0, 0, DCAS, 0, 0 );
 }
 
 int ibrda( int ud, void *buffer, long cnt )
@@ -141,14 +141,14 @@ int ibrda( int ud, void *buffer, long cnt )
 
 	conf = general_enter_library( ud, 1, 0 );
 	if( conf == NULL )
-		return general_exit_library( ud, 1, 0, 0, 0, 1 );
+		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
 
 	retval = gpib_aio_launch( ud, conf, GPIB_AIO_READ,
 		buffer, cnt );
 	if( retval < 0 )
-		return general_exit_library( ud, 1, 0, 0, 0, 1 );
+		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
 
-	return general_exit_library( ud, 0, 0, 0, 0, 1 );
+	return general_exit_library( ud, 0, 0, 0, CMPL, 0, 1 );
 }
 
 int ibrdf(int ud, const char *file_path )
@@ -215,7 +215,7 @@ int ibrdf(int ud, const char *file_path )
 	}
 	if( error ) return exit_library( ud, error );
 
-	return general_exit_library( ud, 0, 0, 0, DCAS, 0 );
+	return general_exit_library( ud, 0, 0, 0, DCAS, 0, 0 );
 }
 
 int InternalRcvRespMsg( ibConf_t *conf, void *buffer, long count, int termination )
@@ -284,7 +284,7 @@ void RcvRespMsg( int boardID, void *buffer, long count, int termination )
 		return;
 	}
 
-	general_exit_library( boardID, 0, 0, 0, DCAS, 0 );
+	general_exit_library( boardID, 0, 0, 0, DCAS, 0, 0 );
 }
 
 void ReceiveSetup( int boardID, Addr4882_t address )
@@ -343,5 +343,5 @@ void Receive( int boardID, Addr4882_t address,
 		return;
 	}
 
-	general_exit_library( boardID, 0, 0, 0, DCAS, 0 );
+	general_exit_library( boardID, 0, 0, 0, DCAS, 0, 0 );
 }

@@ -41,7 +41,7 @@ static int wait_satisfied( struct wait_info *winfo, gpib_status_queue_t *device,
 	gpib_board_t *board = winfo->board;
 	int temp_status;
 
-	temp_status = general_ibstatus( board, device, 0, desc );
+	temp_status = general_ibstatus( board, device, 0, 0, desc );
 	if( winfo->timed_out )
 		temp_status |= TIMO;
 	else
@@ -93,7 +93,7 @@ static void removeWaitTimer( struct wait_info *winfo )
  * If the mask is 0 then
  * no condition is waited for.
  */
-int ibwait( gpib_board_t *board, int wait_mask, int clear_mask,
+int ibwait( gpib_board_t *board, int wait_mask, int clear_mask, int set_mask,
 	int *status, unsigned long usec_timeout, gpib_descriptor_t *desc )
 {
 	int retval = 0;
@@ -105,7 +105,7 @@ int ibwait( gpib_board_t *board, int wait_mask, int clear_mask,
 
 	if( wait_mask == 0 )
 	{
-		*status = general_ibstatus( board, device, clear_mask, desc );
+		*status = general_ibstatus( board, device, clear_mask, set_mask, desc );
 		return 0;
 	}
 
@@ -123,8 +123,8 @@ int ibwait( gpib_board_t *board, int wait_mask, int clear_mask,
 	removeWaitTimer( &winfo );
 
 	/* make sure we only clear status bits that we are reporting */
-	if( *status & clear_mask )
-		general_ibstatus( board, device, *status & clear_mask, 0 );
+	if( *status & clear_mask || set_mask )
+		general_ibstatus( board, device, *status & clear_mask, set_mask, 0 );
 
 	return retval;
 }
