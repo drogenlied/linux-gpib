@@ -140,8 +140,7 @@ void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv)
 	{
 		set_bit(COMMAND_READY_BN, &priv->state);
 		wake_up_interruptible(&board->wait); /* wake up sleeping process */
-	}else
-		clear_bit(COMMAND_READY_BN, &priv->state);
+	}
 
 	// command pass through received
 	if(status1 & HR_CPT)
@@ -153,7 +152,6 @@ void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv)
 	// output byte has been lost
 	if(status1 & HR_ERR)
 	{
-//XXX report error
 		printk("gpib output error\n");
 	}
 

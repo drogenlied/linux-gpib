@@ -31,11 +31,9 @@ ssize_t nec7210_command(gpib_board_t *board, nec7210_private_t *priv, uint8_t
 
 	while(count < length)
 	{
-		if(wait_event_interruptible(board->wait, test_bit(COMMAND_READY_BN,
- &priv->state) ||
+		if(wait_event_interruptible(board->wait, test_bit(COMMAND_READY_BN, &priv->state) ||
 			test_bit(TIMO_NUM, &board->status)))
 		{
-			printk("gpib command wait interrupted\n");
 			break;
 		}
 		if(test_bit(TIMO_NUM, &board->status)) break;
@@ -47,19 +45,20 @@ ssize_t nec7210_command(gpib_board_t *board, nec7210_private_t *priv, uint8_t
 		count++;
 	}
 	// wait until last command byte is written
-	if(wait_event_interruptible(board->wait, test_bit(COMMAND_READY_BN,
- &priv->state) ||
+	if(wait_event_interruptible(board->wait, test_bit(COMMAND_READY_BN, &priv->state) ||
 		test_bit(TIMO_NUM, &board->status)))
 	{
+		printk("gpib command wait interrupted\n");
 		retval = -EINTR;
 	}
 	if(test_bit(TIMO_NUM, &board->status))
 	{
+		printk("gpib command timed out\n");
 		retval = -ETIMEDOUT;
 	}
 
 	// disable command out interrupt
-	priv->imr2_bits |= HR_COIE;
+	priv->imr2_bits &= ~HR_COIE;
 	write_byte(priv, priv->imr2_bits, IMR2);
 
 	return retval ? retval : count;
