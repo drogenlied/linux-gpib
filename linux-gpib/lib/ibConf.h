@@ -1,5 +1,8 @@
 
-/* meaning for flags */     
+#include <unistd.h>
+#include <sys/types.h>
+
+/* meaning for flags */
 
 #define CN_SDCL    (1<<1)             /* Send DCL on init                */
 #define CN_SLLO    (1<<2)             /* Send LLO on init                */
@@ -35,6 +38,9 @@ typedef struct ibBoardStruct {
 	unsigned int dma;
 	int fileno;                        /* device file descriptor           */
 	char device[100];	// name of device file ( /dev/gpib0, etc.)
+	/* pid of child process conducting autopolls,
+	so we can kill it on exit */
+	pid_t autopoll_pid;
 	int is_system_controller : 1;	/* board is busmaster or not */
 } ibBoard_t;
 
