@@ -148,13 +148,13 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 		push_gpib_event( board, EventDevTrg );
 	}
 
-	if( ( status1 & priv->reg_bits[ IMR1 ] ) ||
-		( status2 & ( priv->reg_bits[ IMR2 ] & IMR2_ENABLE_INTR_MASK ) ) )
+	if((status1 & priv->reg_bits[ IMR1 ]) ||
+		(status2 & (priv->reg_bits[ IMR2 ] & IMR2_ENABLE_INTR_MASK)))
 	{
 		GPIB_DPRINTK( "minor %i, isr1 0x%x, imr1 0x%x, isr2 0x%x, imr2 0x%x\n",
 			board->minor, status1, priv->reg_bits[ IMR1 ], status2, priv->reg_bits[ IMR2 ] );
-		update_status_nolock( board, priv );
-		wake_up_interruptible( &board->wait ); /* wake up sleeping process */
+		update_status_nolock(board, priv);
+		wake_up_interruptible(&board->wait); /* wake up sleeping process */
 	}
 }
 

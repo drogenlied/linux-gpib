@@ -20,28 +20,38 @@
 #include <linux/string.h>
 #include <asm/dma.h>
 
-static int pio_write_wait( gpib_board_t *board, nec7210_private_t *priv )
+static int pio_write_wait(gpib_board_t *board, nec7210_private_t *priv,
+	int wake_on_lacs_or_atn)
 {
 	// wait until byte is ready to be sent
-	if( wait_event_interruptible( board->wait,
-		test_bit( WRITE_READY_BN, &priv->state ) ||
-		test_bit( BUS_ERROR_BN, &priv->state ) ||
-		test_bit( DEV_CLEAR_BN, &priv->state ) ||
-		test_bit( TIMO_NUM, &board->status ) ) )
+	if(wait_event_interruptible(board->wait,
+		test_bit(WRITE_READY_BN, &priv->state) ||
+		test_bit(BUS_ERROR_BN, &priv->state) ||
+		test_bit(DEV_CLEAR_BN, &priv->state) ||
+		(wake_on_lacs_or_atn &&
+			(test_bit(ATN_NUM, &board->status) || test_bit(LACS_NUM, &board->status))) ||
+		test_bit(TIMO_NUM, &board->status)))
 	{
 		GPIB_DPRINTK( "gpib write interrupted\n" );
 		return -ERESTARTSYS;
 	}
 	if( test_bit( TIMO_NUM, &board->status ) )
+	{
+		printk("nec7210: write timed out\n");
 		return -ETIMEDOUT;
+	}
 	if( test_bit( DEV_CLEAR_BN, &priv->state ) )
+	{
+		printk("nec7210: write interrupted by clear\n");
 		return -EINTR;
+	}
 	if( test_and_clear_bit( BUS_ERROR_BN, &priv->state ) )
+	{
+		GPIB_DPRINTK("nec7210: bus error on write\n");
 		return -EIO;
-
+	}
 	return 0;
 }
-
 
 static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer, size_t length)
 {
@@ -53,7 +63,10 @@ static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 
 	while( count < length )
 	{
-		retval = pio_write_wait( board, priv );
+		if(current->need_resched)
+			schedule();
+
+		retval = pio_write_wait(board, priv, 0);
 		if(retval == -EIO)
 		{
 			/* resend last byte on bus error */
@@ -62,17 +75,15 @@ static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 			 * so give up after a while */
 			bus_error_count++;
 			if(bus_error_count > max_bus_errors) return retval;
+			else continue;
 		}else if( retval < 0 ) return retval;
 
 		spin_lock_irqsave(&board->spinlock, flags);
 		clear_bit(WRITE_READY_BN, &priv->state);
 		write_byte(priv, buffer[ count++ ], CDOR);
 		spin_unlock_irqrestore(&board->spinlock, flags);
-
-		if( current->need_resched )
-			schedule();
 	}
-	retval = pio_write_wait( board, priv );
+	retval = pio_write_wait(board, priv, 1);
 	if( retval < 0 ) return retval;
 
 	return length;
@@ -184,7 +195,9 @@ ssize_t nec7210_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buf
 		{	// PIO transfer
 			retval = pio_write(board, priv, buffer, length);
 			if(retval < 0)
+		{
 				return retval;
+		}
 			else count += retval;
 		}
 	}
@@ -195,7 +208,9 @@ ssize_t nec7210_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buf
 
 		retval = pio_write(board, priv, &buffer[count], 1);
 		if(retval < 0)
+		{
 			return retval;
+		}
 		else
 			count++;
 	}

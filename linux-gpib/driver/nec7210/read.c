@@ -31,9 +31,9 @@ static ssize_t pio_read( gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 	while( count < length )
 	{
 		if(wait_event_interruptible(board->wait,
-			test_bit( READ_READY_BN, &priv->state ) ||
-			test_bit( DEV_CLEAR_BN, &priv->state ) ||
-			test_bit( TIMO_NUM, &board->status ) ) )
+			test_bit(READ_READY_BN, &priv->state) ||
+			test_bit(DEV_CLEAR_BN, &priv->state) ||
+			test_bit(TIMO_NUM, &board->status)))
 		{
 			printk("nec7210: pio read wait interrupted\n");
 			retval = -ERESTARTSYS;
