@@ -66,14 +66,6 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 	ibConf_t *conf;
 	ibBoard_t *board;
 
-	retval = ibParseConfigFile();
-	if(retval < 0)
-	{
-		setIbsta( ERR );
-		setIberr( EDVR );
-		return -1;
-	}
-
 	init_ibconf( &new_conf );
 	new_conf.pad = pad;
 	new_conf.sad = sad;                        /* device address                   */

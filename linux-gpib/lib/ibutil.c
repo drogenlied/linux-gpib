@@ -342,6 +342,12 @@ ibConf_t * general_enter_library( int ud, int no_lock_board, int ignore_eoip )
 	ibBoard_t *board;
 	int retval;
 
+	retval = ibParseConfigFile();
+	if(retval < 0)
+	{
+		return NULL;
+	}
+
 	if( ibCheckDescriptor( ud ) < 0 )
 	{
 		setIberr( EDVR );
