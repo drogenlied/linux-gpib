@@ -22,7 +22,7 @@
 int nec7210_take_control(gpib_board_t *board, nec7210_private_t *priv, int syncronous)
 {
 	int i;
-	const int timeout = 1000;
+	const int timeout = 10000;
 	int retval = 0;
 	unsigned int adsr_bits = 0;
 
@@ -50,7 +50,7 @@ int nec7210_take_control(gpib_board_t *board, nec7210_private_t *priv, int syncr
 int nec7210_go_to_standby(gpib_board_t *board, nec7210_private_t *priv)
 {
 	int i;
-	const int timeout = 1000;
+	const int timeout = 10000;
 	unsigned int adsr_bits = 0;
 	int retval = 0;
 
