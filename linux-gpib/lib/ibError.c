@@ -12,7 +12,11 @@ FILE* errp=NULL;
 
 PRIVATE void ibOpenErrlog(char *name)
 {
-  
+	if(name == NULL)
+	{
+		errp = stderr;
+		return;
+	}  
   if(( errp=fopen(name,"w"))==NULL){
     fprintf(stderr,"Warning: can't open Errlog: %s",name);
     errp = stderr;
@@ -26,6 +30,7 @@ PRIVATE void ibCloseErrlog(void)
 {
   if( errp != stderr )
     fclose(errp);
+
 }
 
 
@@ -72,21 +77,6 @@ PRIVATE char *ibVerbCode(int code)
   else if( code >=200 && code <=202 ) return routptr[23+(code-200)];
   else return routptr[26];
 }
-
-#if 0
-int ibPutMsg(char *msg)
-{
-
-  time_t tm;
-  char strtime[60];
-
-    time(&tm);
-    strftime(strtime,59,"%c",gmtime(&tm));
-
-    fprintf(errp,"gpib-message   :[%s] %s \n",strtime,msg);
-
-}
-#endif
 
 PRIVATE void ibPutMsg (char *format,...) 
 {

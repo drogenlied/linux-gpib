@@ -17,20 +17,7 @@ char *s;
 char server[60];
 char *device;
 
-#if HAS_RGPIB
-
-   if(( s=(char *)strchr(dev,':')) != (char *)NULL ){
-        ibPutErrlog(-1,"connect server");
-
-        
-        strncpy(server,dev,s-dev);
-	server[s-dev]=0;
-        device = &s[1];
-
-	return (ibFindRemote( server , device ));
-   }
-
-#endif
+	ibOpenErrlog(NULL);
 
    if(!ibfind_called){		/*if called first time load config*/
      if(( envptr = (char *) getenv("IB_CONFIG"))== (char *)0 ){
