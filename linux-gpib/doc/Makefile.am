@@ -12,16 +12,15 @@ EXTRA_DIST = linux-gpib.sgml fdl.xml html linux-gpib.pdf gpib_version.txt #man
 
 if BUILD_DOCS
 all-local: html linux-gpib.pdf #man
+else
+all-local:
+endif
 
 install-data-local:
 #	$(INSTALL) -d $(mandir)/man3
 #	$(INSTALL_DATA) man/*.3 $(mandir)/man3
 	$(INSTALL) -d $(pkgdatadir)/html
-	$(INSTALL_DATA) html/* $(pkgdatadir)/html
-else
-all-local:
-install-data-local:
-endif
+	-$(INSTALL_DATA) html/* $(pkgdatadir)/html
 
 maintainer-clean-local:
 	rm -rf html man
