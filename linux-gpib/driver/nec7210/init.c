@@ -40,11 +40,6 @@ void nec7210_board_reset( nec7210_private_t *priv, const gpib_board_t *board )
 	/* 7210 chip reset */
 	write_byte(priv, AUX_CR, AUXMR);
 
-	/* clear registers by reading */
-	read_byte(priv, CPTR);
-	read_byte(priv, ISR1);
-	read_byte(priv, ISR2);
-
 	/* disable all interrupts */
 	priv->imr1_bits = 0;
 	write_byte(priv, priv->imr1_bits, IMR1);
@@ -52,17 +47,18 @@ void nec7210_board_reset( nec7210_private_t *priv, const gpib_board_t *board )
 	write_byte(priv, priv->imr2_bits, IMR2);
 	write_byte(priv, 0, SPMR);
 
+	/* clear registers by reading */
+	read_byte(priv, CPTR);
+	read_byte(priv, ISR1);
+	read_byte(priv, ISR2);
+
 	write_byte(priv, 0, EOSR);
 	/* set internal counter register 8 for 8 MHz input clock */
 	write_byte(priv, ICR + 8, AUXMR);
 	/* parallel poll unconfigure */
 	write_byte(priv, PPR | HR_PPU, AUXMR);
 
-	/* set GPIB address */
-	nec7210_primary_address( board, priv, board->pad );
 	priv->admr_bits = HR_TRM0 | HR_TRM1;
-
-	nec7210_secondary_address( board, priv, board->sad, board->sad >= 0 );
 
 	// holdoff on all data
 	priv->auxa_bits = AUXRA | HR_HLDA;
@@ -72,6 +68,22 @@ void nec7210_board_reset( nec7210_private_t *priv, const gpib_board_t *board )
 	priv->auxb_bits = AUXRB;
 	write_byte(priv, priv->auxb_bits, AUXMR);
 	write_byte(priv, AUXRE, AUXMR);
+}
+
+void nec7210_board_online( nec7210_private_t *priv, const gpib_board_t *board )
+{
+	/* set GPIB address */
+	nec7210_primary_address( board, priv, board->pad );
+	nec7210_secondary_address( board, priv, board->sad, board->sad >= 0 );
+
+	// enable interrupts
+	priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
+		HR_DETIE | HR_CPTIE | HR_DOIE | HR_DIIE;
+	priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
+	write_byte( priv, priv->imr1_bits, IMR1);
+	write_byte( priv, priv->imr2_bits, IMR2);
+
+	write_byte( priv, AUX_PON, AUXMR);
 }
 
 // wrapper for inb
@@ -110,6 +122,7 @@ void cleanup_module(void)
 }
 
 EXPORT_SYMBOL(nec7210_board_reset);
+EXPORT_SYMBOL(nec7210_board_online);
 
 EXPORT_SYMBOL(nec7210_ioport_read_byte);
 EXPORT_SYMBOL(nec7210_ioport_write_byte);

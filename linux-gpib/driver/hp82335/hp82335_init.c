@@ -244,11 +244,11 @@ int hp82335_attach( gpib_board_t *board )
 
 	tms9914_board_reset(tms_priv);
 
+	hp82335_clear_interrupt( hp_priv );
+
 	writeb( INTR_ENABLE, tms_priv->iobase + HPREG_CCR );
 
 	tms9914_online( board, tms_priv );
-
-	hp82335_clear_interrupt( hp_priv );
 
 	return 0;
 }

@@ -217,24 +217,6 @@ int pc2_generic_attach(gpib_board_t *board)
 	return 0;
 }
 
-void pc2_init( nec7210_private_t *nec_priv, const gpib_board_t *board )
-{
-	nec7210_board_reset( nec_priv, board );
-
-	// enable interrupts
-	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
-		HR_DETIE | HR_APTIE | HR_CPTIE | HR_DOIE | HR_DIIE;
-	nec_priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
-	write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
-	write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
-
-	// make sure interrupt is clear
-	read_byte( nec_priv, ISR1 );
-	read_byte( nec_priv, ISR2 );
-
-	write_byte(nec_priv, AUX_PON, AUXMR);
-}
-
 int pc2_attach(gpib_board_t *board)
 {
 	int isr_flags = 0;
@@ -256,6 +238,8 @@ int pc2_attach(gpib_board_t *board)
 	}
 	nec_priv->iobase = board->ibbase;
 
+	nec7210_board_reset( nec_priv, board );
+
 	// install interrupt handler
 	if( request_irq(board->ibirq, pc2_interrupt, isr_flags, "pc2", board))
 	{
@@ -264,7 +248,7 @@ int pc2_attach(gpib_board_t *board)
 	}
 	pc2_priv->irq = board->ibirq;
 
-	pc2_init( nec_priv, board );
+	nec7210_board_online( nec_priv, board );
 
 	return 0;
 }
@@ -356,6 +340,8 @@ int pc2a_attach(gpib_board_t *board)
 	request_region(pc2a_clear_intr_iobase + board->ibirq, 1, "pc2a");
 	pc2_priv->clear_intr_addr = pc2a_clear_intr_iobase + board->ibirq;
 
+	nec7210_board_reset( nec_priv, board );
+
 	if(request_irq(board->ibirq, pc2a_interrupt, SA_SHIRQ, "pc2a", board))
 	{
 		printk("gpib: can't request IRQ %d\n", board->ibirq);
@@ -363,10 +349,10 @@ int pc2a_attach(gpib_board_t *board)
 	}
 	pc2_priv->irq = board->ibirq;
 
-	pc2_init( nec_priv, board );
-
 	// make sure interrupt is clear
 	outb(0xff , CLEAR_INTR_REG(pc2_priv->irq));
+
+	nec7210_board_online( nec_priv, board );
 
 	return 0;
 }

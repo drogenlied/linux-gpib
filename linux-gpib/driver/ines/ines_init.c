@@ -218,14 +218,7 @@ void ines_init( ines_private_t *ines_priv, const gpib_board_t *board )
 
 	nec7210_board_reset( nec_priv, board );
 
-	// enable interrupts for 7210
-	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
-		HR_DETIE | HR_APTIE | HR_CPTIE | HR_DOIE | HR_DIIE;
-	nec_priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
-	write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
-	write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
-
-	write_byte(nec_priv, AUX_PON, AUXMR);
+	nec7210_board_online( nec_priv, board );
 }
 
 int ines_pci_attach(gpib_board_t *board)

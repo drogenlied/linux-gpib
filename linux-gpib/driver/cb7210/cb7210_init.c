@@ -216,16 +216,9 @@ void cb7210_init(cb7210_private_t *cb_priv, const gpib_board_t *board )
 	/* set clock register for maximum (20 MHz) driving frequency
 	 * ICR should be set to clock in megahertz (1-15) and to zero
 	 * for clocks faster than 15 MHz (max 20MHz) */
-	write_byte(nec_priv, ICR, AUXMR);
+	write_byte(nec_priv, ICR | 0, AUXMR);
 
-	// enable nec7210 interrupts
-	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
-		HR_DETIE | HR_APTIE | HR_CPTIE | HR_DOIE | HR_DIIE;
-	nec_priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
-	write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
-	write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
-
-	write_byte(nec_priv, AUX_PON, AUXMR);
+	nec7210_board_online( nec_priv, board );
 }
 
 int cb_pci_attach(gpib_board_t *board)

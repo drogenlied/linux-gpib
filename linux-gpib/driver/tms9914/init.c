@@ -37,11 +37,6 @@ void tms9914_board_reset( tms9914_private_t *priv )
 	/* chip reset */
 	write_byte(priv, AUX_CR | AUX_CS, AUXCR);
 
-	/* clear registers by reading */
-	read_byte(priv, CPTR);
-	read_byte(priv, ISR0);
-	read_byte(priv, ISR1);
-
 	/* disable all interrupts */
 	priv->imr0_bits = 0;
 	write_byte(priv, priv->imr0_bits, IMR0);
@@ -49,30 +44,15 @@ void tms9914_board_reset( tms9914_private_t *priv )
 	write_byte(priv, priv->imr1_bits, IMR1);
 	write_byte(priv, AUX_DAI | AUX_CS, AUXCR);
 
-	write_byte(priv, 0, SPMR);
+	/* clear registers by reading */
+	read_byte(priv, CPTR);
+	read_byte(priv, ISR0);
+	read_byte(priv, ISR1);
 
-//	write_byte(priv, 0, EOSR);
+	write_byte(priv, 0, SPMR);
 
 	/* parallel poll unconfigure */
 	write_byte(priv, 0, PPR);
-
-//	priv->admr_bits = HR_TRM0 | HR_TRM1;
-
-#if 0
-
-#if (SAD)
-	/* enable secondary addressing */
-	write_byte(priv, HR_ARS | (SAD & ADDRESS_MASK), ADR);
-	priv->admr_bits |= HR_ADM1;
-	write_byte(priv, priv->admr_bits, ADMR);
-#else
-	/* disable secondary addressing */
-	write_byte(priv, HR_ARS | HR_DT | HR_DL, ADR);
-	priv->admr_bits |= HR_ADM0;
-	write_byte(priv, priv->admr_bits, ADMR);
-#endif
-
-#endif
 
 	// request for data holdoff
 	write_byte(priv, AUX_HLDA | AUX_CS, AUXCR);

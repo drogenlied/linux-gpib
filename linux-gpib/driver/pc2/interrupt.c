@@ -36,9 +36,14 @@ void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
 	gpib_board_t *board = arg;
 	pc2_private_t *priv = board->private_data;
+	int status1, status2;
 
-	nec7210_interrupt(board, &priv->nec7210_priv);
+	// read interrupt status (also clears status)
+	status1 = read_byte( &priv->nec7210_priv, ISR1 );
+	status2 = read_byte( &priv->nec7210_priv, ISR2 );
 
 	/* clear interrupt circuit */
 	outb(0xff , CLEAR_INTR_REG(priv->irq) );
+
+	nec7210_interrupt_have_status( board, &priv->nec7210_priv, status1, status2 );
 }

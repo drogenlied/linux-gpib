@@ -219,14 +219,7 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 	// enable interrupt
 	tnt_priv->io_write(0x1, iobase + INTRT);
 
-	// enable nec7210 interrupts
-	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
-		HR_DETIE | HR_APTIE | HR_CPTIE | HR_DOIE | HR_DIIE;
-	nec_priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
-	write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
-	write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
-
-	write_byte(nec_priv, AUX_PON, AUXMR);
+	nec7210_board_online( &tnt_priv->nec7210_priv, board );
 }
 
 int ni_pci_attach(gpib_board_t *board)

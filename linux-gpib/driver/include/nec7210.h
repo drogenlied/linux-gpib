@@ -96,6 +96,7 @@ extern uint8_t nec7210_serial_poll_status( gpib_board_t *board,
 
 // utility functions
 extern void nec7210_board_reset( nec7210_private_t *priv, const gpib_board_t *board );
+extern void nec7210_board_online( nec7210_private_t *priv, const gpib_board_t *board );
 
 // wrappers for io functions
 extern uint8_t nec7210_ioport_read_byte(nec7210_private_t *priv, unsigned int register_num);
@@ -105,6 +106,8 @@ extern void nec7210_iomem_write_byte(nec7210_private_t *priv, uint8_t data, unsi
 
 // interrupt service routine
 void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv);
+void nec7210_interrupt_have_status( gpib_board_t *board,
+	nec7210_private_t *priv, int status1, int status2 );
 
 // nec7210 has 8 registers
 static const int nec7210_num_registers = 8;

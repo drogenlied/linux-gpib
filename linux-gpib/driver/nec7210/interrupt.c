@@ -23,17 +23,23 @@
 /*
  *  interrupt service routine
  */
-
-void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv)
+void nec7210_interrupt( gpib_board_t *board, nec7210_private_t *priv )
 {
 	int status1, status2;
-	unsigned long flags;
-
-	spin_lock(&board->spinlock);
 
 	// read interrupt status (also clears status)
 	status1 = read_byte(priv, ISR1);
 	status2 = read_byte(priv, ISR2);
+
+	nec7210_interrupt_have_status( board, priv, status1, status2 );
+}
+
+void nec7210_interrupt_have_status( gpib_board_t *board,
+	nec7210_private_t *priv, int status1, int status2 )
+{
+	unsigned long flags;
+
+	spin_lock(&board->spinlock);
 
 	// record service request in status
 	if(status2 & HR_SRQI)
@@ -161,5 +167,6 @@ void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv)
 }
 
 EXPORT_SYMBOL(nec7210_interrupt);
+EXPORT_SYMBOL(nec7210_interrupt_have_status);
 
 
