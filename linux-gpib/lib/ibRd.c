@@ -192,7 +192,7 @@ int ibrdf(int ud, const char *file_path )
 		
 		retval = read_data(conf, buffer, sizeof(buffer), &bytes_read);
 		fwrite_count = fwrite( buffer, 1, bytes_read, save_file );
-		if( fwrite_count != retval )
+		if( fwrite_count != bytes_read )
 		{
 			setIberr( EFSO );
 			setIbcnt( errno );
