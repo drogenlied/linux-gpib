@@ -25,13 +25,13 @@ fi
 
 
 function set_var() {
-	echo "  $1 = $2" >>$CONFIG
+	echo "$1=$2" >>$CONFIG
 	echo "#define $1 ($2)" >>$CONFIG_H
 	eval "$1=$2"
 }
 
 function set_svar() {
-	echo "  $1 = $2" >>$CONFIG
+	echo "$1=$2" >>$CONFIG
 	echo "#define $1 \"$2\"" >>$CONFIG_H
 	eval "$1=$2"
 }

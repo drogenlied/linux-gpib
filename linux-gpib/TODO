@@ -1,2 +1,4 @@
 cleanup and improve organization of code
 
+fix CONF() macro silliness
+

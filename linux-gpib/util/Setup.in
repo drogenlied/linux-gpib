@@ -47,8 +47,14 @@ On initial Installation you should do a 'make clean' first\n" 20 70
 #
 ##########
 
+#load old setting for LINUXDIR if available
+LINUXDIR="/usr/src/linux"
+if [ -f ".config" ];then 
+	source .config
+fi
+
 dialog --title "Kernel Source Directory" --inputbox "Input path to linux \
-kernel source directory" 20 70 "/usr/src/linux" 2>/tmp/reply
+kernel source directory" 20 70 $LINUXDIR 2>/tmp/reply
 
 get_reply $?
 set_svar LINUXDIR $REPLY

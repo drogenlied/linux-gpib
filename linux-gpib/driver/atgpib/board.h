@@ -1,5 +1,6 @@
 
 #include <gpibP.h>
+#include <asm/io.h>
 
 extern unsigned int      ibbase;	/* base addr of GPIB interface registers  */
 extern uint8       ibirq;	/* interrupt request line for GPIB (1-7)  */
@@ -39,7 +40,7 @@ extern inline void bdP8out(void * out_addr, uint8 out_value)
  */
 extern inline uint16 bdP16in(void * in_addr)
 {
-	return inw_p((unsigned int) in)addr);
+	return inw_p((unsigned int) in_addr);
 }
 
 /*

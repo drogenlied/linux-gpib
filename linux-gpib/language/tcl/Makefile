@@ -32,7 +32,7 @@ SUBDIRS = $(EXTSUBDIRS)
 
 
 LIBS =  $(GPIBLIBS) -lfl -lm
-INCLUDES = -I. -I$(GPIB_HOME)/include 
+INCLUDES = -I. -I$(GPIB_HOME)/include -I/usr/include/tcl8.3 
 
 CFLAGS = -fpic $(INCLUDES) $(DEFINES) -Wall
 

@@ -579,7 +579,7 @@ void gpib_interrupt(int reg)
 
 /*====================================================================*/
 
-int pcmcia_init_module(void)
+IBLCL int pcmcia_init_module(void)
 {
     servinfo_t serv;
 #ifdef PCMCIA_DEBUG
@@ -596,7 +596,7 @@ int pcmcia_init_module(void)
     return 0;
 }
 
-void pcmcia_cleanup_module(void)
+IBLCL void pcmcia_cleanup_module(void)
 {
 #ifdef PCMCIA_DEBUG
     if (pc_debug)

@@ -7,6 +7,8 @@
 #include <ib.h>
 #include <ibP.h>
 
+void ib_CreateVerboseError(Tcl_Interp *interp,char *entry );
+
 int Gpib_Init ( Tcl_Interp *interp ){
 
 
@@ -235,7 +237,7 @@ int ibOnl   _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,cha
 int ibWait   _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,char *argv[])){
 
   int mask=0;
-  register i;
+  register int i;
 
   if( argc < 3 ){
     Tcl_SetResult(interp, "Error: wait <dev> <what>", TCL_STATIC);
@@ -351,9 +353,7 @@ int ibRsv  _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,char
 
 static char errbuf[80]; 
 
-int ib_CreateVerboseError(Tcl_Interp *interp,char *entry ){
-
-
+void ib_CreateVerboseError(Tcl_Interp *interp,char *entry ){
 
 strcpy(errbuf,entry);
 

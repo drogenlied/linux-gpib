@@ -13,6 +13,8 @@ extern  void bdPCIDetach(void);
 extern  void pci_EnableIRQ ();
 extern  void pci_ResetIRQ ();
 extern  void pci_DisableIRQ ();
+extern  int pcmcia_init_module(void);
+extern  void pcmcia_cleanup_module(void);
 extern  void pci_EnableIRQ ();
 extern  void pci_ResetIRQ ();
 extern  void pci_DisableIRQ ();

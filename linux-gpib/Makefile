@@ -13,7 +13,7 @@ DOCDIRS = doc
 
 export ROOT
 
-all: linux-gpib .test.stat
+all: linux-gpib 
 
 linux-gpib: .config.stat 
 	set -e; \

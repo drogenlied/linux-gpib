@@ -41,12 +41,12 @@ extern uint8       CurHSMode;
 /*
  * Input a one-byte value from the specified I/O port
  */
-extern inline uint8 bdP8in(unsigned int in_addr)
+extern inline uint8 bdP8in(faddr_t in_addr)
 {
-#if defined(CBI_PCI1)
-	return readb(in_addr);
+#if defined(CBI_PCI)
+	return readb((unsigned int)in_addr);
 #else
-	return inb(in_addr);
+	return inb((unsigned int)in_addr);
 #endif
 }
 
@@ -54,12 +54,12 @@ extern inline uint8 bdP8in(unsigned int in_addr)
 /*
  * Output a one-byte value to the specified I/O port
  */
-extern inline void bdP8out(unsigned int out_addr, uint8 out_value)
+extern inline void bdP8out(faddr_t out_addr, uint8 out_value)
 {
-#if defined(CBI_PCI1)
-	writeb(out_value,out_addr);
+#if defined(CBI_PCI)
+	writeb(out_value, (unsigned int) out_addr);
 #else
-	outb(out_value, out_addr);
+	outb(out_value, (unsigned int) out_addr);
 #endif
 }
 

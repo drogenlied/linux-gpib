@@ -1,5 +1,6 @@
 
 #include <gpibP.h>
+#include <asm/io.h>
 
 extern unsigned int      ibbase;	/* base addr of GPIB interface registers  */
 extern uint8       ibirq;	/* interrupt request line for GPIB (1-7)  */
@@ -37,9 +38,9 @@ extern inline uint8 bdP8in(faddr_t in_addr)
 extern inline void bdP8out(faddr_t out_addr, uint8 out_value)
 {
 #if defined(HP82335)
-	writeb(out_value, (unsigned int out_addr);
+	writeb(out_value, (unsigned int) out_addr);
 #else
-        outb_p((unsigned int)out_addr,out_value);
+        outb_p(out_value, (unsigned int)out_addr);
 #endif
 }
 
