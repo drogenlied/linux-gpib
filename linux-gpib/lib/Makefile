@@ -32,7 +32,7 @@ include $(ROOT)/util/.config
 export JUMP_DIR=./jump-dir
 
 CFLAGS= -Wall -I. -I../include -I../driver/include -DDEFAULT_CONFIG_FILE=\"$(LIB_CONFIG_FILE)\"  \
-	-D_REENTRANT -fpic
+	-D_REENTRANT -fpic -DPIC
 ifdef GPIB_CONFIG_LIB_DEBUG
 CFLAGS += -g3 -O
 else
