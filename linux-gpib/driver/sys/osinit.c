@@ -3,7 +3,7 @@
                              -------------------
 
     begin                : Dec 2001
-    copyright            : (C) 2001 by Frank Mori Hess
+    copyright            : (C) 2001, 2004 by Frank Mori Hess
     email                : fmhess@users.sourceforge.net
  ***************************************************************************/
 
@@ -24,7 +24,7 @@
 #include <linux/list.h>
 #include <linux/fs.h>
 #include <linux/pci.h>
-#include <linux/devfs_fs_kernel.h>
+#include <linux/device.h>
 #include <linux/init.h>
 #include <linux/vmalloc.h>
 
@@ -200,7 +200,9 @@ void init_gpib_status_queue( gpib_status_queue_t *device )
 	device->dropped_byte = 0;
 }
 
-static int gpib_common_init_module( void )
+static struct class_simple *gpib_class;
+
+static int __init gpib_common_init_module( void )
 {
 	printk("Linux-GPIB %s Driver -- Kernel Release %s\n", VERSION, UTS_RELEASE);
 	init_board_array(board_array, GPIB_MAX_NUM_BOARDS);
@@ -209,14 +211,33 @@ static int gpib_common_init_module( void )
 		printk( "gpib: can't get major %d\n", IBMAJOR );
 		return -EIO;
 	}
+	gpib_class = class_simple_create(THIS_MODULE, "gpib_common");
+	if(IS_ERR(gpib_class))
+	{
+		printk("gpib: failed to create gpib class\n");
+		unregister_chrdev(IBMAJOR, "gpib");
+		return PTR_ERR(gpib_class);
+	}
+	int i;
+	for(i = 0; i < GPIB_MAX_NUM_BOARDS; ++i)
+	{
+		class_simple_device_add(gpib_class, MKDEV(IBMAJOR, i), NULL, "gpib%i", i);
+	}
 	return 0;
 }
 
-static void gpib_common_exit_module( void )
+static void __exit gpib_common_exit_module( void )
 {
-	if ( unregister_chrdev(IBMAJOR, "gpib") != 0 ) 
+	int i;
+	for(i = 0; i < GPIB_MAX_NUM_BOARDS; ++i)
 	{
-		printk("gpib: device busy or other module error \n");
+		class_simple_device_remove(MKDEV(IBMAJOR, i));
+	}
+	class_simple_destroy(gpib_class);
+	int retval = unregister_chrdev(IBMAJOR, "gpib");
+	if(retval) 
+	{
+		printk("gpib: unregister_chrdev() returned error %i\n", retval);
 	}else 
 	{
 		printk("gpib: succesfully removed \n");
