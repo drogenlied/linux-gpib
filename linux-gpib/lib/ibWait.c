@@ -29,7 +29,7 @@ void fixup_status_bits( const ibConf_t *conf, int *status )
 	}
 }
 
-int my_wait( ibConf_t *conf, int mask, int *status )
+int my_wait( ibConf_t *conf, int wait_mask, int clear_mask, int *status )
 {
 	ibBoard_t *board;
 	int retval;
@@ -48,10 +48,11 @@ int my_wait( ibConf_t *conf, int mask, int *status )
 		return -1;
 	}
 
+	cmd.handle = conf->handle;
 	cmd.usec_timeout = conf->settings.usec_timeout;
-	cmd.wait_mask = mask;
+	cmd.wait_mask = wait_mask;
+	cmd.clear_mask = clear_mask;
 	fixup_status_bits( conf, &cmd.wait_mask );
-	cmd.clear_mask = mask & ( DTAS | DCAS );
 	if( conf->is_interface == 0 )
 	{
 		cmd.pad = conf->settings.pad;
@@ -65,7 +66,7 @@ int my_wait( ibConf_t *conf, int mask, int *status )
 		cmd.wait_mask &= board_wait_mask;
 	}
 
-	if( mask != cmd.wait_mask )
+	if( wait_mask != cmd.wait_mask )
 	{
 		setIberr( EARG );
 		return -1;
@@ -92,14 +93,16 @@ int ibwait( int ud, int mask )
 	int retval;
 	int status;
 	int error = 0;
+	int clear_mask;
 
 	conf = general_enter_library( ud, 1, 0 );
 	if( conf == NULL )
-		return exit_library( ud, 1 );
+		return general_exit_library( ud, 1, 0, 0, 0, 1 );
 
-	retval = my_wait( conf, mask, &status );
+	clear_mask = mask & ( DTAS | DCAS );
+	retval = my_wait( conf, mask, clear_mask, &status );
 	if( retval < 0 )
-		return exit_library( ud, 1 );
+		return general_exit_library( ud, 1, 0, 0, 0, 1 );
 
 //XXX
 	if( conf->async.in_progress )
@@ -119,7 +122,7 @@ int ibwait( int ud, int mask )
 		pthread_mutex_unlock( &conf->async.lock );
 	}
 
-	general_exit_library( ud, error, 0, 1, 0 );
+	general_exit_library( ud, error, 0, 1, 0, 1 );
 
 	return status;
 }
@@ -145,7 +148,7 @@ void WaitSRQ( int boardID, short *result )
 	}
 
 	wait_mask = SRQI | TIMO;
-	retval = my_wait( conf, wait_mask, &status );
+	retval = my_wait( conf, wait_mask, 0, &status );
 	if( retval < 0 )
 	{
 		exit_library( boardID, 1 );

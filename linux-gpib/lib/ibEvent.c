@@ -26,12 +26,12 @@ int ibevent(int ud, short *event )
 
 	conf = general_enter_library( ud, 1, 1 );
 	if( conf == NULL )
-		return exit_library( ud, 1 );
+		return general_exit_library( ud, 1, 0, 0, 0, 1 );
 
 	if( conf->is_interface == 0 )
 	{
 		setIberr( EARG );
-		return exit_library( ud, 1 );
+		return general_exit_library( ud, 1, 0, 0, 0, 1 );
 	}
 
 	board = interfaceBoard( conf );
@@ -49,11 +49,11 @@ int ibevent(int ud, short *event )
 				setIbcnt( errno );
 				break;
 		}
-		return exit_library( ud, 1 );
+		return general_exit_library( ud, 1, 0, 0, 0, 1 );
 	}
 
 	*event = user_event;
 
-	return exit_library( ud, 0 );
+	return general_exit_library( ud, 0, 0, 0, 0, 1 );
 }
 

@@ -36,17 +36,16 @@ static void init_wait_info( struct wait_info *winfo )
 }
 
 static int wait_satisfied( struct wait_info *winfo, gpib_device_t *device,
-	int wait_mask, int *status, pid_t cmpl_pid )
+	int wait_mask, int *status, gpib_descriptor_t *desc )
 {
 	gpib_board_t *board = winfo->board;
 	int temp_status;
 
-	temp_status = general_ibstatus( board, device, 0, cmpl_pid );
+	temp_status = general_ibstatus( board, device, 0, desc );
 	if( winfo->timed_out )
 		temp_status |= TIMO;
 	else
 		temp_status &= ~TIMO;
-
 	if( wait_mask & temp_status )
 	{
 		*status = temp_status;
@@ -95,18 +94,18 @@ static void removeWaitTimer( struct wait_info *winfo )
  * no condition is waited for.
  */
 int ibwait( gpib_board_t *board, int wait_mask, int clear_mask,
-	int *status, int pad, int sad, unsigned long usec_timeout, pid_t cmpl_pid )
+	int *status, unsigned long usec_timeout, gpib_descriptor_t *desc )
 {
 	int retval = 0;
 	gpib_device_t *device;
 	struct wait_info winfo;
 
-	if( pad < 0 ) device = NULL;
-	else device = get_gpib_device( board, pad, sad );
+	if( desc->is_board == 0 ) device = NULL;
+	else device = get_gpib_device( board, desc->pad, desc->sad );
 
 	if( wait_mask == 0 )
 	{
-		*status = general_ibstatus( board, device, clear_mask, cmpl_pid );
+		*status = general_ibstatus( board, device, clear_mask, desc );
 		return 0;
 	}
 
@@ -116,7 +115,7 @@ int ibwait( gpib_board_t *board, int wait_mask, int clear_mask,
 	startWaitTimer( &winfo );
 
 	if( wait_event_interruptible( board->wait,
-		wait_satisfied( &winfo, device, wait_mask, status, cmpl_pid ) ) )
+		wait_satisfied( &winfo, device, wait_mask, status, desc ) ) )
 	{
 		printk( "wait interrupted\n" );
 		retval = -ERESTARTSYS;

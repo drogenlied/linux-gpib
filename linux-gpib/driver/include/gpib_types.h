@@ -257,6 +257,7 @@ typedef struct
 {
 	unsigned int pad;	/* primary gpib address */
 	int sad;	/* secondary gpib address (negative means disabled) */
+	volatile short io_in_progress;
 	unsigned is_board : 1;
 } gpib_descriptor_t;
 

@@ -62,6 +62,7 @@ void init_gpib_descriptor( gpib_descriptor_t *desc )
 	desc->pad = 0;
 	desc->sad = -1;
 	desc->is_board = 0;
+	desc->io_in_progress = 0;
 }
 
 void gpib_register_driver(gpib_interface_t *interface)

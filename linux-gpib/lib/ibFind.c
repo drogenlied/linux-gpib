@@ -23,7 +23,7 @@ int ibfind( const char *dev )
 {
 	int index;
 	int retval;
-	int uDesc;
+	int ud;
 	ibConf_t *conf;
 	int status;
 
@@ -44,28 +44,28 @@ int ibfind( const char *dev )
 
 	conf = &ibFindConfigs[ index ];
 
-	uDesc = my_ibdev( *conf );
-	if(uDesc < 0)
+	ud = my_ibdev( *conf );
+	if(ud < 0)
 	{
 		fprintf(stderr, "libgpib: ibfind failed to get descriptor\n");
 		return -1;
 	}
-	conf = general_enter_library( uDesc, 1, 0 );
+	conf = general_enter_library( ud, 1, 0 );
 
 	if(conf->flags & CN_SDCL)
 	{
-		status = ibclr(uDesc);
+		status = ibclr(ud);
 		if( status & ERR ) return -1;
 	}
 
 	if(strcmp(conf->init_string, ""))
 	{
-		status = ibwrt(uDesc, conf->init_string, strlen(conf->init_string));
+		status = ibwrt(ud, conf->init_string, strlen(conf->init_string));
 		if( status & ERR )
 			return -1;
 	}
 
-	return uDesc;
+	return ud;
 }
 
 

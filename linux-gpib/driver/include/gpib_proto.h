@@ -39,11 +39,11 @@ int ibpad( gpib_board_t *board, unsigned int addr );
 int ibsad( gpib_board_t *board, int addr );
 int ibeos( gpib_board_t *board, int eos, int eosflags );
 int ibwait(gpib_board_t *board, int wait_mask, int clear_mask, int *status,
-	int pad, int sad, unsigned long usec_timeout, pid_t cmpl_pid );
+	unsigned long usec_timeout, gpib_descriptor_t *desc );
 ssize_t ibwrt(gpib_board_t *board, uint8_t *buf, size_t cnt, int more );
 int ibstatus( gpib_board_t *board );
 int general_ibstatus( gpib_board_t *board, const gpib_device_t *device,
-	int clear_mask, pid_t cmpl_pid );
+	int clear_mask, const gpib_descriptor_t *desc );
 int io_timed_out( gpib_board_t *board );
 int ibppc( gpib_board_t *board, uint8_t configuration );
 

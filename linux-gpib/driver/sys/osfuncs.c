@@ -21,13 +21,16 @@
 #include <linux/fcntl.h>
 
 static int board_type_ioctl(gpib_board_t *board, unsigned long arg);
-static int read_ioctl(gpib_board_t *board, unsigned long arg);
-static int write_ioctl(gpib_board_t *board, unsigned long arg);
-static int command_ioctl(gpib_board_t *board, unsigned long arg);
+static int read_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
+	unsigned long arg);
+static int write_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
+	unsigned long arg);
+static int command_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
+	unsigned long arg);
 static int open_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned long arg );
 static int close_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned long arg );
 static int serial_poll_ioctl( gpib_board_t *board, unsigned long arg );
-static int wait_ioctl( gpib_board_t *board, unsigned long arg );
+static int wait_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board, unsigned long arg );
 static int parallel_poll_ioctl( gpib_board_t *board, unsigned long arg );
 static int online_ioctl( gpib_board_t *board, gpib_file_private_t *priv,
 	unsigned long arg );
@@ -58,6 +61,18 @@ static int request_system_control_ioctl( gpib_board_t *board, unsigned long arg 
 static int t1_delay_ioctl( gpib_board_t *board, unsigned long arg );
 
 static int cleanup_open_devices( gpib_file_private_t *file_priv, gpib_board_t *board );
+
+static gpib_descriptor_t* handle_to_descriptor( const gpib_file_private_t *file_priv,
+	int handle )
+{
+	if( handle < 0 || handle >= GPIB_MAX_NUM_DESCRIPTORS )
+	{
+		printk( "gpib: invalid handle %i\n", handle );
+		return NULL;
+	}
+
+	return file_priv->descriptors[ handle ];
+}
 
 static int init_gpib_file_private( gpib_file_private_t *priv )
 {
@@ -241,7 +256,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			return status_bytes_ioctl( board, arg );
 			break;
 		case IBWAIT:
-			return wait_ioctl( board, arg );
+			return wait_ioctl( filep->private_data, board, arg );
 			break;
 		case IBLINES:
 			return line_status_ioctl( board, arg );
@@ -263,11 +278,23 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 
 	switch( cmd )
 	{
+		case IB_T1_DELAY:
+			return t1_delay_ioctl( board, arg );
+			break;
+		case IBCAC:
+			return take_control_ioctl( board, arg );
+			break;
 		case IBCLOSEDEV:
 			return close_dev_ioctl( filep, board, arg );
 			break;
 		case IBCMD:
-			return command_ioctl( board, arg );
+			return command_ioctl( filep->private_data, board, arg );
+			break;
+		case IBEOS:
+			return eos_ioctl( board, arg );
+			break;
+		case IBGTS:
+			return ibgts( board );
 			break;
 		case IBOPENDEV:
 			return open_dev_ioctl( filep, board, arg );
@@ -279,7 +306,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			return query_board_rsv_ioctl( board, arg );
 			break;
 		case IBRD:
-			return read_ioctl( board, arg );
+			return read_ioctl( filep->private_data, board, arg );
 			break;
 		case IBRPP:
 			return parallel_poll_ioctl( board, arg );
@@ -287,11 +314,11 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 		case IBRSC:
 			return request_system_control_ioctl( board, arg );
 			break;
-		case IBWRT:
-			return write_ioctl( board, arg );
+		case IBRSP:
+			return serial_poll_ioctl( board, arg );
 			break;
-		case IBTMO:
-			return timeout_ioctl( board, arg );
+		case IBRSV:
+			return request_service_ioctl( board, arg );
 			break;
 		case IBSIC:
 			return interface_clear_ioctl( board, arg );
@@ -299,23 +326,11 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 		case IBSRE:
 			return remote_enable_ioctl( board, arg );
 			break;
-		case IBGTS:
-			return ibgts( board );
+		case IBTMO:
+			return timeout_ioctl( board, arg );
 			break;
-		case IBCAC:
-			return take_control_ioctl( board, arg );
-			break;
-		case IBEOS:
-			return eos_ioctl( board, arg );
-			break;
-		case IBRSP:
-			return serial_poll_ioctl( board, arg );
-			break;
-		case IBRSV:
-			return request_service_ioctl( board, arg );
-			break;
-		case IB_T1_DELAY:
-			return t1_delay_ioctl( board, arg );
+		case IBWRT:
+			return write_ioctl( filep->private_data, board, arg );
 			break;
 		default:
 			return -ENOTTY;
@@ -355,7 +370,8 @@ static int board_type_ioctl(gpib_board_t *board, unsigned long arg)
 	return -EINVAL;
 }
 
-static int read_ioctl(gpib_board_t *board, unsigned long arg)
+static int read_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
+	unsigned long arg)
 {
 	read_write_ioctl_t read_cmd;
 	uint8_t *userbuf;
@@ -363,15 +379,21 @@ static int read_ioctl(gpib_board_t *board, unsigned long arg)
 	int end_flag = 0;
 	int retval;
 	ssize_t ret;
+	gpib_descriptor_t *desc;
 
 	retval = copy_from_user(&read_cmd, (void*) arg, sizeof(read_cmd));
 	if (retval)
 		return -EFAULT;
 
+	desc = handle_to_descriptor( file_priv, read_cmd.handle );
+	if( desc == NULL ) return -EINVAL;
+
 	/* Check write access to buffer */
 	retval = verify_area(VERIFY_WRITE, read_cmd.buffer, read_cmd.count);
 	if (retval)
 		return -EFAULT;
+
+	desc->io_in_progress = 1;
 
 	/* Read buffer loads till we fill the user supplied buffer */
 	userbuf = read_cmd.buffer;
@@ -382,6 +404,8 @@ static int read_ioctl(gpib_board_t *board, unsigned long arg)
 			remain, &end_flag);
 		if(ret < 0)
 		{
+			desc->io_in_progress = 0;
+			wake_up_interruptible( &board->wait );
 			return ret;
 		}
 		if( ret == 0 ) break;
@@ -393,21 +417,28 @@ static int read_ioctl(gpib_board_t *board, unsigned long arg)
 	read_cmd.end = end_flag;
 
 	retval = copy_to_user((void*) arg, &read_cmd, sizeof(read_cmd));
+	desc->io_in_progress = 0;
+	wake_up_interruptible( &board->wait );
 	if(retval) return -EFAULT;
 
 	return 0;
 }
 
-static int command_ioctl(gpib_board_t *board, unsigned long arg)
+static int command_ioctl( gpib_file_private_t *file_priv,
+	gpib_board_t *board, unsigned long arg)
 {
 	read_write_ioctl_t cmd;
 	uint8_t *userbuf;
 	unsigned long remain;
 	int retval;
+	gpib_descriptor_t *desc;
 
 	retval = copy_from_user(&cmd, (void*) arg, sizeof(cmd));
 	if( retval )
 		return -EFAULT;
+
+	desc = handle_to_descriptor( file_priv, cmd.handle );
+	if( desc == NULL ) return -EINVAL;
 
 	/* Check read access to buffer */
 	retval = verify_area(VERIFY_READ, cmd.buffer, cmd.count);
@@ -418,6 +449,7 @@ static int command_ioctl(gpib_board_t *board, unsigned long arg)
 	userbuf = cmd.buffer;
 	remain = cmd.count;
 
+	desc->io_in_progress = 1;
 	while( remain > 0 )
 	{
 		copy_from_user(board->buffer, userbuf, (board->buffer_length < remain) ?
@@ -426,6 +458,9 @@ static int command_ioctl(gpib_board_t *board, unsigned long arg)
 			board->buffer_length : remain );
 		if(retval < 0)
 		{
+			desc->io_in_progress = 0;
+			wake_up_interruptible( &board->wait );
+			return retval;
 			break;
 		}
 		if( retval == 0 ) break;
@@ -435,30 +470,37 @@ static int command_ioctl(gpib_board_t *board, unsigned long arg)
 
 	cmd.count -= remain;
 
-	if( retval < 0 ) return retval;
-
 	retval = copy_to_user((void*) arg, &cmd, sizeof(cmd));
+	desc->io_in_progress = 0;
+	wake_up_interruptible( &board->wait );
 	if( retval ) return -EFAULT;
 
 	return 0;
 }
 
-static int write_ioctl(gpib_board_t *board, unsigned long arg)
+static int write_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
+	unsigned long arg)
 {
 	read_write_ioctl_t write_cmd;
 	uint8_t *userbuf;
 	unsigned long remain;
 	int retval;
 	ssize_t ret;
+	gpib_descriptor_t *desc;
 
 	retval = copy_from_user(&write_cmd, (void*) arg, sizeof(write_cmd));
 	if (retval)
 		return -EFAULT;
 
+	desc = handle_to_descriptor( file_priv, write_cmd.handle );
+	if( desc == NULL ) return -EINVAL;
+
 	/* Check read access to buffer */
 	retval = verify_area(VERIFY_READ, write_cmd.buffer, write_cmd.count);
 	if (retval)
 		return -EFAULT;
+
+	desc->io_in_progress = 1;
 
 	/* Write buffer loads till we empty the user supplied buffer */
 	userbuf = write_cmd.buffer;
@@ -473,6 +515,8 @@ static int write_ioctl(gpib_board_t *board, unsigned long arg)
 			board->buffer_length : remain, send_eoi);
 		if(ret < 0)
 		{
+			desc->io_in_progress = 0;
+			wake_up_interruptible( &board->wait );
 			return ret;
 		}
 		if( ret == 0 ) break;
@@ -483,6 +527,8 @@ static int write_ioctl(gpib_board_t *board, unsigned long arg)
 	write_cmd.count -= remain;
 
 	retval = copy_to_user((void*) arg, &write_cmd, sizeof(write_cmd));
+	desc->io_in_progress = 0;
+	wake_up_interruptible( &board->wait );
 	if(retval) return -EFAULT;
 
 	return 0;
@@ -693,18 +739,22 @@ static int serial_poll_ioctl( gpib_board_t *board, unsigned long arg )
 	return 0;
 }
 
-static int wait_ioctl( gpib_board_t *board, unsigned long arg )
+static int wait_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
+	unsigned long arg )
 {
 	wait_ioctl_t wait_cmd;
 	int retval;
+	gpib_descriptor_t *desc;
 
 	retval = copy_from_user( &wait_cmd, ( void * ) arg, sizeof( wait_cmd ) );
 	if( retval )
 		return -EFAULT;
 
+	desc = handle_to_descriptor( file_priv, wait_cmd.handle );
+	if( desc == NULL ) return -EINVAL;
+
 	retval = ibwait( board, wait_cmd.wait_mask, wait_cmd.clear_mask,
-		&wait_cmd.ibsta, wait_cmd.pad, wait_cmd.sad, wait_cmd.usec_timeout,
-		wait_cmd.cmpl_pid );
+		&wait_cmd.ibsta, wait_cmd.usec_timeout, desc );
 	if( retval < 0 ) return retval;
 
 	retval = copy_to_user( ( void * ) arg, &wait_cmd, sizeof( wait_cmd ) );
@@ -799,10 +849,9 @@ static int pad_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 	if( retval )
 		return -EFAULT;
 
-	if( cmd.handle >= GPIB_MAX_NUM_DESCRIPTORS )
-	return -EINVAL;
-
-	desc = file_priv->descriptors[ cmd.handle ];
+	desc = handle_to_descriptor( file_priv, cmd.handle );
+	if( desc == NULL )
+		return -EINVAL;
 
 	if( desc->is_board )
 	{
@@ -835,10 +884,9 @@ static int sad_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 	if( retval )
 		return -EFAULT;
 
-	if( cmd.handle >= GPIB_MAX_NUM_DESCRIPTORS )
-	return -EINVAL;
-
-	desc = file_priv->descriptors[ cmd.handle ];
+	desc = handle_to_descriptor( file_priv, cmd.handle );
+	if( desc == NULL )
+		return -EINVAL;
 
 	if( desc->is_board )
 	{
@@ -1006,6 +1054,7 @@ static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 		{
 			printk( "gpib: bug! pid %i tried to release mutex held by pid %i\n",
 				current->pid, board->locking_pid );
+			return -EPERM;
 		}
 		file_priv->holding_mutex = 0;
 		board->locking_pid = 0;

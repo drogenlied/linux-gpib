@@ -31,6 +31,7 @@ typedef struct
 /* argument for read/write/command ioctls */
 typedef struct
 {
+	int handle;
 	uint8_t *buffer;
 	unsigned long count;
 	int end;
@@ -64,13 +65,13 @@ typedef struct
 
 typedef struct
 {
+	int handle;
 	int wait_mask;
 	int clear_mask;
 	int ibsta;
 	int pad;
 	int sad;
 	unsigned long usec_timeout;
-	pid_t cmpl_pid;
 } wait_ioctl_t;
 
 typedef struct

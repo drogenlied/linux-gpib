@@ -46,7 +46,7 @@ static void cleanup_aio( void *varg )
 {
 	struct gpib_aio_arg arg = *((struct gpib_aio_arg*) varg);
 
-	general_exit_library( arg.ud, 0, 1, 0, 0 );
+	general_exit_library( arg.ud, 0, 1, 0, 0, 0 );
 }
 
 int gpib_aio_launch( int ud, ibConf_t *conf, int gpib_aio_type,
@@ -107,7 +107,7 @@ static void* do_aio( void *varg )
 
 	free( varg ); varg = NULL;
 
-	conf = enter_library( arg.ud );
+	conf = general_enter_library( arg.ud, 0, 1 );
 	if( conf != arg.conf )
 	{
 		conf = arg.conf;
@@ -153,6 +153,7 @@ static void* do_aio( void *varg )
 		conf->async.iberr = 0;
 		conf->async.ibsta = CMPL;
 	}
+	pthread_mutex_unlock( &conf->async.lock );
 	pthread_cleanup_pop( 1 );
 	return NULL;
 }

@@ -23,12 +23,12 @@ int ibeos(int ud, int v)
 
 	conf = general_enter_library( ud, 1, 0 );
 	if( conf == NULL )
-		return exit_library( ud, 1 );
+		return general_exit_library( ud, 1, 0, 0, 0, 1 );
 
 	conf->settings.eos = v & 0xff;
 	conf->settings.eos_flags = v & 0xff00;
 
-	return exit_library( ud, 0 );
+	return general_exit_library( ud, 0, 0, 0, 0, 1 );
 }
 
 /*

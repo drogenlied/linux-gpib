@@ -52,15 +52,15 @@ int iblines( int ud, short *line_status )
 
 	conf = general_enter_library( ud, 1, 1 );
 	if( conf == NULL )
-		return exit_library( ud, 1 );
+		return general_exit_library( ud, 1, 0, 0, 0, 1 );
 
 	retval = internal_iblines( conf, line_status );
 	if( retval < 0 )
 	{
-		return exit_library( ud, 1 );
+		return general_exit_library( ud, 1, 0, 0, 0, 1 );
 	}
 
-	return exit_library( ud, 0 );
+	return general_exit_library( ud, 0, 0, 0, 0, 1 );
 }
 
 void TestSRQ( int boardID, short *result )

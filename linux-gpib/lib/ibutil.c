@@ -417,17 +417,11 @@ ibConf_t * general_enter_library( int ud, int no_lock_board, int ignore_eoip )
 int ibstatus( ibConf_t *conf, int error, int clear_mask )
 {
 	int status = 0;
+	int retval;
 
-// XXX gut and replace with my_ibwait
-	pthread_mutex_lock( &conf->async.lock );
-	if( conf->async.in_progress )
-	{
-		status &= ~CMPL;
-	}else
-	{
-		status |= CMPL;
-	}
-	pthread_mutex_unlock( &conf->async.lock );
+	retval = my_wait( conf, 0, clear_mask, &status);
+	if( retval < 0 ) error = 1;
+
 	if( error ) status |= ERR;
 	if( conf->timed_out )
 		status |= TIMO;
@@ -441,11 +435,11 @@ int ibstatus( ibConf_t *conf, int error, int clear_mask )
 
 int exit_library( int ud, int error )
 {
-	return general_exit_library( ud, error, 0, 0, 0 );
+	return general_exit_library( ud, error, 0, 0, 0, 0 );
 }
 
 int general_exit_library( int ud, int error, int no_sync_globals, int no_update_ibsta,
-	int status_clear_mask )
+	int status_clear_mask, int no_unlock_board )
 {
 	ibConf_t *conf = ibConfigs[ ud ];
 	ibBoard_t *board;
@@ -468,7 +462,7 @@ int general_exit_library( int ud, int error, int no_sync_globals, int no_update_
 	else
 		status = ibstatus( conf, error, status_clear_mask );
 
-	if( conf->has_lock )
+	if( no_unlock_board == 0 )
 		conf_unlock_board( conf );
 
 	if( no_sync_globals == 0 )
@@ -575,6 +569,7 @@ int is_cic( const ibBoard_t *board )
 	cmd.clear_mask = 0;
 	cmd.pad = NOADDR;
 	cmd.sad = NOADDR;
+	cmd.handle = 0;
 	retval = ioctl( board->fileno, IBWAIT, &cmd );
 	if( retval < 0 )
 	{
