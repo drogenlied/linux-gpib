@@ -27,10 +27,16 @@ MAKE = make -C
 
 ######################################################################
 
+include $(ROOT)/util/.config
+
 export JUMP_DIR=./jump-dir
 
 CFLAGS= -Wall -O2 -I. -I../include -I../driver/include -DDEFAULT_CONFIG_FILE=\"$(LIB_CONFIG_FILE)\"  \
 	-D_REENTRANT -fpic
+ifdef GPIB_CONFIG_LIB_DEBUG
+CFLAGS += -g3
+endif
+
 LDFLAGS = -L.
 
 SRCS =  ibCac.c ibClr.c ibCmd.c ibConfYacc.c ibConfLex.c  ibEos.c ibEot.c \
@@ -93,6 +99,4 @@ ifndef NODEPS
 endif
 
 include $(ROOT)/makefile.inc
-
-
 

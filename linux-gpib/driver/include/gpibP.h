@@ -24,7 +24,7 @@ extern gpib_board_t board_array[MAX_NUM_GPIB_BOARDS];
 
 extern struct list_head registered_drivers;
 
-#if defined( GPIB_CONFIG_VERBOSE_DEBUG )
+#if defined( GPIB_CONFIG_KERNEL_DEBUG )
 #define GPIB_DPRINTK( format, args... ) printk( "gpib debug: " format, ## args )
 #else
 #define GPIB_DPRINTK( arg... )

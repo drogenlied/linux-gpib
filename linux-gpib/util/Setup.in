@@ -116,7 +116,8 @@ RESULT=$($DIALOG --title "Compilation options" \
 --checklist "Select compilation options" \
 	17 76 10 \
 	"GPIB_CONFIG_PCMCIA"  "Compile in support for PCMCIA boards" "off" \
-	"GPIB_CONFIG_VERBOSE_DEBUG" "Produce verbose debugging messages" "off" \
+	"GPIB_CONFIG_KERNEL_DEBUG" "Generate verbose kernel log spam" "off" \
+	"GPIB_CONFIG_LIB_DEBUG" "Compile library with debugging symbols" "off" \
 	2>&1 1>/dev/tty)
 
 if [ $? = 0 ]; then
