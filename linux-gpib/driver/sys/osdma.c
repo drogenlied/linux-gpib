@@ -13,7 +13,7 @@ IBLCL int osDoDMA(ibio_op_t *rwop)
 
 	rwop->io_pbuf = (uint32) rwop->io_vbuf;
 
-	DBGprint(DBG_DATA, ("pbuf=0x%x cnt=%d  ", rwop->io_pbuf, rwop->io_cnt));
+	DBGprint(DBG_DATA, ("pbuf=0x%x cnt=%d  ", (unsigned int)rwop->io_pbuf, rwop->io_cnt));
 
 
 	/* program dma controller */

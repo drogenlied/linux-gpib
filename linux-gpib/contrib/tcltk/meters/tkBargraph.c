@@ -18,8 +18,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include "tcl.h"
-#include "tk.h"
+#include <tcl.h>
+#include <tk.h>
 
 #ifndef TRUE
 #define TRUE 1

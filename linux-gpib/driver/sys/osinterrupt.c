@@ -2,7 +2,7 @@
 extern uint8       CurHSMode;
 
 /*
- * There is a Problem with Linux Semaphores: 
+ * There is a Problem with Linux Semaphores:
  *      - enabling Interrupts
  *      - call to down()
  *
@@ -22,8 +22,6 @@ extern int ccrbits;
 
 extern uint8 ibirq;
 
-static int IRQ_mask;
-
 long serial=0L;
 
 #if USEINTS
@@ -32,12 +30,11 @@ long serial=0L;
  */
 void ibintr(int irq, struct pt_regs *registerp )
 {
-int s;
 
 /*printk("***IRQ %ld! st=0x%x \n",serial++,GPIBin(hs_status));*/
 #if DEBUG
 	if (dbgMask & DBG_INTR)
-	        printk("GPIB INTERRUPT! semaphore id = %d\n", espsemid.count);
+	        printk("GPIB INTERRUPT! semaphore id = %d\n", atomic_read(&espsemid.count));
 #endif
 
 #ifdef NIAT
@@ -88,24 +85,16 @@ int s;
 
 IBLCL void osWaitForInt( int imr3mask )
 {
-	DECLARE_WAITQUEUE(wait, current);
+//	DECLARE_WAITQUEUE(wait, current);
 
 	DBGin("osWaitForInt");
-#ifdef LINUX2_2
         if (atomic_read(&espsemid.count) <=0) {
-#else
-	if (espsemid.count <= 0) {
-#endif
 	/*
 	 *	If semaphore not already available, enable
 	 *	requested interrupts and wait until it is...
 	 */
 
-#ifdef LINUX2_2
          sema_init( &espsemid, 1);
-#else
-	  espsemid.count = 1;
-#endif
           down(&espsemid); /* spurious interrups calling up() while irq's are enabled ? */
 
           /* now it's time to enable board interrupts */
@@ -149,12 +138,7 @@ IBLCL void osWaitForInt( int imr3mask )
 
 	}
 		else{
-#ifdef LINUX2_2
 		sema_init( &espsemid, 0);
-#else
-		espsemid.count = 0;
-		espsemid.wait  = NULL;
-#endif
 	}
 	DBGout();
 }

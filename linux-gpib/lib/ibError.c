@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-FILE *errp = stderr;
+#define errp stderr
 
 
 PRIVATE void ibOpenErrlog(char *name)

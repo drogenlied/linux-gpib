@@ -1,5 +1,4 @@
 
-ROOT=../..
 INCLUDES = -I. -I$(ROOT)/include
 LIBS = -L.. -lgpib -lfl
 
@@ -13,7 +12,7 @@ OBJS = rgpib_lib.o rgpib_clnt.o rgpib_xdr.o
 RPCCOM = rpcgen 
 #RPCCOM = ../utils/rpcgen -I
 
-CFLAGS = $(INCLUDES) -g
+CFLAGS = $(INCLUDES) -O2
 
 
 all: $(GEN) rgpib.o
@@ -66,6 +65,5 @@ realclean:
 	$(RM) $(GEN) *.o $(BIN)
 
 
-.SILENT:
 include $(ROOT)/makefile.inc
 

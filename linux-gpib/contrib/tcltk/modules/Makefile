@@ -1,5 +1,5 @@
 
-include make.config
+-include make.config
 
 
 clean:
@@ -9,4 +9,4 @@ install:
 	for i in *.so* ; do install $$i $(INSTALLDIR) ; done
 
 make.config:
-	../config.tcl >make.config
+	../config.tcl >./make.config

@@ -16,7 +16,7 @@
 extern void rgpibprog_1();
 void gpib_server();
 
-static int gpib_bus = NULL ;  /* busmaster descriptor */
+static int gpib_bus = 0 ;  /* busmaster descriptor */
 
 
 /***********************************************************************
@@ -86,6 +86,7 @@ main(int argc, char **argv)
         int no=0;
         char tmp[80];
         char hostname[64];
+	int debug = 0;
 
 
          int c;
@@ -99,7 +100,7 @@ main(int argc, char **argv)
              int option_index = 0;
              static struct option long_options[] =
              {
-            {"debug", 0, 0, 0},
+            {"debug", 0, 0, 'd'},
             {"help",  0, 0, 0},
             {0, 0, 0, 0}
              };

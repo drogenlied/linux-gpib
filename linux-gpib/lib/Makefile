@@ -2,11 +2,11 @@
 #
 #   Makefile for NI4882(tm) compatible GPIB - C language Interface
 #
-#   (c) C.Schroeter 1994          
+#   (c) C.Schroeter 1994 
 #
 #######################################################################
 
-ROOT=..
+export ROOT
 TARGET_ROOT = /usr/local
 
 SUBDIRS = net
@@ -58,23 +58,19 @@ all: $(EXP_INC) subdirs $(DEFAULT_BUILD) server
 subdirs:
 	set -e; \
 	for i in $(SUBDIRS); do \
-		$(ECHO) "|||" Making target $(BOLD)all$(NBOLD) in directory $(BOLD)$$i$(NBOLD)... ; \
 		$(MAKE) $$i all ; \
-		$(ECHO) "|||" Leaving directory $(BOLD)$$i$(NBOLD)... ; \
 	done
 
 server:
 	make -C net rgpib_svc
 
 $(LIBNAME):   $(OBJS) 
-	$(ECHO) --- Creating archive $(BOLD)$@$(NBOLD)...
 	rm -f $(LIBNAME)
 	ar cr $(LIBNAME) $(OBJS)
 	ranlib $(LIBNAME)
 
 ibConfLex.c:  ibConfLex.l y.tab.h
 	$(LEX) -o$@ $<
-	$(ECHO) --- Fixing $(BOLD)ibConfLex.c$(NBOLD)...
 	sed s/yy/gpib_yy/g ibConfLex.c > dummy.c
 	mv dummy.c ibConfLex.c
 	sed s/gpib_gpib/gpib/g ibConfLex.c > dummy.c
@@ -89,7 +85,6 @@ ibConfLex.c:  ibConfLex.l y.tab.h
 
 ibConfYacc.c + y.tab.h: ibConfYacc.y
 	$(YACC) $<
-	$(ECHO) --- Fixing $(BOLD)ibConfYacc.c$(NBOLD)...
 	sed s/yy/gpib_yy/g y.tab.c > ibConfYacc.c
 	sed s/gpib_gpib/gpib/g ibConfYacc.c > dummy.c
 	mv dummy.c ibConfYacc.c
@@ -98,7 +93,6 @@ ibConfYacc.c + y.tab.h: ibConfYacc.y
 	sed s/GPIB_GPIB/GPIB/g ibConfYacc.c > dummy.c
 	mv dummy.c ibConfYacc.c
 	rm -f y.tab.c
-	$(ECHO) --- Fixing $(BOLD)y.tab.h$(NBOLD)...
 	sed s/yy/gpib_yy/g y.tab.h > dummy.h
 	mv dummy.h y.tab.h
 	sed s/gpib_gpib/gpib/g y.tab.h > dummy.h
@@ -110,7 +104,6 @@ ibConfYacc.c + y.tab.h: ibConfYacc.y
 
 
 ibProto.h: $(SRCS)
-	$(ECHO) --- Creating $(BOLD)$@$(NBOLD)...
 	echo >ibProto.h
 	echo "#ifdef __cplusplus" >>ibProto.h 
 	echo "extern \"C\" {" >>ibProto.h 
@@ -133,9 +126,7 @@ clean:
 	$(RM) $(EXP_INC) *.o ibConfYacc.c ibConfLex.c *.a .depend y.tab.h ibProto.h
 	set -e; \
 	for i in $(SUBDIRS); do \
-		$(ECHO) "|||" Making target $(BOLD)$@$(NBOLD) in directory $(BOLD)$$i$(NBOLD)... ; \
 		make -C $$i clean; \
-		$(ECHO) "|||" Leaving directory $(BOLD)$$i$(NBOLD)... ; \
 	done
 
 
@@ -206,7 +197,6 @@ shared_2: shared_1.done
 	
 	
 $(EXP_INC):
-	$(ECHO) --- Creating $(BOLD)$@$(NBOLD)...
 	rm -f $@
 	ln -s $(CWD)/`basename $@` $@
 
@@ -221,7 +211,6 @@ ifndef NODEPS
 -include .depend
 endif
 
-.SILENT:
 include $(ROOT)/makefile.inc
 
 

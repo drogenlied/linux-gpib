@@ -462,8 +462,7 @@ IBLCL int ibVFSwrite( struct file *filep, const char *buffer, size_t count, loff
 	int	bufsize;
 	int	remain;
 	char 	*buf;
-	char 	*userbuf;
-	char 	c;
+	const char 	*userbuf;
 
 
     DBGin("ibVFSwrite");
@@ -486,11 +485,7 @@ IBLCL int ibVFSwrite( struct file *filep, const char *buffer, size_t count, loff
 	  userbuf = buffer;
 	  remain = count;
 	  do {
-#ifdef LINUX2_2        
 		  copy_from_user( buf, userbuf, (bufsize < remain) ? bufsize : remain );
-#else
-		  memcpy_fromfs( buf, userbuf, (bufsize < remain) ? bufsize : remain );
-#endif
 		  dvwrt( minor , buf, (bufsize < remain) ? bufsize : remain );
 		  remain -= ibcnt;
 		  userbuf += ibcnt;
@@ -515,7 +510,6 @@ IBLCL int ibVFSread(struct file *filep, char *buffer, size_t count, loff_t *offs
 	int	remain;
 	char 	*buf;
 	char 	*userbuf;
-	char 	c;
 
 
 

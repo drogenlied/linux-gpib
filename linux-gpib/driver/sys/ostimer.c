@@ -47,7 +47,7 @@ IBLCL void osStartTimer(int v)
   #endif
 #endif
 	if (v > 0) {
-		DBGprint(DBG_DATA, ("timo=%d  ", timeTable[v]));
+		DBGprint(DBG_DATA, ("timo=%ld  ", timeTable[v]));
 #if SYSTIMO
 #ifdef LINUX2_0
 		ibtimer_list.expires = jiffies + timeTable[v];   /* set number of ticks */

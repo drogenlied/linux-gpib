@@ -11,7 +11,7 @@ extern ibarg_t ibarg;
 #include <errno.h>
 #include <fcntl.h>
 
-#define CONF(a,b) (((int)a & UD_REMOTE ? a : ibConfigs[a].b ))
+#define CONF(a,b) (((a) & UD_REMOTE) ? (a) : ibConfigs[a].b )
 #define BOARD(a)  (ibConfigs[a].board)
 
 #define MAX_BOARDS 4    /* maximal number of boards */

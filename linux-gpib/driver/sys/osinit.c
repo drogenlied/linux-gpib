@@ -219,8 +219,6 @@ int ibmajor = IBMAJOR;   /* major number for dynamic configuration */
 
 int init_module(void)
 {
-
-        char signature=0;
         extern char kernel_version[];
 
 #if DEBUG
