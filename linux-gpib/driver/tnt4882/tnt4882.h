@@ -288,17 +288,19 @@ enum auxi_bits
 /* paged io */
 static inline unsigned int tnt_paged_readb( tnt4882_private_t *priv, unsigned long offset )
 {
-	unsigned long address = priv->nec7210_priv.iobase + offset;
+	unsigned long iobase = priv->nec7210_priv.iobase;
 
-	write_byte( &priv->nec7210_priv, AUX_PAGEIN, AUXMR );
-	return priv->io_readb( address );
+	priv->io_writeb(priv, AUX_PAGEIN, iobase + AUXMR * priv->nec7210_priv.offset);
+	udelay(1);
+	return priv->io_readb(iobase + offset);
 }
 static inline void tnt_paged_writeb(tnt4882_private_t *priv, unsigned int value, unsigned long offset )
 {
-	unsigned long address = priv->nec7210_priv.iobase + offset;
+	unsigned long iobase = priv->nec7210_priv.iobase;
 
-	write_byte( &priv->nec7210_priv, AUX_PAGEIN, AUXMR );
-	priv->io_writeb( value, address );
+	priv->io_writeb(priv, AUX_PAGEIN, iobase + AUXMR * priv->nec7210_priv.offset);
+	udelay(1);
+	priv->io_writeb(value, iobase + offset);
 }
 
 /* readb/writeb wrappers */
