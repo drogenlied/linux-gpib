@@ -249,7 +249,7 @@ enum aux_cmd_bits
 	AUX_RHDF = 0x2,	/* X Release RFD holdoff          */
 	AUX_HLDA = 0x3,	/* d holdoff on all data          */
 	AUX_HLDE = 0x4,	/* d holdoff on EOI only          */
-	AUX_NBAF = 0x5,	/* X Set ne byte availiable false */
+	AUX_NBAF = 0x5,	/* X Set new byte availiable false */
 	AUX_FGET = 0x6,	/* d force GET                    */
 	AUX_RTL = 0x7,	/* d return to local              */
 	AUX_SEOI = 0x8,	/* X send EOI with next byte      */
