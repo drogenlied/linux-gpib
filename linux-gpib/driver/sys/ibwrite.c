@@ -17,7 +17,7 @@
 
 #include "gpibP.h"
 
-int gpib_clear_to_write( gpib_board_t *board )
+static int gpib_clear_to_write( gpib_board_t *board )
 {
 	unsigned int status;
 

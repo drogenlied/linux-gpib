@@ -249,7 +249,7 @@ int perform_read(int ud)
 
 int prompt_for_write(int ud)
 {
-	char buffer[1024];
+	char buffer[ 1024 ];
 
 	printf("enter a string to send to your device: ");
 	fgets( buffer, sizeof(buffer), stdin );

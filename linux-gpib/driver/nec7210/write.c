@@ -103,8 +103,6 @@ static ssize_t __dma_write(gpib_board_t *board, nec7210_private_t *priv, dma_add
 	if(test_bit(TIMO_NUM, &board->status))
 		retval = -ETIMEDOUT;
 
-	clear_bit(DMA_WRITE_IN_PROGRESS_BN, &priv->state);
-
 	// disable board's dma
 	nec7210_set_reg_bits( priv, IMR2, HR_DMAO, 0 );
 

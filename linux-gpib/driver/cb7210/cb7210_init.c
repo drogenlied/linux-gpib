@@ -257,10 +257,11 @@ void cb7210_init( cb7210_private_t *cb_priv, const gpib_board_t *board, int acce
 	unsigned long iobase = nec_priv->iobase;
 
 	outb( HS_RESET7210, iobase + HS_INT_LEVEL );
-	outb( intr_level_bits( board->ibirq ), iobase + HS_INT_LEVEL );
+	outb( 0x7f/*intr_level_bits( board->ibirq ) */, iobase + HS_INT_LEVEL );
 
-	outb( HS_TX_ENABLE | HS_RX_ENABLE, iobase + HS_MODE );
 	nec7210_board_reset( nec_priv, board );
+	outb( HS_TX_ENABLE | HS_RX_ENABLE | HS_CLR_SRQ_INT |
+		HS_CLR_EOI_EMPTY_INT | HS_CLR_HF_INT, iobase + HS_MODE );
 
 	if( accel )
 	{
@@ -276,7 +277,6 @@ void cb7210_init( cb7210_private_t *cb_priv, const gpib_board_t *board, int acce
 	write_byte(nec_priv, ICR | 0, AUXMR);
 
 	nec7210_board_online( nec_priv, board );
-	outb( cb_priv->hs_mode_bits, iobase + HS_MODE );
 }
 
 int cb_pci_attach(gpib_board_t *board)

@@ -19,6 +19,15 @@
 
 #include "gpibP.h"
 
+static int gpib_clear_to_read( gpib_board_t *board )
+{
+	unsigned int status;
+
+	status = ibstatus( board );
+	if( ( status & ATN ) == 0 && ( status & LACS ) ) return 1;
+
+	return 0;
+}
 
 /*
  * IBRD
@@ -54,14 +63,25 @@ ssize_t ibrd( gpib_board_t *board, uint8_t *buf, size_t length, int *end_flag )
 	// initialize status to END not yet received
 	clear_bit(END_NUM, &board->status);
 
-	ret = board->interface->read(board, buf, length, end_flag);
-	if(ret < 0)
+	/* wait until board is addressed as listener and ATN is not asserted
+	 * (doesn't really matter) */
+	if( wait_event_interruptible( board->wait,
+		gpib_clear_to_read( board ) ||
+		test_bit( TIMO_NUM, &board->status ) ) )
 	{
-		printk("gpib read error\n");
+		ret = -ERESTARTSYS;
+		printk( "gpib: wait interrupted while waiting to be addressed as listener\n");
 	}else
 	{
-		buf += ret;
-		count += ret;
+		ret = board->interface->read(board, buf, length, end_flag);
+		if(ret < 0)
+		{
+			printk("gpib read error\n");
+		}else
+		{
+			buf += ret;
+			count += ret;
+		}
 	}
 
 	osRemoveTimer(board);

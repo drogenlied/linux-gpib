@@ -107,14 +107,13 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 			if(get_dma_residue(priv->dma_channel) == 0)
 			{
 				clear_bit(DMA_WRITE_IN_PROGRESS_BN, &priv->state);
+				// XXX race? byte may still be in CDOR reg
 			}else
 			{
 				clear_bit(WRITE_READY_BN, &priv->state);
 				enable_dma(priv->dma_channel);
 			}
 			release_dma_lock( dma_flags );
-		}else
-		{
 		}
 	}
 

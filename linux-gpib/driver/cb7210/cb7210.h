@@ -93,7 +93,8 @@ static const int cb7210_reg_offset = 1;
 static const int cb7210_iosize = 10;
 
 // fifo size in bytes
-static const int cb7210_fifo_size = 2048;
+static const int cb7210_fifo_size = 1024;
+static const int cb7210_fifo_width = 2;
 
 // cb7210 specific registers and bits
 enum cb7210_regs
@@ -159,9 +160,9 @@ enum hs_status_bits
 	HS_HALF_FULL = ( 1 << 1 ),
 	HS_SRQ_INT = ( 1 << 2 ),
 	HS_EOI_INT = ( 1 << 3 ),
-	HS_TX_MSB_EMPTY = ( 1 << 4 ),
+	HS_TX_MSB_NOT_EMPTY = ( 1 << 4 ),
 	HS_RX_MSB_NOT_EMPTY = ( 1 << 5 ),
-	HS_TX_LSB_EMPTY = ( 1 << 6 ),
+	HS_TX_LSB_NOT_EMPTY = ( 1 << 6 ),
 	HS_RX_LSB_NOT_EMPTY = ( 1 << 7 ),
 };
 
