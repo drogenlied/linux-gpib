@@ -28,7 +28,10 @@ void cec_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
 	gpib_board_t *board = arg;
 	cec_private_t *priv = board->private_data;
+	unsigned long flags;
 
+	spin_lock_irqsave( &board->spinlock, flags );
 	nec7210_interrupt(board, &priv->nec7210_priv);
+	spin_unlock_irqrestore( &board->spinlock, flags );
 }
 

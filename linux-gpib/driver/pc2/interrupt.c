@@ -28,8 +28,11 @@ void pc2_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
 	gpib_board_t *board = arg;
 	pc2_private_t *priv = board->private_data;
-
+	unsigned long flags;
+	
+	spin_lock_irqsave( &board->spinlock, flags );
 	nec7210_interrupt(board, &priv->nec7210_priv);
+	spin_unlock_irqrestore( &board->spinlock, flags );
 }
 
 void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp)
@@ -37,6 +40,9 @@ void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	gpib_board_t *board = arg;
 	pc2_private_t *priv = board->private_data;
 	int status1, status2;
+	unsigned long flags;
+
+	spin_lock_irqsave( &board->spinlock, flags );
 
 	// read interrupt status (also clears status)
 	status1 = read_byte( &priv->nec7210_priv, ISR1 );
@@ -46,4 +52,6 @@ void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	outb(0xff , CLEAR_INTR_REG(priv->irq) );
 
 	nec7210_interrupt_have_status( board, &priv->nec7210_priv, status1, status2 );
+
+	spin_unlock_irqrestore( &board->spinlock, flags );
 }

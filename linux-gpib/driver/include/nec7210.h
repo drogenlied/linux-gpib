@@ -38,16 +38,10 @@ struct nec7210_private_struct
 	volatile uint8_t auxb_bits;	// bits written to auxilliary register B
 	// used to keep track of board's state, bit definitions given below
 	volatile int state;
-	spinlock_t lock;
 	// wrappers for outb, inb, readb, or writeb
 	uint8_t (*read_byte)(nec7210_private_t *priv, unsigned int register_number);
 	void (*write_byte)(nec7210_private_t *priv, uint8_t byte, unsigned int register_number);
 };
-
-static inline void init_nec7210_private( nec7210_private_t *priv )
-{
-	spin_lock_init( &priv->lock );
-}
 
 // slightly shorter way to access read_byte and write_byte
 extern inline uint8_t read_byte(nec7210_private_t *priv, unsigned int register_number)

@@ -46,6 +46,9 @@ void cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	gpib_board_t *board = arg;
 	cb7210_private_t *priv = board->private_data;
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
+	unsigned long flags;
+
+	spin_lock_irqsave( &board->spinlock, flags );
 
 	if( ( hs_status = inb( nec_priv->iobase + HS_STATUS ) ) )
 	{
@@ -70,4 +73,6 @@ void cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 		status1 = 0;
 	status2 = read_byte( nec_priv, ISR2 );
 	nec7210_interrupt_have_status( board, nec_priv, status1, status2 );
+
+	spin_unlock_irqrestore( &board->spinlock, flags );
 }

@@ -28,7 +28,10 @@ void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
 	gpib_board_t *board = arg;
 	tnt4882_private_t *priv = board->private_data;
+	unsigned long flags;
 
+	spin_lock_irqsave( &board->spinlock, flags );
 	tms9914_interrupt(board, &priv->tms9914_priv);
+	spin_unlock_irqrestore( &board->spinlock, flags );
 }
 

@@ -148,9 +148,9 @@ unsigned int nec7210_update_status(gpib_board_t *board, nec7210_private_t *priv)
 	unsigned long flags;
 	unsigned int retval;
 
-	spin_lock_irqsave( &priv->lock, flags );
+	spin_lock_irqsave( &board->spinlock, flags );
 	retval = update_status_nolock( board, priv );
-	spin_unlock_irqrestore( &priv->lock, flags );
+	spin_unlock_irqrestore( &board->spinlock, flags );
 
 	return retval;
 }

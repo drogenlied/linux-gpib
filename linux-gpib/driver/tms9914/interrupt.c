@@ -38,9 +38,6 @@ void tms9914_interrupt( gpib_board_t *board, tms9914_private_t *priv )
 void tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv, int status0,
 		int status1)
 {
-	spin_lock(&board->spinlock);
-
-
 	// record address status change
 	if(status0 & HR_RLC || status0 & HR_MAC)
 	{
@@ -150,8 +147,6 @@ void tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv,
 			write_byte(priv, AUX_INVAL, AUXCR);
 //		update_status_nolock( board, priv );
 	}
-
-	spin_unlock(&board->spinlock);
 
 	if( ( status0 & priv->imr0_bits ) || ( status1 & priv->imr1_bits ) )
 	{

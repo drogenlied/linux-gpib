@@ -30,16 +30,19 @@ void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	tnt4882_private_t *priv = board->private_data;
 	const nec7210_private_t *nec_priv = &priv->nec7210_priv;
 	int isr0_bits;
+	unsigned long flags;
+
+	spin_lock_irqsave( &board->spinlock, flags );
 
 	nec7210_interrupt(board, &priv->nec7210_priv);
 
-	spin_lock( &board->spinlock );
 	isr0_bits = priv->io_read( nec_priv->iobase + ISR0 );
 	if( isr0_bits & TNT_IFCI_BIT )
 	{
 		push_gpib_event( &board->event_queue, EventIFC );
 		wake_up_interruptible( &board->wait );
 	}
-	spin_unlock( &board->spinlock );
+
+	spin_unlock_irqrestore( &board->spinlock, flags );
 }
 

@@ -30,10 +30,11 @@ void ines_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	ines_private_t *priv = board->private_data;
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 	unsigned int isr3_bits, isr4_bits;
+	unsigned long flags;
+
+	spin_lock_irqsave( &board->spinlock, flags );
 
 	nec7210_interrupt( board, nec_priv );
-
-	spin_lock( &board->spinlock );
 	isr3_bits = inb( nec_priv->iobase + ISR3 );
 	isr4_bits = inb( nec_priv->iobase + ISR4 );
 	if( isr3_bits & IFC_ACTIVE_BIT )
@@ -49,6 +50,6 @@ void ines_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	if( isr4_bits & ( IN_FIFO_WATERMARK_BIT | OUT_FIFO_WATERMARK_BIT | OUT_FIFO_EMPTY_BIT ) )
 		wake_up_interruptible( &board->wait );
 
-	spin_unlock( &board->spinlock );
+	spin_unlock_irqrestore( &board->spinlock, flags );
 }
 

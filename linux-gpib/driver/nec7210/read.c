@@ -39,15 +39,15 @@ static ssize_t pio_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *b
 		if(test_bit(TIMO_NUM, &board->status))
 			break;
 
-		spin_lock_irqsave(&priv->lock, flags);
+		spin_lock_irqsave(&board->spinlock, flags);
 		clear_bit(READ_READY_BN, &priv->state);
 		buffer[count++] = read_byte(priv, DIR);
 		if(test_bit(RECEIVED_END_BN, &priv->state))
 		{
-			spin_unlock_irqrestore(&priv->lock, flags);
+			spin_unlock_irqrestore(&board->spinlock, flags);
 			break;
 		}
-		spin_unlock_irqrestore(&priv->lock, flags);
+		spin_unlock_irqrestore(&board->spinlock, flags);
 	}
 	if(test_bit(TIMO_NUM, &board->status))
 		retval = -ETIMEDOUT;
@@ -64,7 +64,7 @@ static ssize_t __dma_read(gpib_board_t *board, nec7210_private_t *priv, size_t l
 	if(length == 0)
 		return 0;
 
-	spin_lock_irqsave(&priv->lock, flags);
+	spin_lock_irqsave(&board->spinlock, flags);
 
 	dma_irq_flags = claim_dma_lock();
 	disable_dma(priv->dma_channel);
@@ -83,7 +83,7 @@ static ssize_t __dma_read(gpib_board_t *board, nec7210_private_t *priv, size_t l
 	// enable nec7210 dma
 	nec7210_set_reg_bits( priv, IMR2, HR_DMAI, 1 );
 
-	spin_unlock_irqrestore(&priv->lock, flags);
+	spin_unlock_irqrestore(&board->spinlock, flags);
 
 	// wait for data to transfer
 	if(wait_event_interruptible(board->wait, test_bit(DMA_READ_IN_PROGRESS_BN, &priv->state) == 0 ||

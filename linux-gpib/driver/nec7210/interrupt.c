@@ -37,9 +37,7 @@ void nec7210_interrupt( gpib_board_t *board, nec7210_private_t *priv )
 void nec7210_interrupt_have_status( gpib_board_t *board,
 	nec7210_private_t *priv, int status1, int status2 )
 {
-	unsigned long flags, dma_flags;
-
-	spin_lock_irqsave( &priv->lock, flags );
+	unsigned long dma_flags;
 
 	// record service request in status
 	if(status2 & HR_SRQI)
@@ -152,8 +150,6 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 	{
 		push_gpib_event( &board->event_queue, EventDevTrg );
 	}
-
-	spin_unlock_irqrestore( &priv->lock, flags );
 
 	if( ( status1 & priv->reg_bits[ IMR1 ] ) || ( status2 & priv->reg_bits[ IMR2 ] ) )
 	{
