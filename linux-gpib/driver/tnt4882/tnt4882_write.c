@@ -42,6 +42,31 @@ static int fifo_xfer_done( tnt4882_private_t *tnt_priv )
 	return retval;
 }
 
+static int write_wait( gpib_board_t *board, tnt4882_private_t *tnt_priv,
+	int wait_for_done )
+{
+	nec7210_private_t *nec_priv = &tnt_priv->nec7210_priv;
+
+	if( wait_event_interruptible( board->wait,
+		( !wait_for_done && fifo_space_available( tnt_priv ) ) ||
+		fifo_xfer_done( tnt_priv ) ||
+		test_bit( BUS_ERROR_BN, &nec_priv->state ) ||
+		test_bit( DEV_CLEAR_BN, &nec_priv->state ) ||
+		test_bit( TIMO_NUM, &board->status ) ) )
+	{
+		GPIB_DPRINTK( "gpib write interrupted\n" );
+		return -ERESTARTSYS;
+	}
+	if( test_bit( TIMO_NUM, &board->status ) )
+		return -ETIMEDOUT;
+	if( test_bit( BUS_ERROR_BN, &nec_priv->state ) )
+		return -EIO;
+	if( test_bit( DEV_CLEAR_BN, &nec_priv->state ) )
+		return -EINTR;
+
+	return 0;
+}
+
 ssize_t tnt4882_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi )
 {
 	size_t count = 0;
@@ -87,20 +112,8 @@ ssize_t tnt4882_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length
 	while( count < length  )
 	{
 		// wait until byte is ready to be sent
-		if( wait_event_interruptible( board->wait,
-			fifo_space_available( tnt_priv ) ||
-			fifo_xfer_done( tnt_priv ) ||
-			test_bit( TIMO_NUM, &board->status ) ) )
-		{
-			printk("gpib write interrupted\n");
-			retval = -ERESTARTSYS;
-			break;
-		}
-		if( test_bit( TIMO_NUM, &board->status ) )
-		{
-			retval = -ETIMEDOUT;
-			break;
-		}
+		retval = write_wait( board, tnt_priv, 0 );
+		if( retval < 0 ) break;
 		if( fifo_xfer_done( tnt_priv ) ) break;
 
 		spin_lock_irqsave( &board->spinlock, flags );
@@ -122,17 +135,7 @@ ssize_t tnt4882_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length
 			schedule();
 	}
 	// wait last byte has been sent
-	if( wait_event_interruptible( board->wait,
-		fifo_xfer_done( tnt_priv ) ||
-		test_bit( TIMO_NUM, &board->status ) ) )
-	{
-		printk("gpib write interrupted\n");
-		retval = -ERESTARTSYS;
-	}
-	if( test_bit( TIMO_NUM, &board->status ) )
-	{
-		retval = -ETIMEDOUT;
-	}
+	retval = write_wait( board, tnt_priv, 1 );
 
 	tnt_priv->io_writeb( STOP, iobase + CMDR );
 	udelay(1);

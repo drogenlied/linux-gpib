@@ -77,6 +77,9 @@ ssize_t fifo_write( gpib_board_t *board, uint8_t *buffer, size_t length )
 
 	if( length == 0 ) return 0;
 
+	clear_bit( DEV_CLEAR_BN, &nec_priv->state );
+	clear_bit( BUS_ERROR_BN, &nec_priv->state );
+
 	output_fifo_enable( board, 1 );
 
 	while( count < length )
@@ -85,15 +88,18 @@ ssize_t fifo_write( gpib_board_t *board, uint8_t *buffer, size_t length )
 		if( wait_event_interruptible( board->wait,
 			cb_priv->out_fifo_half_empty ||
 			output_fifo_empty( cb_priv ) ||
+			test_bit( DEV_CLEAR_BN, &nec_priv->state ) ||
+			test_bit( BUS_ERROR_BN, &nec_priv->state ) ||
 			test_bit( TIMO_NUM, &board->status ) ) )
 		{
 			printk("cb7210: fifo wait interrupted\n");
 			retval = -ERESTARTSYS;
 			break;
 		}
-		if( test_bit( TIMO_NUM, &board->status ) )
+		if( test_bit( TIMO_NUM, &board->status ) ||
+			test_bit( DEV_CLEAR_BN, &nec_priv->state ) ||
+			test_bit( BUS_ERROR_BN, &nec_priv->state ) )
 		{
-			retval = -ETIMEDOUT;
 			break;
 		}
 
@@ -105,7 +111,7 @@ ssize_t fifo_write( gpib_board_t *board, uint8_t *buffer, size_t length )
 		if( num_bytes % cb7210_fifo_width )
 		{
 			printk( "cb7210: bug! fifo_write() with odd number of bytes\n");
-			retval = -EIO;
+			retval = -EINVAL;
 			break;
 		}
 
@@ -126,15 +132,19 @@ ssize_t fifo_write( gpib_board_t *board, uint8_t *buffer, size_t length )
 	// wait last byte has been sent
 	if( wait_event_interruptible( board->wait,
 		output_fifo_empty( cb_priv ) ||
+		test_bit( DEV_CLEAR_BN, &nec_priv->state ) ||
+		test_bit( BUS_ERROR_BN, &nec_priv->state ) ||
 		test_bit( TIMO_NUM, &board->status ) ) )
 	{
 		printk("cb7210: wait for last byte interrupted\n");
 		retval = -ERESTARTSYS;
 	}
 	if( test_bit( TIMO_NUM, &board->status ) )
-	{
 		retval = -ETIMEDOUT;
-	}
+	if( test_bit( BUS_ERROR_BN, &nec_priv->state ) )
+		retval = -EIO;
+	if( test_bit( DEV_CLEAR_BN, &nec_priv->state ) )
+		retval = -EINTR;
 
 	output_fifo_enable( board, 0 );
 

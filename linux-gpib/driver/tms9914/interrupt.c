@@ -89,7 +89,8 @@ void tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv,
 
 	if(status1 & HR_ERR)
 	{
-		printk("gpib error detected\n");
+		GPIB_DPRINTK( "gpib bus error\n");
+		set_bit( BUS_ERROR_BN, &priv->state );
 	}
 
 	if( status1 & HR_IFC )
@@ -110,6 +111,7 @@ void tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv,
 		push_gpib_event( board, EventDevClr );
 		// clear dac holdoff
 		write_byte(priv, AUX_VAL, AUXCR);
+		set_bit( DEV_CLEAR_BN, &priv->state );
 	}
 
 	// check for being addressed with secondary addressing

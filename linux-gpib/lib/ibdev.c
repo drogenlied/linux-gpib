@@ -26,9 +26,17 @@ static int is_device_addr( int minor, int pad, int sad )
 
 	board = &ibBoard[ minor ];
 
-	if( query_pad( board, &board_pad ) < 0 ) return -1;
-	if( query_sad( board, &board_sad ) < 0 ) return -1;
-
+	if( query_pad( board, &board_pad ) < 0 )
+	{
+		fprintf( stderr, "failed to query pad\n" );
+		return -1;
+	}
+	if( query_sad( board, &board_sad ) < 0 )
+	{
+		fprintf( stderr, "failed to query sad\n" );
+		return -1;
+	}
+	
 	if( gpib_address_equal( board_pad, board_sad, pad, sad ) == 0 )
 	{
 		return 1;
@@ -40,6 +48,7 @@ static int is_device_addr( int minor, int pad, int sad )
 int ibdev( int minor, int pad, int sad, int timo, int eot, int eosmode )
 {
 	int retval;
+	ibConf_t new_conf;
 
 	retval = ibParseConfigFile();
 	if(retval < 0)
@@ -50,43 +59,28 @@ int ibdev( int minor, int pad, int sad, int timo, int eot, int eosmode )
 
 	sad -= sad_offset;
 
-	if( is_device_addr( minor, pad, sad ) == 0 )
-	{
-		setIberr( EARG );
-		setIbsta( ERR );
-		fprintf( stderr, "libgpib: ibdev gpib address already in use by\n"
-			"\tinterface board.  Use board index or ibfind() to open boards.\n" );
-		return -1;
-	}
-
-	return my_ibdev( minor, pad, sad, timeout_to_usec( timo ),
-		eot, eosmode & 0xff, eosmode & 0xff00 );
-}
-
-int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_eoi, int eos, int eos_flags)
-{
-	int uDesc;
-	ibConf_t new_conf;
-	ibConf_t *conf;
-
 	init_ibconf( &new_conf );
 	new_conf.settings.pad = pad;
 	new_conf.settings.sad = sad;                        /* device address                   */
 	new_conf.settings.board = minor;                         /* board number                     */
-	new_conf.settings.eos = eos;                           /* local eos modes                  */
-	new_conf.settings.eos_flags = eos_flags;
-	new_conf.settings.usec_timeout = usec_timeout;
-	if( send_eoi )
+	new_conf.settings.eos = eosmode & 0xff;                           /* local eos modes                  */
+	new_conf.settings.eos_flags = eosmode & 0xff00;
+	new_conf.settings.usec_timeout = timeout_to_usec( timo );
+	if( eot )
 		new_conf.settings.send_eoi = 1;
 	else
 		new_conf.settings.send_eoi = 0;
 	new_conf.defaults = new_conf.settings;
+	new_conf.is_interface = 0;
 
-	if( is_device_addr( minor, new_conf.settings.pad, new_conf.settings.sad ) )
-	{
-		new_conf.is_interface = 0;
-	}else
-		new_conf.is_interface = 1;
+	return my_ibdev( new_conf );
+	// XXX check for address conflicts with boards
+}
+
+int my_ibdev( ibConf_t new_conf )
+{
+	int uDesc;
+	ibConf_t *conf;
 
 	uDesc = ibGetDescriptor(new_conf);
 	if(uDesc < 0)

@@ -60,6 +60,12 @@ long send_data( ibConf_t *conf, const void *buffer, unsigned long count, int sen
 				conf->timed_out = 1;
 				setIberr( EABO );
 				break;
+			case EINTR:
+				setIberr( EABO );
+				break;
+			case EIO:
+				setIberr( ENOL );
+				break;
 			default:
 				setIberr( EDVR );
 				setIbcnt( errno );

@@ -193,6 +193,9 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 		case CFCDMA:
 			return dma_ioctl( board, arg );
 			break;
+		case IBBOARD_INFO:
+			return board_info_ioctl( board, arg );
+			break;
 		case IBMUTEX:
 			return mutex_ioctl( board, filep->private_data, arg );
 			break;
@@ -221,9 +224,6 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 
 	switch( cmd )
 	{
-		case IBBOARD_INFO:
-			return board_info_ioctl( board, arg );
-			break;
 		case IBEVENT:
 			return event_ioctl( board, arg );
 			break;

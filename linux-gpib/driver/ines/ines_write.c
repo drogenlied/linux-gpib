@@ -24,6 +24,31 @@ static inline unsigned short num_out_fifo_bytes( ines_private_t *ines_priv )
 	return inb( iobase( ines_priv ) + OUT_FIFO_COUNT );
 }
 
+static int ines_write_wait( gpib_board_t *board, ines_private_t *ines_priv,
+	unsigned int fifo_threshold )
+{
+	nec7210_private_t *nec_priv = &ines_priv->nec7210_priv;
+
+	// wait until byte is ready to be sent
+	if( wait_event_interruptible( board->wait,
+		num_out_fifo_bytes( ines_priv ) < fifo_threshold ||
+		test_bit( BUS_ERROR_BN, &nec_priv->state ) ||
+		test_bit( DEV_CLEAR_BN, &nec_priv->state ) ||
+		test_bit( TIMO_NUM, &board->status ) ) )
+	{
+		GPIB_DPRINTK( "gpib write interrupted\n" );
+		return -ERESTARTSYS;
+	}
+	if( test_bit( BUS_ERROR_BN, &nec_priv->state ) )
+		return -EIO;
+	if( test_bit( DEV_CLEAR_BN, &nec_priv->state ) )
+		return -EINTR;
+	if( test_bit( TIMO_NUM, &board->status ) )
+		return -ETIMEDOUT;
+
+	return 0;
+}
+
 ssize_t ines_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi )
 {
 	size_t count = 0;
@@ -42,20 +67,9 @@ ssize_t ines_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length, i
 
 	while( count < length )
 	{
-		// wait until byte is ready to be sent
-		if( wait_event_interruptible( board->wait,
-			num_out_fifo_bytes( ines_priv ) < out_fifo_size ||
-			test_bit( TIMO_NUM, &board->status ) ) )
-		{
-			printk("gpib write interrupted\n");
-			retval = -ERESTARTSYS;
+		retval = ines_write_wait( board, ines_priv, out_fifo_size );
+		if( retval < 0 )
 			break;
-		}
-		if( test_bit( TIMO_NUM, &board->status ) )
-		{
-			retval = -ETIMEDOUT;
-			break;
-		}
 
 		num_bytes = out_fifo_size - num_out_fifo_bytes( ines_priv );
 		if( num_bytes + count > length )
@@ -71,18 +85,7 @@ ssize_t ines_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length, i
 		}
 	}
 	// wait last byte has been sent
-	if( wait_event_interruptible( board->wait,
-		num_out_fifo_bytes( ines_priv ) == 0 ||
-		test_bit( TIMO_NUM, &board->status ) ) )
-	{
-		printk("gpib write interrupted\n");
-		retval = -ERESTARTSYS;
-	}
-	if( test_bit( TIMO_NUM, &board->status ) )
-	{
-		retval = -ETIMEDOUT;
-	}
-
+	retval = ines_write_wait( board, ines_priv, 1 );
 	if( retval < 0 )
 		return retval;
 

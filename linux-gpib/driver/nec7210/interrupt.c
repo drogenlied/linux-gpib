@@ -63,12 +63,6 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 			clear_bit(REM_NUM, &board->status);
 	}
 
-	// record address status change in status
-	if(status2 & HR_ADSC)
-	{
-//		update_status_nolock( board, priv );
-	}
-
 	// record reception of END
 	if(status1 & HR_END)
 	{
@@ -146,7 +140,7 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 	if( status1 & HR_DEC )
 	{
 		push_gpib_event( board, EventDevClr );
-		// XXX should clear buffers, etc.
+		set_bit( DEV_CLEAR_BN, &priv->state );
 	}
 
 	if( status1 & HR_DET )

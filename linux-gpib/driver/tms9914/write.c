@@ -18,6 +18,28 @@
 
 #include "board.h"
 
+static int pio_write_wait( gpib_board_t *board, tms9914_private_t *priv )
+{
+	// wait until next byte is ready to be sent
+	if(wait_event_interruptible( board->wait,
+		test_bit( WRITE_READY_BN, &priv->state ) ||
+		test_bit( BUS_ERROR_BN, &priv->state ) ||
+		test_bit( DEV_CLEAR_BN, &priv->state ) ||
+		test_bit( TIMO_NUM, &board->status ) ) )
+	{
+		GPIB_DPRINTK( "gpib write interrupted!\n" );
+		return -ERESTARTSYS;
+	}
+	if( test_bit( TIMO_NUM, &board->status ) )
+		return -ETIMEDOUT;
+	if( test_bit( BUS_ERROR_BN, &priv->state ) )
+		return -EIO;
+	if( test_bit( DEV_CLEAR_BN, &priv->state ) )
+		return -EINTR;
+
+	return 0;
+}
+
 static ssize_t pio_write(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buffer, size_t length)
 {
 	size_t count = 0;
@@ -26,37 +48,16 @@ static ssize_t pio_write(gpib_board_t *board, tms9914_private_t *priv, uint8_t *
 
 	while(count < length)
 	{
-		// wait until next byte is ready to be sent
-		if(wait_event_interruptible(board->wait, test_bit(WRITE_READY_BN, &priv->state) ||
-			test_bit(TIMO_NUM, &board->status)))
-		{
-			printk("gpib write interrupted!\n");
-			retval = -ERESTARTSYS;
-			break;
-		}
-		if(test_bit(TIMO_NUM, &board->status))
-		{
-			retval = -ETIMEDOUT;
-			break;
-		}
+		retval = pio_write_wait( board, priv );
+		if( retval < 0 ) break;
+
 		spin_lock_irqsave(&board->spinlock, flags);
-		clear_bit(WRITE_READY_BN, &priv->state);
-		write_byte(priv, buffer[count++], CDOR);
+		clear_bit( WRITE_READY_BN, &priv->state );
+		write_byte( priv, buffer[count++], CDOR );
 		spin_unlock_irqrestore(&board->spinlock, flags);
 	}
-	if(wait_event_interruptible(board->wait, test_bit(WRITE_READY_BN, &priv->state) ||
-		test_bit(TIMO_NUM, &board->status)))
-	{
-		printk("gpib write interrupted!\n");
-		retval = -ERESTARTSYS;
-	}
-	if(test_bit(TIMO_NUM, &board->status))
-	{
-		retval = -ETIMEDOUT;
-	}
-
-	if(retval)
-		return retval;
+	retval = pio_write_wait( board, priv );
+	if( retval < 0 ) return retval;
 
 	return length;
 }
@@ -68,6 +69,9 @@ ssize_t tms9914_write(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buf
 	ssize_t retval = 0;
 
 	if(length == 0) return 0;
+
+	clear_bit( BUS_ERROR_BN, &priv->state );
+	clear_bit( DEV_CLEAR_BN, &priv->state );
 
 	if(send_eoi)
 	{

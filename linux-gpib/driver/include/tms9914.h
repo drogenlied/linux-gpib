@@ -69,6 +69,8 @@ enum
 	WRITE_READY_BN,	// board is ready to send a data byte
 	COMMAND_READY_BN,	// board is ready to send a command byte
 	RECEIVED_END_BN,	// received END
+	BUS_ERROR_BN,	// bus error
+	DEV_CLEAR_BN,	// device clear received
 };
 
 // interface functions

@@ -54,8 +54,7 @@ unsigned int create_send_setup( const ibBoard_t *board,
 int send_setup( ibConf_t *conf );
 void init_ibconf( ibConf_t *conf );
 void init_ibboard( ibBoard_t *board );
-int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout,
-	int send_eoi, int eos, int eosflags);
+int my_ibdev( ibConf_t new_conf );
 int my_ibbna( ibConf_t *conf, unsigned int new_board_index );
 unsigned int timeout_to_usec( enum gpib_timeout timeout );
 unsigned int ppoll_timeout_to_usec( unsigned int timeout );

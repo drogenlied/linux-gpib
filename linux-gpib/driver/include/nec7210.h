@@ -65,6 +65,7 @@ enum
 	RECEIVED_END_BN,	// received END
 	BUS_ERROR_BN,	// output error has occurred
 	RFD_HOLDOFF_BN,	// rfd holdoff in effect
+	DEV_CLEAR_BN,	// device clear received
 };
 
 // interface functions

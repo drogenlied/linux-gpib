@@ -52,7 +52,7 @@ int InternalReceiveSetup( ibConf_t *conf, Addr4882_t address )
 
 	if ( my_ibcmd( conf, cmdString, i ) < 0)
 	{
-		fprintf(stderr, "receive_setup: command failed\n");
+		fprintf(stderr, "%s: command failed\n", __FUNCTION__ );
 		return -1;
 	}
 
