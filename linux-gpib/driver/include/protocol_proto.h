@@ -13,7 +13,7 @@ extern  int iblines( const gpib_board_t *board, short *lines );
 extern  ssize_t ibrd(gpib_board_t *board, uint8_t *buf, size_t length, int *end_flag);
 extern  int ibrpp( gpib_board_t *board, uint8_t *buf );
 extern  int ibrsv(gpib_board_t *board, uint8_t poll_status);
-extern  int ibsic(gpib_board_t *board);
+extern  int ibsic( gpib_board_t *board, unsigned int usec_duration );
 extern  int ibsre(gpib_board_t *board, int enable);
 extern  int ibpad( gpib_board_t *board, unsigned int addr );
 extern  int ibsad( gpib_board_t *board, int addr );

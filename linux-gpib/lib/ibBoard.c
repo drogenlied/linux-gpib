@@ -1,9 +1,25 @@
+/***************************************************************************
+                          lib/ibBoard.c
+                             -------------------
+
+    copyright            : (C) 2001,2002 by Frank Mori Hess
+    email                : fmhess@users.sourceforge.net
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "ib_internal.h"
-#include <ibP.h>
+#include "ibP.h"
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -179,7 +195,67 @@ int ibBoardClose( ibBoard_t *board )
 	return 0;
 }
 
-/**********************/
+int InternalResetSys( ibConf_t *conf, Addr4882_t addressList[] )
+{
+	ibBoard_t *board;
+	int retval;
+
+	board = interfaceBoard( conf );
+
+	if( addressListIsValid( addressList ) == 0 )
+	{
+		setIberr( EARG );
+		return -1;
+	}
+
+	if( conf->is_interface == 0 )
+	{
+		setIberr( EDVR );
+		return -1;
+	}
+
+	if( board->is_system_controller == 0 )
+	{
+		setIberr( ECIC );
+		return -1;
+	}
+
+	retval = remote_enable( board, 1 );
+	if( retval < 0 ) return retval;
+
+	retval = internal_ibsic( conf );
+	if( retval < 0 ) return retval;
+
+	retval = InternalDevClearList( conf, NULL );
+	if( retval < 0 ) return retval;
+
+	// XXX send "*RST\n" to devices in addressList
+
+	return 0;
+}
+
+void ResetSys( int boardID, Addr4882_t addressList[] )
+{
+	ibConf_t *conf;
+	int retval;
+
+	conf = enter_library( boardID );
+	if( conf == NULL )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	retval = InternalResetSys( conf, addressList );
+	if( retval < 0 )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	exit_library( boardID, 0 );
+
+}
 
 
 

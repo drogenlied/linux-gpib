@@ -33,7 +33,7 @@ int ibonline( gpib_board_t *board, int master )
 		if( master )
 		{
 			board->master = 1;
-			ibsic( board );
+			ibsic( board, 100 );
 		}else
 		{
 			board->master = 0;

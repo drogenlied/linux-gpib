@@ -49,6 +49,7 @@ static int status_bytes_ioctl( gpib_board_t *board, unsigned long arg );
 static int board_info_ioctl( const gpib_board_t *board, unsigned long arg );
 static int ppc_ioctl( gpib_board_t *board, unsigned long arg );
 static int query_board_rsv_ioctl( gpib_board_t *board, unsigned long arg );
+static int interface_clear_ioctl( gpib_board_t *board, unsigned long arg );
 
 static int cleanup_open_devices( gpib_file_private_t *file_priv, gpib_board_t *board );
 
@@ -249,7 +250,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			return wait_ioctl( board, arg );
 			break;
 		case IBSIC:
-			return ibsic( board );
+			return interface_clear_ioctl( board, arg );
 			break;
 		case IBSRE:
 			return remote_enable_ioctl( board, arg );
@@ -946,3 +947,14 @@ static int board_info_ioctl( const gpib_board_t *board, unsigned long arg)
 	return 0;
 }
 
+static int interface_clear_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	unsigned int usec_duration;
+	int retval;
+
+	retval = copy_from_user( &usec_duration, ( void * ) arg, sizeof( usec_duration ) );
+	if( retval )
+		return -EFAULT;
+
+	return ibsic( board, usec_duration );
+}

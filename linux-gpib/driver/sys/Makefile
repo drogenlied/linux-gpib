@@ -10,7 +10,7 @@ SRCS =  osfuncs.c  osinit.c  ostimer.c osutil.c autopoll.c ibcac.c ibcmd.c \
 
 OBJS =  $(SRCS:.c=.o)
 
-INCLUDES = -I. -I../include -I ../board/ -I../../include 
+INCLUDES = -I. -I../include -I../../include 
 
 CFLAGS += $(INCLUDES) -DEXPORT_SYMTAB
 

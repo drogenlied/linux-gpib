@@ -94,7 +94,7 @@ typedef struct
 #define IBRPP _IOWR( GPIB_CODE, 6, uint8_t )
 
 #define IBONL _IOW( GPIB_CODE, 8, online_ioctl_t )
-#define IBSIC _IO( GPIB_CODE, 9 )
+#define IBSIC _IOW( GPIB_CODE, 9, unsigned int )
 #define IBSRE _IOW( GPIB_CODE, 10, int )
 #define IBGTS _IO( GPIB_CODE, 11 )
 #define IBCAC _IOW( GPIB_CODE, 12, int )

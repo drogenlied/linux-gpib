@@ -57,31 +57,23 @@ int ibclr( int ud )
 	return exit_library( ud, 0 );
 }
 
-void DevClearList( int boardID, Addr4882_t addressList[] )
+
+int InternalDevClearList( ibConf_t *conf, Addr4882_t addressList[] )
 {
 	int i;
-	ibConf_t *conf;
 	ibBoard_t *board;
 	uint8_t *cmd;
 	int count;
 
-	conf = enter_library( boardID );
-	if( conf == NULL )
-	{
-		exit_library( boardID, 1 );
-		return;
-	}
 	if( addressListIsValid( addressList ) == 0 )
 	{
-		exit_library( boardID, 1 );
-		return;
+		return -1;
 	}
 
 	if( conf->is_interface == 0 )
 	{
 		setIberr( EDVR );
-		exit_library( boardID, 1 );
-		return;
+		return -1;
 	}
 
 	board = interfaceBoard( conf );
@@ -89,8 +81,7 @@ void DevClearList( int boardID, Addr4882_t addressList[] )
 	if( board->is_system_controller == 0 )
 	{
 		setIberr( ECIC );
-		exit_library( boardID, 1 );
-		return;
+		return -1;
 	}
 
 	cmd = malloc( 16 + 2 * numAddresses( addressList ) );
@@ -98,8 +89,7 @@ void DevClearList( int boardID, Addr4882_t addressList[] )
 	{
 		setIberr( EDVR );
 		setIbcnt( ENOMEM );
-		exit_library( boardID, 1 );
-		return;
+		return -1;
 	}
 
 	i = create_send_setup( board, addressList, cmd );
@@ -116,9 +106,27 @@ void DevClearList( int boardID, Addr4882_t addressList[] )
 
 	if(count != i)
 	{
+		return -1;
+	}
+
+	return 0;
+}
+
+void DevClearList( int boardID, Addr4882_t addressList[] )
+{
+	int retval;
+	ibConf_t *conf;
+
+	conf = enter_library( boardID );
+	if( conf == NULL )
+	{
 		exit_library( boardID, 1 );
 		return;
 	}
+
+	retval = InternalDevClearList( conf, addressList );
+	if( retval < 0 )
+		exit_library( boardID, 1 );
 
 	exit_library( boardID, 0 );
 }

@@ -101,6 +101,8 @@ extern int internal_ibsre( ibConf_t *conf, int v );
 extern int internal_ibrsv( ibConf_t *conf, int v );
 extern int internal_iblines( ibConf_t *conf, short *line_status );
 extern int internal_ibgts( ibConf_t *conf, int shadow_handshake );
+extern int internal_ibsic( ibConf_t *conf );
+extern int InternalDevClearList( ibConf_t *conf, Addr4882_t addressList[] );
 
 static __inline__ ibBoard_t* interfaceBoard( const ibConf_t *conf )
 {
