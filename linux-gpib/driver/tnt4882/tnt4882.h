@@ -75,6 +75,7 @@ ssize_t tnt4882_write(gpib_board_t *board, uint8_t *buffer, size_t length,
 ssize_t tnt4882_accel_write(gpib_board_t *board, uint8_t *buffer, size_t length,
 	int send_eoi);
 ssize_t tnt4882_command(gpib_board_t *board, uint8_t *buffer, size_t length);
+ssize_t tnt4882_command_unaccel(gpib_board_t *board, uint8_t *buffer, size_t length);
 int tnt4882_take_control(gpib_board_t *board, int synchronous);
 int tnt4882_go_to_standby(gpib_board_t *board);
 void tnt4882_request_system_control( gpib_board_t *board, int request_control );
@@ -169,6 +170,7 @@ enum bus_control_status_bits
 /* CFG -- Configuration Register (write only) */
 enum cfg_bits
 {
+	TNT_COMMAND = 0x80,	/* bytes are command bytes instead of data bytes */
 	TNT_TLCHE = ( 1 << 6 ),	/* halt transfer on imr0, imr1, or imr2 interrupt */
 	TNT_IN = ( 1 << 5 ),	/* transfer is GPIB read                 */
 	TNT_A_B = ( 1 << 4 ),	/* order to use fifos 1=fifa A first(big endian), 0=fifo b first(little endian) */

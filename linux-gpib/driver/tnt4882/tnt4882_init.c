@@ -61,7 +61,7 @@ ssize_t tnt4882_write(gpib_board_t *board, uint8_t *buffer, size_t length, int s
 	tnt4882_private_t *priv = board->private_data;
 	return nec7210_write(board, &priv->nec7210_priv, buffer, length, send_eoi);
 }
-ssize_t tnt4882_command(gpib_board_t *board, uint8_t *buffer, size_t length)
+ssize_t tnt4882_command_unaccel(gpib_board_t *board, uint8_t *buffer, size_t length)
 {
 	tnt4882_private_t *priv = board->private_data;
 	return nec7210_command(board, &priv->nec7210_priv, buffer, length);
@@ -159,8 +159,8 @@ gpib_interface_t ni_pci_interface =
 	name: "ni_pci",
 	attach: ni_pci_attach,
 	detach: ni_pci_detach,
-	read: tnt4882_read,
-	write: tnt4882_write,
+	read: tnt4882_accel_read,
+	write: tnt4882_accel_write,
 	command: tnt4882_command,
 	take_control: tnt4882_take_control,
 	go_to_standby: tnt4882_go_to_standby,
@@ -219,7 +219,7 @@ gpib_interface_t ni_isa_interface =
 	detach: ni_isa_detach,
 	read: tnt4882_read,
 	write: tnt4882_write,
-	command: tnt4882_command,
+	command: tnt4882_command_unaccel,
 	take_control: tnt4882_take_control,
 	go_to_standby: tnt4882_go_to_standby,
 	request_system_control: tnt4882_request_system_control,
@@ -248,7 +248,7 @@ gpib_interface_t ni_nat4882_isa_interface =
 	detach: ni_isa_detach,
 	read: tnt4882_read,
 	write: tnt4882_write,
-	command: tnt4882_command,
+	command: tnt4882_command_unaccel,
 	take_control: tnt4882_take_control,
 	go_to_standby: tnt4882_go_to_standby,
 	request_system_control: tnt4882_request_system_control,
@@ -277,7 +277,7 @@ gpib_interface_t ni_nec_isa_interface =
 	detach: ni_isa_detach,
 	read: tnt4882_read,
 	write: tnt4882_write,
-	command: tnt4882_command,
+	command: tnt4882_command_unaccel,
 	take_control: tnt4882_take_control,
 	go_to_standby: tnt4882_go_to_standby,
 	request_system_control: tnt4882_request_system_control,
@@ -431,13 +431,15 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 	// turn off one-chip mode
 	tnt_writeb( tnt_priv, NODMA, HSSEL );
 	tnt_writeb( tnt_priv, 0, ACCWR );
-
 	// make sure we are in 7210 mode
 	tnt_writeb( tnt_priv,AUX_7210, AUXCR);
 	udelay(1);
 	// registers might be swapped, so write it to the swapped address too
 	tnt_writeb( tnt_priv,AUX_7210, SWAPPED_AUXCR);
 	udelay(1);
+	// turn on one-chip mode
+	if( tnt_priv->chipset == TNT4882 )
+		tnt_writeb( tnt_priv, NODMA | TNT_ONE_CHIP_BIT, HSSEL );
 
 	nec7210_board_reset( nec_priv, board );
 	// read-clear isr0
@@ -692,7 +694,6 @@ static int tnt4882_init_module( void )
 	gpib_register_driver(&ni_nec_isa_accel_interface);
 	gpib_register_driver(&ni_pci_interface);
 	gpib_register_driver(&ni_pci_accel_interface);
-
 #if defined(GPIB_CONFIG_PCMCIA)
 	gpib_register_driver(&ni_pcmcia_interface);
 	gpib_register_driver(&ni_pcmcia_accel_interface);

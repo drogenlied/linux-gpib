@@ -65,7 +65,8 @@ static int write_wait( gpib_board_t *board, tnt4882_private_t *tnt_priv,
 	return 0;
 }
 
-ssize_t tnt4882_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi )
+static ssize_t generic_write( gpib_board_t *board, uint8_t *buffer, size_t length,
+	int send_eoi, int send_commands )
 {
 	size_t count = 0;
 	ssize_t retval = 0;
@@ -79,7 +80,10 @@ ssize_t tnt4882_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length
 	imr1_bits = nec_priv->reg_bits[ IMR1 ];
 	imr2_bits = nec_priv->reg_bits[ IMR2 ];
 	nec7210_set_reg_bits( nec_priv, IMR1, 0xff, HR_ERRIE | HR_DECIE );
-	nec7210_set_reg_bits( nec_priv, IMR2, 0xff, HR_DMAO );
+	if( tnt_priv->chipset != TNT4882 )
+		nec7210_set_reg_bits( nec_priv, IMR2, 0xff, HR_DMAO );
+	else
+		nec7210_set_reg_bits( nec_priv, IMR2, 0xff, 0 );
 
 	tnt_writeb( tnt_priv, RESET_FIFO, CMDR );
 	udelay(1);
@@ -88,8 +92,11 @@ ssize_t tnt4882_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length
 	if( send_eoi )
 	{
 		bits |= TNT_CCEN;
-		tnt_writeb( tnt_priv, AUX_SEOI, CCR );
+		if( tnt_priv->chipset != TNT4882 )
+			tnt_writeb( tnt_priv, AUX_SEOI, CCR );
 	}
+	if( send_commands )
+		bits |= TNT_COMMAND;
 	tnt_writeb( tnt_priv, bits, CFG );
 
 	// load 2's complement of count into hardware counters
@@ -148,6 +155,15 @@ ssize_t tnt4882_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length
 	return length;
 }
 
+ssize_t tnt4882_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi )
+{
+	return generic_write( board, buffer, length, send_eoi, 0 );
+}
+
+ssize_t tnt4882_command( gpib_board_t *board, uint8_t *buffer, size_t length )
+{
+	return generic_write( board, buffer, length, 0, 1 );
+}
 
 
 
