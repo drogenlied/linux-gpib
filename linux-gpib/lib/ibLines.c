@@ -70,24 +70,24 @@ void TestSRQ( int boardID, short *result )
 	ibConf_t *conf;
 	int retval;
 
-	conf = enter_library( boardID );
+	conf = general_enter_library( boardID, 1, 0 );
 	if( conf == NULL )
 	{
-		exit_library( boardID, 1 );
+		general_exit_library( boardID, 1, 0, 0, 0, 0, 1 );
 		return;
 	}
 
 	retval = internal_iblines( conf, &line_status );
 	if( retval < 0 )
 	{
-		exit_library( boardID, 1 );
+		general_exit_library( boardID, 1, 0, 0, 0, 0, 1 );
 		return;
 	}
 
 	if( ( line_status & ValidSRQ ) == 0 )
 	{
 		setIberr( ECAP );
-		exit_library( boardID, 1 );
+		general_exit_library( boardID, 1, 0, 0, 0, 0, 1 );
 		return;
 	}
 
@@ -97,6 +97,5 @@ void TestSRQ( int boardID, short *result )
 	}else
 		*result = 0;
 
-
-	exit_library( boardID, 0 );
+	general_exit_library( boardID, 0, 0, 0, 0, 0, 1 );
 }
