@@ -29,6 +29,7 @@ void fprint_status( FILE* filep, char *msg  );
 
 enum Action
 {
+	GPIB_IFC,
 	GPIB_QUIT,
 	GPIB_READ,
 	GPIB_REQUEST_SERVICE,
@@ -170,6 +171,7 @@ int prompt_for_action(void)
 	{
 		printf("You can:\n"
 			"\tw(a)it for an event\n"
+			"\tsend (i)nterface clear (system controller only)\n"
 			"\tget bus (l)ine status (board only)\n"
  			"\t(q)uit\n"
 			"\t(r)ead string\n"
@@ -190,6 +192,10 @@ int prompt_for_action(void)
 			case 'L':
 			case 'l':
 				return GPIB_LINE_STATUS;
+				break;
+			case 'I':
+			case 'i':
+				return GPIB_IFC;
 				break;
 			case 'q':
 			case 'Q':
@@ -366,6 +372,17 @@ int get_lines( int ud )
 	return 0;
 }
 
+int interface_clear( int ud )
+{
+
+	if( ibsic( ud ) & ERR )
+		return -1;
+
+	printf( "Inferface clear sent\n" );
+
+	return 0;
+}
+
 int main(int argc,char **argv)
 {
 	int dev;
@@ -381,6 +398,9 @@ int main(int argc,char **argv)
 
 		switch( act )
 		{
+			case GPIB_IFC:
+				interface_clear( dev );
+				break;
 			case GPIB_LINE_STATUS:
 				get_lines( dev );
 				break;
