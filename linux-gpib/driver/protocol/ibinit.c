@@ -12,7 +12,6 @@ int timeidx	= DFLTTIMO;	/* timeout index into timeTable */
 int pollTimeidx	= T100ms;	/* timeidx for serial and parallel polls */
 int myPAD		= PAD;		/* current primary address */
 int mySAD		= SAD;		/* current secondary address */
-int ifcDelay	= 200;		/* delay loop counter for IFC pulse */
 
 #if !defined(HP82335) && !defined(TMS9914)
 int auxrabits	= AUXRA;	/* static bits for AUXRA (EOS modes) */

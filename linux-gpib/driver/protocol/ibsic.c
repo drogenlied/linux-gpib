@@ -26,7 +26,7 @@ IBLCL int ibsic(void)
         /* set controller state */
 	bdsc();
 	bdSendAuxCmd(AUX_SIFC);                   /* assert IFC */
-	for(i = 0; i < ifcDelay; i++);              /* busy wait >= ~100us */
+	udelay(100);
 	bdSendAuxCmd(AUX_CIFC);                   /* clear IFC */
 	drvstat |= DRV_IFC;
         }

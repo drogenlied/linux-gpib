@@ -1,3 +1,19 @@
+/***************************************************************************
+                                gpib_types.h
+                             -------------------
+
+    copyright            : (C) 2002 by Frank Mori Hess
+    email                : fmhess@users.sourceforge.net
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
 
 #ifndef _GPIB_TYPES_H
 #define _GPIB_TYPES_H
@@ -6,7 +22,7 @@
 #include <stdint.h>
 #endif
 
-typedef unsigned char	*faddr_t;	
+typedef unsigned char	*faddr_t;
 
 typedef struct ibio_op {
 	faddr_t		io_vbuf;	/* virtual buffer address	*/
@@ -15,20 +31,6 @@ typedef struct ibio_op {
 	int		io_flags;	/* direction flags, etc.	*/
 	uint8_t		io_ccfunc;	/* carry-cycle function		*/
 } ibio_op_t;
-
-typedef struct {
-	int		ib_ioport;	/* I/O address of GPIB board	*/
-	int		ib_irqline;	/* Interrupt request line	*/
-	int		ib_dmachan;	/* DMA channel			*/
-} ibinfo_t;
-
-typedef struct {
-	int		ib_opened;	/* GPIB board is opened if > 0	*/
-	ibinfo_t      * ib_infoptr;	/* Pointer to ibinfo structure	*/
-
-        int             dmaflag;        /* Switches DMA on/off */
-
-} ibboard_t;
 
 typedef struct {
 	int		ib_cnt;		/* I/O count  (rd, wrt, etc)	*/
@@ -41,5 +43,71 @@ typedef struct {
 	char            *ib_buf;
 
 } ibarg_t;
+
+/* gpib_board_t is filled out by driver.  It is the interface
+ * between the board-specific details dealt with in the drivers
+ * and generic interface provided by gpib-common.
+ */
+typedef struct
+{
+	char *name;	// name of board
+	/* attach() does board-specific initialization and allocation
+	 */
+	int (*attach)(int *option, num_options);
+	/* detach() does board-specific freeing of resources and hardware shutdown
+	 */
+	void (*detach)();
+	/* read() should read at most 'length' bytes from the bus into
+	 * 'buffer'.  It should not return until it fills buffer or
+	 * encounters an EOI (and or EOS if appropriate).  If 'eos'
+	 * is nonzero, it is the end of string character the read should
+	 * look for.  if 'eos' is zero, there is no end of string character.
+	 * Ultimately, this will be changed into or replaced by an asynchronous
+	 * read.  Positive return value is number of bytes read, negative
+	 * return indicates error.
+	 */
+	ssize_t (*read)(uint8_t *buffer, size_t length, char eos);
+	/* write() should write 'length' bytes from buffer to the bus.
+	 * If the boolean value send_eoi is nonzero, then EOI should
+	 * be sent along with the last byte.  Returns number of bytes
+	 * written or negative value on error.
+	 */
+	ssize_t (*write)(uint8_t *buffer, size_t length, int send_eoi);
+	/* Sends the command bytes in 'buffer' to the bus. 
+	 */
+	ssize_t (*command)(uint8_t *buffer, size_t length);
+	/* Take control (assert ATN).  If 'asyncronous' is nonzero, take
+	 * control asyncronously (assert ATN immediately without waiting
+	 * for other processes to complete first).
+	 */
+	void (*take_control)(int asyncronous);
+	/* De-assert ATN. */
+	void (*go_to_standby)(void);
+	/* Asserts or de-asserts 'interface clear' (IFC) depending on
+	 * boolean value of 'assert'
+	 */
+	void (*interface_clear)(int assert);
+	/* suspend until one of the conditions specified by 'event_mask' is
+	 * true.  The meaning of the bits in the 'event_mask' is the same
+	 * as the meaning of the bits in the 'status' variable below. */
+	int (*wait)(int event_mask);
+	/* TODO: conduct serial poll */
+	void (*serial_poll)(void);
+	/* TODO: conduct parallel poll */
+	void (*parallel_poll)(void);
+	/* Returns current status of the bus lines.  Should be set to
+	 * NULL if your board does not have the ability to query the
+	 * state of the bus lines. */
+	int (*line_status)(void);
+	/* Stores information on the board's current status.  Usually
+	 * updated by the interrupt handler.  The meaning of the bits
+	 * is specified in gpib_user.h in the IBSTA section. */
+	int status;
+	/* Holds error code for last error. */
+	int error;
+	/* 'private_data' can be used as seen fit by the driver to
+	 * store additional variables for this board */
+	void *private_data;
+} gpib_board_t;
 
 #endif	// _GPIB_TYPES_H

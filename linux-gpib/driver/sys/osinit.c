@@ -101,8 +101,6 @@ struct semaphore espsemid;		/* semaphore ID for ESP interrupt support */
 int       espintcon = 0;		        /* ESP interrupt routine is "connected" */
 #endif
 
-ibboard_t ibboard   = { 0 };	/* driver info, etc */
-
 /*
  * LINUX specific stuff
  * 
@@ -110,7 +108,6 @@ ibboard_t ibboard   = { 0 };	/* driver info, etc */
  */
 
 struct wait_queue *ibwait_queue = NULL;
-
 
 
 /*
