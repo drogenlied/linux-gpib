@@ -31,7 +31,7 @@ enum
 	USB_DEVICE_ID_NI_USB_B = 0x702a
 };
 
-enum ni_usb_devices
+enum ni_usb_device
 {
 	NIUSB_SUBDEV_TNT4882 = 1,
 	NIUSB_SUBDEV_UNKNOWN2 = 2,
@@ -61,12 +61,20 @@ struct ni_usb_status_block
 	unsigned short count;
 };
 
+struct ni_usb_register
+{
+	enum ni_usb_device device;
+	short address;
+	unsigned short value;
+};
+
 enum ni_usb_bulk_ids
 {
 	NIUSB_IBCAC_ID = 0x1,
-	NIUSB_UNKNOWN3_ID = 0x3,
+	NIUSB_UNKNOWN3_ID = 0x3, // device level function id?
 	NIUSB_TERM_ID = 0x4,
 	NIUSB_IBGTS_ID = 0x6,
+	NIUSB_IBRPP_ID = 0x7,
 	NIUSB_REG_READ_ID = 0x8,
 	NIUSB_REG_WRITE_ID = 0x9,
 	NIUSB_IBSIC_ID = 0xf,
@@ -101,13 +109,13 @@ static inline int ni_usb_bulk_register_write_header(uint8_t *buffer, int num_wri
 	return i;	
 }
 
-static inline int ni_usb_bulk_register_write(uint8_t *buffer, int device, int address, int value)
+static inline int ni_usb_bulk_register_write(uint8_t *buffer, struct ni_usb_register reg)
 {
 	int i = 0;
 	
-	buffer[i++] = device;
-	buffer[i++] = address;
-	buffer[i++] = value;
+	buffer[i++] = reg.device;
+	buffer[i++] = reg.address;
+	buffer[i++] = reg.value;
 	return i;	
 }
 
