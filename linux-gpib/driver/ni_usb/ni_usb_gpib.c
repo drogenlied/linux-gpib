@@ -63,16 +63,14 @@ int ni_usb_parse_termination_block(const uint8_t *buffer)
 int parse_board_ibrd_readback(const uint8_t *raw_data, struct ni_usb_status_block *status, 
 	uint8_t *parsed_data, int parsed_data_length)
 {
-	static const int ibrd_data_id = 0x36;
 	static const int ibrd_data_block_length = 15;
-	static const int ibrd_status_id = 0x38;
 	int i = 0;
 	int j = 0;
 	int k;
 	unsigned int adr1_bits;
 	struct ni_usb_status_block register_write_status;
 		
-	while(raw_data[i] == ibrd_data_id)
+	while(raw_data[i] == NIUSB_IBRD_DATA_ID)
 	{
 		if(parsed_data_length < j + ibrd_data_block_length)
 		{
@@ -80,23 +78,18 @@ int parse_board_ibrd_readback(const uint8_t *raw_data, struct ni_usb_status_bloc
 			return -EIO;
 		}
 		i++;
-		for(j = 0; j < ibrd_data_block_length; j++)
+		for(k = 0; k < ibrd_data_block_length; k++)
 		{
 			parsed_data[j++] = raw_data[i++];
 		}
 	}
 	i += ni_usb_parse_status_block(&raw_data[i], status);
-	if(status->id != ibrd_status_id)
+	if(status->id != NIUSB_IBRD_STATUS_ID)
 	{
 		printk("%s: bug: status->id=%i, != ibrd_status_id\n", __FILE__, status->id);
 		return -EIO;
 	}
 	adr1_bits = raw_data[i++];
-	if(raw_data[i++] != status->count % ibrd_data_block_length)
-	{
-		printk("%s: unexpected data: raw_data[%i]=%i, status->count=%i\n", 
-			__FILE__, i - 1, (int)raw_data[i - 1], status->count);
-	}
 	for(k = 0; k < 2; k++)
 		if(raw_data[i++] != 0)
 		{
@@ -180,7 +173,7 @@ ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *en
 	in_data = kmalloc(in_data_length, GFP_KERNEL);
 	if(in_data == NULL) return -ENOMEM;
 	in_pipe = usb_rcvbulkpipe(usb_dev, NIUSB_BULK_IN_ENDPOINT);
-	retval = usb_bulk_msg(usb_dev, in_pipe, in_data, in_data_length, &bytes_read, HZ /*FIXME set timeout properly */);
+	retval = usb_bulk_msg(usb_dev, in_pipe, in_data, in_data_length, &bytes_read, 30 * HZ /*FIXME set timeout properly */);
 	if(retval)
 	{
 		printk("%s: %s: usb_bulk_msg returned %i, bytes_read=%i\n", __FILE__, __FUNCTION__, retval, bytes_read);		
@@ -188,7 +181,9 @@ ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *en
 		return -EIO;
 	}
 	parse_board_ibrd_readback(in_data, &status, buffer, length);
-	kfree(in_data);
+		kfree(in_data);
+	if(status.ibsta & END) *end = 1;
+	else *end = 0;
 	//FIXME update ibsta using status info
 	return length - status.count;
 }
@@ -249,7 +244,7 @@ static ssize_t ni_usb_write(gpib_board_t *board, uint8_t *buffer, size_t length,
 	in_data = kmalloc(in_data_length, GFP_KERNEL);
 	if(in_data == NULL) return -ENOMEM;
 	in_pipe = usb_rcvbulkpipe(usb_dev, NIUSB_BULK_IN_ENDPOINT);
-	retval = usb_bulk_msg(usb_dev, in_pipe, in_data, in_data_length, &bytes_read, HZ /*FIXME set timeout properly */);
+	retval = usb_bulk_msg(usb_dev, in_pipe, in_data, in_data_length, &bytes_read, 30 * HZ /*FIXME set timeout properly */);
 	if(retval || bytes_read != 12)
 	{
 		printk("%s: %s: usb_bulk_msg returned %i, bytes_read=%i\n", __FILE__, __FUNCTION__, retval, bytes_read);		
@@ -407,7 +402,7 @@ int ni_usb_go_to_standby(gpib_board_t *board)
 		printk("%s: usb_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, bytes_written, i);		
 		return retval;
 	}
-	in_data_length = 0x10;
+	in_data_length = 0x20;
 	in_data = kmalloc(in_data_length, GFP_KERNEL);
 	if(in_data == NULL)
 	{
@@ -424,6 +419,10 @@ int ni_usb_go_to_standby(gpib_board_t *board)
 	}
 	ni_usb_parse_status_block(in_data, &status);
 	kfree(in_data);
+	if(status.id != NIUSB_IBGTS_ID)
+	{
+		printk("%s: %s: bug: status.id 0x%x != INUSB_IBGTS_ID\n", __FILE__, __FUNCTION__, status.id);
+	}
 	//FIXME update ibsta using status info
 	return 0;
 }
@@ -603,7 +602,7 @@ void ni_usb_remote_enable(gpib_board_t *board, int enable)
 	}
 	in_pipe = usb_rcvbulkpipe(usb_dev, NIUSB_BULK_IN_ENDPOINT);
 	retval = usb_bulk_msg(usb_dev, in_pipe, in_data, in_data_length, &bytes_read, HZ /*FIXME set timeout properly */);
-	if(retval || bytes_read != 12)
+	if(retval || bytes_read != 16)
 	{
 		printk("%s: %s: usb_bulk_msg returned %i, bytes_read=%i\n", __FILE__, __FUNCTION__, retval, bytes_read);		
 		kfree(in_data);

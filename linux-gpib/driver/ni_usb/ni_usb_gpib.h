@@ -67,6 +67,8 @@ enum ni_usb_bulk_ids
 	NIUSB_IBGTS_ID = 0x6,
 	NIUSB_REG_WRITE_ID = 0x9,
 	NIUSB_IBSIC_ID = 0xf,
+	NIUSB_IBRD_DATA_ID = 0x36,
+	NIUSB_IBRD_STATUS_ID = 0x38
 };
 
 static inline int nec7210_to_tnt4882_offset(int offset)
