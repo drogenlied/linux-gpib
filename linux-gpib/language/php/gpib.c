@@ -50,7 +50,7 @@ BIBLIOGRAPHY:
  file://localhost/opt/doc.php.nexen.html/zend.structure.exporting-functions.html */
 
 #ifdef USE_LINUX_GPIB
-#include "ib.h" 
+#include "gpib/ib.h" 
 #endif
 
 #ifdef USE_NI_GPIB

@@ -4,7 +4,7 @@ MOD=gpib
 GPIBINCLUDES =	-I/usr/local/include/sys
 #GPIBLIB      =  /opt/nigpib-0.8.3/libgpib.a
 GPIBLIB      =  /usr/local/lib/libgpib.a
-DRIVER       =  USE_NI_GPIB
+DRIVER       =  USE_LINUX_GPIB
 EXTENSIONDIR =  /usr/lib/php4/20010901
 
 
