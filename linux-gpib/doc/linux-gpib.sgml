@@ -601,6 +601,12 @@ Default is <option>--sre</option>.</para>
 	<entry>tnt4882.o</entry>
 	<entry>ni_pcmcia, ni_pcmcia_accel</entry>
 	</row>
+	<row>
+	<entry>Quancom</entry>
+	<entry>PCIGPIB-1</entry>
+	<entry>ines_gpib.o</entry>
+	<entry>ines_pci, ines_pci_accel</entry>
+	</row>
 	</tbody>
 	</table>
 </para>
