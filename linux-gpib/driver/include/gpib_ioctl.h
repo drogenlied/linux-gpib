@@ -35,13 +35,20 @@ typedef struct
 	int eos_flags;
 } eos_ioctl_t;
 
+typedef struct
+{
+	int mask;
+	unsigned int pad;
+	int sad;
+} wait_ioctl_t;
+
 /* Standard functions. */
 #define IBRD _IOWR( GPIB_CODE, 0, read_write_ioctl_t )
 #define IBWRT _IOWR( GPIB_CODE, 1, read_write_ioctl_t )
 #define IBCMD _IOWR( GPIB_CODE, 2, read_write_ioctl_t )
 #define IBOPENDEV _IOW( GPIB_CODE, 3, open_close_dev_ioctl_t )
 #define IBCLOSEDEV _IOW( GPIB_CODE, 4, open_close_dev_ioctl_t )
-#define IBWAIT _IOWR( GPIB_CODE, 5, unsigned int )
+#define IBWAIT _IOWR( GPIB_CODE, 5, wait_ioctl_t )
 #define IBRPP _IOWR( GPIB_CODE, 6, uint8_t )
 #define IBAPE _IOW( GPIB_CODE, 7, int )
 #define IBONL _IOW( GPIB_CODE, 8, int)
@@ -62,4 +69,4 @@ typedef struct
 #define CFCDMA _IOW( GPIB_CODE, 23, unsigned int )
 #define CFCBOARDTYPE _IOW( GPIB_CODE, 24, board_type_ioctl_t )
 #define IBAUTOPOLL _IO( GPIB_CODE, 25 )
-
+#define IBMUTEX _IOW( GPIB_CODE, 26, int )

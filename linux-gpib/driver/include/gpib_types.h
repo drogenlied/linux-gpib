@@ -184,6 +184,8 @@ typedef struct
 	unsigned int num_status_bytes;
 	// number of times this address is opened
 	unsigned int reference_count;
+	// flags loss of status byte error due to limit on size of queue
+	unsigned dropped_byte : 1;
 } gpib_device_t;
 
 typedef struct
@@ -193,6 +195,12 @@ typedef struct
 } status_byte_t;
 
 void init_gpib_device( gpib_device_t *device );
+
+typedef struct
+{
+	struct list_head device_list;
+	unsigned holding_mutex : 1;
+} gpib_file_private_t;
 
 #endif	// __KERNEL__
 

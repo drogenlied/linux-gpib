@@ -104,7 +104,14 @@ int autopoll_device( gpib_board_t *board, gpib_device_t *device )
 	uint8_t poll_byte;
 	int retval;
 
-	if( num_status_bytes( device ) >= max_num_status_bytes ) return -1;
+	if( num_status_bytes( device ) >= max_num_status_bytes )
+	{
+		uint8_t lost_byte;
+
+		device->dropped_byte = 1;
+		retval = pop_status_byte( device, &lost_byte );
+		if( retval < 0 ) return retval;
+	}
 
 	retval = dvrsp( board, device->pad, device->sad, serial_timeout, &poll_byte );
 	if( retval < 0 ) return retval;
@@ -138,8 +145,8 @@ int autopoll_all_devices( gpib_board_t *board )
 		}
 
 		up( &board->mutex );
-// XXX figure out how to schedule
-//		schedule();
+		if( current->need_resched )
+			schedule();
 	}
 
 	return 0;

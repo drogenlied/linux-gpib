@@ -38,7 +38,7 @@ CWD := `pwd`
 
 MAKE = make OPTIONS="$(OPTIONS) " -C
 
-SUBDIRS = nec7210 tms9914 protocol sys 
+SUBDIRS = nec7210 tms9914 sys
 ifdef CB7210
 SUBDIRS += cb7210
 endif
@@ -66,9 +66,6 @@ subdirs:
 		$(MAKE) $$i all ; \
 	done	
 
-gpib-common.o: ./sys/sys.o ./protocol/ieee488.o
-	$(RLINK) -o gpib-common.o ./sys/sys.o ./protocol/ieee488.o
-
 clean :
 	rm -f *.o kernel_version.c $(EXP_INC) 
 	set -e; \
@@ -94,7 +91,6 @@ unload:
 test:  unload load run-test unload
 
 install: 
-	$(INSTALL) -D gpib-common.o $(MODLIB)/misc/gpib-common.o
 	for i in $(SUBDIRS); do \
 		$(MAKE) $$i install; \
 	done	

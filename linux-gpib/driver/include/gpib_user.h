@@ -32,7 +32,7 @@
 
 #define WAITBITS (TIMO | SRQI | CIC | TACS | LACS)
 // status bits that drivers are responsible for
-static const int DRIVERBITS = (SRQI | LOK | REM | CIC | ATN | TACS | LACS | DTAS | DCAS);
+static const int DRIVERBITS = ( SRQI | LOK | REM | CIC | ATN | TACS | LACS | DTAS | DCAS );
 
 /* IBERR error codes */
 

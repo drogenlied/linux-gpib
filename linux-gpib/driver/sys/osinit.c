@@ -185,6 +185,7 @@ void init_gpib_device( gpib_device_t *device )
 	INIT_LIST_HEAD( &device->status_bytes );
 	device->num_status_bytes = 0;
 	device->reference_count = 0;
+	device->dropped_byte = 0;
 }
 
 int init_module(void)

@@ -27,7 +27,6 @@ int command_ioctl(gpib_board_t *board, unsigned long arg);
 int status_ioctl(gpib_board_t *board, unsigned long arg);
 int open_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned long arg );
 int close_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned long arg );
-int cleanup_open_devices( struct file *filep, gpib_board_t *board );
 int serial_poll_ioctl( gpib_board_t *board, unsigned long arg );
 int wait_ioctl( gpib_board_t *board, unsigned long arg );
 int parallel_poll_ioctl( gpib_board_t *board, unsigned long arg );
@@ -44,6 +43,15 @@ int iobase_ioctl( gpib_board_t *board, unsigned long arg );
 int irq_ioctl( gpib_board_t *board, unsigned long arg );
 int dma_ioctl( gpib_board_t *board, unsigned long arg );
 int autopoll_ioctl( gpib_board_t *board);
+int mutex_ioctl( gpib_board_t *board, unsigned long arg );
+
+int cleanup_open_devices( gpib_file_private_t *file_priv, gpib_board_t *board );
+
+void init_gpib_file_private( gpib_file_private_t *priv )
+{
+	INIT_LIST_HEAD( &priv->device_list );
+	priv->holding_mutex = 0;
+}
 
 int ibopen(struct inode *inode, struct file *filep)
 {
@@ -58,12 +66,12 @@ int ibopen(struct inode *inode, struct file *filep)
 
 	board = &board_array[minor];
 
-	filep->private_data = kmalloc( sizeof( struct list_head ), GFP_KERNEL );
+	filep->private_data = kmalloc( sizeof( gpib_file_private_t ), GFP_KERNEL );
 	if( filep->private_data == NULL )
 	{
 		return -ENOMEM;
 	}
-	INIT_LIST_HEAD( ( struct list_head * ) filep->private_data );
+	init_gpib_file_private( ( gpib_file_private_t * ) filep->private_data );
 
 	if( board->exclusive )
 	{
@@ -89,6 +97,7 @@ int ibclose(struct inode *inode, struct file *filep)
 {
 	unsigned int minor = MINOR(inode->i_rdev);
 	gpib_board_t *board;
+	gpib_file_private_t *priv = filep->private_data;
 
 	if(minor >= MAX_NUM_GPIB_BOARDS)
 	{
@@ -106,18 +115,21 @@ int ibclose(struct inode *inode, struct file *filep)
 	if( board->exclusive )
 		board->exclusive = 0;
 
-	if( filep->private_data )
+	if( priv )
 	{
-		cleanup_open_devices( filep, board );
+		cleanup_open_devices( priv, board );
+		if( priv->holding_mutex )
+			up( &board->mutex );
 		kfree( filep->private_data );
 	}
 
 	return 0;
 }
 
+
+
 int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned long arg)
 {
-	int	retval = 0; 		/* assume everything OK for now */
 	unsigned int minor = MINOR(inode->i_rdev);
 	gpib_board_t *board;
 
@@ -127,14 +139,6 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 		return -ENODEV;
 	}
 	board = &board_array[minor];
-
-	/* XXX lock other processes from performing commands */
-	retval = down_interruptible(&board->mutex);
-	if(retval)
-	{
-		printk("gpib: ioctl interrupted while waiting on lock\n");
-		return -ERESTARTSYS;
-	}
 
 	GPIB_DPRINTK( "minor %i ioctl %i\n", minor, cmd);
 
@@ -148,91 +152,92 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 	switch( cmd )
 	{
 		case CFCBOARDTYPE:
-			retval = board_type_ioctl(board, arg);
+			return board_type_ioctl(board, arg);
 			break;
 		case IBRD:
-			retval = read_ioctl( board, arg );
+			return read_ioctl( board, arg );
 			break;
 		case IBWRT:
-			retval = write_ioctl( board, arg );
+			return write_ioctl( board, arg );
 			break;
 		case IBCMD:
-			retval = command_ioctl( board, arg );
+			return command_ioctl( board, arg );
 			break;
 		case IBSTATUS:
-			retval = status_ioctl( board, arg );
+			return status_ioctl( board, arg );
 			break;
 		case IBTMO:
-			retval = ibtmo( board, arg );
+			return ibtmo( board, arg );
 			break;
 		case IBOPENDEV:
-			retval = open_dev_ioctl( filep, board, arg );
+			return open_dev_ioctl( filep, board, arg );
 			break;
 		case IBCLOSEDEV:
-			retval = close_dev_ioctl( filep, board, arg );
+			return close_dev_ioctl( filep, board, arg );
 			break;
 		case IBRSP:
-			retval = serial_poll_ioctl( board, arg );
+			return serial_poll_ioctl( board, arg );
 			break;
 		case IBWAIT:
-			retval = wait_ioctl( board, arg );
+			return wait_ioctl( board, arg );
 			break;
 		case IBRPP:
-			retval = parallel_poll_ioctl( board, arg );
+			return parallel_poll_ioctl( board, arg );
 			break;
 		case IBAPE:
-			retval = auto_poll_enable_ioctl( board, arg );
+			return auto_poll_enable_ioctl( board, arg );
 			break;
 		case IBONL:
-			retval = online_ioctl( board, arg );
+			return online_ioctl( board, arg );
 			break;
 		case IBSIC:
-			retval = ibsic( board );
+			return ibsic( board );
 			break;
 		case IBSRE:
-			retval = remote_enable_ioctl( board, arg );
+			return remote_enable_ioctl( board, arg );
 			break;
 		case IBGTS:
-			retval = ibgts( board );
+			return ibgts( board );
 			break;
 		case IBCAC:
-			retval = take_control_ioctl( board, arg );
+			return take_control_ioctl( board, arg );
 			break;
 		case IBLINES:
-			retval = line_status_ioctl( board, arg );
+			return line_status_ioctl( board, arg );
 			break;
 		case IBPAD:
-			retval = pad_ioctl( board, arg );
+			return pad_ioctl( board, arg );
 			break;
 		case IBSAD:
-			retval = sad_ioctl( board, arg );
+			return sad_ioctl( board, arg );
 			break;
 		case IBEOS:
-			retval = eos_ioctl( board, arg );
+			return eos_ioctl( board, arg );
 			break;
 		case IBRSV:
-			retval = request_service_ioctl( board, arg );
+			return request_service_ioctl( board, arg );
 			break;
 		case CFCBASE:
-			retval = iobase_ioctl( board, arg );
+			return iobase_ioctl( board, arg );
 			break;
 		case CFCIRQ:
-			retval = irq_ioctl( board, arg );
+			return irq_ioctl( board, arg );
 			break;
 		case CFCDMA:
-			retval = dma_ioctl( board, arg );
+			return dma_ioctl( board, arg );
 			break;
 		case IBAUTOPOLL:
-			up(&board->mutex);
 			return autopoll_ioctl( board );
 			break;
+		case IBMUTEX:
+			return mutex_ioctl( board, arg );
+			break;
 		default:
-			retval = -ENOTTY;
+			return -ENOTTY;
 			break;
 	}
 
-	up( &board->mutex );
-	return retval;
+	return -ENOTTY;
 }
 
 int board_type_ioctl(gpib_board_t *board, unsigned long arg)
@@ -481,9 +486,9 @@ inline int decrement_open_device_count( struct list_head *head, unsigned int pad
 	return subtract_open_device_count( head, pad, sad, 1 );
 }
 
-int cleanup_open_devices( struct file *filep, gpib_board_t *board )
+int cleanup_open_devices( gpib_file_private_t *file_priv, gpib_board_t *board )
 {
-	struct list_head *list_ptr, *head = filep->private_data;
+	struct list_head *list_ptr, *head = &file_priv->device_list;
 	gpib_device_t *device;
 	int retval = 0;
 
@@ -566,14 +571,14 @@ int serial_poll_ioctl( gpib_board_t *board, unsigned long arg )
 
 int wait_ioctl( gpib_board_t *board, unsigned long arg )
 {
-	unsigned int wait_mask;
+	wait_ioctl_t wait_cmd;
 	int retval;
 
-	retval = copy_from_user( &wait_mask, ( void * ) arg, sizeof( wait_mask ) );
+	retval = copy_from_user( &wait_cmd, ( void * ) arg, sizeof( wait_cmd ) );
 	if( retval )
 		return -EFAULT;
 
-	return ibwait( board, wait_mask );
+	return ibwait( board, wait_cmd.mask, wait_cmd.pad, wait_cmd.sad );
 }
 
 int parallel_poll_ioctl( gpib_board_t *board, unsigned long arg )
@@ -787,4 +792,28 @@ int autopoll_ioctl( gpib_board_t *board )
 	up( &board->autopoll_mutex );
 
 	return retval;
+}
+
+int mutex_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	int retval, lock_mutex;
+
+	retval = copy_from_user( &lock_mutex, ( void * ) arg, sizeof( lock_mutex ) );
+	if( retval )
+		return -EFAULT;
+
+	if( lock_mutex )
+	{
+		retval = down_interruptible(&board->mutex);
+		if(retval)
+		{
+			printk("gpib: ioctl interrupted while waiting on lock\n");
+			return -ERESTARTSYS;
+		}
+	}else
+	{
+		up( &board->mutex );
+	}
+
+	return 0;
 }

@@ -35,6 +35,8 @@ extern int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout,
 	int send_eoi, int eos, int eosflags);
 extern unsigned int timeout_to_usec( enum gpib_timeout timeout );
 extern int set_timeout( const ibBoard_t *board, unsigned int usec_timeout );
+extern int ib_lock_mutex( ibBoard_t *board );
+extern int ib_unlock_mutex( ibBoard_t *board );
 
 #include <stdio.h>
 int gpib_yyparse(void);

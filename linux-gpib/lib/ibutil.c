@@ -118,3 +118,15 @@ void init_ibconf( ibConf_t *conf )
 	conf->send_eoi = 1;
 	conf->is_interface = 0;
 }
+
+int ib_lock_mutex( ibBoard_t *board )
+{
+	int lock = 1;
+	return ioctl( board->fileno, IBMUTEX, &lock );
+}
+
+int ib_unlock_mutex( ibBoard_t *board )
+{
+	int unlock = 0;
+	return ioctl( board->fileno, IBMUTEX, &unlock );
+}
