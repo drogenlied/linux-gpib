@@ -144,7 +144,7 @@ int ibCheckDescriptor( int ud )
 {
 	int retval;
 
-	if( ud < 0 || ud > NUM_CONFIGS || ibConfigs[ud] == NULL )
+	if( ud < 0 || ud >= NUM_CONFIGS || ibConfigs[ud] == NULL )
 	{
 		fprintf( stderr, "libgpib: invalid descriptor\n" );
 		return -1;
