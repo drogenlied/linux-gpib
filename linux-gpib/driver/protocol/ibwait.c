@@ -42,7 +42,7 @@ IBLCL int ibwait(unsigned int mask)
 		return -1;
 	}
 	osStartTimer(timeidx);
-	while((board.update_status() & mask) == 0)
+	while((driver->update_status() & mask) == 0)
 	{
 		if(interruptible_sleep_on_timeout(&wait, 1))
 		{

@@ -24,6 +24,7 @@ ssize_t nec7210_write(uint8_t *buffer, size_t length, int send_eoi)
 	gpib_char_t data;
 	unsigned long flags;
 	size_t count = 0;
+	int retval = 0;
 
 	if(length == 0) return 0;
 
@@ -65,13 +66,14 @@ ssize_t nec7210_write(uint8_t *buffer, size_t length, int send_eoi)
 		if(wait_event_interruptible(nec7210_write_wait, test_bit(0, &write_in_progress) == 0))
 		{
 			printk("gpib write interrupted!\n");
+			retval = -1;
 		}
-
-		count += length;
 
 		// disable board's dma
 		imr2_bits &= ~HR_DMAO;
 		GPIBout(IMR2, imr2_bits);
+
+		if(retval == 0) count += length;
 	}
 
 #else	// PIO transfer
@@ -86,8 +88,7 @@ ssize_t nec7210_write(uint8_t *buffer, size_t length, int send_eoi)
 			if(gpib_buffer_put(write_buffer, data))
 			{
 				printk("gpib: write buffer full!\n");
-				// XXX
-				break;
+				return -1;
 			}
 			count++;
 		}
@@ -100,13 +101,13 @@ ssize_t nec7210_write(uint8_t *buffer, size_t length, int send_eoi)
 		if(wait_event_interruptible(nec7210_write_wait, test_bit(0, &write_in_progress) == 0))
 		{
 			printk("gpib write interrupted!\n");
-			// XXX
+			retval = -1;
 		}
 	}
 
 #endif	// DMAOP
 
-	if(send_eoi)
+	if(send_eoi && retval == 0)
 	{
 		/*send EOI */
 		if((pgmstat & PS_NOEOI) == 0)
@@ -121,10 +122,11 @@ ssize_t nec7210_write(uint8_t *buffer, size_t length, int send_eoi)
 	GPIBout(IMR1, imr1_bits);
 
 	if (!noTimo) {
-		board.status |= (ERR | TIMO);
-		iberr = EABO;
+		set_bit(TIMO_NUM, &driver->status);
+		return -1;
 	}
 
+	if(retval < 0) return retval;
 	return count;
 }
 

@@ -13,5 +13,5 @@
 #include <gpib_ioctl.h>
 #include <gpib_user.h>
 
-extern gpib_board_t board;
+extern gpib_driver_t *driver;
 

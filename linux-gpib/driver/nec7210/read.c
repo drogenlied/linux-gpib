@@ -97,7 +97,7 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, int *end)
 		buffer[count++] = data.value;
 		if(data.end)
 		{
-			set_bit(END_NUM, &board.status);
+			set_bit(END_NUM, &driver->status);
 			break;
 		}
 	}
@@ -113,12 +113,12 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, int *end)
 
 	if (!noTimo)
 	{
-		set_bit(ERR_NUM, &board.status);
-		set_bit(TIMO_NUM, &board.status);
+		set_bit(ERR_NUM, &driver->status);
+		set_bit(TIMO_NUM, &driver->status);
 		iberr = EABO;
 	}
 
-	if(test_bit(END_NUM, &board.status))
+	if(test_bit(END_NUM, &driver->status))
 		*end = 1;
 
 	return count;

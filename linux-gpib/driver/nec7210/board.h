@@ -53,8 +53,9 @@ extern int          auxa_bits;  /* static bits for AUXRA (EOS modes) */
 
 extern gpib_buffer_t *read_buffer, *write_buffer;
 
-// interrupt service routine
+// interrupt service routines
 void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp);
+void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
 // boolean values that signal various conditions
 extern volatile int write_in_progress;	// data can be sent

@@ -38,7 +38,7 @@ IBLCL ssize_t ibwrt(uint8_t *buf, size_t cnt, int more)
 {
 	size_t bytes_sent = 0;
 	ssize_t ret = 0;
-	int status = board.update_status();
+	int status = driver->update_status();
 
 	if((status & TACS) == 0)
 	{
@@ -51,13 +51,13 @@ IBLCL ssize_t ibwrt(uint8_t *buf, size_t cnt, int more)
 		printk("gpib: ibwrt called with no data\n");
 		return -1;
 	}
-	board.go_to_standby();
+	driver->go_to_standby();
 	// mark io in progress
-	clear_bit(CMPL_NUM, &board.status);
+	clear_bit(CMPL_NUM, &driver->status);
 	osStartTimer(timeidx);
-	while ((bytes_sent < cnt) && !(board.status & (TIMO)))
+	while ((bytes_sent < cnt) && !(driver->status & (TIMO)))
 	{
-		ret = board.write(buf, cnt, !more);
+		ret = driver->write(buf, cnt, !more);
 		if(ret < 0)
 		{
 			printk("gpib write error\n");
@@ -69,7 +69,7 @@ IBLCL ssize_t ibwrt(uint8_t *buf, size_t cnt, int more)
 	osRemoveTimer();
 
 	// mark io complete
-	set_bit(CMPL_NUM, &board.status);
+	set_bit(CMPL_NUM, &driver->status);
 
 	if(ret < 0) return ret;
 	

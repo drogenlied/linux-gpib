@@ -108,14 +108,28 @@ unsigned int nec7210_update_status(void)
 {
 	int address_status_bits = GPIBin(ADSR);
 
-	/* everything but ATN is updated by
-	* interrupt handler */
-	if(address_status_bits & HR_NATN)
-		clear_bit(ATN_NUM, &board.status);
+	if(address_status_bits & HR_CIC)
+		set_bit(CIC_NUM, &driver->status);
 	else
-		set_bit(ATN_NUM, &board.status);
+		clear_bit(CIC_NUM, &driver->status);
+	// check for talker/listener addressed
+	if(address_status_bits & HR_TA)
+		set_bit(TACS_NUM, &driver->status);
+	else
+		clear_bit(TACS_NUM, &driver->status);
+	if(address_status_bits & HR_LA)
+		set_bit(LACS_NUM, &driver->status);
+	else
+		clear_bit(LACS_NUM, &driver->status);
+	if(address_status_bits & HR_NATN)
+		clear_bit(ATN_NUM, &driver->status);
+	else
+		set_bit(ATN_NUM, &driver->status);
 
-	return board.status;
+	/* we rely on the interrupt handler to set the
+	 * bits read from ISR1 and ISR2 */
+
+	return driver->status;
 }
 
 

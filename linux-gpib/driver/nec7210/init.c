@@ -25,14 +25,20 @@
 #include <asm/dma.h>
 #include <gpib_buffer.h>
 
+int pc2_attach(void);
+int pc2a_attach(void);
+void pc2_detach(void);
+
 unsigned long ibbase = IBBASE;
 unsigned int ibirq = IBIRQ;
 unsigned int ibdma = IBDMA;
 unsigned long remapped_ibbase = 0;
 
-gpib_board_t board =
+gpib_driver_t pc2_driver =
 {
-	name:	"nec7210",	//XXX
+	name:	"nec7210",
+	attach:	pc2_attach,
+	detach:	pc2_detach,
 	read:	nec7210_read,
 	write:	nec7210_write,
 	command:	nec7210_command,
@@ -42,7 +48,7 @@ gpib_board_t board =
 	remote_enable:	nec7210_remote_enable,
 	enable_eos:	nec7210_enable_eos,
 	disable_eos:	nec7210_disable_eos,
-	parallel_poll:	nec7210_parallel_poll,	
+	parallel_poll:	nec7210_parallel_poll,
 	line_status:	NULL,
 	update_status:	nec7210_update_status,
 	primary_address:	nec7210_primary_address,
@@ -51,6 +57,38 @@ gpib_board_t board =
 	status:	0,
 	private_data:	NULL,
 };
+
+gpib_driver_t pc2a_driver =
+{
+	name:	"nec7210",
+	attach:	pc2a_attach,
+	detach:	pc2_detach,
+	read:	nec7210_read,
+	write:	nec7210_write,
+	command:	nec7210_command,
+	take_control:	nec7210_take_control,
+	go_to_standby:	nec7210_go_to_standby,
+	interface_clear:	nec7210_interface_clear,
+	remote_enable:	nec7210_remote_enable,
+	enable_eos:	nec7210_enable_eos,
+	disable_eos:	nec7210_disable_eos,
+	parallel_poll:	nec7210_parallel_poll,
+	line_status:	NULL,
+	update_status:	nec7210_update_status,
+	primary_address:	nec7210_primary_address,
+	secondary_address:	nec7210_secondary_address,
+	serial_poll_response:	nec7210_serial_poll_response,
+	status:	0,
+	private_data:	NULL,
+};
+
+#ifdef NIPCIIa
+gpib_driver_t *driver = &pc2a_driver;
+#endif
+
+#if !defined(NIPCIIa)
+gpib_driver_t *driver = &pc2_driver;
+#endif
 
 gpib_buffer_t *read_buffer = NULL, *write_buffer = NULL;
 
@@ -104,6 +142,31 @@ void board_reset(void)
 	GPIBout(AUXMR, AUXRE);
 }
 
+int allocate_buffers(void)
+{
+	read_buffer = kmalloc(sizeof(gpib_buffer_t), GFP_KERNEL);
+	gpib_buffer_init(read_buffer);
+	write_buffer = kmalloc(sizeof(gpib_buffer_t), GFP_KERNEL);
+	gpib_buffer_init(write_buffer);
+	if(read_buffer == NULL || write_buffer == NULL)
+		return -1;
+	return 0;
+}
+
+void free_buffers(void)
+{
+	if(read_buffer)
+	{
+		kfree(read_buffer);
+		read_buffer = NULL;
+	}
+	if(write_buffer)
+	{
+		kfree(write_buffer);
+		write_buffer = NULL;
+	}
+}
+
 int board_attach(void)
 {
 	unsigned int i, err;
@@ -113,11 +176,8 @@ int board_attach(void)
 	ioports_allocated = iomem_allocated = irq_allocated =
 		dma_allocated = pcmcia_initialized = 0;
 
-	read_buffer = kmalloc(sizeof(gpib_buffer_t), GFP_KERNEL);
-	gpib_buffer_init(read_buffer);
-	write_buffer = kmalloc(sizeof(gpib_buffer_t), GFP_KERNEL);
-	gpib_buffer_init(write_buffer);
-
+	if(allocate_buffers())
+		return -1;
 #ifdef INES_PCMCIA
 	pcmcia_init_module();
 	pcmcia_initialized = 1;
@@ -253,17 +313,180 @@ void board_detach(void)
 #endif
 		pcmcia_initialized = 0;
 	}
-	if(read_buffer)
-	{
-		kfree(read_buffer);
-		read_buffer = NULL;
-	}
-	if(write_buffer)
-	{
-		kfree(write_buffer);
-		write_buffer = NULL;
-	}
+	free_buffers();
 }
+
+
+int pc2_attach(void)
+{
+	unsigned int i, err;
+	int isr_flags = 0;
+
+	// nothing is allocated yet
+	ioports_allocated = iomem_allocated = irq_allocated =
+		dma_allocated = pcmcia_initialized = 0;
+
+	if(allocate_buffers())
+		return -1;
+
+	/* nec7210 registers can be spread out to varying degrees, so allocate
+	 * each one seperately.  Some boards have extra registers that I haven't
+	 * bothered to reserve.  fmhess */
+	err = 0;
+	for(i = 0; i < nec7210_num_registers; i++)
+	{
+		if(check_region(ibbase + i * NEC7210_REG_OFFSET, 1))
+			err++;
+	}
+	if(err)
+	{
+		printk("gpib: ioports are already in use");
+		return -1;
+	}
+	for(i = 0; i < nec7210_num_registers; i++)
+	{
+		request_region(ibbase + i * NEC7210_REG_OFFSET, 1, "gpib");
+	}
+	ioports_allocated = 1;
+
+	// install interrupt handler
+	if( request_irq(ibirq, nec7210_interrupt, isr_flags, "gpib", &ibbase))
+	{
+		printk("gpib: can't request IRQ %d\n", ibirq);
+		return -1;
+	}
+	irq_allocated = 1;
+
+	// request isa dma channel
+#if DMAOP
+	if( request_dma( ibdma, "gpib" ) )
+	{
+		printk("gpib: can't request DMA %d\n",ibdma );
+		return -1;
+	}
+	dma_allocated = 1;
+#endif
+	board_reset();
+
+	// enable interrupts
+	imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
+		HR_DETIE | HR_APTIE | HR_CPTIE;
+	imr2_bits = IMR2_ENABLE_INTR_MASK;
+	GPIBout(IMR1, imr1_bits);
+	GPIBout(IMR2, imr2_bits);
+
+	GPIBout(AUXMR, AUX_PON);
+
+	return 0;
+}
+
+void pc2_detach(void)
+{
+	int i;
+	if(dma_allocated)
+	{
+		free_dma(ibdma);
+		dma_allocated = 0;
+	}
+	if(irq_allocated)
+	{
+		free_irq(ibirq, &ibbase);
+		irq_allocated = 0;
+	}
+	if(ioports_allocated)
+	{
+		board_reset();
+		for(i = 0; i < nec7210_num_registers; i++)
+			release_region(ibbase + i * NEC7210_REG_OFFSET, 1);
+		ioports_allocated = 0;
+	}
+	free_buffers();
+}
+
+int pc2a_attach(void)
+{
+	unsigned int i, err;
+	int isr_flags = 0;
+
+	// nothing is allocated yet
+	ioports_allocated = iomem_allocated = irq_allocated =
+		dma_allocated = pcmcia_initialized = 0;
+
+	if(allocate_buffers())
+		return -1;
+
+	switch( ibbase ){
+
+		case 0x02e1:
+		case 0x22e1:
+		case 0x42e1:
+		case 0x62e1:
+			break;
+	   default:
+	     printk("PCIIa base range invalid, must be one of [0246]2e1 is %lx \n", ibbase);
+             return(0);
+           break;
+	}
+
+        if( ibirq < 2 || ibirq > 7 ){
+	  printk("Illegal Interrupt Level \n");
+          return(0);
+	}
+
+	/* nec7210 registers can be spread out to varying degrees, so allocate
+	 * each one seperately.  Some boards have extra registers that I haven't
+	 * bothered to reserve.  fmhess */
+	err = 0;
+	for(i = 0; i < nec7210_num_registers; i++)
+	{
+		if(check_region(ibbase + i * NEC7210_REG_OFFSET, 1))
+			err++;
+	}
+	if(err)
+	{
+		printk("gpib: ioports are already in use");
+		return -1;
+	}
+	for(i = 0; i < nec7210_num_registers; i++)
+	{
+		request_region(ibbase + i * NEC7210_REG_OFFSET, 1, "gpib");
+	}
+	ioports_allocated = 1;
+
+	if( request_irq(ibirq, pc2a_interrupt, isr_flags, "gpib", &ibbase))
+	{
+		printk("gpib: can't request IRQ %d\n", ibirq);
+		return -1;
+	}
+	irq_allocated = 1;
+	// request isa dma channel
+#if DMAOP
+	if( request_dma( ibdma, "gpib" ) )
+	{
+		printk("gpib: can't request DMA %d\n",ibdma );
+		return -1;
+	}
+	dma_allocated = 1;
+#endif
+	board_reset();
+
+	// enable interrupts
+	imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
+		HR_DETIE | HR_APTIE | HR_CPTIE;
+	imr2_bits = IMR2_ENABLE_INTR_MASK;
+	GPIBout(IMR1, imr1_bits);
+	GPIBout(IMR2, imr2_bits);
+
+	GPIBout(AUXMR, AUX_PON);
+
+	return 0;
+}
+
+
+
+
+
+
 
 
 

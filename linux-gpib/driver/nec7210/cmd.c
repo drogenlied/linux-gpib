@@ -44,7 +44,8 @@ IBLCL ssize_t nec7210_command(uint8_t *buffer, size_t length)
 
 	if (!noTimo)
 	{
-		board.status |= TIMO;
+		set_bit(TIMO_NUM, &driver->status);
+		return -1;
 	}
 	return count;
 }

@@ -11,22 +11,24 @@
  */
 IBLCL int ibrpp(uint8_t *buf)
 {
-	int status = board.update_status();
+	int status = driver->update_status();
 	if((status * CIC) == 0)
 	{
 		return -1;
 	}
 	osStartTimer(pollTimeidx);
-	board.take_control(0);
-	if(board.parallel_poll(buf)) 
+	driver->take_control(0);
+	if(driver->parallel_poll(buf)) 
 	{
-		//XXX handle error
-	} 
-	board.go_to_standby();             
-	if (!noTimo) {
-		ibsta |= ERR;              /* something went wrong */
-		iberr = EBUS;
+		printk("gpib: parallel poll failed\n");
+		return -1;
 	}
+	if (!noTimo)
+	{
+		printk("gpib: parallel poll timeout\n");
+		return -1;
+	}
+//supposed to send rpp local message false at end
 	osRemoveTimer();
 	return 0;
 }

@@ -18,7 +18,7 @@ IBLCL ssize_t ibcmd(uint8_t *buf, size_t cnt)
 {
 	size_t	bytes_sent = 0;
 	ssize_t ret = 0;
-	int status = board.update_status();
+	int status = driver->update_status();
 
 	if((status & CIC) == 0)
 	{
@@ -26,14 +26,14 @@ IBLCL ssize_t ibcmd(uint8_t *buf, size_t cnt)
 	}
 	osStartTimer(timeidx);
 
-	if(board.take_control(0))
+	if(driver->take_control(1))
 	{
 		printk("gpib error while becoming active controller\n");
 		return -1;
 	}
-	while ((bytes_sent < cnt) && !(board.update_status() & (TIMO)))
+	while ((bytes_sent < cnt) && !(driver->update_status() & (TIMO)))
 	{
-		ret = board.command(buf, cnt);
+		ret = driver->command(buf, cnt);
 		if(ret < 0)
 		{
 			printk("error writing gpib command bytes\n");

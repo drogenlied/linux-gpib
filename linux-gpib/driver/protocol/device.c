@@ -28,7 +28,7 @@
 IBLCL int dvtrg(int padsad)
 {
 	uint8_t cmdString[2];
-	int status = board.update_status();
+	int status = driver->update_status();
 
 	if((status & CIC) == 0)
 	{
@@ -55,7 +55,7 @@ IBLCL int dvtrg(int padsad)
 IBLCL int dvclr(int padsad)
 {
 	uint8_t cmdString[2];
-	int status = board.update_status();
+	int status = driver->update_status();
 
 	if((status & CIC ) == 0)
 	{
@@ -85,7 +85,7 @@ IBLCL int dvclr(int padsad)
 IBLCL int dvrsp(int padsad, uint8_t *result)
 {
 	uint8_t cmd_string[8];
-	int status = board.update_status();
+	int status = driver->update_status();
 	int end_flag;
 	ssize_t ret;
 	unsigned int pad, sad;
@@ -106,7 +106,7 @@ IBLCL int dvrsp(int padsad, uint8_t *result)
 
 	osStartTimer(pollTimeidx);
 
-	board.take_control(0);
+	driver->take_control(1);
 
 	i = 0;
 	cmd_string[i++] = UNL;
@@ -122,17 +122,17 @@ IBLCL int dvrsp(int padsad, uint8_t *result)
 	if (ibcmd(cmd_string, i) < 0)
 		return -1;
 
-	board.go_to_standby();
+	driver->go_to_standby();
 
 	// read poll result
-	ret = board.read(result, 1, &end_flag);
+	ret = driver->read(result, 1, &end_flag);
 	if(ret <= 0)
 	{
 		printk("gpib: serial poll failed\n");
 		return -1;
 	}
 
-	board.take_control(1);
+	driver->take_control(1);
 
 	cmd_string[0] = SPD;	/* disable serial poll bytes */
 	cmd_string[1] = UNT;
@@ -155,7 +155,7 @@ IBLCL int dvrsp(int padsad, uint8_t *result)
  */
 IBLCL ssize_t dvwrt(int padsad, uint8_t *buf, unsigned int cnt)
 {
-	int status = board.update_status();
+	int status = driver->update_status();
 
 	if((status & CIC) == 0)
 	{

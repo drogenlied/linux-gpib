@@ -11,11 +11,11 @@
  */
 IBLCL int iblines(int *buf)
 {
-	if(board.line_status == NULL)
+	if(driver->line_status == NULL)
 	{
 		printk("driver cannot query gpib line status\n");
 		return -1;
 	}
-	*buf = board.line_status();
+	*buf = driver->line_status();
 	return 0;
 }

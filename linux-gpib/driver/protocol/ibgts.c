@@ -9,14 +9,14 @@
 
 IBLCL int ibgts(void)
 {
-	int status = board.update_status();
+	int status = driver->update_status();
 
 	if((status & CIC) == 0)
 	{
 		printk("gpib: not CIC during ibgts\n");
 		return -1;
 	}
-	board.go_to_standby();                    /* go to standby */
+	driver->go_to_standby();                    /* go to standby */
 	return 0;
 }
 

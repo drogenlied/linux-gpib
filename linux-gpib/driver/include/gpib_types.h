@@ -49,6 +49,10 @@ typedef struct {
 typedef struct
 {
 	char *name;	// name of board
+	/* attach() initializes board and allocates resources */
+	int (*attach)(void);
+	/* detach() shuts down board and frees resources */
+	void (*detach)(void);
 	/* read() should read at most 'length' bytes from the bus into
 	 * 'buffer'.  It should return when it fills the buffer or
 	 * encounters an END (EOI and or EOS if appropriate).  It should set 'end'
@@ -122,7 +126,7 @@ typedef struct
 	/* 'private_data' can be used as seen fit by the driver to
 	 * store additional variables for this board */
 	void *private_data;
-} gpib_board_t;
+} gpib_driver_t;
 
 #endif	// __KERNEL__
 

@@ -37,22 +37,22 @@ IBLCL ssize_t ibrd(uint8_t *buf, size_t length, int *end_flag)
 {
 	size_t count = 0;
 	ssize_t ret;
-	int status = board.update_status();
+	int status = driver->update_status();
 
 	if((status & LACS) == 0) 
 	{
 		printk("gpib read failed: not listener\n");
 		return -1;
 	}
-	board.go_to_standby();
+	driver->go_to_standby();
 	osStartTimer(timeidx);
 	// mark io in progress
-	clear_bit(CMPL_NUM, &board.status);
+	clear_bit(CMPL_NUM, &driver->status);
 	// initialize status to END not yet received
-	clear_bit(END_NUM, &board.status);
-	while ((count < length) && !(board.status & TIMO)) 
+	clear_bit(END_NUM, &driver->status);
+	while ((count < length) && !(driver->update_status() & TIMO)) 
 	{
-		ret = board.read(buf, length - count, end_flag);
+		ret = driver->read(buf, length - count, end_flag);
 		if(ret < 0)
 		{
 			printk("gpib read error\n");
@@ -64,7 +64,7 @@ IBLCL ssize_t ibrd(uint8_t *buf, size_t length, int *end_flag)
 	}
 	osRemoveTimer();
 	// mark io completed
-	set_bit(CMPL_NUM, &board.status);
+	set_bit(CMPL_NUM, &driver->status);
 	return count;
 }
 

@@ -14,7 +14,7 @@ IBLCL int ibpad(int v)
 	}else
 	{
 		myPAD = v;
-		board.primary_address( myPAD );
+		driver->primary_address( myPAD );
 	}
 	return 0;
 }
@@ -38,10 +38,10 @@ IBLCL int ibsad(int v)
 			v = 0;		/* v == 0x7F also disables */
 		if ((mySAD = v))
 		{
-			board.secondary_address(mySAD - 0x60, 1);
+			driver->secondary_address(mySAD - 0x60, 1);
 		}else
 		{
-			board.secondary_address(0,0);
+			driver->secondary_address(0,0);
 		}
 	}
 	return 0;
@@ -75,9 +75,9 @@ IBLCL int ibtmo(int v)
  * If v == 1 then send EOI with the last byte of each write.
  * If v == 0 then disable the sending of EOI.
  */
-IBLCL int ibeot(int v)
+IBLCL int ibeot(int send_eoi)
 {
-	if (v)
+	if (send_eoi)
 	{
 		pgmstat &= ~PS_NOEOI;
 	}else
@@ -105,9 +105,9 @@ IBLCL int ibeos(int v)
 	{
 		if(emodes & REOS)
 		{
-			board.enable_eos(ebyte, emodes & BIN);
+			driver->enable_eos(ebyte, emodes & BIN);
 		}else
-			board.disable_eos();
+			driver->disable_eos();
 	}
 	return 0;
 }
@@ -117,6 +117,6 @@ IBLCL int ibeos(int v)
 IBLCL int ibstat(void)
 /* update the GPIB status information */
 {
-	return board.update_status();
+	return driver->update_status();
 }
 

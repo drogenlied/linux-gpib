@@ -10,5 +10,7 @@ fix completely useless interrupt handling
 
 parallel polls (ibppc)
 
+fix timeouts
+
 generally make this software suck less
  

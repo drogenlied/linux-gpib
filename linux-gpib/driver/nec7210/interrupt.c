@@ -31,8 +31,17 @@ DECLARE_WAIT_QUEUE_HEAD(nec7210_command_wait);
 DECLARE_WAIT_QUEUE_HEAD(nec7210_status_wait);
 
 /*
- * GPIB interrupt service routine -- fast and simple
+ * GPIB interrupt service routines
  */
+
+void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp)
+{
+	nec7210_interrupt(irq, arg, registerp);
+
+	/* clear interrupt circuit */
+	outb(0xff , CLEAR_INTR_REG(ibirq) );
+}
+
 void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 {
 	int status1, status2, address_status;
@@ -45,15 +54,10 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	status1 = GPIBin(ISR1);
 	status2 = GPIBin(ISR2);
 
-#ifdef NIPCIIa
-	/* clear interrupt circuit */
-	outb(0xff , CLEAR_INTR_REG(ibirq) );
-#endif
-
 	// record service request in status
 	if(status2 & HR_SRQI)
 	{
-		set_bit(SRQI_NUM, &board.status);
+		set_bit(SRQI_NUM, &driver->status);
 		wake_up_interruptible(&nec7210_status_wait);
 	}
 
@@ -61,18 +65,18 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	if(status2 & HR_LOKC)
 	{
 		if(status2 & HR_LOK)
-			set_bit(LOK_NUM, &board.status);
+			set_bit(LOK_NUM, &driver->status);
 		else
-			clear_bit(LOK_NUM, &board.status);
+			clear_bit(LOK_NUM, &driver->status);
 	}
 
 	// change in remote status
 	if(status2 & HR_REMC)
 	{
 		if(status2 & HR_REM)
-			set_bit(REM_NUM, &board.status);
+			set_bit(REM_NUM, &driver->status);
 		else
-			clear_bit(REM_NUM, &board.status);
+			clear_bit(REM_NUM, &driver->status);
 	}
 
 	// record address status change in status
@@ -81,24 +85,24 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 		address_status = GPIBin(ADSR);
 		// check if we are controller in charge
 		if(address_status & HR_CIC)
-			set_bit(CIC_NUM, &board.status);
+			set_bit(CIC_NUM, &driver->status);
 		else
-			clear_bit(CIC_NUM, &board.status);
+			clear_bit(CIC_NUM, &driver->status);
 		// check for talker/listener addressed
 		if(address_status & HR_TA)
-			set_bit(TACS_NUM, &board.status);
+			set_bit(TACS_NUM, &driver->status);
 		else
-			clear_bit(TACS_NUM, &board.status);
+			clear_bit(TACS_NUM, &driver->status);
 		if(address_status & HR_LA)
-			set_bit(LACS_NUM, &board.status);
+			set_bit(LACS_NUM, &driver->status);
 		else
-			clear_bit(LACS_NUM, &board.status);
+			clear_bit(LACS_NUM, &driver->status);
 		wake_up_interruptible(&nec7210_status_wait); /* wake up sleeping process */
 	}
 
 	// record reception of END
 	if(status1 & HR_END)
-		set_bit(END_NUM, &board.status);
+		set_bit(END_NUM, &driver->status);
 
 	// get incoming data in PIO mode
 	if((status1 & HR_DI) & (imr1_bits & HR_DIIE))
@@ -168,7 +172,7 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 		printk("gpib output error\n");
 	}
 
-//	printk("isr1 0x%x, isr2 0x%x, status 0x%x\n", status1, status2, board.status);
+//	printk("isr1 0x%x, isr2 0x%x, status 0x%x\n", status1, status2, driver->status);
 
 }
 

@@ -20,14 +20,12 @@ IBLCL int ibsic(void)
 
 		pgmstat |= PS_SAC;
 			/* set controller state */
-		board.interface_clear(1);                   /* assert IFC */
+		driver->interface_clear(1);                   /* assert IFC */
 		udelay(100);
-		board.interface_clear(0);                   /* clear IFC */
+		driver->interface_clear(0);                   /* clear IFC */
 		drvstat |= DRV_IFC;
 	}
-#if defined(CBI_4882)
-	 fix4882Bug();
-#endif
+
 	return 0;
 }
 
