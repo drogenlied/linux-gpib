@@ -5,7 +5,7 @@
 #
 #
 
-load ../libgpib.so
+load ../libgpib_tcl.so
 
 #
 # init device

@@ -21,7 +21,7 @@
 
 #include <asm/ioctl.h>
 
-#define GPIB_CODE 160
+#define IBMAJOR 160
 
 typedef struct
 {
@@ -130,42 +130,42 @@ typedef unsigned int t1_delay_ioctl_t;
 /* Standard functions. */
 enum gpib_ioctl
 {
-	IBRD = _IOWR( GPIB_CODE, 0, read_write_ioctl_t ),
-	IBWRT = _IOWR( GPIB_CODE, 1, read_write_ioctl_t ),
-	IBCMD = _IOWR( GPIB_CODE, 2, read_write_ioctl_t ),
-	IBOPENDEV = _IOWR( GPIB_CODE, 3, open_dev_ioctl_t ),
-	IBCLOSEDEV = _IOW( GPIB_CODE, 4, close_dev_ioctl_t ),
-	IBWAIT = _IOWR( GPIB_CODE, 5, wait_ioctl_t ),
-	IBRPP = _IOWR( GPIB_CODE, 6, uint8_t ),
+	IBRD = _IOWR( IBMAJOR, 0, read_write_ioctl_t ),
+	IBWRT = _IOWR( IBMAJOR, 1, read_write_ioctl_t ),
+	IBCMD = _IOWR( IBMAJOR, 2, read_write_ioctl_t ),
+	IBOPENDEV = _IOWR( IBMAJOR, 3, open_dev_ioctl_t ),
+	IBCLOSEDEV = _IOW( IBMAJOR, 4, close_dev_ioctl_t ),
+	IBWAIT = _IOWR( IBMAJOR, 5, wait_ioctl_t ),
+	IBRPP = _IOWR( IBMAJOR, 6, uint8_t ),
 
-	IBONL = _IOW( GPIB_CODE, 8, online_ioctl_t ),
-	IBSIC = _IOW( GPIB_CODE, 9, unsigned int ),
-	IBSRE = _IOW( GPIB_CODE, 10, int ),
-	IBGTS = _IO( GPIB_CODE, 11 ),
-	IBCAC = _IOW( GPIB_CODE, 12, int ),
-	IBLINES = _IOR( GPIB_CODE, 14, short ),
-	IBPAD = _IOW( GPIB_CODE, 15, pad_ioctl_t ),
-	IBSAD = _IOW( GPIB_CODE, 16, sad_ioctl_t ),
-	IBTMO = _IOW( GPIB_CODE, 17, unsigned int ),
-	IBRSP = _IOWR( GPIB_CODE, 18, serial_poll_ioctl_t ),
-	IBEOS = _IOW( GPIB_CODE, 19, eos_ioctl_t ),
-	IBRSV = _IOW( GPIB_CODE, 20, uint8_t ),
-	CFCBASE = _IOW( GPIB_CODE, 21, unsigned long ),
-	CFCIRQ = _IOW( GPIB_CODE, 22, unsigned int ),
-	CFCDMA = _IOW( GPIB_CODE, 23, unsigned int ),
-	CFCBOARDTYPE = _IOW( GPIB_CODE, 24, board_type_ioctl_t ),
-	IBAUTOPOLL = _IO( GPIB_CODE, 25 ),
-	IBMUTEX = _IOW( GPIB_CODE, 26, int ),
-	IBSPOLL_BYTES = _IOWR( GPIB_CODE, 27, spoll_bytes_ioctl_t ),
-	IBPPC = _IOW( GPIB_CODE, 28, ppoll_config_ioctl_t ),
-	IBBOARD_INFO = _IOR( GPIB_CODE, 29, board_info_ioctl_t ),
+	IBONL = _IOW( IBMAJOR, 8, online_ioctl_t ),
+	IBSIC = _IOW( IBMAJOR, 9, unsigned int ),
+	IBSRE = _IOW( IBMAJOR, 10, int ),
+	IBGTS = _IO( IBMAJOR, 11 ),
+	IBCAC = _IOW( IBMAJOR, 12, int ),
+	IBLINES = _IOR( IBMAJOR, 14, short ),
+	IBPAD = _IOW( IBMAJOR, 15, pad_ioctl_t ),
+	IBSAD = _IOW( IBMAJOR, 16, sad_ioctl_t ),
+	IBTMO = _IOW( IBMAJOR, 17, unsigned int ),
+	IBRSP = _IOWR( IBMAJOR, 18, serial_poll_ioctl_t ),
+	IBEOS = _IOW( IBMAJOR, 19, eos_ioctl_t ),
+	IBRSV = _IOW( IBMAJOR, 20, uint8_t ),
+	CFCBASE = _IOW( IBMAJOR, 21, unsigned long ),
+	CFCIRQ = _IOW( IBMAJOR, 22, unsigned int ),
+	CFCDMA = _IOW( IBMAJOR, 23, unsigned int ),
+	CFCBOARDTYPE = _IOW( IBMAJOR, 24, board_type_ioctl_t ),
+	IBAUTOPOLL = _IO( IBMAJOR, 25 ),
+	IBMUTEX = _IOW( IBMAJOR, 26, int ),
+	IBSPOLL_BYTES = _IOWR( IBMAJOR, 27, spoll_bytes_ioctl_t ),
+	IBPPC = _IOW( IBMAJOR, 28, ppoll_config_ioctl_t ),
+	IBBOARD_INFO = _IOR( IBMAJOR, 29, board_info_ioctl_t ),
 
-	IBQUERY_BOARD_RSV = _IOR( GPIB_CODE, 31, int ),
-	IBSELECT_PCI = _IOWR( GPIB_CODE, 32, select_pci_ioctl_t ),
-	IBEVENT = _IOR( GPIB_CODE, 33, event_ioctl_t ),
-	IBRSC = _IOW( GPIB_CODE, 34, rsc_ioctl_t ),
-	IB_T1_DELAY = _IOW( GPIB_CODE, 35, t1_delay_ioctl_t ),
-	IBLOC = _IO( GPIB_CODE, 36 )
+	IBQUERY_BOARD_RSV = _IOR( IBMAJOR, 31, int ),
+	IBSELECT_PCI = _IOWR( IBMAJOR, 32, select_pci_ioctl_t ),
+	IBEVENT = _IOR( IBMAJOR, 33, event_ioctl_t ),
+	IBRSC = _IOW( IBMAJOR, 34, rsc_ioctl_t ),
+	IB_T1_DELAY = _IOW( IBMAJOR, 35, t1_delay_ioctl_t ),
+	IBLOC = _IO( IBMAJOR, 36 )
 };
 
 #endif	/* _GPIB_IOCTL_H */

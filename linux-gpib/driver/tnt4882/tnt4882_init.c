@@ -486,7 +486,7 @@ int ni_isa_attach(gpib_board_t *board)
 	}
 
 	// allocate ioports
-	if( request_region(board->ibbase, atgpib_iosize, "atgpib") == 0)
+	if( request_region(board->ibbase, atgpib_iosize, "atgpib") == NULL )
 	{
 		printk("tnt4882: failed to allocate ioports\n");
 		return -1;

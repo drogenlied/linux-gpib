@@ -2,19 +2,17 @@
 # Makefile for directory driver/tms9914
 #
 
+CFLAGS += -DEXPORT_SYMTAB
+
 SRCS =  cmd.c init.c read.c util.c \
-	write.c aux.c interrupt.c 
+	write.c aux.c interrupt.c
 
 OBJS =  $(SRCS:.c=.o)
 
-CFLAGS += -DEXPORT_SYMTAB
-
 all: tms9914.o
-
 
 tms9914.o: $(OBJS)
 	$(LD) -r -o tms9914.o $(OBJS)
-
 
 clean:
 	$(RM) *.o .depend
@@ -26,7 +24,7 @@ depend:
 
 ifndef NODEPS
 .depend: $(SRCS)
-	$(DEPEND) $(CFLAGS) -MM $(SRCS)  >./.depend
+	$(CC) $(CFLAGS) -MM $(SRCS)  >./.depend
 
 -include .depend
 endif

@@ -295,7 +295,7 @@ void cec_pci_detach(gpib_board_t *board)
 	cec_free_private(board);
 }
 
-int init_module(void)
+int cec_init_module(void)
 {
 	EXPORT_NO_SYMBOLS;
 
@@ -304,13 +304,13 @@ int init_module(void)
 	return 0;
 }
 
-void cleanup_module(void)
+void cec_exit_module(void)
 {
 	gpib_unregister_driver(&cec_pci_interface);
 }
 
-
-
+module_init( cec_init_module );
+module_exit( cec_exit_module );
 
 
 

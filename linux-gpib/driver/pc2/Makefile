@@ -14,6 +14,8 @@ pc2-gpib.o: $(OBJS)
 clean:
 	$(RM) *.o .depend
 
+distclean: clean
+
 install:
 	$(INSTALL) -D pc2-gpib.o $(MODLIB)/misc/pc2-gpib.o
 
@@ -21,7 +23,7 @@ depend:
 
 ifndef NODEPS
 .depend: $(SRCS)
-	$(DEPEND) $(CFLAGS) -MM $(SRCS)  >./.depend
+	$(CC) $(CFLAGS) -MM $(SRCS)  >./.depend
 
 -include .depend
 endif

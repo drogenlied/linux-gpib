@@ -8,23 +8,22 @@ OBJS =  $(SRCS:.c=.o)
 
 all: cb7210.o
 
-
 cb7210.o: $(OBJS)
 	$(LD) -r -o cb7210.o $(OBJS)
-
 
 clean:
 	$(RM) *.o .depend
 
+distclean: clean
+
 install:
 	$(INSTALL) -D cb7210.o $(MODLIB)/misc/cb7210.o
-
 
 depend:
 
 ifndef NODEPS
 .depend: $(SRCS)
-	$(DEPEND) $(CFLAGS) -MM $(SRCS)  >./.depend
+	$(CC) $(CFLAGS) -MM $(SRCS)  >./.depend
 
 -include .depend
 endif

@@ -15,6 +15,8 @@ tnt4882.o: $(OBJS)
 clean:
 	$(RM) *.o .depend
 
+distclean: clean
+
 install:
 	$(INSTALL) -D tnt4882.o $(MODLIB)/misc/tnt4882.o
 
@@ -22,7 +24,7 @@ depend:
 
 ifndef NODEPS
 .depend: $(SRCS)
-	$(DEPEND) $(CFLAGS) -MM $(SRCS)  >./.depend
+	$(CC) $(CFLAGS) -MM $(SRCS)  >./.depend
 
 -include .depend
 endif

@@ -12,7 +12,7 @@ EXTENSIONDIR =  /usr/lib/php4/20010901
 all : $(MOD).so
 
 $(MOD).so: $(MOD).o 
-	gcc -shared -L../../lib -lgpib -lpthread -rdynamic -o $(MOD).so \
+	gcc -shared -L../../lib/.libs -lgpib -lpthread -rdynamic -o $(MOD).so \
 	$(MOD).o
 
 $(MOD).o: gpib.c

@@ -8,7 +8,7 @@
 #include "gpib_types.h"
 #include "gpib_proto.h"
 #include "gpib_ioctl.h"
-#include "gpib/autoconf.h"
+#include "config.h"
 
 #include <linux/fs.h>
 

@@ -12,7 +12,7 @@
 #  clausi@chemie.fu-berlin.de
 #
 
-load ../libgpib.so
+load ../libgpib_tcl.so
 load ../../../contrib/tcltk/modules/libBLT.so.2.1
 
 set auto_path [linsert $auto_path 0 ./tclib]
