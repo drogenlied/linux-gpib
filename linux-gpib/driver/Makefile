@@ -58,7 +58,7 @@ ifdef CEC
 SUBDIRS += cec
 endif
 
-all : $(EXP_INC) subdirs gpib-common.o
+all : $(EXP_INC) subdirs 
 
 subdirs:
 	set -e; \
