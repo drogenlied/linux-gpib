@@ -20,7 +20,8 @@
 
 #include "ines.h"
 
-#ifdef CONFIG_PCMCIA
+#if defined(CONFIG_PCMCIA) || defined(CONFIG_PCMCIA_MODULE)
+
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/ptrace.h>
