@@ -42,7 +42,8 @@ void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	if( isr0_bits & TNT_IFCI_BIT )
 	{
 		push_gpib_event( board, EventIFC );
-		wake_up_interruptible( &board->wait );
+		//XXX don't need this wakeup, one below should do?
+//		wake_up_interruptible( &board->wait );
 	}
 
 	if( isr3_bits & HR_NFF )
@@ -57,14 +58,13 @@ void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	{
 		priv->imr3_bits &= ~HR_DONE;
 	}
-	if( isr3_bits & HR_INTR )
+	if(isr3_bits & (HR_INTR | HR_TLCI))
 	{
-		GPIB_DPRINTK( "tnt4882: isr3 0x%x imr3 0x%x\n", isr3_bits,
-			imr3_bits );
+		GPIB_DPRINTK( "tnt4882: minor %i isr0 0x%x imr0 0x%x isr3 0x%x imr3 0x%x\n", board->minor,
+			isr0_bits, priv->imr0_bits, isr3_bits, imr3_bits );
 		tnt_writeb( priv, priv->imr3_bits, IMR3 );
 		wake_up_interruptible( &board->wait );
 	}
-
 	spin_unlock_irqrestore( &board->spinlock, flags );
 }
 

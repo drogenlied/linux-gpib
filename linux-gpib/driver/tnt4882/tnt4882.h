@@ -49,7 +49,8 @@ typedef struct
 	struct mite_struct *mite;
 	struct pci_dev *isapnp_dev;
 	unsigned int irq;
-	volatile int imr3_bits;
+	volatile short imr0_bits;
+	volatile short imr3_bits;
 	ni_chipset_t chipset;
 	void (*io_writeb)( unsigned int value, unsigned long address );
 	void (*io_writew)( unsigned int value, unsigned long address );
@@ -229,12 +230,12 @@ enum isr0_bits
 enum isr3_bits
 {
 	HR_DONE = ( 1 << 0 ),	/* transfer done */
-	HR_TLCI = ( 1 << 1 ),	/* TLC interrupt asserted */
+	HR_TLCI = ( 1 << 1 ),	/* isr0, isr1, or isr2 interrupt asserted */
 	HR_NEF = ( 1 << 2 ),	/* NOT empty fifo */
 	HR_NFF = ( 1 << 3 ),	/* NOT full fifo */
 	HR_STOP = ( 1 << 4 ),	/* fifo empty or STOP command issued */
-	HR_SRQI_CIC = ( 1 << 5 ),	/* SRQ asserted and we are CIC */
-	HR_INTR = ( 1 << 7 ),	/* 1=board is interrupting */
+	HR_SRQI_CIC = ( 1 << 5 ),	/* SRQ asserted and we are CIC (500x only?)*/
+	HR_INTR = ( 1 << 7 ),	/* isr3 interrupt active */
 };
 
 enum keyreg_bits
@@ -275,7 +276,15 @@ enum tnt4882_aux_cmds
 
 enum tnt4882_aux_regs
 {
+	AUXRG = 0x40,
 	AUXRI = 0xe0,
+};
+
+enum auxg_bits
+{
+ /* no talking when no listeners bit (prevents bus errors when data written at wrong time) */
+	NTNL_BIT = 0x8,
+	CHES_BIT = 0x1, /*clear holdoff on end select bit*/
 };
 
 enum auxi_bits
@@ -283,6 +292,15 @@ enum auxi_bits
 	SISB = 0x1,	// static interrupt bits (don't clear isr1, isr2 on read )
 	PP2 = 0x4,	// ignore remote parallel poll configuration
 	USTD = 0x8,	// ultra short ( 1100 nanosec ) T1 delay
+};
+
+enum sasr_bits
+{
+	ACRDY_BIT = 0x4,	/* acceptor ready state */
+	ADHS_BIT = 0x8,	/* acceptor data holdoff state */
+	ANHS2_BIT = 0x10,	/* acceptor not ready holdoff immediately state */
+	ANHS1_BIT = 0x20,	/* acceptor not ready holdoff state */
+	AEHS_BIT = 0x40,	/* acceptor end holdoff state */
 };
 
 /* paged io */

@@ -335,7 +335,7 @@ gpib_interface_t ni_nat4882_isa_accel_interface =
 	detach: ni_isa_detach,
 	read: tnt4882_accel_read,
 	write: tnt4882_accel_write,
-	command: tnt4882_command,
+	command: tnt4882_command_unaccel,
 	take_control: tnt4882_take_control,
 	go_to_standby: tnt4882_go_to_standby,
 	request_system_control: tnt4882_request_system_control,
@@ -364,7 +364,7 @@ gpib_interface_t ni_nec_isa_accel_interface =
 	detach: ni_isa_detach,
 	read: tnt4882_accel_read,
 	write: tnt4882_accel_write,
-	command: tnt4882_command,
+	command: tnt4882_command_unaccel,
 	take_control: tnt4882_take_control,
 	go_to_standby: tnt4882_go_to_standby,
 	request_system_control: tnt4882_request_system_control,
@@ -390,11 +390,12 @@ void tnt4882_board_reset( tnt4882_private_t *tnt_priv, gpib_board_t *board )
 {
 	nec7210_private_t *nec_priv = &tnt_priv->nec7210_priv;
 
-	tnt_writeb( tnt_priv, 0, IMR0 );
+	tnt_priv->imr0_bits = 0;
+	tnt_writeb( tnt_priv, tnt_priv->imr0_bits, IMR0 );
 	tnt_priv->imr3_bits = 0;
 	tnt_writeb( tnt_priv, tnt_priv->imr3_bits, IMR3 );
 	tnt_readb( tnt_priv, IMR0 );
-	tnt_readb( tnt_priv, IMR0 );
+	tnt_readb( tnt_priv, IMR3 );
 	nec7210_board_reset( nec_priv, board );
 }
 
@@ -458,9 +459,12 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 	write_byte( &tnt_priv->nec7210_priv, AUX_HLDI, AUXMR );
 	set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
 
+	write_byte( &tnt_priv->nec7210_priv, AUXRG | NTNL_BIT, AUXMR );
+
 	nec7210_board_online( nec_priv, board );
 	// enable interface clear interrupt for event queue
-	tnt_writeb( tnt_priv, TNT_IMR0_ALWAYS_BITS | TNT_IFCIE_BIT, IMR0 );
+	tnt_priv->imr0_bits = TNT_IMR0_ALWAYS_BITS | /*TNT_ATNI_BIT |*/ TNT_IFCIE_BIT;
+	tnt_writeb( tnt_priv, tnt_priv->imr0_bits, IMR0 );
 }
 
 int ni_pci_attach(gpib_board_t *board)

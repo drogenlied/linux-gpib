@@ -56,12 +56,20 @@ static int write_wait( gpib_board_t *board, tnt4882_private_t *tnt_priv,
 		return -ERESTARTSYS;
 	}
 	if( test_bit( TIMO_NUM, &board->status ) )
+	{
+		printk("tnt4882: write timed out\n");
 		return -ETIMEDOUT;
-	if( test_bit( BUS_ERROR_BN, &nec_priv->state ) )
+	}
+	if( test_and_clear_bit( BUS_ERROR_BN, &nec_priv->state ) )
+	{
+		printk("tnt4882: write bus error\n");
 		return -EIO;
+	}
 	if( test_bit( DEV_CLEAR_BN, &nec_priv->state ) )
+	{
+		printk("tnt4882: device clear interrupted write\n" );
 		return -EINTR;
-
+	}
 	return 0;
 }
 
@@ -73,7 +81,7 @@ static ssize_t generic_write( gpib_board_t *board, uint8_t *buffer, size_t lengt
 	tnt4882_private_t *tnt_priv = board->private_data;
 	nec7210_private_t *nec_priv = &tnt_priv->nec7210_priv;
 	unsigned long iobase = nec_priv->iobase;
-	unsigned int bits, imr1_bits, imr2_bits;
+	unsigned int bits, imr0_bits, imr1_bits, imr2_bits;
 	int32_t hw_count;
 	unsigned long flags;
 
@@ -84,6 +92,9 @@ static ssize_t generic_write( gpib_board_t *board, uint8_t *buffer, size_t lengt
 		nec7210_set_reg_bits( nec_priv, IMR2, 0xff, HR_DMAO );
 	else
 		nec7210_set_reg_bits( nec_priv, IMR2, 0xff, 0 );
+	imr0_bits = tnt_priv->imr0_bits;
+	tnt_priv->imr0_bits &= ~TNT_ATNI_BIT;
+	tnt_writeb(tnt_priv, tnt_priv->imr0_bits, IMR0);
 
 	tnt_writeb( tnt_priv, RESET_FIFO, CMDR );
 	udelay(1);
@@ -129,7 +140,6 @@ static ssize_t generic_write( gpib_board_t *board, uint8_t *buffer, size_t lengt
 			word = buffer[ count++ ] & 0xff;
 			if( count < length )
 				word |= ( buffer[ count++ ] << 8 ) & 0xff00;
-			//XXX not all boards use memory-mapped io
 			tnt_priv->io_writew( word, iobase + FIFOB );
 		}
 		tnt_priv->imr3_bits |= HR_NFF;
@@ -147,6 +157,8 @@ static ssize_t generic_write( gpib_board_t *board, uint8_t *buffer, size_t lengt
 
 	nec7210_set_reg_bits( nec_priv, IMR1, 0xff, imr1_bits );
 	nec7210_set_reg_bits( nec_priv, IMR2, 0xff, imr2_bits );
+	tnt_priv->imr0_bits = imr0_bits;
+	tnt_writeb(tnt_priv, tnt_priv->imr0_bits, IMR0);
 
 	if( retval < 0 )
 		return retval;
