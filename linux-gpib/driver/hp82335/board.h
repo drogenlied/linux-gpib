@@ -3,6 +3,7 @@
 #include <asm/io.h>
 
 extern unsigned long      ibbase;	/* base addr of GPIB interface registers  */
+extern unsigned long remapped_ibbase;	// ioremapped address for memory mapped io
 extern uint8       ibirq;	/* interrupt request line for GPIB (1-7)  */
 extern uint8       ibdma ;      /* DMA channel                            */
 
@@ -22,7 +23,7 @@ extern int          ccrbits;    /* static bits for card control register */
 extern inline uint8_t bdP8in(unsigned long in_addr)
 {
 #if defined(HP82335)
-	return readb(ibbase + in_addr);
+	return readb(remapped_ibbase + in_addr);
 #else
 	return inb_p(ibbase + in_addr);
 #endif
@@ -34,7 +35,7 @@ extern inline uint8_t bdP8in(unsigned long in_addr)
 extern inline void bdP8out(unsigned long out_addr, uint8_t out_value)
 {
 #if defined(HP82335)
-	writeb(out_value, ibbase + out_addr);
+	writeb(out_value, remapped_ibbase + out_addr);
 #else
         outb_p(out_value, ibbase + out_addr);
 #endif

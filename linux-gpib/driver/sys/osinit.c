@@ -1,3 +1,22 @@
+/***************************************************************************
+                          osinit.c  -  description
+                             -------------------
+
+    begin                : Dec 2001
+    copyright            : (C) 2001 by Frank Mori Hess
+    email                : fmhess@users.sourceforge.net
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
+
+
 #include <ibsys.h>
 #include <linux/version.h>
 #include <linux/module.h>
@@ -96,8 +115,6 @@ IBLCL int osInit(void)
 {
 	int	s;
 extern  struct timer_list ibtimer_list;
-extern  void ibintr(int irq, void *d, struct pt_regs *regs);
-	int isr_flags = 0;
 
 	DBGin("osInit");
 
@@ -132,37 +149,6 @@ extern  void ibintr(int irq, void *d, struct pt_regs *regs);
         sema_init( &espsemid, 0);
 	DBGprint(DBG_DATA, ("espsemid=0x%x  ", atomic_read(&espsemid.count)));
 #endif
-        /* avoid symbols to be exported (TB) */
-#if 0
-        register_symtab(NULL);
-#endif
-	/* register IRQ and DMA channel */
-
-#if USEINTS
-#if defined(CBI_PCI) || defined(MODBUS_PCI) || 	defined(INES_PCI)  
-	isr_flags |= SA_SHIRQ;
-#endif
-	if( request_irq(ibirq, ibintr, isr_flags, "gpib", NULL)){
-	  printk("can't request IRQ %d\n",ibirq);
-          DBGout();
-	  return(0);
-	}
-	DBGprint(DBG_DATA, ("IRQ %d  ", ibirq));
-#if defined(CBI_PCI) || defined(MODBUS_PCI) || 	defined(INES_PCI)  
-	pci_EnableIRQ ();
-#endif
-
-#endif
-#if DMAOP
-	if( request_dma( ibdma, "gpib" ) ){
-	  printk("can't request DMA %d\n",ibdma );
-#if USEINTS
-	free_irq(ibirq, NULL);
-#endif
-          DBGout();
-	  return(0);
-	}
-#endif
 	pgmstat |= PS_SYSRDY;
 	DBGout();
 	return 1;
@@ -172,16 +158,6 @@ extern  void ibintr(int irq, void *d, struct pt_regs *regs);
 IBLCL void osReset(void)
 {
 	DBGin("osReset");
-
-        if( pgmstat & PS_SYSRDY ){
-
-#if USEINTS                /*release ressources */
-	free_irq(ibirq, NULL);
-#endif
-#if DMAOP
-	free_dma(ibdma);
-#endif
-        }
 	pgmstat &= ~PS_SYSRDY;
 	DBGout();
 }
@@ -224,25 +200,6 @@ int init_module(void)
          	dbgMask |= DBG_1PPL;
 #endif
 
-
-#ifdef CBI_PCMCIA
-   pcmcia_init_module();
-#endif
-#ifdef INES_PCMCIA
-   pcmcia_init_module();
-#endif
-
-
-#ifdef CBI_PCI
-   bd_PCIInfo();
-#endif
-#ifdef MODBUS_PCI
-   bd_PCIInfo();
-#endif
-#ifdef INES_PCI
-   bd_PCIInfo();
-#endif
-
         printk("Linux-GPIB Driver Board=%s -- Major=%d ",BOARD_TYPE,ibmajor);
 #if !defined(CBI_PCMCIA) && !defined(INES_PCMCIA)
         printk("Base=0x%lx ",ibbase );
@@ -281,29 +238,16 @@ void cleanup_module(void)
     printk("gpib: device busy, remove delayed\n");
   }
   else {
-    osReset();
+    board_detach();
   }
 
   osMemRelease();
- 
+
   if ( unregister_chrdev(ibmajor, "gpib") != 0 ) {
     printk("gpib: device busy or other module error \n");
   } else {
     printk("gpib: succesfully removed \n");
-  } 
-#ifdef CBI_PCMCIA
-  pcmcia_cleanup_module();
-#endif
-#ifdef INES_PCMCIA
-  pcmcia_cleanup_module();
-#endif    
-#ifdef MODBUS_PCI
-  bdPCIDetach();
-#endif
-#ifdef HP82335
-	bdDetach();
-#endif
-
+  }
   DBGout();
 }
 

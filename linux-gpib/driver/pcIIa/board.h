@@ -5,7 +5,9 @@
 #include <gpibP.h>
 #include <asm/io.h>
 
-extern unsigned long      ibbase;	/* base addr of GPIB interface registers  */
+extern unsigned long ibbase;	/* base addr of GPIB interface registers  */
+extern unsigned long remapped_ibbase;	// ioremapped memory io address
+
 extern uint8       ibirq;	/* interrupt request line for GPIB (1-7)  */
 extern uint8       ibdma ;      /* DMA channel                            */
 extern struct pci_dev *ib_pci_dev;	// pci_dev for plug and play boards
@@ -29,7 +31,7 @@ extern void *ib;            /* Local pointer to IB registers */
 extern inline uint8_t bdP8in(unsigned long in_addr)
 {
 #if defined(MODBUS_PCI)
-	return readw(ibbase + in_addr) & 0xff;
+	return readw(remapped_ibbase + in_addr) & 0xff;
 #else
 	return inb_p(ibbase + in_addr);
 #endif
@@ -42,7 +44,7 @@ extern inline uint8_t bdP8in(unsigned long in_addr)
 extern inline void bdP8out(unsigned long out_addr, uint8_t out_value)
 {
 #if defined(MODBUS_PCI)
-	writeb(out_value, ibbase + out_addr );
+	writeb(out_value, remapped_ibbase + out_addr );
 #else
 	outb_p(out_value, ibbase + out_addr);
 #endif

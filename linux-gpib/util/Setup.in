@@ -36,7 +36,7 @@ dialog --clear --title "Linux-GPIB Configuration" --msgbox "\
 \n\
 This Utility configures the Compile Time Options of the Package\n\
 And sets up the necessary things to run the software diagnostic\n\
-Program. If no /etc/gpib.conf exists one will be created.\n
+Program.\n
 \n
 On initial Installation you should do a 'make clean' first\n" 20 70
 

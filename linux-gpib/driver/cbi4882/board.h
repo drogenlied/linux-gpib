@@ -2,6 +2,7 @@
 #include <gpibP.h>
 
 extern unsigned long ibbase;	/* base addr of GPIB interface registers  */
+extern unsigned long remapped_ibbase;	// ioremapped base address for memory mapped boards
 extern uint8       ibirq;	/* interrupt request line for GPIB (1-7)  */
 extern uint8       ibdma ;      /* DMA channel                            */
 extern struct pci_dev *ib_pci_dev;	// pci_dev for plug and play boards
@@ -32,11 +33,11 @@ extern uint8       CurHSMode;
  */
 extern inline uint8_t bdP8in(unsigned long in_addr)
 {
-#if defined(CBI_PCI)
-	return readb(+ ibbase + in_addr);
-#else
+//#if defined(CBI_PCI)
+//	return readb(remapped_ibbase + in_addr);
+//#else
 	return inb(ibbase + in_addr);
-#endif
+//#endif
 }
 
 
@@ -45,11 +46,11 @@ extern inline uint8_t bdP8in(unsigned long in_addr)
  */
 extern inline void bdP8out(unsigned long out_addr, uint8_t out_value)
 {
-#if defined(CBI_PCI)
-	writeb(out_value, ibbase + out_addr);
-#else
+//#if defined(CBI_PCI)
+	writeb(out_value, remapped_ibbase + out_addr);
+//#else
 	outb(out_value, ibbase + out_addr);
-#endif
+//#endif
 }
 
 

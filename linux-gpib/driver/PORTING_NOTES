@@ -55,7 +55,7 @@
 
   For a minimal Hardware interface the routines
 
-   bdonl() bdcmd() bdread() bdwrt()
+   board_attach() board_detach() bdcmd() bdread() bdwrt()
 
   and the auxiliary commands bdSendAuxCmd() should be implemented first.
 

@@ -30,7 +30,7 @@ long serial=0L;
 /*
  * GPIB interrupt service routine -- fast and simple
  */
-void ibintr(int irq, struct pt_regs *registerp )
+IBLCL void ibintr(int irq, void *arg, struct pt_regs *registerp )
 {
 
 /*printk("***IRQ %ld! st=0x%x \n",serial++,GPIBin(hs_status));*/

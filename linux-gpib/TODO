@@ -9,4 +9,6 @@ make drivers support more than one gpib card in computer at once
 add MODULE_PARM support for module parameters
 add some documentation on how to load and pass parameters to kernel modules
 add doc on setting up kernel source to INSTALL
+
+fix #ifdef nightmare
  

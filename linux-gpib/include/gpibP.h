@@ -16,8 +16,6 @@
 #include <gpib_ioctl.h>
 #include <gpib_user.h>
 
-#define SLOW_DOWN_IO __SLOW_DOWN_IO
-
 /* this are wrappers for the DMA/PIO functions */
 
 #if DMAOP

@@ -20,10 +20,7 @@
 
 unsigned int pci_config_reg = 0x0000;
 
-
-
-
-IBLCL void bd_PCIInfo(void) 
+IBLCL void bd_PCIInfo(void)
 {
 	DBGin("bd_PCIInfo");
 
@@ -40,6 +37,7 @@ IBLCL void bd_PCIInfo(void)
 		return;
 	}
 
+	pci_config_reg = ib_pci_dev->resource[0].start & PCI_BASE_ADDRESS_IO_MASK;
 	ibbase = ib_pci_dev->resource[1].start & PCI_BASE_ADDRESS_IO_MASK;
 	ibirq = ib_pci_dev->irq;
 

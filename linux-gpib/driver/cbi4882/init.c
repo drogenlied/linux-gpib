@@ -1,6 +1,9 @@
 
 
 #include <board.h>
+#include <linux/ioport.h>
+#include <linux/sched.h>
+#include <asm/dma.h>
 
 
 unsigned long ibbase = IBBASE;	/* base addr of GPIB interface registers  */
@@ -11,16 +14,14 @@ uint8       board_type = CBI_ISA_GPIB;
 uint8       CurHSMode = 0;      /* hs mode register value */
 uint8       CurIRQreg = 0;      /* hs IRQ register value */
 
-/*
- * BDONL
- * Initialize the interface hardware.
- */
-IBLCL int bdonl(int v)
+// flags to indicate if various resources have been allocated
+static unsigned int ioports_allocated = 0, irq_allocated = 0, dma_allocated = 0;
+
+// number of ioports cbi boards use (probably underestimate)
+static const int cbi_iosize = 0xa;
+
+void board_reset(void)
 {
-	uint8_t		s;
-
-	DBGin("bdonl");
-
 	/* CBI 4882 reset */
 	GPIBout(HS_INT_LEVEL, HS_RESET7210 );
 	GPIBout(HS_INT_LEVEL, 0 );
@@ -30,35 +31,14 @@ IBLCL int bdonl(int v)
 	CurHSMode |= HS_SYS_CONTROL;
 	GPIBout(HS_MODE, CurHSMode ); /* enable syscntrl */
 
-	/* now its time to check the board type */
-
-	GPIBout( SPMR, 0xaa );
-             /* check if serial poll registers are readable & writeable */
-        if( GPIBin( SPSR ) != 0xaa ) {
-	  printk("GPIB Board is not a CBI488.2! \n");
-	  return(0);
-	}
-
-        GPIBout( AUXMR, AUX_PAGE + 1 ); /* select paged in register */
-        if( GPIBin( SPSR ) != 0xaa ) {  /* does SPMR still return 0xaa ? */
-	  DBGprint(DBG_BRANCH, ("    CBI488.2 old type ") );
-	}
-
-        if( GPIBin(HS_MODE) == 0xff ) {
-	  DBGprint(DBG_BRANCH, (", LC variant\n") );
-          board_type = CBI_ISA_GPIB_LC;
-	}
-        
-
         GPIBout(AUXMR, AUX_PON);
 	GPIBout(AUXMR, AUX_CR);                     /* 7210 chip reset */
 	GPIBout(AUXMR, AUX_CIFC);
 
+	GPIBin(CPTR);                           /* clear registers by reading */
 
-	s = GPIBin(CPTR);                           /* clear registers by reading */
-
-	s = GPIBin(ISR1);
-	s = GPIBin(ISR2);
+	GPIBin(ISR1);
+	GPIBin(ISR2);
 	GPIBout(IMR1, 0);                           /* disable all interrupts */
 	GPIBout(IMR2, 0);
 
@@ -85,25 +65,105 @@ IBLCL int bdonl(int v)
         GPIBout(AUXMR, AUXRB | HR_INV );           /* On PCI boards set INT pin to active low */
 #endif
 
-
-#if 0
-	GPIBout(AUXMR, AUXRB | HR_TRI);
-#endif
 	GPIBout(AUXMR, AUXRE | 0);
-	GPIBout(AUXMR, AUX_LOSPEED ); 
-                        /* disable hispeed mode (long T1delay)*/
+	GPIBout(AUXMR, AUX_LOSPEED );
 
+}
+int board_attach(void)
+{
+	int isr_flags = 0;
 
-#if 0
-	GPIBout(timer, 0xC4);                       /* 0xC4 = 7.5 usec (60 * 0.125) */
+#ifdef CBI_PCMCIA
+	pcmcia_init_module();
 #endif
-        if(v) GPIBout(AUXMR, AUX_PON);
+#if defined(CBI_PCI)
+	bd_PCIInfo();
+#endif
+	// nothing is allocated yet
+	ioports_allocated = irq_allocated = dma_allocated = 0;
 
-	
+	// allocate ioports
+	if(check_region(ibbase, cbi_iosize) < 0)
+	{
+		printk("gpib: ioports are already in use");
+		return -1;
+	}
+	request_region(ibbase, cbi_iosize, "gpib");
+	ioports_allocated = 1;
 
+	// install interrupt handler
+#if USEINTS
+#if defined(CBI_PCI)
+	isr_flags |= SA_SHIRQ;
+#endif
+	if( request_irq(ibirq, ibintr, isr_flags, "gpib", NULL))
+	{
+		printk("gpib: can't request IRQ %d\n", ibirq);
+		return -1;
+	}
+	irq_allocated = 1;
+#endif
 
-	DBGout();
-	return(1);
+	// request isa dma channel
+#if DMAOP
+	if( request_dma( ibdma, "gpib" ) )
+	{
+		printk("gpib: can't request DMA %d\n",ibdma );
+		return -1;
+	}
+	dma_allocated = 1;
+#endif
+
+	/* now its time to check the board type */
+
+	GPIBout( SPMR, 0xaa );
+             /* check if serial poll registers are readable & writeable */
+        if( GPIBin( SPSR ) != 0xaa ) {
+	  printk("GPIB Board is not a CBI488.2! \n");
+	  return(0);
+	}
+
+        GPIBout( AUXMR, AUX_PAGE + 1 ); /* select paged in register */
+        if( GPIBin( SPSR ) != 0xaa ) {  /* does SPMR still return 0xaa ? */
+	  DBGprint(DBG_BRANCH, ("    CBI488.2 old type ") );
+	}
+
+        if( GPIBin(HS_MODE) == 0xff ) {
+	  DBGprint(DBG_BRANCH, (", LC variant\n") );
+          board_type = CBI_ISA_GPIB_LC;
+	}
+	board_reset();
+#if defined(CBI_PCI)
+	pci_EnableIRQ();
+#endif
+	GPIBout(AUXMR, AUX_PON);
+	return 0;
+}
+
+void board_detach(void)
+{
+#if defined(CBI_PCI)
+	pci_DisableIRQ();
+#endif
+	board_reset();
+	if(dma_allocated)
+	{
+		free_dma(ibdma);
+		dma_allocated = 0;
+	}
+	if(irq_allocated)
+	{
+		free_irq(ibirq, 0);
+		irq_allocated = 0;
+	}
+	if(ioports_allocated)
+	{
+		release_region(ibbase, cbi_iosize);
+		ioports_allocated = 0;
+	}
+#ifdef CBI_PCMCIA
+	pcmcia_cleanup_module();
+#endif
 }
 
 

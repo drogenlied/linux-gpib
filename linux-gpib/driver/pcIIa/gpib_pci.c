@@ -65,18 +65,19 @@ IBLCL void bd_PCIInfo(void)
 	pci_ioaddr[3] = ib_pci_dev->resource[3].start;
 	pci_ioaddr[4] = ib_pci_dev->resource[4].start;
 
-	pci_ioaddr[0]     &= PCI_BASE_ADDRESS_MEM_MASK;
-	pci_ioaddr[1]     &= PCI_BASE_ADDRESS_IO_MASK;
-	pci_ioaddr[2]     &= PCI_BASE_ADDRESS_MEM_MASK;
-	pci_ioaddr[3]     &= PCI_BASE_ADDRESS_MEM_MASK;
-	pci_ioaddr[4]     &= PCI_BASE_ADDRESS_MEM_MASK;
+	pci_ioaddr[0]&= PCI_BASE_ADDRESS_MEM_MASK;
+	pci_ioaddr[1]&= PCI_BASE_ADDRESS_IO_MASK;
+	pci_ioaddr[2]&= PCI_BASE_ADDRESS_MEM_MASK;
+	pci_ioaddr[3]&= PCI_BASE_ADDRESS_MEM_MASK;
+	pci_ioaddr[4]&= PCI_BASE_ADDRESS_MEM_MASK;
 
       printk("GPIB: io0=0x%lx io1=0x%lx io2=0x%lx io3=0x%lx io4=0x%lx \n",
                     pci_ioaddr[0],pci_ioaddr[1],pci_ioaddr[2],pci_ioaddr[3], pci_ioaddr[4] );
 
 
       pci_config_reg = remap_pci_mem( pci_ioaddr[0], 128 ) ;
-      ibbase   = remap_pci_mem( pci_ioaddr[2], 0x2000 ) ;
+      ibbase = pci_ioaddr[2];
+      remapped_ibbase   = remap_pci_mem( ibbase, 0x2000 ) ;
       pci_status_reg = remap_pci_mem( pci_ioaddr[4], 0x2000 ) ;
 
       printk("GPIB: On Board Reg: 0x%x=0x%x 0x%x=0x%x\n",pci_status_reg+0x1,readb(pci_status_reg+0x1),pci_status_reg+0x3,readb(pci_status_reg+0x3));
@@ -93,21 +94,14 @@ IBLCL void bd_PCIInfo(void)
   DBGout();
 }
 
-
 IBLCL void bdPCIDetach(void)
 {
 	DBGin("bdPCIDetach");
 	unmap_pci_mem( pci_config_reg) ;
-	unmap_pci_mem( ibbase) ;
+	unmap_pci_mem( remapped_ibbase) ;
 	unmap_pci_mem( pci_status_reg) ;
 	DBGout();
 }
-
-
-
-
-
-
 
 /* enable or disable PCI interrupt on AMCC PCI controller */
 

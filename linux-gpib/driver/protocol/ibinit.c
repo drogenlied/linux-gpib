@@ -86,15 +86,17 @@ IBLCL int ibonl(int v)
 	    }
 
 	    if (v) {
-	      if( (ib_opened <= 1) && !( drvstat & DRV_ONLINE )){  
+	      if( (ib_opened <= 1) && !( drvstat & DRV_ONLINE )){
                 DBGprint(DBG_BRANCH,("Board Online"));
 
-		if(! bdonl(1)){
-		  printk("GPIB Hardware Error! (Chip type not found or wrong Base Address?)\n");
-		  ibsta |= ERR;
-		  iberr = ENEB;
-		  DBGout();
-		  return ibsta;
+		if(board_attach() < 0)
+		{
+			board_detach();
+			printk("GPIB Hardware Error! (Chip type not found or wrong Base Address?)\n");
+			ibsta |= ERR;
+			iberr = ENEB;
+			DBGout();
+			return ibsta;
 		}
 
 		if(! osInit()){
@@ -103,7 +105,7 @@ IBLCL int ibonl(int v)
 		  iberr = ENEB;
 		  DBGout();
 		  return ibsta;
-		}                           
+		}
 	      } else {
 		DBGprint(DBG_BRANCH,("Board already Online"));
 	      }
@@ -115,7 +117,7 @@ IBLCL int ibonl(int v)
 	    else {		/* OFFLINE: leave SYSFAIL red */
               if( ib_opened <= 1) {
 		DBGprint(DBG_BRANCH,("Board Offline"));
-		bdonl(0);
+		board_detach();
 		if (pgmstat & PS_SYSRDY)
 		  osReset();	/* reset system interface */
 		pgmstat &= ~PS_ONLINE;
