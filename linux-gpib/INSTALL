@@ -86,6 +86,9 @@ o) cd to your linux-gpib directory and type 'make config'.  If you
 	for linux-gpib related files on your system and asks if you wish to create
 	them if there aren't any.
 
+	If you are using a PCMCIA board, copy the files in the etc/pcmcia
+	subdirectory to /etc/pcmcia.
+
 	To give a user access to the computer's gpib board you will have to add
 	them to the group 'gpib' (you can use the 'usermod' tool to change the
 	groups a user belongs to).  Or, you could change the
@@ -124,7 +127,7 @@ D) Loading the driver module
 	to /etc/modules.conf, which would autoload the tnt4882.o module when
 	the library is used.  
 	
-	For PCMCIA cards, you just need to edit the gpib_config call in the 
+	For PCMCIA cards, you may need to edit the gpib_config call in the 
 	/etc/pcmcia/linux-gpib-pcmcia script.
 
 	You may find the examples/ibtest program useful as a starting point in trying

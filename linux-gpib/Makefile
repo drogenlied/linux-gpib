@@ -62,8 +62,6 @@ install: all
 		$(MAKE) -C $$i -k install ; \
 	done
 	(cd ./util; ./Setup.install)
-	install -d /etc/pcmcia/
-	install -m 644 etc/pcmcia/linux-gpib-pcmcia.conf /etc/pcmcia/
 	
 .config.stat config: 
 	(cd ./util; ./Setup)
