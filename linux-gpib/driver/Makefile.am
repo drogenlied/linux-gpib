@@ -15,9 +15,9 @@ SUBDIRS = cb7210 cec hp82335 ines nec7210 pc2 sys tms9914 tnt4882 tnt4882-tms in
 
 install-data-hook: device-file-check /etc/gpib.conf
 	depmod -ae $(KERNELRELEASE_LINUX)
-	groupadd gpib || echo "gpib group already exists"
 
 /dev/gpib0:
+	groupadd gpib || echo "group gpib exists"
 	for i in $(shell seq 0 15); \
 	do \
 		mknod --mode u=rw,g=rw,o= /dev/gpib$${i} c $(IBMAJOR) $${i} || exit 1; \
