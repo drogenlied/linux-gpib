@@ -225,7 +225,7 @@ int ines_pci_attach(gpib_board_t *board)
 	int retval;
 	ines_pci_id found_id;
 	unsigned int i;
-	
+
 	retval = ines_generic_attach(board);
 	if(retval) return retval;
 
@@ -290,7 +290,15 @@ int ines_pci_attach(gpib_board_t *board)
 			ines_priv->plx_iobase + PLX_INTCSR_REG);
 	else if(ines_priv->amcc_iobase)
 	{
-		outl(0x87, ines_priv->amcc_iobase + AMCC_PASS_THRU_REG);
+		static const int region = 1;
+		static const int num_wait_states = 7;
+		uint32_t bits;
+
+		bits = amcc_prefetch_bits(region, PREFETCH_DISABLED);
+		bits |= amcc_PTADR_mode_bit(region);
+		bits |= amcc_disable_write_fifo_bit(region);
+		bits |= amcc_wait_state_bits(region, num_wait_states);
+		outl(bits, ines_priv->amcc_iobase + AMCC_PASS_THRU_REG);
 		outl(AMCC_ADDON_INTR_ENABLE_BIT, ines_priv->amcc_iobase + AMCC_INTCS_REG);
 	}
 	ines_init(ines_priv);

@@ -29,17 +29,6 @@ void ines_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	gpib_board_t *board = arg;
 	ines_private_t *priv = board->private_data;
 	
-	if(priv->amcc_iobase)
-	{
-		if((inl(priv->amcc_iobase + AMCC_INTCS_REG) & AMCC_ADDON_INTR_ACTIVE_BIT))
-		{
-			// clear amcc interrupt
-			outl(AMCC_ADDON_INTR_ENABLE_BIT, priv->amcc_iobase + AMCC_INTCS_REG);
-// XXX
-printk("amcc status: 0x%x\n", inl(priv->amcc_iobase + AMCC_INTCS_REG));
-		}
-	}
-
 	nec7210_interrupt(board, &priv->nec7210_priv);
 }
 
