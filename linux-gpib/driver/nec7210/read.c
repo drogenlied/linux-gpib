@@ -25,7 +25,6 @@ static ssize_t pio_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t 
 	size_t count = 0;
 	ssize_t retval = 0;
 	unsigned long flags;
-	static spinlock_t lock = SPIN_LOCK_UNLOCKED;
 
 	// enable 'data in' and 'end' interrupt
 	priv->imr1_bits |= HR_DIIE | HR_ENDIE;
@@ -44,10 +43,10 @@ static ssize_t pio_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t 
 		if(test_bit(TIMO_NUM, &device->status))
 			break;
 
-		spin_lock_irqsave(&lock, flags);
+		spin_lock_irqsave(&device->spinlock, flags);
 		clear_bit(READ_READY_BN, &priv->state);
 		buffer[count++] = priv->read_byte(priv, DIR);
-		spin_unlock_irqrestore(&lock, flags);
+		spin_unlock_irqrestore(&device->spinlock, flags);
 
 		if(test_bit(RECEIVED_END_BN, &priv->state))
 			break;
@@ -64,9 +63,14 @@ static ssize_t dma_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t 
 {
 	ssize_t retval = 0;
 	size_t count = 0;
-	unsigned long flags;
+	unsigned long flags, dma_irq_flags;
 
-	flags = claim_dma_lock();
+	if(length == 0)
+		return 0;
+
+	spin_lock_irqsave(&device->spinlock, flags);
+
+	dma_irq_flags = claim_dma_lock();
 	disable_dma(priv->dma_channel);
 
 	/* program dma controller */
@@ -74,11 +78,13 @@ static ssize_t dma_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t 
 	set_dma_count(priv->dma_channel, length);
 	set_dma_addr (priv->dma_channel, virt_to_bus(buffer));
 	set_dma_mode(priv->dma_channel, DMA_MODE_READ);
-	release_dma_lock(flags);
+	release_dma_lock(dma_irq_flags);
 
 	enable_dma(priv->dma_channel);
 
+
 	set_bit(DMA_IN_PROGRESS_BN, &priv->state);
+	clear_bit(READ_READY_BN, &priv->state);
 
 	// enable 'data in' and 'end' interrupt
 	priv->imr1_bits |= HR_DIIE | HR_ENDIE;
@@ -88,7 +94,7 @@ static ssize_t dma_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t 
 	priv->imr2_bits |= HR_DMAI;
 	priv->write_byte(priv, priv->imr2_bits, IMR2);
 
-	// attempt to busy wait may improve performance XXX
+	spin_unlock_irqrestore(&device->spinlock, flags);
 
 	// wait for data to transfer
 	if(wait_event_interruptible(device->wait, test_bit(DMA_IN_PROGRESS_BN, &priv->state) == 0 ||

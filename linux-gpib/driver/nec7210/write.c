@@ -19,13 +19,11 @@
 #include "board.h"
 #include <asm/dma.h>
 
-
 static ssize_t pio_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t *buffer, size_t length)
 {
 	size_t count = 0;
 	ssize_t retval = 0;
 	unsigned long flags;
-	static spinlock_t lock = SPIN_LOCK_UNLOCKED;
 
 	// enable 'data out' interrupts
 	priv->imr1_bits |= HR_DOIE;
@@ -46,10 +44,10 @@ static ssize_t pio_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 			break;
 		}
 
-		spin_lock_irqsave(&lock, flags);
+		spin_lock_irqsave(&device->spinlock, flags);
 		clear_bit(WRITE_READY_BN, &priv->state);
 		priv->write_byte(priv, buffer[count++], CDOR);
-		spin_unlock_irqrestore(&lock, flags);
+		spin_unlock_irqrestore(&device->lock, flags);
 	}
 	// wait till last byte gets sent
 	if(wait_event_interruptible(device->wait, test_bit(WRITE_READY_BN, &priv->state) ||
@@ -86,6 +84,9 @@ static ssize_t dma_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 	set_dma_addr(priv->dma_channel, virt_to_bus(buffer));
 	set_dma_mode(priv->dma_channel, DMA_MODE_WRITE );
 	enable_dma(priv->dma_channel);
+	release_dma_lock(flags);
+
+	spin_lock_irqsave(&device->spinlock, flags);
 
 	// enable board's dma for output
 	priv->imr2_bits |= HR_DMAO;
@@ -94,11 +95,11 @@ static ssize_t dma_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 	clear_bit(WRITE_READY_BN, &priv->state);
 	set_bit(DMA_IN_PROGRESS_BN, &priv->state);
 
-	release_dma_lock(flags);
-
 	// enable 'data out' interrupts
 	priv->imr1_bits |= HR_DOIE;
 	priv->write_byte(priv, priv->imr1_bits, IMR1);
+
+	spin_lock_irqsave(&device->spinlock, flags);
 
 	// suspend until message is sent
 	if(wait_event_interruptible(device->wait, test_bit(DMA_IN_PROGRESS_BN, &priv->state) == 0 ||

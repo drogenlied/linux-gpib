@@ -151,6 +151,8 @@ struct gpib_device_struct
 	wait_queue_head_t wait;
 	/* Lock that only allows one process to access this device at a time */
 	struct semaphore mutex;
+	/* Spin lock for dealing with races with the interrupt handler */
+	spinlock_t spinlock;
 	/* IO base address to use for non-pnp cards (set by core, driver should make local copy) */
 	unsigned long ibbase;
 	/* IRQ to use for non-pnp cards (set by core, driver should make local copy) */

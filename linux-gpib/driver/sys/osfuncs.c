@@ -68,6 +68,7 @@ if(device_array[minor] == NULL)
 	device_array[minor]->ibdma = IBDMA;
 	init_waitqueue_head(&device_array[minor]->wait);
 	init_MUTEX(&device_array[minor]->mutex);
+	spin_lock_init(&device_array[minor]->spinlock);
 }
 
 	if ( filep->f_flags & O_EXCL )
