@@ -551,7 +551,38 @@ void agilent_82357a_secondary_address(gpib_board_t *board, unsigned int address,
 }
 int agilent_82357a_parallel_poll(gpib_board_t *board, uint8_t *result)
 {
-	//FIXME: implement
+	agilent_82357a_private_t *a_priv = board->private_data;
+	struct agilent_82357a_register_pairlet write;
+	struct agilent_82357a_register_pairlet read;
+	int retval;
+
+	// execute parallel poll
+	write.address = AUXCR;
+	write.value = AUX_CS | AUX_RPP;
+	retval = agilent_82357a_write_registers(a_priv, &write, 1);
+	if(retval)
+	{
+		printk("%s: %s: agilent_82357a_write_registers() returned error\n", __FILE__, __FUNCTION__);
+		return retval;
+	}
+	udelay(2);	//silly, since usb write will take way longer
+	read.address = CPTR;
+	retval = agilent_82357a_read_registers(a_priv, &read, 1);
+	if(retval)
+	{
+		printk("%s: %s: agilent_82357a_read_registers() returned error\n", __FILE__, __FUNCTION__);
+		return retval;
+	}
+	*result = read.value;
+	// clear parallel poll state
+	write.address = AUXCR;
+	write.value = AUX_RPP;
+	retval = agilent_82357a_write_registers(a_priv, &write, 1);
+	if(retval)
+	{
+		printk("%s: %s: agilent_82357a_write_registers() returned error\n", __FILE__, __FUNCTION__);
+		return retval;
+	}
 	return 0;
 }
 void agilent_82357a_parallel_poll_configure(gpib_board_t *board, uint8_t config)
