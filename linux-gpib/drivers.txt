@@ -23,6 +23,7 @@ Measurement Computing
 National Instruments:
   AT-GPIB                 ni_isa                   tnt4882.o           ?
   PCI-GPIB                ni_pci                   tnt4882.o           Y
+  PCI-GPIB+               ni_pci                   tnt4882.o           ?
   PCII                    pcII                     pc2-gpib.o          ?
   PCIIa                   pcIIa                    pc2-gpib.o          Y
   PCII/IIa              * pcII or pcIIa            pc2-gpib.o          Y
