@@ -125,6 +125,12 @@ enum xfer_status_completion_bits
 	XSC_BUS_NOT_ADDRESSED = 0x80
 };
 
+enum xfer_abort_type
+{
+	XA_FLUSH = 0x1
+};
+
+
 // struct which defines local data for each 82357 device
 typedef struct
 {

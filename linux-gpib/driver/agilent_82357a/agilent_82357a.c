@@ -259,6 +259,42 @@ int agilent_82357a_read_registers(agilent_82357a_private_t *a_priv, struct agile
 	return 0;
 }
 
+static int agilent_82357a_abort(agilent_82357a_private_t *a_priv, int flush)
+{
+	int retval;
+	uint16_t wIndex = 0;
+	uint8_t status_data[2];
+		
+	if(flush)
+		wIndex |= XA_FLUSH;
+	retval = agilent_82357a_receive_control_msg(a_priv, agilent_82357a_control_request, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE, 
+		XFER_ABORT, wIndex, status_data, sizeof(status_data), HZ);
+	if(retval < 0)
+	{
+		printk("%s: %s: agilent_82357a_receive_control_msg() returned %i\n", __FILE__, __FUNCTION__, retval);
+		return -EIO;
+	}
+	if(status_data[0] != (~XFER_ABORT & 0xff))
+	{
+		printk("%s: %s: error, major code=0x%x != ~XFER_ABORT\n", __FILE__, __FUNCTION__, status_data[0]);
+		return -EIO;
+	}
+	switch(status_data[1])
+	{
+	case UGP_SUCCESS:
+		return 0;
+		break;
+	case UGP_ERR_FLUSHING:
+		if(flush) return 0;
+		//fall-through
+	case UGP_ERR_FLUSHING_ALREADY:
+	default:
+		printk("%s: %s: abort returned error code=0x%x\n", __FILE__, __FUNCTION__, status_data[1]);
+		return -EIO;
+		break;
+	}
+}
+
 // interface functions
 ssize_t agilent_82357a_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes)
 {
