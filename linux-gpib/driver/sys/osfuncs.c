@@ -24,6 +24,7 @@ int board_type_ioctl(gpib_device_t *device, unsigned long arg);
 int read_ioctl(gpib_device_t *device, unsigned long arg);
 int write_ioctl(gpib_device_t *device, unsigned long arg);
 int command_ioctl(gpib_device_t *device, unsigned long arg);
+int status_ioctl(gpib_device_t *device, unsigned long arg);
 
 #define GIVE_UP(a) {up(&device->mutex); return a;}
 
@@ -82,15 +83,11 @@ int ibclose(struct inode *inode, struct file *file)
 	return 0;
 }
 
-int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
- unsigned long arg)
+int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned long arg)
 {
 	int	retval = 0; 		/* assume everything OK for now */
 	ibarg_t m_ibarg,*ibargp;
-	int	remain;
-	uint8_t 	*userbuf;
 	char c;
-	ssize_t ret;
 	int end_flag = 0;
 	unsigned int minor = MINOR(inode->i_rdev);
 	gpib_device_t *device;
@@ -121,6 +118,12 @@ printk("minor %i ioctl %i\n", minor, cmd);
 			break;
 		case IBCMD:
 			return command_ioctl(device, arg);
+			break;
+		case IBSTATUS:
+			return status_ioctl(device, arg);
+			break;
+		case IBTMO:
+			retval = ibtmo(device, arg);
 			break;
 		default:
 			break;
@@ -211,12 +214,6 @@ printk("minor %i ioctl %i\n", minor, cmd);
 			break;
 		case IBSAD:
 			retval = ibsad(device, ibargp->ib_arg);
-			break;
-		case IBTMO:
-			retval = ibtmo(device, ibargp->ib_arg);
-			break;
-		case IBEOT:
-			retval = ibeot(device, ibargp->ib_arg);
 			break;
 		case IBEOS:
 			retval = ibeos(device, ibargp->ib_arg);
@@ -361,6 +358,7 @@ int read_ioctl(gpib_device_t *device, unsigned long arg)
 		userbuf += ret;
 	}
 	read_cmd.count -= remain;
+	read_cmd.end = end_flag;
 
 	retval = copy_to_user((void*) arg, &read_cmd, sizeof(read_cmd));
 	if(retval) return -EFAULT;
@@ -434,7 +432,7 @@ int write_ioctl(gpib_device_t *device, unsigned long arg)
 	while(remain > 0)
 	{
 		int send_eoi;
-		send_eoi = device->buffer_length <= remain && device->send_eoi;
+		send_eoi = device->buffer_length <= remain && write_cmd.end;
 		copy_from_user(device->buffer, userbuf, (device->buffer_length < remain) ?
 			device->buffer_length : remain );
 		ret = ibwrt(device, device->buffer, (device->buffer_length < remain) ?
@@ -456,7 +454,19 @@ int write_ioctl(gpib_device_t *device, unsigned long arg)
 	return 0;
 }
 
+int status_ioctl(gpib_device_t *device, unsigned long arg)
+{
+	int status;
+	int retval;
 
+	status = ibstatus(device);
+
+	retval = put_user(status, (int *) arg);
+	if (retval)
+		return -EFAULT;
+
+	return 0;
+}
 
 
 

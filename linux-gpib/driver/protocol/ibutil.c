@@ -53,15 +53,15 @@ int ibsad(gpib_device_t *device, int v)
  * of v specifies an index into the array timeTable.
  * If v == 0 then timeouts are disabled.
  */
-int ibtmo(gpib_device_t *device, int v)
+int ibtmo(gpib_device_t *device, unsigned int timeout)
 {
-	if ((v < TNONE) || (v > T1000s))
+	if (timeout > T1000s)
 	{
-		printk("gpib: error setting timeout\n");
-		return -1;
+		printk("gpib: invalid timeout setting\n");
+		return -EINVAL;
 	}else
 	{
-		timeidx = v;
+		timeidx = timeout;	// XXX global
 	}
 	return 0;
 }

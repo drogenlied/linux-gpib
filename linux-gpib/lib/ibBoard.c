@@ -133,14 +133,6 @@ int ibBoardFunc (int bd, int code, ...)
 }
 
 
-// XXX global! (and wrong)
-int ibGetNrBoards(void)
-{
-	extern int bdid;
-
-	return bdid + 1;
-}
-
 
 
 

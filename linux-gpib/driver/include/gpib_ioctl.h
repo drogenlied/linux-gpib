@@ -13,6 +13,7 @@ typedef struct
 {
 	uint8_t *buffer;
 	unsigned long count;
+	int end;
 } read_write_ioctl_t;
 
 /* Standard functions. */
@@ -27,11 +28,12 @@ typedef struct
 #define IBGTS		8
 #define IBCAC		9
 
+#define IBSTATUS _IOR(GPIB_CODE, 10, int)
+
 #define IBLINES		11
 #define IBPAD		12
 #define IBSAD		13
-#define IBTMO		14
-#define IBEOT		15
+#define IBTMO _IO(GPIB_CODE, 14)
 #define IBEOS		16
 #define IBRSV		17
 

@@ -12,7 +12,7 @@ int receive_setup(ibBoard_t *board, int pad, int sad)
 
 	if( pad < 0 || pad > gpib_addr_max || sad > gpib_addr_max)
 	{
-		fprintf(stderr, "bad gpib address\n");
+		fprintf(stderr, "receive_setup: bad gpib address\n");
 		return -1;
 	}
 
@@ -37,11 +37,14 @@ int ibrd(int ud, void *rd, unsigned long cnt)
 	ibBoard_t *board;
 	read_write_ioctl_t read_cmd;
 	int retval;
+	int status = ibsta & (RQS | CMPL);
 
 	if(ibCheckDescriptor(ud) < 0)
 	{
 		iberr = EDVR;
-		return ibsta | ERR;
+		status |= ERR;
+		ibsta = status;
+		return status;
 	}
 
 	board = &ibBoard[conf->board];
@@ -49,35 +52,63 @@ int ibrd(int ud, void *rd, unsigned long cnt)
 	// set eos mode
 	iblcleos(ud);
 	// set timeout XXX need to init conf with board default when not set
-	ibBoardFunc(conf->board, IBTMO, conf->tmo);
+	__ibtmo(board, conf->tmo);
 
 	if(conf->is_interface == 0)
 	{
 		// set up addressing
-		receive_setup(board, conf->pad, conf->sad);
+		if(receive_setup(board, conf->pad, conf->sad) < 0)
+		{
+			iberr = EDVR;
+			status |= ERR;
+			ibsta = status;
+			return status;
+		}
 	}
 
 	read_cmd.buffer = rd;
 	read_cmd.count = cnt;
 
-	retval = ioctl(ibBoard[conf->board].fileno, IBRD, &read_cmd);
+	retval = ioctl(board->fileno, IBRD, &read_cmd);
 	if(retval < 0)
 	{
 		switch(errno)
 		{
 			case ETIMEDOUT:
+				status |= TIMO;
 				iberr = EABO;
 				break;
 			default:
-				iberr = ENEB;
+				iberr = EDVR;
 				break;
 		}
-		return ibsta | ERR;
+		status |= ERR;
+		ibsta = status;
+		return status;
+	}
+
+	// get more status bits from interface board if appropriate
+	if(conf->is_interface)
+	{
+		int board_status;
+		retval = ioctl(board->fileno, IBSTATUS, &board_status);
+		if(retval < 0)
+		{
+			status |= ERR;
+			iberr = EDVR;
+			ibsta = status;
+			return status;
+		}
+		status |= board_status & DRIVERBITS;
 	}
 
 	ibcnt = read_cmd.count;
+	status |= CMPL;
+	if(read_cmd.end)
+		status |= END;
+	ibsta = status;
 
-	return ibsta;
+	return status;
 }
 
 

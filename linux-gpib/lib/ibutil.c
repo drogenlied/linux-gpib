@@ -100,8 +100,6 @@ int ibCheckDescriptor(int ud)
 
 ssize_t device_command(ibBoard_t *board, uint8_t *cmd, size_t count, int pad, int sad)
 {
-	ssize_t retval;
-
 	if(send_setup(board, pad, sad) < 0)
 	{
 		return -1;

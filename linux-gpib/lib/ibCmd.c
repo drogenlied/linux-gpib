@@ -8,18 +8,25 @@ int ibcmd(int ud, void *cmd, unsigned long cnt)
 	ibConf_t *conf = ibConfigs[ud];
 	ibBoard_t *board;
 	ssize_t count;
+	int retval;
+	int status = ibsta & CMPL;
+	int board_status;
 
 	if(ibCheckDescriptor(ud) < 0)
 	{
 		iberr = EDVR;
-		return ibsta | ERR;
+		status |= ERR;
+		ibsta = status;
+		return status;
 	}
 
 	// check that ud is an interface board
 	if(conf->is_interface == 0)
 	{
 		iberr = EARG;
-		return ibsta | ERR;
+		status |= ERR;
+		ibsta = status;
+		return status;
 	}
 
 	board = &ibBoard[conf->board];
@@ -28,15 +35,44 @@ int ibcmd(int ud, void *cmd, unsigned long cnt)
 
 	count = __ibcmd(board, cmd, cnt);
 
+	if(count < 0)
+	{
+		switch(errno)
+		{
+			case ETIMEDOUT:
+				iberr = EABO;
+				status |= TIMO;
+				break;
+			default:
+				break;
+		}
+		status |= ERR;
+		ibsta = ERR;
+		return status;
+	}
+
 	if(count != cnt)
 	{
 		iberr = EDVR;
-		return ibsta | ERR;
+		status |= ERR;
+		ibsta = status;
+		return status;
 	}
 
+	// get more status bits from interface board
+	retval = ioctl(board->fileno, IBSTATUS, &board_status);
+	if(retval < 0)
+	{
+		status |= ERR;
+		iberr = EDVR;
+		ibsta = status;
+		return status;
+	}
+	status |= board_status & DRIVERBITS;
+
 	ibcnt = count;
-	ibsta &= ~ERR;
-	return ibsta;
+	ibsta = status;
+	return status;
 }
 
 ssize_t __ibcmd(ibBoard_t *board, uint8_t *buffer, size_t count)

@@ -1,6 +1,7 @@
 
 #include "ib_internal.h"
 #include <ibP.h>
+#include <sys/ioctl.h>
 
 int ibtmo(int ud,int v)
 {
@@ -21,7 +22,8 @@ int ibtmo(int ud,int v)
 
 int __ibtmo(ibBoard_t *board, int timeout)
 {
-	//XXX
+	ioctl(board->fileno, IBTMO, timeout);
+
 	return 0;
 }
 

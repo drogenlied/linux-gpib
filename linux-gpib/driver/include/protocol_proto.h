@@ -15,7 +15,7 @@ extern  int ibsic(gpib_device_t *device);
 extern  int ibsre(gpib_device_t *device, int enable);
 extern  int ibpad(gpib_device_t *device, int v);
 extern  int ibsad(gpib_device_t *device, int v);
-extern  int ibtmo(gpib_device_t *device, int v);
+extern  int ibtmo(gpib_device_t *device, unsigned int v);
 extern  int ibeot(gpib_device_t *device, int send_eoi);
 extern  int ibeos(gpib_device_t *device, int v);
 extern  int ibwait(gpib_device_t *device, unsigned int mask);
