@@ -51,15 +51,24 @@ int ibonl( int ud, int onl )
 		return status;
 	}
 
-	if(onl == 0)
+	if( onl )
+	{
+		retval = open_gpib_device( board, conf );
+		if( retval < 0 )
+		{
+			fprintf( stderr, "libgpib: failed to mark device as open\n" );
+		}
+	}else
 	{
 		if( conf->is_interface )
 			ibBoardClose( conf->board );
-		if( conf )
+		retval = close_gpib_device( board, conf );
+		if( retval < 0 )
 		{
-			free( ibConfigs[ ud ] );
-			ibConfigs[ ud ] = NULL;
+			fprintf( stderr, "libgpib: failed to mark device as closed!\n" );
 		}
+		free( ibConfigs[ ud ] );
+		ibConfigs[ ud ] = NULL;
 	}
 
 	return status;

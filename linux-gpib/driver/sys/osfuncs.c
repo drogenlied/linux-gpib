@@ -772,7 +772,9 @@ int autopoll_ioctl( gpib_board_t *board )
 	while( 1 )
 	{
 		if( wait_event_interruptible( board->wait,
-			board->autopoll && board->stuck_srq == 0 &&
+			board->online &&
+			board->autopoll &&
+			board->stuck_srq == 0 &&
 			test_and_clear_bit( SRQI_NUM, &board->status) ) )
 		{
 			retval = -ERESTARTSYS;
@@ -782,6 +784,7 @@ int autopoll_ioctl( gpib_board_t *board )
 		retval = autopoll_all_devices( board );
 		if( retval < 0 )
 		{
+			// XXX srq may not necessarily be stuck
 			board->stuck_srq = 1;
 			set_bit( SRQI_NUM, &board->status );
 			break;

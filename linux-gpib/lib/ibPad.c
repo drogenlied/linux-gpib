@@ -20,27 +20,21 @@ int ibpad( int ud, int addr )
 
 	board = &ibBoard[ conf->board ];
 
-	if ( conf->is_interface )
+	if( address > 30 )
 	{
-		retval = ioctl( board->fileno, IBPAD, &address );
-		if( retval < 0 )
-		{
-			status |= ERR;
-			ibsta = status;
-			return status;
-		}
-	}else
+		status |= ERR;
+		ibsta = status;
+		iberr = EARG;
+		fprintf( stderr, "invalid gpib address\n" );
+	}
+
+	retval = gpibi_change_address( board, conf, address, conf->sad );
+	if( retval < 0 )
 	{
-		if( address > 30 )
-		{
-			status |= ERR;
-			ibsta = status;
-			iberr = EARG;
-			fprintf( stderr, "invalid gpib address\n" );
-		}else
-		{
-			conf->pad = address ;
-		}
+		status |= ERR;
+		ibsta = status;
+		iberr = EARG;
+		fprintf( stderr, "failed to change gpib address\n" );
 	}
 
 	ibsta = status;

@@ -20,30 +20,22 @@ int ibsad( int ud, int v )
 
 	board = &ibBoard[ conf->board ];
 
-	if( conf->is_interface )
+	if( sad > 30 )
 	{
-		retval = ioctl( board->fileno, IBSAD, &sad );
-		if( retval < 0 )
-		{
-			status |= ERR;
-			ibsta = status;
-			iberr = EDVR;
-			return status;
-		}
-	}else
+		ibsta = CMPL | ERR;
+		iberr = EARG;
+		ibcnt = errno;
+		ibPutErrlog(-1, ibVerbCode(IBSAD));
+	}
+
+	retval = gpibi_change_address( board, conf, conf->pad, sad );
+	if( retval < 0 )
 	{
-		if ( sad_offset <= 30 )
-		{
-			conf->sad = sad;
-			if( conf->sad < 0 ) conf->sad = -1;
-		}
-		else
-		{
-			ibsta = CMPL | ERR;
-			iberr = EARG;
-			ibcnt = errno;
-			ibPutErrlog(-1, ibVerbCode(IBSAD));
-		}
-   }
+		status |= ERR;
+		ibsta = status;
+		iberr = EARG;
+		fprintf( stderr, "failed to change gpib address\n" );
+	}
+
 	return ibsta;
 }

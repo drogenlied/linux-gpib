@@ -117,6 +117,7 @@ void init_ibconf( ibConf_t *conf )
 	conf->usec_timeout = 3000000;
 	conf->send_eoi = 1;
 	conf->is_interface = 0;
+	conf->is_open = 0;
 }
 
 int ib_lock_mutex( ibBoard_t *board )
@@ -131,3 +132,87 @@ int ib_unlock_mutex( ibBoard_t *board )
 	return ioctl( board->fileno, IBMUTEX, &unlock );
 }
 
+int open_gpib_device( ibBoard_t *board, ibConf_t *conf )
+{
+	open_close_dev_ioctl_t open_cmd;
+	int retval;
+
+	if( conf->is_open ) return 0;
+
+	if( conf->is_interface == 0 )
+	{
+		open_cmd.pad = conf->pad;
+		open_cmd.sad = conf->sad;
+		retval = ioctl( board->fileno, IBOPENDEV, &open_cmd );
+		if( retval < 0 ) return retval;
+	}
+
+	conf->is_open = 1;
+
+	return 0;
+}
+
+int close_gpib_device( ibBoard_t *board, ibConf_t *conf )
+{
+	open_close_dev_ioctl_t close_cmd;
+	int retval;
+
+	if( conf->is_open == 0 ) return 0;
+
+	if( conf->is_interface == 0 )
+	{
+		close_cmd.pad = conf->pad;
+		close_cmd.sad = conf->sad;
+		retval = ioctl( board->fileno, IBOPENDEV, &close_cmd );
+		if( retval < 0 ) return retval;
+	}
+
+	conf->is_open = 0;
+
+	return 0;
+}
+
+int gpibi_change_address( ibBoard_t *board, ibConf_t *conf, unsigned int pad, int sad )
+{
+	int retval;
+
+	if ( conf->is_interface )
+	{
+		if( pad != conf->pad )
+		{
+			retval = ioctl( board->fileno, IBPAD, &pad );
+			if( retval < 0 ) return retval;
+		}
+
+		if( sad != conf->sad )
+		{
+			retval = ioctl( board->fileno, IBSAD, &sad );
+			if( retval < 0 ) return retval;
+		}
+	}
+
+	retval = close_gpib_device( board, conf );
+	if( retval < 0 ) return retval;
+
+	conf->pad = pad;
+	conf->sad = sad;
+
+	retval = open_gpib_device( board, conf );
+	if( retval < 0 ) return retval;
+
+	return 0;
+}
+
+int lock_board_mutex( ibBoard_t *board )
+{
+	static const int lock = 1;
+
+	return ioctl( board->fileno, IBMUTEX, &lock );
+}
+
+int unlock_board_mutex( ibBoard_t *board )
+{
+	static const int unlock = 0;
+
+	return ioctl( board->fileno, IBMUTEX, &unlock );
+}

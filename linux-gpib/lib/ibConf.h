@@ -25,6 +25,7 @@ typedef struct ibConfStruct
 	unsigned int usec_timeout;
 	unsigned int send_eoi : 1;	// assert EOI at end of writes
 	unsigned int is_interface : 1;	// is interface board
+	unsigned int is_open : 1;
 } ibConf_t;
 
 /*---------------------------------------------------------------------- */

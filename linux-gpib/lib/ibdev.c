@@ -82,10 +82,10 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 		return -1;
 	}
 
-	if(ibBdChrConfig(uDesc) & ERR)
+	if( ibBdChrConfig(uDesc) & ERR )
 		return -1;
 
-	if(ibonl(uDesc, 1) & ERR)
+	if( ibonl( uDesc, 1 ) & ERR )
 	{
 		fprintf(stderr, "failed to bring device online\n");
 		return -1;
@@ -93,7 +93,7 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 
 	if( board->is_system_controller )
 	{
-		if(ibsre(uDesc, 1) & ERR ) return -1;
+		if( ibsre( uDesc, 1 ) & ERR ) return -1;
 	}
 
 	return uDesc;

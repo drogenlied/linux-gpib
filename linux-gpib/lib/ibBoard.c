@@ -59,7 +59,7 @@ int fork_autopoll_process( ibBoard_t *board )
 	int retval;
 	static int atexit_registered = 0;
 
-	if( board->autopoll_pid > 0 ) return;
+	if( board->autopoll_pid > 0 ) return 0;
 
 	process_id = fork();
 	if( process_id < 0 ) return process_id;
@@ -111,13 +111,27 @@ int ibBoardOpen( int bd, int flags )
 }
 
 /**********************/
-int ibBoardClose(int bd)
+int ibBoardClose( int bd )
 {
-	if(ibBoard[bd].fileno > 0)
+	int retval;
+
+	if( ibBoard[ bd ].fileno >= 0 )
 	{
-		close(ibBoard[bd].fileno);
-		ibBoard[bd].fileno = -1;
+		close( ibBoard[ bd ].fileno );
+		ibBoard[ bd ].fileno = -1;
 	}
+
+	if( ibBoard[ bd ]. autopoll_pid > 0 )
+	{
+		retval = kill( ibBoard[ bd ].autopoll_pid, SIGTERM );
+		if( retval < 0 )
+		{
+			fprintf( stderr, "libgpib: failed to terminate child autopoll process\n" );
+			return retval;
+		}
+		ibBoard[ bd ].autopoll_pid = 0;
+	}
+
 	return 0;
 }
 
