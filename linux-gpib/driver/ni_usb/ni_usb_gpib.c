@@ -262,6 +262,7 @@ int parse_board_ibrd_readback(const uint8_t *raw_data, struct ni_usb_status_bloc
 	int j = 0;
 	int k;
 	unsigned int adr1_bits;
+	int num_data_blocks = 0;
 	struct ni_usb_status_block register_write_status;
 	int unexpected = 0;
 	
@@ -275,8 +276,8 @@ int parse_board_ibrd_readback(const uint8_t *raw_data, struct ni_usb_status_bloc
 			else
 				++i;
 		}
+		++num_data_blocks;
 	}
-	*actual_bytes_read = j;
 	i += ni_usb_parse_status_block(&raw_data[i], status);
 	if(status->id != NIUSB_IBRD_STATUS_ID)
 	{
@@ -284,7 +285,11 @@ int parse_board_ibrd_readback(const uint8_t *raw_data, struct ni_usb_status_bloc
 		return -EIO;
 	}
 	adr1_bits = raw_data[i++];
-	i++;	// this skips over element which is set to (bytes read) modulo 15
+	*actual_bytes_read = (num_data_blocks - 1) * ibrd_data_block_length + raw_data[i++];
+	if(*actual_bytes_read > j)
+	{
+		printk("%s: bug: discarded data. actual_bytes_read=%i, j=%i\n", __FILE__, *actual_bytes_read, j);
+	}
 	for(k = 0; k < 2; k++)
 		if(raw_data[i++] != 0)
 		{
