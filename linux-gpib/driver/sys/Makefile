@@ -4,7 +4,7 @@
 
 -include $(ROOT)/util/.config
 
-SRCS =  osadjcnt.c osfuncs.c  osinit.c  ostimer.c \
+SRCS =  osfuncs.c  osinit.c  ostimer.c \
 	osutil.c oslock.c osmem.c
 OBJS =  $(SRCS:.c=.o)
 

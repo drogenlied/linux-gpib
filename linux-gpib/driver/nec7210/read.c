@@ -2,22 +2,11 @@
 #include <asm/dma.h>
 
 /*
- *  BDREAD (DMA)
- *  This function performs a single DMA read operation.
- *  Note that the hand-shake is held off at the end of every read.
- */
-
-IBLCL void bdDMAread(ibio_op_t *rdop)
-{
-	bdPIOread(rdop);
-}
-
-/*
- *  BDREAD (PIO)
+ *  BDREAD 
  *  This function performs a single Programmed I/O read operation.
  *  Note that the hand-shake is held off at the end of every read.
  */
-IBLCL void bdPIOread(ibio_op_t *rdop)
+IBLCL void bdread(ibio_op_t *rdop)
 {
 	faddr_t		buf;
 	unsigned	cnt;

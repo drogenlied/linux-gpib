@@ -2,21 +2,11 @@
 #include <asm/dma.h>
 
 /*
- *  BDWRT (DMA)
- *  This function performs a single DMA write operation.
- */
-
-IBLCL int bdDMAwrt(ibio_op_t *wrtop)
-{
-	return bdPIOwrt(wrtop);
-}
-
-/*
- *  BDWRT (PIO)
+ *  BDWRT 
  *  This function performs a single Programmed I/O write operation.
  *  Returns negative value on error, or number of bytes written on success 
  */
-IBLCL int bdPIOwrt( ibio_op_t *wrtop)
+IBLCL int bdwrt( ibio_op_t *wrtop)
 {
 	faddr_t		buf;
 	unsigned	cnt;

@@ -1,23 +1,12 @@
 #include <board.h>
 
-/*
- *  BdAdjCnt (DMA)
- *  This function adjusts the I/O count to the maximum transferable value.
- */
-IBLCL void bdDMAAdjCnt(ibio_op_t *rwop)
-{ 
-	DBGin("bdAdjCnt(dma)");
-	bdPIOAdjCnt(rwop);
-	DBGout();
-}
-
 
 /*
  *  BdAdjCnt (PIO)
  *  This function adjusts the I/O count to the maximum transferable value.
  */
-IBLCL void bdPIOAdjCnt(ibio_op_t *rwop)
-{ 
+IBLCL void bdAdjCnt(ibio_op_t *rwop)
+{
 	unsigned	requested_cnt;
 
 	DBGin("bdAdjCnt");

@@ -3,7 +3,7 @@
 
 extern int eosmodes;
 
-IBLCL void bdPIOread(ibio_op_t *rdop)
+IBLCL void bdread(ibio_op_t *rdop)
 {
 	faddr_t		buf;
 	unsigned	cnt;

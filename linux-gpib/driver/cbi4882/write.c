@@ -6,7 +6,7 @@
  *  BDWRT (PIO)
  *  This function performs a single Programmed I/O write operation.
  */
-IBLCL void bdPIOwrt(ibio_op_t *wrtop)
+IBLCL void bdwrt(ibio_op_t *wrtop)
 {
 	faddr_t		buf;
 	unsigned	cnt;

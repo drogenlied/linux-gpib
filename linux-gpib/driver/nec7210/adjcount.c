@@ -2,20 +2,12 @@
 
 // useless crap -- fmhess
 
-/*
- *  BdAdjCnt (DMA)
- *  This function adjusts the I/O count to the maximum transferable value.
- */
-IBLCL void bdDMAAdjCnt(ibio_op_t *rwop)
-{ 
-}
-
 
 /*
- *  BdAdjCnt (PIO)
+ *  BdAdjCnt 
  *  This function adjusts the I/O count to the maximum transferable value.
  */
-IBLCL void bdPIOAdjCnt(ibio_op_t *rwop)
+IBLCL void bdAdjCnt(ibio_op_t *rwop)
 { 
 }
 

@@ -7,7 +7,7 @@
  *  Note that the hand-shake is held off at the end of every read.
  */
 #if DMAOP
-IBLCL void bdDMAread(ibio_op_t *rdop)
+IBLCL void bdread(ibio_op_t *rdop)
 {
 	faddr_t		buf;
 	unsigned	cnt;
@@ -136,7 +136,7 @@ rddone:
  *  This function performs a single Programmed I/O read operation.
  *  Note that the hand-shake is held off at the end of every read.
  */
-IBLCL void bdPIOread(ibio_op_t *rdop)
+IBLCL void bdread(ibio_op_t *rdop)
 {
 	faddr_t		buf;
 	unsigned	cnt;
