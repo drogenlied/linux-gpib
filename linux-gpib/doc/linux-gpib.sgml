@@ -325,6 +325,13 @@ volatile long ibcntl;
 	bytes sent or received.  They are also set to the value of errno after
 	EDVR or EFSO errors.
 	</para>
+	<para>
+	If you wish to avoid using a global variable, you may instead use
+	<link LINKEND="reference-function-thread-ibcnt">ThreadIbcnt()
+	or ThreadIbcntl()</link>
+	which return thread-specific values.
+	</para>
+
 </refsect1>
 </refentry>
 
@@ -470,6 +477,11 @@ volatile int iberr;
 	</tbody>
 	</tgroup>
 	</table>
+	</para>
+	<para>
+	If you wish to avoid using a global variable, you may instead use
+	<link LINKEND="reference-function-thread-iberr">ThreadIberr()</link>
+	which returns a thread-specific value.
 	</para>
 </refsect1>
 </refentry>
@@ -642,6 +654,11 @@ volatile int ibsta;
 	</tbody>
 	</tgroup>
 	</table>
+	</para>
+	<para>
+	If you wish to avoid using a global variable, you may instead use
+	<link LINKEND="reference-function-thread-ibsta">ThreadIbsta()</link>
+	which returns a thread-specific value.
 	</para>
 </refsect1>
 </refentry>
@@ -3148,6 +3165,136 @@ volatile int ibsta;
 	Utility Functions
 </title>
 
+<refentry ID="reference-function-get-pad">
+<refmeta>
+	<refentrytitle>GetPAD</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>GetPAD</refname>
+	<refpurpose>extract primary address from an Addr4882_t value</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>static __inline__ unsigned int <function>GetPAD</function></funcdef>
+		<paramdef>Addr4882_t <parameter>address</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	GetPAD() extracts the primary address packed into the Addr4882_t
+	value <parameter>address</parameter>.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The primary GPIB address (from 0 through 30) stored in <parameter>address</parameter>.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-get-sad">
+<refmeta>
+	<refentrytitle>GetSAD</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>GetSAD</refname>
+	<refpurpose>extract secondary address from an Addr4882_t value</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>static __inline__ unsigned int <function>GetSAD</function></funcdef>
+		<paramdef>Addr4882_t <parameter>address</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	GetSAD() extracts the secondary address packed into the Addr4882_t
+	value <parameter>address</parameter>.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The secondary GPIB address (from 0x60 through 0x7e, or 0 for none) stored in
+	<parameter>address</parameter>.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-make-addr">
+<refmeta>
+	<refentrytitle>MakeAddr</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>MakeAddr</refname>
+	<refpurpose>pack primary and secondary address into an Addr4882_t value</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>static __inline__ Addr4882_t <function>MakeAddr</function></funcdef>
+		<paramdef>unsigned int <parameter>pad</parameter></paramdef>
+		<paramdef>unsigned int <parameter>sad</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	MakeAddr() generates an Addr4882_t value that corresponds to the
+	specified primary address <parameter>pad</parameter> and secondary
+	address <parameter>sad</parameter>.  It does so by putting
+	<parameter>pad</parameter> into the least significant byte and
+	left shifting <parameter>sad</parameter> up to the next byte.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Examples
+	</title>
+<programlisting>
+Addr4882_t address;
+
+address = 5 /* primary address 5, no secondary address */
+address = MakeAddr(3, 0); /* primary address 3, no secondary address */
+address = MakeAddr(7, 0x70); /* primary address 3, secondary address 16 */
+address = MakeAddr(20, MSA(9)); /* primary address 20, secondary address 9 */
+</programlisting>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	An Addr4882_t value corresponding to the specified primary and
+	secondary GPIB address.
+	</para>
+</refsect1>
+</refentry>
+
 <refentry ID="reference-function-mla">
 <refmeta>
 	<refentrytitle>MLA</refentrytitle>
@@ -3309,6 +3456,128 @@ volatile int ibsta;
 	</title>
 	<para>
 	The appropriate PPE command byte is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-thread-ibcnt">
+<refmeta>
+	<refentrytitle>ThreadIbcnt and ThreadIbcntl</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ThreadIbcnt and ThreadIbcntl</refname>
+	<refpurpose>Thread-specific ibcnt and ibcntl values</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ThreadIbcnt</function></funcdef>
+		<paramdef>void</paramdef>
+	</funcprototype>
+	<funcprototype>
+		<funcdef>long <function>ThreadIbcntl</function></funcdef>
+		<paramdef>void</paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ThreadIbcnt() and ThreadIbcntl() return thread-local versions
+	 of the global
+	variables <link LINKEND="reference-globals-ibcnt">ibcnt and ibcntl</link>.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibcnt">ibcnt or ibcntl</link>
+	corresponding to the last 'traditional' or 'multidevice' function
+	called in the current thread is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-thread-iberr">
+<refmeta>
+	<refentrytitle>ThreadIberr</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ThreadIberr</refname>
+	<refpurpose>Thread-specific iberr value</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ThreadIberr</function></funcdef>
+		<paramdef>void</paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ThreadIberr() returns a thread-local version of the global
+	variable <link LINKEND="reference-globals-iberr">iberr</link>.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">iberr</link>
+	corresponding to the last 'traditional' or 'multidevice' function
+	called by the current thread is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-thread-ibsta">
+<refmeta>
+	<refentrytitle>ThreadIbsta</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ThreadIbsta</refname>
+	<refpurpose>Thread-specific ibsta value</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ThreadIbsta</function></funcdef>
+		<paramdef>void</paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ThreadIbsta() returns a thread-local version of the global
+	variable <link LINKEND="reference-globals-ibsta">ibsta</link>.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link>
+	corresponding to the last 'traditional' or 'multidevice' function
+	called by the current thread is returned.
 	</para>
 </refsect1>
 </refentry>
