@@ -1,8 +1,8 @@
-#include <board.h>
+#include "board.h"
 
-ibbase = IBBASE;
-ibirq = IBIRQ;
-ibdma = IBDMA;
+unsigned long ibbase = IBBASE;
+uint8 ibirq = IBIRQ;
+uint8 ibdma = IBDMA;
 
 /*
  * BDONL

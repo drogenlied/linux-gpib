@@ -1,11 +1,9 @@
+#include "board.h"
 
 
-#include <board.h>
-
-
-ibbase = IBBASE;	/* base addr of GPIB interface registers  */
-ibirq  = IBIRQ;	/* interrupt request line for GPIB (1-7)  */
-ibdma  = IBDMA;     /* DMA channel                            */
+unsigned long ibbase = IBBASE;	/* base addr of GPIB interface registers  */
+uint8 ibirq  = IBIRQ;	/* interrupt request line for GPIB (1-7)  */
+uint8 ibdma  = IBDMA;     /* DMA channel                            */
 
 /*
  * BDONL
