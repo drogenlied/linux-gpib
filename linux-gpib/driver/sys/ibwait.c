@@ -46,7 +46,6 @@ static int wait_satisfied( struct wait_info *winfo, gpib_status_queue_t *status_
 		temp_status |= TIMO;
 	else
 		temp_status &= ~TIMO;
-printk("queue %p wait mask 0x%x, status 0x%x\n", status_queue, wait_mask, temp_status );
 	if( wait_mask & temp_status )
 	{
 		*status = temp_status;
