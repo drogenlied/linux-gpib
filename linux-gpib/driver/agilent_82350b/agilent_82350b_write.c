@@ -21,6 +21,7 @@
 ssize_t agilent_82350b_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi )
 {
 	agilent_82350b_private_t *a_priv = board->private_data;
+	tms9914_private_t *tms_priv = &a_priv->tms9914_priv;
 	int i, j;
 	unsigned short event_status;
 	ssize_t retval = 0;
@@ -52,16 +53,27 @@ ssize_t agilent_82350b_accel_write( gpib_board_t *board, uint8_t *buffer, size_t
 		if(readb(a_priv->gpib_base + STREAM_STATUS_REG) & HALTED_STATUS_BIT) 
 			writeb(RESTART_STREAM_BIT, a_priv->gpib_base + STREAM_STATUS_REG); 
 		if(wait_event_interruptible(board->wait, 
-			(event_status = read_and_clear_event_status(board)) & (BUFFER_END_STATUS_BIT | TERM_COUNT_STATUS_BIT)))
+			((event_status = read_and_clear_event_status(board)) & (BUFFER_END_STATUS_BIT | TERM_COUNT_STATUS_BIT)) ||
+			test_bit(DEV_CLEAR_BN, &tms_priv->state) ||
+			test_bit(TIMO_NUM, &board->status)))
+
 		{
 			printk("%s: write wait interrupted\n", __FILE__);
 			retval = -ERESTARTSYS;
 			break;
 		}
-		printk("count regs: 0x%x 0x%x 0x%x\n",
-			readb(a_priv->gpib_base + XFER_COUNT_LO_REG),
-			readb(a_priv->gpib_base + XFER_COUNT_MID_REG),
-			readb(a_priv->gpib_base + XFER_COUNT_HI_REG));
+		if(test_bit(TIMO_NUM, &board->status))
+		{
+			printk("%s: minor %i: write timed out\n", __FILE__, board->minor);
+			retval = -ETIMEDOUT;
+			break;
+		}
+		if(test_bit(DEV_CLEAR_BN, &tms_priv->state))
+		{
+			printk("%s: device clear interrupted write\n", __FILE__);
+			retval = -EINTR;
+			break;
+		}
 	}
 	writeb(0, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG); 
 	if(retval) return retval;
