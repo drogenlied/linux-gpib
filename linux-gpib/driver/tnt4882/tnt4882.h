@@ -36,6 +36,7 @@ typedef struct
 	nec7210_private_t nec7210_priv;
 	struct mite_struct *mite;
 	unsigned int irq;
+	volatile int imr3_bits;
 	void (*io_write)( unsigned int value, unsigned long address );
 	unsigned int (*io_read)( unsigned long address );
 } tnt4882_private_t;
@@ -46,10 +47,12 @@ extern gpib_interface_t ni_pci_interface;
 extern gpib_interface_t ni_pcmcia_interface;
 
 // interface functions
-ssize_t tnt4882_read(gpib_board_t *board, uint8_t *buffer, size_t length, int
- *end);
-ssize_t tnt4882_write(gpib_board_t *board, uint8_t *buffer, size_t length, int
- send_eoi);
+ssize_t tnt4882_read(gpib_board_t *board, uint8_t *buffer, size_t length,
+	int *end);
+ssize_t tnt4882_write(gpib_board_t *board, uint8_t *buffer, size_t length,
+	int send_eoi);
+ssize_t tnt4882_accel_write(gpib_board_t *board, uint8_t *buffer, size_t length,
+	int send_eoi);
 ssize_t tnt4882_command(gpib_board_t *board, uint8_t *buffer, size_t length);
 int tnt4882_take_control(gpib_board_t *board, int synchronous);
 int tnt4882_go_to_standby(gpib_board_t *board);
@@ -97,6 +100,8 @@ enum
 	// register number for auxilliary command register when swap bit is set (9914 mode)
 	SWAPPED_AUXCR = 0xa,
 	HSSEL = 0xd,	// handshake select register
+	CNT2 = 0x9,
+	CNT3 = 0xb,
 	CFG = 0x10,
 	IMR0 = 0x1d,
 	IMR3 = 0x12,
@@ -105,7 +110,7 @@ enum
 	KEYREG = 0x17,	// key control register (7210 mode only)
 	FIFOB = 0x18,
 	FIFOA = 0x19,
-	CCRG = 0x1a,	// carry cycle register
+	CCR = 0x1a,	// carry cycle register
 	CMDR = 0x1c,	// command register
 	TIMER = 0x1e,	// timer register
 
@@ -139,17 +144,25 @@ enum sts1_bits
 	S_GSYNC = 0x01,	/* indicates if GPIB is in sync w I/O */
 };
 
+/* STS2 -- Status Register 2 */
+enum sts2_bits
+{
+	AFFN = ( 1 << 3 ), 	/* "A full FIFO NOT"  (0=FIFO full)  */
+	AEFN = ( 1 << 2 ),	/* "A empty FIFO NOT" (0=FIFO empty) */
+	BFFN = ( 1 << 1 ),	/* "B full FIFO NOT"  (0=FIFO full)  */
+	BEFN = ( 1 << 0 ),	/* "B empty FIFO NOT" (0=FIFO empty) */
+};
+
 /* CFG -- Configuration Register (write only) */
 enum cfg_bits
 {
-	C_CMD = ( 1 << 7 ),	/* FIFO 'bcmd' in progress            */
-	C_TLCH = ( 1 << 6 ),	/* halt DMA on TLC interrupt          */
-	C_IN = ( 1 << 5 ),	/* DMA is a GPIB read                 */
-	C_A_B = ( 1 << 4 ),	/* fifo order 1=motorola, 0=intel     */
-	C_CCEN = ( 1 << 3 ),	/* enable carry cycle                 */
-	C_TMOE = ( 1 << 2 ),	/* enable CPU bus time limit          */
-	C_T_B = ( 1 << 1 ),	/* tmot reg is: 1=125ns clocks, 0=num bytes */
-	C_B16 = ( 1 << 0 ),	/* 1=FIFO is 16-bit register, 0=8-bit */
+	TNT_TLCHE = ( 1 << 6 ),	/* halt transfer on imr0, imr1, or imr2 interrupt */
+	TNT_IN = ( 1 << 5 ),	/* transfer is GPIB read                 */
+	TNT_A_B = ( 1 << 4 ),	/* order to use fifos 1=fifa A first(big endian), 0=fifo b first(little endian) */
+	TNT_CCEN = ( 1 << 3 ),	/* enable carry cycle                 */
+	TNT_TMOE = ( 1 << 2 ),	/* enable CPU bus time limit          */
+	TNT_TIM_BYTN = ( 1 << 1 ),	/* tmot reg is: 1=125ns clocks, 0=num bytes */
+	TNT_B_16BIT = ( 1 << 0 ),	/* 1=FIFO is 16-bit register, 0=8-bit */
 };
 
 /* IMR0 -- Interrupt Mode Register 0 */
@@ -187,29 +200,18 @@ enum isr3_bits
 	HR_NFF = ( 1 << 3 ),	/* NOT full fifo */
 	HR_NEF = ( 1 << 2 ),	/* NOT empty fifo */
 	HR_TLCI = ( 1 << 1 ),	/* TLC interrupt asserted */
-	HR_DONE = ( 1 << 0 ),	/* DMA done */
+	HR_DONE = ( 1 << 0 ),	/* transfer done */
 };
 
 /* CMDR -- Command Register */
 enum cmdr_bits
 {
 	CLRSC = 0x2,	/* clear the SC bit */
-	SETSC = 0x3,	/* set the SC bit 		*/
-	GO = ( 1 << 2 ),	/* start DMA 			*/
-	STOP = ( 1 << 3 ),	/* stop DMA 			*/
-	RSTFIFO = ( 1 << 4 ),	/* reset the FIFO 		*/
-	SFTRST = ( 1 << 5 ),	/* issue a software reset 	*/
-	DU_ADD = ( 1 << 6 ),	/* Motorola mode dual 	  	*/
-	DDU_ADD = ( 1 << 7 ),	/* Disable dual addressing 	*/
-};
-
-/* STS2 -- Status Register 2 */
-enum sts2_bits
-{
-	AFFN = ( 1 << 3 ), 	/* "A full FIFO NOT"  (0=FIFO full)  */
-	AEFN = ( 1 << 2 ),	/* "A empty FIFO NOT" (0=FIFO empty) */
-	BFFN = ( 1 << 1 ),	/* "B full FIFO NOT"  (0=FIFO full)  */
-	BEFN = ( 1 << 0 ),	/* "B empty FIFO NOT" (0=FIFO empty) */
+	SETSC = 0x3,	/* set the SC bit */
+	GO = 0x4,	/* start fifos */
+	STOP = 0x8,	/* stop fifos */
+	RESET_FIFO = 0x10,	/* reset the FIFOs 		*/
+	SOFT_RESET = 0x22,	/* issue a software reset 	*/
 };
 
 enum bus_control_status_bits

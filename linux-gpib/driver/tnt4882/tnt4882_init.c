@@ -169,6 +169,32 @@ gpib_interface_t ni_pci_interface =
 	provider_module: &__this_module,
 };
 
+gpib_interface_t ni_pci_accel_interface =
+{
+	name: "ni_pci_accel",
+	attach: ni_pci_attach,
+	detach: ni_pci_detach,
+	read: tnt4882_read,
+	write: tnt4882_accel_write,
+	command: tnt4882_command,
+	take_control: tnt4882_take_control,
+	go_to_standby: tnt4882_go_to_standby,
+	request_system_control: tnt4882_request_system_control,
+	interface_clear: tnt4882_interface_clear,
+	remote_enable: tnt4882_remote_enable,
+	enable_eos: tnt4882_enable_eos,
+	disable_eos: tnt4882_disable_eos,
+	parallel_poll: tnt4882_parallel_poll,
+	parallel_poll_response: tnt4882_parallel_poll_response,
+	line_status: tnt4882_line_status,
+	update_status: tnt4882_update_status,
+	primary_address: tnt4882_primary_address,
+	secondary_address: tnt4882_secondary_address,
+	serial_poll_response: tnt4882_serial_poll_response,
+	serial_poll_status: tnt4882_serial_poll_status,
+	provider_module: &__this_module,
+};
+
 gpib_interface_t ni_isa_interface =
 {
 	name: "ni_isa",
@@ -219,11 +245,12 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 	const unsigned long iobase = nec_priv->iobase;
 
 	/* NAT 4882 reset */
-	tnt_priv->io_write( SFTRST, iobase + CMDR );	/* Turbo488 software reset */
+	tnt_priv->io_write( SOFT_RESET, iobase + CMDR );	/* Turbo488 software reset */
 	udelay(1);
 
-	// turn off one-chip mode
-	tnt_priv->io_write(NODMA, iobase + HSSEL);
+	// turn off one-chip mode and dma
+	tnt_priv->io_write( NODMA, iobase + HSSEL );
+	tnt_priv->io_write( 0, iobase + ACCWR );
 
 	// make sure we are in 7210 mode
 	tnt_priv->io_write(AUX_7210, iobase + AUXCR);
@@ -240,10 +267,11 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 	tnt_priv->io_write( NODMA , iobase + HSSEL);
 
 	// enable passing of nec7210 interrupts
-	tnt_priv->io_write(0x2, iobase + IMR3);
+	tnt_priv->imr3_bits = HR_TLCI;
+	tnt_priv->io_write( tnt_priv->imr3_bits, iobase + IMR3 );
 
 	// enable interrupt
-	tnt_priv->io_write(0x1, iobase + INTRT);
+	tnt_priv->io_write( 0x1, iobase + INTRT );
 
 	// force immediate holdoff
 	write_byte( nec_priv, AUX_HLDI, AUXMR );
@@ -409,6 +437,7 @@ int init_module(void)
 
 	gpib_register_driver(&ni_isa_interface);
 	gpib_register_driver(&ni_pci_interface);
+	gpib_register_driver(&ni_pci_accel_interface);
 
 #if defined(GPIB_CONFIG_PCMCIA)
 	gpib_register_driver(&ni_pcmcia_interface);
@@ -426,6 +455,7 @@ void cleanup_module(void)
 {
 	gpib_unregister_driver(&ni_isa_interface);
 	gpib_unregister_driver(&ni_pci_interface);
+	gpib_unregister_driver(&ni_pci_accel_interface);
 #if defined(GPIB_CONFIG_PCMCIA)
 	gpib_unregister_driver(&ni_pcmcia_interface);
 	exit_ni_gpib_cs();
