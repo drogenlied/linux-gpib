@@ -78,7 +78,7 @@ int main( int argc, char *argv[] )
 	}
 
 	fclose( filep );
-	
+
 	status = ibeos( board, eos_mode );
 	if( status & ERR )
 	{
@@ -95,10 +95,10 @@ int main( int argc, char *argv[] )
 		return -1;
 	}
 
-	status = ibrdf( board, file_path );
+	status = ibwrt( board, buffer, buffer_length );
 	if( status & ERR )
 	{
-		fprintf( stderr, "ibrdf() failed\n" );
+		fprintf( stderr, "ibwrt() failed\n" );
 		fprintf( stderr, "%s\n", gpib_error_string( ThreadIberr() ) );
 		return -1;
 	}
