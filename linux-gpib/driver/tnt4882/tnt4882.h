@@ -34,6 +34,14 @@ enum
 	PCI_DEVICE_ID_NI_GPIB_PLUS = 0xc811,
 };
 
+typedef enum
+{
+	/* leave 0 unused to catch initialization bugs */
+	TNT4882 = 1,
+	NAT4882 = 2,
+	NEC7210 = 3,
+} ni_chipset_t;
+
 // struct which defines private_data for tnt4882 devices
 typedef struct
 {
@@ -42,6 +50,7 @@ typedef struct
 	struct pci_dev *isapnp_dev;
 	unsigned int irq;
 	volatile int imr3_bits;
+	ni_chipset_t chipset;
 	void (*io_writeb)( unsigned int value, unsigned long address );
 	void (*io_writew)( unsigned int value, unsigned long address );
 	unsigned int (*io_readb)( unsigned long address );
@@ -97,7 +106,8 @@ void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp);
 // utility functions
 int tnt4882_allocate_private(gpib_board_t *board);
 void tnt4882_free_private(gpib_board_t *board);
-void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board );
+void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board,
+	ni_chipset_t chipset );
 
 // register offset for nec7210 compatible registers
 static const int atgpib_reg_offset = 2;
@@ -118,11 +128,13 @@ enum
 	CNT2 = 0x9,
 	CNT3 = 0xb,
 	CFG = 0x10,
+	SASR = 0x1b,
 	IMR0 = 0x1d,
 	IMR3 = 0x12,
 	CNT0 = 0x14,
 	CNT1 = 0x16,
 	KEYREG = 0x17,	// key control register (7210 mode only)
+	CSR = KEYREG,
 	FIFOB = 0x18,
 	FIFOA = 0x19,
 	CCR = 0x1a,	// carry cycle register
@@ -133,8 +145,10 @@ enum
 	STS2 = 0x1c,	        /* T488 Status Register 2 */
 	ISR0 = IMR0,
 	ISR3 = 0x1a,		/* T488 Interrupt Status Register 3 */
-	BCSR = 0x1f,		/* bus control/status register */
+	BCR = 0x1f,		/* bus control/status register */
+	BSR = BCR,
 };
+static const int tnt_pagein_offset = 0x11;
 
 /*============================================================*/
 
@@ -250,6 +264,7 @@ enum sts2_bits
 enum tnt4882_aux_cmds
 {
 	AUX_9914 = 0x15,	// switch to 9914 mode
+	AUX_PAGEIN = 0x50,	/* page in alternate registers */
 	AUX_HLDI = 0x51,	// rfd holdoff immediately
 	AUX_7210 = 0x99,	// switch to 7210 mode
 };
@@ -266,4 +281,85 @@ enum auxi_bits
 	USTD = 0x8,	// ultra short ( 1100 nanosec ) T1 delay
 };
 
+/* paged io */
+static inline unsigned int tnt_paged_readb( tnt4882_private_t *priv, unsigned long address )
+{
+	write_byte( &priv->nec7210_priv, AUX_PAGEIN, AUXMR );
+	return priv->io_readb( address );
+}
+static inline void tnt_paged_writeb(tnt4882_private_t *priv, unsigned int value, unsigned long address )
+{
+	write_byte( &priv->nec7210_priv, AUX_PAGEIN, AUXMR );
+	priv->io_writeb( value, address );
+}
+
+/* readb/writeb wrappers */
+static inline unsigned int tnt_readb( tnt4882_private_t *priv, unsigned long address )
+{
+	switch( address )
+	{
+	case CSR:
+	case SASR:
+	case ISR0:
+	case BSR:
+		switch( priv->chipset )
+		{
+		case TNT4882:
+			return priv->io_readb( address );
+			break;
+		case NAT4882:
+			return tnt_paged_readb( priv, address - tnt_pagein_offset );
+			break;
+		case NEC7210:
+			return 0;
+			break;
+		default:
+			printk( "tnt4882: bug! unsupported ni_chipset\n" );
+			return 0;
+			break;
+		}
+		break;
+	default:
+		break;
+	}
+	return priv->io_readb( address );
+}
+
+static inline void tnt_writeb( tnt4882_private_t *priv, unsigned int value, unsigned long address)
+{
+	switch( address )
+	{
+	case KEYREG:
+	case IMR0:
+	case BCR:
+		switch( priv->chipset )
+		{
+		case TNT4882:
+			priv->io_writeb( value, address );
+			break;
+		case NAT4882:
+			tnt_paged_writeb( priv, value, address - tnt_pagein_offset );
+			break;
+		case NEC7210:
+			break;
+		default:
+			printk( "tnt4882: bug! unsupported ni_chipset\n" );
+			break;
+		}
+		break;
+	case HSSEL:
+		switch( priv->chipset )
+		{
+		case TNT4882:
+			priv->io_writeb( value, address );
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		priv->io_writeb( value, address );
+		break;
+	}
+}
 #endif	// _TNT4882_H

@@ -31,7 +31,7 @@ int tnt4882_line_status( const gpib_board_t *board )
 
 	tnt_priv = board->private_data;
 
-	bcsr_bits = tnt_priv->io_readb( tnt_priv->nec7210_priv.iobase + BCSR );
+	bcsr_bits = tnt_readb( tnt_priv, tnt_priv->nec7210_priv.iobase + BSR );
 
 	if( bcsr_bits & BCSR_REN_BIT )
 		status |= BusREN;
@@ -61,13 +61,14 @@ unsigned int tnt4882_t1_delay( gpib_board_t *board, unsigned int nano_sec )
 	unsigned int retval;
 
 	retval = nec7210_t1_delay( board, nec_priv, nano_sec );
-
+	if( tnt_priv->chipset == NEC7210 ) return retval;
+	
 	if( nano_sec <= 350 )
 	{
-		tnt_priv->io_writeb( MSTD, iobase + KEYREG );
+		tnt_writeb( tnt_priv, MSTD, iobase + KEYREG );
 		retval = 350;
 	}else
-		tnt_priv->io_writeb( 0, iobase + KEYREG );
+		tnt_writeb( tnt_priv, 0, iobase + KEYREG );
 
 	if( nano_sec > 500 && nano_sec <= 1100 )
 	{
@@ -75,6 +76,5 @@ unsigned int tnt4882_t1_delay( gpib_board_t *board, unsigned int nano_sec )
 		retval = 1100;
 	}else
 		write_byte( nec_priv, AUXRI, AUXMR );
-
 	return retval;
 }

@@ -529,9 +529,15 @@ pci board.  If used, you must also specify the pci slot with <option>--pci-slot<
 	</row>
 	<row>
 	<entry>National Instruments</entry>
-	<entry>AT-GPIB</entry>
+	<entry>AT-GPIB (with NAT4882 chip)</entry>
 	<entry>tnt4882.o</entry>
-	<entry>ni_isa, ni_isa_accel</entry>
+	<entry>ni_nat4882_isa, ni_nat4882_isa_accel</entry>
+	</row>
+	<row>
+	<entry>National Instruments</entry>
+	<entry>AT-GPIB (with NEC7210 chip)</entry>
+	<entry>tnt4882.o</entry>
+	<entry>ni_nec_isa, ni_nec_isa_accel</entry>
 	</row>
 	<row>
 	<entry>National Instruments</entry>

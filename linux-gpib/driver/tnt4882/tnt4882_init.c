@@ -30,7 +30,9 @@
 
 MODULE_LICENSE("GPL");
 
-int ni_isa_attach(gpib_board_t *board);
+int ni_tnt_isa_attach( gpib_board_t *board );
+int ni_nat4882_isa_attach( gpib_board_t *board );
+int ni_nec_isa_attach( gpib_board_t *board );
 int ni_pci_attach(gpib_board_t *board);
 
 void ni_isa_detach(gpib_board_t *board);
@@ -81,9 +83,9 @@ void tnt4882_request_system_control( gpib_board_t *board, int request_control )
 
 	nec7210_request_system_control( board, &priv->nec7210_priv, request_control );
 	if( request_control )
-		priv->io_writeb( SETSC, iobase + CMDR );
+		tnt_writeb( priv, SETSC, iobase + CMDR );
 	else
-		priv->io_writeb( CLRSC, iobase + CMDR );
+		tnt_writeb( priv, CLRSC, iobase + CMDR );
 	udelay(1);
 }
 void tnt4882_interface_clear(gpib_board_t *board, int assert)
@@ -214,7 +216,7 @@ gpib_interface_t ni_pci_accel_interface =
 gpib_interface_t ni_isa_interface =
 {
 	name: "ni_isa",
-	attach: ni_isa_attach,
+	attach: ni_tnt_isa_attach,
 	detach: ni_isa_detach,
 	read: tnt4882_read,
 	write: tnt4882_write,
@@ -240,10 +242,68 @@ gpib_interface_t ni_isa_interface =
 	provider_module: &__this_module,
 };
 
+gpib_interface_t ni_nat4882_isa_interface =
+{
+	name: "ni_nat4882_isa",
+	attach: ni_nat4882_isa_attach,
+	detach: ni_isa_detach,
+	read: tnt4882_read,
+	write: tnt4882_write,
+	command: tnt4882_command,
+	take_control: tnt4882_take_control,
+	go_to_standby: tnt4882_go_to_standby,
+	request_system_control: tnt4882_request_system_control,
+	interface_clear: tnt4882_interface_clear,
+	remote_enable: tnt4882_remote_enable,
+	enable_eos: tnt4882_enable_eos,
+	disable_eos: tnt4882_disable_eos,
+	parallel_poll: tnt4882_parallel_poll,
+	parallel_poll_configure: tnt4882_parallel_poll_configure,
+	parallel_poll_response: tnt4882_parallel_poll_response,
+	line_status: tnt4882_line_status,
+	update_status: tnt4882_update_status,
+	primary_address: tnt4882_primary_address,
+	secondary_address: tnt4882_secondary_address,
+	serial_poll_response: tnt4882_serial_poll_response,
+	serial_poll_status: tnt4882_serial_poll_status,
+	t1_delay: tnt4882_t1_delay,
+	return_to_local: tnt4882_return_to_local,
+	provider_module: &__this_module,
+};
+
+gpib_interface_t ni_nec_isa_interface =
+{
+	name: "ni_nec_isa",
+	attach: ni_nec_isa_attach,
+	detach: ni_isa_detach,
+	read: tnt4882_read,
+	write: tnt4882_write,
+	command: tnt4882_command,
+	take_control: tnt4882_take_control,
+	go_to_standby: tnt4882_go_to_standby,
+	request_system_control: tnt4882_request_system_control,
+	interface_clear: tnt4882_interface_clear,
+	remote_enable: tnt4882_remote_enable,
+	enable_eos: tnt4882_enable_eos,
+	disable_eos: tnt4882_disable_eos,
+	parallel_poll: tnt4882_parallel_poll,
+	parallel_poll_configure: tnt4882_parallel_poll_configure,
+	parallel_poll_response: tnt4882_parallel_poll_response,
+	line_status: NULL,
+	update_status: tnt4882_update_status,
+	primary_address: tnt4882_primary_address,
+	secondary_address: tnt4882_secondary_address,
+	serial_poll_response: tnt4882_serial_poll_response,
+	serial_poll_status: tnt4882_serial_poll_status,
+	t1_delay: tnt4882_t1_delay,
+	return_to_local: tnt4882_return_to_local,
+	provider_module: &__this_module,
+};
+
 gpib_interface_t ni_isa_accel_interface =
 {
 	name: "ni_isa_accel",
-	attach: ni_isa_attach,
+	attach: ni_tnt_isa_attach,
 	detach: ni_isa_detach,
 	read: tnt4882_accel_read,
 	write: tnt4882_accel_write,
@@ -259,6 +319,64 @@ gpib_interface_t ni_isa_accel_interface =
 	parallel_poll_configure: tnt4882_parallel_poll_configure,
 	parallel_poll_response: tnt4882_parallel_poll_response,
 	line_status: tnt4882_line_status,
+	update_status: tnt4882_update_status,
+	primary_address: tnt4882_primary_address,
+	secondary_address: tnt4882_secondary_address,
+	serial_poll_response: tnt4882_serial_poll_response,
+	serial_poll_status: tnt4882_serial_poll_status,
+	t1_delay: tnt4882_t1_delay,
+	return_to_local: tnt4882_return_to_local,
+	provider_module: &__this_module,
+};
+
+gpib_interface_t ni_nat4882_isa_accel_interface =
+{
+	name: "ni_nat4882_isa_accel",
+	attach: ni_nat4882_isa_attach,
+	detach: ni_isa_detach,
+	read: tnt4882_accel_read,
+	write: tnt4882_accel_write,
+	command: tnt4882_command,
+	take_control: tnt4882_take_control,
+	go_to_standby: tnt4882_go_to_standby,
+	request_system_control: tnt4882_request_system_control,
+	interface_clear: tnt4882_interface_clear,
+	remote_enable: tnt4882_remote_enable,
+	enable_eos: tnt4882_enable_eos,
+	disable_eos: tnt4882_disable_eos,
+	parallel_poll: tnt4882_parallel_poll,
+	parallel_poll_configure: tnt4882_parallel_poll_configure,
+	parallel_poll_response: tnt4882_parallel_poll_response,
+	line_status: tnt4882_line_status,
+	update_status: tnt4882_update_status,
+	primary_address: tnt4882_primary_address,
+	secondary_address: tnt4882_secondary_address,
+	serial_poll_response: tnt4882_serial_poll_response,
+	serial_poll_status: tnt4882_serial_poll_status,
+	t1_delay: tnt4882_t1_delay,
+	return_to_local: tnt4882_return_to_local,
+	provider_module: &__this_module,
+};
+
+gpib_interface_t ni_nec_isa_accel_interface =
+{
+	name: "ni_nec_isa_accel",
+	attach: ni_nec_isa_attach,
+	detach: ni_isa_detach,
+	read: tnt4882_accel_read,
+	write: tnt4882_accel_write,
+	command: tnt4882_command,
+	take_control: tnt4882_take_control,
+	go_to_standby: tnt4882_go_to_standby,
+	request_system_control: tnt4882_request_system_control,
+	interface_clear: tnt4882_interface_clear,
+	remote_enable: tnt4882_remote_enable,
+	enable_eos: tnt4882_enable_eos,
+	disable_eos: tnt4882_disable_eos,
+	parallel_poll: tnt4882_parallel_poll,
+	parallel_poll_configure: tnt4882_parallel_poll_configure,
+	parallel_poll_response: tnt4882_parallel_poll_response,
+	line_status: NULL,
 	update_status: tnt4882_update_status,
 	primary_address: tnt4882_primary_address,
 	secondary_address: tnt4882_secondary_address,
@@ -287,39 +405,39 @@ void tnt4882_free_private(gpib_board_t *board)
 	}
 }
 
-void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
+void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board,
+	ni_chipset_t chipset )
 {
 	nec7210_private_t *nec_priv = &tnt_priv->nec7210_priv;
 	const unsigned long iobase = nec_priv->iobase;
 
-	/* NAT 4882 reset */
-	tnt_priv->io_writeb( SOFT_RESET, iobase + CMDR );	/* Turbo488 software reset */
+	tnt_priv->chipset = chipset;
+	
+	/* Turbo488 software reset */
+	tnt_writeb( tnt_priv, SOFT_RESET, iobase + CMDR );
 	udelay(1);
 
-	// turn off one-chip mode and dma
-	tnt_priv->io_writeb( NODMA, iobase + HSSEL );
-	tnt_priv->io_writeb( 0, iobase + ACCWR );
+	// turn off one-chip mode
+	tnt_writeb( tnt_priv, NODMA, iobase + HSSEL );
+	tnt_writeb( tnt_priv, 0, iobase + ACCWR );
 
 	// make sure we are in 7210 mode
-	tnt_priv->io_writeb(AUX_7210, iobase + AUXCR);
+	tnt_writeb( tnt_priv,AUX_7210, iobase + AUXCR);
 	udelay(1);
 	// registers might be swapped, so write it to the swapped address too
-	tnt_priv->io_writeb(AUX_7210, iobase +  SWAPPED_AUXCR);
+	tnt_writeb( tnt_priv,AUX_7210, iobase +  SWAPPED_AUXCR);
 	udelay(1);
 
 	nec7210_board_reset( nec_priv, board );
 	// read-clear isr0
-	tnt_priv->io_readb( iobase + ISR0 );
-
-	// turn off one chip mode and dma
-	tnt_priv->io_writeb( NODMA , iobase + HSSEL);
+	tnt_readb( tnt_priv, iobase + ISR0 );
 
 	// enable passing of nec7210 interrupts
 	tnt_priv->imr3_bits = HR_TLCI;
-	tnt_priv->io_writeb( tnt_priv->imr3_bits, iobase + IMR3 );
+	tnt_writeb( tnt_priv, tnt_priv->imr3_bits, iobase + IMR3 );
 
 	// enable interrupt
-	tnt_priv->io_writeb( 0x1, iobase + INTRT );
+	tnt_writeb( tnt_priv, 0x1, iobase + INTRT );
 
 	// force immediate holdoff
 	write_byte( nec_priv, AUX_HLDI, AUXMR );
@@ -327,7 +445,7 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 
 	nec7210_board_online( nec_priv, board );
 	// enable interface clear interrupt for event queue
-	tnt_priv->io_writeb( TNT_IMR0_ALWAYS_BITS | TNT_IFCIE_BIT,
+	tnt_writeb( tnt_priv, TNT_IMR0_ALWAYS_BITS | TNT_IFCIE_BIT,
 		iobase + IMR0 );
 }
 
@@ -394,7 +512,7 @@ int ni_pci_attach(gpib_board_t *board)
 	tnt_priv->irq = mite_irq(tnt_priv->mite);
 	printk( "tnt4882: irq %i\n", tnt_priv->irq );
 
-	tnt4882_init( tnt_priv, board );
+	tnt4882_init( tnt_priv, board, TNT4882 );
 
 	return 0;
 }
@@ -452,7 +570,7 @@ int ni_isapnp_find( struct pci_dev **dev )
 	return 0;
 }
 
-int ni_isa_attach(gpib_board_t *board)
+int ni_isa_attach_common( gpib_board_t *board, ni_chipset_t chipset )
 {
 	tnt4882_private_t *tnt_priv;
 	nec7210_private_t *nec_priv;
@@ -501,9 +619,24 @@ int ni_isa_attach(gpib_board_t *board)
 	}
 	tnt_priv->irq = board->ibirq;
 
-	tnt4882_init( tnt_priv, board );
+	tnt4882_init( tnt_priv, board, chipset );
 
 	return 0;
+}
+
+int ni_tnt_isa_attach( gpib_board_t *board )
+{
+	return ni_isa_attach_common( board, TNT4882 );
+}
+
+int ni_nat4882_isa_attach( gpib_board_t *board )
+{
+	return ni_isa_attach_common( board, NAT4882 );
+}
+
+int ni_nec_isa_attach( gpib_board_t *board )
+{
+	return ni_isa_attach_common( board, NEC7210 );
 }
 
 void ni_isa_detach(gpib_board_t *board)
@@ -535,6 +668,10 @@ static int tnt4882_init_module( void )
 
 	gpib_register_driver(&ni_isa_interface);
 	gpib_register_driver(&ni_isa_accel_interface);
+	gpib_register_driver(&ni_nat4882_isa_interface);
+	gpib_register_driver(&ni_nat4882_isa_accel_interface);
+	gpib_register_driver(&ni_nec_isa_interface);
+	gpib_register_driver(&ni_nec_isa_accel_interface);
 	gpib_register_driver(&ni_pci_interface);
 	gpib_register_driver(&ni_pci_accel_interface);
 
@@ -555,6 +692,10 @@ static void tnt4882_exit_module( void )
 {
 	gpib_unregister_driver(&ni_isa_interface);
 	gpib_unregister_driver(&ni_isa_accel_interface);
+	gpib_unregister_driver(&ni_nat4882_isa_interface);
+	gpib_unregister_driver(&ni_nat4882_isa_accel_interface);
+	gpib_unregister_driver(&ni_nec_isa_interface);
+	gpib_unregister_driver(&ni_nec_isa_accel_interface);
 	gpib_unregister_driver(&ni_pci_interface);
 	gpib_unregister_driver(&ni_pci_accel_interface);
 #if defined(GPIB_CONFIG_PCMCIA)

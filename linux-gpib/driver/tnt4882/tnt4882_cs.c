@@ -745,7 +745,7 @@ int ni_pcmcia_attach(gpib_board_t *board)
 	}
 	tnt_priv->irq = dev_list->irq.AssignedIRQ;
 
-	tnt4882_init( tnt_priv, board );
+	tnt4882_init( tnt_priv, board, TNT4882 );
 
 	return 0;
 }
