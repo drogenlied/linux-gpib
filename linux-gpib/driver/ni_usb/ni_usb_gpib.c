@@ -34,9 +34,9 @@ static int ni_usb_set_interrupt_monitor(gpib_board_t *board, unsigned int monito
 static DECLARE_MUTEX(ni_usb_hotplug_lock);
 
 //calculates a reasonable timeout in jiffies that can be passed to usb functions
-static inline int ni_usb_timeout_jiffies(unsigned int usec)
+static inline unsigned long ni_usb_timeout_jiffies(unsigned int usec)
 {
-	return HZ + (usec * HZ ) / 900000;
+	return (1 + usec / 900000) * HZ;
 };
 // returns timeout code byte for use in ni-usb-b instructions
 static unsigned short ni_usb_timeout_code(unsigned int usec)
