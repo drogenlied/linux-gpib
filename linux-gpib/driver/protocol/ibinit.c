@@ -20,7 +20,7 @@ int ccrbits	= 0;	/* static bits for AUXRA (EOS modes) */
 
 int drvstat = 0;
 
-int ibonl(gpib_board_t *board, int v)
+int ibonl( gpib_board_t *board, int v )
 {
 	/*
 	* ibonl must be called first time a process is entering the driver
@@ -29,8 +29,8 @@ int ibonl(gpib_board_t *board, int v)
 	*/
 	if( board->open_count == 1 || !(board->online) )
 	{
-		myPAD = 0;
-		mySAD = -1;
+		board->pad = 0;
+		board->sad = -1;
 #if !defined(HP82335) && !defined(TMS9914)
 #else
 		ccrbits = 0;
@@ -39,7 +39,7 @@ int ibonl(gpib_board_t *board, int v)
 
 	if (v)
 	{
-		if( (board->open_count <= 1) && !(board->online))
+		if( ( board->open_count <= 1 ) && !(board->online))
 		{
 			board->buffer_length = 0x1000;
 			if(board->buffer)
