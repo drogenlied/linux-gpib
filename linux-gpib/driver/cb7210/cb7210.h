@@ -37,6 +37,7 @@ typedef struct
 	volatile uint8_t hs_mode_bits;
 	volatile unsigned out_fifo_half_empty : 1;
 	volatile unsigned in_fifo_half_full : 1;
+	volatile unsigned fifo_full : 1;
 } cb7210_private_t;
 
 // interfaces

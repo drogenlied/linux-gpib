@@ -50,6 +50,7 @@ static inline void input_fifo_enable( gpib_board_t *board, int enable )
 	{
 		outb( HS_RX_ENABLE | HS_TX_ENABLE | HS_CLR_SRQ_INT |
 			HS_CLR_EOI_EMPTY_INT | HS_CLR_HF_INT, nec_priv->iobase + HS_MODE );
+		cb_priv->fifo_full = 0;
 
 		cb_priv->hs_mode_bits &= ~HS_ENABLE_MASK;
 		cb_priv->hs_mode_bits |= HS_RX_ENABLE;
@@ -67,21 +68,50 @@ static inline void input_fifo_enable( gpib_board_t *board, int enable )
 	spin_unlock_irqrestore( &board->spinlock, flags );
 }
 
-static ssize_t pio_read( gpib_board_t *board, cb7210_private_t *cb_priv, uint8_t *buffer, size_t length )
+int read_input_fifo( cb7210_private_t *cb_priv, uint8_t *buffer, unsigned int num_bytes )
+{
+	nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
+	unsigned long iobase = nec_priv->iobase;
+	int count;
+
+	if( num_bytes % cb7210_fifo_width )
+	{
+		printk( "cb7210: bug! tried to read odd number of bytes in read_input_fifo()\n" );
+		return 0;
+	}
+
+	count = 0;
+	while( count < num_bytes )
+	{
+		uint16_t word;
+
+		word = inw( iobase + DIR );
+		buffer[ count++ ] = word & 0xff;
+		buffer[ count++ ] = ( word >> 8 ) & 0xff;
+	}
+
+	return count;
+}
+
+static ssize_t fifo_read( gpib_board_t *board, cb7210_private_t *cb_priv, uint8_t *buffer, size_t length )
 {
 	size_t count = 0;
 	ssize_t retval = 0;
 	nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
 	unsigned long iobase = nec_priv->iobase;
+	uint16_t word;
+	unsigned long flags;
 
-	while( count < length )
+	if( length < cb7210_fifo_size ) return 0;
+
+	while( count + cb7210_fifo_size < length )
 	{
 		if( wait_event_interruptible( board->wait,
 			have_input_fifo_word( cb_priv ) ||
 			test_bit( RECEIVED_END_BN, &nec_priv->state ) ||
 			test_bit( TIMO_NUM, &board->status ) ) )
 		{
-			printk("gpib: pio read wait interrupted\n");
+			printk("cb7210: fifo read wait interrupted\n");
 			retval = -ERESTARTSYS;
 			break;
 		}
@@ -90,35 +120,45 @@ static ssize_t pio_read( gpib_board_t *board, cb7210_private_t *cb_priv, uint8_t
 
 		clear_bit( READ_READY_BN, &nec_priv->state );
 
-		while( have_input_fifo_word( cb_priv ) )
+		if( cb_priv->in_fifo_half_full )
 		{
-			uint16_t word;
+			unsigned int num_bytes;
 
-			word = inw( iobase + DIR );
-			if( count < length )
-				buffer[ count++ ] = word & 0xff;
-			if( count < length )
-				buffer[ count++ ] = ( word >> 8 ) & 0xff;
+			num_bytes = cb7210_fifo_size / 2;
+			if( count + num_bytes + cb7210_fifo_size > length )
+				num_bytes = length - count - cb7210_fifo_size;
+			spin_lock_irqsave( &board->spinlock, flags );
+			count += read_input_fifo( cb_priv, &buffer[ count ], num_bytes );
+			cb_priv->in_fifo_half_full = 0;
+			spin_unlock_irqrestore( &board->spinlock, flags );
 		}
+
 		if( test_bit( RECEIVED_END_BN, &nec_priv->state ) )
 		{
-			while( have_input_fifo_word( cb_priv ) )
-			{
-				uint16_t word;
-
-				word = inw( iobase + DIR );
-				if( count < length )
-					buffer[ count++ ] = word & 0xff;
-				if( count < length )
-					buffer[ count++ ] = ( word >> 8 ) & 0xff;
-			}
-			if( have_input_fifo_byte( cb_priv ) )
-			{
-				if( count < length )
-					buffer[ count++ ] = inw( iobase + DIR ) & 0xff;
-			}
 			break;
 		}
+	}
+	if( wait_event_interruptible( board->wait,
+		cb_priv->fifo_full ||
+		test_bit( RECEIVED_END_BN, &nec_priv->state ) ||
+		test_bit( TIMO_NUM, &board->status ) ) )
+	{
+		printk("cb7210: fifo read wait interrupted\n");
+		return -ERESTARTSYS;
+	}
+
+	nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAI, 0 );
+
+	while( have_input_fifo_word( cb_priv ) && count < length )
+	{
+		word = inw( iobase + DIR );
+		buffer[ count++ ] = word & 0xff;
+		if( count == length ) break;
+		buffer[ count++ ] = ( word >> 8 ) & 0xff;
+	}
+	if( have_input_fifo_byte( cb_priv ) && count < length )
+	{
+		buffer[ count++ ] = inw( iobase + DIR ) & 0xff;
 	}
 	if( test_bit( TIMO_NUM, &board->status ) )
 		retval = -ETIMEDOUT;
@@ -133,9 +173,11 @@ ssize_t cb7210_accel_read( gpib_board_t *board, uint8_t *buffer,
 	cb7210_private_t *cb_priv = board->private_data;
 	nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
 
-	*end = 0;
+	//XXX deal with lack of eos capability when using fifos
+	if( length < cb7210_fifo_size /* || ( nec_priv->auxa_bits & HR_REOS XXX ) */ )
+		return cb7210_read( board, buffer, length, end );
 
-//XXX deal with lack of eos capability when using fifos
+	*end = 0;
 
 	/* release rfd holdoff */
 	outb( AUX_FH, nec_priv->iobase + AUXMR );
@@ -156,7 +198,7 @@ ssize_t cb7210_accel_read( gpib_board_t *board, uint8_t *buffer,
 
 	input_fifo_enable( board, 1 );
 
-	retval = pio_read( board, cb_priv, buffer, length );
+	retval = fifo_read( board, cb_priv, buffer, length );
 	input_fifo_enable( board, 0 );
 	if( retval < 0 )
 		return retval;

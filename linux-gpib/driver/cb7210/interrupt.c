@@ -52,13 +52,6 @@ void cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	spin_lock_irqsave( &board->spinlock, flags );
 
 	hs_status = inb( nec_priv->iobase + HS_STATUS );
-	if( hs_status & HS_HALF_FULL)
-	{
-		if( priv->hs_mode_bits & HS_TX_ENABLE )
-			priv->out_fifo_half_empty = 1;
-		else if( priv->hs_mode_bits & HS_RX_ENABLE )
-			priv->in_fifo_half_full = 1;
-	}
 
 	if( ( priv->hs_mode_bits & HS_TX_ENABLE ) )
 		status1 = 0;
@@ -77,9 +70,18 @@ void cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 
 	clear_bits = 0;
 
-	if( hs_status & HS_HALF_FULL )
+	if( hs_status & HS_HALF_FULL)
+	{
+		if( priv->hs_mode_bits & HS_TX_ENABLE )
+			priv->out_fifo_half_empty = 1;
+		else if( priv->hs_mode_bits & HS_RX_ENABLE )
+			priv->in_fifo_half_full = 1;
 		clear_bits |= HS_CLR_HF_INT;
+	}
 
+	if( hs_status & HS_FIFO_FULL )
+		priv->fifo_full = 1;
+		
 	if( hs_status & HS_SRQ_INT )
 		clear_bits |= HS_CLR_SRQ_INT;
 
