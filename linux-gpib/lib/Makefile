@@ -65,7 +65,10 @@ ibConfYacc.c + ibConfYacc.h: ibConfYacc.y
 	bison -d -y -p gpib_yy -o ibConfYacc.c ibConfYacc.y
 
 clean: 
-	$(RM) $(EXP_INC) *.o ibConfYacc.c ibConfLex.c *.a .depend ibConfYacc.h *.so
+	$(RM) $(EXP_INC) *.o *.a .depend *.so
+# don't cleanup bison/flex files since I want to avoid bison bugs in older
+# versions of bison that people may have installed
+#	$(RM) ibConfYacc.c ibConfLex.c ibConfYacc.h
 
 
 realclean : clean
@@ -76,8 +79,6 @@ install:
 	$(INSTALL) -D libgpib.so $(LIB_TARGET_DIR)/$(LIBNAME)
 	cd $(LIB_TARGET_DIR) && ln -sf $(LIBNAME) libgpib.so
 	ldconfig $(LIB_TARGET_DIR)		
-#	install ib.h           $(INC_TARGET_DIR)		
-#        install ibConf.h       $(INC_TARGET_DIR)		
 
 rcsput:
 	ci -u $(SRCS) *.h *.l *.y  gpib.conf.dist

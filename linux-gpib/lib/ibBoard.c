@@ -200,8 +200,6 @@ int configure_autopoll( ibConf_t *conf, int enable )
 		return destroy_autopoll_thread( interfaceBoard( conf ) );
 }
 
-
-/**********************/
 int ibBoardOpen( ibBoard_t *board )
 {
 	int fd;
@@ -223,7 +221,6 @@ int ibBoardOpen( ibBoard_t *board )
 	return 0;
 }
 
-/**********************/
 int ibBoardClose( ibBoard_t *board )
 {
 
