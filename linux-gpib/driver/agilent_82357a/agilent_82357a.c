@@ -705,7 +705,7 @@ void agilent_82357a_detach(gpib_board_t *board)
 
 gpib_interface_t agilent_82357a_gpib_interface =
 {
-	name: "agilent_82357a_b",
+	name: "agilent_82357a",
 	attach: agilent_82357a_attach,
 	detach: agilent_82357a_detach,
 	read: agilent_82357a_read,

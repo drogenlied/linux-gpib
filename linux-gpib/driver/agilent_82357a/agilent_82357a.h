@@ -31,7 +31,7 @@ enum usb_vendor_ids
 enum usb_device_ids
 {
 	USB_DEVICE_ID_AGILENT_82357A = 0x0107,
-	USB_DEVICE_ID_AGILENT__82357A_PREINIT = 0x0007	// device id before firmware is loaded
+	USB_DEVICE_ID_AGILENT_82357A_PREINIT = 0x0007	// device id before firmware is loaded
 };
 
 enum endpoint_addresses
