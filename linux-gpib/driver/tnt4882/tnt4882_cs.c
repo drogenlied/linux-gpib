@@ -677,7 +677,6 @@ int ni_pcmcia_attach(gpib_board_t *board)
 	tnt4882_private_t *tnt_priv;
 	nec7210_private_t *nec_priv;
 	int isr_flags = SA_SHIRQ;
-	int retval;
 
 	if( dev_list == NULL )
 	{
@@ -690,41 +689,15 @@ int ni_pcmcia_attach(gpib_board_t *board)
 	if(tnt4882_allocate_private(board))
 		return -ENOMEM;
 	tnt_priv = board->private_data;
+	tnt_priv->io_write = outb_wrapper;
+	tnt_priv->io_read = inb_wrapper;
 	nec_priv = &tnt_priv->nec7210_priv;
+	nec_priv->read_byte = nec7210_ioport_read_byte;
+	nec_priv->write_byte = nec7210_ioport_write_byte;
 	nec_priv->offset = atgpib_reg_offset;
 
-	if( dev_list->io.NumPorts1 )
-	{
-		GPIB_DPRINTK( "ioport1 window attributes: 0x%x\n", dev_list->io.Attributes1 );
-		nec_priv->iobase = dev_list->io.BasePort1;
-		tnt_priv->io_write = outb_wrapper;
-		tnt_priv->io_read = inb_wrapper;
-		nec_priv->read_byte = nec7210_ioport_read_byte;
-		nec_priv->write_byte = nec7210_ioport_write_byte;
-	} else if ( dev_list->io.NumPorts2 )
-	{
-		GPIB_DPRINTK( "ioport2 window attributes: 0x%x\n", dev_list->io.Attributes2 );
-		nec_priv->iobase = dev_list->io.BasePort2;
-		tnt_priv->io_write = outb_wrapper;
-		tnt_priv->io_read = inb_wrapper;
-		nec_priv->read_byte = nec7210_ioport_read_byte;
-		nec_priv->write_byte = nec7210_ioport_write_byte;
-	} else
-	{
-		win_req_t req;
-		retval = CardServices( GetFirstWindow, &dev_list->handle, &req );
-		if( retval )
-		{
-			printk( "gpib: failed to get memory window information\n" );
-			return -1;
-		}
-		GPIB_DPRINTK( "memory window attributes: 0x%x\n", req.Attributes );
-		nec_priv->iobase = (unsigned long) ioremap( req.Base, req.Size );
-		tnt_priv->io_write = writeb_wrapper;
-		tnt_priv->io_read = readb_wrapper;
-		nec_priv->read_byte = nec7210_iomem_read_byte;
-		nec_priv->write_byte = nec7210_iomem_write_byte;
-	}
+	GPIB_DPRINTK( "ioport1 window attributes: 0x%x\n", dev_list->io.Attributes1 );
+	nec_priv->iobase = dev_list->io.BasePort1;
 
 	// get irq
 	if( request_irq( dev_list->irq.AssignedIRQ, tnt4882_interrupt, isr_flags, "tnt4882", board))
@@ -754,8 +727,6 @@ void ni_pcmcia_detach(gpib_board_t *board)
 		if(nec_priv->iobase)
 		{
 			nec7210_board_reset(nec_priv);
-			if( tnt_priv->io_write == writeb_wrapper )
-				iounmap( (void *) nec_priv->iobase );
 		}
 	}
 	tnt4882_free_private(board);
