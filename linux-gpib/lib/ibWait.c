@@ -20,12 +20,22 @@
 
 void fixup_status_bits( const ibConf_t *conf, int *status )
 {
-	if( interfaceBoard(conf)->use_event_queue )
+	static const int board_wait_mask = board_status_mask & ~ERR;
+	static const int device_wait_mask = device_status_mask & ~ERR;
+
+	if( conf->is_interface == 0 )
 	{
-		*status &= ~DTAS & ~DCAS;
+		*status &= device_wait_mask;
 	}else
 	{
-		*status &= ~EVENT;
+		*status &= board_wait_mask;
+		if( interfaceBoard(conf)->use_event_queue )
+		{
+			*status &= ~DTAS & ~DCAS;
+		}else
+		{
+			*status &= ~EVENT;
+		}
 	}
 }
 
@@ -34,10 +44,6 @@ int my_wait( ibConf_t *conf, int wait_mask, int clear_mask, int set_mask, int *s
 	ibBoard_t *board;
 	int retval;
 	wait_ioctl_t cmd;
-	int board_wait_mask, device_wait_mask;
-
-	board_wait_mask = board_status_mask & ~ERR;
-	device_wait_mask = device_status_mask & ~ERR;
 
 	board = interfaceBoard( conf );
 
@@ -59,13 +65,11 @@ int my_wait( ibConf_t *conf, int wait_mask, int clear_mask, int set_mask, int *s
 	{
 		cmd.pad = conf->settings.pad;
 		cmd.sad = conf->settings.sad;
-		cmd.wait_mask &= device_wait_mask;
 	}else
 	{
 		cmd.pad = NOADDR;
 		cmd.sad = NOADDR;
 //XXX additionally, clear wait mask depending on event queue enabled, etc */
-		cmd.wait_mask &= board_wait_mask;
 	}
 
 	if( wait_mask != cmd.wait_mask )
