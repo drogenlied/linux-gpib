@@ -2505,7 +2505,7 @@ volatile int ibsta;
 </refmeta>
 <refnamediv>
 	<refname>ibsic</refname>
-	<refpurpose>interface clear (board)</refpurpose>
+	<refpurpose>perform interface clear (board)</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
@@ -2521,6 +2521,10 @@ volatile int ibsta;
 	Description
 	</title>
 	<para>
+	ibsic() resets the GPIB bus by asserting the IFC line for
+	a duration of at least 100 microseconds.  The board specified
+	by <parameter>ud</parameter> must be the system controller
+	in order to assert IFC.
 	</para>
 </refsect1>
 <refsect1>
@@ -2710,6 +2714,90 @@ volatile int ibsta;
 	</tbody>
 	</tgroup>
 	</table>
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-ibtrg">
+<refmeta>
+	<refentrytitle>ibtrg</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibtrg</refname>
+	<refpurpose>trigger device (device)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibtrg</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibtrg() sends a GET (group execute trigger)
+	<link LINKEND="reference-command-bytes">command byte</link> to the
+	device specified by the device descriptor <parameter>ud</parameter>.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-ibwait">
+<refmeta>
+	<refentrytitle>ibwait</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibwait</refname>
+	<refpurpose>wait for event (board or device)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibwait</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>int <parameter>status_mask</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibwait() will sleep until one of the conditions specified in
+	<parameter>status_mask</parameter> is true.  The meaning of
+	the bits in <parameter>status_mask</parameter> are the same
+	as the bits of the <link LINKEND="reference-globals-ibsta">ibsta</link>
+	status variable.
+	</para>
+	<para>
+	If <parameter>status_mask</parameter> is zero, then ibwait() will
+	return immediately.  This is useful if you simply wish to get an
+	updated ibsta.
 	</para>
 </refsect1>
 <refsect1>
