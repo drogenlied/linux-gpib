@@ -30,6 +30,7 @@ ssize_t agilent_82350b_accel_write( gpib_board_t *board, uint8_t *buffer, size_t
 	{
 		--fifoTransferLength;
 	}
+	clear_bit(DEV_CLEAR_BN, &tms_priv->state);
 	read_and_clear_event_status(board);
 	for(i = 0; i < fifoTransferLength;)
 	{
