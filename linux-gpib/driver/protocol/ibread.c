@@ -45,6 +45,7 @@ IBLCL ssize_t ibrd(uint8_t *buf, size_t length, int *end_flag)
 		return -1;
 	}
 	driver->go_to_standby(driver);
+//XXX global
 	osStartTimer(timeidx);
 	// mark io in progress
 	clear_bit(CMPL_NUM, &driver->status);
@@ -56,7 +57,7 @@ IBLCL ssize_t ibrd(uint8_t *buf, size_t length, int *end_flag)
 		if(ret < 0)
 		{
 			printk("gpib read error\n");
-			return ret;	//XXX
+			break;
 		}
 		buf += ret;
 		count += ret;
@@ -65,6 +66,7 @@ IBLCL ssize_t ibrd(uint8_t *buf, size_t length, int *end_flag)
 	osRemoveTimer();
 	// mark io completed
 	set_bit(CMPL_NUM, &driver->status);
+
 	return count;
 }
 

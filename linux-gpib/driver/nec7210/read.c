@@ -48,10 +48,10 @@ ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int 
 	disable_dma(priv->dma_channel);
 
 	/* program dma controller */
-	clear_dma_ff (priv->dma_channel);
-	set_dma_count(priv->dma_channel, length );
+	clear_dma_ff(priv->dma_channel);
+	set_dma_count(priv->dma_channel, length);
 	set_dma_addr (priv->dma_channel, virt_to_bus(buffer));
-	set_dma_mode(priv->dma_channel, DMA_MODE_READ );
+	set_dma_mode(priv->dma_channel, DMA_MODE_READ);
 	release_dma_lock(flags);
 
 	enable_dma(priv->dma_channel);
@@ -80,7 +80,7 @@ ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int 
 
 	// record how many bytes we transferred
 	flags = claim_dma_lock();
-	clear_dma_ff (priv->dma_channel);
+	clear_dma_ff(priv->dma_channel);
 	disable_dma(priv->dma_channel);
 	count += length - get_dma_residue(priv->dma_channel);
 	release_dma_lock(flags);
@@ -125,7 +125,7 @@ ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int 
 		set_bit(RFD_HOLDOFF_BN, &priv->state);
 	}
 
-	if(test_bit(TIMO, &driver->status))
+	if(test_bit(TIMO_NUM, &driver->status))
 		ret = -ETIMEDOUT;
 
 	return count ? count : ret;
