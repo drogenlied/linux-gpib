@@ -24,11 +24,7 @@
 static int wait_satisfied( gpib_board_t *board, gpib_device_t *device,
 	unsigned int mask )
 {
-	if( mask & RQS )
-	{
-		if( num_status_bytes( device ) ) return 1;
-	}
-	if( mask & ibstatus( board ) ) return 1;
+	if( mask & full_ibstatus( board, device ) ) return 1;
 
 	return 0;
 }
@@ -41,18 +37,18 @@ static int wait_satisfied( gpib_board_t *board, gpib_device_t *device,
  * If the mask is 0 then
  * no condition is waited for.
  */
-int ibwait( gpib_board_t *board, unsigned int *mask, unsigned int pad, int sad )
+int ibwait( gpib_board_t *board, unsigned int mask, unsigned int pad, int sad )
 {
 	int retval = 0;
 	gpib_device_t *device;
 
-	if( *mask == 0 )
+	if( mask == 0 )
 	{
 		return 0;
 	}
-	else if( *mask & ~WAITBITS )
+	else if( mask & ~WAITBITS )
 	{
-		printk( "bad mask 0x%x \n", *mask );
+		printk( "bad mask 0x%x \n", mask );
 		return -1;
 	}
 
@@ -62,16 +58,13 @@ int ibwait( gpib_board_t *board, unsigned int *mask, unsigned int pad, int sad )
 
 	osStartTimer( board, board->usec_timeout );
 
-	if( wait_event_interruptible( board->wait, wait_satisfied( board, device, *mask ) ) )
+	if( wait_event_interruptible( board->wait, wait_satisfied( board, device, mask ) ) )
 	{
 		printk( "wait interrupted\n" );
 		retval = -ERESTARTSYS;
 	}
-
+	if( test_bit( TIMO_NUM, &board->status ) ) retval = -ETIMEDOUT;
 	osRemoveTimer( board );
-
-	*mask = ibstatus( board );
-	if( num_status_bytes( device ) ) *mask |= RQS;
 
 	return retval;
 }

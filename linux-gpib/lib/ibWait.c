@@ -7,7 +7,7 @@ int ibwait( int ud, int mask )
 	ibConf_t *conf;
 	ibBoard_t *board;
 	int retval;
-	wait_ioctl_t cmd;
+	wait_status_ioctl_t cmd;
 
 	conf = enter_library( ud, 0 );
 	if( conf == NULL )

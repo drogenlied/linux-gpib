@@ -1,6 +1,6 @@
 
 #include "gpibP.h"
-
+#include "autopoll.h"
 /*
  * IBPAD
  * change the GPIB address of the interface board.  The address
@@ -81,4 +81,15 @@ unsigned int ibstatus( gpib_board_t *board )
 		return 0;
 
 	return board->interface->update_status( board );
+}
+
+unsigned int full_ibstatus( gpib_board_t *board, const gpib_device_t *device )
+{
+	unsigned int status;
+
+	status = ibstatus( board );
+
+	if( num_status_bytes( device ) ) status |= RQS;
+
+	return status;
 }

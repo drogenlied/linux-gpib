@@ -45,3 +45,9 @@ void osRemoveTimer( gpib_board_t *board )
 		del_timer_sync( &board->timer );
 }
 
+int io_timed_out( gpib_board_t *board )
+{
+	if( test_bit( TIMO_NUM, &board->status ) ) return 1;
+	return 0;
+}
+

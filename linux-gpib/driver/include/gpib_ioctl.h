@@ -40,7 +40,7 @@ typedef struct
 	int mask;
 	unsigned int pad;
 	int sad;
-} wait_ioctl_t;
+} wait_status_ioctl_t;
 
 typedef struct
 {
@@ -54,7 +54,7 @@ typedef struct
 #define IBCMD _IOWR( GPIB_CODE, 2, read_write_ioctl_t )
 #define IBOPENDEV _IOW( GPIB_CODE, 3, open_close_dev_ioctl_t )
 #define IBCLOSEDEV _IOW( GPIB_CODE, 4, open_close_dev_ioctl_t )
-#define IBWAIT _IOWR( GPIB_CODE, 5, wait_ioctl_t )
+#define IBWAIT _IOWR( GPIB_CODE, 5, wait_status_ioctl_t )
 #define IBRPP _IOWR( GPIB_CODE, 6, uint8_t )
 #define IBAPE _IOW( GPIB_CODE, 7, int )
 #define IBONL _IOW( GPIB_CODE, 8, online_ioctl_t )
@@ -62,7 +62,7 @@ typedef struct
 #define IBSRE _IOW( GPIB_CODE, 10, int )
 #define IBGTS _IO( GPIB_CODE, 11 )
 #define IBCAC _IOW( GPIB_CODE, 12, int )
-#define IBSTATUS _IOR( GPIB_CODE, 13, int )
+#define IBSTATUS _IOWR( GPIB_CODE, 13, wait_status_ioctl_t )
 #define IBLINES _IOR( GPIB_CODE, 14, short )
 #define IBPAD _IOW( GPIB_CODE, 15, unsigned int )
 #define IBSAD _IOW( GPIB_CODE, 16, int )

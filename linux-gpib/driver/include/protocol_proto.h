@@ -18,7 +18,9 @@ extern  int ibsre(gpib_board_t *board, int enable);
 extern  int ibpad( gpib_board_t *board, unsigned int addr );
 extern  int ibsad( gpib_board_t *board, int addr );
 extern  int ibeos( gpib_board_t *board, int eos, int eosflags );
-extern  int ibwait(gpib_board_t *board, unsigned int *mask, unsigned int pad, int sad );
+extern  int ibwait(gpib_board_t *board, unsigned int mask, unsigned int pad, int sad );
 extern  ssize_t ibwrt(gpib_board_t *board, uint8_t *buf, size_t cnt, int more );
-extern unsigned int ibstatus(gpib_board_t *board);
+extern unsigned int ibstatus( gpib_board_t *board );
+extern unsigned int full_ibstatus( gpib_board_t *board, const gpib_device_t *device );
+extern int io_timed_out( gpib_board_t *board );
 

@@ -346,7 +346,7 @@ static int command_ioctl(gpib_board_t *board, unsigned long arg)
 	ssize_t ret;
 
 	retval = copy_from_user(&cmd, (void*) arg, sizeof(cmd));
-	if (retval)
+	if( retval )
 		return -EFAULT;
 
 	/* Check read access to buffer */
@@ -357,7 +357,7 @@ static int command_ioctl(gpib_board_t *board, unsigned long arg)
 	/* Write buffer loads till we empty the user supplied buffer */
 	userbuf = cmd.buffer;
 	remain = cmd.count;
-	while (remain > 0 && !(ibstatus(board) & (TIMO)))
+	while( remain > 0 && !io_timed_out( board ) )
 	{
 		copy_from_user(board->buffer, userbuf, (board->buffer_length < remain) ?
 			board->buffer_length : remain );
@@ -400,7 +400,7 @@ static int write_ioctl(gpib_board_t *board, unsigned long arg)
 	/* Write buffer loads till we empty the user supplied buffer */
 	userbuf = write_cmd.buffer;
 	remain = write_cmd.count;
-	while(remain > 0)
+	while( remain > 0 )
 	{
 		int send_eoi;
 		send_eoi = remain <= board->buffer_length && write_cmd.end;
@@ -427,12 +427,18 @@ static int write_ioctl(gpib_board_t *board, unsigned long arg)
 
 static int status_ioctl(gpib_board_t *board, unsigned long arg)
 {
-	int status;
 	int retval;
+	wait_status_ioctl_t cmd;
+	gpib_device_t *device;
 
-	status = ibstatus(board);
+	copy_from_user( &cmd, (void *) arg, sizeof( wait_status_ioctl_t ) );
 
-	retval = put_user( status, (int *) arg );
+	device = get_gpib_device( board, cmd.pad, cmd.sad );
+	if( device == NULL )
+		cmd.mask = 0;
+	else cmd.mask = full_ibstatus( board, device );
+
+	retval = copy_to_user( (void *) arg, &cmd, sizeof( wait_status_ioctl_t ) );
 	if (retval)
 		return -EFAULT;
 
@@ -598,14 +604,14 @@ static int serial_poll_ioctl( gpib_board_t *board, unsigned long arg )
 
 static int wait_ioctl( gpib_board_t *board, unsigned long arg )
 {
-	wait_ioctl_t wait_cmd;
+	wait_status_ioctl_t wait_cmd;
 	int retval;
 
 	retval = copy_from_user( &wait_cmd, ( void * ) arg, sizeof( wait_cmd ) );
 	if( retval )
 		return -EFAULT;
 
-	retval = ibwait( board, &wait_cmd.mask, wait_cmd.pad, wait_cmd.sad );
+	retval = ibwait( board, wait_cmd.mask, wait_cmd.pad, wait_cmd.sad );
 	if( retval < 0 ) return retval;
 
 	retval = copy_to_user( ( void * ) arg, &wait_cmd, sizeof( wait_cmd ) );

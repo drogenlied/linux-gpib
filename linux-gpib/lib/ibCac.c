@@ -4,10 +4,9 @@
 
 int ibcac( int ud, int synchronous )
 {
-	ibConf_t *conf = ibConfigs[ud];
+	ibConf_t *conf;
 	ibBoard_t *board;
 	int retval;
-	int status = CMPL;
 
 	conf = enter_library( ud, 1 );
 	if( conf == NULL )

@@ -268,25 +268,21 @@ ibConf_t * enter_library( int ud, int lock_library )
 	return conf;
 }
 
-
-//XXX
 int ibstatus( ibConf_t *conf, int error )
 {
 	int status = 0;
 	int retval;
-	int board_status;
+	wait_status_ioctl_t board_status;
 
-	// get more status bits from interface board
-	if( conf->is_interface )
+	board_status.pad = conf->pad;
+	board_status.sad = conf->sad;
+	retval = ioctl( interfaceBoard( conf )->fileno, IBSTATUS, &board_status );
+	if( retval < 0 )
 	{
-		retval = ioctl( interfaceBoard( conf )->fileno, IBSTATUS, &board_status );
-		if( retval < 0 )
-		{
-			error++;
-			setIberr( EDVR );
-		}else
-			status |= board_status;
-	}
+		error++;
+		setIberr( EDVR );
+	}else
+		status = board_status.mask;
 
 	status |= CMPL;
 	if( error ) status |= ERR;
