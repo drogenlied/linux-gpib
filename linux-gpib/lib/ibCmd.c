@@ -146,7 +146,7 @@ ssize_t my_ibcmd( ibConf_t *conf, const uint8_t *buffer, size_t count)
 	cmd.buffer = (void*)buffer;
 	cmd.count = count;
 
-	set_timeout( board, conf->usec_timeout);
+	set_timeout( board, conf->settings.usec_timeout);
 
 	retval = ioctl( board->fileno, IBCMD, &cmd );
 	if( retval < 0 )
@@ -213,7 +213,7 @@ unsigned int send_setup_string( const ibConf_t *conf,
 
 	board = interfaceBoard( conf );
 
-	addressList[ 0 ] = packAddress( conf->pad, conf->sad );
+	addressList[ 0 ] = packAddress( conf->settings.pad, conf->settings.sad );
 	addressList[ 1 ] = NOADDR;
 
 	return create_send_setup( board, addressList, cmdString );

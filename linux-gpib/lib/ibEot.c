@@ -21,9 +21,9 @@
 void internal_ibeot( ibConf_t *conf, int send_eoi )
 {
 	if(send_eoi)
-		conf->send_eoi = 1;
+		conf->settings.send_eoi = 1;
 	else
-		conf->send_eoi = 0;
+		conf->settings.send_eoi = 0;
 }
 
 int ibeot( int ud, int send_eoi )

@@ -129,7 +129,7 @@ int internal_ibtmo( ibConf_t *conf, int timeout )
 		return -1;
 	}
 
-	conf->usec_timeout = timeout_to_usec( timeout );
+	conf->settings.usec_timeout = timeout_to_usec( timeout );
 
 	return 0;
 }

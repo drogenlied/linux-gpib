@@ -25,8 +25,8 @@ int ibeos(int ud, int v)
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 
-	conf->eos = v & 0xff;
-	conf->eos_flags = v & 0xff00;
+	conf->settings.eos = v & 0xff;
+	conf->settings.eos_flags = v & 0xff00;
 
 	return exit_library( ud, 0 );
 }
@@ -42,10 +42,10 @@ int iblcleos( const ibConf_t *conf )
 {
 	int use_eos, compare8;
 
-	use_eos = conf->eos_flags & REOS;
-	compare8 = conf->eos_flags & BIN;
+	use_eos = conf->settings.eos_flags & REOS;
+	compare8 = conf->settings.eos_flags & BIN;
 
-	return config_read_eos( interfaceBoard( conf ), use_eos, conf->eos, compare8 ) ;
+	return config_read_eos( interfaceBoard( conf ), use_eos, conf->settings.eos, compare8 ) ;
 }
 
 int config_read_eos( ibBoard_t *board, int use_eos_char, int eos_char,

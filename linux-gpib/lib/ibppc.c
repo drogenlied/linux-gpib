@@ -62,7 +62,7 @@ int device_ppc( ibConf_t *conf, int ppc_configuration )
 {
 	Addr4882_t addressList[ 2 ];
 
-	addressList[ 0 ] = packAddress( conf->pad, conf->sad );
+	addressList[ 0 ] = packAddress( conf->settings.pad, conf->settings.sad );
 	addressList [ 1 ] = NOADDR;
 
 	return ppoll_configure_device( conf, addressList, ppc_configuration );
@@ -76,7 +76,7 @@ int board_ppc( ibConf_t *conf, int ppc_configuration )
 
 	board = interfaceBoard( conf );
 
-	if( conf->local_ppc == 0 )
+	if( conf->settings.local_ppc == 0 )
 	{
 		setIberr( ECAP );
 		return -1;
@@ -84,7 +84,7 @@ int board_ppc( ibConf_t *conf, int ppc_configuration )
 
 	retval = query_ppc( board );
 	if( retval < 0 ) return retval;
-	conf->ppoll_config = retval;	// store old value
+	conf->settings.ppoll_config = retval;	// store old value
 
 	cmd.config = ppc_configuration;
 	cmd.set_ist = 0;
@@ -126,8 +126,8 @@ int internal_ibppc( ibConf_t *conf, int v )
 		if( retval < 0 ) return retval;
 	}
 
-	setIberr( conf->ppoll_config );
-	conf->ppoll_config = v;
+	setIberr( conf->settings.ppoll_config );
+	conf->settings.ppoll_config = v;
 
 	return 0;
 }

@@ -25,7 +25,7 @@ static int set_spoll_timeout( ibConf_t *conf, int timeout )
 		return -1;
 	}
 
-	conf->spoll_usec_timeout = timeout_to_usec( timeout );
+	conf->settings.spoll_usec_timeout = timeout_to_usec( timeout );
 
 	return 0;
 }
@@ -38,7 +38,7 @@ static int set_ppoll_timeout( ibConf_t *conf, int timeout )
 		return -1;
 	}
 
-	conf->ppoll_usec_timeout = ppoll_timeout_to_usec( timeout );
+	conf->settings.ppoll_usec_timeout = ppoll_timeout_to_usec( timeout );
 
 	return 0;
 }
@@ -109,23 +109,23 @@ int ibconfig( int ud, int option, int value )
 			break;
 		case IbcEOSrd:
 			if( value )
-				conf->eos_flags |= REOS;
+				conf->settings.eos_flags |= REOS;
 			else
-				conf->eos_flags &= ~REOS;
+				conf->settings.eos_flags &= ~REOS;
 			return exit_library( ud, 0 );
 			break;
 		case IbcEOSwrt:
 			if( value )
-				conf->eos_flags |= XEOS;
+				conf->settings.eos_flags |= XEOS;
 			else
-				conf->eos_flags &= ~XEOS;
+				conf->settings.eos_flags &= ~XEOS;
 			return exit_library( ud, 0 );
 			break;
 		case IbcEOScmp:
 			if( value )
-				conf->eos_flags |= BIN;
+				conf->settings.eos_flags |= BIN;
 			else
-				conf->eos_flags &= ~BIN;
+				conf->settings.eos_flags &= ~BIN;
 			return exit_library( ud, 0 );
 			break;
 		case IbcEOSchar:
@@ -134,7 +134,7 @@ int ibconfig( int ud, int option, int value )
 				setIberr( EARG );
 				return exit_library( ud, 1 );
 			}
-			conf->eos = value;
+			conf->settings.eos = value;
 			return exit_library( ud, 0 );
 			break;
 		case IbcReadAdjust:
@@ -311,9 +311,9 @@ int ibconfig( int ud, int option, int value )
 				 * making the driver keep track of current addressing
 				 * state.  Maybe someday, but low priority. */
 				if( value )
-					conf->readdr = 1;
+					conf->settings.readdr = 1;
 				else
-					conf->readdr = 0;
+					conf->settings.readdr = 0;
 				return exit_library( ud, 0 );
 				break;
 			case IbcSPollTime:

@@ -46,11 +46,11 @@ void setup_global_board_descriptors( void )
 {
 	int i;
 
-	for( i = 0; i < FIND_CONFIGS_LENGTH; i++ )
+	for( i = 0; i < FIND_CONFIGS_LENGTH && strlen( ibFindConfigs[ i ].name ); i++ )
 	{
 		if( ibFindConfigs[ i ].is_interface )
 		{
-			insert_descriptor( ibFindConfigs[ i ].board, ibFindConfigs[ i ] );
+			insert_descriptor( ibFindConfigs[ i ].settings.board, ibFindConfigs[ i ] );
 		}
 	}
 }
@@ -75,6 +75,7 @@ int ibParseConfigFile( void )
 	int stat = 0;
 	static int config_parsed = 0;
 	char *filename, *envptr;
+	int i;
 
 	if( config_parsed ) return 0;
 
@@ -102,6 +103,10 @@ int ibParseConfigFile( void )
 
 	if( stat == 0 )
 	{
+		for( i = 0; i < FIND_CONFIGS_LENGTH && strlen( ibFindConfigs[ i ].name ); i++ )
+		{
+			ibFindConfigs[ i ].settings = ibFindConfigs[ i ].defaults;
+		}
 		setup_global_board_descriptors();
 		config_parsed = 1;
 	}
@@ -117,7 +122,7 @@ int ibGetDescriptor(ibConf_t p)
 	int retval;
 
 	/* check validity of values */
-	if( p.pad >= gpib_addr_max || p.sad >= gpib_addr_max )
+	if( p.settings.pad >= gpib_addr_max || p.settings.sad >= gpib_addr_max )
 	{
 		setIberr( ETAB );
 		return -1;
@@ -175,26 +180,34 @@ int ibCheckDescriptor( int ud )
 	return 0;
 }
 
+void init_descriptor_settings( descriptor_settings_t *settings )
+{
+	settings->pad = -1;
+	settings->sad = -1;
+	settings->board = -1;
+	settings->usec_timeout = 3000000;
+	settings->spoll_usec_timeout = 1000000;
+	settings->ppoll_usec_timeout = 2;
+	settings->eos = 0;
+	settings->eos_flags = 0;
+	settings->ppoll_config = 0;
+	settings->send_eoi = 1;
+	settings->local_lockout = 0;
+	settings->local_ppc = 0;
+	settings->readdr = 0;
+}
+
 void init_ibconf( ibConf_t *conf )
 {
 	conf->name[0] = 0;
-	conf->pad = -1;
-	conf->sad = -1;
+	init_descriptor_settings( &conf->defaults );
+	init_descriptor_settings( &conf->settings );
 	conf->init_string[0] = 0;
-	conf->board = -1;
-	conf->eos = 0;
-	conf->eos_flags = 0;
 	conf->flags = 0;
-	conf->usec_timeout = 3000000;
-	conf->spoll_usec_timeout = 1000000;
-	conf->ppoll_usec_timeout = 2;
-	conf->send_eoi = 1;
 	conf->is_interface = 0;
 	conf->dev_is_open = 0;
 	conf->board_is_open = 0;
 	conf->has_lock = 0;
-	conf->ppoll_config = 0;
-	conf->local_lockout = 0;
 	conf->timed_out = 0;
 }
 
@@ -209,8 +222,8 @@ int open_gpib_device( ibConf_t *conf )
 
 	board = interfaceBoard( conf );
 
-	open_cmd.pad = conf->pad;
-	open_cmd.sad = conf->sad;
+	open_cmd.pad = conf->settings.pad;
+	open_cmd.sad = conf->settings.sad;
 	retval = ioctl( board->fileno, IBOPENDEV, &open_cmd );
 	if( retval < 0 )
 	{
@@ -236,8 +249,8 @@ int close_gpib_device( ibConf_t *conf )
 
 	board = interfaceBoard( conf );
 
-	close_cmd.pad = conf->pad;
-	close_cmd.sad = conf->sad;
+	close_cmd.pad = conf->settings.pad;
+	close_cmd.sad = conf->settings.sad;
 	retval = ioctl( board->fileno, IBCLOSEDEV, &close_cmd );
 	if( retval < 0 )
 	{
@@ -260,7 +273,7 @@ int gpibi_change_address( ibConf_t *conf, unsigned int pad, int sad )
 
 	if ( conf->is_interface )
 	{
-		if( pad != conf->pad )
+		if( pad != conf->settings.pad )
 		{
 			retval = ioctl( board->fileno, IBPAD, &pad );
 			if( retval < 0 )
@@ -271,7 +284,7 @@ int gpibi_change_address( ibConf_t *conf, unsigned int pad, int sad )
 			}
 		}
 
-		if( sad != conf->sad )
+		if( sad != conf->settings.sad )
 		{
 			retval = ioctl( board->fileno, IBSAD, &sad );
 			if( retval < 0 )
@@ -286,8 +299,8 @@ int gpibi_change_address( ibConf_t *conf, unsigned int pad, int sad )
 	retval = close_gpib_device( conf );
 	if( retval < 0 ) return retval;
 
-	conf->pad = pad;
-	conf->sad = sad;
+	conf->settings.pad = pad;
+	conf->settings.sad = sad;
 
 	retval = open_gpib_device( conf );
 	if( retval < 0 ) return retval;
@@ -424,8 +437,8 @@ int ibstatus( ibConf_t *conf, int error )
 	}else
 	{
 		spoll_bytes_ioctl_t cmd;
-		cmd.pad = conf->pad;
-		cmd.sad = conf->sad;
+		cmd.pad = conf->settings.pad;
+		cmd.sad = conf->settings.sad;
 		retval = ioctl( interfaceBoard( conf )->fileno, IBSPOLL_BYTES, &cmd );
 		if( retval < 0 )
 		{

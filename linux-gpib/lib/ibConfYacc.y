@@ -12,8 +12,8 @@
 YY_DECL;
 
 ibConf_t ibFindConfigs[FIND_CONFIGS_LENGTH];
-unsigned int findIndex = 0;
-int bdid = 0;
+unsigned int findIndex;
+int bdid;
 
 %}
 
@@ -53,7 +53,6 @@ char cval;
 	interface: T_INTERFACE '{' minor parameter '}'
 			{
 				ibFindConfigs[findIndex].is_interface = 1;
-				ibFindConfigs[findIndex].send_eoi = 1;
 				if(++findIndex >= FIND_CONFIGS_LENGTH)
 				{
 					fprintf(stderr, " too many devices in config file\n");
@@ -63,7 +62,7 @@ char cval;
 		;
 
 	minor : T_MINOR '=' T_NUMBER {
-				bdid = $3; ibFindConfigs[findIndex].board = $3;
+				bdid = $3; ibFindConfigs[findIndex].defaults.board = $3;
 				if(bdid < MAX_BOARDS)
 					snprintf(ibBoard[bdid].device, sizeof(ibBoard[bdid].device), "/dev/gpib%i", bdid);
 				else
@@ -80,17 +79,17 @@ char cval;
 			}
 		;
 
-	statement: T_PAD '=' T_NUMBER      { ibBoard[bdid].pad =  $3; ibFindConfigs[findIndex].pad = $3;}
-		| T_SAD '=' T_NUMBER      { ibBoard[bdid].sad = $3 - sad_offset; ibFindConfigs[findIndex].sad = $3 - sad_offset;}
-		| T_EOSBYTE '=' T_NUMBER  { ibFindConfigs[findIndex].eos = $3;}
-		| T_REOS T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $2 * REOS;}
-		| T_BIN  T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $2 * BIN;}
-		| T_REOS '=' T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $3 * REOS;}
-		| T_XEOS '=' T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $3 * XEOS;}
-		| T_BIN '=' T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $3 * BIN;}
-		| T_EOT '=' T_BOOL           { ibFindConfigs[findIndex].send_eoi = $3;}
-		| T_TIMO '=' T_TIVAL      { ibFindConfigs[findIndex].usec_timeout = $3; }
-		| T_TIMO '=' T_NUMBER      { ibFindConfigs[findIndex].usec_timeout = timeout_to_usec( $3 ); }
+	statement: T_PAD '=' T_NUMBER      { ibBoard[bdid].pad =  $3; ibFindConfigs[findIndex].defaults.pad = $3;}
+		| T_SAD '=' T_NUMBER      { ibBoard[bdid].sad = $3 - sad_offset; ibFindConfigs[findIndex].defaults.sad = $3 - sad_offset;}
+		| T_EOSBYTE '=' T_NUMBER  { ibFindConfigs[findIndex].defaults.eos = $3;}
+		| T_REOS T_BOOL           { ibFindConfigs[findIndex].defaults.eos_flags |= $2 * REOS;}
+		| T_BIN  T_BOOL           { ibFindConfigs[findIndex].defaults.eos_flags |= $2 * BIN;}
+		| T_REOS '=' T_BOOL           { ibFindConfigs[findIndex].defaults.eos_flags |= $3 * REOS;}
+		| T_XEOS '=' T_BOOL           { ibFindConfigs[findIndex].defaults.eos_flags |= $3 * XEOS;}
+		| T_BIN '=' T_BOOL           { ibFindConfigs[findIndex].defaults.eos_flags |= $3 * BIN;}
+		| T_EOT '=' T_BOOL           { ibFindConfigs[findIndex].defaults.send_eoi = $3;}
+		| T_TIMO '=' T_TIVAL      { ibFindConfigs[findIndex].defaults.usec_timeout = $3; }
+		| T_TIMO '=' T_NUMBER      { ibFindConfigs[findIndex].defaults.usec_timeout = timeout_to_usec( $3 ); }
 		| T_BASE '=' T_NUMBER     { ibBoard[bdid].base = $3; }
 		| T_IRQ  '=' T_NUMBER     { ibBoard[bdid].irq = $3; }
 		| T_DMA  '=' T_NUMBER     { ibBoard[bdid].dma = $3; }
@@ -113,7 +112,6 @@ char cval;
 	device: T_DEVICE '{' option '}'
 			{
 				ibFindConfigs[findIndex].is_interface = 0;
-				ibFindConfigs[findIndex].send_eoi = 1;
 				if(++findIndex >= FIND_CONFIGS_LENGTH)
 				{
 					fprintf(stderr, "too many devices in config file\n");
@@ -132,22 +130,22 @@ char cval;
 		;
 
 	assign:
-		T_PAD '=' T_NUMBER { ibFindConfigs[findIndex].pad = $3; }
-		| T_SAD '=' T_NUMBER { ibFindConfigs[findIndex].sad = $3 - sad_offset; }
+		T_PAD '=' T_NUMBER { ibFindConfigs[findIndex].defaults.pad = $3; }
+		| T_SAD '=' T_NUMBER { ibFindConfigs[findIndex].defaults.sad = $3 - sad_offset; }
 		| T_INIT_S '=' T_STRING { strncpy(ibFindConfigs[findIndex].init_string,$3,60); }
-		| T_EOSBYTE '=' T_NUMBER  { ibFindConfigs[findIndex].eos = $3; }
-		| T_REOS T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $2 * REOS;}
-		| T_REOS '=' T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $3 * REOS;}
-		| T_XEOS '=' T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $3 * XEOS;}
-		| T_BIN T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $2 * BIN; }
-		| T_BIN '=' T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $3 * BIN; }
-		| T_EOT '=' T_BOOL           { ibFindConfigs[findIndex].send_eoi = $3;}
+		| T_EOSBYTE '=' T_NUMBER  { ibFindConfigs[findIndex].defaults.eos = $3; }
+		| T_REOS T_BOOL           { ibFindConfigs[findIndex].defaults.eos_flags |= $2 * REOS;}
+		| T_REOS '=' T_BOOL           { ibFindConfigs[findIndex].defaults.eos_flags |= $3 * REOS;}
+		| T_XEOS '=' T_BOOL           { ibFindConfigs[findIndex].defaults.eos_flags |= $3 * XEOS;}
+		| T_BIN T_BOOL           { ibFindConfigs[findIndex].defaults.eos_flags |= $2 * BIN; }
+		| T_BIN '=' T_BOOL           { ibFindConfigs[findIndex].defaults.eos_flags |= $3 * BIN; }
+		| T_EOT '=' T_BOOL           { ibFindConfigs[findIndex].defaults.send_eoi = $3;}
 		| T_AUTOPOLL              { ibFindConfigs[findIndex].flags |= CN_AUTOPOLL; }
 		| T_INIT_F '=' flags
 		| T_NAME '=' T_STRING	{ strncpy(ibFindConfigs[findIndex].name,$3, sizeof(ibFindConfigs[findIndex].name));}
-		| T_MINOR '=' T_NUMBER	{ ibFindConfigs[findIndex].board = $3;}
-		| T_TIMO '=' T_TIVAL      { ibFindConfigs[findIndex].usec_timeout = $3; }
-		| T_TIMO '=' T_NUMBER      { ibFindConfigs[findIndex].usec_timeout = timeout_to_usec( $3 ); }
+		| T_MINOR '=' T_NUMBER	{ ibFindConfigs[findIndex].defaults.board = $3;}
+		| T_TIMO '=' T_TIVAL      { ibFindConfigs[findIndex].defaults.usec_timeout = $3; }
+		| T_TIMO '=' T_NUMBER      { ibFindConfigs[findIndex].defaults.usec_timeout = timeout_to_usec( $3 ); }
 		;
 
 	flags: /* empty */

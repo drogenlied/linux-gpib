@@ -52,7 +52,7 @@ int ibpct( int ud )
 		return exit_library( ud, 1 );
 	}
 
-	retval = my_pass_control( conf, conf->pad, conf->sad );
+	retval = my_pass_control( conf, conf->settings.pad, conf->settings.sad );
 	if( retval < 0 )
 		return exit_library( ud, 1 );
 

@@ -114,36 +114,36 @@ int ibask( int ud, int option, int *value )
 	switch( option )
 	{
 		case IbaPAD:
-			*value = conf->pad;
+			*value = conf->settings.pad;
 			return exit_library( ud, 0 );
 			break;
 		case IbaSAD:
-			if( conf->sad < 0 ) *value = 0;
-			else *value = MSA( conf->sad );
+			if( conf->settings.sad < 0 ) *value = 0;
+			else *value = MSA( conf->settings.sad );
 			return exit_library( ud, 0 );
 			break;
 		case IbaTMO:
-			*value = usec_to_timeout( conf->usec_timeout );
+			*value = usec_to_timeout( conf->settings.usec_timeout );
 			return exit_library( ud, 0 );
 			break;
 		case IbaEOT:
-			*value = conf->send_eoi;
+			*value = conf->settings.send_eoi;
 			return exit_library( ud, 0 );
 			break;
 		case IbaEOSrd:
-			*value = conf->eos_flags & REOS;
+			*value = conf->settings.eos_flags & REOS;
 			return exit_library( ud, 0 );
 			break;
 		case IbaEOSwrt:
-			*value = conf->eos_flags & XEOS;
+			*value = conf->settings.eos_flags & XEOS;
 			return exit_library( ud, 0 );
 			break;
 		case IbaEOScmp:
-			*value = conf->eos_flags & BIN;
+			*value = conf->settings.eos_flags & BIN;
 			return exit_library( ud, 0 );
 			break;
 		case IbaEOSchar:
-			*value = conf->eos;
+			*value = conf->settings.eos;
 			return exit_library( ud, 0 );
 			break;
 		case IbaReadAdjust:
@@ -203,7 +203,7 @@ int ibask( int ud, int option, int *value )
 				return exit_library( ud, 0 );
 				break;
 			case IbaPP2:
-				*value = conf->local_ppc;
+				*value = conf->settings.local_ppc;
 				return exit_library( ud, 0 );
 				break;
 			case IbaTIMING:
@@ -225,10 +225,10 @@ int ibask( int ud, int option, int *value )
 				*value = 0;
 				return exit_library( ud, 0 );
 			case IbaSendLLO:
-				*value = conf->local_lockout;
+				*value = conf->settings.local_lockout;
 				return exit_library( ud, 0 );
 			case IbaPPollTime:
-				*value = usec_to_ppoll_timeout( conf->ppoll_usec_timeout );
+				*value = usec_to_ppoll_timeout( conf->settings.ppoll_usec_timeout );
 				return exit_library( ud, 0 );
 			case IbaHSCableLength:
 				/* HS transfer not supported and may never
@@ -253,11 +253,11 @@ int ibask( int ud, int option, int *value )
 		switch( option )
 		{
 			case IbaREADDR:
-				*value = conf->readdr;
+				*value = conf->settings.readdr;
 				return exit_library( ud, 0 );
 				break;
 			case IbaSPollTime:
-				*value = usec_to_timeout( conf->spoll_usec_timeout );
+				*value = usec_to_timeout( conf->settings.spoll_usec_timeout );
 				return exit_library( ud, 0 );
 				break;
 			case IbaUnAddr:
@@ -268,7 +268,7 @@ int ibask( int ud, int option, int *value )
 				return exit_library( ud, 0 );
 				break;
 			case IbaBNA:
-				*value = conf->board;
+				*value = conf->settings.board;
 				return exit_library( ud, 0 );
 				break;
 			default:

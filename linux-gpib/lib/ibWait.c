@@ -37,12 +37,12 @@ int my_wait( ibConf_t *conf, int mask )
 		return -1;
 	}
 
-	cmd.usec_timeout = conf->usec_timeout;
+	cmd.usec_timeout = conf->settings.usec_timeout;
 	cmd.mask = mask;
 	if( conf->is_interface == 0 )
 	{
-		cmd.pad = conf->pad;
-		cmd.sad = conf->sad;
+		cmd.pad = conf->settings.pad;
+		cmd.sad = conf->settings.sad;
 		cmd.mask &= device_wait_mask;
 	}else
 	{

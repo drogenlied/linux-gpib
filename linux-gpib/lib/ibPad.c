@@ -31,7 +31,7 @@ int internal_ibpad( ibConf_t *conf, unsigned int address )
 		return -1;
 	}
 
-	retval = gpibi_change_address( conf, address, conf->sad );
+	retval = gpibi_change_address( conf, address, conf->settings.sad );
 	if( retval < 0 )
 	{
 		fprintf( stderr, "libgpib: failed to change gpib address\n" );

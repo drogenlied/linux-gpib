@@ -121,7 +121,7 @@ int InternalReceive( ibConf_t *conf, Addr4882_t address,
 
 static __inline__ ibBoard_t* interfaceBoard( const ibConf_t *conf )
 {
-	return &ibBoard[ conf->board ];
+	return &ibBoard[ conf->settings.board ];
 }
 
 #include <stdio.h>

@@ -69,8 +69,8 @@ int ibrsp(int ud, char *spr)
 	}
 	board = interfaceBoard( conf );
 
-	retval = serial_poll( board, conf->pad, conf->sad,
-		conf->spoll_usec_timeout, spr );
+	retval = serial_poll( board, conf->settings.pad, conf->settings.sad,
+		conf->settings.spoll_usec_timeout, spr );
 	if(retval < 0)
 	{
 		if( errno == ETIMEDOUT )
@@ -122,7 +122,7 @@ void AllSPoll( int boardID, const Addr4882_t addressList[], short resultList[] )
 	{
 		char result;
 		retval = serial_poll( board, extractPAD( addressList[ i ] ),
-			extractSAD( addressList[ i ] ), conf->spoll_usec_timeout, &result );
+			extractSAD( addressList[ i ] ), conf->settings.spoll_usec_timeout, &result );
 		if( retval < 0 )
 		{
 			if( errno == ETIMEDOUT )
@@ -182,7 +182,7 @@ void FindRQS( int boardID, const Addr4882_t addressList[], short *result )
 	{
 		char spoll_byte;
 		retval = serial_poll( board, extractPAD( addressList[ i ] ),
-			extractSAD( addressList[ i ] ), conf->usec_timeout, &spoll_byte );
+			extractSAD( addressList[ i ] ), conf->settings.usec_timeout, &spoll_byte );
 		if( retval < 0 )
 		{
 			if( errno == ETIMEDOUT )
@@ -242,7 +242,7 @@ void ReadStatusByte( int boardID, Addr4882_t address, short *result )
 	}
 
 	retval = serial_poll( board, extractPAD( address ),
-		extractSAD( address ), conf->spoll_usec_timeout, &byte_result );
+		extractSAD( address ), conf->settings.spoll_usec_timeout, &byte_result );
 	if( retval < 0 )
 	{
 		if( errno == ETIMEDOUT )

@@ -68,7 +68,7 @@ ssize_t read_data( ibConf_t *conf, uint8_t *buffer, size_t count )
 	read_cmd.buffer = buffer;
 	read_cmd.count = count;
 
-	set_timeout( board, conf->usec_timeout );
+	set_timeout( board, conf->settings.usec_timeout );
 
 	conf->end = 0;
 
@@ -101,7 +101,7 @@ ssize_t my_ibrd( ibConf_t *conf, uint8_t *buffer, size_t count )
 	if( conf->is_interface == 0 )
 	{
 		// set up addressing
-		if( InternalReceiveSetup( conf, packAddress( conf->pad, conf->sad ) ) < 0 )
+		if( InternalReceiveSetup( conf, packAddress( conf->settings.pad, conf->settings.sad ) ) < 0 )
 		{
 			return -1;
 		}
@@ -154,7 +154,7 @@ int ibrdf(int ud, const char *file_path )
 	if( conf->is_interface == 0 )
 	{
 		// set up addressing
-		if( InternalReceiveSetup( conf, packAddress( conf->pad, conf->sad ) ) < 0 )
+		if( InternalReceiveSetup( conf, packAddress( conf->settings.pad, conf->settings.sad ) ) < 0 )
 		{
 			return exit_library( ud, 1 );
 		}

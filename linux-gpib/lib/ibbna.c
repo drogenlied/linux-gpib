@@ -51,8 +51,8 @@ int my_ibbna( ibConf_t *conf, unsigned int new_board_index )
 		return -1;
 	}
 
-	old_board_index = conf->board;
-	conf->board = board_conf->board;
+	old_board_index = conf->settings.board;
+	conf->settings.board = board_conf->settings.board;
 
 	if( ibBoardOpen( interfaceBoard( conf ) ) < 0 )
 	{

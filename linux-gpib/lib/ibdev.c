@@ -66,19 +66,21 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 	ibBoard_t *board;
 
 	init_ibconf( &new_conf );
-	new_conf.pad = pad;
-	new_conf.sad = sad;                        /* device address                   */
-	new_conf.board = minor;                         /* board number                     */
-	new_conf.eos = eos;                           /* local eos modes                  */
-	new_conf.eos_flags = eos_flags;
-	new_conf.usec_timeout = usec_timeout;
+	new_conf.settings.pad = pad;
+	new_conf.settings.sad = sad;                        /* device address                   */
+	new_conf.settings.board = minor;                         /* board number                     */
+	new_conf.settings.eos = eos;                           /* local eos modes                  */
+	new_conf.settings.eos_flags = eos_flags;
+	new_conf.settings.usec_timeout = usec_timeout;
 	if( send_eoi )
-		new_conf.send_eoi = 1;
+		new_conf.settings.send_eoi = 1;
 	else
-		new_conf.send_eoi = 0;
+		new_conf.settings.send_eoi = 0;
+	new_conf.defaults = new_conf.settings;
+	
 	// check if it is an interface board
 	board = &ibBoard[ minor ];
-	if( gpib_address_equal( board->pad, board->sad, new_conf.pad, new_conf.sad ) )
+	if( gpib_address_equal( board->pad, board->sad, new_conf.settings.pad, new_conf.settings.sad ) )
 	{
 		new_conf.is_interface = 1;
 	}else

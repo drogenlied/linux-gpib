@@ -41,32 +41,37 @@ struct async_operation
 	volatile int in_progress;
 };
 
+typedef struct
+{
+	int pad;	/* device primary address */
+	int sad;	/* device secodnary address (negative disables) */
+	int board;	/* board index */
+	unsigned int usec_timeout;
+	unsigned int spoll_usec_timeout;
+	unsigned int ppoll_usec_timeout;
+	char eos;                           /* eos character */
+	int eos_flags;
+	int ppoll_config;	/* current parallel poll configuration */
+	unsigned send_eoi : 1;	/* assert EOI at end of writes */
+	unsigned local_lockout : 1;	/* send local lockout when device is brought online */
+	unsigned local_ppc : 1;	/* enable local configuration of board's parallel poll response */
+	unsigned readdr : 1;	/* useless, exists for compatibility only at present */
+}descriptor_settings_t;
 
 typedef struct ibConfStruct
 {
 	char name[100];		/* name of the device (for ibfind())     */
-	int pad;		/* device primary address */
-	int sad;		/* device secodnary address (negative disables) */
+	descriptor_settings_t defaults;	/* initial settings stored so ibonl() can restore them */
+	descriptor_settings_t settings;	/* various software settings for this descriptor */
 	char init_string[100];               /* initialization string (optional) */
-	int board;                         /* board number                     */
-	char eos;                           /* eos character */
-	int eos_flags;
 	int flags;                         /* some flags, deprecated          */
-	unsigned int usec_timeout;
-	unsigned int spoll_usec_timeout;
-	unsigned int ppoll_usec_timeout;
 	struct async_operation async;	/* used by asynchronous operations ibcmda(), ibrda(), etc. */
-	int ppoll_config;	/* current parallel poll configuration */
-	unsigned send_eoi : 1;	/* assert EOI at end of writes */
+	unsigned end : 1;	/* EOI asserted or EOS received at end of IO operation */
 	unsigned is_interface : 1;	/* is interface board */
 	unsigned dev_is_open : 1;
 	unsigned board_is_open : 1;
 	unsigned has_lock : 1;
-	unsigned end : 1;	/* EOI asserted or EOS received at end of IO operation */ 
-	unsigned local_lockout : 1;	/* send local lockout when device is brought online */
-	unsigned local_ppc : 1;	/* enable local configuration of board's parallel poll response */
 	unsigned timed_out : 1;		/* io operation timed out */
-	unsigned readdr : 1;	/* useless, exists for compatibility only at present */
 } ibConf_t;
 
 /*---------------------------------------------------------------------- */

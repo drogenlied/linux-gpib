@@ -69,7 +69,7 @@ int ibtrg( int ud )
 		return exit_library( ud, 1 );
 	}
 
-	addressList[ 0 ] = packAddress( conf->pad, conf->sad );
+	addressList[ 0 ] = packAddress( conf->settings.pad, conf->settings.sad );
 	addressList[ 1 ] = NOADDR;
 
 	retval = my_trigger( conf, addressList );

@@ -31,7 +31,7 @@ int internal_ibrpp( ibConf_t *conf, char *result )
 		return -1;
 	}
 
-	set_timeout( board, conf->ppoll_usec_timeout );
+	set_timeout( board, conf->settings.ppoll_usec_timeout );
 
 	retval = ioctl( board->fileno, IBRPP, &poll_byte );
 	if( retval < 0 )

@@ -44,8 +44,9 @@ int ibfind( const char *dev )
 
 	conf = &ibFindConfigs[ index ];
 
-	uDesc = my_ibdev( conf->board, conf->pad, conf->sad, conf->usec_timeout,
-		conf->send_eoi, conf->eos, conf->eos_flags );
+	uDesc = my_ibdev( conf->settings.board, conf->settings.pad, conf->settings.sad,
+		conf->settings.usec_timeout, conf->settings.send_eoi,
+		conf->settings.eos, conf->settings.eos_flags );
 	if(uDesc < 0)
 	{
 		fprintf(stderr, "libgpib: ibfind failed to get descriptor\n");
