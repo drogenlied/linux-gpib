@@ -52,6 +52,7 @@ static int ppc_ioctl( gpib_board_t *board, unsigned long arg );
 static int query_board_rsv_ioctl( gpib_board_t *board, unsigned long arg );
 static int interface_clear_ioctl( gpib_board_t *board, unsigned long arg );
 static int select_pci_ioctl( gpib_board_t *board, unsigned long arg );
+static int event_ioctl( gpib_board_t *board, unsigned long arg );
 
 static int cleanup_open_devices( gpib_file_private_t *file_priv, gpib_board_t *board );
 
@@ -176,7 +177,6 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 	if( board->interface == NULL )
 	{
 		printk("gpib: no gpib board configured on /dev/gpib%i\n", minor);
-		up( &board->mutex );
 		return -ENODEV;
 	}
 
@@ -226,6 +226,9 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			break;
 		case IBCMD:
 			return command_ioctl( board, arg );
+			break;
+		case IBEVENT:
+			return event_ioctl( board, arg );
 			break;
 		case IBOPENDEV:
 			return open_dev_ioctl( filep, board, arg );
@@ -981,5 +984,22 @@ static int select_pci_ioctl( gpib_board_t *board, unsigned long arg )
 	board->pci_bus = selection.pci_bus;
 	board->pci_slot = selection.pci_slot;
 	
+	return 0;
+}
+
+static int event_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	event_ioctl_t user_event;
+	int retval;
+	short event;
+
+	retval = pop_gpib_event( &board->event_queue, &event );
+	if( retval < 0 ) return retval;
+
+	user_event = event;
+
+	retval = copy_to_user( (void*) arg, &user_event, sizeof( user_event ) );
+	if( retval ) return -EFAULT;
+
 	return 0;
 }
