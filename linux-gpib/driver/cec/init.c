@@ -164,11 +164,11 @@ int cec_generic_attach(gpib_board_t *board)
 	return 0;
 }
 
-void cec_init(cec_private_t *cec_priv)
+void cec_init( cec_private_t *cec_priv, const gpib_board_t *board )
 {
 	nec7210_private_t *nec_priv = &cec_priv->nec7210_priv;
 
-	nec7210_board_reset(nec_priv);
+	nec7210_board_reset( nec_priv, board );
 
 	// enable interrupts for 7210
 	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
@@ -231,7 +231,7 @@ int cec_pci_attach(gpib_board_t *board)
 	}
 	cec_priv->irq = cec_priv->pci_device->irq;
 
-	cec_init(cec_priv);
+	cec_init( cec_priv, board );
 
 	// enable interrupts on plx chip
 	outl(LINTR1_EN_BIT | LINTR1_POLARITY_BIT | PCI_INTR_EN_BIT,
@@ -256,7 +256,7 @@ void cec_pci_detach(gpib_board_t *board)
 		}
 		if(nec_priv->iobase)
 		{
-			nec7210_board_reset(nec_priv);
+			nec7210_board_reset( nec_priv, board );
 			pci_release_regions(cec_priv->pci_device);
 		}
 	}

@@ -37,7 +37,10 @@ ssize_t ibwrt(gpib_board_t *board, uint8_t *buf, size_t cnt, int send_eoi)
 
 	if(cnt == 0) return 0;
 
-	board->interface->go_to_standby(board);
+	if( board->master )
+	{
+		board->interface->go_to_standby(board);
+	}
 	// mark io in progress
 	clear_bit(CMPL_NUM, &board->status);
 	osStartTimer( board, board->usec_timeout );

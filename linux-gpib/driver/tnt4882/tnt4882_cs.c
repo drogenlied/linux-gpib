@@ -707,7 +707,7 @@ int ni_pcmcia_attach(gpib_board_t *board)
 	}
 	tnt_priv->irq = dev_list->irq.AssignedIRQ;
 
-	tnt4882_init( tnt_priv );
+	tnt4882_init( tnt_priv, board );
 
 	return 0;
 }
@@ -726,7 +726,7 @@ void ni_pcmcia_detach(gpib_board_t *board)
 		}
 		if(nec_priv->iobase)
 		{
-			nec7210_board_reset(nec_priv);
+			nec7210_board_reset( nec_priv, board );
 		}
 	}
 	tnt4882_free_private(board);

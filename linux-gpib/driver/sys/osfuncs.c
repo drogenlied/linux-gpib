@@ -180,6 +180,12 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 		case IBAUTOPOLL:
 			return autopoll_ioctl( board );
 			break;
+		case IBPAD:
+			return pad_ioctl( board, arg );
+			break;
+		case IBSAD:
+			return sad_ioctl( board, arg );
+			break;
 		default:
 			break;
 	}
@@ -239,12 +245,6 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			break;
 		case IBLINES:
 			return line_status_ioctl( board, arg );
-			break;
-		case IBPAD:
-			return pad_ioctl( board, arg );
-			break;
-		case IBSAD:
-			return sad_ioctl( board, arg );
 			break;
 		case IBEOS:
 			return eos_ioctl( board, arg );

@@ -638,7 +638,7 @@ int cb_pcmcia_attach(gpib_board_t *board)
 	}
 	cb_priv->irq = dev_list->irq.AssignedIRQ;
 
-	cb7210_init(cb_priv);
+	cb7210_init( cb_priv, board );
 
 	return 0;
 }

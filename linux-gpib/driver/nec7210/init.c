@@ -34,7 +34,7 @@ MODULE_LICENSE("GPL");
 // size of modbus pci memory io region
 static const int iomem_size = 0x2000;
 
-void nec7210_board_reset(nec7210_private_t *priv)
+void nec7210_board_reset( nec7210_private_t *priv, const gpib_board_t *board )
 {
 #ifdef MODBUS_PCI
 	GPIBout(0x20, 0xff); /* enable controller mode */
@@ -61,19 +61,10 @@ void nec7210_board_reset(nec7210_private_t *priv)
 	write_byte(priv, PPR | HR_PPU, AUXMR);
 
 	/* set GPIB address */
-	write_byte(priv, 0 & ADDRESS_MASK, ADR); //XXX
+	nec7210_primary_address( board, priv, board->pad );
 	priv->admr_bits = HR_TRM0 | HR_TRM1;
-#if 0
-	/* enable secondary addressing */
-	write_byte(priv, HR_ARS | (SAD & ADDRESS_MASK), ADR);
-	priv->admr_bits |= HR_ADM1;
-	write_byte(priv, priv->admr_bits, ADMR);
-#else
-	/* disable secondary addressing */
-	write_byte(priv, HR_ARS | HR_DT | HR_DL, ADR);
-	priv->admr_bits |= HR_ADM0;
-	write_byte(priv, priv->admr_bits, ADMR);
-#endif
+
+	nec7210_secondary_address( board, priv, board->sad, board->sad >= 0 );
 
 	// holdoff on all data	XXX record current handshake state somewhere
 	priv->auxa_bits = AUXRA;

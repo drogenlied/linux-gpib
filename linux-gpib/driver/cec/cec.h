@@ -59,7 +59,7 @@ void cec_interrupt(int irq, void *arg, struct pt_regs *registerp);
 // utility functions
 void cec_free_private(gpib_board_t *board);
 int cec_generic_attach(gpib_board_t *board);
-void cec_init(cec_private_t *priv);
+void cec_init( cec_private_t *priv, const gpib_board_t *board );
 
 // offset between consecutive nec7210 registers
 static const int cec_reg_offset = 1;

@@ -193,11 +193,11 @@ int cb7210_generic_attach(gpib_board_t *board)
 	return 0;
 }
 
-void cb7210_init(cb7210_private_t *cb_priv)
+void cb7210_init(cb7210_private_t *cb_priv, const gpib_board_t *board )
 {
 	nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
 
-	nec7210_board_reset(nec_priv);
+	nec7210_board_reset( nec_priv, board );
 
 	// XXX set clock register for 20MHz? driving frequency
 	write_byte(nec_priv, ICR | 8, AUXMR);
@@ -266,7 +266,7 @@ int cb_pci_attach(gpib_board_t *board)
 		INBOX_INTR_CS_BIT;
 	outl(bits, cb_priv->amcc_iobase + INTCSR_REG );
 
-	cb7210_init(cb_priv);
+	cb7210_init( cb_priv, board );
 
 	return 0;
 }
@@ -287,7 +287,7 @@ void cb_pci_detach(gpib_board_t *board)
 		}
 		if(nec_priv->iobase)
 		{
-			nec7210_board_reset(nec_priv);
+			nec7210_board_reset( nec_priv, board );
 			pci_release_regions(cb_priv->pci_device);
 		}
 	}
@@ -359,7 +359,7 @@ int cb_isa_attach(gpib_board_t *board)
 	}
 	cb_priv->irq = board->ibirq;
 
-	cb7210_init(cb_priv);
+	cb7210_init( cb_priv, board );
 
 	return 0;
 }
@@ -378,7 +378,7 @@ void cb_isa_detach(gpib_board_t *board)
 		}
 		if(nec_priv->iobase)
 		{
-			nec7210_board_reset(nec_priv);
+			nec7210_board_reset( nec_priv, board );
 			release_region(nec_priv->iobase, cb7210_iosize);
 		}
 	}

@@ -73,13 +73,13 @@ int nec7210_serial_poll_response(gpib_board_t *board, nec7210_private_t *priv, u
 	return 0;
 }
 
-void nec7210_primary_address(gpib_board_t *board, nec7210_private_t *priv, unsigned int address)
+void nec7210_primary_address(const gpib_board_t *board, nec7210_private_t *priv, unsigned int address)
 {
 	// put primary address in address0
 	write_byte(priv, address & ADDRESS_MASK, ADR);
 }
 
-void nec7210_secondary_address(gpib_board_t *board, nec7210_private_t *priv, unsigned int address, int enable)
+void nec7210_secondary_address(const gpib_board_t *board, nec7210_private_t *priv, unsigned int address, int enable)
 {
 	if(enable)
 	{

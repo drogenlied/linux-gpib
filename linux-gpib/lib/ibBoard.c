@@ -90,6 +90,7 @@ int ibBoardOpen( int bd, int flags )
 {
 	int fd;
 	ibBoard_t *board = &ibBoard[ bd ];
+	int retval;
 
 	if( board->fileno < 0 )
 	{
@@ -102,6 +103,20 @@ int ibBoardOpen( int bd, int flags )
 			return ERR;
 		}
 		board->fileno = fd;
+
+		retval = ioctl( board->fileno, IBPAD, &board->pad );
+		if( retval < 0 )
+		{
+			fprintf( stderr, "failed to init interface pad\n" );
+			return ERR;
+		}
+		retval = ioctl( board->fileno, IBSAD, &board->sad );
+		if( retval < 0 )
+		{
+			fprintf( stderr, "failed to init interface sad\n" );
+			return ERR;
+		}
+
 		if( fork_autopoll_process( board ) < 0)
 		{
 			ibBoardClose( bd );

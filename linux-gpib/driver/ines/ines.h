@@ -62,7 +62,7 @@ void ines_interrupt(int irq, void *arg, struct pt_regs *registerp);
 // utility functions
 void ines_free_private(gpib_board_t *board);
 int ines_generic_attach(gpib_board_t *board);
-void ines_init(ines_private_t *priv);
+void ines_init( ines_private_t *priv, const gpib_board_t *board );
 
 // pcmcia init/cleanup
 int ines_pcmcia_init_module(void);

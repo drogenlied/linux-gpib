@@ -655,7 +655,7 @@ int ines_pcmcia_attach(gpib_board_t *board)
 	}
 	ines_priv->irq = dev_list->irq.AssignedIRQ;
 
-	ines_init(ines_priv);
+	ines_init( ines_priv, board );
 
 	return 0;
 }

@@ -201,11 +201,11 @@ int ines_generic_attach(gpib_board_t *board)
 	return 0;
 }
 
-void ines_init(ines_private_t *ines_priv)
+void ines_init( ines_private_t *ines_priv, const gpib_board_t *board )
 {
 	nec7210_private_t *nec_priv = &ines_priv->nec7210_priv;
 
-	nec7210_board_reset(nec_priv);
+	nec7210_board_reset( nec_priv, board );
 
 	// enable interrupts for 7210
 	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
@@ -301,7 +301,7 @@ int ines_pci_attach(gpib_board_t *board)
 		outl(bits, ines_priv->amcc_iobase + AMCC_PASS_THRU_REG);
 		outl(AMCC_ADDON_INTR_ENABLE_BIT, ines_priv->amcc_iobase + AMCC_INTCS_REG);
 	}
-	ines_init(ines_priv);
+	ines_init( ines_priv, board );
 
 	return 0;
 }
@@ -322,7 +322,7 @@ void ines_pci_detach(gpib_board_t *board)
 		}
 		if(nec_priv->iobase)
 		{
-			nec7210_board_reset(nec_priv);
+			nec7210_board_reset( nec_priv, board );
 			pci_release_regions(ines_priv->pci_device);
 		}
 	}

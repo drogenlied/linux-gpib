@@ -203,9 +203,9 @@ int pc2_generic_attach(gpib_board_t *board)
 	return 0;
 }
 
-void pc2_init(nec7210_private_t *nec_priv)
+void pc2_init( nec7210_private_t *nec_priv, const gpib_board_t *board )
 {
-	nec7210_board_reset(nec_priv);
+	nec7210_board_reset( nec_priv, board );
 
 	// enable interrupts
 	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
@@ -252,7 +252,7 @@ int pc2_attach(gpib_board_t *board)
 	}
 	pc2_priv->irq = board->ibirq;
 
-	pc2_init(nec_priv);
+	pc2_init( nec_priv, board );
 
 	return 0;
 }
@@ -275,7 +275,7 @@ void pc2_detach(gpib_board_t *board)
 		}
 		if(nec_priv->iobase)
 		{
-			nec7210_board_reset(nec_priv);
+			nec7210_board_reset( nec_priv, board );
 			release_region(nec_priv->iobase, pc2_iosize);
 		}
 		if(nec_priv->dma_buffer)
@@ -356,7 +356,7 @@ int pc2a_attach(gpib_board_t *board)
 	}
 	pc2_priv->irq = board->ibirq;
 
-	pc2_init(nec_priv);
+	pc2_init( nec_priv, board );
 
 	// make sure interrupt is clear
 	outb(0xff , CLEAR_INTR_REG(pc2_priv->irq));
@@ -383,7 +383,7 @@ void pc2a_detach(gpib_board_t *board)
 		}
 		if(nec_priv->iobase)
 		{
-			nec7210_board_reset(nec_priv);
+			nec7210_board_reset( nec_priv, board );
 			for(i = 0; i < nec7210_num_registers; i++)
 				release_region(nec_priv->iobase + i * pc2a_reg_offset, 1);
 		}

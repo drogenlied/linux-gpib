@@ -82,15 +82,15 @@ extern void nec7210_enable_eos(gpib_board_t *board, nec7210_private_t *priv,
 	uint8_t eos_bytes, int compare_8_bits);
 extern void nec7210_disable_eos(gpib_board_t *board, nec7210_private_t *priv);
 extern unsigned int nec7210_update_status(gpib_board_t *board, nec7210_private_t *priv);
-extern void nec7210_primary_address(gpib_board_t *board,
+extern void nec7210_primary_address( const gpib_board_t *board,
 	nec7210_private_t *priv, unsigned int address);
-extern void nec7210_secondary_address(gpib_board_t *board, nec7210_private_t *priv,
+extern void nec7210_secondary_address( const gpib_board_t *board, nec7210_private_t *priv,
 	unsigned int address, int enable);
 extern int nec7210_parallel_poll(gpib_board_t *board, nec7210_private_t *priv, uint8_t *result);
 extern int nec7210_serial_poll_response(gpib_board_t *board, nec7210_private_t *priv, uint8_t status);
 
 // utility functions
-extern void nec7210_board_reset(nec7210_private_t *priv);
+extern void nec7210_board_reset( nec7210_private_t *priv, const gpib_board_t *board );
 
 // wrappers for io functions
 extern uint8_t nec7210_ioport_read_byte(nec7210_private_t *priv, unsigned int register_num);

@@ -172,7 +172,7 @@ void tnt4882_free_private(gpib_board_t *board)
 	}
 }
 
-void tnt4882_init( tnt4882_private_t *tnt_priv )
+void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 {
 	nec7210_private_t *nec_priv = &tnt_priv->nec7210_priv;
 	const unsigned long iobase = nec_priv->iobase;
@@ -193,7 +193,7 @@ void tnt4882_init( tnt4882_private_t *tnt_priv )
 	tnt_priv->io_write(AUX_7210, iobase +  SWAPPED_AUXCR);
 	udelay(1);
 
-	nec7210_board_reset( &tnt_priv->nec7210_priv );
+	nec7210_board_reset( &tnt_priv->nec7210_priv, board );
 
 	// turn off one chip mode and dma
 	tnt_priv->io_write( NODMA , iobase + HSSEL);
@@ -266,7 +266,7 @@ int ni_pci_attach(gpib_board_t *board)
 	}
 	tnt_priv->irq = mite_irq(tnt_priv->mite);
 
-	tnt4882_init( tnt_priv );
+	tnt4882_init( tnt_priv, board );
 
 	return 0;
 }
@@ -285,7 +285,7 @@ void ni_pci_detach(gpib_board_t *board)
 		}
 		if(nec_priv->iobase)
 		{
-			nec7210_board_reset(nec_priv);
+			nec7210_board_reset( nec_priv, board );
 		}
 		if(tnt_priv->mite)
 			mite_unsetup(tnt_priv->mite);
@@ -328,7 +328,7 @@ int ni_isa_attach(gpib_board_t *board)
 	}
 	tnt_priv->irq = board->ibirq;
 
-	tnt4882_init( tnt_priv );
+	tnt4882_init( tnt_priv, board );
 
 	return 0;
 }
@@ -347,7 +347,7 @@ void ni_isa_detach(gpib_board_t *board)
 		}
 		if(nec_priv->iobase)
 		{
-			nec7210_board_reset(nec_priv);
+			nec7210_board_reset( nec_priv, board );
 			release_region(nec_priv->iobase, atgpib_iosize);
 		}
 	}

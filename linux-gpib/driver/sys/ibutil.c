@@ -15,7 +15,8 @@ int ibpad( gpib_board_t *board, unsigned int addr )
 	}else
 	{
 		board->pad = addr;
-		board->interface->primary_address( board, board->pad );
+		if( board->online )
+			board->interface->primary_address( board, board->pad );
 	}
 	return 0;
 }
@@ -36,13 +37,15 @@ int ibsad( gpib_board_t *board, int addr )
 	}else
 	{
 		board->sad = addr;
-		if( board->sad < 0 ) board->sad = -1;
-		if( board->sad >= 0 )
+		if( board->online )
 		{
-			board->interface->secondary_address( board, board->sad, 1 );
-		}else
-		{
-			board->interface->secondary_address( board, 0, 0 );
+			if( board->sad >= 0 )
+			{
+				board->interface->secondary_address( board, board->sad, 1 );
+			}else
+			{
+				board->interface->secondary_address( board, 0, 0 );
+			}
 		}
 	}
 	return 0;
