@@ -106,7 +106,7 @@ D) Loading the driver module
 
 	alias char-major-160 gpib_common
 	alias char-major-160-0 tnt4882
-	post-install tnt4882 export PATH=/sbin:/usr/sbin:/usr/local/sbin:$PATH;gpib_config --minor 0
+	post-install tnt4882 PATH=/sbin:/usr/sbin:/usr/local/sbin:$PATH;gpib_config --minor 0
 
 	to /etc/modules.conf, which would autoload the tnt4882.o module when
 	the library is used.
