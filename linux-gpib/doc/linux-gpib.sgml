@@ -3319,7 +3319,7 @@ volatile int ibsta;
 </refmeta>
 <refnamediv>
 	<refname>PPollUnconfig</refname>
-	<refpurpose>disable a device's parallel poll response</refpurpose>
+	<refpurpose>disable devices' parallel poll response</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
@@ -3338,6 +3338,57 @@ volatile int ibsta;
 	<para>
 	PPollUnconfig() configures the devices specified by <parameter>addressList</parameter>
 	to ignore parallel polls.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-rcvrespmsg">
+<refmeta>
+	<refentrytitle>RcvRespMsg</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>RcvRespMsg</refname>
+	<refpurpose>read data</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>RcvRespMsg</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>void *<parameter>buffer</parameter></paramdef>
+		<paramdef>long <parameter>count</parameter></paramdef>
+		<paramdef>long <parameter>termination</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	RcvRespMsg() reads data from the bus.
+	A device must already have been addressed as talker (and the
+	board as listener) before calling this function.  Addressing may
+	be accomplished with the
+	<link LINKEND="reference-function-receivesetup">ReceiveSetup()</link>
+	function.
+	</para>
+	<para>
+	Up to <parameter>count</parameter> bytes are read into the array
+	specified by <parameter>buffer</parameter>.  The <parameter>termination</parameter>
+	argument specifies the 8-bit end-of-string character whose
+	reception will terminate a read.  <parameter>termination</parameter>
+	can also be set to the 'STOPend' constant, in which case no
+	end-of-string character will be used.  Assertion of the EOI line
+	will always end a read.
+	</para>
+	<para>
+	You may find it simpler to use the slightly higher level function
+	<link LINKEND="reference-function-receive">Receive()</link>, since
+	it does not require
+	addressing and reading of data to be performed separately.
 	</para>
 </refsect1>
 </refentry>
@@ -3376,6 +3427,82 @@ volatile int ibsta;
 	<link LINKEND="reference-function-allspoll">AllSPoll()</link>.
 	Serial polls may also be conducted with the 'traditional API' function
 	<link LINKEND="reference-function-ibrsp">ibrsp()</link>.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-receive">
+<refmeta>
+	<refentrytitle>Receive</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>Receive</refname>
+	<refpurpose>perform addressing and read data</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>Receive</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>Addr4882_t <parameter>address</parameter></paramdef>
+		<paramdef>void *<parameter>buffer</parameter></paramdef>
+		<paramdef>long <parameter>count</parameter></paramdef>
+		<paramdef>long <parameter>termination</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	Receive() performs the necessary addressing, then reads data from the device
+	specified by <parameter>address</parameter>.
+	It is equivalent to a
+	<link LINKEND="reference-function-receivesetup">ReceiveSetup()</link>
+	call followed by a
+	<link LINKEND="reference-function-rcvrespmsg">RcvRespMsg()</link>
+	call.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-receivesetup">
+<refmeta>
+	<refentrytitle>ReceiveSetup</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ReceiveSetup</refname>
+	<refpurpose>perform addressing for a read</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>ReceiveSetup</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>Addr4882_t <parameter>address</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ReceiveSetup() addresses the device specified by <parameter>address</parameter>
+	as talker, and addresses the interface board as listener.  A subsequent
+	<link LINKEND="reference-function-rcvrespmsg">RcvRespMsg()</link> call
+	will read data from the device.
+	</para>
+	<para>
+	You may find it simpler to use the slightly higher level function
+	<link LINKEND="reference-function-receive">Receive()</link>, since
+	it does not require
+	addressing and reading of data to be performed separately.
 	</para>
 </refsect1>
 </refentry>
