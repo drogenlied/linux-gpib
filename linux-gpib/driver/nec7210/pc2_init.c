@@ -344,6 +344,7 @@ void pc2a_detach(gpib_driver_t *driver)
 
 	if(pc2_priv)
 	{
+		nec_priv = &pc2_priv->nec7210_priv;
 		if(nec_priv->dma_channel)
 		{
 			free_dma(nec_priv->dma_channel);
