@@ -24,6 +24,8 @@
 #include <asm/io.h>
 #include <gpib_buffer.h>
 
+#include "cb7210.h"
+
 extern ssize_t nec7210_read(uint8_t *buffer, size_t length, int *end);
 extern ssize_t nec7210_write(uint8_t *buffer, size_t length, int send_eoi);
 extern ssize_t nec7210_command(uint8_t *buffer, size_t length);
@@ -42,10 +44,9 @@ extern int nec7210_serial_poll_response(uint8_t status);
 
 extern unsigned long ibbase;	/* base addr of GPIB interface registers  */
 extern unsigned long remapped_ibbase;	// ioremapped memory io address
-
 extern unsigned int ibirq;	/* interrupt request line for GPIB (1-7)  */
 extern unsigned int ibdma ;      /* DMA channel                            */
-extern struct pci_dev *ib_pci_dev;	// pci_dev for plug and play boards
+extern struct pci_dev *pci_dev_ptr;	// pci_dev for plug and play boards
 
 extern volatile int noTimo;     /* timeout flag */
 extern int          pgmstat;    /* Program state */
@@ -56,6 +57,7 @@ extern gpib_buffer_t *read_buffer, *write_buffer;
 // interrupt service routines
 void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp);
 void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp);
+void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
 // boolean values that signal various conditions
 extern volatile int write_in_progress;	// data can be sent

@@ -42,6 +42,27 @@ void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	outb(0xff , CLEAR_INTR_REG(ibirq) );
 }
 
+void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp )
+{
+	int bits, hs_status;
+
+	// read incoming mailbox to clear mailbox full flag
+	inl(amcc_iobase + INCOMING_MAILBOX_REG(3));
+	// clear amccs5933 interrupt
+	bits = INBOX_FULL_INTR_BIT | INBOX_BYTE_BITS(3) | INBOX_SELECT_BITS(3) |
+		INBOX_INTR_CS_BIT;
+	outl(bits, amcc_iobase + INTCSR_REG );
+
+	if((hs_status = GPIBin(HS_STATUS)))
+	{
+		GPIBout(HS_MODE, HS_CLR_SRQ_INT | HS_CLR_EOI_INT |
+			HS_CLR_EMPTY_INT | HS_CLR_HF_INT);
+		printk("gpib: cbhs interrupt? 0x%x\n", hs_status);
+	}
+
+	nec7210_interrupt(irq, arg, registerp);
+}
+
 void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 {
 	int status1, status2, address_status;

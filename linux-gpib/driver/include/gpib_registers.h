@@ -90,9 +90,7 @@
 #define ADR0	(0x6 * NEC7210_REG_OFFSET)
 #define ADR1	(0x7 * NEC7210_REG_OFFSET)
 
-#ifdef NIPCIIa
 #define CLEAR_INTR_REG(irq)	(0x2f0 + (irq))	// interrupt clear register address
-#endif
 
 #ifdef CBI_4882
 
