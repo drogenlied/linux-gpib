@@ -1,5 +1,16 @@
 Linux GPIB Package changelog
 
+3.1.93: Added ibwrti() and ibrdi() to Perl binding, fixed Perl
+bindings for ibevent(), iblines(), ibrpp(), and ibrsp().
+Added isapnp support for NI AT-GPIB/TNT.  Fixed
+accelerated interface for NI ISA cards.  Added php binding from
+Michel Billaud.  Backward-compatible updates to config file format.
+New, docbook-based documentation (also online at
+http://linux-gpib.sourceforge.net/doc/index.html).  Added ibist().
+Fixed tnt4882 driver when monitoring EOI line with iblines().
+Fixed board-level ibloc().  Added recognition of CPCI-GPIB board
+to cb7210 driver (Sebastian Prassl).
+
 3.1.92: Fixed compilation with PCMCIA support enabled.  No other
 changes.
 
