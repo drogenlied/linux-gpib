@@ -23,9 +23,11 @@ extern gpib_buffer_t *read_buffer, *write_buffer;
 void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
 extern volatile int write_in_progress;	// boolean value that signals whether data can be sent
+extern volatile int command_out_ready;	// boolean value that signals when command can be sent
 
 extern wait_queue_head_t nec7210_write_wait;
 extern wait_queue_head_t nec7210_read_wait;
+extern wait_queue_head_t nec7210_status_wait;
 
 #define LOW_PORT 0x2e1
 

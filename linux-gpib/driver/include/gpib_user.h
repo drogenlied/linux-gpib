@@ -1,17 +1,26 @@
 
 /* IBSTA status bits (returned by all functions) */
 
-#define ERR	 (1 << 15)	/* Function call terminated on error */
-#define TIMO	 (1 << 14)	/* Time limit on I/O or wait function exceeded */
-#define END	 (1 << 13)	/* EOI terminated the ibrd call */
+#define ERR_NUM	15
+#define ERR	 (1 << ERR_NUM)	/* Function call terminated on error */
+#define TIMO_NUM	14
+#define TIMO	 (1 << TIMO_NUM)	/* Time limit on I/O or wait function exceeded */
+#define END_NUM	13
+#define END	 (1 << END_NUM)	/* EOI terminated the ibrd call */
 #define SRQI_NUM	12
 #define SRQI	 (1 << SRQI_NUM)	/* SRQ is asserted */
-#define RQS      (1 << 11)      /* Device requesting Service */
-#define CMPL	 (1 <<  8)	/* I/O is complete (should always be set) */
-#define CIC	 (1 <<  5)	/* GPIB interface is Controller-in-Charge */
-#define ATN	 (1 <<  4)	/* Attention is asserted */
-#define TACS	 (1 <<  3)	/* GPIB interface is addressed as Talker */
-#define LACS	 (1 <<  2)	/* GPIB interface is addressed as Listener */
+#define RQS_NUM	11
+#define RQS      (1 << RQS_NUM)      /* Device requesting Service */
+#define CMPL_NUM	8
+#define CMPL	 (1 <<  CMPL_NUM)	/* I/O is complete (should always be set) */
+#define CIC_NUM	5
+#define CIC	 (1 <<  CIC_NUM)	/* GPIB interface is Controller-in-Charge */
+#define ATN_NUM	4
+#define ATN	 (1 <<  ATN_NUM)	/* Attention is asserted */
+#define TACS_NUM	3
+#define TACS	 (1 <<  TACS_NUM)	/* GPIB interface is addressed as Talker */
+#define LACS_NUM	2
+#define LACS	 (1 <<  LACS_NUM)	/* GPIB interface is addressed as Listener */
 
 #define WAITBITS (TIMO | SRQI | CIC | TACS | LACS)
 
