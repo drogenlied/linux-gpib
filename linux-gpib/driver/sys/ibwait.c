@@ -35,17 +35,18 @@ static void init_wait_info( struct wait_info *winfo )
 	winfo->timed_out = 0;
 }
 
-static int wait_satisfied( struct wait_info *winfo, gpib_status_queue_t *device,
+static int wait_satisfied( struct wait_info *winfo, gpib_status_queue_t *status_queue,
 	int wait_mask, int *status, gpib_descriptor_t *desc )
 {
 	gpib_board_t *board = winfo->board;
 	int temp_status;
 
-	temp_status = general_ibstatus( board, device, 0, 0, desc );
+	temp_status = general_ibstatus( board, status_queue, 0, 0, desc );
 	if( winfo->timed_out )
 		temp_status |= TIMO;
 	else
 		temp_status &= ~TIMO;
+printk("queue %p wait mask 0x%x, status 0x%x\n", status_queue, wait_mask, temp_status );
 	if( wait_mask & temp_status )
 	{
 		*status = temp_status;
@@ -97,15 +98,15 @@ int ibwait( gpib_board_t *board, int wait_mask, int clear_mask, int set_mask,
 	int *status, unsigned long usec_timeout, gpib_descriptor_t *desc )
 {
 	int retval = 0;
-	gpib_status_queue_t *device;
+	gpib_status_queue_t *status_queue;
 	struct wait_info winfo;
 
-	if( desc->is_board == 0 ) device = NULL;
-	else device = get_gpib_status_queue( board, desc->pad, desc->sad );
+	if( desc->is_board ) status_queue = NULL;
+	else status_queue = get_gpib_status_queue( board, desc->pad, desc->sad );
 
 	if( wait_mask == 0 )
 	{
-		*status = general_ibstatus( board, device, clear_mask, set_mask, desc );
+		*status = general_ibstatus( board, status_queue, clear_mask, set_mask, desc );
 		return 0;
 	}
 
@@ -115,7 +116,7 @@ int ibwait( gpib_board_t *board, int wait_mask, int clear_mask, int set_mask,
 	startWaitTimer( &winfo );
 
 	if( wait_event_interruptible( board->wait,
-		wait_satisfied( &winfo, device, wait_mask, status, desc ) ) )
+		wait_satisfied( &winfo, status_queue, wait_mask, status, desc ) ) )
 	{
 		printk( "wait interrupted\n" );
 		retval = -ERESTARTSYS;
@@ -124,7 +125,7 @@ int ibwait( gpib_board_t *board, int wait_mask, int clear_mask, int set_mask,
 
 	/* make sure we only clear status bits that we are reporting */
 	if( *status & clear_mask || set_mask )
-		general_ibstatus( board, device, *status & clear_mask, set_mask, 0 );
+		general_ibstatus( board, status_queue, *status & clear_mask, set_mask, 0 );
 
 	return retval;
 }
