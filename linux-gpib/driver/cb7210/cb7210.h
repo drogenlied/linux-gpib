@@ -64,6 +64,7 @@ void cb7210_secondary_address(gpib_board_t *board, unsigned int address, int
  enable);
 int cb7210_parallel_poll(gpib_board_t *board, uint8_t *result);
 void cb7210_serial_poll_response(gpib_board_t *board, uint8_t status);
+uint8_t cb7210_serial_poll_status( gpib_board_t *board );
 void cb7210_parallel_poll_response(gpib_board_t *board, uint8_t configuration);
 
 // utility functions
