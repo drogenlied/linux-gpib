@@ -50,7 +50,7 @@ ssize_t tnt4882_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *e
 
 	if( retval < 0 )
 	{	// force immediate holdoff
-		write_byte( nec_priv, AUX_HLDI, AUXMR );
+		nec_write_byte( priv, AUX_HLDI, AUXMR );
 		set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
 		nec7210_read_data_in( board, nec_priv, &dummy );
 	}
@@ -400,10 +400,14 @@ void tnt4882_board_reset( tnt4882_private_t *tnt_priv, gpib_board_t *board )
 
 int tnt4882_allocate_private(gpib_board_t *board)
 {
+	tnt4882_private_t *tnt_priv;
+
 	board->private_data = kmalloc(sizeof(tnt4882_private_t), GFP_KERNEL);
 	if(board->private_data == NULL)
 		return -1;
-	memset(board->private_data, 0, sizeof(tnt4882_private_t));
+	tnt_priv = board->private_data;
+	memset(tnt_priv, 0, sizeof(tnt4882_private_t));
+	spin_lock_init( &tnt_priv->register_page_lock );
 	return 0;
 }
 
@@ -447,7 +451,7 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 	tnt_writeb( tnt_priv, 0x1, INTRT );
 
 	// force immediate holdoff
-	write_byte( nec_priv, AUX_HLDI, AUXMR );
+	nec_write_byte( tnt_priv, AUX_HLDI, AUXMR );
 	set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
 
 	nec7210_board_online( nec_priv, board );

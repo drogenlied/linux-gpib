@@ -63,7 +63,7 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 	unsigned long flags;
 
 	nec7210_set_handshake_mode( board, nec_priv, HR_HLDA );
-	write_byte( nec_priv, AUX_FH, AUXMR );
+	nec_write_byte( tnt_priv, AUX_FH, AUXMR );
 	nec7210_set_handshake_mode( board, nec_priv, HR_HLDE );
 
 	imr1_bits = nec_priv->reg_bits[ IMR1 ];
@@ -175,7 +175,7 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 	if( retval < 0 )
 	{
 		// force immediate holdoff
-		write_byte( nec_priv, AUX_HLDI, AUXMR );
+		nec_write_byte( tnt_priv, AUX_HLDI, AUXMR );
 		set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
 		return retval;
 	}

@@ -61,7 +61,7 @@ unsigned int tnt4882_t1_delay( gpib_board_t *board, unsigned int nano_sec )
 
 	retval = nec7210_t1_delay( board, nec_priv, nano_sec );
 	if( tnt_priv->chipset == NEC7210 ) return retval;
-	
+
 	if( nano_sec <= 350 )
 	{
 		tnt_writeb( tnt_priv, MSTD, KEYREG );
@@ -71,9 +71,9 @@ unsigned int tnt4882_t1_delay( gpib_board_t *board, unsigned int nano_sec )
 
 	if( nano_sec > 500 && nano_sec <= 1100 )
 	{
-		write_byte( nec_priv, AUXRI | USTD, AUXMR );
+		nec_write_byte( tnt_priv, AUXRI | USTD, AUXMR );
 		retval = 1100;
 	}else
-		write_byte( nec_priv, AUXRI, AUXMR );
+		nec_write_byte( tnt_priv, AUXRI, AUXMR );
 	return retval;
 }
