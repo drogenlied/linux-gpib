@@ -328,8 +328,7 @@ int read_ioctl(gpib_board_t *board, unsigned long arg)
 			remain, &end_flag);
 		if(ret < 0)
 		{
-			retval = -EIO;
-			break;
+			return -EIO;
 		}
 		copy_to_user(userbuf, board->buffer, ret);
 		remain -= ret;
