@@ -37,6 +37,8 @@ Measurement Computing
 National Instruments:
   AT-GPIB             ni_isa                            tnt4882.o          Y
                       ni_isa_accel                                         ?
+  AT-GPIB/TNT         ni_isa                            tnt4882.o          Y
+                      ni_isa_accel                                         Y
   PCI-GPIB            ni_pci                            tnt4882.o          Y
                       ni_pci_accel                                         Y
   PCI-GPIB+           ni_pci                            tnt4882.o          Y
