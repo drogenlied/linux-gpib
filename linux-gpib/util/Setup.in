@@ -1,7 +1,5 @@
 #!/bin/bash
 
-echo DIALOG is $DIALOG !
-
 CONFIG=.tmpconfig
 CONFIG_H=.tmpconfig.h
 

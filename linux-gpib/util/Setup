@@ -12,10 +12,10 @@ clear
 
 DIALOG=0
 
-if [ -x /bin/dialog -o -x /usr/bin/dialog -o -x /usr/local/bin/dialog ] ; then
-	DIALOG=dialog
-elif [ -x /bin/whiptail -o -x /usr/bin/whiptail -o /usr/local/bin/whiptail ] ; then
-	DIALOG=whiptail
+if hash dialog ; then
+	DIALOG=$(hash -t dialog)
+elif hash whiptail ; then
+	DIALOG=$(hash -t whiptail)
 fi
 
 if [ $DIALOG == 0 ] ; then
