@@ -15,7 +15,7 @@ int ibsic(gpib_board_t *board)
 {
 	if(!test_bit(CIC_NUM, &board->status))
 	{
-
+		GPIB_DPRINTK( "sending interface clear\n" );
 		board->master = 1;
 		/* set controller state */
 		board->interface->interface_clear(board, 1);                   /* assert IFC */
