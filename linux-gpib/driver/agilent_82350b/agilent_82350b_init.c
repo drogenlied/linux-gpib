@@ -38,7 +38,7 @@ int read_transfer_counter(agilent_82350b_private_t *a_priv)
 	int lo, mid, value;
 	lo = readb(a_priv->gpib_base + XFER_COUNT_LO_REG);
 	mid =readb(a_priv->gpib_base + XFER_COUNT_MID_REG);
-	value = (lo & 0xff)| ((mid << 8) & 0x7f00);
+	value = (lo & 0xff) | ((mid << 8) & 0x7f00);
 	value = ~(value - 1) & 0x7fff;
 	return value;
 }
