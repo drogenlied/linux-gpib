@@ -3,7 +3,7 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_INIT
 dnl Every other copy of the package version number gets its value from here
-AM_INIT_AUTOMAKE(linux-gpib, 3.1.96)
+AM_INIT_AUTOMAKE(linux-gpib, 3.1.96-cvs)
 
 dnl create a config.h file (Automake will add -DHAVE_CONFIG_H)
 AM_CONFIG_HEADER(config.h)
