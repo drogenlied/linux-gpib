@@ -224,8 +224,13 @@ int ni_pci_attach(gpib_device_t *device)
 	/* NAT 4882 reset */
 	udelay(1);
 	writeb(SFTRST, nec_priv->iobase + CMDR);	/* Turbo488 software reset */
+	udelay(1);
+	writeb(SETSC, nec_priv->iobase + CMDR);	
 
 	nec7210_board_reset(nec_priv);
+
+	// turn off one chip mode and dma
+	writeb(0x10, nec_priv->iobase + 0xd);	
 
 	// enable passing of nec7210 interrupts
 	writeb(0x2, nec_priv->iobase + IMR3);
@@ -303,6 +308,8 @@ int ni_isa_attach(gpib_device_t *device)
 	/* NAT 4882 reset */
 	udelay(1);
 	outb(SFTRST, nec_priv->iobase + CMDR);	/* Turbo488 software reset */
+	udelay(1);
+	writeb(SETSC, nec_priv->iobase + CMDR);	
 
 	nec7210_board_reset(nec_priv);
 

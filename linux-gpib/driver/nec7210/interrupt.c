@@ -161,7 +161,7 @@ void nec7210_interrupt(gpib_device_t *device, nec7210_private_t *priv)
 
 	spin_unlock(&device->spinlock);
 
-printk("isr1 0x%x, imr1 0x%x, isr2 0x%x, imr2 0x%x, status 0x%x\n", status1, priv->imr1_bits, status2, priv->imr2_bits, device->status);
+//printk("isr1 0x%x, imr1 0x%x, isr2 0x%x, imr2 0x%x, status 0x%x\n", status1, priv->imr1_bits, status2, priv->imr2_bits, device->status);
 }
 
 EXPORT_SYMBOL(nec7210_interrupt);

@@ -130,10 +130,14 @@ static const int atgpib_iosize = 32;
 #define	HR_DONE          (1<<0)	/* DMA done			*/
 
 /* CMDR -- Command Register */
-#define	GO		(1<<2)	/* start DMA 			*/
-#define	STOP		(1<<3)	/* stop DMA 			*/
-#define	RSTFIFO		(1<<4)	/* reset the FIFO 		*/
-#define SFTRST		0x22	/* issue a software reset 	*/
+#define	CLRSC		(unsigned char)0x2	/* clear the SC bit 		*/
+#define	SETSC		(unsigned char)0x3	/* set the SC bit 		*/
+#define	GO		(unsigned char)(1<<2)	/* start DMA 			*/
+#define	STOP		(unsigned char)(1<<3)	/* stop DMA 			*/
+#define	RSTFIFO		(unsigned char)(1<<4)	/* reset the FIFO 		*/
+#define SFTRST		(unsigned char)(1<<5)	/* issue a software reset 	*/
+#define	DU_ADD		(unsigned char)(1<<6)	/* Motorola mode dual 	  	*/
+#define	DDU_ADD		(unsigned char)(1<<7)	/* Disable dual addressing 	*/
 
 /* STS2 -- Status Register 2 */
 #define AFFN		(1<<3)	/* "A full FIFO NOT"  (0=FIFO full)  */
