@@ -20,6 +20,8 @@ IBLCL ssize_t ibcmd(gpib_device_t *device, uint8_t *buf, size_t length)
 	ssize_t ret = 0;
 	int status = ibstatus(device);
 
+	if(length == 0) return 0;
+
 	if((status & CIC) == 0)
 	{
 		printk("gpib: cannot send command when not controller-in-charge\n");
@@ -31,17 +33,17 @@ IBLCL ssize_t ibcmd(gpib_device_t *device, uint8_t *buf, size_t length)
 	if((ret = device->interface->take_control(device, 0)))
 	{
 		printk("gpib error while becoming active controller\n");
-	}else while ((count < length) &&
-		((status = ibstatus(device)) & TIMO) == 0)
+	}else
 	{
 		ret = device->interface->command(device, buf, length - count);
 		if(ret < 0)
 		{
 			printk("error writing gpib command bytes\n");
-			break;
+		}else
+		{
+			buf += ret;
+			count += ret;
 		}
-		buf += ret;
-		count += ret;
 	}
 
 	osRemoveTimer(device);

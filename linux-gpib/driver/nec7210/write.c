@@ -17,6 +17,7 @@
  ***************************************************************************/
 
 #include "board.h"
+#include <linux/string.h>
 #include <asm/dma.h>
 
 static ssize_t pio_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t *buffer, size_t length)
@@ -24,10 +25,6 @@ static ssize_t pio_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 	size_t count = 0;
 	ssize_t retval = 0;
 	unsigned long flags;
-
-	// enable 'data out' interrupts
-	priv->imr1_bits |= HR_DOIE;
-	write_byte(priv, priv->imr1_bits, IMR1);
 
 	while(count < length)
 	{
@@ -61,32 +58,28 @@ static ssize_t pio_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 		retval = -ETIMEDOUT;
 	}
 
-	// disable 'data out' interrupts
-	priv->imr1_bits &= ~HR_DOIE;
-	write_byte(priv, priv->imr1_bits, IMR1);
-
 	if(retval)
 		return retval;
 
 	return length;
 }
 
-static ssize_t dma_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t *buffer, size_t length)
+static ssize_t __dma_write(gpib_device_t *device, nec7210_private_t *priv, dma_addr_t address, size_t length)
 {
-	unsigned long flags;
+	unsigned long flags, dma_irq_flags;
 	int residue = 0;
 
+	spin_lock_irqsave(&device->spinlock, flags);
+
 	/* program dma controller */
-	flags = claim_dma_lock();
+	dma_irq_flags = claim_dma_lock();
 	disable_dma(priv->dma_channel);
 	clear_dma_ff(priv->dma_channel);
 	set_dma_count(priv->dma_channel, length);
-	set_dma_addr(priv->dma_channel, virt_to_bus(buffer));
+	set_dma_addr(priv->dma_channel, address);
 	set_dma_mode(priv->dma_channel, DMA_MODE_WRITE );
 	enable_dma(priv->dma_channel);
-	release_dma_lock(flags);
-
-	spin_lock_irqsave(&device->spinlock, flags);
+	release_dma_lock(dma_irq_flags);
 
 	// enable board's dma for output
 	priv->imr2_bits |= HR_DMAO;
@@ -94,10 +87,6 @@ static ssize_t dma_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 
 	clear_bit(WRITE_READY_BN, &priv->state);
 	set_bit(DMA_IN_PROGRESS_BN, &priv->state);
-
-	// enable 'data out' interrupts
-	priv->imr1_bits |= HR_DOIE;
-	write_byte(priv, priv->imr1_bits, IMR1);
 
 	spin_lock_irqsave(&device->spinlock, flags);
 
@@ -112,10 +101,6 @@ static ssize_t dma_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 	priv->imr2_bits &= ~HR_DMAO;
 	write_byte(priv, priv->imr2_bits, IMR2);
 
-	// disable 'data out' interrupts
-	priv->imr1_bits &= ~HR_DOIE;
-	write_byte(priv, priv->imr1_bits, IMR1);
-
 	flags = claim_dma_lock();
 	clear_dma_ff(priv->dma_channel);
 	disable_dma(priv->dma_channel);
@@ -128,15 +113,33 @@ static ssize_t dma_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t
 	return length;
 }
 
+static ssize_t dma_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t *buffer, size_t length)
+{
+	size_t remain = length;
+	size_t transfer_size;
+	ssize_t retval = 0;
+
+	while(remain > 0)
+	{
+		transfer_size = (priv->dma_buffer_length < remain) ? priv->dma_buffer_length : remain;
+		memcpy(priv->dma_buffer, buffer, transfer_size);
+		retval = __dma_write(device, priv, priv->dma_buffer_addr, transfer_size);
+		if(retval < 0) break;
+		remain -= retval;
+		buffer += retval;
+	}
+
+	if(retval < 0) return retval;
+
+	return length - remain;
+}
+
 ssize_t nec7210_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t *buffer, size_t length, int send_eoi)
 {
 	size_t count = 0;
 	ssize_t retval = 0;
 
 	if(length == 0) return 0;
-
-	/* normal handshaking, XXX necessary?*/
-//	write_byte(priv, priv->auxa_bits, AUXMR);
 
 	if(send_eoi)
 	{

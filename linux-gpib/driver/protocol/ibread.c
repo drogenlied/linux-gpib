@@ -39,24 +39,25 @@ IBLCL ssize_t ibrd(gpib_device_t *device, uint8_t *buf, size_t length, int *end_
 	ssize_t ret = 0;
 	int status = ibstatus(device);
 
+	if(length == 0) return 0;
+
 	device->interface->go_to_standby(device);
 	osStartTimer(device, timeidx);
 	// mark io in progress
 	clear_bit(CMPL_NUM, &device->status);
 	// initialize status to END not yet received
 	clear_bit(END_NUM, &device->status);
-	while ((count < length) && !(status = ibstatus(device) & TIMO)) 
+
+	ret = device->interface->read(device, buf, length - count, end_flag);
+	if(ret < 0)
 	{
-		ret = device->interface->read(device, buf, length - count, end_flag);
-		if(ret < 0)
-		{
-			printk("gpib read error\n");
-			break;
-		}
+		printk("gpib read error\n");
+	}else
+	{
 		buf += ret;
 		count += ret;
-		if(*end_flag) break;
 	}
+
 	osRemoveTimer(device);
 	// mark io completed
 	set_bit(CMPL_NUM, &device->status);

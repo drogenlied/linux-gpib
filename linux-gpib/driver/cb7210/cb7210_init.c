@@ -205,7 +205,7 @@ void cb7210_init(cb7210_private_t *cb_priv)
 
 	// enable nec7210 interrupts
 	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
-		HR_DETIE | HR_APTIE | HR_CPTIE;
+		HR_DETIE | HR_APTIE | HR_CPTIE | HR_DOIE | HR_DIIE;
 	nec_priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
 	write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
 	write_byte(nec_priv, nec_priv->imr2_bits, IMR2);

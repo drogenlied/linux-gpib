@@ -40,23 +40,19 @@ IBLCL ssize_t ibwrt(gpib_device_t *device, uint8_t *buf, size_t cnt, int more)
 	ssize_t ret = 0;
 	int status = ibstatus(device);
 
-	if(cnt == 0 && more == 0)
-	{
-		printk("gpib: ibwrt called with no data\n");
-		return -1;
-	}
+	if(cnt == 0) return 0;
+
 	device->interface->go_to_standby(device);
 	// mark io in progress
 	clear_bit(CMPL_NUM, &device->status);
 	osStartTimer(device, timeidx);
-	while ((bytes_sent < cnt) && !(ibstatus(device) & (TIMO)))
+
+	ret = device->interface->write(device, buf, cnt, !more);
+	if(ret < 0)
 	{
-		ret = device->interface->write(device, buf, cnt, !more);
-		if(ret < 0)
-		{
-			printk("gpib write error\n");
-			break;
-		}
+		printk("gpib write error\n");
+	}else
+	{
 		buf += ret;
 		bytes_sent += ret;
 	}

@@ -26,10 +26,6 @@ static ssize_t pio_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t 
 	ssize_t retval = 0;
 	unsigned long flags;
 
-	// enable 'data in' and 'end' interrupt
-	priv->imr1_bits |= HR_DIIE | HR_ENDIE;
-	write_byte(priv, priv->imr1_bits, IMR1);
-
 	while(count < length)
 	{
 		if(wait_event_interruptible(device->wait,
@@ -52,14 +48,10 @@ static ssize_t pio_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t 
 			break;
 	}
 
-	// disable 'data in' and 'end' interrupt
-	priv->imr1_bits &= ~HR_DIIE & ~HR_ENDIE;
-	write_byte(priv, priv->imr1_bits, IMR1);
-
 	return retval ? retval : count;
 }
 
-static ssize_t dma_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t *buffer, size_t length)
+static ssize_t __dma_read(gpib_device_t *device, nec7210_private_t *priv, size_t length)
 {
 	ssize_t retval = 0;
 	size_t count = 0;
@@ -76,19 +68,14 @@ static ssize_t dma_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t 
 	/* program dma controller */
 	clear_dma_ff(priv->dma_channel);
 	set_dma_count(priv->dma_channel, length);
-	set_dma_addr (priv->dma_channel, virt_to_bus(buffer));
+	set_dma_addr (priv->dma_channel, priv->dma_buffer_addr);
 	set_dma_mode(priv->dma_channel, DMA_MODE_READ);
 	release_dma_lock(dma_irq_flags);
 
 	enable_dma(priv->dma_channel);
 
-
 	set_bit(DMA_IN_PROGRESS_BN, &priv->state);
 	clear_bit(READ_READY_BN, &priv->state);
-
-	// enable 'data in' and 'end' interrupt
-	priv->imr1_bits |= HR_DIIE | HR_ENDIE;
-	write_byte(priv, priv->imr1_bits, IMR1);
 
 	// enable nec7210 dma
 	priv->imr2_bits |= HR_DMAI;
@@ -108,10 +95,6 @@ static ssize_t dma_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t 
 	priv->imr2_bits &= ~HR_DMAI;
 	write_byte(priv, priv->imr2_bits, IMR2);
 
-	// disable 'data in' and 'end' interrupt
-	priv->imr1_bits &= ~HR_DIIE & ~HR_ENDIE;
-	write_byte(priv, priv->imr1_bits, IMR1);
-
 	// record how many bytes we transferred
 	flags = claim_dma_lock();
 	clear_dma_ff(priv->dma_channel);
@@ -120,6 +103,27 @@ static ssize_t dma_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t 
 	release_dma_lock(flags);
 
 	return retval ? retval : count;
+}
+
+static ssize_t dma_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t *buffer, size_t length)
+{
+	size_t remain = length;
+	size_t transfer_size;
+	ssize_t retval = 0;
+
+	while(remain > 0)
+	{
+		transfer_size = (priv->dma_buffer_length < remain) ? priv->dma_buffer_length : remain;
+		retval = __dma_read(device, priv, transfer_size);
+		if(retval < 0) break;
+		memcpy(buffer, priv->dma_buffer, transfer_size);
+		remain -= retval;
+		buffer += retval;
+	}
+
+	if(retval < 0) return retval;
+
+	return length - remain;
 }
 
 ssize_t nec7210_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t *buffer, size_t length, int *end)
