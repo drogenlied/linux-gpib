@@ -18,7 +18,7 @@
 unsigned int pci_config_reg = 0x0000;
 unsigned int pci_status_reg = 0x0000;
 
-struct pci_dev ib_pci_dev = NULL;
+struct pci_dev *ib_pci_dev = NULL;
 
 IBLCL void bd_PCIInfo(void)
 {
