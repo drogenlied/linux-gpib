@@ -76,10 +76,6 @@ ssize_t ines_accel_read( gpib_board_t *board, uint8_t *buffer,
 	*end = 0;
 
 	if(length == 0) return 0;
-	/* chip seems to freak out if input fifo ever becomes
-	 * full (all registers read 0xff), so we'll use
-	 * transfer counter to prevent that from ever happening */
-	if(length >= in_fifo_size) length = in_fifo_size - 1;
 
 	clear_bit( DEV_CLEAR_BN, &nec_priv->state );
 
