@@ -308,9 +308,10 @@ static void gpib_config(dev_link_t *link)
 	u_char buf[64];
 	win_req_t req;
 	memreq_t mem;
+	unsigned long virt;
+
 	handle = link->handle;
 	dev = link->priv;
-	unsigned long virt;
 	
 #ifdef PCMCIA_DEBUG
 	if (pc_debug)
@@ -412,11 +413,11 @@ static void gpib_config(dev_link_t *link)
 			cs_error(link->handle, MapMemPage, i);
 			break;
 		}
-		virt = ioremap(req.Base, req.Size);
+		virt = ( unsigned long ) ioremap( req.Base, req.Size );
 		writeb( ( link->io.BasePort1 >> 2 ) & 0xff, virt + 0xf0 ); // IOWindow base
 //		writeb(COR_LEVEL_REQ | 0x30,virt+0x100);                  // LevlIrq, 32 byte IOWindow
 //		writeb(CCSR_IOIS8,virt+0x102);                  // IOis8
-		iounmap(virt);
+		iounmap( ( void* ) virt );
 //		CardServices(ReleaseWindow,handle);
 
 	} while (0);
