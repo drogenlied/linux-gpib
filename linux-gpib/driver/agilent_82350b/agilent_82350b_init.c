@@ -193,7 +193,7 @@ gpib_interface_t agilent_82350b_interface =
 	detach: agilent_82350b_detach,
 	read: agilent_82350b_accel_read,
 	write: agilent_82350b_accel_write,
-	command: agilent_82350b_accel_command,
+	command: agilent_82350b_command,
 	request_system_control: agilent_82350b_request_system_control,
 	take_control: agilent_82350b_take_control,
 	go_to_standby: agilent_82350b_go_to_standby,

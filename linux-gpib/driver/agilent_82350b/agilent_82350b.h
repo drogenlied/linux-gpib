@@ -58,7 +58,6 @@ extern gpib_interface_t agilent_82350b_interface;
 // interface functions
 ssize_t agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes);
 ssize_t agilent_82350b_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi );
-ssize_t agilent_82350b_accel_command( gpib_board_t *board, uint8_t *buffer, size_t length );
 ssize_t agilent_82350b_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes);
 ssize_t agilent_82350b_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi );
 ssize_t agilent_82350b_command( gpib_board_t *board, uint8_t *buffer, size_t length );
@@ -161,6 +160,6 @@ enum sram_access_control_bits
 	ENABLE_TI_TO_SRAM = 0x40,	// enable fifo
 };
 
-static const int agilent_82350b_fifo_size = 1024;
+static const int agilent_82350b_fifo_size = 0x1000;
 
 #endif	// _AGILENT_82350B_H

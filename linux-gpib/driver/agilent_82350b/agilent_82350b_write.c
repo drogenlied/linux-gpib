@@ -53,7 +53,7 @@ ssize_t agilent_82350b_accel_write( gpib_board_t *board, uint8_t *buffer, size_t
 		if(readb(a_priv->gpib_base + STREAM_STATUS_REG) & HALTED_STATUS_BIT) 
 			writeb(RESTART_STREAM_BIT, a_priv->gpib_base + STREAM_STATUS_REG); 
 		if(wait_event_interruptible(board->wait, 
-			((event_status = read_and_clear_event_status(board)) & (BUFFER_END_STATUS_BIT | TERM_COUNT_STATUS_BIT)) ||
+			((event_status = read_and_clear_event_status(board)) & TERM_COUNT_STATUS_BIT) ||
 			test_bit(DEV_CLEAR_BN, &tms_priv->state) ||
 			test_bit(TIMO_NUM, &board->status)))
 
@@ -74,7 +74,7 @@ ssize_t agilent_82350b_accel_write( gpib_board_t *board, uint8_t *buffer, size_t
 			retval = -EINTR;
 			break;
 		}
-	}
+}
 	writeb(0, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG); 
 	if(retval) return retval;
 	if(send_eoi)
@@ -85,9 +85,5 @@ ssize_t agilent_82350b_accel_write( gpib_board_t *board, uint8_t *buffer, size_t
 	return length;
 }
 
-ssize_t agilent_82350b_accel_command( gpib_board_t *board, uint8_t *buffer, size_t length )
-{
-	agilent_82350b_private_t *priv = board->private_data;
-	return tms9914_command( board, &priv->tms9914_priv, buffer, length );
-}
+
 
