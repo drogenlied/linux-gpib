@@ -29,6 +29,10 @@
 #include <linux/pci_ids.h>
 #include <linux/string.h>
 
+#ifdef MODULE_LICENSE
+MODULE_LICENSE("GPL");
+#endif
+
 int ni_isa_attach(gpib_device_t *device);
 
 void ni_isa_detach(gpib_device_t *device);

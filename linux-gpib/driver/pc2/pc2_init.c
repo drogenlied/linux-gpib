@@ -28,6 +28,10 @@
 #include <linux/pci_ids.h>
 #include <linux/string.h>
 
+#ifdef MODULE_LICENSE
+MODULE_LICENSE("GPL");
+#endif
+
 int pc2_attach(gpib_device_t *device);
 int pc2a_attach(gpib_device_t *device);
 

@@ -23,6 +23,10 @@
 #include <asm/io.h>
 #include <linux/module.h>
 
+#ifdef MODULE_LICENSE
+MODULE_LICENSE("GPL");
+#endif
+
 #define INES_VENDOR_ID 0x10b5
 #define INES_DEV_ID    0x9050
 #define INES_SUBID 0x107210b5L
