@@ -76,8 +76,8 @@ static ssize_t fifo_read( gpib_board_t *board, cb7210_private_t *cb_priv, uint8_
 	int hs_status;
 	uint16_t word;
 	unsigned long flags;
-	*end = 0;
 
+	*end = 0;
 
 	if( length <= cb7210_fifo_size )
 	{
@@ -114,15 +114,20 @@ static ssize_t fifo_read( gpib_board_t *board, cb7210_private_t *cb_priv, uint8_
 
 		cb_priv->in_fifo_half_full = 0;
 
-hs_status = inb( nec_priv->iobase + HS_STATUS );
-printk("hs 0x%x, cnt %i\n", inb( nec_priv->iobase + HS_STATUS ), count );
+		hs_status = inb( nec_priv->iobase + HS_STATUS );
 
 		spin_unlock_irqrestore( &board->spinlock, flags );
 
-		if( test_bit( RECEIVED_END_BN, &nec_priv->state ) ||
-			( hs_status & HS_FIFO_FULL ) )
+		if( test_and_clear_bit( RECEIVED_END_BN, &nec_priv->state ) )
 		{
-			printk("end or ff hs 0x%x\n", hs_status );
+			*end = 1;
+printk("end hs 0x%x\n", hs_status );
+			break;
+		}
+printk("hs 0x%x, cnt %i\n", inb( nec_priv->iobase + HS_STATUS ), count );
+		if( hs_status & HS_FIFO_FULL )
+		{
+printk("ff hs 0x%x\n", hs_status );
 			break;
 		}
 		if( test_bit( TIMO_NUM, &board->status ) )

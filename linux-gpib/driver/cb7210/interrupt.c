@@ -49,7 +49,7 @@ void cb7210_internal_interrupt( gpib_board_t *board )
 
 	hs_status = inb( nec_priv->iobase + HS_STATUS );
 
-	if( ( priv->hs_mode_bits & HS_RX_ENABLE )  )
+	if( ( priv->hs_mode_bits & HS_ENABLE_MASK )  )
 		status1 = 0;
 	else
 	{
