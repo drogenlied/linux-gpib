@@ -76,10 +76,17 @@ ssize_t ines_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end)
 	ines_private_t *priv = board->private_data;
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 	ssize_t retval;
+	unsigned long flags;
 
 	retval = nec7210_read(board, &priv->nec7210_priv, buffer, length, end);
 	if( retval < 0 )
+	{
 		write_byte( nec_priv, INES_RFD_HLD_IMMEDIATE, AUXMR );
+		spin_lock_irqsave( &board->spinlock, flags );
+		read_byte( nec_priv, DIR );
+		clear_bit( READ_READY_BN, &nec_priv->state );
+		spin_unlock_irqrestore( &board->spinlock, flags );
+	}
 	return retval;
 }
 ssize_t ines_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi)

@@ -117,4 +117,5 @@ EXPORT_SYMBOL( nec7210_take_control );
 EXPORT_SYMBOL( nec7210_go_to_standby );
 EXPORT_SYMBOL( nec7210_interface_clear );
 EXPORT_SYMBOL( nec7210_remote_enable );
+EXPORT_SYMBOL( nec7210_release_rfd_holdoff );
 

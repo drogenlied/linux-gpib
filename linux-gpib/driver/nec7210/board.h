@@ -27,7 +27,6 @@
 #include "nec7210.h"
 
 unsigned int update_status_nolock( gpib_board_t *board, nec7210_private_t *priv );
-void nec7210_release_rfd_holdoff( nec7210_private_t *priv );
 
 #endif	//_GPIB_PCIIA_BOARD_H
 
