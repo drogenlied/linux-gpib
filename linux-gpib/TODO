@@ -4,9 +4,6 @@ generally make this software suck less
 
 fix crash on pcmcia card removal when program has board open
 
-fix reporting of read/write errors and interruption of
-read/write on clears
-
 have library parse dmesg automatically on error
 
 report error when user tries to read/write to interface board which is
@@ -14,14 +11,9 @@ bus master
 
 a kcontrol module for configuring boards might be nice
 
-test/debug parallel poll support
-
 fix parallel poll timeouts
 
 possible problems when autopoll happens without remote enable
-
-online ioctl doesn't need to handle asserting IFC as there is a
-seperate ioctl for that, also IFC should happen after remote enable.
 
 timeouts on read/write should handle data that was able to be
 received/sent before timeout occurred.
@@ -30,4 +22,6 @@ stuck SRQ handling
 
 add query to ibask() for support of IFC events
 
+interface clear seems to clear rfd holdoffs... maybe we should
+give up on trying to assert rfd holdoffs?
 
