@@ -168,7 +168,7 @@ int ibCheckDescriptor( int ud )
 	if( ud < 0 || ud > NUM_CONFIGS || ibConfigs[ud] == NULL )
 		return -1;
 
-	retval = conf_online( &ibConfigs[ ud ], 1 );
+	retval = conf_online( ibConfigs[ ud ], 1 );
 	if( retval < 0 ) return retval;
 
 	return 0;
@@ -460,4 +460,82 @@ int general_exit_library( int ud, int error, int keep_lock )
 	}
 
 	return status;
+}
+
+int extractPAD( Addr4882_t address )
+{
+	int pad = address & 0xff;
+
+	if( address == NOADDR ) return -1;
+
+	if( pad < 0 || pad > gpib_addr_max ) return -1;
+
+	return pad;
+}
+
+int extractSAD( Addr4882_t address )
+{
+	int sad = ( address >> 8 ) & 0xff;
+
+	if( address == NOADDR ) return -1;
+
+	if( sad <= 0 ) return -1;
+
+	sad &= ~0x60;
+	if( sad > gpib_addr_max ) return -1;
+
+	return sad;
+}
+
+Addr4882_t packAddress( unsigned int pad, int sad )
+{
+	Addr4882_t address;
+
+	address = 0;
+	address |= pad & 0xff;
+	if( sad >= 0 )
+		address |= ( ( sad | 0x60 ) << 8 ) & 0xff00;
+
+	return address;
+}
+
+int addressIsValid( Addr4882_t address )
+{
+	if( address == NOADDR ) return 1;
+
+	if( extractPAD( address ) < 0 ||
+		extractSAD( address ) < 0 ) return 0;
+
+	return 1;
+}
+
+int addressListIsValid( Addr4882_t addressList[] )
+{
+	int i;
+
+	if( addressList == NULL ) return 1;
+
+	for( i = 0; addressList[ i ] != NOADDR; i++ )
+	{
+		if( addressIsValid( addressList[ i ] ) == 0 )
+			return 0;
+	}
+
+	return 1;
+}
+
+unsigned int numAddresses( Addr4882_t addressList[] )
+{
+	unsigned int count;
+
+	if( addressList == NULL )
+		return 0;
+
+	count = 0;
+	while( addressList[ count ] != NOADDR )
+	{
+		count++;
+	}
+
+	return count;
 }

@@ -180,36 +180,52 @@ ssize_t my_ibcmd( ibConf_t *conf, uint8_t *buffer, size_t count)
 	return cmd.count;
 }
 
-int send_setup_string( const ibConf_t *conf,
-	uint8_t *cmdString )
+unsigned int create_send_setup( const ibBoard_t *board,
+	Addr4882_t addressList[], uint8_t *cmdString )
 {
-	int pad = conf->pad;
-	int sad = conf->sad;
-	unsigned int i = 0;
-	const ibBoard_t *board = &ibBoard[ conf->board ];
+	unsigned int i, j;
 
-	if( pad < 0 || pad > gpib_addr_max || sad > gpib_addr_max)
+	if( addressList == NULL ) return 0;
+
+	if( addressListIsValid( addressList ) == 0 )
 	{
-		fprintf(stderr, "libgpib: bug! bad conf gpib address\n");
-		return -1;
+		fprintf(stderr, "libgpib: bug! bad address list\n");
+		return 0;
 	}
 
-	if( board->sad > gpib_addr_max )
-	{
-		fprintf(stderr, "libgpib: bug! bad board gpib secondary address\n");
-		return -1;
-	}
-
+	i = 0;
 	cmdString[ i++ ] = UNL;
-	cmdString[ i++ ] = MLA( pad );
-	if( sad >= 0)
-		cmdString[ i++ ] = MSA( sad );
+	for( j = 0; j < numAddresses( addressList ); j++ )
+	{
+		unsigned int pad;
+		int sad;
+
+		pad = extractPAD( addressList[ j ] );
+		sad = extractSAD( addressList[ j ] );
+		cmdString[ i++ ] = MLA( pad );
+		if( sad >= 0)
+			cmdString[ i++ ] = MSA( sad );
+	}
 	/* controller's talk address */
 	cmdString[ i++ ] = MTA( board->pad );
 	if( board->sad >= 0 )
 		cmdString[ i++ ] = MSA( board->sad );
 
 	return i;
+}
+
+int send_setup_string( const ibConf_t *conf,
+	uint8_t *cmdString )
+{
+	ibBoard_t *board;
+	Addr4882_t addressList[ 2 ];
+
+	board = interfaceBoard( conf );
+
+	addressList[ 0 ] = packAddress( conf->pad, conf->sad );
+	addressList[ 1 ] = NOADDR;
+
+	return create_send_setup( board, addressList, cmdString );
 }
 
 int send_setup( ibConf_t *conf )

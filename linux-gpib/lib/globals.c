@@ -22,10 +22,10 @@
 #include <stdlib.h>
 
 
-int iberr = 0;
-int ibsta = 0;
-int ibcnt = 0;
-long ibcntl = 0;
+volatile int iberr = 0;
+volatile int ibsta = 0;
+volatile int ibcnt = 0;
+volatile long ibcntl = 0;
 
 static pthread_key_t ibsta_key;
 static pthread_key_t iberr_key;

@@ -1,6 +1,8 @@
 
 GPIB_DUMMY_VERSION {
 	global:
+		DevClear;
+		DevClearList;
 		ThreadIbsta;
 		ThreadIberr;
 		ThreadIbcnt;

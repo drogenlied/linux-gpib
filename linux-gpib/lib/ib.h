@@ -25,14 +25,19 @@ extern "C" {
 #include <stdint.h>
 #include <gpib_user.h>
 
-extern int ibsta, ibcnt, iberr;
-extern long ibcntl;
+typedef unsigned int Addr4882_t;
+static const Addr4882_t NOADDR = -1;
+static const int NO_SAD = 0;
+
+extern volatile int ibsta, ibcnt, iberr;
+extern volatile long ibcntl;
+
+extern void DevClear( int boardID, Addr4882_t address );
+extern void DevClearList( int boardID, Addr4882_t addressList[] );
 extern int ThreadIbsta( void );
 extern int ThreadIberr( void );
 extern int ThreadIbcnt( void );
 extern long ThreadIbcntl( void );
-
-/***** Public Functions ******/
 extern int ibask(int ud, int option, int *value );
 extern int ibbna( int ud, char *board_name );
 extern int ibcac(int ud, int v);

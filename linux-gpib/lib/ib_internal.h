@@ -47,6 +47,8 @@ extern  int ibGetDescriptor(ibConf_t conf);
 extern  int ibFindDevIndex(char *name);
 extern ssize_t my_ibcmd( ibConf_t *conf, uint8_t *buffer, size_t length);
 extern int send_setup_string( const ibConf_t *conf, uint8_t *cmdString );
+extern unsigned int create_send_setup( const ibBoard_t *board,
+	Addr4882_t addressList[], uint8_t *cmdString );
 extern int send_setup( ibConf_t *conf );
 extern void init_ibconf( ibConf_t *conf );
 extern int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout,
@@ -74,6 +76,12 @@ extern unsigned int usec_to_timeout( unsigned int usec );
 extern int query_ppc( const ibBoard_t *board );
 extern int conf_online( ibConf_t *conf, int online );
 extern int configure_autopoll( ibConf_t *conf, int enable );
+extern int extractPAD( Addr4882_t address );
+extern int extractSAD( Addr4882_t address );
+extern Addr4882_t packAddress( unsigned int pad, int sad );
+extern int addressIsValid( Addr4882_t address );
+extern int addressListIsValid( Addr4882_t addressList[] );
+extern unsigned int numAddresses( Addr4882_t addressList[] );
 
 extern int internal_ibpad( ibConf_t *conf, unsigned int address );
 extern int internal_ibsad( ibConf_t *conf, int address );

@@ -19,8 +19,6 @@
 #ifndef _GPIB_USER_H
 #define _GPIB_USER_H
 
-typedef unsigned int Addr4882_t;
-
 /* IBSTA status bits (returned by all functions) */
 
 #define ERR_NUM	15
@@ -183,8 +181,6 @@ extern __inline__ int gpib_address_equal( unsigned int pad1, int sad1, unsigned 
 
 	return 0;
 }
-
-static const Addr4882_t NOADDR = -1;
 
 enum ibask_option
 {
