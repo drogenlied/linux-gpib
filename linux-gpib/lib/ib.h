@@ -34,7 +34,7 @@ static const int STOPend = 0x100;
 enum sad_special_address
 {
 	NO_SAD = 0,
-	ALL_SAD = 0xff
+	ALL_SAD = -1
 };
 
 enum send_eotmode

@@ -14,8 +14,9 @@
 int ibsic( gpib_board_t *board, unsigned int usec_duration )
 {
 	if( usec_duration < 100 ) usec_duration = 100;
-	if( usec_duration > 1000 ) usec_duration = 1000;
+	if( usec_duration > 1000 ) 
 	{
+		usec_duration = 1000;
 		printk( "gpib: warning, shortening long udelay\n");
 	}
 

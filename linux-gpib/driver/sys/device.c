@@ -25,6 +25,8 @@ static int setup_serial_poll( gpib_board_t *board, unsigned int usec_timeout )
 	uint8_t cmd_string[8];
 	int i;
 
+	GPIB_DPRINTK( "entering setup_serial_poll()\n" );
+
 	board->interface->take_control( board, 0 );
 
 	i = 0;
@@ -50,6 +52,8 @@ static int read_serial_poll_byte( gpib_board_t *board, unsigned int pad,
 	int end_flag;
 	ssize_t ret;
 	int i;
+
+	GPIB_DPRINTK( "entering read_serial_poll_byte(), pad=%i sad=%i\n", pad, sad );
 
 	board->interface->take_control(board, 0);
 
@@ -81,6 +85,8 @@ static int read_serial_poll_byte( gpib_board_t *board, unsigned int pad,
 static int cleanup_serial_poll( gpib_board_t *board, unsigned int usec_timeout )
 {
 	uint8_t cmd_string[8];
+
+	GPIB_DPRINTK( "entering cleanup_serial_poll()\n" );
 
 	board->interface->take_control( board, 0 );
 
@@ -118,6 +124,7 @@ int serial_poll_all( gpib_board_t *board, unsigned int usec_timeout )
 	gpib_device_t *device;
 	uint8_t result;
 
+	GPIB_DPRINTK( "entering serial_poll_all()\n" );
 	retval = setup_serial_poll( board, usec_timeout );
 	if( retval < 0 ) return retval;
 

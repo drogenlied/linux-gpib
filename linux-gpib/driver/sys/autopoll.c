@@ -120,10 +120,13 @@ int autopoll_all_devices( gpib_board_t *board )
 {
 	int retval;
 
+	GPIB_DPRINTK( "entered autopoll_all_devices()\n" );
 	if( down_interruptible( &board->mutex ) )
 	{
 		return -ERESTARTSYS;
 	}
+
+	GPIB_DPRINTK( "autopoll has board lock\n" );
 
 	retval = serial_poll_all( board, serial_timeout );
 	if( retval < 0 )
@@ -132,6 +135,7 @@ int autopoll_all_devices( gpib_board_t *board )
 		return retval;
 	}
 
+	GPIB_DPRINTK( "autopoll_all_devices() complete\n" );
 	/* need to wake wait queue in case someone is
 	* waiting on RQS */
 	wake_up_interruptible( &board->wait );
