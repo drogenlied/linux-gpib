@@ -152,7 +152,19 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 		      board->open_count,
 		      board->online );
 
-	if( board->interface == NULL && cmd != CFCBOARDTYPE )
+	switch( cmd )
+	{
+		case CFCBOARDTYPE:
+			return board_type_ioctl(board, arg);
+			break;
+		case IBAUTOPOLL:
+			return autopoll_ioctl( board );
+			break;
+		default:
+			break;
+	}
+
+	if( board->interface == NULL )
 	{
 		printk("gpib: no gpib board configured on /dev/gpib%i\n", minor);
 		up( &board->mutex );
@@ -161,9 +173,6 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 
 	switch( cmd )
 	{
-		case CFCBOARDTYPE:
-			return board_type_ioctl(board, arg);
-			break;
 		case CFCBASE:
 			return iobase_ioctl( board, arg );
 			break;
@@ -178,9 +187,6 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			break;
 		case IBONL:
 			return online_ioctl( board, arg );
-			break;
-		case IBAUTOPOLL:
-			return autopoll_ioctl( board );
 			break;
 		case IBPAD:
 			return pad_ioctl( board, arg );
