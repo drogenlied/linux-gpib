@@ -85,6 +85,7 @@ extern int ThreadIbcnt( void );
 extern long ThreadIbcntl( void );
 extern void Trigger( int boardID, Addr4882_t address );
 extern void TriggerList( int boardID, Addr4882_t addressList[] );
+extern void WaitSRQ( int boardID, short *result );
 extern int ibask(int ud, int option, int *value );
 extern int ibbna( int ud, char *board_name );
 extern int ibcac(int ud, int v);

@@ -1,4 +1,4 @@
-#include <gpibP.h>
+#include "gpibP.h"
 
 #include <linux/config.h>
 #include <linux/kernel.h>

@@ -30,7 +30,8 @@ static int close_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned lo
 static int serial_poll_ioctl( gpib_board_t *board, unsigned long arg );
 static int wait_ioctl( gpib_board_t *board, unsigned long arg );
 static int parallel_poll_ioctl( gpib_board_t *board, unsigned long arg );
-static int online_ioctl( gpib_board_t *board, unsigned long arg );
+static int online_ioctl( gpib_board_t *board, gpib_file_private_t *priv,
+	unsigned long arg );
 static int remote_enable_ioctl( gpib_board_t *board, unsigned long arg );
 static int take_control_ioctl( gpib_board_t *board, unsigned long arg );
 static int line_status_ioctl( gpib_board_t *board, unsigned long arg );
@@ -56,6 +57,7 @@ static int cleanup_open_devices( gpib_file_private_t *file_priv, gpib_board_t *b
 static void init_gpib_file_private( gpib_file_private_t *priv )
 {
 	INIT_LIST_HEAD( &priv->device_list );
+	priv->online_count = 0;
 	priv->holding_mutex = 0;
 }
 
@@ -122,6 +124,9 @@ int ibclose(struct inode *inode, struct file *filep)
 		cleanup_open_devices( priv, board );
 		if( priv->holding_mutex )
 			up( &board->mutex );
+		while( priv->online_count )
+			iboffline( board, priv );
+
 		kfree( filep->private_data );
 		filep->private_data = NULL;
 	}
@@ -131,8 +136,6 @@ int ibclose(struct inode *inode, struct file *filep)
 	if( board->exclusive )
 		board->exclusive = 0;
 
-	if( board->online && board->open_count == 0 )
-		iboffline( board );
 
 	return 0;
 }
@@ -191,7 +194,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			return mutex_ioctl( board, filep->private_data, arg );
 			break;
 		case IBONL:
-			return online_ioctl( board, arg );
+			return online_ioctl( board, filep->private_data, arg );
 			break;
 		case IBPAD:
 			return pad_ioctl( board, arg );
@@ -336,7 +339,7 @@ static int read_ioctl(gpib_board_t *board, unsigned long arg)
 			remain, &end_flag);
 		if(ret < 0)
 		{
-			return -EIO;
+			return ret;
 		}
 		copy_to_user(userbuf, board->buffer, ret);
 		remain -= ret;
@@ -664,7 +667,8 @@ static int parallel_poll_ioctl( gpib_board_t *board, unsigned long arg )
 	return 0;
 }
 
-static int online_ioctl( gpib_board_t *board, unsigned long arg )
+static int online_ioctl( gpib_board_t *board, gpib_file_private_t *priv,
+	unsigned long arg )
 {
 	online_ioctl_t online_cmd;
 	int retval;
@@ -674,9 +678,9 @@ static int online_ioctl( gpib_board_t *board, unsigned long arg )
 		return -EFAULT;
 
 	if( online_cmd.online )
-		return ibonline( board, online_cmd.master );
+		return ibonline( board, priv, online_cmd.master );
 	else
-		return iboffline( board );
+		return iboffline( board, priv );
 
 	return 0;
 }

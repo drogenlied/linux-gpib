@@ -211,6 +211,7 @@ void init_gpib_device( gpib_device_t *device );
 typedef struct
 {
 	struct list_head device_list;
+	unsigned int online_count;
 	unsigned holding_mutex : 1;
 } gpib_file_private_t;
 

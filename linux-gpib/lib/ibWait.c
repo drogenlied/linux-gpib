@@ -1,23 +1,33 @@
+/***************************************************************************
+                          lib/ibWait.c
+                             -------------------
+
+    copyright            : (C) 2001,2002 by Frank Mori Hess
+    email                : fmhess@users.sourceforge.net
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
 
 #include "ib_internal.h"
-#include <ibP.h>
+#include "ibP.h"
 #include <pthread.h>
 
-int ibwait( int ud, int mask )
+int my_wait( ibConf_t *conf, int mask )
 {
-	ibConf_t *conf;
 	ibBoard_t *board;
 	int retval;
 	wait_ioctl_t cmd;
 	int board_wait_mask, device_wait_mask;
-	int status;
 
 	board_wait_mask = board_status_mask & ~ERR;
 	device_wait_mask = device_status_mask & ~ERR;
-
-	conf = general_enter_library( ud, 1, 0 );
-	if( conf == NULL )
-		return exit_library( ud, 1 );
 
 	board = interfaceBoard( conf );
 
@@ -25,7 +35,7 @@ int ibwait( int ud, int mask )
 		board->is_system_controller == 0 )
 	{
 		setIberr( ECIC );
-		return exit_library( ud, 1 );
+		return -1;
 	}
 
 	cmd.usec_timeout = conf->usec_timeout;
@@ -45,7 +55,7 @@ int ibwait( int ud, int mask )
 	if( mask != cmd.mask )
 	{
 		setIberr( EARG );
-		exit_library( ud, 1 );
+		return -1;
 	}
 
 	retval = ioctl( board->fileno, IBWAIT, &cmd );
@@ -55,14 +65,32 @@ int ibwait( int ud, int mask )
 		{
 			case ETIMEDOUT:
 				conf->timed_out = 1;
-				return exit_library( ud, 0 );
+				return 0;
 				break;
 			default:
 				break;
 		}
 		setIberr( EDVR );
-		return exit_library( ud, 1 );
+		setIbcnt( errno );
+		return -1;
 	}
+
+	return 0;
+}
+
+int ibwait( int ud, int mask )
+{
+	ibConf_t *conf;
+	int retval;
+	int status;
+
+	conf = general_enter_library( ud, 1, 0 );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
+
+	retval = my_wait( conf, mask );
+	if( retval < 0 )
+		return exit_library( ud, 1 );
 
 	status = exit_library( ud, 0 );
 
@@ -75,4 +103,38 @@ int ibwait( int ud, int mask )
 	}
 
 	return status;
+}
+
+void WaitSRQ( int boardID, short *result )
+{
+	ibConf_t *conf;
+	int retval;
+	int wait_mask;
+
+	conf = enter_library( boardID );
+	if( conf == NULL )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	if( conf->is_interface == 0 )
+	{
+		setIberr( EDVR );
+		return;
+	}
+
+	wait_mask = SRQI | TIMO;
+	retval = my_wait( conf, wait_mask );
+	if( retval < 0 )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+	// XXX need better query of service request state, new ioctl?
+	// should play nice with autopolling
+	if( ThreadIbsta() & SRQI ) *result = 1;
+	else *result = 0;
+
+	exit_library( boardID, 0 );
 }

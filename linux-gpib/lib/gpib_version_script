@@ -33,6 +33,7 @@ GPIB_DUMMY_VERSION {
 		ThreadIbcntl;
 		Trigger;
 		TriggerList;
+		WaitSRQ;
 		ibask;
 		ibbna;
 		ibcac;

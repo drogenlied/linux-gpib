@@ -1,20 +1,27 @@
+/***************************************************************************
+                               sys/ibinit.c
+                             -------------------
+
+    copyright            : (C) 2001, 2002 by Frank Mori Hess
+    email                : fmhess@users.sourceforge.net
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
 
 #include "gpibP.h"
 #include <linux/kernel.h>
 #include <linux/vmalloc.h>
 #include <linux/module.h>
 
-/*
-* IBONL
-* Initialize the interface hardware.  If v is non-zero then
-* the GPIB chip is enabled online.  If v is zero then it is
-* left disabled and offline.
-*
-* NOTE:
-*      1.  Ibonl must be called before any other function.
-*/
-
-int ibonline( gpib_board_t *board, int master )
+int ibonline( gpib_board_t *board, gpib_file_private_t *priv,
+	int master )
 {
 	if( !board->online )
 	{
@@ -42,12 +49,13 @@ int ibonline( gpib_board_t *board, int master )
 
 	__MOD_INC_USE_COUNT( board->interface->provider_module );
 	board->online++;
+	priv->online_count++;
 
 	return 0;
 }
 
 // XXX need to make sure autopoll is not in progress
-int iboffline( gpib_board_t *board )
+int iboffline( gpib_board_t *board, gpib_file_private_t *priv )
 {
 	if( board->online == 0 )
 	{
@@ -65,6 +73,7 @@ int iboffline( gpib_board_t *board )
 	}
 	__MOD_DEC_USE_COUNT( board->interface->provider_module );
 	board->online--;
+	priv->online_count--;
 
 	return 0;
 }
