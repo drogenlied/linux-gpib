@@ -290,8 +290,7 @@ int ines_pci_attach(gpib_board_t *board)
 			ines_priv->plx_iobase + PLX_INTCSR_REG);
 	else if(ines_priv->amcc_iobase)
 	{
-		// disable endian conversion
-		outl(0, ines_priv->amcc_iobase + AMCC_PASS_THRU_REG);
+		outl(0x87, ines_priv->amcc_iobase + AMCC_PASS_THRU_REG);
 		outl(AMCC_ADDON_INTR_ENABLE_BIT, ines_priv->amcc_iobase + AMCC_INTCS_REG);
 	}
 	ines_init(ines_priv);

@@ -35,6 +35,8 @@ void ines_interrupt(int irq, void *arg, struct pt_regs *registerp)
 		{
 			// clear amcc interrupt
 			outl(AMCC_ADDON_INTR_ENABLE_BIT, priv->amcc_iobase + AMCC_INTCS_REG);
+// XXX
+printk("amcc status: 0x%x\n", inl(priv->amcc_iobase + AMCC_INTCS_REG));
 		}
 	}
 

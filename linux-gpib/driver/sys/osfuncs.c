@@ -106,7 +106,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 		return -ENODEV;
 	}
 
-//printk("minor %i ioctl %i\n", minor, cmd);
+printk("minor %i ioctl %i\n", minor, cmd);
 
 	switch( cmd )
 	{
