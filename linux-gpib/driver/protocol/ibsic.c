@@ -12,16 +12,16 @@ extern int drvstat,ib_opened;
  *          ibcmd in order to initialize the bus and enable the
  *          interface to leave the controller idle state.
  */
-IBLCL int ibsic(void)
+IBLCL int ibsic(gpib_device_t *device)
 {
 	if( !(drvstat & DRV_IFC) || (ib_opened <= 1))
 	{
 
 		pgmstat |= PS_SAC;
 		/* set controller state */
-		driver->interface_clear(driver, 1);                   /* assert IFC */
+		device->interface->interface_clear(device, 1);                   /* assert IFC */
 		udelay(100);
-		driver->interface_clear(driver, 0);                   /* clear IFC */
+		device->interface->interface_clear(device, 0);                   /* clear IFC */
 		drvstat |= DRV_IFC;
 	}
 

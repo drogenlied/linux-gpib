@@ -21,6 +21,7 @@
 #include <linux/version.h>
 #include <linux/module.h>
 #include <linux/wait.h>
+#include <linux/list.h>
 
 // early 2.4.x kernels don't define MODULE_LICENSE
 #ifndef MODULE_LICENSE
@@ -31,13 +32,15 @@ MODULE_LICENSE("GPL");
 MODULE_PARM(ibmajor, "i");
 MODULE_PARM_DESC(ibmajor, "major device number of gpib device file");
 MODULE_PARM(dbgMask, "i");
-MODULE_PARM_DESC(dbgMask, "controls amount of debugging information the module dumps");
+MODULE_PARM_DESC(dbgMask, "controls amount of debugging information the module
+ dumps");
 
 /* default debugging level */
 
 #if DEBUG
 #ifndef DEFAULT_DEBUG
-unsigned int   dbgMask  = (DBG_ENTRY | DBG_EXIT | DBG_BRANCH | DBG_DATA | DBG_INTR | DBG_1PPL) & ~DBG_ALL;
+unsigned int   dbgMask  = (DBG_ENTRY | DBG_EXIT | DBG_BRANCH | DBG_DATA |
+ DBG_INTR | DBG_1PPL) & ~DBG_ALL;
 #else
 unsigned int   dbgMask  = 0;
 #endif
@@ -159,12 +162,14 @@ IBLCL void osReset(void)
 
 
 
-/***************************************************************************************
+/*******************************************************************************
+********
 
    Init module functions
 
 
-****************************************************************************************/
+********************************************************************************
+********/
 
 struct file_operations ib_fops = 
 {
@@ -188,18 +193,26 @@ struct file_operations ib_fops =
 	get_unmapped_area: NULL,
 };
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 int ibmajor = IBMAJOR;   /* major number for dynamic configuration */
 
+gpib_device_t *device_array[MAX_NUM_GPIB_DEVICES] = {NULL};
+
+LIST_HEAD(registered_drivers);
+
+void gpib_register_driver(gpib_interface_t *interface)
+{
+	list_add(&interface->list, &registered_drivers);
+	printk("gpib: registered %s interface\n", interface->name);
+}
+
+void gpib_unregister_driver(gpib_interface_t *interface)
+{
+	list_del(&interface->list);
+	printk("gpib: unregistered %s interface\n", interface->name);
+}
 
 int init_module(void)
 {
-	EXPORT_NO_SYMBOLS;
-
 	printk("Linux-GPIB Driver Board=%s -- Major=%d\n", BOARD_TYPE, ibmajor);
 	printk("-- Kernel Release %s\n", UTS_RELEASE);
 
@@ -210,12 +223,7 @@ int init_module(void)
 	}
 	osMemInit();
 
-	init_waitqueue_head(&driver->wait);
-#if defined(CBI_PCMCIA)
-	return pcmcia_init_module();
-#else
 	return 0;
-#endif
 }
 
 void cleanup_module(void)
@@ -228,14 +236,7 @@ void cleanup_module(void)
 	} else {
 		printk("gpib: succesfully removed \n");
 	}
-#if defined(CBI_PCMCIA)
-	pcmcia_cleanup_module();
-#endif
 }
 
-
-
-#ifdef __cplusplus
-}
-#endif
-
+EXPORT_SYMBOL(gpib_register_driver);
+EXPORT_SYMBOL(gpib_unregister_driver);

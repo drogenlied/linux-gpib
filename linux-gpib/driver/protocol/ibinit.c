@@ -53,7 +53,7 @@ extern int ib_opened;
 
 int drvstat = 0;
 
-IBLCL int ibonl(int v)
+IBLCL int ibonl(gpib_device_t *device, int v)
 {
 	/*
 	* ibonl must be called first time a process is entering the driver
@@ -76,9 +76,9 @@ IBLCL int ibonl(int v)
 	{
 		if( (ib_opened <= 1) && !( drvstat & DRV_ONLINE ))
 		{
-			if(driver->attach(driver) < 0)
+			if(device->interface->attach(device) < 0)
 			{
-				driver->detach(driver);
+				device->interface->detach(device);
 				printk("GPIB Hardware Error! (Chip type not found or wrong Base Address?)\n");
 				return -1;
 			}
@@ -98,7 +98,7 @@ IBLCL int ibonl(int v)
 		if( ib_opened <= 1)
 		{
 			DBGprint(DBG_BRANCH,("Board Offline"));
-			driver->detach(driver);
+			device->interface->detach(device);
 			if (pgmstat & PS_SYSRDY)
 			osReset();	/* reset system interface */
 			pgmstat &= ~PS_ONLINE;

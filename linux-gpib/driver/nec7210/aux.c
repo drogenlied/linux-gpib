@@ -20,7 +20,7 @@
 #include <linux/delay.h>
 #include <asm/bitops.h>
 
-int nec7210_take_control(gpib_driver_t *driver, nec7210_private_t *priv, int syncronous)
+int nec7210_take_control(gpib_device_t *device, nec7210_private_t *priv, int syncronous)
 {
 	int i;
 	const int timeout = 1000;
@@ -46,9 +46,9 @@ int nec7210_take_control(gpib_driver_t *driver, nec7210_private_t *priv, int syn
 	if(i == timeout)
 	{
 		while((priv->read_byte(priv, ADSR) & HR_NATN) &&
-			test_bit(TIMO_NUM, &driver->status) == 0)
+			test_bit(TIMO_NUM, &device->status) == 0)
 		{
-			if(interruptible_sleep_on_timeout(&driver->wait, 1))
+			if(interruptible_sleep_on_timeout(&device->wait, 1))
 			{
 				printk("interupted for ATN\n");
 				return -EINTR;
@@ -56,7 +56,7 @@ int nec7210_take_control(gpib_driver_t *driver, nec7210_private_t *priv, int syn
 		}
 	}
 
-	if(test_bit(TIMO_NUM, &driver->status))
+	if(test_bit(TIMO_NUM, &device->status))
 	{
 		printk("gpib: take control timed out\n");
 		return -ETIMEDOUT;
@@ -65,7 +65,7 @@ int nec7210_take_control(gpib_driver_t *driver, nec7210_private_t *priv, int syn
 	return 0;
 }
 
-int nec7210_go_to_standby(gpib_driver_t *driver, nec7210_private_t *priv)
+int nec7210_go_to_standby(gpib_device_t *device, nec7210_private_t *priv)
 {
 	int i;
 	const int timeout = 1000;
@@ -86,7 +86,7 @@ int nec7210_go_to_standby(gpib_driver_t *driver, nec7210_private_t *priv)
 	return 0;
 }
 
-void nec7210_interface_clear(gpib_driver_t *driver, nec7210_private_t *priv, int assert)
+void nec7210_interface_clear(gpib_device_t *device, nec7210_private_t *priv, int assert)
 {
 	if(assert)
 		priv->write_byte(priv, AUX_SIFC, AUXMR);
@@ -94,7 +94,7 @@ void nec7210_interface_clear(gpib_driver_t *driver, nec7210_private_t *priv, int
 		priv->write_byte(priv, AUX_CIFC, AUXMR);
 }
 
-void nec7210_remote_enable(gpib_driver_t *driver, nec7210_private_t *priv, int enable)
+void nec7210_remote_enable(gpib_device_t *device, nec7210_private_t *priv, int enable)
 {
 	if(enable)
 		priv->write_byte(priv, AUX_SREN, AUXMR);

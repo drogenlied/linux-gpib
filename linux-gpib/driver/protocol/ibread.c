@@ -33,27 +33,26 @@
  *          calling ibcmd.
  */
 
-IBLCL ssize_t ibrd(uint8_t *buf, size_t length, int *end_flag)
+IBLCL ssize_t ibrd(gpib_device_t *device, uint8_t *buf, size_t length, int *end_flag)
 {
 	size_t count = 0;
 	ssize_t ret = 0;
-	int status = ibstatus();
+	int status = ibstatus(device);
 
 	if((status & LACS) == 0) 
 	{
 		printk("gpib read failed: not listener\n");
 		return -1;
 	}
-	driver->go_to_standby(driver);
-//XXX global
-	osStartTimer(timeidx);
+	device->interface->go_to_standby(device);
+	osStartTimer(device, timeidx);
 	// mark io in progress
-	clear_bit(CMPL_NUM, &driver->status);
+	clear_bit(CMPL_NUM, &device->status);
 	// initialize status to END not yet received
-	clear_bit(END_NUM, &driver->status);
-	while ((count < length) && !(status = ibstatus() & TIMO)) 
+	clear_bit(END_NUM, &device->status);
+	while ((count < length) && !(status = ibstatus(device) & TIMO)) 
 	{
-		ret = driver->read(driver, buf, length - count, end_flag);
+		ret = device->interface->read(device, buf, length - count, end_flag);
 		if(ret < 0)
 		{
 			printk("gpib read error\n");
@@ -63,9 +62,9 @@ IBLCL ssize_t ibrd(uint8_t *buf, size_t length, int *end_flag)
 		count += ret;
 		if(*end_flag) break;
 	}
-	osRemoveTimer();
+	osRemoveTimer(device);
 	// mark io completed
-	set_bit(CMPL_NUM, &driver->status);
+	set_bit(CMPL_NUM, &device->status);
 
 	return ret ? ret : count;
 }

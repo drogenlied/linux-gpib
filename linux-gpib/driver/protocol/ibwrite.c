@@ -34,11 +34,11 @@
  *          well as the interface board itself must be
  *          addressed by calling ibcmd.
  */
-IBLCL ssize_t ibwrt(uint8_t *buf, size_t cnt, int more)
+IBLCL ssize_t ibwrt(gpib_device_t *device, uint8_t *buf, size_t cnt, int more)
 {
 	size_t bytes_sent = 0;
 	ssize_t ret = 0;
-	int status = ibstatus();
+	int status = ibstatus(device);
 
 	if((status & TACS) == 0)
 	{
@@ -51,13 +51,13 @@ IBLCL ssize_t ibwrt(uint8_t *buf, size_t cnt, int more)
 		printk("gpib: ibwrt called with no data\n");
 		return -1;
 	}
-	driver->go_to_standby(driver);
+	device->interface->go_to_standby(device);
 	// mark io in progress
-	clear_bit(CMPL_NUM, &driver->status);
-	osStartTimer(timeidx);
-	while ((bytes_sent < cnt) && !(ibstatus() & (TIMO)))
+	clear_bit(CMPL_NUM, &device->status);
+	osStartTimer(device, timeidx);
+	while ((bytes_sent < cnt) && !(ibstatus(device) & (TIMO)))
 	{
-		ret = driver->write(driver, buf, cnt, !more);
+		ret = device->interface->write(device, buf, cnt, !more);
 		if(ret < 0)
 		{
 			printk("gpib write error\n");
@@ -67,13 +67,13 @@ IBLCL ssize_t ibwrt(uint8_t *buf, size_t cnt, int more)
 		bytes_sent += ret;
 	}
 
-	if(ibstatus() & TIMO)
+	if(ibstatus(device) & TIMO)
 		ret = -ETIMEDOUT;
 
-	osRemoveTimer();
+	osRemoveTimer(device);
 
 	// mark io complete
-	set_bit(CMPL_NUM, &driver->status);
+	set_bit(CMPL_NUM, &device->status);
 
 	if(ret < 0) return ret;
 	

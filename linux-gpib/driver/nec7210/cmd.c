@@ -18,7 +18,8 @@
 
 #include "board.h"
 
-ssize_t nec7210_command(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length)
+ssize_t nec7210_command(gpib_device_t *device, nec7210_private_t *priv, uint8_t
+ *buffer, size_t length)
 {
 	size_t count = 0;
 	ssize_t retval = 0;
@@ -29,14 +30,15 @@ ssize_t nec7210_command(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t 
 
 	while(count < length)
 	{
-		if(wait_event_interruptible(driver->wait, test_and_clear_bit(COMMAND_READY_BN, &priv->state) ||
-			test_bit(TIMO_NUM, &driver->status)))
+		if(wait_event_interruptible(device->wait, test_and_clear_bit(COMMAND_READY_BN,
+ &priv->state) ||
+			test_bit(TIMO_NUM, &device->status)))
 		{
 			printk("gpib command wait interrupted\n");
 			retval = -EINTR;
 			break;
 		}
-		if(test_bit(TIMO_NUM, &driver->status))
+		if(test_bit(TIMO_NUM, &device->status))
 		{
 			retval = -ETIMEDOUT;
 			break;

@@ -19,7 +19,7 @@ IBLCL void osSendEOI(void)
 }
 #endif
 
-IBLCL void osChngBase(unsigned long new_base)
+IBLCL void osChngBase(gpib_device_t *device, unsigned long new_base)
 {
 #if !defined(CBI_PCMCIA) && !defined(CBI_PCI) && !defined(MODBUS_PCI) && !defined(INES_PCMCIA) && !defined(INES_PCI)
   if( !(pgmstat & PS_SYSRDY ) && ibbase != new_base ){
@@ -31,7 +31,7 @@ IBLCL void osChngBase(unsigned long new_base)
 }
 
 
-IBLCL void osChngIRQ(int new_irq)
+IBLCL void osChngIRQ(gpib_device_t *device, int new_irq)
 {
 #if !defined(CBI_PCMCIA) && !defined(CBI_PCI) && !defined(MODBUS_PCI) && !defined(INES_PCMCIA) && !defined(INES_PCI) 
   if( !(pgmstat & PS_SYSRDY ) && ibirq != new_irq ){
@@ -50,7 +50,7 @@ IBLCL void osChngIRQ(int new_irq)
  */
 
 
-IBLCL void osChngDMA(int new_dma)
+IBLCL void osChngDMA(gpib_device_t *device, int new_dma)
 {
   if( !(pgmstat & PS_SYSRDY ) && ibdma != new_dma ){
       printk("GPIB: Change DMA from %d to %d\n",ibdma,new_dma);

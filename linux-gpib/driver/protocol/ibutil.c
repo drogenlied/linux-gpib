@@ -5,7 +5,7 @@
  * change the GPIB address of the interface board.  The address
  * must be 0 through 30.  ibonl resets the address to PAD.
  */
-IBLCL int ibpad(int v)
+IBLCL int ibpad(gpib_device_t *device, int v)
 {
 	if ((v < 0) || (v > 30))
 	{
@@ -14,7 +14,7 @@ IBLCL int ibpad(int v)
 	}else
 	{
 		myPAD = v;
-		driver->primary_address(driver, myPAD );
+		device->interface->primary_address(device, myPAD );
 	}
 	return 0;
 }
@@ -26,7 +26,7 @@ IBLCL int ibpad(int v)
  * The address must be 0x60 through 0x7E.  ibonl resets the
  * address to SAD.
  */
-IBLCL int ibsad(int v)
+IBLCL int ibsad(gpib_device_t *device, int v)
 {
 	if (v && ((v < 0x60) || (v > 0x7F)))
 	{
@@ -38,10 +38,10 @@ IBLCL int ibsad(int v)
 			v = 0;		/* v == 0x7F also disables */
 		if ((mySAD = v))
 		{
-			driver->secondary_address(driver, mySAD - 0x60, 1);
+			device->interface->secondary_address(device, mySAD - 0x60, 1);
 		}else
 		{
-			driver->secondary_address(driver, 0,0);
+			device->interface->secondary_address(device, 0,0);
 		}
 	}
 	return 0;
@@ -55,7 +55,7 @@ IBLCL int ibsad(int v)
  * of v specifies an index into the array timeTable.
  * If v == 0 then timeouts are disabled.
  */
-IBLCL int ibtmo(int v)
+IBLCL int ibtmo(gpib_device_t *device, int v)
 {
 	if ((v < TNONE) || (v > T1000s))
 	{
@@ -75,9 +75,9 @@ IBLCL int ibtmo(int v)
  * If v == 1 then send EOI with the last byte of each write.
  * If v == 0 then disable the sending of EOI.
  */
-IBLCL int ibeot(int send_eoi)
+IBLCL int ibeot(gpib_device_t *device, int send_eoi)
 {
-	if (send_eoi)
+	if(send_eoi)
 	{
 		pgmstat &= ~PS_NOEOI;
 	}else
@@ -92,7 +92,7 @@ IBLCL int ibeot(int send_eoi)
  * Set the end-of-string modes for I/O operations to v.
  *
  */
-IBLCL int ibeos(int v)
+IBLCL int ibeos(gpib_device_t *device, int v)
 {
 	int ebyte, emodes;
 	ebyte = v & 0xFF;
@@ -105,17 +105,17 @@ IBLCL int ibeos(int v)
 	{
 		if(emodes & REOS)
 		{
-			driver->enable_eos(driver, ebyte, emodes & BIN);
+			device->interface->enable_eos(device, ebyte, emodes & BIN);
 		}else
-			driver->disable_eos(driver);
+			device->interface->disable_eos(device);
 	}
 	return 0;
 }
 
-IBLCL unsigned int ibstatus()
+IBLCL unsigned int ibstatus(gpib_device_t *device)
 {
-	if(driver->private_data == NULL)
+	if(device->private_data == NULL)
 		return 0;
 
-	return driver->update_status(driver);
+	return device->interface->update_status(device);
 }

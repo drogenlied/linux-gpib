@@ -31,83 +31,83 @@
 
 #define PCI_DEVICE_ID_CBOARDS_PCI_GPIB 0x6
 
-int cb_pci_attach(gpib_driver_t *driver);
+int cb_pci_attach(gpib_device_t *device);
 
-void cb_pci_detach(gpib_driver_t *driver);
+void cb_pci_detach(gpib_device_t *device);
 
 // wrappers for interface functions
-ssize_t cb7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int *end)
+ssize_t cb7210_read(gpib_device_t *device, uint8_t *buffer, size_t length, int *end)
 {
-	cb7210_private_t *priv = driver->private_data;
-	return nec7210_read(driver, &priv->nec7210_priv, buffer, length, end);
+	cb7210_private_t *priv = device->private_data;
+	return nec7210_read(device, &priv->nec7210_priv, buffer, length, end);
 }
-ssize_t cb7210_write(gpib_driver_t *driver, uint8_t *buffer, size_t length, int send_eoi)
+ssize_t cb7210_write(gpib_device_t *device, uint8_t *buffer, size_t length, int send_eoi)
 {
-	cb7210_private_t *priv = driver->private_data;
-	return nec7210_write(driver, &priv->nec7210_priv, buffer, length, send_eoi);
+	cb7210_private_t *priv = device->private_data;
+	return nec7210_write(device, &priv->nec7210_priv, buffer, length, send_eoi);
 }
-ssize_t cb7210_command(gpib_driver_t *driver, uint8_t *buffer, size_t length)
+ssize_t cb7210_command(gpib_device_t *device, uint8_t *buffer, size_t length)
 {
-	cb7210_private_t *priv = driver->private_data;
-	return nec7210_command(driver, &priv->nec7210_priv, buffer, length);
+	cb7210_private_t *priv = device->private_data;
+	return nec7210_command(device, &priv->nec7210_priv, buffer, length);
 }
-int cb7210_take_control(gpib_driver_t *driver, int synchronous)
+int cb7210_take_control(gpib_device_t *device, int synchronous)
 {
-	cb7210_private_t *priv = driver->private_data;
-	return nec7210_take_control(driver, &priv->nec7210_priv, synchronous);
+	cb7210_private_t *priv = device->private_data;
+	return nec7210_take_control(device, &priv->nec7210_priv, synchronous);
 }
-int cb7210_go_to_standby(gpib_driver_t *driver)
+int cb7210_go_to_standby(gpib_device_t *device)
 {
-	cb7210_private_t *priv = driver->private_data;
-	return nec7210_go_to_standby(driver, &priv->nec7210_priv);
+	cb7210_private_t *priv = device->private_data;
+	return nec7210_go_to_standby(device, &priv->nec7210_priv);
 }
-void cb7210_interface_clear(gpib_driver_t *driver, int assert)
+void cb7210_interface_clear(gpib_device_t *device, int assert)
 {
-	cb7210_private_t *priv = driver->private_data;
-	nec7210_interface_clear(driver, &priv->nec7210_priv, assert);
+	cb7210_private_t *priv = device->private_data;
+	nec7210_interface_clear(device, &priv->nec7210_priv, assert);
 }
-void cb7210_remote_enable(gpib_driver_t *driver, int enable)
+void cb7210_remote_enable(gpib_device_t *device, int enable)
 {
-	cb7210_private_t *priv = driver->private_data;
-	nec7210_remote_enable(driver, &priv->nec7210_priv, enable);
+	cb7210_private_t *priv = device->private_data;
+	nec7210_remote_enable(device, &priv->nec7210_priv, enable);
 }
-void cb7210_enable_eos(gpib_driver_t *driver, uint8_t eos_byte, int compare_8_bits)
+void cb7210_enable_eos(gpib_device_t *device, uint8_t eos_byte, int compare_8_bits)
 {
-	cb7210_private_t *priv = driver->private_data;
-	nec7210_enable_eos(driver, &priv->nec7210_priv, eos_byte, compare_8_bits);
+	cb7210_private_t *priv = device->private_data;
+	nec7210_enable_eos(device, &priv->nec7210_priv, eos_byte, compare_8_bits);
 }
-void cb7210_disable_eos(gpib_driver_t *driver)
+void cb7210_disable_eos(gpib_device_t *device)
 {
-	cb7210_private_t *priv = driver->private_data;
-	nec7210_disable_eos(driver, &priv->nec7210_priv);
+	cb7210_private_t *priv = device->private_data;
+	nec7210_disable_eos(device, &priv->nec7210_priv);
 }
-unsigned int cb7210_update_status(gpib_driver_t *driver)
+unsigned int cb7210_update_status(gpib_device_t *device)
 {
-	cb7210_private_t *priv = driver->private_data;
-	return nec7210_update_status(driver, &priv->nec7210_priv);
+	cb7210_private_t *priv = device->private_data;
+	return nec7210_update_status(device, &priv->nec7210_priv);
 }
-void cb7210_primary_address(gpib_driver_t *driver, unsigned int address)
+void cb7210_primary_address(gpib_device_t *device, unsigned int address)
 {
-	cb7210_private_t *priv = driver->private_data;
-	nec7210_primary_address(driver, &priv->nec7210_priv, address);
+	cb7210_private_t *priv = device->private_data;
+	nec7210_primary_address(device, &priv->nec7210_priv, address);
 }
-void cb7210_secondary_address(gpib_driver_t *driver, unsigned int address, int enable)
+void cb7210_secondary_address(gpib_device_t *device, unsigned int address, int enable)
 {
-	cb7210_private_t *priv = driver->private_data;
-	nec7210_secondary_address(driver, &priv->nec7210_priv, address, enable);
+	cb7210_private_t *priv = device->private_data;
+	nec7210_secondary_address(device, &priv->nec7210_priv, address, enable);
 }
-int cb7210_parallel_poll(gpib_driver_t *driver, uint8_t *result)
+int cb7210_parallel_poll(gpib_device_t *device, uint8_t *result)
 {
-	cb7210_private_t *priv = driver->private_data;
-	return nec7210_parallel_poll(driver, &priv->nec7210_priv, result);
+	cb7210_private_t *priv = device->private_data;
+	return nec7210_parallel_poll(device, &priv->nec7210_priv, result);
 }
-int cb7210_serial_poll_response(gpib_driver_t *driver, uint8_t status)
+int cb7210_serial_poll_response(gpib_device_t *device, uint8_t status)
 {
-	cb7210_private_t *priv = driver->private_data;
-	return nec7210_serial_poll_response(driver, &priv->nec7210_priv, status);
+	cb7210_private_t *priv = device->private_data;
+	return nec7210_serial_poll_response(device, &priv->nec7210_priv, status);
 }
 
-gpib_driver_t cb_pci_driver =
+gpib_interface_t cb_pci_interface =
 {
 	name: "nec7210",
 	attach: cb_pci_attach,
@@ -129,36 +129,36 @@ gpib_driver_t cb_pci_driver =
 	serial_poll_response: cb7210_serial_poll_response,
 };
 
-int cb7210_allocate_private(gpib_driver_t *driver)
+int cb7210_allocate_private(gpib_device_t *device)
 {
-	driver->private_data = kmalloc(sizeof(cb7210_private_t), GFP_KERNEL);
-	if(driver->private_data == NULL)
+	device->private_data = kmalloc(sizeof(cb7210_private_t), GFP_KERNEL);
+	if(device->private_data == NULL)
 		return -1;
-	memset(driver->private_data, 0, sizeof(cb7210_private_t));
+	memset(device->private_data, 0, sizeof(cb7210_private_t));
 	return 0;
 }
 
-void cb7210_free_private(gpib_driver_t *driver)
+void cb7210_free_private(gpib_device_t *device)
 {
-	if(driver->private_data)
+	if(device->private_data)
 	{
-		kfree(driver->private_data);
-		driver->private_data = NULL;
+		kfree(device->private_data);
+		device->private_data = NULL;
 	}
 }
 
-int cb_pci_attach(gpib_driver_t *driver)
+int cb_pci_attach(gpib_device_t *device)
 {
 	cb7210_private_t *cb_priv;
 	nec7210_private_t *nec_priv;
 	int isr_flags = 0;
 	int bits;
 
-	driver->status = 0;
+	device->status = 0;
 
-	if(cb7210_allocate_private(driver))
+	if(cb7210_allocate_private(device))
 		return -ENOMEM;
-	cb_priv = driver->private_data;
+	cb_priv = device->private_data;
 	nec_priv = &cb_priv->nec7210_priv;
 	nec_priv->read_byte = ioport_read_byte;
 	nec_priv->write_byte = ioport_write_byte;
@@ -191,7 +191,7 @@ int cb_pci_attach(gpib_driver_t *driver)
 	nec_priv->write_byte(nec_priv, 0, HS_MODE); /* disable system control */
 
 	isr_flags |= SA_SHIRQ;
-	if(request_irq(cb_priv->pci_device->irq, cb_pci_interrupt, isr_flags, "pci-gpib", driver))
+	if(request_irq(cb_priv->pci_device->irq, cb_pci_interrupt, isr_flags, "pci-gpib", device))
 	{
 		printk("gpib: can't request IRQ %d\n",cb_priv->pci_device->irq);
 		return -1;
@@ -220,9 +220,9 @@ int cb_pci_attach(gpib_driver_t *driver)
 	return 0;
 }
 
-void cb_pci_detach(gpib_driver_t *driver)
+void cb_pci_detach(gpib_device_t *device)
 {
-	cb7210_private_t *cb_priv = driver->private_data;
+	cb7210_private_t *cb_priv = device->private_data;
 	nec7210_private_t *nec_priv;
 
 	if(cb_priv)
@@ -232,7 +232,7 @@ void cb_pci_detach(gpib_driver_t *driver)
 		{
 			// disable amcc interrupts
 			outl(0, cb_priv->amcc_iobase + INTCSR_REG );
-			free_irq(cb_priv->irq, driver);
+			free_irq(cb_priv->irq, device);
 		}
 		if(nec_priv->iobase)
 		{
@@ -240,6 +240,6 @@ void cb_pci_detach(gpib_driver_t *driver)
 			pci_release_regions(cb_priv->pci_device);
 		}
 	}
-	cb7210_free_private(driver);
+	cb7210_free_private(device);
 }
 

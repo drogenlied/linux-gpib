@@ -14,11 +14,11 @@
  *          must be called to initialize the GPIB and enable
  *          the interface to leave the controller idle state.
  */
-IBLCL ssize_t ibcmd(uint8_t *buf, size_t length)
+IBLCL ssize_t ibcmd(gpib_device_t *device, uint8_t *buf, size_t length)
 {
 	size_t	count = 0;
 	ssize_t ret = 0;
-	int status = ibstatus();
+	int status = ibstatus(device);
 
 	if((status & CIC) == 0)
 	{
@@ -26,15 +26,15 @@ IBLCL ssize_t ibcmd(uint8_t *buf, size_t length)
 		return -1;
 	}
 	// XXX global
-	osStartTimer(timeidx);
+	osStartTimer(device, timeidx);
 
-	if((ret = driver->take_control(driver, 0)))
+	if((ret = device->interface->take_control(device, 0)))
 	{
 		printk("gpib error while becoming active controller\n");
 	}else while ((count < length) &&
-		((status = ibstatus()) & TIMO) == 0)
+		((status = ibstatus(device)) & TIMO) == 0)
 	{
-		ret = driver->command(driver, buf, length - count);
+		ret = device->interface->command(device, buf, length - count);
 		if(ret < 0)
 		{
 			printk("error writing gpib command bytes\n");
@@ -44,7 +44,7 @@ IBLCL ssize_t ibcmd(uint8_t *buf, size_t length)
 		count += ret;
 	}
 
-	osRemoveTimer();
+	osRemoveTimer(device);
 
 	if(status & TIMO)
 		ret = -ETIMEDOUT;

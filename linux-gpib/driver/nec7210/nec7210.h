@@ -34,7 +34,8 @@ struct nec7210_private_struct
 	volatile int state;
 	// wrappers for outb, inb, readb, or writeb
 	uint8_t (*read_byte)(nec7210_private_t *priv, unsigned int register_number);
-	void (*write_byte)(nec7210_private_t *priv, uint8_t byte, unsigned int register_number);
+	void (*write_byte)(nec7210_private_t *priv, uint8_t byte, unsigned int
+ register_number);
 };
 
 // nec7210_private_t.state bit numbers
@@ -50,25 +51,27 @@ enum
 };
 
 // interface functions
-extern ssize_t nec7210_read(gpib_driver_t *driver, nec7210_private_t *priv,
+extern ssize_t nec7210_read(gpib_device_t *device, nec7210_private_t *priv,
 	uint8_t *buffer, size_t length, int *end);
-extern ssize_t nec7210_write(gpib_driver_t *driver, nec7210_private_t *priv,
+extern ssize_t nec7210_write(gpib_device_t *device, nec7210_private_t *priv,
 	uint8_t *buffer, size_t length, int send_eoi);
-extern ssize_t nec7210_command(gpib_driver_t *driver, nec7210_private_t *priv,
+extern ssize_t nec7210_command(gpib_device_t *device, nec7210_private_t *priv,
 	uint8_t *buffer, size_t length);
-extern int nec7210_take_control(gpib_driver_t *driver, nec7210_private_t *priv, int syncronous);
-extern int nec7210_go_to_standby(gpib_driver_t *driver, nec7210_private_t *priv);
-extern void nec7210_interface_clear(gpib_driver_t *driver, nec7210_private_t *priv, int assert);
-extern void nec7210_remote_enable(gpib_driver_t *driver, nec7210_private_t *priv, int enable);
-extern void nec7210_enable_eos(gpib_driver_t *driver, nec7210_private_t *priv,
+extern int nec7210_take_control(gpib_device_t *device, nec7210_private_t *priv,
+	int syncronous);
+extern int nec7210_go_to_standby(gpib_device_t *device, nec7210_private_t *priv);
+extern void nec7210_interface_clear(gpib_device_t *device, nec7210_private_t *priv, int assert);
+extern void nec7210_remote_enable(gpib_device_t *device, nec7210_private_t *priv, int enable);
+extern void nec7210_enable_eos(gpib_device_t *device, nec7210_private_t *priv,
 	uint8_t eos_bytes, int compare_8_bits);
-extern void nec7210_disable_eos(gpib_driver_t *driver, nec7210_private_t *priv);
-extern unsigned int nec7210_update_status(gpib_driver_t *driver, nec7210_private_t *priv);
-extern void nec7210_primary_address(gpib_driver_t *driver, nec7210_private_t *priv, unsigned int address);
-extern void nec7210_secondary_address(gpib_driver_t *driver, nec7210_private_t *priv,
+extern void nec7210_disable_eos(gpib_device_t *device, nec7210_private_t *priv);
+extern unsigned int nec7210_update_status(gpib_device_t *device, nec7210_private_t *priv);
+extern void nec7210_primary_address(gpib_device_t *device,
+	nec7210_private_t *priv, unsigned int address);
+extern void nec7210_secondary_address(gpib_device_t *device, nec7210_private_t *priv,
 	unsigned int address, int enable);
-extern int nec7210_parallel_poll(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *result);
-extern int nec7210_serial_poll_response(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t status);
+extern int nec7210_parallel_poll(gpib_device_t *device, nec7210_private_t *priv, uint8_t *result);
+extern int nec7210_serial_poll_response(gpib_device_t *device, nec7210_private_t *priv, uint8_t status);
 
 // utility function
 extern void nec7210_board_reset(nec7210_private_t *priv);
@@ -80,7 +83,7 @@ extern uint8_t iomem_read_byte(nec7210_private_t *priv, unsigned int register_nu
 extern void iomem_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num);
 
 // interrupt service routine
-void nec7210_interrupt(gpib_driver_t *driver, nec7210_private_t *priv);
+void nec7210_interrupt(gpib_device_t *device, nec7210_private_t *priv);
 
 // nec7210 has 8 registers
 static const int nec7210_num_registers = 8;
@@ -146,7 +149,8 @@ enum
 #define HR_INT          (1 << 7)
 
 // IMR2, interrupt mask register 2
-#define IMR2_ENABLE_INTR_MASK	0x4f	// all the bits in this register that enable interrupts
+// all the bits in this register that enable interrupts
+#define IMR2_ENABLE_INTR_MASK	0x4f
 #define HR_ACIE         (1<<0)
 #define HR_REMIE        (1<<1)
 #define HR_LOKIE        (1<<2)

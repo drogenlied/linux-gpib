@@ -213,10 +213,6 @@ C) Loading the driver module
 
 	You can load the driver module by typing
 
-		make load
-	or
-		insmod ./driver/gpib0.o
-	or
 		modprobe gpib0
 
 

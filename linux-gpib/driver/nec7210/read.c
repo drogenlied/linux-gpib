@@ -20,7 +20,7 @@
 #include <asm/dma.h>
 #include <linux/spinlock.h>
 
-static ssize_t pio_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length)
+static ssize_t pio_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t *buffer, size_t length)
 {
 	size_t count = 0;
 	ssize_t retval = 0;
@@ -33,15 +33,15 @@ static ssize_t pio_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t 
 
 	while(count < length)
 	{
-		if(wait_event_interruptible(driver->wait,
+		if(wait_event_interruptible(device->wait,
 			test_bit(READ_READY_BN, &priv->state) ||
-			test_bit(TIMO_NUM, &driver->status)))
+			test_bit(TIMO_NUM, &device->status)))
 		{
 			printk("gpib: pio read wait interrupted\n");
 			retval = -EINTR;
 			break;
 		};
-		if(test_bit(TIMO_NUM, &driver->status))
+		if(test_bit(TIMO_NUM, &device->status))
 			break;
 
 		spin_lock_irqsave(&lock, flags);
@@ -60,7 +60,7 @@ static ssize_t pio_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t 
 	return retval ? retval : count;
 }
 
-static ssize_t dma_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length)
+static ssize_t dma_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t *buffer, size_t length)
 {
 	ssize_t retval = 0;
 	size_t count = 0;
@@ -91,8 +91,8 @@ static ssize_t dma_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t 
 	// attempt to busy wait may improve performance XXX
 
 	// wait for data to transfer
-	if(wait_event_interruptible(driver->wait, test_bit(DMA_IN_PROGRESS_BN, &priv->state) == 0 ||
-		test_bit(TIMO_NUM, &driver->status)))
+	if(wait_event_interruptible(device->wait, test_bit(DMA_IN_PROGRESS_BN, &priv->state) == 0 ||
+		test_bit(TIMO_NUM, &device->status)))
 	{
 		printk("gpib: dma read wait interrupted\n");
 		retval = -EINTR;
@@ -116,7 +116,7 @@ static ssize_t dma_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t 
 	return retval ? retval : count;
 }
 
-ssize_t nec7210_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length, int *end)
+ssize_t nec7210_read(gpib_device_t *device, nec7210_private_t *priv, uint8_t *buffer, size_t length, int *end)
 {
 	size_t	count = 0;
 	ssize_t retval = 0;
@@ -141,10 +141,10 @@ ssize_t nec7210_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *bu
 	{
 		if(priv->dma_channel)
 		{		// ISA DMA transfer
-			retval = dma_read(driver, priv, buffer, length);
+			retval = dma_read(device, priv, buffer, length);
 		}else
 		{	// PIO transfer
-			retval = pio_read(driver, priv, buffer, length);
+			retval = pio_read(device, priv, buffer, length);
 		}
 		if(retval < 0)
 			return retval;
@@ -157,7 +157,7 @@ ssize_t nec7210_read(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *bu
 	{
 		// make sure we holdoff after last byte read
 		priv->write_byte(priv, priv->auxa_bits | HR_HLDA, AUXMR);
-		retval = pio_read(driver, priv, &buffer[count], 1);
+		retval = pio_read(device, priv, &buffer[count], 1);
 		if(retval < 0)
 			return retval;
 		else

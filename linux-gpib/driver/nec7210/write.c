@@ -19,7 +19,7 @@
 #include "board.h"
 #include <asm/dma.h>
 
-static ssize_t pio_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length)
+static ssize_t pio_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t *buffer, size_t length)
 {
 	size_t count = 0;
 	ssize_t retval = 0;
@@ -38,14 +38,14 @@ static ssize_t pio_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t
 		spin_unlock_irqrestore(&lock, flags);
 
 		// wait until byte is sent
-		if(wait_event_interruptible(driver->wait, test_bit(WRITE_READY_BN, &priv->state) ||
-			test_bit(TIMO_NUM, &driver->status)))
+		if(wait_event_interruptible(device->wait, test_bit(WRITE_READY_BN, &priv->state) ||
+			test_bit(TIMO_NUM, &device->status)))
 		{
 			printk("gpib write interrupted!\n");
 			retval = -EINTR;
 			break;
 		}
-		if(test_bit(TIMO_NUM, &driver->status))
+		if(test_bit(TIMO_NUM, &device->status))
 		{
 			retval = -ETIMEDOUT;
 			break;
@@ -62,7 +62,7 @@ static ssize_t pio_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t
 	return length;
 }
 
-static ssize_t dma_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length)
+static ssize_t dma_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t *buffer, size_t length)
 {
 	unsigned long flags;
 	int residue = 0;
@@ -88,8 +88,8 @@ static ssize_t dma_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t
 	priv->write_byte(priv, priv->imr1_bits, IMR1);
 
 	// suspend until message is sent
-	if(wait_event_interruptible(driver->wait, test_bit(DMA_IN_PROGRESS_BN, &priv->state) == 0 ||
-		test_bit(TIMO_NUM, &driver->status)))
+	if(wait_event_interruptible(device->wait, test_bit(DMA_IN_PROGRESS_BN, &priv->state) == 0 ||
+		test_bit(TIMO_NUM, &device->status)))
 	{
 		printk("gpib write interrupted!\n");
 	}
@@ -114,7 +114,7 @@ static ssize_t dma_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t
 	return length;
 }
 
-ssize_t nec7210_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length, int send_eoi)
+ssize_t nec7210_write(gpib_device_t *device, nec7210_private_t *priv, uint8_t *buffer, size_t length, int send_eoi)
 {
 	size_t count = 0;
 	ssize_t retval = 0;
@@ -133,13 +133,13 @@ ssize_t nec7210_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *b
 	{
 		if(priv->dma_channel)
 		{	// isa dma transfer
-			retval = dma_write(driver, priv, buffer, length);
+			retval = dma_write(device, priv, buffer, length);
 			if(retval < 0)
 				return retval;
 			else count += retval;
 		}else
 		{	// PIO transfer
-			retval = pio_write(driver, priv, buffer, length);
+			retval = pio_write(device, priv, buffer, length);
 			if(retval < 0)
 				return retval;
 			else count += retval;
@@ -150,7 +150,7 @@ ssize_t nec7210_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *b
 		/*send EOI */
 		priv->write_byte(priv, AUX_SEOI, AUXMR);
 
-		retval = pio_write(driver, priv, &buffer[count], 1);
+		retval = pio_write(device, priv, &buffer[count], 1);
 		if(retval < 0)
 			return retval;
 		else

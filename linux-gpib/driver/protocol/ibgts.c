@@ -7,16 +7,16 @@
  * active state, i.e., turn ATN off.
  */
 
-IBLCL int ibgts(void)
+IBLCL int ibgts(gpib_device_t *device)
 {
-	int status = driver->update_status(driver);
+	int status = ibstatus(device);
 
 	if((status & CIC) == 0)
 	{
 		printk("gpib: not CIC during ibgts\n");
 		return -1;
 	}
-	driver->go_to_standby(driver);                    /* go to standby */
+	device->interface->go_to_standby(device);                    /* go to standby */
 	return 0;
 }
 

@@ -28,85 +28,85 @@
 #include <linux/pci_ids.h>
 #include <linux/string.h>
 
-int pc2_attach(gpib_driver_t *driver);
-int pc2a_attach(gpib_driver_t *driver);
+int pc2_attach(gpib_device_t *device);
+int pc2a_attach(gpib_device_t *device);
 
-void pc2_detach(gpib_driver_t *driver);
-void pc2a_detach(gpib_driver_t *driver);
+void pc2_detach(gpib_device_t *device);
+void pc2a_detach(gpib_device_t *device);
 
 // wrappers for interface functions
-ssize_t pc2_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int *end)
+ssize_t pc2_read(gpib_device_t *device, uint8_t *buffer, size_t length, int *end)
 {
-	pc2_private_t *priv = driver->private_data;
-	return nec7210_read(driver, &priv->nec7210_priv, buffer, length, end);
+	pc2_private_t *priv = device->private_data;
+	return nec7210_read(device, &priv->nec7210_priv, buffer, length, end);
 }
-ssize_t pc2_write(gpib_driver_t *driver, uint8_t *buffer, size_t length, int send_eoi)
+ssize_t pc2_write(gpib_device_t *device, uint8_t *buffer, size_t length, int send_eoi)
 {
-	pc2_private_t *priv = driver->private_data;
-	return nec7210_write(driver, &priv->nec7210_priv, buffer, length, send_eoi);
+	pc2_private_t *priv = device->private_data;
+	return nec7210_write(device, &priv->nec7210_priv, buffer, length, send_eoi);
 }
-ssize_t pc2_command(gpib_driver_t *driver, uint8_t *buffer, size_t length)
+ssize_t pc2_command(gpib_device_t *device, uint8_t *buffer, size_t length)
 {
-	pc2_private_t *priv = driver->private_data;
-	return nec7210_command(driver, &priv->nec7210_priv, buffer, length);
+	pc2_private_t *priv = device->private_data;
+	return nec7210_command(device, &priv->nec7210_priv, buffer, length);
 }
-int pc2_take_control(gpib_driver_t *driver, int synchronous)
+int pc2_take_control(gpib_device_t *device, int synchronous)
 {
-	pc2_private_t *priv = driver->private_data;
-	return nec7210_take_control(driver, &priv->nec7210_priv, synchronous);
+	pc2_private_t *priv = device->private_data;
+	return nec7210_take_control(device, &priv->nec7210_priv, synchronous);
 }
-int pc2_go_to_standby(gpib_driver_t *driver)
+int pc2_go_to_standby(gpib_device_t *device)
 {
-	pc2_private_t *priv = driver->private_data;
-	return nec7210_go_to_standby(driver, &priv->nec7210_priv);
+	pc2_private_t *priv = device->private_data;
+	return nec7210_go_to_standby(device, &priv->nec7210_priv);
 }
-void pc2_interface_clear(gpib_driver_t *driver, int assert)
+void pc2_interface_clear(gpib_device_t *device, int assert)
 {
-	pc2_private_t *priv = driver->private_data;
-	nec7210_interface_clear(driver, &priv->nec7210_priv, assert);
+	pc2_private_t *priv = device->private_data;
+	nec7210_interface_clear(device, &priv->nec7210_priv, assert);
 }
-void pc2_remote_enable(gpib_driver_t *driver, int enable)
+void pc2_remote_enable(gpib_device_t *device, int enable)
 {
-	pc2_private_t *priv = driver->private_data;
-	nec7210_remote_enable(driver, &priv->nec7210_priv, enable);
+	pc2_private_t *priv = device->private_data;
+	nec7210_remote_enable(device, &priv->nec7210_priv, enable);
 }
-void pc2_enable_eos(gpib_driver_t *driver, uint8_t eos_byte, int compare_8_bits)
+void pc2_enable_eos(gpib_device_t *device, uint8_t eos_byte, int compare_8_bits)
 {
-	pc2_private_t *priv = driver->private_data;
-	nec7210_enable_eos(driver, &priv->nec7210_priv, eos_byte, compare_8_bits);
+	pc2_private_t *priv = device->private_data;
+	nec7210_enable_eos(device, &priv->nec7210_priv, eos_byte, compare_8_bits);
 }
-void pc2_disable_eos(gpib_driver_t *driver)
+void pc2_disable_eos(gpib_device_t *device)
 {
-	pc2_private_t *priv = driver->private_data;
-	nec7210_disable_eos(driver, &priv->nec7210_priv);
+	pc2_private_t *priv = device->private_data;
+	nec7210_disable_eos(device, &priv->nec7210_priv);
 }
-unsigned int pc2_update_status(gpib_driver_t *driver)
+unsigned int pc2_update_status(gpib_device_t *device)
 {
-	pc2_private_t *priv = driver->private_data;
-	return nec7210_update_status(driver, &priv->nec7210_priv);
+	pc2_private_t *priv = device->private_data;
+	return nec7210_update_status(device, &priv->nec7210_priv);
 }
-void pc2_primary_address(gpib_driver_t *driver, unsigned int address)
+void pc2_primary_address(gpib_device_t *device, unsigned int address)
 {
-	pc2_private_t *priv = driver->private_data;
-	nec7210_primary_address(driver, &priv->nec7210_priv, address);
+	pc2_private_t *priv = device->private_data;
+	nec7210_primary_address(device, &priv->nec7210_priv, address);
 }
-void pc2_secondary_address(gpib_driver_t *driver, unsigned int address, int enable)
+void pc2_secondary_address(gpib_device_t *device, unsigned int address, int enable)
 {
-	pc2_private_t *priv = driver->private_data;
-	nec7210_secondary_address(driver, &priv->nec7210_priv, address, enable);
+	pc2_private_t *priv = device->private_data;
+	nec7210_secondary_address(device, &priv->nec7210_priv, address, enable);
 }
-int pc2_parallel_poll(gpib_driver_t *driver, uint8_t *result)
+int pc2_parallel_poll(gpib_device_t *device, uint8_t *result)
 {
-	pc2_private_t *priv = driver->private_data;
-	return nec7210_parallel_poll(driver, &priv->nec7210_priv, result);
+	pc2_private_t *priv = device->private_data;
+	return nec7210_parallel_poll(device, &priv->nec7210_priv, result);
 }
-int pc2_serial_poll_response(gpib_driver_t *driver, uint8_t status)
+int pc2_serial_poll_response(gpib_device_t *device, uint8_t status)
 {
-	pc2_private_t *priv = driver->private_data;
-	return nec7210_serial_poll_response(driver, &priv->nec7210_priv, status);
+	pc2_private_t *priv = device->private_data;
+	return nec7210_serial_poll_response(device, &priv->nec7210_priv, status);
 }
 
-gpib_driver_t pc2_driver =
+gpib_interface_t pc2_interface =
 {
 	name:	"nec7210",
 	attach:	pc2_attach,
@@ -128,7 +128,7 @@ gpib_driver_t pc2_driver =
 	serial_poll_response:	pc2_serial_poll_response,
 };
 
-gpib_driver_t pc2a_driver =
+gpib_interface_t pc2a_interface =
 {
 	name:	"nec7210",
 	attach:	pc2a_attach,
@@ -150,34 +150,34 @@ gpib_driver_t pc2a_driver =
 	serial_poll_response:	pc2_serial_poll_response,
 };
 
-static int allocate_private(gpib_driver_t *driver)
+static int allocate_private(gpib_device_t *device)
 {
-	driver->private_data = kmalloc(sizeof(pc2_private_t), GFP_KERNEL);
-	if(driver->private_data == NULL)
+	device->private_data = kmalloc(sizeof(pc2_private_t), GFP_KERNEL);
+	if(device->private_data == NULL)
 		return -1;
-	memset(driver->private_data, 0, sizeof(pc2_private_t));
+	memset(device->private_data, 0, sizeof(pc2_private_t));
 	return 0;
 }
 
-static void free_private(gpib_driver_t *driver)
+static void free_private(gpib_device_t *device)
 {
-	if(driver->private_data)
+	if(device->private_data)
 	{
-		kfree(driver->private_data);
-		driver->private_data = NULL;
+		kfree(device->private_data);
+		device->private_data = NULL;
 	}
 }
 
-int pc2_attach(gpib_driver_t *driver)
+int pc2_attach(gpib_device_t *device)
 {
 	int isr_flags = 0;
 	pc2_private_t *pc2_priv;
 	nec7210_private_t *nec_priv;
-	driver->status = 0;
+	device->status = 0;
 
-	if(allocate_private(driver))
+	if(allocate_private(device))
 		return -ENOMEM;
-	pc2_priv = driver->private_data;
+	pc2_priv = device->private_data;
 	nec_priv = &pc2_priv->nec7210_priv;
 	nec_priv->offset = pc2_reg_offset;
 	nec_priv->read_byte = ioport_read_byte;
@@ -191,7 +191,7 @@ int pc2_attach(gpib_driver_t *driver)
 	nec_priv->iobase = ibbase;
 
 	// install interrupt handler
-	if( request_irq(ibirq, pc2_interrupt, isr_flags, "pc2", driver))
+	if( request_irq(ibirq, pc2_interrupt, isr_flags, "pc2", device))
 	{
 		printk("gpib: can't request IRQ %d\n", ibirq);
 		return -1;
@@ -221,9 +221,9 @@ int pc2_attach(gpib_driver_t *driver)
 	return 0;
 }
 
-void pc2_detach(gpib_driver_t *driver)
+void pc2_detach(gpib_device_t *device)
 {
-	pc2_private_t *pc2_priv = driver->private_data;
+	pc2_private_t *pc2_priv = device->private_data;
 	nec7210_private_t *nec_priv;
 
 	if(pc2_priv)
@@ -235,7 +235,7 @@ void pc2_detach(gpib_driver_t *driver)
 		}
 		if(pc2_priv->irq)
 		{
-			free_irq(pc2_priv->irq, driver);
+			free_irq(pc2_priv->irq, device);
 		}
 		if(nec_priv->iobase)
 		{
@@ -243,21 +243,21 @@ void pc2_detach(gpib_driver_t *driver)
 			release_region(nec_priv->iobase, pc2_iosize);
 		}
 	}
-	free_private(driver);
+	free_private(device);
 }
 
-int pc2a_attach(gpib_driver_t *driver)
+int pc2a_attach(gpib_device_t *device)
 {
 	unsigned int i, err;
 	int isr_flags = 0;
 	pc2_private_t *pc2_priv;
 	nec7210_private_t *nec_priv;
 
-	driver->status = 0;
+	device->status = 0;
 
-	if(allocate_private(driver))
+	if(allocate_private(device))
 		return -ENOMEM;
-	pc2_priv = driver->private_data;
+	pc2_priv = device->private_data;
 	nec_priv = &pc2_priv->nec7210_priv;
 	nec_priv->offset = pc2a_reg_offset;
 	nec_priv->read_byte = ioport_read_byte;
@@ -304,7 +304,7 @@ int pc2a_attach(gpib_driver_t *driver)
 	request_region(pc2a_clear_intr_iobase, pc2a_clear_intr_iosize, "pc2a");
 	nec_priv->iobase = ibbase;
 
-	if(request_irq(ibirq, pc2a_interrupt, isr_flags, "pc2a", driver))
+	if(request_irq(ibirq, pc2a_interrupt, isr_flags, "pc2a", device))
 	{
 		printk("gpib: can't request IRQ %d\n", ibirq);
 		return -1;
@@ -336,10 +336,10 @@ int pc2a_attach(gpib_driver_t *driver)
 	return 0;
 }
 
-void pc2a_detach(gpib_driver_t *driver)
+void pc2a_detach(gpib_device_t *device)
 {
 	int i;
-	pc2_private_t *pc2_priv = driver->private_data;
+	pc2_private_t *pc2_priv = device->private_data;
 	nec7210_private_t *nec_priv;
 
 	if(pc2_priv)
@@ -351,7 +351,7 @@ void pc2a_detach(gpib_driver_t *driver)
 		}
 		if(pc2_priv->irq)
 		{
-			free_irq(pc2_priv->irq, driver);
+			free_irq(pc2_priv->irq, device);
 		}
 		if(nec_priv->iobase)
 		{
@@ -361,6 +361,6 @@ void pc2a_detach(gpib_driver_t *driver)
 			release_region(pc2a_clear_intr_iobase, pc2a_clear_intr_iosize);
 		}
 	}
-	free_private(driver);
+	free_private(device);
 }
 

@@ -22,7 +22,6 @@
 
 #include <gpibP.h>
 #include <asm/io.h>
-#include <gpib_buffer.h>
 
 #include "nec7210.h"
 #include "pc2.h"
@@ -30,7 +29,7 @@
 
 extern unsigned long ibbase;	/* base addr of GPIB interface registers  */
 extern unsigned int ibirq;	/* interrupt request line for GPIB (1-7)  */
-extern unsigned int ibdma ;      /* DMA channel                            */
+extern unsigned int ibdma;      /* DMA channel                            */
 
 #endif	//_GPIB_PCIIA_BOARD_H
 

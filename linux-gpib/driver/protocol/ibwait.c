@@ -27,7 +27,7 @@
  * If the mask is 0 then
  * no condition is waited for.
  */
-IBLCL int ibwait(unsigned int mask)
+IBLCL int ibwait(gpib_device_t *device, unsigned int mask)
 {
 	int retval = 0;
 
@@ -40,17 +40,17 @@ IBLCL int ibwait(unsigned int mask)
 		printk("bad mask 0x%x \n",mask);
 		return -1;
 	}
-	osStartTimer(timeidx);
-	while((ibstatus() & mask) == 0)
+	osStartTimer(device, timeidx);
+	while((ibstatus(device) & mask) == 0)
 	{
-		if(interruptible_sleep_on_timeout(&driver->wait, 1))
+		if(interruptible_sleep_on_timeout(&device->wait, 1))
 		{
 			printk("wait interrupted\n");
 			retval = -1;
 			break;
 		}
 	}
-	osRemoveTimer();
+	osRemoveTimer(device);
 	return retval;
 }
 

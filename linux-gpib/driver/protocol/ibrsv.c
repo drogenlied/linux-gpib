@@ -6,15 +6,15 @@
  * Request service from the CIC and/or set the serial poll
  * status byte.
  */
-IBLCL int ibrsv(uint8_t poll_status)
+IBLCL int ibrsv(gpib_device_t *device, uint8_t poll_status)
 {
-	int status = ibstatus();
+	int status = ibstatus(device);
 
 	if((status & CIC))
 	{
 		printk("gpib: interface requested service while CIC\n");
 		return -1;
 	}
-	driver->serial_poll_response(driver, poll_status);		/* set new status to v */
+	device->interface->serial_poll_response(device, poll_status);		/* set new status to v */
 	return 0;
 }

@@ -19,7 +19,7 @@
 #include "board.h"
 #include <linux/delay.h>
 
-void nec7210_enable_eos(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t eos_byte, int compare_8_bits)
+void nec7210_enable_eos(gpib_device_t *device, nec7210_private_t *priv, uint8_t eos_byte, int compare_8_bits)
 {
 	priv->write_byte(priv, eos_byte, EOSR);
 	priv->auxa_bits |= HR_REOS;
@@ -30,13 +30,13 @@ void nec7210_enable_eos(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t 
 	priv->write_byte(priv, priv->auxa_bits, AUXMR);
 }
 
-void nec7210_disable_eos(gpib_driver_t *driver, nec7210_private_t *priv)
+void nec7210_disable_eos(gpib_device_t *device, nec7210_private_t *priv)
 {
 	priv->auxa_bits &= ~HR_REOS;
 	priv->write_byte(priv, priv->auxa_bits, AUXMR);
 }
 
-int nec7210_parallel_poll(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *result)
+int nec7210_parallel_poll(gpib_device_t *device, nec7210_private_t *priv, uint8_t *result)
 {
 	int ret;
 
@@ -48,7 +48,7 @@ int nec7210_parallel_poll(gpib_driver_t *driver, nec7210_private_t *priv, uint8_
 	priv->write_byte(priv, AUX_EPP, AUXMR);
 
 	// wait for result
-	ret = wait_event_interruptible(driver->wait, test_bit(COMMAND_READY_BN, &priv->state));
+	ret = wait_event_interruptible(device->wait, test_bit(COMMAND_READY_BN, &priv->state));
 
 	// disable command out interrupts
 	priv->imr2_bits &= ~HR_COIE;
@@ -65,7 +65,7 @@ int nec7210_parallel_poll(gpib_driver_t *driver, nec7210_private_t *priv, uint8_
 	return 0;
 }
 
-int nec7210_serial_poll_response(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t status)
+int nec7210_serial_poll_response(gpib_device_t *device, nec7210_private_t *priv, uint8_t status)
 {
 	priv->write_byte(priv, 0, SPMR);		/* clear current serial poll status */
 	priv->write_byte(priv, status, SPMR);		/* set new status to v */
@@ -73,13 +73,13 @@ int nec7210_serial_poll_response(gpib_driver_t *driver, nec7210_private_t *priv,
 	return 0;
 }
 
-void nec7210_primary_address(gpib_driver_t *driver, nec7210_private_t *priv, unsigned int address)
+void nec7210_primary_address(gpib_device_t *device, nec7210_private_t *priv, unsigned int address)
 {
 	// put primary address in address0
 	priv->write_byte(priv, address & ADDRESS_MASK, ADR);
 }
 
-void nec7210_secondary_address(gpib_driver_t *driver, nec7210_private_t *priv, unsigned int address, int enable)
+void nec7210_secondary_address(gpib_device_t *device, nec7210_private_t *priv, unsigned int address, int enable)
 {
 	if(enable)
 	{
@@ -99,7 +99,7 @@ void nec7210_secondary_address(gpib_driver_t *driver, nec7210_private_t *priv, u
 	priv->write_byte(priv, priv->admr_bits, ADMR);
 }
 
-unsigned int nec7210_update_status(gpib_driver_t *driver, nec7210_private_t *priv)
+unsigned int nec7210_update_status(gpib_device_t *device, nec7210_private_t *priv)
 {
 	int address_status_bits;
 
@@ -108,27 +108,27 @@ unsigned int nec7210_update_status(gpib_driver_t *driver, nec7210_private_t *pri
 	address_status_bits = priv->read_byte(priv, ADSR);
 
 	if(address_status_bits & HR_CIC)
-		set_bit(CIC_NUM, &driver->status);
+		set_bit(CIC_NUM, &device->status);
 	else
-		clear_bit(CIC_NUM, &driver->status);
+		clear_bit(CIC_NUM, &device->status);
 	// check for talker/listener addressed
 	if(address_status_bits & HR_TA)
-		set_bit(TACS_NUM, &driver->status);
+		set_bit(TACS_NUM, &device->status);
 	else
-		clear_bit(TACS_NUM, &driver->status);
+		clear_bit(TACS_NUM, &device->status);
 	if(address_status_bits & HR_LA)
-		set_bit(LACS_NUM, &driver->status);
+		set_bit(LACS_NUM, &device->status);
 	else
-		clear_bit(LACS_NUM, &driver->status);
+		clear_bit(LACS_NUM, &device->status);
 	if(address_status_bits & HR_NATN)
-		clear_bit(ATN_NUM, &driver->status);
+		clear_bit(ATN_NUM, &device->status);
 	else
-		set_bit(ATN_NUM, &driver->status);
+		set_bit(ATN_NUM, &device->status);
 
 	/* we rely on the interrupt handler to set the
 	 * bits read from ISR1 and ISR2 */
 
-	return driver->status;
+	return device->status;
 }
 
 

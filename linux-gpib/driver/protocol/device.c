@@ -25,22 +25,22 @@
  * zero in for this argument.  This function sends the TAD of the
  * GPIB interface, UNL, the LAD of the device, and GET.
  */ 
-IBLCL int dvtrg(int padsad)
+IBLCL int dvtrg(gpib_device_t *device, int padsad)
 {
 	uint8_t cmdString[2];
-	int status = ibstatus();
+	int status = ibstatus(device);
 
 	if((status & CIC) == 0)
 	{
 		printk("gpib: interface cannot trigger when not CIC\n");
 		return -1;
 	}
-	if(send_setup(padsad))
+	if(send_setup(device, padsad))
 	{
 		return -1;
 	}
 	cmdString[0] = GET;
-	ibcmd(cmdString, 1);
+	ibcmd(device, cmdString, 1);
 	return 0;
 }
 
@@ -52,22 +52,22 @@ IBLCL int dvtrg(int padsad)
  * zero in for this argument.  This function sends the TAD of the
  * GPIB interface, UNL, the LAD of the device, and SDC.
  */
-IBLCL int dvclr(int padsad)
+IBLCL int dvclr(gpib_device_t *device, int padsad)
 {
 	uint8_t cmdString[2];
-	int status = ibstatus();
+	int status = ibstatus(device);
 
 	if((status & CIC ) == 0)
 	{
 		printk("gpib: board not CIC during clear\n");
 		return -1;
 	}
-	if(driver->take_control(driver, 0) < 0)
+	if(device->interface->take_control(device, 0) < 0)
 		return -1;
-	if(send_setup(padsad) < 0)
+	if(send_setup(device, padsad) < 0)
 		return -1;
 	cmdString[0] = SDC;
-	if(driver->command(driver, cmdString, 1) < 0)
+	if(device->interface->command(device, cmdString, 1) < 0)
 		return -1;
 
 	return 0;
@@ -84,10 +84,10 @@ IBLCL int dvclr(int padsad)
  */
 
 
-IBLCL int dvrsp(int padsad, uint8_t *result)
+IBLCL int dvrsp(gpib_device_t *device, int padsad, uint8_t *result)
 {
 	uint8_t cmd_string[8];
-	int status = ibstatus();
+	int status = ibstatus(device);
 	int end_flag;
 	ssize_t ret;
 	unsigned int pad, sad;
@@ -106,9 +106,9 @@ IBLCL int dvrsp(int padsad, uint8_t *result)
 		return -1;
 	}
 
-	osStartTimer(pollTimeidx);
+	osStartTimer(device, pollTimeidx);
 
-	driver->take_control(driver, 0);
+	device->interface->take_control(device, 0);
 
 	i = 0;
 	cmd_string[i++] = UNL;
@@ -121,28 +121,28 @@ IBLCL int dvrsp(int padsad, uint8_t *result)
 	if (sad)
 		cmd_string[i++] = sad;
 
-	if (driver->command(driver, cmd_string, i) < i)
+	if (device->interface->command(device, cmd_string, i) < i)
 		return -1;
 
-	driver->go_to_standby(driver);
+	device->interface->go_to_standby(device);
 
 	// read poll result
-	ret = driver->read(driver, result, 1, &end_flag);
+	ret = device->interface->read(device, result, 1, &end_flag);
 	if(ret < 1)
 	{
 		printk("gpib: serial poll failed\n");
 		return -1;
 	}
 
-	driver->take_control(driver, 0);
+	device->interface->take_control(device, 0);
 
 	cmd_string[0] = SPD;	/* disable serial poll bytes */
 	cmd_string[1] = UNT;
-	if(driver->command(driver, cmd_string, 2) < 2 )
+	if(device->interface->command(device, cmd_string, 2) < 2 )
 	{
 		return -1;
 	}
-	osRemoveTimer();
+	osRemoveTimer(device);
 
 	return 0;
 }
@@ -155,25 +155,25 @@ IBLCL int dvrsp(int padsad, uint8_t *result)
  * listen and the GPIB interface is addressed to talk.  ibwrt is
  * then called to write cnt bytes to the device from buf.
  */
-IBLCL ssize_t dvwrt(int padsad, uint8_t *buf, unsigned int cnt)
+IBLCL ssize_t dvwrt(gpib_device_t *device, int padsad, uint8_t *buf, unsigned int cnt)
 {
-	int status = ibstatus();
+	int status = ibstatus(device);
 	if((status & CIC) == 0)
 	{
 		return -1;
 	}
-	if (send_setup(padsad) < 0)
+	if (send_setup(device, padsad) < 0)
 		return -1;
 
 	// XXX assumes all the data is written in this call
-	return ibwrt(buf, cnt, 0);
+	return ibwrt(device, buf, cnt, 0);
 }
 
 
 /*
  * 488.2 Controller sequences
  */
-IBLCL int receive_setup(int padsad)
+IBLCL int receive_setup(gpib_device_t *device, int padsad)
 {
 	uint8_t pad, sad;
 	uint8_t cmdString[8];
@@ -195,14 +195,14 @@ IBLCL int receive_setup(int padsad)
 	if (sad)
 		cmdString[i++] = sad;
 
-	if (ibcmd(cmdString, i) < 0)
+	if (ibcmd(device, cmdString, i) < 0)
 		return -1;
 
 	return 0;
 }
 
 
-IBLCL int send_setup(int padsad)
+IBLCL int send_setup(gpib_device_t *device, int padsad)
 {
 	uint8_t pad, sad;
 	uint8_t cmdString[8];
@@ -223,7 +223,7 @@ IBLCL int send_setup(int padsad)
 	if (mySAD)
 		cmdString[i++] = mySAD;
 
-	if (ibcmd(cmdString, i) < 0)
+	if (ibcmd(device, cmdString, i) < 0)
 		return -1;
 
 

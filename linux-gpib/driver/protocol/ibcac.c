@@ -10,16 +10,16 @@
  * If v is non-zero, take control synchronously, if
  * possible.  Otherwise, take control asynchronously.
  */
-IBLCL int ibcac(int sync)
+IBLCL int ibcac(gpib_device_t *device, int sync)
 {
-	int status = ibstatus();
+	int status = ibstatus(device);
 	if((status & CIC) == 0)
 	{
 		printk("gpib: not CIC during ibcac\n");
 		return -1;
 	}
 
-	driver->take_control(driver, sync);
+	device->interface->take_control(device, sync);
 
 	return 0;
 }

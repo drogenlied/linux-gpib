@@ -20,12 +20,10 @@
 
 #include <linux/fcntl.h>
 
-#define GIVE_UP(a) {up(&inode_mutex); return a;}
+#define GIVE_UP(a) {up(&device->mutex); return a;}
 
 int ib_opened=0;
 int ib_exclusive=0;
-
-DECLARE_MUTEX(inode_mutex);
 
 IBLCL int ibopen(struct inode *inode, struct file *filep)
 {
@@ -44,6 +42,34 @@ IBLCL int ibopen(struct inode *inode, struct file *filep)
 		ib_exclusive=1;
 	}
 
+// this is a temporary hack to allocate the gpib0 device
+if(device_array[0] == NULL)
+{
+	device_array[0] = kmalloc(sizeof(gpib_device_t), GFP_KERNEL);
+
+#ifdef NIPCIIa
+	device_array[0]->interface = &pc2a_interface;
+#warning using pc2a driver
+#endif
+
+#ifdef CBI_PCI
+	device_array[0]->interface = &cb_pci_interface;
+#warning using cb_pci driver
+#endif
+
+#ifdef CBI_PCMCIA
+	device_array[0]->interface = &cb_pcmcia_interface;
+#warning using cb_pcmcia driver
+#endif
+
+#if !defined(NIPCIIa) && !defined(CBI_4882)
+	device_array[0]->interface = &pc2_interface;
+#warning using pc2 driver
+#endif
+
+	init_waitqueue_head(&device_array[0]->wait);
+}
+
 	ib_opened++;
 
 	return 0;
@@ -52,21 +78,31 @@ IBLCL int ibopen(struct inode *inode, struct file *filep)
 
 IBLCL int ibclose(struct inode *inode, struct file *file)
 {
+	unsigned int minor = MINOR(inode->i_rdev);
+	gpib_device_t *device = device_array[minor - 1];
+
 	if ((pgmstat & PS_ONLINE) && ib_opened == 1 )
-		ibonl(0);
+		ibonl(device, 0);
 	ib_opened--;
 
 	if( ib_exclusive )
 		ib_exclusive = 0;
 
+	// temporary hack
+	if(ib_opened == 0)
+	{
+		kfree(device_array[0]);
+		device_array[0] = NULL;
+	}
+
 	return 0;
 }
 
-IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned long arg)
+IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd,
+ unsigned long arg)
 {
 	int	retval = 0; 		/* assume everything OK for now */
 	ibarg_t m_ibarg,*ibargp;
-
 	int	bufsize;
 	int	remain;
 	char 	*buf;
@@ -74,6 +110,20 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, uns
 	char 	c;
 	ssize_t ret;
 	int end_flag = 0;
+	unsigned int minor = MINOR(inode->i_rdev);
+	gpib_device_t *device;
+
+	if(minor > MAX_NUM_GPIB_DEVICES)
+	{
+		printk("gpib: invalid minor number of device file\n");
+		return -ENODEV;
+	}
+	device = device_array[minor - 1];
+	if(device == NULL)
+	{
+		printk("gpib: no device configured at minor number %i\n", minor);
+		return -ENODEV;
+	}
 
 printk("ioclt %i\n", cmd);
 
@@ -107,13 +157,12 @@ printk("ioclt %i\n", cmd);
 		ibargp->ib_ibcnt = ibcnt;
 		copy_to_user((ibarg_t *) arg, (ibarg_t *) ibargp , sizeof(ibarg_t));
 
-		DBGout();
 		return retval;
 	}
 #endif
 
 	/* lock other processes from performing commands */
-	retval = down_interruptible(&inode_mutex);
+	retval = down_interruptible(&device->mutex);
 	if(retval)
 	{
 		printk("gpib: ioctl interrupted while waiting on lock\n");
@@ -140,7 +189,7 @@ printk("ioclt %i\n", cmd);
 			remain = ibargp->ib_cnt;
 			do
 			{
-				ret = ibrd( buf, (bufsize < remain) ? bufsize : remain, &end_flag);
+				ret = ibrd(device, buf, (bufsize < remain) ? bufsize : remain, &end_flag);
 				if(ret < 0)
 				{
 					retval = -EIO;
@@ -172,7 +221,8 @@ printk("ioclt %i\n", cmd);
 			do
 			{
 				copy_from_user( buf, userbuf, (bufsize < remain) ? bufsize : remain );
-				ret = ibwrt( buf, (bufsize < remain) ? bufsize : remain, (bufsize < remain) );
+				ret = ibwrt(device, buf, (bufsize < remain) ? bufsize : remain, (bufsize < remain)
+ );
 				if(ret < 0)
 				{
 					retval = -EIO;
@@ -200,10 +250,10 @@ printk("ioclt %i\n", cmd);
 			/* Write DMA buffer loads till we empty the user supplied buffer */
 			userbuf = ibargp->ib_buf;
 			remain = ibargp->ib_cnt;
-			while (remain > 0 && !(ibstatus() & (TIMO)))
+			while (remain > 0 && !(ibstatus(device) & (TIMO)))
 			{
 				copy_from_user( buf, userbuf, (bufsize < remain) ? bufsize : remain );
-				ret = ibcmd( buf, (bufsize < remain) ? bufsize : remain );
+				ret = ibcmd(device, buf, (bufsize < remain) ? bufsize : remain );
 				if(ret < 0)
 				{
 					retval = -EIO;
@@ -221,7 +271,7 @@ printk("ioclt %i\n", cmd);
 
 		case IBWAIT:
 			DBGprint(DBG_DATA,("**arg=%x",ibargp->ib_arg));
-			retval = ibwait(ibargp->ib_arg);
+			retval = ibwait(device, ibargp->ib_arg);
 			break;
 		case IBRPP:
 			/* Check write access to Poll byte */
@@ -229,59 +279,55 @@ printk("ioclt %i\n", cmd);
 			if (retval)
 				GIVE_UP(retval);
 
-			retval = ibrpp(&c);
+			retval = ibrpp(device, &c);
 			put_user( c, ibargp->ib_buf );
 			break;
 		case IBONL:
-			retval = ibonl(ibargp->ib_arg);
+			retval = ibonl(device, ibargp->ib_arg);
 			break;
 		case IBAPE:
-			ibAPE(ibargp->ib_arg,ibargp->ib_cnt);
+			ibAPE(device, ibargp->ib_arg,ibargp->ib_cnt);
 			break;
 		case IBSIC:
-			retval = ibsic();
+			retval = ibsic(device);
 			break;
 		case IBSRE:
-			retval = ibsre(ibargp->ib_arg);
+			retval = ibsre(device, ibargp->ib_arg);
 			break;
 		case IBGTS:
-			retval = ibgts();
+			retval = ibgts(device);
 			break;
 		case IBCAC:
-			retval = ibcac(ibargp->ib_arg);
+			retval = ibcac(device, ibargp->ib_arg);
 			break;
 		case IBSDBG:
-	#if DEBUG
-			dbgMask= ibargp->ib_arg | DBG_1PPL;
-			DBGprint(DBG_DATA,("dbgMask=0x%x",dbgMask));
-	#endif
 			break;
 		case IBLINES:
-			retval = iblines(&ibargp->ib_ret);
+			retval = iblines(device, &ibargp->ib_ret);
 			break;
 		case IBPAD:
-			retval = ibpad(ibargp->ib_arg);
+			retval = ibpad(device, ibargp->ib_arg);
 			break;
 		case IBSAD:
-			retval = ibsad(ibargp->ib_arg);
+			retval = ibsad(device, ibargp->ib_arg);
 			break;
 		case IBTMO:
-			retval = ibtmo(ibargp->ib_arg);
+			retval = ibtmo(device, ibargp->ib_arg);
 			break;
 		case IBEOT:
-			retval = ibeot(ibargp->ib_arg);
+			retval = ibeot(device, ibargp->ib_arg);
 			break;
 		case IBEOS:
-			retval = ibeos(ibargp->ib_arg);
+			retval = ibeos(device, ibargp->ib_arg);
 			break;
 		case IBRSV:
-			retval = ibrsv(ibargp->ib_arg);
+			retval = ibrsv(device, ibargp->ib_arg);
 			break;
 		case DVTRG:
-			retval = dvtrg(ibargp->ib_arg);
+			retval = dvtrg(device, ibargp->ib_arg);
 			break;
 		case DVCLR:
-			retval = dvclr(ibargp->ib_arg);
+			retval = dvclr(device, ibargp->ib_arg);
 			break;
 		case DVRSP:
 			/* Check write access to Poll byte */
@@ -290,7 +336,7 @@ printk("ioclt %i\n", cmd);
 			{
 				GIVE_UP(retval);
 			}
-			retval = dvrsp(ibargp->ib_arg, &c);
+			retval = dvrsp(device, ibargp->ib_arg, &c);
 
 			put_user( c, ibargp->ib_buf );
 
@@ -301,7 +347,7 @@ printk("ioclt %i\n", cmd);
 			{
 				GIVE_UP(retval);
 			}
-			retval = ibAPrsp(ibargp->ib_arg, &c);
+			retval = ibAPrsp(device, ibargp->ib_arg, &c);
 			put_user( c, ibargp->ib_buf );
 			break;
 		case DVRD:	// XXX unnecessary, should be in user space lib
@@ -316,7 +362,7 @@ printk("ioclt %i\n", cmd);
 			{
 				GIVE_UP(-ENOMEM);
 			}
-			if(receive_setup(ibargp->ib_arg))
+			if(receive_setup(device, ibargp->ib_arg))
 			{
 				retval = -EIO;
 				break;
@@ -326,7 +372,7 @@ printk("ioclt %i\n", cmd);
 			remain = ibargp->ib_cnt;
 			do
 			{
-				ret = ibrd(buf, (bufsize < remain) ? bufsize : remain, &end_flag);
+				ret = ibrd(device, buf, (bufsize < remain) ? bufsize : remain, &end_flag);
 				if(ret < 0)
 				{
 					retval = -EIO;
@@ -356,10 +402,10 @@ printk("ioclt %i\n", cmd);
 			/* Write DMA buffer loads till we empty the user supplied buffer */
 			userbuf = ibargp->ib_buf;
 			remain = ibargp->ib_cnt;
-			while (remain > 0  && !(ibstatus() & (TIMO)))
+			while (remain > 0  && !(ibstatus(device) & (TIMO)))
 			{
 				copy_from_user( buf, userbuf, (bufsize < remain) ? bufsize : remain );
-				ret = dvwrt( ibargp->ib_arg, buf, (bufsize < remain) ? bufsize : remain );
+				ret = dvwrt(device, ibargp->ib_arg, buf, (bufsize < remain) ? bufsize : remain );
 				if(ret < 0)
 				{
 					retval = -EIO;
@@ -377,13 +423,13 @@ printk("ioclt %i\n", cmd);
 
 		/* special configuration options */
 		case CFCBASE:
-			osChngBase(ibargp->ib_arg);
+			osChngBase(device, ibargp->ib_arg);
 			break;
 		case CFCIRQ:
-			osChngIRQ(ibargp->ib_arg);
+			osChngIRQ(device, ibargp->ib_arg);
 			break;
 		case CFCDMA:
-			osChngDMA(ibargp->ib_arg);
+			osChngDMA(device, ibargp->ib_arg);
 			break;
 		case CFCDMABUFFER:
 			if (ibargp->ib_arg > MAX_DMA_SIZE)
@@ -407,7 +453,7 @@ printk("ioclt %i\n", cmd);
 	}
 
 	// return status bits
-	ibargp->ib_ibsta = ibstatus();
+	ibargp->ib_ibsta = ibstatus(device);
 	if(retval)
 		ibargp->ib_ibsta |= ERR;
 	else

@@ -40,13 +40,13 @@ EXPORTED_INCLUDES = gpib_types.h gpib_registers.h gpib_ioctl.h gpib_user.h
 EXP_INC = $(EXPORTED_INCLUDES:%=$(ROOT)/include/%)
 CWD := `pwd`
 
-OBJS =     ./sys/sys.o  ./protocol/ieee488.o  ./board/board.o 
+OBJS = ./board/board.o
 
 MAKE = make OPTIONS="$(OPTIONS) " -C
 SUBDIRS = board protocol sys
 
 
-all : $(EXP_INC) subdirs gpib$(DRIVER_DEVICE_ID).o
+all : $(EXP_INC) subdirs gpib$(DRIVER_DEVICE_ID).o gpib-common.o
 
 subdirs:
 	set -e; \
@@ -56,6 +56,9 @@ subdirs:
 
 gpib$(DRIVER_DEVICE_ID).o: $(OBJS)
 	$(RLINK) -o gpib$(DRIVER_DEVICE_ID).o $(OBJS) 
+
+gpib-common.o:
+	$(RLINK) -o gpib-common.o ./sys/sys.o ./protocol/ieee488.o
 
 clean :
 	rm -f *.o kernel_version.c $(EXP_INC) 
@@ -89,7 +92,7 @@ device:
 
 
 install:
-	$(INSTALL) -D gpib$(DRIVER_DEVICE_ID).o $(MODLIB)/misc/gpib$(DRIVER_DEVICE_ID).o
+	$(INSTALL) -D gpib$(DRIVER_DEVICE_ID).o gpib-common.o $(MODLIB)/misc/
 	depmod -a $(KERNELRELEASE)
 
 

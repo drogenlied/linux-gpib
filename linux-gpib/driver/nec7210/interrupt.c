@@ -26,18 +26,18 @@
 
 void pc2_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
-	gpib_driver_t *driver = arg;
-	pc2_private_t *priv = driver->private_data;
+	gpib_device_t *device = arg;
+	pc2_private_t *priv = device->private_data;
 
-	nec7210_interrupt(driver, &priv->nec7210_priv);
+	nec7210_interrupt(device, &priv->nec7210_priv);
 }
 
 void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
-	gpib_driver_t *driver = arg;
-	pc2_private_t *priv = driver->private_data;
+	gpib_device_t *device = arg;
+	pc2_private_t *priv = device->private_data;
 
-	nec7210_interrupt(driver, &priv->nec7210_priv);
+	nec7210_interrupt(device, &priv->nec7210_priv);
 
 	/* clear interrupt circuit */
 	outb(0xff , CLEAR_INTR_REG(priv->irq) );
@@ -46,8 +46,8 @@ void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp)
 void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp )
 {
 	int bits, hs_status;
-	gpib_driver_t *driver = arg;
-	cb7210_private_t *priv = driver->private_data;
+	gpib_device_t *device = arg;
+	cb7210_private_t *priv = device->private_data;
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 
 	// read incoming mailbox to clear mailbox full flag
@@ -64,19 +64,19 @@ void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp )
 		printk("gpib: cbi488 interrupt? 0x%x\n", hs_status);
 	}
 
-	nec7210_interrupt(driver, nec_priv);
+	nec7210_interrupt(device, nec_priv);
 }
 
 void cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 {
-	gpib_driver_t *driver = arg;
-	cb7210_private_t *priv = driver->private_data;
+	gpib_device_t *device = arg;
+	cb7210_private_t *priv = device->private_data;
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 
-	nec7210_interrupt(driver, nec_priv);
+	nec7210_interrupt(device, nec_priv);
 }
 
-void nec7210_interrupt(gpib_driver_t *driver, nec7210_private_t *priv)
+void nec7210_interrupt(gpib_device_t *device, nec7210_private_t *priv)
 {
 	int status1, status2, address_status;
 	unsigned long flags;
@@ -88,26 +88,26 @@ void nec7210_interrupt(gpib_driver_t *driver, nec7210_private_t *priv)
 	// record service request in status
 	if(status2 & HR_SRQI)
 	{
-		set_bit(SRQI_NUM, &driver->status);
-		wake_up_interruptible(&driver->wait);
+		set_bit(SRQI_NUM, &device->status);
+		wake_up_interruptible(&device->wait);
 	}
 
 	// change in lockout status
 	if(status2 & HR_LOKC)
 	{
 		if(status2 & HR_LOK)
-			set_bit(LOK_NUM, &driver->status);
+			set_bit(LOK_NUM, &device->status);
 		else
-			clear_bit(LOK_NUM, &driver->status);
+			clear_bit(LOK_NUM, &device->status);
 	}
 
 	// change in remote status
 	if(status2 & HR_REMC)
 	{
 		if(status2 & HR_REM)
-			set_bit(REM_NUM, &driver->status);
+			set_bit(REM_NUM, &device->status);
 		else
-			clear_bit(REM_NUM, &driver->status);
+			clear_bit(REM_NUM, &device->status);
 	}
 
 	// record address status change in status
@@ -116,23 +116,23 @@ void nec7210_interrupt(gpib_driver_t *driver, nec7210_private_t *priv)
 		address_status = priv->read_byte(priv, ADSR);
 		// check if we are controller in charge
 		if(address_status & HR_CIC)
-			set_bit(CIC_NUM, &driver->status);
+			set_bit(CIC_NUM, &device->status);
 		else
-			clear_bit(CIC_NUM, &driver->status);
+			clear_bit(CIC_NUM, &device->status);
 		// check for talker/listener addressed
 		if(address_status & HR_TA)
-			set_bit(TACS_NUM, &driver->status);
+			set_bit(TACS_NUM, &device->status);
 		else
-			clear_bit(TACS_NUM, &driver->status);
+			clear_bit(TACS_NUM, &device->status);
 		if(address_status & HR_LA)
-			set_bit(LACS_NUM, &driver->status);
+			set_bit(LACS_NUM, &device->status);
 		else
-			clear_bit(LACS_NUM, &driver->status);
+			clear_bit(LACS_NUM, &device->status);
 		if(address_status & HR_NATN)
-			clear_bit(ATN_NUM, &driver->status);
+			clear_bit(ATN_NUM, &device->status);
 		else
-			set_bit(ATN_NUM, &driver->status);
-		wake_up_interruptible(&driver->wait); /* wake up sleeping process */
+			set_bit(ATN_NUM, &device->status);
+		wake_up_interruptible(&device->wait); /* wake up sleeping process */
 	}
 
 	// record reception of END
@@ -145,7 +145,7 @@ void nec7210_interrupt(gpib_driver_t *driver, nec7210_private_t *priv)
 	if((status1 & HR_DI))
 	{
 		set_bit(READ_READY_BN, &priv->state);
-		wake_up_interruptible(&driver->wait); /* wake up sleeping process */
+		wake_up_interruptible(&device->wait); /* wake up sleeping process */
 	}
 
 	// check for dma read transfer complete
@@ -157,7 +157,7 @@ void nec7210_interrupt(gpib_driver_t *driver, nec7210_private_t *priv)
 		if((status1 & HR_END) || get_dma_residue(priv->dma_channel) == 0)
 		{
 			clear_bit(DMA_IN_PROGRESS_BN, &priv->state);
-			wake_up_interruptible(&driver->wait); /* wake up sleeping process */
+			wake_up_interruptible(&device->wait); /* wake up sleeping process */
 		}else
 			enable_dma(priv->dma_channel);
 		release_dma_lock(flags);
@@ -174,14 +174,14 @@ void nec7210_interrupt(gpib_driver_t *driver, nec7210_private_t *priv)
 			if(get_dma_residue(priv->dma_channel) == 0)
 			{
 				clear_bit(DMA_IN_PROGRESS_BN, &priv->state);
-				wake_up_interruptible(&driver->wait); /* wake up sleeping process */
+				wake_up_interruptible(&device->wait); /* wake up sleeping process */
 			}else
 				enable_dma(priv->dma_channel);
 			release_dma_lock(flags);
 		}else
 		{ // for writing data, pio mode
 			set_bit(WRITE_READY_BN, &priv->state);
-			wake_up_interruptible(&driver->wait); 
+			wake_up_interruptible(&device->wait); 
 		}
 	}
 
@@ -189,7 +189,7 @@ void nec7210_interrupt(gpib_driver_t *driver, nec7210_private_t *priv)
 	if(status2 & HR_CO)
 	{
 		set_bit(COMMAND_READY_BN, &priv->state);
-		wake_up_interruptible(&driver->wait); /* wake up sleeping process */
+		wake_up_interruptible(&device->wait); /* wake up sleeping process */
 	}else
 		clear_bit(COMMAND_READY_BN, &priv->state);
 
@@ -205,7 +205,7 @@ void nec7210_interrupt(gpib_driver_t *driver, nec7210_private_t *priv)
 		printk("gpib output error\n");
 	}
 
-printk("isr1 0x%x, imr1 0x%x, isr2 0x%x, imr2 0x%x, status 0x%x\n", status1, priv->imr1_bits, status2, priv->imr2_bits, driver->status);
+printk("isr1 0x%x, imr1 0x%x, isr2 0x%x, imr2 0x%x, status 0x%x\n", status1, priv->imr1_bits, status2, priv->imr2_bits, device->status);
 }
 
 

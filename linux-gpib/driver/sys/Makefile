@@ -10,7 +10,7 @@ OBJS =  $(SRCS:.c=.o)
 
 INCLUDES = -I. -I../include -I ../board/ -I../../include 
 
-CFLAGS += $(INCLUDES)
+CFLAGS += $(INCLUDES) -DEXPORT_SYMTAB
 
 all: sys.o
 
