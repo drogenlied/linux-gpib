@@ -62,10 +62,12 @@ IBLCL int dvclr(int padsad)
 		printk("gpib: board not CIC during clear\n");
 		return -1;
 	}
-	if (send_setup(padsad) < 0)
+	if(driver->take_control(0) < 0)
+		return -1;
+	if(send_setup(padsad) < 0)
 		return -1;
 	cmdString[0] = SDC;
-	if(ibcmd(cmdString, 1) < 0)
+	if(driver->command(cmdString, 1) < 0)
 		return -1;
 
 	return 0;
@@ -156,7 +158,6 @@ IBLCL int dvrsp(int padsad, uint8_t *result)
 IBLCL ssize_t dvwrt(int padsad, uint8_t *buf, unsigned int cnt)
 {
 	int status = driver->update_status();
-
 	if((status & CIC) == 0)
 	{
 		return -1;
@@ -164,9 +165,8 @@ IBLCL ssize_t dvwrt(int padsad, uint8_t *buf, unsigned int cnt)
 	if (send_setup(padsad) < 0)
 		return -1;
 
-	ibwrt(buf, cnt, 0);	// XXX assumes all the data is written in this call
-
-	return 0;
+	// XXX assumes all the data is written in this call
+	return ibwrt(buf, cnt, 0);
 }
 
 

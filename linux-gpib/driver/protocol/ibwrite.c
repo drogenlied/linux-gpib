@@ -55,7 +55,7 @@ IBLCL ssize_t ibwrt(uint8_t *buf, size_t cnt, int more)
 	// mark io in progress
 	clear_bit(CMPL_NUM, &driver->status);
 	osStartTimer(timeidx);
-	while ((bytes_sent < cnt) && !(driver->status & (TIMO)))
+	while ((bytes_sent < cnt) && !(driver->update_status() & (TIMO)))
 	{
 		ret = driver->write(buf, cnt, !more);
 		if(ret < 0)

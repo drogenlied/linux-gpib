@@ -20,7 +20,7 @@
 
 #include <linux/fcntl.h>
 
-#define GIVE_UP(a) osUnlockMutex(); return a
+#define GIVE_UP(a) {osUnlockMutex(); return a;}
 
 int ib_opened=0;
 int ib_exclusive=0;
@@ -142,7 +142,7 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, uns
 				remain -= ret;
 				userbuf += ret;
 			}while (remain > 0 && end_flag == 0);
-			ibargp->ib_cnt -= remain;
+			ibargp->ib_ibcnt = ibargp->ib_cnt - remain;
 			/* Free the DMA buffer */
 			osFreeDMABuffer( buf );
 			break;
@@ -170,10 +170,10 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, uns
 					retval = -EIO;
 					break;
 				}
-				remain -= ibcnt;
-				userbuf += ibcnt;
+				remain -= ret;
+				userbuf += ret;
 			}while (remain > 0);
-			ibargp->ib_cnt -= remain;
+			ibargp->ib_ibcnt = ibargp->ib_cnt - remain;
 			/* Free the DMA buffer */
 			osFreeDMABuffer( buf );
 			break;
@@ -201,10 +201,10 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, uns
 					retval = -EIO;
 					break;
 				}
-				remain -= ibcnt;
-				userbuf += ibcnt;
-			} while (remain > 0 && ibcnt > 0 && !(ibsta & (ERR | TIMO)));
-			ibargp->ib_cnt -= remain;
+				remain -= ret;
+				userbuf += ret;
+			} while (remain > 0 && !(driver->update_status() & (TIMO)));
+			ibargp->ib_ibcnt = ibargp->ib_cnt - remain;
 
 			/* Free the DMA buffer */
 			osFreeDMABuffer( buf );
@@ -328,8 +328,7 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, uns
 				remain -= ret;
 				userbuf += ret;
 			}while (remain > 0  && end_flag == 0);	//!(driver->update_status() & TIMO));
-			ibargp->ib_cnt -= remain;
-
+			ibargp->ib_ibcnt = ibargp->ib_cnt - remain;
 			/* Free the DMA buffer */
 			osFreeDMABuffer( buf );
 			break;
@@ -352,15 +351,15 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, uns
 			do {
 				copy_from_user( buf, userbuf, (bufsize < remain) ? bufsize : remain );
 				ret = dvwrt( ibargp->ib_arg, buf, (bufsize < remain) ? bufsize : remain );
-				if(ret)
+				if(ret < 0)
 				{
 					retval = -EIO;
 					break;
 				}
-				remain -= ibcnt;
-				userbuf += ibcnt;
-			} while (remain > 0 && ibcnt > 0 && !(ibsta & (ERR | TIMO)));
-			ibargp->ib_cnt -= remain;
+				remain -= ret;
+				userbuf += ret;
+			} while (remain > 0  && !(driver->update_status() & (TIMO)));
+			ibargp->ib_ibcnt = ibargp->ib_cnt - remain;
 
 			/* Free the DMA buffer */
 			osFreeDMABuffer( buf );
@@ -411,7 +410,6 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, uns
 		ibargp->ib_ibsta &= ~END;
 	// XXX io is always complete since we don't support asynchronous transfers yet
 	ibargp->ib_ibsta |= CMPL;
-
 
 	copy_to_user((ibarg_t *) arg, (ibarg_t *) ibargp , sizeof(ibarg_t));
 

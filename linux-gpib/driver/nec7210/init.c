@@ -84,10 +84,12 @@ gpib_driver_t pc2a_driver =
 
 #ifdef NIPCIIa
 gpib_driver_t *driver = &pc2a_driver;
+#warning using pc2a driver
 #endif
 
 #if !defined(NIPCIIa)
 gpib_driver_t *driver = &pc2_driver;
+#warning usin pc2 driver
 #endif
 
 gpib_buffer_t *read_buffer = NULL, *write_buffer = NULL;
@@ -469,6 +471,9 @@ int pc2a_attach(void)
 	dma_allocated = 1;
 #endif
 	board_reset();
+
+	// make sure interrupt is clear
+        outb(0xff , CLEAR_INTR_REG(ibirq));
 
 	// enable interrupts
 	imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |

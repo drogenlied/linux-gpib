@@ -40,7 +40,7 @@ int nec7210_take_control(int syncronous)
 	// suspend if we still don't have ATN
 	if(i == timeout)
 	{
-		while(GPIBin(ADSR) & HR_NATN)
+		while(GPIBin(ADSR) & HR_NATN )
 		{
 			if(interruptible_sleep_on_timeout(&nec7210_status_wait, 1))
 			{
@@ -71,7 +71,6 @@ int nec7210_go_to_standby(void)
 		printk("error waiting for NATN\n");
 		return -1;
 	}
-
 	return 0;
 }
 

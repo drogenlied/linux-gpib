@@ -97,6 +97,10 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 			set_bit(LACS_NUM, &driver->status);
 		else
 			clear_bit(LACS_NUM, &driver->status);
+		if(address_status & HR_NATN)
+			clear_bit(ATN_NUM, &driver->status);
+		else
+			set_bit(ATN_NUM, &driver->status);
 		wake_up_interruptible(&nec7210_status_wait); /* wake up sleeping process */
 	}
 
@@ -119,10 +123,16 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	}
 
 	// check for dma read transfer complete
-	if((status1 & HR_END) && (imr2_bits & HR_DMAI))
+	if(imr2_bits & HR_DMAI)
 	{
-		set_bit(0, &dma_transfer_complete);
-		wake_up_interruptible(&nec7210_read_wait); /* wake up sleeping process */
+		flags = claim_dma_lock();
+		clear_dma_ff(ibdma);
+		if((status1 & HR_END) || get_dma_residue(ibdma) == 0)
+		{
+			set_bit(0, &dma_transfer_complete);
+			wake_up_interruptible(&nec7210_read_wait); /* wake up sleeping process */
+		}
+		release_dma_lock(flags);
 	}
 
 	if((status1 & HR_DO) && test_bit(0, &write_in_progress))

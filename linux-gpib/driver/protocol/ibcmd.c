@@ -26,7 +26,7 @@ IBLCL ssize_t ibcmd(uint8_t *buf, size_t cnt)
 	}
 	osStartTimer(timeidx);
 
-	if(driver->take_control(1))
+	if(driver->take_control(0))
 	{
 		printk("gpib error while becoming active controller\n");
 		return -1;

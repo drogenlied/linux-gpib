@@ -58,14 +58,14 @@ int main(int argc,char **argv){
    */
 
 
-  printf("\nsend IFC");
+  fprintf(stderr, "\nsend IFC\n");
   if( ibsic(dev) & ERR ){
     gpiberr("ibsic Err");
     exit(1);
 
   }
 
-  printf("\nset REM");
+  fprintf(stderr, "set REM\n");
   if( ibsre(dev,1) & ERR ){
     gpiberr("ibsre err");
     exit(1);
@@ -81,7 +81,7 @@ int main(int argc,char **argv){
    *
    */
  
-  printf("\nclear device..");
+  fprintf(stderr, "clear device..\n");
   if(ibclr(dev) & ERR){
     gpiberr("clr err");
     exit(1);
@@ -97,7 +97,7 @@ int main(int argc,char **argv){
    * front panel display.
    */
 
-  printf("\nsend nice string..");
+  fprintf(stderr, "send nice string..\n");
   strcpy(cmd,"D2INIT ");
   if( ibwrt(dev,cmd,strlen(cmd)) & ERR ){
     gpiberr("wrt err");

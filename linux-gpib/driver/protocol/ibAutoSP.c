@@ -131,7 +131,7 @@ IBLCL int ibAPWait(int pad)
        AP_LocalUnLock(pad);
        /*FIXME: there is no state that can be returned here*/
        DBGout();
-       return ibsta;
+       return driver->update_status();
      }
 
   /* wait for SRQ interrupt */
@@ -139,7 +139,7 @@ IBLCL int ibAPWait(int pad)
        AP_UnLock();
        AP_LocalUnLock(pad);
        DBGout();
-       return ibsta;
+       return driver->update_status();
      }
 
   /* poll all devices with AP_POLL set */
@@ -147,7 +147,7 @@ IBLCL int ibAPWait(int pad)
      for(i=0;i<MAX_DEVICES;i++){
        if( AP_Vector[i].flags & AP_POLL ){
 	 dvrsp(i,&(AP_Vector[i].spb ));
-	 AP_Vector[i].stat = ibsta;
+	 AP_Vector[i].stat = driver->update_status();
 	 AP_Vector[i].flags  |= AP_PENDING;
          DBGprint(DBG_DATA,("device %d -> spb=0x%x",i,AP_Vector[i].spb));
        }
@@ -155,7 +155,6 @@ IBLCL int ibAPWait(int pad)
      osUnlockMutex();
      if(! (AP_Vector[pad].spb & 0x40 ) ) {
        printk("Ouups: No RQS after Autopoll Operation ?\n");
-       ibsta |= ERR;
      }
 
   /* Exit IRQ Region */
@@ -163,7 +162,7 @@ IBLCL int ibAPWait(int pad)
   /* Unlock device */
      AP_LocalUnLock(pad);
      DBGout();
-     return ibsta;
+     return driver->update_status();
 }
 
 /*
@@ -188,12 +187,12 @@ IBLCL int ibAPrsp(int padsad, char *spb)
 
         *spb = AP_Vector[pad].spb;
         AP_Vector[pad].flags &= ~AP_PENDING;
-	ibsta =  AP_Vector[pad].stat;
+//	driver->status =  AP_Vector[pad].stat;
 
         AP_UnLock();
 	DBGout();
 
-	return ibsta; 	/* 980728 TBg */
+	return driver->update_status(); 	/* 980728 TBg */
 }
 
 

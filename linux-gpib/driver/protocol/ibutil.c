@@ -112,11 +112,3 @@ IBLCL int ibeos(int v)
 	return 0;
 }
 
-
-
-IBLCL int ibstat(void)
-/* update the GPIB status information */
-{
-	return driver->update_status();
-}
-

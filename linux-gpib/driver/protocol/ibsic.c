@@ -14,12 +14,11 @@ extern int drvstat,ib_opened;
  */
 IBLCL int ibsic(void)
 {
-	DBGin("ibsic");
 	if( !(drvstat & DRV_IFC) || (ib_opened <= 1))
 	{
 
 		pgmstat |= PS_SAC;
-			/* set controller state */
+		/* set controller state */
 		driver->interface_clear(1);                   /* assert IFC */
 		udelay(100);
 		driver->interface_clear(0);                   /* clear IFC */

@@ -129,8 +129,3 @@
 #define TAD (unsigned char)0x40 /* value to be 'ored' in to obtain talk address   */
 
 
-extern int  ibsta;			/* status bits returned by last call      */
-extern int  ibcnt;			/* actual byte count of last I/O transfer */
-extern int  iberr;			/* error code returned when (ibsta & ERR) */
-
-

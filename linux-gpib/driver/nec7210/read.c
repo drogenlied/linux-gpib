@@ -35,6 +35,7 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, int *end)
 		GPIBout(AUXMR, AUX_FH);	/* set HLDA in AUXRA to ensure FH works */
 		pgmstat &= ~PS_HELD;
 	}
+	clear_bit(END_NUM, &driver->status);
 /*
  *	holdoff on END
  */
@@ -52,13 +53,19 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, int *end)
 	release_dma_lock(flags);
 
 	enable_dma(ibdma);
+	
+	clear_bit(0, &dma_transfer_complete);
+
+	// enable 'data in' interrupt
+	imr1_bits |= HR_DIIE;
+	GPIBout(IMR1, imr1_bits);
 
 	// enable nec7210 dma
 	imr2_bits |= HR_DMAI;
 	GPIBout(IMR2, imr2_bits);
 
 	// wait for data to transfer
-	if(wait_event_interruptible(nec7210_read_wait, test_and_clear_bit(0, &dma_transfer_complete)))
+	if(wait_event_interruptible(nec7210_read_wait, test_bit(0, &dma_transfer_complete)))
 	{
 		printk("read wait interrupted\n");
 		return -1;
@@ -102,11 +109,11 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, int *end)
 		}
 	}
 
+#endif
+
 	// disable 'data in' interrupt
 	imr1_bits &= ~HR_DIIE;
 	GPIBout(IMR1, imr1_bits);
-
-#endif
 
 	pgmstat |= PS_HELD;
 	GPIBout(AUXMR, auxa_bits | HR_HLDA);
@@ -115,7 +122,6 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, int *end)
 	{
 		set_bit(ERR_NUM, &driver->status);
 		set_bit(TIMO_NUM, &driver->status);
-		iberr = EABO;
 	}
 
 	if(test_bit(END_NUM, &driver->status))

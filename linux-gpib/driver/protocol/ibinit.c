@@ -1,10 +1,6 @@
 #include <ibprot.h>
 #include <linux/kernel.h>
 
-int       ibsta	= 0; 		/* status bits returned by last call      */
-int       ibcnt	= 0; 		/* actual byte count of last I/O transfer */
-int       iberr	= 0; 		/* error code from last function call     */
-
 int pgmstat	= 0;		/* program status vector */
 volatile int noTimo	= INITTIMO;	/* 0 = I/O or wait operation timed out */
 
@@ -76,17 +72,15 @@ IBLCL int ibonl(int v)
 #else
 		ccrbits = 0;
 #endif
-		ibsta = CMPL;
-		ibcnt = 0;
 	}
 
 	if (v)
 	{
 		if( (ib_opened <= 1) && !( drvstat & DRV_ONLINE ))
 		{
-			if(board_attach() < 0)
+			if(driver->attach() < 0)
 			{
-				board_detach();
+				driver->detach();
 				printk("GPIB Hardware Error! (Chip type not found or wrong Base Address?)\n");
 				return -1;
 			}
@@ -106,7 +100,7 @@ IBLCL int ibonl(int v)
 		if( ib_opened <= 1)
 		{
 			DBGprint(DBG_BRANCH,("Board Offline"));
-			board_detach();
+			driver->detach();
 			if (pgmstat & PS_SYSRDY)
 			osReset();	/* reset system interface */
 			pgmstat &= ~PS_ONLINE;
