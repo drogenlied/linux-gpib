@@ -165,16 +165,20 @@ int ibonl( int ud, int onl )
 
 	board = interfaceBoard( conf );
 
+	status = general_exit_library( ud, 0, 0, 0, 0, CMPL, 1 );
+
 	retval = close_gpib_handle( conf );
+	conf_unlock_board( conf );
 	if( retval < 0 )
 	{
 		fprintf( stderr, "libgpib: failed to mark device as closed!\n" );
 		setIberr( EDVR );
 		setIbcnt( errno );
-		return exit_library( ud, 1 );
+		status |= ERR;
+		setIbsta( status );
+		sync_globals();
+		return status;
 	}
-
-	status = general_exit_library( ud, 0, 0, 0, 0, CMPL, 0 );
 
 	if( ud >= GPIB_MAX_NUM_BOARDS )
 	{
