@@ -137,10 +137,10 @@ int ibopen(struct inode *inode, struct file *filep)
 			printk( "gpib: request module returned %i\n", retval );
 		}
 	}
+	if(board->interface)
+		if(!try_module_get(board->interface->provider_module))
+			return -ENOSYS;
 	board->open_count++;
-	if( board->interface )
-		__MOD_INC_USE_COUNT( board->interface->provider_module );
-
 	return 0;
 }
 
@@ -172,8 +172,8 @@ int ibclose(struct inode *inode, struct file *filep)
 	}
 
 	board->open_count--;
-	if( board->interface )
-		__MOD_DEC_USE_COUNT( board->interface->provider_module );
+	if(board->interface)
+		module_put(board->interface->provider_module);
 
 	if( board->exclusive )
 		board->exclusive = 0;
@@ -359,7 +359,7 @@ static int board_type_ioctl(gpib_board_t *board, unsigned long arg)
 	board_type_ioctl_t cmd;
 	int retval;
 
-	if( !suser() )
+	if(!capable(CAP_SYS_ADMIN))
 		return -EPERM;
 
 	retval = copy_from_user(&cmd, (void*)arg, sizeof(board_type_ioctl_t));
@@ -375,10 +375,11 @@ static int board_type_ioctl(gpib_board_t *board, unsigned long arg)
 		interface = list_entry(list_ptr, gpib_interface_t, list);
 		if(strcmp(interface->name, cmd.name) == 0)
 		{
-			if( board->interface )
-				__MOD_DEC_USE_COUNT( board->interface->provider_module );
+			if(board->interface)
+				if(try_module_get(board->interface->provider_module))
+					return -ENOSYS;
 			board->interface = interface;
-			__MOD_INC_USE_COUNT( board->interface->provider_module );
+			module_put(board->interface->provider_module);
 			return 0;
 		}
 	}
@@ -801,7 +802,7 @@ static int online_ioctl( gpib_board_t *board, unsigned long arg )
 	online_ioctl_t online_cmd;
 	int retval;
 
-	if( !suser() )
+	if(!capable(CAP_SYS_ADMIN))
 		return -EPERM;
 		
 	retval = copy_from_user( &online_cmd, ( void * ) arg, sizeof( online_cmd ) );
@@ -954,7 +955,7 @@ static int iobase_ioctl( gpib_board_t *board, unsigned long arg )
 	unsigned long base_addr;
 	int retval;
 
-	if( !suser() )
+	if(!capable(CAP_SYS_ADMIN))
 		return -EPERM;
 
 	retval = copy_from_user( &base_addr, ( void * ) arg, sizeof( base_addr ) );
@@ -971,7 +972,7 @@ static int irq_ioctl( gpib_board_t *board, unsigned long arg )
 	unsigned int irq;
 	int retval;
 
-	if( !suser() )
+	if(!capable(CAP_SYS_ADMIN))
 		return -EPERM;
 
 	retval = copy_from_user( &irq, ( void * ) arg, sizeof( irq ) );
@@ -988,7 +989,7 @@ static int dma_ioctl( gpib_board_t *board, unsigned long arg )
 	unsigned int dma_channel;
 	int retval;
 
-	if( !suser() )
+	if(!capable(CAP_SYS_ADMIN))
 		return -EPERM;
 
 	retval = copy_from_user( &dma_channel, ( void * ) arg, sizeof( dma_channel ) );
@@ -1179,7 +1180,7 @@ static int select_pci_ioctl( gpib_board_t *board, unsigned long arg )
 	select_pci_ioctl_t selection;
 	int retval;
 
-	if( !suser() )
+	if(!capable(CAP_SYS_ADMIN))
 		return -EPERM;
 
 	retval = copy_from_user( &selection, ( void * ) arg, sizeof( selection ) );

@@ -525,8 +525,6 @@ static int ines_init_module( void )
 {
 	int err = 0;
 
-	EXPORT_NO_SYMBOLS;
-
 	gpib_register_driver(&ines_pci_interface);
 	gpib_register_driver(&ines_pci_accel_interface);
 

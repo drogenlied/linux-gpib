@@ -306,8 +306,6 @@ void cec_pci_detach(gpib_board_t *board)
 
 int cec_init_module(void)
 {
-	EXPORT_NO_SYMBOLS;
-
 	gpib_register_driver(&cec_pci_interface);
 
 	return 0;

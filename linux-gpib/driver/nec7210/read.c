@@ -61,7 +61,7 @@ static ssize_t pio_read( gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 		if( count < length )
 			nec7210_release_rfd_holdoff( board, priv );
 
-		if( current->need_resched )
+		if(need_resched())
 			schedule();
 	}
 	return retval ? retval : count;

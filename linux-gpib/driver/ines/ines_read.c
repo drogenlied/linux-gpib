@@ -59,7 +59,7 @@ static ssize_t pio_read( gpib_board_t *board, ines_private_t *ines_priv, uint8_t
 		{
 			break;
 		}
-		if(current->need_resched) schedule();
+		if(need_resched()) schedule();
 	}
 	/* make sure RECEIVED_END is in sync */
 	ines_interrupt(0, board, NULL);

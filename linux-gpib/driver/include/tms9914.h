@@ -19,6 +19,7 @@
 #define _TMS9914_H
 
 #include <linux/types.h>
+#include <linux/interrupt.h>
 #include <gpib_types.h>
 
 /* struct used to provide variables local to a tms9914 chip */
@@ -34,7 +35,7 @@ struct tms9914_private_struct
 	volatile uint8_t admr_bits;
 	volatile uint8_t auxa_bits;	// bits written to auxilliary register A
 	// used to keep track of board's state, bit definitions given below
-	volatile int state;
+	volatile unsigned long state;
 	uint8_t eos;	// eos character
 	short eos_flags;
 	volatile uint8_t spoll_status;
@@ -119,8 +120,8 @@ uint8_t tms9914_iomem_read_byte(tms9914_private_t *priv, unsigned int register_n
 void tms9914_iomem_write_byte(tms9914_private_t *priv, uint8_t data, unsigned int register_num);
 
 // interrupt service routine
-void tms9914_interrupt(gpib_board_t *board, tms9914_private_t *priv );
-void tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv, int status1,
+irqreturn_t tms9914_interrupt(gpib_board_t *board, tms9914_private_t *priv );
+irqreturn_t tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv, int status1,
 		int status2);
 
 // tms9914 has 8 registers

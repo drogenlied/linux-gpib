@@ -560,32 +560,30 @@ void ni_pci_detach(gpib_board_t *board)
 	tnt4882_free_private(board);
 }
 
-int ni_isapnp_find( struct pci_dev **dev )
+int ni_isapnp_find( struct pnp_dev **dev )
 {
-	*dev = isapnp_find_dev( NULL, ISAPNP_VENDOR_ID_NI,
+	*dev = pnp_find_dev( NULL, ISAPNP_VENDOR_ID_NI,
 		ISAPNP_FUNCTION( ISAPNP_ID_NI_ATGPIB_TNT ), NULL );
-	if( *dev == NULL )
+	if(*dev == NULL || (*dev)->card == NULL)
 	{
 		printk( "tnt4882: failed to find isapnp board\n" );
 		return -ENODEV;
 	}
-	if( (*dev)->active )
-	{
-		printk( "tnt4882: atgpib/tnt board already active, aborting\n" );
+	if(pnp_device_attach(*dev) < 0)
+ 	{
+		printk( "tnt4882: atgpib/tnt board already active, skipping\n" );
 		return -EBUSY;
 	}
-	if( (*dev)->prepare( *dev ) < 0 )
+	if(pnp_activate_dev(*dev) < 0 )
 	{
-		printk( "tnt4882: failed to prepare() atgpib/tnt, aborting\n" );
+		pnp_device_detach(*dev);
+		printk( "tnt4882: failed to activate() atgpib/tnt, aborting\n" );
 		return -EAGAIN;
 	}
-	if( (*dev)->ro )
+	if(!pnp_port_valid(*dev, 0) || !pnp_irq_valid(*dev, 0))
 	{
-		printk( "tnt4882: atgpib/tnt board is read only?\n" );
-	}
-	if( (*dev)->activate( *dev ) < 0 )
-	{
-		printk( "tnt4882: failed to activate() atgpib/tnt, aborting\n" );
+		pnp_device_detach(*dev);
+		printk( "tnt4882: invalid port or irq for atgpib/tnt, aborting\n" );
 		return -ENOMEM;
 	}
 	return 0;
@@ -616,14 +614,14 @@ int ni_isa_attach_common( gpib_board_t *board, enum nec7210_chipset chipset )
 	// look for plug-n-play board
 	if( board->ibbase == 0 )
 	{
-		struct pci_dev *dev;
+		struct pnp_dev *dev;
 		int retval;
 
 		retval = ni_isapnp_find( &dev );
 		if( retval < 0 ) return retval;
-		tnt_priv->isapnp_dev = dev;
-		iobase = dev->resource[ 0 ].start;
-		board->ibirq = dev->irq_resource[ 0 ].start;
+		tnt_priv->pnp_dev = dev;
+		iobase = pnp_port_start(dev, 0);
+		board->ibirq = pnp_irq(dev, 0);
 	}else
 		iobase = board->ibbase;
 
@@ -683,16 +681,16 @@ void ni_isa_detach(gpib_board_t *board)
 		{
 			release_region(nec_priv->iobase, atgpib_iosize);
 		}
-		if( tnt_priv->isapnp_dev )
-			tnt_priv->isapnp_dev->deactivate( tnt_priv->isapnp_dev );
+		if(tnt_priv->pnp_dev)
+		{			
+			pnp_device_detach(tnt_priv->pnp_dev);
+		}
 	}
 	tnt4882_free_private(board);
 }
 
 static int tnt4882_init_module( void )
 {
-	EXPORT_NO_SYMBOLS;
-
 	gpib_register_driver(&ni_isa_interface);
 	gpib_register_driver(&ni_isa_accel_interface);
 	gpib_register_driver(&ni_nat4882_isa_interface);

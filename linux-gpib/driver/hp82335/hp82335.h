@@ -58,7 +58,7 @@ void hp82335_serial_poll_response( gpib_board_t *board, uint8_t status );
 void hp82335_return_to_local( gpib_board_t *board );
 
 // interrupt service routines
-void hp82335_interrupt(int irq, void *arg, struct pt_regs *registerp);
+irqreturn_t hp82335_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
 // utility functions
 int hp82335_allocate_private(gpib_board_t *board);

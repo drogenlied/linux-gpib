@@ -169,7 +169,7 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 		tnt_writeb( tnt_priv, tnt_priv->imr3_bits, IMR3 );
 		spin_unlock_irqrestore( &board->spinlock, flags );
 
-		if( current->need_resched )
+		if(need_resched())
 			schedule();
 	}
 	// wait for last byte

@@ -23,19 +23,17 @@
 /*
  *  interrupt service routine
  */
-
-void tms9914_interrupt( gpib_board_t *board, tms9914_private_t *priv )
+irqreturn_t tms9914_interrupt( gpib_board_t *board, tms9914_private_t *priv )
 {
 	int status0, status1;
 
 	// read interrupt status (also clears status)
 	status0 = read_byte( priv, ISR0 );
 	status1 = read_byte( priv, ISR1 );
-
-	tms9914_interrupt_have_status( board, priv, status0, status1 );
+	return tms9914_interrupt_have_status( board, priv, status0, status1 );
 }
 
-void tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv, int status0,
+irqreturn_t tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv, int status0,
 		int status1)
 {
 	// record reception of END
@@ -135,6 +133,7 @@ void tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv,
 		update_status_nolock( board, priv );
 		wake_up_interruptible( &board->wait );
 	}
+	return IRQ_HANDLED;
 }
 
 EXPORT_SYMBOL(tms9914_interrupt);

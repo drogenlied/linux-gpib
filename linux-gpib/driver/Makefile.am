@@ -30,7 +30,7 @@ clean-local:
 
 install-data-hook: device-file-check /etc/gpib.conf
 	for module in $(GPIB_MODULES) ; do \
-		$(INSTALL_DATA) -D $$module $(LINUX_MODLIB)/gpib/$$(basename $$module) ; \
+		$(INSTALL_DATA) -D $$module $(LINUX_MODLIB)/gpib/$$(basename $$module .o).ko ; \
 	done
 	$(DEPMOD) -ae
 

@@ -260,7 +260,7 @@ int hp82335_attach( gpib_board_t *board )
 	printk("hp82335: base address 0x%x remapped to 0x%lx\n", hp_priv->raw_iobase,
 		tms_priv->iobase );
 
-	if( request_irq( board->ibirq, hp82335_interrupt, SA_SHIRQ, "hp82335", board ) )
+	if(request_irq( board->ibirq, hp82335_interrupt, SA_SHIRQ, "hp82335", board))
 	{
 		printk( "hp82335: can't request IRQ %d\n", board->ibirq );
 		return -1;
@@ -307,10 +307,7 @@ void hp82335_detach(gpib_board_t *board)
 
 static int hp82335_init_module( void )
 {
-	EXPORT_NO_SYMBOLS;
-
 	gpib_register_driver(&hp82335_interface);
-
 	return 0;
 }
 
@@ -326,22 +323,20 @@ module_exit( hp82335_exit_module );
  * GPIB interrupt service routines
  */
 
-void hp82335_interrupt(int irq, void *arg, struct pt_regs *registerp)
+irqreturn_t hp82335_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
 	int status1, status2;
 	gpib_board_t *board = arg;
 	hp82335_private_t *priv = board->private_data;
 	unsigned long flags;
-
+	irqreturn_t retval;
+	
 	spin_lock_irqsave( &board->spinlock, flags );
-
 	status1 = read_byte( &priv->tms9914_priv, ISR0);
 	status2 = read_byte( &priv->tms9914_priv, ISR1);
-
 	hp82335_clear_interrupt( priv );
-
-	tms9914_interrupt_have_status(board, &priv->tms9914_priv, status1, status2);
-
+	retval = tms9914_interrupt_have_status(board, &priv->tms9914_priv, status1, status2);
 	spin_unlock_irqrestore( &board->spinlock, flags );
+	return retval;
 }
 

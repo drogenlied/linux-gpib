@@ -27,6 +27,7 @@
 #include "gpib/gpib_user.h"
 #include <linux/wait.h>
 #include <linux/timer.h>
+#include <linux/interrupt.h>
 #include <asm/semaphore.h>
 
 typedef struct gpib_interface_struct gpib_interface_t;
@@ -149,7 +150,7 @@ static inline void init_event_queue( gpib_event_queue_t *queue )
 struct gpib_pseudo_irq
 {
 	struct timer_list timer;
-	void (*handler)(int, void *, struct pt_regs *);
+	irqreturn_t (*handler)(int, void *, struct pt_regs *);
 	volatile short active;
 };
 
@@ -173,7 +174,7 @@ struct gpib_board_struct
 	unsigned int buffer_length;
 	/* Used to hold the board's current status (see update_status() above)
 	 */
-	volatile unsigned int status;
+	volatile unsigned long status;
 	/* Driver should only sleep on this wait queue.  It is special in that the
 	 * core will wake this queue and set the TIMO bit in 'status' when the
 	 * watchdog timer times out.

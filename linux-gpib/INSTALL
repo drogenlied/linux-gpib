@@ -41,7 +41,7 @@ o) Unpacking the Software:
 		'uname -r' produces "2.4.16-386" then your EXTRAVERSION should be
 		set as 'EXTRAVERSION=-386'.
 	3) run 'make oldconfig' in your kernel source directory.
-	4) run 'make dep' in the kernel source directory.
+	4) run 'make prepare' in the kernel source directory.
 
 
 B) Installing Linux-GPIB

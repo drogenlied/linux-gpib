@@ -63,7 +63,7 @@ static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 	clear_bit(BUS_ERROR_BN, &priv->state);
 	while(count < length)
 	{
-		if(current->need_resched)
+		if(need_resched())
 			schedule();
 
 		retval = pio_write_wait(board, priv, 0, 0, priv->type == NEC7210);

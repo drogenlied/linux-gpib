@@ -40,7 +40,7 @@ static inline short nec7210_atn_has_changed(gpib_board_t *board, nec7210_private
 /*
  *  interrupt service routine
  */
-void nec7210_interrupt( gpib_board_t *board, nec7210_private_t *priv )
+irqreturn_t nec7210_interrupt( gpib_board_t *board, nec7210_private_t *priv )
 {
 	int status1, status2;
 
@@ -48,10 +48,10 @@ void nec7210_interrupt( gpib_board_t *board, nec7210_private_t *priv )
 	status1 = read_byte(priv, ISR1);
 	status2 = read_byte(priv, ISR2);
 
-	nec7210_interrupt_have_status( board, priv, status1, status2 );
+	return nec7210_interrupt_have_status( board, priv, status1, status2 );
 }
 
-void nec7210_interrupt_have_status( gpib_board_t *board,
+irqreturn_t nec7210_interrupt_have_status( gpib_board_t *board,
 	nec7210_private_t *priv, int status1, int status2 )
 {
 	unsigned long dma_flags;
@@ -174,6 +174,7 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 		update_status_nolock(board, priv);
 		wake_up_interruptible(&board->wait); /* wake up sleeping process */
 	}
+	return IRQ_HANDLED;
 }
 
 EXPORT_SYMBOL(nec7210_interrupt);

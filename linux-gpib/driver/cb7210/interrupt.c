@@ -24,7 +24,7 @@
  * GPIB interrupt service routines
  */
 
-void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp )
+irqreturn_t cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp )
 {
 	int bits;
 	gpib_board_t *board = arg;
@@ -37,10 +37,10 @@ void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp )
 		INBOX_INTR_CS_BIT;
 	outl(bits, priv->amcc_iobase + INTCSR_REG );
 
-	cb7210_interrupt(irq, arg, registerp);
+	return cb7210_interrupt(irq, arg, registerp);
 }
 
-void cb7210_internal_interrupt( gpib_board_t *board )
+irqreturn_t cb7210_internal_interrupt( gpib_board_t *board )
 {
 	int hs_status, status1, status2;
 	cb7210_private_t *priv = board->private_data;
@@ -99,15 +99,16 @@ void cb7210_internal_interrupt( gpib_board_t *board )
 		outb( priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
 		wake_up_interruptible( &board->wait );
 	}
+	return IRQ_HANDLED;
 }
-void cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
+irqreturn_t cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 {
 	gpib_board_t *board = arg;
 	unsigned long flags;
-
-	spin_lock_irqsave( &board->spinlock, flags );
-
-	cb7210_internal_interrupt( board );
-
-	spin_unlock_irqrestore( &board->spinlock, flags );
+	irqreturn_t retval;
+	
+	spin_lock_irqsave(&board->spinlock, flags);
+	retval = cb7210_internal_interrupt(board);
+	spin_unlock_irqrestore(&board->spinlock, flags);
+	return retval;
 }

@@ -24,14 +24,13 @@ static int autospoll_thread(void *board_void)
 {
 	gpib_board_t *board = board_void;
 	int retval = 0;
-
+	
 	lock_kernel();
 	/* This thread doesn't need any user-level access,
 	 * so get rid of all our resources..
 	 */
-	daemonize();
 	/* set our name for identification purposes */
-	sprintf(current->comm, "gpib%d_autospoll", board->minor);
+	daemonize("gpib%d_autospoll", board->minor);
 	unlock_kernel();
 
 	GPIB_DPRINTK("entering autospoll thread\n" );

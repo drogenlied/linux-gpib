@@ -474,8 +474,6 @@ static int cb7210_init_module( void )
 {
 	int err = 0;
 
-	EXPORT_NO_SYMBOLS;
-
 	gpib_register_driver(&cb_pci_interface);
 	gpib_register_driver(&cb_isa_interface);
 	gpib_register_driver(&cb_pci_accel_interface);

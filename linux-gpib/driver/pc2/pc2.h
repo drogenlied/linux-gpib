@@ -45,8 +45,8 @@ static const int pc2a_reg_offset = 0x400;
 static const int pc2_reg_offset = 1;
 
 //interrupt service routine
-void pc2_interrupt(int irq, void *arg, struct pt_regs *registerp);
-void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp);
+irqreturn_t pc2_interrupt(int irq, void *arg, struct pt_regs *registerp);
+irqreturn_t pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
 // pc2 specific registers and bits
 

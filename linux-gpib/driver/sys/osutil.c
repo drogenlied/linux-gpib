@@ -60,7 +60,7 @@ void pseudo_irq_handler(unsigned long arg)
 		mod_timer(&board->pseudo_irq.timer, jiffies + pseudo_irq_period());
 }
 
-int gpib_request_pseudo_irq(gpib_board_t *board, void (*handler)(int, void *, struct pt_regs *))
+int gpib_request_pseudo_irq(gpib_board_t *board, irqreturn_t (*handler)(int, void *, struct pt_regs *))
 {
 	if(timer_pending(&board->pseudo_irq.timer) || board->pseudo_irq.handler)
 	{

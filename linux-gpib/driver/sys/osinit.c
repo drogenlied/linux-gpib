@@ -180,44 +180,23 @@ void init_gpib_status_queue( gpib_status_queue_t *device )
 
 static int gpib_common_init_module( void )
 {
-	int i;
-
 	printk("Linux-GPIB %s Driver -- Kernel Release %s\n", VERSION, UTS_RELEASE);
-
 	init_board_array(board_array, GPIB_MAX_NUM_BOARDS);
-
-	if( devfs_register_chrdev( IBMAJOR, "gpib", &ib_fops ) )
+	if(register_chrdev(IBMAJOR, "gpib", &ib_fops))
 	{
 		printk( "gpib: can't get major %d\n", IBMAJOR );
 		return -EIO;
 	}
-
-	for( i = 0; i < GPIB_MAX_NUM_BOARDS; i++ )
-	{
-		char name[20];
-		sprintf( name, "gpib%d", i );
-		devfs_register( NULL, name, DEVFS_FL_DEFAULT,
-			IBMAJOR, i, 0666 | S_IFCHR, &ib_fops, NULL );
-	}
-
 	return 0;
 }
 
 static void gpib_common_exit_module( void )
 {
-	int i;
-
-	for( i = 0; i < GPIB_MAX_NUM_BOARDS; i++ )
+	if ( unregister_chrdev(IBMAJOR, "gpib") != 0 ) 
 	{
-		char name[20];
-		sprintf( name, "gpib%d", i );
-		devfs_unregister( devfs_find_handle( NULL, name,
-			IBMAJOR, i, DEVFS_SPECIAL_CHR, 0 ) );
-	}
-
-	if ( devfs_unregister_chrdev( IBMAJOR, "gpib" ) != 0 ) {
 		printk("gpib: device busy or other module error \n");
-	} else {
+	}else 
+	{
 		printk("gpib: succesfully removed \n");
 	}
 }

@@ -24,7 +24,7 @@
  * GPIB interrupt service routines
  */
 
-void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp)
+irqreturn_t tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
 	gpib_board_t *board = arg;
 	tnt4882_private_t *priv = board->private_data;
@@ -66,5 +66,6 @@ void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp)
 		wake_up_interruptible( &board->wait );
 	}
 	spin_unlock_irqrestore( &board->spinlock, flags );
+	return IRQ_HANDLED;
 }
 

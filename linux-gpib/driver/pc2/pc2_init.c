@@ -543,8 +543,6 @@ void pc2_2a_detach( gpib_board_t *board )
 
 static int pc2_init_module( void )
 {
-	EXPORT_NO_SYMBOLS;
-
 	gpib_register_driver(&pc2_interface);
 	gpib_register_driver(&pc2a_interface);
 	gpib_register_driver(&pc2a_cb7210_interface);

@@ -25,6 +25,7 @@
 
 #include <linux/config.h>
 #include <linux/delay.h>
+#include <linux/interrupt.h>
 
 enum
 {
@@ -52,9 +53,9 @@ extern gpib_interface_t cb_pcmcia_interface;
 extern gpib_interface_t cb_pcmcia_accel_interface;
 
 // interrupt service routines
-void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp);
-void cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp);
-void cb7210_internal_interrupt( gpib_board_t *board );
+irqreturn_t cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp);
+irqreturn_t cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp);
+irqreturn_t cb7210_internal_interrupt( gpib_board_t *board );
 
 // interface functions
 ssize_t cb7210_read( gpib_board_t *board, uint8_t *buffer, size_t length,

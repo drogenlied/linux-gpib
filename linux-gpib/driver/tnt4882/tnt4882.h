@@ -39,7 +39,7 @@ typedef struct
 {
 	nec7210_private_t nec7210_priv;
 	struct mite_struct *mite;
-	struct pci_dev *isapnp_dev;
+	struct pnp_dev *pnp_dev;
 	unsigned int irq;
 	volatile short imr0_bits;
 	volatile short imr3_bits;
@@ -94,7 +94,7 @@ int __init init_ni_gpib_cs(void);
 void __exit exit_ni_gpib_cs(void);
 
 // interrupt service routines
-void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp);
+irqreturn_t tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
 // utility functions
 int tnt4882_allocate_private(gpib_board_t *board);

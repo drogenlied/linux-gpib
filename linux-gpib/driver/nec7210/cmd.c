@@ -52,7 +52,7 @@ ssize_t nec7210_command(gpib_board_t *board, nec7210_private_t *priv, uint8_t
 
 		count++;
 
-		if( current->need_resched )
+		if(need_resched())
 			schedule();
 	}
 	// wait for last byte to get sent

@@ -24,6 +24,7 @@
 #include "plx9050.h"
 #include "amcc5920.h"
 #include <linux/config.h>
+#include <linux/interrupt.h>
 
 enum ines_pci_chip
 {
@@ -79,7 +80,7 @@ unsigned int ines_t1_delay( gpib_board_t *board, unsigned int nano_sec );
 void ines_return_to_local( gpib_board_t *board );
 
 // interrupt service routines
-void ines_interrupt(int irq, void *arg, struct pt_regs *registerp);
+irqreturn_t ines_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
 // utility functions
 void ines_free_private(gpib_board_t *board);
