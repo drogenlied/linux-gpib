@@ -86,6 +86,8 @@ irqreturn_t agilent_82350b_interrupt(int irq, void *arg, struct pt_regs *registe
 int agilent_82350b_allocate_private(gpib_board_t *board);
 void agilent_82350b_free_private(gpib_board_t *board);
 unsigned short read_and_clear_event_status(gpib_board_t *board);
+int read_transfer_counter(agilent_82350b_private_t *a_priv);
+void set_transfer_counter(agilent_82350b_private_t *a_priv, int count);
 
 //registers
 enum agilent_82350b_gpib_registers

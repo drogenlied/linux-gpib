@@ -35,16 +35,12 @@ ssize_t agilent_82350b_accel_write( gpib_board_t *board, uint8_t *buffer, size_t
 	for(i = 0; i < fifoTransferLength;)
 	{
 		int block_size;
-		int complement;
 		if(fifoTransferLength - i < agilent_82350b_fifo_size)
 			block_size = fifoTransferLength - i;
 		else
 			block_size = agilent_82350b_fifo_size;
 		writeb(0, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG); 
-		complement = -block_size;
-		writeb(complement & 0xff, a_priv->gpib_base + XFER_COUNT_LO_REG);
-		writeb((complement >> 8) & 0xff, a_priv->gpib_base + XFER_COUNT_MID_REG);
-		writeb((complement >> 16) & 0xf, a_priv->gpib_base + XFER_COUNT_HI_REG);
+		set_transfer_counter(a_priv, block_size);
 		for(j = 0; j < block_size; ++j, ++i)
 		{
 			// load data into board's sram

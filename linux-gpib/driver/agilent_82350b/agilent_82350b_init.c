@@ -33,6 +33,26 @@ int agilent_82350b_accel_attach( gpib_board_t *board );
 
 void agilent_82350b_detach( gpib_board_t *board );
 
+int read_transfer_counter(agilent_82350b_private_t *a_priv)
+{
+	int lo, mid, hi, value;
+	lo = readb(a_priv->gpib_base + XFER_COUNT_LO_REG);
+	mid =readb(a_priv->gpib_base + XFER_COUNT_MID_REG);
+	hi = readb(a_priv->gpib_base + XFER_COUNT_HI_REG);
+	value = ~0xfffff;
+	value |= lo | ((mid << 8) & 0xff00) | ((hi << 16) & 0xf0000);
+	value = -value;
+	return value;
+}
+	
+void set_transfer_counter(agilent_82350b_private_t *a_priv, int count)
+{
+	int complement = -count;;
+	writeb(complement & 0xff, a_priv->gpib_base + XFER_COUNT_LO_REG);
+	writeb((complement >> 8) & 0xff, a_priv->gpib_base + XFER_COUNT_MID_REG);
+	writeb((complement >> 16) & 0xf, a_priv->gpib_base + XFER_COUNT_HI_REG);
+}
+
 // wrappers for interface functions
 ssize_t agilent_82350b_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes)
 {
