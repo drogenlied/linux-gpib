@@ -42,7 +42,7 @@ install-data-hook: device-file-check /etc/gpib.conf
 	for i in $(shell seq 0 15); \
 	do \
 		mknod --mode u=rw,g=rw,o= /dev/gpib$${i} c $(IBMAJOR) $${i} || exit 1; \
-		chown root.gpib /dev/gpib$${i}; \
+		chown root:gpib /dev/gpib$${i}; \
 	done
 
 .PHONY : device-file-check
