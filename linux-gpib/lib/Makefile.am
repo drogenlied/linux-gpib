@@ -29,7 +29,7 @@ libgpib_la_SOURCES = \
 	ibConfLex.c ibConfYacc.c ibConfYacc.h
 
 libgpib_la_CFLAGS = $(LIBGPIB_CFLAGS) -DDEFAULT_CONFIG_FILE=\"/etc/gpib.conf\"
-libgpib_la_LDFLAGS = -release $(VERSION) --version-script=$(srcdir)/gpib_version_script -lpthread
+libgpib_la_LDFLAGS = -release $(VERSION) -Wl,--version-script=$(srcdir)/gpib_version_script -lpthread
 
 ibConfLex.c: $(srcdir)/ibConfLex.l $(srcdir)/ibConfYacc.h
 	$(LEX) -Pgpib_yy -o$@ $<
