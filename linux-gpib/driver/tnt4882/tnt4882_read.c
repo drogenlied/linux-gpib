@@ -62,10 +62,6 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 	int32_t hw_count;
 	unsigned long flags;
 
-	nec7210_set_handshake_mode( board, nec_priv, HR_HLDA );
-	write_byte( nec_priv, AUX_FH, AUXMR );
-	nec7210_set_handshake_mode( board, nec_priv, HR_HLDE );
-
 	imr1_bits = nec_priv->reg_bits[ IMR1 ];
 	imr2_bits = nec_priv->reg_bits[ IMR2 ];
 	nec7210_set_reg_bits( nec_priv, IMR1, 0xff, HR_ENDIE | HR_DECIE );
@@ -88,13 +84,17 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 	tnt_writeb( tnt_priv, ( hw_count >> 16 ) & 0xff, CNT2 );
 	tnt_writeb( tnt_priv, ( hw_count >> 24 ) & 0xff, CNT3 );
 
-	tnt_writeb( tnt_priv, GO, CMDR );
-	udelay(1);
-
 	spin_lock_irqsave( &board->spinlock, flags );
 	tnt_priv->imr3_bits |= HR_DONE | HR_NEF;
 	tnt_writeb( tnt_priv, tnt_priv->imr3_bits, IMR3 );
 	spin_unlock_irqrestore( &board->spinlock, flags );
+
+	nec7210_set_handshake_mode( board, nec_priv, HR_HLDA );
+	write_byte( nec_priv, AUX_FH, AUXMR );
+	nec7210_set_handshake_mode( board, nec_priv, HR_HLDE );
+
+	tnt_writeb( tnt_priv, GO, CMDR );
+	udelay(1);
 
 	while( count + 1 < length &&
 		test_bit( RECEIVED_END_BN, &nec_priv->state ) == 0 )
