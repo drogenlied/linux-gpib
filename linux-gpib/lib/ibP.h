@@ -22,6 +22,7 @@
 
 /* Unit descriptor flag */
 
+#define GPIB_CONFIGS_LENGTH 0x1000
 #define FIND_CONFIGS_LENGTH 64	/* max number of devices we can read from config file */
 
 extern ibBoard_t ibBoard[];
@@ -30,9 +31,6 @@ extern ibConf_t ibFindConfigs[];
 
 #include <errno.h>
 #include <fcntl.h>
-
-#define MAX_BOARDS 16    /* maximal number of boards */
-#define NUM_CONFIGS 0x1000	/* max number of device descriptors (length of ibConfigs array) */
 
 static const int sad_offset = 0x60;
 

@@ -95,22 +95,20 @@ int conf_online( ibConf_t *conf, int online )
 	retval = board_online( board, online );
 	if( retval < 0 ) return retval;
 
+	retval = conf_lock_board( conf );
+	if( retval < 0 ) return retval;
 	if( online )
 	{
-		conf->board_is_open = 1;
 
-		retval = conf_lock_board( conf );
-		if( retval < 0 ) return retval;
-
-		retval = open_gpib_device( conf );
-		if( retval < 0 ) return retval;
-
-		retval = conf_unlock_board( conf );
-		if( retval < 0 ) return retval;
+		retval = open_gpib_handle( conf );
 	}else
 	{
-		conf->board_is_open = 0;
+		retval = close_gpib_handle( conf );
 	}
+	conf_unlock_board( conf );
+	if( retval < 0 ) return retval;
+
+	conf->board_is_open = online != 0;
 
 	return 0;
 }
@@ -158,7 +156,7 @@ int ibonl( int ud, int onl )
 
 	board = interfaceBoard( conf );
 
-	retval = close_gpib_device( conf );
+	retval = close_gpib_handle( conf );
 	if( retval < 0 )
 	{
 		fprintf( stderr, "libgpib: failed to mark device as closed!\n" );
@@ -167,13 +165,7 @@ int ibonl( int ud, int onl )
 		return exit_library( ud, 1 );
 	}
 
-	retval = conf_online( conf, onl );
-	if( retval < 0 )
-	{
-		return exit_library( ud, 1 );
-	}
-
-	if( ud >= MAX_BOARDS )
+	if( ud >= GPIB_MAX_NUM_BOARDS )
 	{
 		// need to take more care to clean up before freeing XXX
 		free( ibConfigs[ ud ] );

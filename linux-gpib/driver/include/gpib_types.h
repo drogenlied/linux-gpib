@@ -24,6 +24,7 @@
  * and generic interface provided by gpib-common.
  * This really should be in a different header file.
  */
+#include "gpib/gpib_user.h"
 #include <linux/wait.h>
 #include <linux/timer.h>
 #include <asm/semaphore.h>
@@ -251,11 +252,19 @@ typedef struct
 
 void init_gpib_device( gpib_device_t *device );
 
+/* Used to store device-descriptor-specific information */
 typedef struct
 {
-	struct list_head device_list;
+	unsigned int pad;	/* primary gpib address */
+	int sad;	/* secondary gpib address (negative means disabled) */
+	unsigned is_board : 1;
+} gpib_descriptor_t;
+
+typedef struct
+{
 	unsigned int online_count;
-	unsigned holding_mutex : 1;
+	volatile short holding_mutex;
+	gpib_descriptor_t *descriptors[ GPIB_MAX_NUM_DESCRIPTORS ];
 } gpib_file_private_t;
 
 #endif	/* __KERNEL__ */

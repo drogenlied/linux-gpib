@@ -20,34 +20,40 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <assert.h>
 #include "parse.h"
 
-ibConf_t *ibConfigs[NUM_CONFIGS];
+ibConf_t *ibConfigs[ GPIB_CONFIGS_LENGTH ] = {NULL};
 ibConf_t ibFindConfigs[ FIND_CONFIGS_LENGTH ];
 
-int insert_descriptor( int ud, ibConf_t p )
+int insert_descriptor( ibConf_t p )
 {
 	ibConf_t *conf;
+	int i;
 
-	if( ibConfigs[ ud ] != NULL )
+	for( i = GPIB_MAX_NUM_BOARDS; i < GPIB_CONFIGS_LENGTH; i++ )
+	{
+		if( ibConfigs[ i ] == NULL ) break;
+	}
+	if( i == GPIB_CONFIGS_LENGTH )
 	{
 		setIberr( ENEB );
 		return -1;
 	}
-	ibConfigs[ ud ] = malloc( sizeof( ibConf_t ) );
-	if( ibConfigs[ ud ] == NULL )
+	ibConfigs[ i ] = malloc( sizeof( ibConf_t ) );
+	if( ibConfigs[ i ] == NULL )
 	{
 		setIberr( EDVR );
 		setIbcnt( ENOMEM );
 		return -1;
 	}
-	conf = ibConfigs[ ud ];
+	conf = ibConfigs[ i ];
 
 	/* put entry to the table */
 	*conf = p;
 	init_async_op( &conf->async );
 
-	return 0;
+	return i;
 }
 
 int setup_global_board_descriptors( void )
@@ -59,7 +65,7 @@ int setup_global_board_descriptors( void )
 	{
 		if( ibFindConfigs[ i ].is_interface )
 		{
-			if( insert_descriptor( ibFindConfigs[ i ].settings.board, ibFindConfigs[ i ] ) < 0 )
+			if( insert_descriptor( ibFindConfigs[ i ] ) < 0 )
 			{
 				fprintf( stderr, "libgpib: failed to insert board descriptor\n" );
 				retval = -1;
@@ -88,7 +94,7 @@ int ibParseConfigFile( void )
 	else filename = DEFAULT_CONFIG_FILE;
 
 	retval = parse_gpib_conf( filename, ibFindConfigs, FIND_CONFIGS_LENGTH,
-		ibBoard, MAX_BOARDS );
+		ibBoard, GPIB_MAX_NUM_BOARDS );
 	if( retval < 0 )
 	{
 		pthread_mutex_unlock( &config_lock );
@@ -105,37 +111,22 @@ int ibParseConfigFile( void )
 
 /**********************************************************************/
 
-int ibGetDescriptor(ibConf_t p)
+int ibGetDescriptor( ibConf_t p )
 {
-	int ib_ndev;
 	int retval;
 
-	/* check validity of values */
+	/* XXX should go somewhere else XXX check validity of values */
 	if( p.settings.pad >= gpib_addr_max || p.settings.sad >= gpib_addr_max )
 	{
 		setIberr( ETAB );
 		return -1;
 	}
-	// search for an unused descriptor
-	for( ib_ndev = MAX_BOARDS; ib_ndev < NUM_CONFIGS; ib_ndev++ )
-	{
-		if( ibConfigs[ ib_ndev ] == NULL )
-		{
-			retval = insert_descriptor( ib_ndev, p );
-			if( retval < 0 )
-			{
-				return retval;
-			}
-			break;
-		}
-	}
-	if( ib_ndev == NUM_CONFIGS)
-	{
-		setIberr( ETAB );
-		return -1;
-	}
 
-	return ib_ndev;
+	retval = insert_descriptor( p );
+	if( retval < 0 )
+		return retval;
+
+	return retval;
 }
 
 int ibFindDevIndex( const char *name )
@@ -152,18 +143,13 @@ int ibFindDevIndex( const char *name )
 	return -1;
 }
 
-int ibCheckDescriptor( int ud )
+static int ibCheckDescriptor( int ud )
 {
-	int retval;
-
-	if( ud < 0 || ud >= NUM_CONFIGS || ibConfigs[ud] == NULL )
+	if( ud < 0 || ud >= GPIB_CONFIGS_LENGTH || ibConfigs[ud] == NULL )
 	{
 		fprintf( stderr, "libgpib: invalid descriptor\n" );
 		return -1;
 	}
-
-	retval = conf_online( ibConfigs[ ud ], 1 );
-	if( retval < 0 ) return retval;
 
 	return 0;
 }
@@ -187,31 +173,31 @@ void init_descriptor_settings( descriptor_settings_t *settings )
 
 void init_ibconf( ibConf_t *conf )
 {
+	conf->handle = -1;
 	conf->name[0] = 0;
 	init_descriptor_settings( &conf->defaults );
 	init_descriptor_settings( &conf->settings );
 	conf->init_string[0] = 0;
 	conf->flags = 0;
 	conf->is_interface = 0;
-	conf->dev_is_open = 0;
 	conf->board_is_open = 0;
 	conf->has_lock = 0;
 	conf->timed_out = 0;
 }
 
-int open_gpib_device( ibConf_t *conf )
+int open_gpib_handle( ibConf_t *conf )
 {
-	open_close_dev_ioctl_t open_cmd;
+	open_dev_ioctl_t open_cmd;
 	int retval;
 	ibBoard_t *board;
 
-	if( conf->dev_is_open ||
-		conf->is_interface ) return 0;
+	if( conf->handle >= 0 ) return 0;
 
 	board = interfaceBoard( conf );
 
 	open_cmd.pad = conf->settings.pad;
 	open_cmd.sad = conf->settings.sad;
+	open_cmd.is_board = conf->is_interface;
 	retval = ioctl( board->fileno, IBOPENDEV, &open_cmd );
 	if( retval < 0 )
 	{
@@ -221,24 +207,22 @@ int open_gpib_device( ibConf_t *conf )
 		return retval;
 	}
 
-	conf->dev_is_open = 1;
+	conf->handle = open_cmd.handle;
 
 	return 0;
 }
 
-int close_gpib_device( ibConf_t *conf )
+int close_gpib_handle( ibConf_t *conf )
 {
-	open_close_dev_ioctl_t close_cmd;
+	close_dev_ioctl_t close_cmd;
 	int retval;
 	ibBoard_t *board;
 
-	if( conf->dev_is_open == 0 ||
-		conf->is_interface ) return 0;
+	if( conf->handle < 0 ) return 0;
 
 	board = interfaceBoard( conf );
 
-	close_cmd.pad = conf->settings.pad;
-	close_cmd.sad = conf->settings.sad;
+	close_cmd.handle = conf->handle;
 	retval = ioctl( board->fileno, IBCLOSEDEV, &close_cmd );
 	if( retval < 0 )
 	{
@@ -247,7 +231,7 @@ int close_gpib_device( ibConf_t *conf )
 		return retval;
 	}
 
-	conf->dev_is_open = 0;
+	conf->handle = -1;
 
 	return 0;
 }
@@ -256,36 +240,33 @@ int gpibi_change_address( ibConf_t *conf, unsigned int pad, int sad )
 {
 	int retval;
 	ibBoard_t *board;
+	pad_ioctl_t pad_cmd;
+	sad_ioctl_t sad_cmd;
 
 	board = interfaceBoard( conf );
 
-	if( conf->is_interface )
+	pad_cmd.handle = conf->handle;
+	pad_cmd.pad = pad;
+	retval = ioctl( board->fileno, IBPAD, &pad_cmd );
+	if( retval < 0 )
 	{
-		retval = ioctl( board->fileno, IBPAD, &pad );
-		if( retval < 0 )
-		{
-			setIberr( EDVR );
-			setIbcnt( errno );
-			return retval;
-		}
-
-		retval = ioctl( board->fileno, IBSAD, &sad );
-		if( retval < 0 )
-		{
-			setIberr( EDVR );
-			setIbcnt( errno );
-			return retval;
-		}
+		setIberr( EDVR );
+		setIbcnt( errno );
+		return retval;
 	}
 
-	retval = close_gpib_device( conf );
-	if( retval < 0 ) return retval;
+	sad_cmd.handle = conf->handle;
+	sad_cmd.sad = sad;
+	retval = ioctl( board->fileno, IBSAD, &sad_cmd );
+	if( retval < 0 )
+	{
+		setIberr( EDVR );
+		setIbcnt( errno );
+		return retval;
+	}
 
 	conf->settings.pad = pad;
 	conf->settings.sad = sad;
-
-	retval = open_gpib_device( conf );
-	if( retval < 0 ) return retval;
 
 	return 0;
 }
@@ -331,25 +312,25 @@ int conf_lock_board( ibConf_t *conf )
 	retval = lock_board_mutex( board );
 	if( retval < 0 ) return retval;
 
+	assert( conf->has_lock == 0 );
 	conf->has_lock = 1;
 
 	return retval;
 }
 
-int conf_unlock_board( ibConf_t *conf )
+void conf_unlock_board( ibConf_t *conf )
 {
 	ibBoard_t *board;
 	int retval;
 
 	board = interfaceBoard( conf );
 
-	if( conf->has_lock == 0 ) return 0;
+	assert( conf->has_lock );
 
 	conf->has_lock = 0;
 
 	retval = unlock_board_mutex( board );
-	if( retval < 0 ) conf->has_lock = 1;
-	return retval;
+	assert( retval == 0 );
 }
 
 ibConf_t * enter_library( int ud )
@@ -371,7 +352,7 @@ ibConf_t * general_enter_library( int ud, int no_lock_board, int ignore_eoip )
 
 	setIberr( 0 );
 	setIbcnt( 0 );
-	
+
 	conf = ibConfigs[ ud ];
 
 	if( ibCheckDescriptor( ud ) < 0 )
@@ -379,6 +360,10 @@ ibConf_t * general_enter_library( int ud, int no_lock_board, int ignore_eoip )
 		setIberr( EDVR );
 		return NULL;
 	}
+
+	retval = conf_online( ibConfigs[ ud ], 1 );
+	if( retval < 0 ) return NULL;
+
 	conf->timed_out = 0;
 
 	board = interfaceBoard( conf );
@@ -474,7 +459,6 @@ int general_exit_library( int ud, int error, int no_sync_globals, int status_cle
 {
 	ibConf_t *conf = ibConfigs[ ud ];
 	ibBoard_t *board;
-	int retval;
 	int status;
 
 	if( ibCheckDescriptor( ud ) < 0 )
@@ -489,13 +473,8 @@ int general_exit_library( int ud, int error, int no_sync_globals, int status_cle
 
 	status = ibstatus( conf, error, status_clear_mask );
 
-	retval = conf_unlock_board( conf );
-	if( retval < 0 )
-	{
-		setIberr( EDVR );
-		status |= ERR;
-		setIbsta( status );
-	}
+	if( conf->has_lock )
+		conf_unlock_board( conf );
 
 	if( no_sync_globals == 0 )
 		sync_globals();

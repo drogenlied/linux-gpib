@@ -2,13 +2,15 @@
 #ifndef _GPIB_P_H
 #define _GPIB_P_H
 
-#include <linux/fs.h>
-#include <autoconf.h>
+#include <linux/types.h>
 
+#include "gpib_user.h"
 #include "gpib_types.h"
 #include "gpib_proto.h"
 #include "gpib_ioctl.h"
-#include "gpib_user.h"
+#include "gpib/autoconf.h"
+
+#include <linux/fs.h>
 
 void gpib_register_driver(gpib_interface_t *interface);
 void gpib_unregister_driver(gpib_interface_t *interface);
@@ -18,8 +20,7 @@ unsigned int num_gpib_events( const gpib_event_queue_t *queue );
 int push_gpib_event( gpib_board_t *board, short event_type );
 int pop_gpib_event( gpib_event_queue_t *queue, short *event_type );
 
-#define MAX_NUM_GPIB_BOARDS 16
-extern gpib_board_t board_array[MAX_NUM_GPIB_BOARDS];
+extern gpib_board_t board_array[GPIB_MAX_NUM_BOARDS];
 
 extern struct list_head registered_drivers;
 

@@ -145,7 +145,8 @@ char cval;
 		;
 
 	minor : T_MINOR '=' T_NUMBER {
-				priv(parse_arg)->board_index = $3; current_config(parse_arg)->defaults.board = $3;
+				priv(parse_arg)->board_index = $3;
+				current_config(parse_arg)->defaults.board = $3;
 				if(priv(parse_arg)->board_index < priv(parse_arg)->boards_length )
 					snprintf(current_board(parse_arg)->device, sizeof(current_board( parse_arg )->device), "/dev/gpib%i", priv(parse_arg)->board_index);
 				else

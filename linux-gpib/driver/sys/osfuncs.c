@@ -35,8 +35,10 @@ static int online_ioctl( gpib_board_t *board, gpib_file_private_t *priv,
 static int remote_enable_ioctl( gpib_board_t *board, unsigned long arg );
 static int take_control_ioctl( gpib_board_t *board, unsigned long arg );
 static int line_status_ioctl( gpib_board_t *board, unsigned long arg );
-static int pad_ioctl( gpib_board_t *board, unsigned long arg );
-static int sad_ioctl( gpib_board_t *board, unsigned long arg );
+static int pad_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
+	unsigned long arg );
+static int sad_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
+	unsigned long arg );
 static int eos_ioctl( gpib_board_t *board, unsigned long arg );
 static int request_service_ioctl( gpib_board_t *board, unsigned long arg );
 static int iobase_ioctl( gpib_board_t *board, unsigned long arg );
@@ -58,11 +60,20 @@ static int t1_delay_ioctl( gpib_board_t *board, unsigned long arg );
 
 static int cleanup_open_devices( gpib_file_private_t *file_priv, gpib_board_t *board );
 
-static void init_gpib_file_private( gpib_file_private_t *priv )
+static int init_gpib_file_private( gpib_file_private_t *priv )
 {
-	INIT_LIST_HEAD( &priv->device_list );
 	priv->online_count = 0;
 	priv->holding_mutex = 0;
+	memset( priv->descriptors, 0, sizeof( priv->descriptors ) );
+	priv->descriptors[ 0 ] = kmalloc( sizeof( gpib_descriptor_t ), GFP_KERNEL );
+	if( priv->descriptors[ 0 ] == NULL )
+	{
+		printk( "gpib: failed to allocate default board descriptor\n" );
+		return -ENOMEM;
+	}
+	init_gpib_descriptor( priv->descriptors[ 0 ] );
+	priv->descriptors[ 0 ]->is_board = 1;
+	return 0;
 }
 
 int ibopen(struct inode *inode, struct file *filep)
@@ -70,7 +81,7 @@ int ibopen(struct inode *inode, struct file *filep)
 	unsigned int minor = MINOR(inode->i_rdev);
 	gpib_board_t *board;
 
-	if(minor >= MAX_NUM_GPIB_BOARDS)
+	if(minor >= GPIB_MAX_NUM_BOARDS)
 	{
 		printk("gpib: invalid minor number of device file\n");
 		return -ENXIO;
@@ -113,7 +124,7 @@ int ibclose(struct inode *inode, struct file *filep)
 	gpib_board_t *board;
 	gpib_file_private_t *priv = filep->private_data;
 
-	if(minor >= MAX_NUM_GPIB_BOARDS)
+	if(minor >= GPIB_MAX_NUM_BOARDS)
 	{
 		printk("gpib: invalid minor number of device file\n");
 		return -ENODEV;
@@ -151,7 +162,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 	unsigned int minor = MINOR(inode->i_rdev);
 	gpib_board_t *board;
 
-	if( minor >= MAX_NUM_GPIB_BOARDS )
+	if( minor >= GPIB_MAX_NUM_BOARDS )
 	{
 		printk("gpib: invalid minor number of device file\n");
 		return -ENODEV;
@@ -203,10 +214,10 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			return online_ioctl( board, filep->private_data, arg );
 			break;
 		case IBPAD:
-			return pad_ioctl( board, arg );
+			return pad_ioctl( board, filep->private_data, arg );
 			break;
 		case IBSAD:
-			return sad_ioctl( board, arg );
+			return sad_ioctl( board, filep->private_data, arg );
 			break;
 		case IBSELECT_PCI:
 			return select_pci_ioctl( board, arg );
@@ -597,67 +608,88 @@ static inline int decrement_open_device_count( struct list_head *head, unsigned 
 
 static int cleanup_open_devices( gpib_file_private_t *file_priv, gpib_board_t *board )
 {
-	struct list_head *list_ptr, *old_list, *head = &file_priv->device_list;
-	gpib_device_t *device;
 	int retval = 0;
+	int i;
 
-	list_ptr = head->next;
-	while( list_ptr != head )
+	for( i = 0; i < GPIB_MAX_NUM_DESCRIPTORS; i++ )
 	{
-		device = list_entry( list_ptr, gpib_device_t, list );
-		retval = subtract_open_device_count( &board->device_list, device->pad, device->sad,
-			device->reference_count );
-		if( retval < 0 ) break;
-		old_list = list_ptr;
-		list_ptr = old_list->next;
-		list_del( old_list );
-		kfree( device );
+		gpib_descriptor_t *desc;
+
+		desc = file_priv->descriptors[ i ];
+		if( desc == NULL ) continue;
+
+		if( desc->is_board == 0 )
+		{
+			retval = decrement_open_device_count( &board->device_list, desc->pad,
+				desc->sad );
+			if( retval < 0 ) return retval;
+		}
+		kfree( desc );
+		file_priv->descriptors[ i ] = NULL;
 	}
 
-	return retval;
+	return 0;
 }
 
 static int open_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned long arg )
 {
-	open_close_dev_ioctl_t open_dev_cmd;
+	open_dev_ioctl_t open_dev_cmd;
 	int retval;
-	struct list_head *list_ptr = filep->private_data;
+	gpib_file_private_t *file_priv = filep->private_data;
+	int i;
 
 	retval = copy_from_user( &open_dev_cmd, ( void* ) arg, sizeof( open_dev_cmd ) );
 	if (retval)
 		return -EFAULT;
 
-	retval = increment_open_device_count( list_ptr, open_dev_cmd.pad, open_dev_cmd.sad );
-	if( retval < 0 )
-		return retval;
+	for( i = 0; i < GPIB_MAX_NUM_DESCRIPTORS; i++ )
+		if( file_priv->descriptors[ i ] == NULL ) break;
+	if( i == GPIB_MAX_NUM_DESCRIPTORS )
+		return -ERANGE;
+	file_priv->descriptors[ i ] = kmalloc( sizeof( gpib_descriptor_t ), GFP_KERNEL );
+	if( file_priv->descriptors[ i ] == NULL )
+		return -ENOMEM;
+	init_gpib_descriptor( file_priv->descriptors[ i ] );
+
+	file_priv->descriptors[ i ]->pad = open_dev_cmd.pad;
+	file_priv->descriptors[ i ]->sad = open_dev_cmd.sad;
+	file_priv->descriptors[ i ]->is_board = open_dev_cmd.is_board;
+
 	retval = increment_open_device_count( &board->device_list, open_dev_cmd.pad, open_dev_cmd.sad );
 	if( retval < 0 )
-	{
-		decrement_open_device_count( list_ptr, open_dev_cmd.pad, open_dev_cmd.sad );
 		return retval;
-	}
 
 	/* clear stuck srq state, since we may be able to find service request on
 	 * the new device */
 	board->stuck_srq = 0;
+
+	open_dev_cmd.handle = i;
+	retval = copy_to_user( ( void* ) arg, &open_dev_cmd, sizeof( open_dev_cmd ) );
+	if (retval)
+		return -EFAULT;
 
 	return 0;
 }
 
 static int close_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned long arg )
 {
-	open_close_dev_ioctl_t close_dev_cmd;
-	struct list_head *list_ptr = filep->private_data;
+	close_dev_ioctl_t cmd;
+	gpib_file_private_t *file_priv = filep->private_data;
 	int retval;
 
-	retval = copy_from_user( &close_dev_cmd, ( void* ) arg, sizeof( close_dev_cmd ) );
+	retval = copy_from_user( &cmd, ( void* ) arg, sizeof( cmd ) );
 	if (retval)
 		return -EFAULT;
 
-	retval = decrement_open_device_count( list_ptr, close_dev_cmd.pad, close_dev_cmd.sad );
+	if( cmd.handle >= GPIB_MAX_NUM_DESCRIPTORS ) return -EINVAL;
+	if( file_priv->descriptors[ cmd.handle ] == NULL ) return -EINVAL;
+
+	retval = decrement_open_device_count( &board->device_list, file_priv->descriptors[ cmd.handle ]->pad,
+		file_priv->descriptors[ cmd.handle ]->sad );
 	if( retval < 0 ) return retval;
-	retval = decrement_open_device_count( &board->device_list, close_dev_cmd.pad, close_dev_cmd.sad );
-	if( retval < 0 ) return retval;
+
+	kfree( file_priv->descriptors[ cmd.handle ] );
+	file_priv->descriptors[ cmd.handle ] = NULL;
 
 	return 0;
 }
@@ -773,28 +805,75 @@ static int line_status_ioctl( gpib_board_t *board, unsigned long arg )
 	return 0;
 }
 
-static int pad_ioctl( gpib_board_t *board, unsigned long arg )
+static int pad_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
+	unsigned long arg )
 {
-	unsigned int address;
+	pad_ioctl_t cmd;
 	int retval;
+	gpib_descriptor_t *desc;
 
-	retval = copy_from_user( &address, ( void * ) arg, sizeof( address ) );
+	retval = copy_from_user( &cmd, ( void * ) arg, sizeof( cmd ) );
 	if( retval )
 		return -EFAULT;
 
-	return ibpad( board, address );
+	if( cmd.handle >= GPIB_MAX_NUM_DESCRIPTORS )
+	return -EINVAL;
+
+	desc = file_priv->descriptors[ cmd.handle ];
+
+	if( desc->is_board )
+	{
+		retval = ibpad( board, cmd.pad );
+		if( retval < 0 ) return retval;
+	}else
+	{
+		retval = decrement_open_device_count( &board->device_list, desc->pad, desc->sad );
+		if( retval < 0 )
+			return retval;
+
+		desc->pad = cmd.pad;
+
+		retval = increment_open_device_count( &board->device_list, desc->pad, desc->sad );
+		if( retval < 0 )
+			return retval;
+	}
+
+	return 0;
 }
 
-static int sad_ioctl( gpib_board_t *board, unsigned long arg )
+static int sad_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
+	unsigned long arg )
 {
-	int address;
+	sad_ioctl_t cmd;
 	int retval;
+	gpib_descriptor_t *desc;
 
-	retval = copy_from_user( &address, ( void * ) arg, sizeof( address ) );
+	retval = copy_from_user( &cmd, ( void * ) arg, sizeof( cmd ) );
 	if( retval )
 		return -EFAULT;
 
-	return ibsad( board, address );
+	if( cmd.handle >= GPIB_MAX_NUM_DESCRIPTORS )
+	return -EINVAL;
+
+	desc = file_priv->descriptors[ cmd.handle ];
+
+	if( desc->is_board )
+	{
+		retval = ibsad( board, cmd.sad );
+		if( retval < 0 ) return retval;
+	}else
+	{
+		retval = decrement_open_device_count( &board->device_list, desc->pad, desc->sad );
+		if( retval < 0 )
+			return retval;
+
+		desc->sad = cmd.sad;
+
+		retval = increment_open_device_count( &board->device_list, desc->pad, desc->sad );
+		if( retval < 0 )
+			return retval;
+	}
+	return 0;
 }
 
 static int eos_ioctl( gpib_board_t *board, unsigned long arg )

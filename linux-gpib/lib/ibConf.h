@@ -62,6 +62,7 @@ typedef struct
 
 typedef struct ibConfStruct
 {
+	int handle;
 	char name[100];		/* name of the device (for ibfind())     */
 	descriptor_settings_t defaults;	/* initial settings stored so ibonl() can restore them */
 	descriptor_settings_t settings;	/* various software settings for this descriptor */
@@ -70,7 +71,6 @@ typedef struct ibConfStruct
 	struct async_operation async;	/* used by asynchronous operations ibcmda(), ibrda(), etc. */
 	unsigned end : 1;	/* EOI asserted or EOS received at end of IO operation */
 	unsigned is_interface : 1;	/* is interface board */
-	unsigned dev_is_open : 1;
 	unsigned board_is_open : 1;
 	unsigned has_lock : 1;
 	unsigned timed_out : 1;		/* io operation timed out */

@@ -24,6 +24,7 @@
 #include "gpib_ioctl.h"
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <assert.h>
 
 #include "ibConf.h"
 
@@ -34,7 +35,6 @@ enum internal_gpib_addr
 };
 
 void init_async_op( struct async_operation *async );
-int ibCheckDescriptor(int ud);
 int initIbBoardAtFork( void );
 int ibBoardOpen( ibBoard_t *board );
 int ibBoardClose( ibBoard_t *board );
@@ -60,14 +60,14 @@ unsigned int timeout_to_usec( enum gpib_timeout timeout );
 unsigned int ppoll_timeout_to_usec( unsigned int timeout );
 unsigned int usec_to_ppoll_timeout( unsigned int usec );
 int set_timeout( const ibBoard_t *board, unsigned int usec_timeout );
-int close_gpib_device( ibConf_t *conf );
-int open_gpib_device( ibConf_t *conf );
+int close_gpib_handle( ibConf_t *conf );
+int open_gpib_handle( ibConf_t *conf );
 int gpibi_change_address( ibConf_t *conf,
 	unsigned int pad, int sad );
 int lock_board_mutex( ibBoard_t *board );
 int unlock_board_mutex( ibBoard_t *board );
 int conf_lock_board( ibConf_t *conf );
-int conf_unlock_board( ibConf_t *conf );
+void conf_unlock_board( ibConf_t *conf );
 int exit_library( int ud, int error );
 int general_exit_library( int ud, int error, int no_sync_globals, int status_clear_mask );
 ibConf_t * enter_library( int ud );
@@ -122,6 +122,7 @@ int InternalReceive( ibConf_t *conf, Addr4882_t address,
 
 static __inline__ ibBoard_t* interfaceBoard( const ibConf_t *conf )
 {
+	assert( conf->settings.board >= 0 && conf->settings.board < GPIB_MAX_NUM_BOARDS );
 	return &ibBoard[ conf->settings.board ];
 }
 

@@ -38,9 +38,16 @@ typedef struct
 
 typedef struct
 {
+	unsigned int handle;
 	unsigned int pad;
 	int sad;
-} open_close_dev_ioctl_t;
+	unsigned is_board : 1;
+} open_dev_ioctl_t;
+
+typedef struct
+{
+	unsigned int handle;
+} close_dev_ioctl_t;
 
 typedef struct
 {
@@ -99,6 +106,18 @@ typedef struct
 	unsigned clear_ist : 1;
 }	ppoll_config_ioctl_t;
 
+typedef struct
+{
+	unsigned int handle;
+	unsigned int pad;
+} pad_ioctl_t;
+
+typedef struct
+{
+	unsigned int handle;
+	int sad;
+} sad_ioctl_t;
+
 typedef short event_ioctl_t;
 typedef int rsc_ioctl_t;
 typedef unsigned int t1_delay_ioctl_t;
@@ -109,8 +128,8 @@ enum gpib_ioctl
 	IBRD = _IOWR( GPIB_CODE, 0, read_write_ioctl_t ),
 	IBWRT = _IOWR( GPIB_CODE, 1, read_write_ioctl_t ),
 	IBCMD = _IOWR( GPIB_CODE, 2, read_write_ioctl_t ),
-	IBOPENDEV = _IOW( GPIB_CODE, 3, open_close_dev_ioctl_t ),
-	IBCLOSEDEV = _IOW( GPIB_CODE, 4, open_close_dev_ioctl_t ),
+	IBOPENDEV = _IOWR( GPIB_CODE, 3, open_dev_ioctl_t ),
+	IBCLOSEDEV = _IOW( GPIB_CODE, 4, close_dev_ioctl_t ),
 	IBWAIT = _IOW( GPIB_CODE, 5, wait_ioctl_t ),
 	IBRPP = _IOWR( GPIB_CODE, 6, uint8_t ),
 
@@ -121,8 +140,8 @@ enum gpib_ioctl
 	IBCAC = _IOW( GPIB_CODE, 12, int ),
 	IBSTATUS = _IOWR( GPIB_CODE, 13, int ),
 	IBLINES = _IOR( GPIB_CODE, 14, short ),
-	IBPAD = _IOW( GPIB_CODE, 15, unsigned int ),
-	IBSAD = _IOW( GPIB_CODE, 16, int ),
+	IBPAD = _IOW( GPIB_CODE, 15, pad_ioctl_t ),
+	IBSAD = _IOW( GPIB_CODE, 16, sad_ioctl_t ),
 	IBTMO = _IOW( GPIB_CODE, 17, unsigned int ),
 	IBRSP = _IOWR( GPIB_CODE, 18, serial_poll_ioctl_t ),
 	IBEOS = _IOW( GPIB_CODE, 19, eos_ioctl_t ),

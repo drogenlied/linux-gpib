@@ -148,10 +148,12 @@ static void parse_options( int argc, char *argv[], parsed_options_t *settings )
 	}
 }
 
-static int configure_board( ibBoard_t *board, unsigned int pad, int sad )
+static int configure_board( ibBoard_t *board, unsigned int minor, unsigned int pad, int sad )
 {
 	board_type_ioctl_t boardtype;
 	select_pci_ioctl_t pci_selection;
+	pad_ioctl_t pad_cmd;
+	sad_ioctl_t sad_cmd;
 	int retval;
 
 	strncpy( boardtype.name, board->board_type, sizeof( boardtype.name ) );
@@ -163,9 +165,15 @@ static int configure_board( ibBoard_t *board, unsigned int pad, int sad )
 	if( retval < 0 ) return retval;
 	retval = ioctl( board->fileno, CFCDMA, &board->dma );
 	if( retval < 0 ) return retval;
- 	retval = ioctl( board->fileno, IBPAD, &pad );
+
+	pad_cmd.handle = 0;
+	pad_cmd.pad = pad;
+	retval = ioctl( board->fileno, IBPAD, &pad_cmd );
 	if( retval < 0 ) return retval;
-	retval = ioctl( board->fileno, IBSAD, &sad );
+
+	sad_cmd.handle = 0;
+	sad_cmd.sad = sad;
+	retval = ioctl( board->fileno, IBSAD, &sad_cmd );
 	if( retval < 0 ) return retval;
 
 	pci_selection.pci_bus = board->pci_bus;
@@ -179,12 +187,12 @@ static int configure_board( ibBoard_t *board, unsigned int pad, int sad )
 int main( int argc, char *argv[] )
 {
 	ibConf_t configs[ FIND_CONFIGS_LENGTH ];
-	ibBoard_t boards[ MAX_BOARDS ];
+	ibBoard_t boards[ GPIB_MAX_NUM_BOARDS ];
 	char *filename, *envptr, *devicefile;
 	int retval;
 	parsed_options_t options;
 	ibBoard_t *board;
-	ibConf_t *conf;
+	ibConf_t *conf = NULL;
 	unsigned int pad = 0;
 	int sad = -1;
 	int i;
@@ -197,14 +205,14 @@ int main( int argc, char *argv[] )
 	else filename = DEFAULT_CONFIG_FILE;
 
 	retval = parse_gpib_conf( filename, configs, FIND_CONFIGS_LENGTH,
-		boards, MAX_BOARDS );
+		boards, GPIB_MAX_NUM_BOARDS );
 	if( retval < 0 )
 	{
 		fprintf( stderr, "failed to parse config file %s\n", filename );
 		return retval;
 	}
 
-	if( options.minor >= MAX_BOARDS )
+	if( options.minor >= GPIB_MAX_NUM_BOARDS )
 	{
 		fprintf( stderr, "minor number %i out of range\n", options.minor );
 		return -1;
@@ -219,6 +227,7 @@ int main( int argc, char *argv[] )
 		sad = conf->settings.sad;
 		break;
 	}
+
 	board = &boards[ options.minor ];
 
 	asprintf( &devicefile, "/dev/gpib%i", options.minor );
@@ -251,7 +260,7 @@ int main( int argc, char *argv[] )
 		perror( __FUNCTION__ );
 		return board->fileno;
 	}
-	retval = configure_board( board, pad, sad );
+	retval = configure_board( board, options.minor, pad, sad );
 	if( retval < 0 )
 	{
 		fprintf( stderr, "failed to configure board\n" );

@@ -18,6 +18,7 @@
 #include "ib_internal.h"
 #include <stdlib.h>
 
+#if 0
 static int is_device_addr( int minor, int pad, int sad )
 {
 	ibBoard_t *board;
@@ -36,7 +37,7 @@ static int is_device_addr( int minor, int pad, int sad )
 		fprintf( stderr, "failed to query sad\n" );
 		return -1;
 	}
-	
+
 	if( gpib_address_equal( board_pad, board_sad, pad, sad ) == 0 )
 	{
 		return 1;
@@ -44,6 +45,7 @@ static int is_device_addr( int minor, int pad, int sad )
 
 	return 0;
 }
+#endif
 
 int ibdev( int minor, int pad, int sad, int timo, int eot, int eosmode )
 {
@@ -79,25 +81,25 @@ int ibdev( int minor, int pad, int sad, int timo, int eot, int eosmode )
 
 int my_ibdev( ibConf_t new_conf )
 {
-	int uDesc;
+	int ud;
 	ibConf_t *conf;
 
-	uDesc = ibGetDescriptor(new_conf);
-	if(uDesc < 0)
+	ud = ibGetDescriptor(new_conf);
+	if( ud < 0 )
 	{
-		fprintf(stderr, "libgpib: ibdev failed to get descriptor\n");
+		fprintf( stderr, "libgpib: ibdev failed to get descriptor\n" );
 		setIbsta( ERR );
 		return -1;
 	}
 
-	conf = enter_library( uDesc );
+	conf = enter_library( ud );
 	if( conf == NULL )
 	{
-		exit_library( uDesc, 1 );
+		exit_library( ud, 1 );
 		return -1;
 	}
 	// XXX do local lockout if appropriate
 
-	exit_library( uDesc, 0 );
-	return uDesc;
+	exit_library( ud, 0 );
+	return ud;
 }

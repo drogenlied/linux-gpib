@@ -30,14 +30,14 @@
 #include <pthread.h>
 #include <stdlib.h>
 
-ibBoard_t ibBoard[ MAX_BOARDS ];
+ibBoard_t ibBoard[ GPIB_MAX_NUM_BOARDS ];
 void cleanup_autopoll( void *arg );
 
 void atfork_autopoll_prepare( void )
 {
 	int i;
 
-	for( i = 0; i < MAX_BOARDS; i++ )
+	for( i = 0; i < GPIB_MAX_NUM_BOARDS; i++ )
 		pthread_mutex_lock( &ibBoard[ i ].autopoll_lock );
 }
 
@@ -45,7 +45,7 @@ void atfork_autopoll_parent( void )
 {
 	int i;
 
-	for( i = 0; i < MAX_BOARDS; i++ )
+	for( i = 0; i < GPIB_MAX_NUM_BOARDS; i++ )
 		pthread_mutex_unlock( &ibBoard[ i ].autopoll_lock );
 }
 
@@ -53,7 +53,7 @@ void atfork_autopoll_child( void )
 {
 	int i, start_autopoll;
 
-	for( i = 0; i < MAX_BOARDS; i++ )
+	for( i = 0; i < GPIB_MAX_NUM_BOARDS; i++ )
 	{
 		pthread_mutex_init( &ibBoard[ i ].autopoll_lock, NULL );
 		if( ibBoard[ i ].autopoll_thread )

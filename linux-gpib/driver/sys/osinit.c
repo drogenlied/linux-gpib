@@ -53,9 +53,16 @@ struct file_operations ib_fops =
 //	get_unmapped_area: NULL,
 };
 
-gpib_board_t board_array[MAX_NUM_GPIB_BOARDS];
+gpib_board_t board_array[GPIB_MAX_NUM_BOARDS];
 
 LIST_HEAD(registered_drivers);
+
+void init_gpib_descriptor( gpib_descriptor_t *desc )
+{
+	desc->pad = 0;
+	desc->sad = -1;
+	desc->is_board = 0;
+}
 
 void gpib_register_driver(gpib_interface_t *interface)
 {
@@ -67,7 +74,7 @@ void gpib_unregister_driver(gpib_interface_t *interface)
 {
 	int i;
 
-	for(i = 0; i < MAX_NUM_GPIB_BOARDS; i++)
+	for(i = 0; i < GPIB_MAX_NUM_BOARDS; i++)
 	{
 		gpib_board_t *board = &board_array[i];
 		if (board->interface == interface) {
@@ -170,7 +177,7 @@ static int gpib_common_init_module( void )
 
 	printk("Linux-GPIB %s Driver -- Kernel Release %s\n", GPIB_VERSION, UTS_RELEASE);
 
-	init_board_array(board_array, MAX_NUM_GPIB_BOARDS);
+	init_board_array(board_array, GPIB_MAX_NUM_BOARDS);
 
 	if( devfs_register_chrdev( IBMAJOR, "gpib", &ib_fops ) )
 	{
@@ -178,7 +185,7 @@ static int gpib_common_init_module( void )
 		return -EIO;
 	}
 
-	for( i = 0; i < MAX_NUM_GPIB_BOARDS; i++ )
+	for( i = 0; i < GPIB_MAX_NUM_BOARDS; i++ )
 	{
 		char name[20];
 		sprintf( name, "gpib%d", i );
@@ -193,7 +200,7 @@ static void gpib_common_exit_module( void )
 {
 	int i;
 
-	for( i = 0; i < MAX_NUM_GPIB_BOARDS; i++ )
+	for( i = 0; i < GPIB_MAX_NUM_BOARDS; i++ )
 	{
 		char name[20];
 		sprintf( name, "gpib%d", i );

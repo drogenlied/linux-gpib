@@ -31,8 +31,7 @@ int my_ibbna( ibConf_t *conf, unsigned int new_board_index )
 		setIberr( EARG );
 		return -1;
 	}
-
-	retval = close_gpib_device( conf );
+	retval = close_gpib_handle( conf );
 	if( retval < 0 )
 	{
 		setIberr( EDVR );
@@ -60,7 +59,7 @@ int my_ibbna( ibConf_t *conf, unsigned int new_board_index )
 		return -1;
 	}
 
-	retval = open_gpib_device( conf );
+	retval = open_gpib_handle( conf );
 	if( retval < 0 )
 	{
 		setIberr( EDVR );

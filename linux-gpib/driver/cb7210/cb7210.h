@@ -19,10 +19,11 @@
 #ifndef _CB7210_H
 #define _CB7210_H
 
-#include <linux/config.h>
 #include "nec7210.h"
 #include "gpibP.h"
 #include "amccs5933.h"
+
+#include <linux/config.h>
 
 enum
 {
