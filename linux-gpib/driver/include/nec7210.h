@@ -68,6 +68,7 @@
 #define HR_TON          (1<<7)
 
 // ADR, bits used in address0, address1 and address0/1 registers
+#define ADDRESS_MASK		0x1f			/* mask to specify lower 5 bits */
 #define HR_DL           (1<<5)
 #define HR_DT           (1<<6)
 #define HR_ARS          (1<<7)
@@ -81,7 +82,6 @@
 #define AUXRA		0x80
 #define AUXRB		0xa0
 #define AUXRE		0xc0
-#define LOMASK		0x1F			/* mask to specify lower 5 bits */
 
 // auxra, auxiliary register A
 #define HR_HANDSHAKE_MASK	0x3

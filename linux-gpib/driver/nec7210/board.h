@@ -6,7 +6,7 @@
 #include <asm/io.h>
 #include <gpib_buffer.h>
 
-extern ssize_t nec7210_read(uint8_t *buffer, size_t length, uint8_t eos);
+extern ssize_t nec7210_read(uint8_t *buffer, size_t length, int *end);
 extern ssize_t nec7210_write(uint8_t *buffer, size_t length, int send_eoi);
 extern ssize_t nec7210_command(uint8_t *buffer, size_t length);
 extern int nec7210_take_control(int syncronous);
@@ -17,8 +17,8 @@ extern void nec7210_remote_enable(int enable);
 extern void nec7210_enable_eos(uint8_t eos_bytes, int compare_8_bits);
 extern void nec7210_disable_eos(void);
 extern unsigned int nec7210_update_status(void);
-
-extern void bdSendAuxCmd(int cmd);
+extern void nec7210_primary_address(unsigned int address);
+extern void nec7210_secondary_address(unsigned int address, int enable);
 
 extern unsigned long ibbase;	/* base addr of GPIB interface registers  */
 extern unsigned long remapped_ibbase;	// ioremapped memory io address
@@ -48,8 +48,7 @@ extern wait_queue_head_t nec7210_status_wait;
 
 // software copies of bits written to interrupt mask registers
 extern volatile int imr1_bits, imr2_bits;
-
-#define LOW_PORT 0x2e1
+extern int admr_bits;
 
 /* this routines are 'wrappers' for the outb() macros */
 
@@ -57,12 +56,12 @@ extern volatile int imr1_bits, imr2_bits;
  * Input a one-byte value from the specified I/O port
  */
 
-extern inline uint8_t bdP8in(unsigned long in_addr)
+extern inline uint8_t GPIBin(unsigned long in_addr)
 {
 #if defined(MODBUS_PCI)
 	return readw(remapped_ibbase + in_addr) & 0xff;
 #else
-	return inb_p(ibbase + in_addr);
+	return inb(ibbase + in_addr);
 #endif
 }
 
@@ -70,12 +69,12 @@ extern inline uint8_t bdP8in(unsigned long in_addr)
 /*
  * Output a one-byte value to the specified I/O port
  */
-extern inline void bdP8out(unsigned long out_addr, uint8_t out_value)
+extern inline void GPIBout(unsigned long out_addr, uint8_t out_value)
 {
 #if defined(MODBUS_PCI)
 	writeb(out_value, remapped_ibbase + out_addr );
 #else
-	outb_p(out_value, ibbase + out_addr);
+	outb(out_value, ibbase + out_addr);
 #endif
 }
 

@@ -91,6 +91,7 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, uns
 	char 	*userbuf;
 	char 	c;
 	ssize_t ret;
+	int end_flag;
 
 	DBGin("ibioctl");
 	DBGprint(DBG_DATA,("cmd=%d",cmd));
@@ -150,12 +151,12 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, uns
 			remain = ibargp->ib_cnt;
 			do
 			{
-				ret = ibrd( buf, (bufsize < remain) ? bufsize : remain );
-				if(ret < 0) break;
+				ret = ibrd( buf, (bufsize < remain) ? bufsize : remain, &end_flag);
+				if(ret < 0) break; 	//XXX
 				copy_to_user( userbuf, buf, ret );
 				remain -= ret;
 				userbuf += ret;
-			}while (remain > 0 && !(board.update_status() & END));
+			}while (remain > 0 && end_flag == 0);
 			ibcnt = ibargp->ib_cnt - remain;
 			/* Free the DMA buffer */
 			osFreeDMABuffer( buf );
@@ -312,18 +313,20 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, uns
 			{
 				GIVE_UP(-ENOMEM);
 			}
+			if (receive_setup(ibargp->ib_arg) & ERR)
+				break;	// XXX
 
 			/* Read DMA buffer loads till we fill the user supplied buffer */
 			userbuf = ibargp->ib_buf;
 			remain = ibargp->ib_cnt;
 			do
 			{
-				ret = dvrd( ibargp->ib_arg, buf, (bufsize < remain) ? bufsize : remain );
+				ret = ibrd(buf, (bufsize < remain) ? bufsize : remain, &end_flag);
 				if(ret < 0) break;
 				copy_to_user( userbuf, buf, ret );
 				remain -= ret;
 				userbuf += ret;
-			}while (remain > 0  && !(board.update_status() & (END|ERR|TIMO)));
+			}while (remain > 0  && end_flag == 0);	//!(board.update_status() & TIMO));
 			ibcnt = ibargp->ib_cnt - remain;
 
 			/* Free the DMA buffer */

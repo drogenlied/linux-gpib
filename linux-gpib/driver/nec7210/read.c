@@ -1,12 +1,14 @@
 #include "board.h"
 #include <asm/dma.h>
 
-ssize_t nec7210_read(uint8_t *buffer, size_t length, uint8_t eos) // XXX eos broken
+ssize_t nec7210_read(uint8_t *buffer, size_t length, int *end)
 {
 	size_t	count = 0;
 	gpib_char_t data;
 	int ret;
 	unsigned long flags;
+
+	*end = 0;
 
 	if(length == 0) return 0;
 
@@ -55,8 +57,6 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, uint8_t eos) // XXX eos bro
 	count += length - get_dma_residue(ibdma);
 	release_dma_lock(flags);
 
-	set_bit(END_NUM, &board.status); // not always
-
 #else	// PIO transfer
 
 	// enable 'data in' interrupt
@@ -100,6 +100,9 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, uint8_t eos) // XXX eos bro
 		set_bit(TIMO_NUM, &board.status);
 		iberr = EABO;
 	}
+
+	if(test_bit(END_NUM, &board.status))
+		*end = 1;
 
 	return count;
 }

@@ -42,10 +42,11 @@ gpib_board_t board =
 	remote_enable:	nec7210_remote_enable,
 	enable_eos:	nec7210_enable_eos,
 	disable_eos:	nec7210_disable_eos,
-	serial_poll:	NULL,	// XXX
 	parallel_poll:	NULL,	// XXX
 	line_status:	NULL,
 	update_status:	nec7210_update_status,
+	primary_address:	nec7210_primary_address,
+	secondary_address:	nec7210_secondary_address,
 	status:	0,
 	error:	0,
 	private_data:	NULL,
@@ -82,7 +83,6 @@ void board_reset(void)
 #endif
 
 	GPIBout(AUXMR, AUX_CR);                     /* 7210 chip reset */
-        /*GPIBout(INTRT, 1);*/
 
 	GPIBin(CPTR);                           /* clear registers by reading */
 	GPIBin(ISR1);
@@ -92,22 +92,16 @@ void board_reset(void)
 	GPIBout(IMR2, 0);
 	GPIBout(SPMR, 0);
 
-	GPIBout(ADR,(PAD & LOMASK));                /* set GPIB address; MTA=PAD|100, MLA=PAD|040 */
-#if (SAD)
-	GPIBout(ADR, HR_ARS | (SAD & LOMASK));      /* enable secondary addressing */
-	GPIBout(ADMR, HR_TRM1 | HR_TRM0 | HR_ADM1);
-#else
-	GPIBout(ADR, HR_ARS | HR_DT | HR_DL);       /* disable secondary addressing */
-	GPIBout(ADMR, HR_TRM1 | HR_TRM0 | HR_ADM0);
-#endif
-
 	GPIBout(EOSR, 0);
 	GPIBout(AUXMR, ICR | 5);                    /* set internal counter register N= 8 */
 	GPIBout(AUXMR, PPR | HR_PPU);               /* parallel poll unconfigure */
+
+	// holdoff on all data	XXX record current handshake state somewhere
+	auxa_bits = AUXRA | HR_HLDA;
 	GPIBout(AUXMR, auxa_bits);
 
-	GPIBout(AUXMR, AUXRB | 0);                  /* set INT pin to active high */
-	GPIBout(AUXMR, AUXRE | 0);
+	GPIBout(AUXMR, AUXRB);                  /* set INT pin to active high */
+	GPIBout(AUXMR, AUXRE);
 }
 
 int board_attach(void)

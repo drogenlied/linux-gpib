@@ -1,5 +1,7 @@
 #include "board.h"
 
+int admr_bits = HR_TRM0 | HR_TRM1;
+
 void nec7210_enable_eos(uint8_t eos_byte, int compare_8_bits)
 {
 	DBGin("bdSetEOS");
@@ -19,49 +21,53 @@ void nec7210_disable_eos(void)
 	GPIBout(AUXMR, auxa_bits);
 }
 
+int nec7210_parallel_poll(uint8_t * result)
+{
+	return -1;
+
+	// execute parallel poll
+	GPIBout(AUXMR, AUX_EPP);
+	// wait for result and store it XXX
+
+	return 0;
+}
+
 /* -- bdSetSPMode(reg)
- * Sets Serial Poll Mode
- *
- */
+* Sets Serial Poll Mode
+*
+*/
 
 IBLCL void bdSetSPMode(int v)
 {
-  DBGin("bdSetSPMode");
 	GPIBout(SPMR, 0);		/* clear current serial poll status */
 	GPIBout(SPMR, v);		/* set new status to v */
-  DBGout();
 }
 
-
-/* -- bdSetPAD(reg)
- * Sets PAD of Controller
- *
- */
-
-IBLCL void bdSetPAD(int v)
+void nec7210_primary_address(unsigned int address)
 {
-  DBGin("bdSetPAD");
-  GPIBout(ADR,( v & LOMASK ));
-  DBGout();
+	// put primary address in address0
+	GPIBout(ADR, (address & ADDRESS_MASK));
 }
 
-/* -- bdSetSAD()
- * Sets SAD of Controller
- *
- */
-
-IBLCL void bdSetSAD(int mySAD,int enable)
+void nec7210_secondary_address(unsigned int address, int enable)
 {
-  DBGin("bdSetSPMode");
-  if(enable){
-    DBGprint(DBG_DATA, ("sad=0x%x  ", mySAD));
-    GPIBout(ADR, HR_ARS | (mySAD & LOMASK));
-    GPIBout(ADMR, HR_TRM1 | HR_TRM0 | HR_ADM1);
-  } else {
-    GPIBout(ADR, HR_ARS | HR_DT | HR_DL);
-    GPIBout(ADMR, HR_TRM1 | HR_TRM0 | HR_ADM0);
-  }
-  DBGout();
+	if(enable)
+	{
+		// put secondary address in address1
+		GPIBout(ADR, HR_ARS | (address & ADDRESS_MASK));
+		// go to address mode 2
+		admr_bits &= ~HR_ADM0;
+		admr_bits |= HR_ADM1;
+		GPIBout(ADMR, admr_bits);
+	}else
+	{
+		// disable address1 register
+		GPIBout(ADR, HR_ARS | HR_DT | HR_DL);
+		// go to address mode 1
+		admr_bits |= HR_ADM0;
+		admr_bits &= ~HR_ADM1;
+		GPIBout(ADMR, admr_bits);
+	}
 }
 
 unsigned int nec7210_update_status(void)
@@ -69,7 +75,7 @@ unsigned int nec7210_update_status(void)
 	int address_status_bits = GPIBin(ADSR);
 
 	/* everything but ATN is updated by
-	 * interrupt handler */
+	* interrupt handler */
 	if(address_status_bits & HR_NATN)
 		clear_bit(ATN_NUM, &board.status);
 	else

@@ -60,7 +60,7 @@ IBLCL int dvclr(int padsad)
  * This function performs a serial poll of the device with primary 
  * address pad and secondary address sad. If the device has no
  * secondary adddress, pass a zero in for this argument.  At the
- * end of a successful serial poll the response is returned in spb.
+ * end of a successful serial poll the response is returned in result.
  * SPD and UNT are sent at the completion of the poll.
  */
 
@@ -72,94 +72,57 @@ IBLCL int dvclr(int padsad)
 
 #endif
 
-IBLCL int dvrsp(int padsad,char *spb)
+IBLCL int dvrsp(int padsad, uint8_t *result)
 {
-#if 0
-	char spdString[3];
+	char cmd_string[2];
 	uint8_t isreg1;
 	int sp_noTimo;
-	
-	DBGin("dvrsp");
-	if (fnInit(HR_CIC) & ERR) {
-		DBGout();
-		return ibsta;
-	}
-	if (!(receive_setup(padsad, 1) & ERR)) {
-        	spdString[0] = SPD;	/* disable serial poll bytes */
-        	spdString[1] = UNT;
+	int status = board.update_status();
+	int end_flag;
+	ssize_t ret;
 
-		bdSendAuxACmd(HR_HLDA);
-		if (pgmstat & PS_HELD) {
-			DBGprint(DBG_BRANCH, ("finish handshake  "));
-			bdSendAuxCmd(AUX_FH);
-			pgmstat &= ~PS_HELD;
-		}
-		board.go_to_standby();
-	
+	DBGin("dvrsp");
+	if((status & CIC) == 0)
+	{
+		DBGout();
+		return status;
+	}
+	if (!(receive_setup(padsad) & ERR))
+	{
+		// send serial poll command
 		osStartTimer(pollTimeidx);
-		DBGprint(DBG_BRANCH, ("wait for spoll byte  "));
-		isreg1 = bdWaitIn();
-					/* wait for byte to come in */
-		bdSendAuxCmd(AUX_TCS);
-		if (isreg1 & HR_DI) {
-			DBGprint(DBG_BRANCH, ("received  "));
-			*spb = bdGetDataByte();
-			DBGprint(DBG_DATA, ("spb=0x%x  ", *spb));
-			pgmstat |= PS_HELD;
+
+		board.take_control(0);
+
+		cmd_string[0] = SPE;
+		board.command(cmd_string, 1);
+
+		board.go_to_standby();
+
+		ret = board.read(result, 1, &end_flag);
+		if(ret <= 0)
+		{
+			printk("gpib serial poll failed\n");
+			*result = 0;
 		}
-		else {
-			DBGprint(DBG_BRANCH, ("NOT received  "));
-			*spb = 0;
-		}
-		bdWaitATN();
-					/* wait for synchronous take control */
-		sp_noTimo = noTimo;
-		osRemoveTimer();
-		if ((ibcmd((faddr_t)spdString, 2) & ERR) || !sp_noTimo) {
-		        DBGprint(DBG_DATA, ("ps_noTimo=%d  ", sp_noTimo));
+
+		board.take_control(1);
+
+		cmd_string[0] = SPD;	/* disable serial poll bytes */
+		cmd_string[1] = UNT;
+		if ((board.command(cmd_string, 2) < 0) || !noTimo)
+		{
+			DBGprint(DBG_DATA, ("ps_noTimo=%d  ", noTimo));
 			ibsta |= ERR;	/* something went wrong */
 			iberr = EBUS;
 		}
-		else	ibcnt = 1;	/* SUCCESS: spoll byte received */
-
+		board.go_to_standby();
+		osRemoveTimer();
 	}
 	DBGout();
-#endif
-	return ibsta;
+
+	return status;
 }
-
-
-/*
- * DVRD
- * Read cnt bytes from the device with primary address pad and
- * secondary address sad.  If the device has no secondary address,
- * pass a zero in for this argument.  The device is adressed to
- * talk and the GPIB interface is addressed to listen.  ibrd is
- * then called to read cnt bytes from the device and place them
- * in buf.
- */
-IBLCL ssize_t dvrd(int padsad,faddr_t buf,unsigned int cnt)
-{
-	ssize_t ret = 0;
-	int status = board.update_status();
-	DBGin("dvrd");
-
-	ibcnt = 0;
-	if((status & CIC) == 0) 
-	{
-		printk("board not CIC on dvrd\n");
-		DBGout();
-		return -1;
-	}
-	if (receive_setup(padsad, 0) & ERR)
-		return -1;
-
-	ret = ibrd(buf, cnt);
-
-	DBGout();
-	return ret;
-}
-
 
 /*
  * DVWRT
@@ -190,7 +153,7 @@ IBLCL int dvwrt(int padsad,faddr_t buf,unsigned int cnt)
 /*
  * 488.2 Controller sequences
  */
-IBLCL int receive_setup(int padsad,int spoll)
+IBLCL int receive_setup(int padsad)
 
 				/* spoll = TRUE if this is for a serial poll */
 {
@@ -216,10 +179,6 @@ IBLCL int receive_setup(int padsad,int spoll)
 	cmdString[i++] = myPAD | LAD;	/* controller's listen address */
 	if (mySAD)
 		cmdString[i++] = mySAD;
-	if (spoll) {
-		DBGprint(DBG_BRANCH, ("SPE  "));
-		cmdString[i++] = SPE;
-	}
 	cmdString[i++] = pad | TAD;
 	if (sad)
 		cmdString[i++] = sad;

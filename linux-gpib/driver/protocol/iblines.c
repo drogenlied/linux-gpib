@@ -11,15 +11,11 @@
  */
 IBLCL int iblines(int *buf)
 {
-	int status = board.update_status();
-
-	DBGin("iblines");
-//	if (fnInit(0) & ERR)
-//		*buf = 0;
-//	else {
-	*buf = bdlines();
-	ibstat();
-//	}
-	DBGout();
-	return status;
+	if(board.line_status == NULL)
+	{
+		printk("driver cannot query gpib line status\n");
+		return -1;
+	}
+	*buf = board.line_status();
+	return 0;
 }

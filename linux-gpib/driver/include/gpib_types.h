@@ -54,15 +54,15 @@ typedef struct
 {
 	char *name;	// name of board
 	/* read() should read at most 'length' bytes from the bus into
-	 * 'buffer'.  It should not return until it fills buffer or
-	 * encounters an EOI (and or EOS if appropriate).  If 'eos'
-	 * is nonzero, it is the end of string character the read should
-	 * look for.  if 'eos' is zero, there is no end of string character.
+	 * 'buffer'.  It should return when it fills the buffer or
+	 * encounters an END (EOI and or EOS if appropriate).  It should set 'end'
+	 * to be nonzero if the read was terminated by an END, otherwise 'end'
+	 * should be zero. 
 	 * Ultimately, this will be changed into or replaced by an asynchronous
 	 * read.  Positive return value is number of bytes read, negative
 	 * return indicates error.
 	 */
-	ssize_t (*read)(uint8_t *buffer, size_t length, uint8_t eos);
+	ssize_t (*read)(uint8_t *buffer, size_t length, int *end);
 	/* write() should write 'length' bytes from buffer to the bus.
 	 * If the boolean value send_eoi is nonzero, then EOI should
 	 * be sent along with the last byte.  Returns number of bytes
@@ -98,10 +98,8 @@ typedef struct
 	void (*enable_eos)(uint8_t eos, int compare_8_bits);
 	/* disable END on eos byte (END on EOI only)*/
 	void (*disable_eos)(void);
-	/* TODO: conduct serial poll */
-	void (*serial_poll)(void);
 	/* TODO: conduct parallel poll */
-	void (*parallel_poll)(void);
+	int (*parallel_poll)(uint8_t *result);
 	/* Returns current status of the bus lines.  Should be set to
 	 * NULL if your board does not have the ability to query the
 	 * state of the bus lines. */
@@ -110,10 +108,12 @@ typedef struct
 	 * The meaning of the bits
 	 * are specified in gpib_user.h in the IBSTA section. */
 	unsigned int (*update_status)(void);
-
-	/* The rest of the members of this struct can be used as
-	 * the driver sees fit. */
-
+	/* Sets primary address 0-30 for gpib interface card.
+	 */
+	void (*primary_address)(unsigned int address);
+	/* Sets and enables, or disables secondary address 0-30 for gpib interface card.
+	 */
+	void (*secondary_address)(unsigned int address, int enable);
 	/* Holds board's current status */
 	volatile unsigned int status;
 	/* Holds error code for last error. */

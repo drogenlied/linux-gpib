@@ -9,12 +9,6 @@
 IBLCL int ibpad(int v)
 {
 	DBGin("ibpad");
-#if 0
-	if(fnInit(0) & ERR) {
-		DBGout();
-		return ibsta;
-	}
-#endif
 	if ((v < 0) || (v > 30)) {
 		ibsta |= ERR;
 		iberr = EARG;
@@ -22,7 +16,7 @@ IBLCL int ibpad(int v)
 	else {
 		myPAD = v;
 		DBGprint(DBG_DATA, ("pad=0x%x  ", myPAD));
-		bdSetPAD( myPAD );
+		board.primary_address( myPAD );
 	}
 	DBGout();
 	return board.update_status();
@@ -38,12 +32,6 @@ IBLCL int ibpad(int v)
 IBLCL int ibsad(int v)
 {
 	DBGin("ibsad");
-#if 0
-	if (fnInit(0) & ERR) {
-		DBGout();
-		return ibsta;
-	}
-#endif
 	if (v && ((v < 0x60) || (v > 0x7F))) {
 		ibsta |= ERR;
 		iberr = EARG;
@@ -53,11 +41,11 @@ IBLCL int ibsad(int v)
 			v = 0;		/* v == 0x7F also disables */
 		if ((mySAD = v)) {
 			DBGprint(DBG_BRANCH, ("enabled  "));
-			bdSetSAD(mySAD,1);
+			board.secondary_address(mySAD - 0x60, 1);
 		}
 		else {
 			DBGprint(DBG_BRANCH, ("disabled  "));
-			bdSetSAD(mySAD,0);
+			board.secondary_address(0,0);
 		}
 	}
 	DBGout();
@@ -130,12 +118,6 @@ IBLCL int ibeos(int v)
 {
 	int ebyte, emodes;
 	DBGin("ibeos");
-#if 0
-	if (fnInit(0) & ERR) {
-		DBGout();
-		return ibsta;
-	}
-#endif
 	ebyte = v & 0xFF;
 	emodes = (v >> 8) & 0xFF;
 	if (emodes & ~EOSM) {
@@ -152,7 +134,7 @@ IBLCL int ibeos(int v)
 			board.disable_eos();
 	}
 	DBGout();
-	return board.update_status();
+	return 0;
 }
 
 

@@ -92,7 +92,7 @@ ssize_t nec7210_write(uint8_t *buffer, size_t length, int send_eoi)
 	{
 		/*send EOI */
 		if((pgmstat & PS_NOEOI) == 0)
-			bdSendAuxCmd(AUX_SEOI);
+			GPIBout(AUXMR, AUX_SEOI);
 		set_bit(0, &write_in_progress);
 		GPIBout(CDOR, buffer[count]);
 		count++;
