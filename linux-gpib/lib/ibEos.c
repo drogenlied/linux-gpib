@@ -68,6 +68,7 @@ int config_read_eos( ibBoard_t *board, int use_eos_char, int eos_char,
 		if( eos_cmd.eos != eos_char )
 		{
 			setIberr( EARG );
+			fprintf(stderr, "libgpib: eos char more than 8 bits?\n");
 			return -1;
 		}
 	}
@@ -77,6 +78,7 @@ int config_read_eos( ibBoard_t *board, int use_eos_char, int eos_char,
 	{
 		setIberr( EDVR );
 		setIbcnt( errno );
+		fprintf(stderr, "libgpib: IBEOS ioctl failed\n");
 	}
 
 	return retval;
