@@ -32,6 +32,8 @@ enum Action
 {
 	GPIB_QUIT,
 	GPIB_READ,
+	GPIB_REQUEST_SERVICE,
+	GPIB_SERIAL_POLL,
 	GPIB_TIMEOUT,
 	GPIB_WRITE,
 };
@@ -76,7 +78,9 @@ int prompt_for_action(void)
 		printf("You can:\n"
  			"\t(q)uit\n"
 			"\t(r)ead string from device\n"
+			"\tperform (s)erial poll\n"
 			"\tchange (t)imeout on io operations\n"
+			"\trequest ser(v)ice\n"
 			"\t(w)rite string to device\n"
 			);
 		fgets( input, sizeof( input ), stdin );
@@ -90,9 +94,17 @@ int prompt_for_action(void)
 			case 'R':
 				return GPIB_READ;
 				break;
+			case 's':
+			case 'S':
+				return GPIB_SERIAL_POLL;
+				break;
 			case 't':
 			case 'T':
 				return GPIB_TIMEOUT;
+				break;
+			case 'v':
+			case 'V':
+				return GPIB_REQUEST_SERVICE;
 				break;
 			case 'w':
 			case 'W':
@@ -137,6 +149,40 @@ int prompt_for_write(int ud)
 		gpiberr("write error");
 		return -1;
 	}
+	return 0;
+}
+
+int do_serial_poll( int ud )
+{
+	char result;
+	int status;
+
+	status = ibrsp( ud, &result );
+	if( status & ERR )
+	{
+		gpiberr("serial poll error");
+		return -1;
+	}
+	printf( "serial poll result: 0x%x\n", ( int ) result );
+	return 0;
+}
+
+int request_service( int ud )
+{
+	int status_byte;
+	int status;
+
+	printf( "enter new status byte (bit 0x40 requests service): " );
+	scanf( "%i", &status_byte );
+
+	status = ibrsv( ud, status_byte );
+
+	if( status & ERR )
+	{
+		gpiberr("request service error");
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -195,45 +241,34 @@ int main(int argc,char **argv)
 		exit(1);
 	}
 
-	do	
+	do
 	{
 		act = prompt_for_action();
 
 		switch( act )
 		{
 			case GPIB_READ:
-				if(perform_read(dev) < 0)
-				{
-					ibonl(dev, 0);
-					exit(1);
-				}
+				perform_read( dev );
+				break;
+			case GPIB_REQUEST_SERVICE:
+				request_service( dev );
+				break;
+			case GPIB_SERIAL_POLL:
+				do_serial_poll( dev );
 				break;
 			case GPIB_TIMEOUT:
-				prompt_for_timeout( dev ); 
+				prompt_for_timeout( dev );
 				break;
 			case GPIB_WRITE:
-				if(prompt_for_write(dev) < 0)
-				{
-					ibonl(dev, 0);
-					exit(1);
-				}
+				prompt_for_write( dev );
+				break;
+			case GPIB_QUIT:
 				break;
 			default:
+				fprintf( stderr, "invalid selection\n");
 				break;
 		}
 	}while( act != GPIB_QUIT );
-
-
-#if 0
-	fprintf(stderr, "\nserial poll\n");
-	if( ibrsp(dev, &result) & ERR )
-	{
-		gpiberr("serial poll error");
-		ibonl(dev, 0);
-		exit(1);
-	}
-	fprintf(stderr, "result 0x%x\n", result);
-#endif
 
 	ibonl(dev, 0);
 	return 0;
