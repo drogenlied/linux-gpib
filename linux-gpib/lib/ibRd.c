@@ -134,7 +134,7 @@ int ibrdf(int ud, const char *file_path )
 {
 	ibConf_t *conf;
 	int retval;
-	uint8_t buffer[ 0x1000 ];
+	uint8_t buffer[ 0x4000 ];
 	unsigned long byte_count;
 	FILE *save_file;
 	int error;

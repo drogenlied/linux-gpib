@@ -176,8 +176,9 @@ ssize_t my_ibwrtf( ibConf_t *conf, const char *file_path )
 	int retval;
 	FILE *data_file;
 	struct stat file_stats;
-	uint8_t buffer[ 0x1000 ];
+	uint8_t *buffer[ 0x4000 ];
 
+	if( buffer == NULL )
 	board = interfaceBoard( conf );
 
 	data_file = fopen( file_path, "r" );
