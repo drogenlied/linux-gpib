@@ -4,6 +4,7 @@
 
 #include "ibConfYacc.h"
 #include "ib_internal.h"
+#include <string.h>
 
 %}
 
