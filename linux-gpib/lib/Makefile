@@ -46,7 +46,7 @@ OBJS =  $(SRCS:.c=.o)
 all: $(EXP_INC) libgpib.so 
 
 libgpib.so:   $(OBJS) 
-	$(CC) -shared $(OBJS) -o libgpib.so	
+	ld --version-script=gpib_version_script -shared $(OBJS) -o libgpib.so	
 
 ibConfLex.c:  ibConfLex.l ibConfYacc.h 
 	flex -Pgpib_yy -o$@ $<

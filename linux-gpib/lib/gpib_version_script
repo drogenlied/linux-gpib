@@ -1,0 +1,6 @@
+
+DUMMY_VERSION {
+	global: ibrd;
+	local: send_setup;
+};
+
