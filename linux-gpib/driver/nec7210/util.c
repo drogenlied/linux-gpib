@@ -113,7 +113,11 @@ void nec7210_secondary_address(gpib_driver_t *driver, unsigned int address, int 
 unsigned int nec7210_update_status(gpib_driver_t *driver)
 {
 	nec7210_private_t *priv = driver->private_data;
-	int address_status_bits = priv->read_byte(priv, ADSR);
+	int address_status_bits;
+
+	if(priv == NULL) return 0;
+
+	address_status_bits = priv->read_byte(priv, ADSR);
 
 	if(address_status_bits & HR_CIC)
 		set_bit(CIC_NUM, &driver->status);

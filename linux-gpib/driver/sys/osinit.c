@@ -154,9 +154,7 @@ extern  struct timer_list ibtimer_list;
 
 IBLCL void osReset(void)
 {
-	DBGin("osReset");
 	pgmstat &= ~PS_SYSRDY;
-	DBGout();
 }
 
 
