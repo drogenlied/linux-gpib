@@ -32,9 +32,23 @@ void check_for_eos( tms9914_private_t *priv, uint8_t byte )
 		if( ( priv->eos & 0x7f ) == ( byte & 0x7f ) )
 			set_bit( RECEIVED_END_BN, &priv->state );
 	}
+}
 
-	if( test_bit( RECEIVED_END_BN, &priv->state ) == 0 )
-		write_byte( priv, AUX_RHDF, AUXCR );
+int need_release_holdoff(gpib_board_t *board, tms9914_private_t *priv)
+{
+	unsigned long flags;
+	int retval;
+	unsigned int line_status = tms9914_line_status(board, priv);
+	if((line_status & BusNRFD) == 0 || (line_status & BusDAV))
+		return 0;
+	spin_lock_irqsave(&board->spinlock, flags);
+	tms9914_interrupt(board, priv);
+	if(test_bit(READ_READY_BN, &priv->state))
+		retval = 0;
+	else
+		retval = 1;
+	spin_unlock_irqrestore(&board->spinlock, flags);
+	return retval;
 }
 
 static ssize_t pio_read(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buffer, size_t length, int *nbytes)
@@ -45,6 +59,8 @@ static ssize_t pio_read(gpib_board_t *board, tms9914_private_t *priv, uint8_t *b
 	*nbytes = 0;
 	while(*nbytes < length)
 	{
+		if(need_release_holdoff(board, priv))
+			write_byte( priv, AUX_RHDF, AUXCR );
 		if(wait_event_interruptible(board->wait,
 			test_bit( READ_READY_BN, &priv->state ) ||
 			test_bit( DEV_CLEAR_BN, &priv->state ) ||
@@ -99,8 +115,6 @@ ssize_t tms9914_read(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buff
 		write_byte(priv, AUX_HLDA, AUXCR);
 		write_byte(priv, AUX_HLDE | AUX_CS, AUXCR);
 	}
-	write_byte(priv, AUX_RHDF, AUXCR);
-
 	// transfer data (except for last byte)
 	length--;
 	if(length)
