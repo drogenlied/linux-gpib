@@ -48,9 +48,7 @@ A copy of the license is included in the section entitled
 </title>
 <para>
 The library reads its configuration information from the
-file /etc/gpib.conf.  An alternate file path for the configuration information
-can be specified
-by setting the IB_CONFIG environment variable.  A template gpib.conf
+file /etc/gpib.conf.  A template gpib.conf
 file can be found in the util/templates/ subdirectory of the linux-gpib
 package.
 </para>
@@ -668,7 +666,7 @@ volatile int ibsta;
 
 <section>
 <title>
-	'Traditional API' Functions
+	'Traditional' API Functions
 </title>
 
 <refentry ID="reference-function-ibask">
@@ -2941,7 +2939,7 @@ volatile int ibsta;
 
 <section>
 <title>
-	'Multidevice API' Functions
+	'Multidevice' API Functions
 </title>
 
 <refentry ID="reference-function-allspoll">
@@ -3332,7 +3330,7 @@ volatile int ibsta;
 	<funcprototype>
 		<funcdef>void <function>PPollUnconfig</function></funcdef>
 		<paramdef>int <parameter>board_desc</parameter></paramdef>
-		<paramdef>Addr4882_t <parameter>addressList[]</parameter></paramdef>
+		<paramdef>const Addr4882_t <parameter>addressList[]</parameter></paramdef>
 	</funcprototype>
 	</funcsynopsis>
 </refsynopsisdiv>
@@ -3528,7 +3526,7 @@ volatile int ibsta;
 	<funcprototype>
 		<funcdef>void <function>ResetSys</function></funcdef>
 		<paramdef>int <parameter>board_desc</parameter></paramdef>
-		<paramdef>Addr4882_t <parameter>addressList[]</parameter></paramdef>
+		<paramdef>const Addr4882_t <parameter>addressList[]</parameter></paramdef>
 	</funcprototype>
 	</funcsynopsis>
 </refsynopsisdiv>
@@ -3617,7 +3615,6 @@ volatile int ibsta;
 	<funcprototype>
 		<funcdef>void <function>SendCmds</function></funcdef>
 		<paramdef>int <parameter>board_desc</parameter></paramdef>
-		<paramdef>Addr4882_t <parameter>address</parameter></paramdef>
 		<paramdef>const void *<parameter>cmds</parameter></paramdef>
 		<paramdef>long <parameter>count</parameter></paramdef>
 	</funcprototype>
@@ -3771,7 +3768,7 @@ volatile int ibsta;
 	<funcprototype>
 		<funcdef>void <function>SendList</function></funcdef>
 		<paramdef>int <parameter>board_desc</parameter></paramdef>
-		<paramdef>Addr4882_t <parameter>addressList[]</parameter></paramdef>
+		<paramdef>const Addr4882_t <parameter>addressList[]</parameter></paramdef>
 		<paramdef>const void *<parameter>data</parameter></paramdef>
 		<paramdef>long <parameter>count</parameter></paramdef>
 		<paramdef>int <parameter>eot_mode</parameter></paramdef>
@@ -3852,7 +3849,7 @@ volatile int ibsta;
 	<funcprototype>
 		<funcdef>void <function>SendSetup</function></funcdef>
 		<paramdef>int <parameter>board_desc</parameter></paramdef>
-		<paramdef>Addr4882_t <parameter>addressList[]</parameter></paramdef>
+		<paramdef>const Addr4882_t <parameter>addressList[]</parameter></paramdef>
 	</funcprototype>
 	</funcsynopsis>
 </refsynopsisdiv>
@@ -3892,7 +3889,7 @@ volatile int ibsta;
 	<funcprototype>
 		<funcdef>void <function>SetRWLS</function></funcdef>
 		<paramdef>int <parameter>board_desc</parameter></paramdef>
-		<paramdef>Addr4882_t <parameter>addressList[]</parameter></paramdef>
+		<paramdef>const Addr4882_t <parameter>addressList[]</parameter></paramdef>
 	</funcprototype>
 	</funcsynopsis>
 </refsynopsisdiv>
@@ -3911,6 +3908,88 @@ volatile int ibsta;
 	will enter LWLS (local with lockout state).  Local lockout means
 	the remote/local mode of devices cannot be changed though the
 	devices' front-panel controls.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-testsrq">
+<refmeta>
+	<refentrytitle>TestSRQ</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>TestSRQ</refname>
+	<refpurpose>query state of SRQ bus line</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>TestSRQ</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>short *<parameter>result</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	TestSRQ() checks the state of the SRQ
+	<link LINKEND="gpib-protocol-bus-lines">bus line</link> and
+	writes its state to the location specified by <parameter>result</parameter>.
+	A '1' indicates the SRQ line is asserted, and a '0' indicates
+	the line is not asserted.
+	</para>
+	<para>
+	Some boards lack the capability to report the status of the SRQ
+	line.  In such a case, an ECAP error is returned in
+	<link LINKEND="reference-globals-iberr">iberr</link>.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-testsys">
+<refmeta>
+	<refentrytitle>TestSys</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>TestSys</refname>
+	<refpurpose>perform self-test queries on devices</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>TestSys</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>const Addr4882_t <parameter>addressList[]</parameter></paramdef>
+		<paramdef>short <parameter>results[]</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	TestSys() sends the '*TST?' message to all the devices in the
+	<parameter>addressList</parameter> array, then reads their
+	responses into the <parameter>results</parameter> array.
+	This will cause devices that conform to the IEEE 488.2 standard
+	to perform a self-test and respond with a zero on success.
+	A non-zero response indicates an error during the self-test.
+	</para>
+	<para>
+	The number of devices which responded with nonzero values from
+	their self-tests is returned in
+	<link LINKEND="reference-globals-ibcnt">ibcnt and ibcntl</link>.
+	If a device fails to respond to the *TST? query, an error
+	will be flagged in
+	<link LINKEND="reference-globals-ibsta">ibsta</link> (this
+	is different than NI's documented behaviour which is broken).
 	</para>
 </refsect1>
 </refentry>
