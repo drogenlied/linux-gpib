@@ -39,21 +39,21 @@ int cb7210_line_status( const gpib_board_t *board )
 	bsr_bits = inb( cb_priv->nec7210_priv.iobase + BUS_STATUS );
 	spin_unlock_irqrestore( &board->spinlock, flags );
 
-	if( bsr_bits & BSR_REN_BIT )
+	if( ( bsr_bits & BSR_REN_BIT ) == 0 )
 		status |= BusREN;
-	if( bsr_bits & BSR_IFC_BIT )
+	if( ( bsr_bits & BSR_IFC_BIT ) == 0 )
 		status |= BusIFC;
-	if( bsr_bits & BSR_SRQ_BIT )
+	if( ( bsr_bits & BSR_SRQ_BIT ) == 0 )
 		status |= BusSRQ;
-	if( bsr_bits & BSR_EOI_BIT )
+	if( ( bsr_bits & BSR_EOI_BIT ) == 0 )
 		status |= BusEOI;
-	if( bsr_bits & BSR_NRFD_BIT )
+	if( ( bsr_bits & BSR_NRFD_BIT ) == 0 )
 		status |= BusNRFD;
-	if( bsr_bits & BSR_NDAC_BIT )
+	if( ( bsr_bits & BSR_NDAC_BIT ) == 0 )
 		status |= BusNDAC;
-	if( bsr_bits & BSR_DAV_BIT )
+	if( ( bsr_bits & BSR_DAV_BIT ) == 0 )
 		status |= BusDAV;
-	if( bsr_bits & BSR_ATN_BIT )
+	if( ( bsr_bits & BSR_ATN_BIT ) == 0 )
 		status |= BusATN;
 
 	return status;
