@@ -527,7 +527,7 @@ Default is <option>--sre</option>.</para>
 	<entry>Measurement Computing (Computer Boards)</entry>
 	<entry>ISA-GPIB-PC2A</entry>
 	<entry>pc2_gpib.o</entry>
-	<entry>pcIIa</entry>
+	<entry>pcIIa (nec7210 chip), pcIIa_cb7210 (cb7210 chip)</entry>
 	</row>
 	<row>
 	<entry>Measurement Computing (Computer Boards)</entry>

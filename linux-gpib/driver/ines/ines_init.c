@@ -292,6 +292,7 @@ int ines_generic_attach(gpib_board_t *board)
 	nec_priv->read_byte = nec7210_ioport_read_byte;
 	nec_priv->write_byte = nec7210_ioport_write_byte;
 	nec_priv->offset = 1;
+	nec_priv->type = iGPIB7210;
 	ines_priv->pci_chip_type = PCI_CHIP_NONE;
 
 	return 0;

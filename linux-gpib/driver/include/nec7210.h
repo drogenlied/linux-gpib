@@ -24,6 +24,15 @@
 
 #include "gpib_types.h"
 
+enum nec7210_chipset
+{
+	NEC7210,	// The original
+	TNT4882,	// NI
+	NAT4882,	// NI
+	CB7210,	// measurement computing
+	IOT7210,	// iotech
+	iGPIB7210,	// Ines
+};
 /* struct used to provide variables local to a nec7210 chip */
 typedef struct nec7210_private_struct nec7210_private_t;
 struct nec7210_private_struct
@@ -45,6 +54,7 @@ struct nec7210_private_struct
 	// wrappers for outb, inb, readb, or writeb
 	uint8_t (*read_byte)(nec7210_private_t *priv, unsigned int register_number);
 	void (*write_byte)(nec7210_private_t *priv, uint8_t byte, unsigned int register_number);
+	enum nec7210_chipset type;
 };
 
 static inline void init_nec7210_private( nec7210_private_t *priv )

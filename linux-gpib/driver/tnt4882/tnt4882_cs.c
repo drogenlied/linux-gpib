@@ -729,8 +729,8 @@ int ni_pcmcia_attach(gpib_board_t *board)
 	tnt_priv->io_readb = inb_wrapper;
 	tnt_priv->io_writew = outw_wrapper;
 	tnt_priv->io_readw = inw_wrapper;
-	tnt_priv->chipset = TNT4882;
 	nec_priv = &tnt_priv->nec7210_priv;
+	nec_priv->type = TNT4882;
 	nec_priv->read_byte = nec7210_locking_ioport_read_byte;
 	nec_priv->write_byte = nec7210_locking_ioport_write_byte;
 	nec_priv->offset = atgpib_reg_offset;

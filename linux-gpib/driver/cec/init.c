@@ -172,7 +172,7 @@ int cec_allocate_private(gpib_board_t *board)
 		return -1;
 	priv = board->private_data;
 	memset( priv, 0, sizeof(cec_private_t));
-	init_nec7210_private( &priv->nec7210_priv );
+	init_nec7210_private(&priv->nec7210_priv);
 	return 0;
 }
 
@@ -199,7 +199,7 @@ int cec_generic_attach(gpib_board_t *board)
 	nec_priv->read_byte = nec7210_ioport_read_byte;
 	nec_priv->write_byte = nec7210_ioport_write_byte;
 	nec_priv->offset = cec_reg_offset;
-
+	nec_priv->type = NEC7210;	// guess
 	return 0;
 }
 

@@ -69,13 +69,16 @@ static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 		retval = pio_write_wait(board, priv, 0);
 		if(retval == -EIO)
 		{
-			/* resend last byte on bus error */
-			count--;
-			/* we can get unrecoverable bus errors,
-			 * so give up after a while */
-			bus_error_count++;
-			if(bus_error_count > max_bus_errors) return retval;
-			else continue;
+			if(priv->type == NEC7210)
+			{
+				/* resend last byte on bus error, not required with cb7210 chip */
+				count--;
+				/* we can get unrecoverable bus errors,
+				 * so give up after a while */
+				bus_error_count++;
+				if(bus_error_count > max_bus_errors) return retval;
+				else continue;
+			}
 		}else if( retval < 0 ) return retval;
 
 		spin_lock_irqsave(&board->spinlock, flags);

@@ -268,7 +268,7 @@ int cb7210_allocate_private(gpib_board_t *board)
 		return -1;
 	priv = board->private_data;
 	memset( priv, 0, sizeof(cb7210_private_t));
-	init_nec7210_private( &priv->nec7210_priv );
+	init_nec7210_private(&priv->nec7210_priv);
 	return 0;
 }
 
@@ -296,7 +296,7 @@ int cb7210_generic_attach(gpib_board_t *board)
 	nec_priv->read_byte = nec7210_locking_ioport_read_byte;
 	nec_priv->write_byte = nec7210_locking_ioport_write_byte;
 	nec_priv->offset = cb7210_reg_offset;
-
+	nec_priv->type = CB7210;
 	return 0;
 }
 

@@ -105,7 +105,7 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 	imr1_bits = nec_priv->reg_bits[ IMR1 ];
 	imr2_bits = nec_priv->reg_bits[ IMR2 ];
 	nec7210_set_reg_bits( nec_priv, IMR1, 0xff, HR_ENDIE | HR_DECIE );
-	if( tnt_priv->chipset != TNT4882 )
+	if( nec_priv->type != TNT4882 )
 		nec7210_set_reg_bits( nec_priv, IMR2, 0xff, HR_DMAI );
 	else
 		nec7210_set_reg_bits( nec_priv, IMR2, 0xff, 0 );

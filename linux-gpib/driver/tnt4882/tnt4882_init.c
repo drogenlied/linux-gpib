@@ -440,7 +440,7 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 	tnt_writeb( tnt_priv,AUX_7210, SWAPPED_AUXCR);
 	udelay(1);
 	// turn on one-chip mode
-	if( tnt_priv->chipset == TNT4882 )
+	if( nec_priv->type == TNT4882 )
 		tnt_writeb(tnt_priv, NODMA | TNT_ONE_CHIP_BIT, HSSEL);
 	else
 		tnt_writeb(tnt_priv, NODMA, HSSEL);
@@ -483,8 +483,8 @@ int ni_pci_attach(gpib_board_t *board)
 	tnt_priv->io_readb = readb_wrapper;
 	tnt_priv->io_writew = writew_wrapper;
 	tnt_priv->io_readw = readw_wrapper;
-	tnt_priv->chipset = TNT4882;
 	nec_priv = &tnt_priv->nec7210_priv;
+	nec_priv->type = TNT4882;
 	nec_priv->read_byte = nec7210_locking_iomem_read_byte;
 	nec_priv->write_byte = nec7210_locking_iomem_write_byte;
 	nec_priv->offset = atgpib_reg_offset;
@@ -591,7 +591,7 @@ int ni_isapnp_find( struct pci_dev **dev )
 	return 0;
 }
 
-int ni_isa_attach_common( gpib_board_t *board, ni_chipset_t chipset )
+int ni_isa_attach_common( gpib_board_t *board, enum nec7210_chipset chipset )
 {
 	tnt4882_private_t *tnt_priv;
 	nec7210_private_t *nec_priv;
@@ -607,8 +607,8 @@ int ni_isa_attach_common( gpib_board_t *board, ni_chipset_t chipset )
 	tnt_priv->io_readb = inb_wrapper;
 	tnt_priv->io_writew = outw_wrapper;
 	tnt_priv->io_readw = inw_wrapper;
-	tnt_priv->chipset = chipset;
 	nec_priv = &tnt_priv->nec7210_priv;
+	nec_priv->type = chipset;
 	nec_priv->read_byte = nec7210_locking_ioport_read_byte;
 	nec_priv->write_byte = nec7210_locking_ioport_write_byte;
 	nec_priv->offset = atgpib_reg_offset;

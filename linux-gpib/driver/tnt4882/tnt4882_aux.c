@@ -60,7 +60,7 @@ unsigned int tnt4882_t1_delay( gpib_board_t *board, unsigned int nano_sec )
 	unsigned int retval;
 
 	retval = nec7210_t1_delay( board, nec_priv, nano_sec );
-	if( tnt_priv->chipset == NEC7210 ) return retval;
+	if( nec_priv->type == NEC7210 ) return retval;
 
 	if( nano_sec <= 350 )
 	{

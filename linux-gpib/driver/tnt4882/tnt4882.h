@@ -34,14 +34,6 @@ enum
 	PCI_DEVICE_ID_NI_GPIB_PLUS = 0xc811,
 };
 
-typedef enum
-{
-	/* leave 0 unused to catch initialization bugs */
-	TNT4882 = 1,
-	NAT4882 = 2,
-	NEC7210 = 3,
-} ni_chipset_t;
-
 // struct which defines private_data for tnt4882 devices
 typedef struct
 {
@@ -51,7 +43,6 @@ typedef struct
 	unsigned int irq;
 	volatile short imr0_bits;
 	volatile short imr3_bits;
-	ni_chipset_t chipset;
 	void (*io_writeb)( unsigned int value, unsigned long address );
 	void (*io_writew)( unsigned int value, unsigned long address );
 	unsigned int (*io_readb)( unsigned long address );
@@ -336,7 +327,7 @@ static inline unsigned short tnt_readb( tnt4882_private_t *priv, unsigned long o
 	case SASR:
 	case ISR0:
 	case BSR:
-		switch( priv->chipset )
+		switch(priv->nec7210_priv.type)
 		{
 		case TNT4882:
 			retval = priv->io_readb( address );
@@ -373,7 +364,7 @@ static inline void tnt_writeb( tnt4882_private_t *priv, unsigned short value, un
 	case KEYREG:
 	case IMR0:
 	case BCR:
-		switch( priv->chipset )
+		switch(priv->nec7210_priv.type)
 		{
 		case TNT4882:
 			priv->io_writeb( value, address );

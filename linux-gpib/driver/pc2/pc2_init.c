@@ -31,6 +31,7 @@ MODULE_LICENSE("GPL");
 
 int pc2_attach(gpib_board_t *board);
 int pc2a_attach(gpib_board_t *board);
+int pc2a_cb7210_attach(gpib_board_t *board);
 int pc2_2a_attach(gpib_board_t *board);
 
 void pc2_detach(gpib_board_t *board);
@@ -197,6 +198,35 @@ gpib_interface_t pc2a_interface =
 	provider_module: &__this_module,
 };
 
+gpib_interface_t pc2a_cb7210_interface =
+{
+	name:	"pcIIa_cb7210",
+	attach:	pc2a_cb7210_attach,
+	detach:	pc2a_detach,
+	read:	pc2_read,
+	write:	pc2_write,
+	command:	pc2_command,
+	take_control:	pc2_take_control,
+	go_to_standby:	pc2_go_to_standby,
+	request_system_control:	pc2_request_system_control,
+	interface_clear:	pc2_interface_clear,
+	remote_enable:	pc2_remote_enable,
+	enable_eos:	pc2_enable_eos,
+	disable_eos:	pc2_disable_eos,
+	parallel_poll:	pc2_parallel_poll,
+	parallel_poll_configure:	pc2_parallel_poll_configure,
+	parallel_poll_response:	pc2_parallel_poll_response,
+	line_status:	NULL,
+	update_status:	pc2_update_status,
+	primary_address:	pc2_primary_address,
+	secondary_address:	pc2_secondary_address,
+	serial_poll_response:	pc2_serial_poll_response,
+	serial_poll_status:	pc2_serial_poll_status,
+	t1_delay: pc2_t1_delay,
+	return_to_local: pc2_return_to_local,
+	provider_module: &__this_module,
+};
+
 gpib_interface_t pc2_2a_interface =
 {
 	name:	"pcII_IIa",
@@ -248,7 +278,7 @@ static void free_private(gpib_board_t *board)
 	}
 }
 
-int pc2_generic_attach(gpib_board_t *board)
+int pc2_generic_attach(gpib_board_t *board, enum nec7210_chipset chipset)
 {
 	pc2_private_t *pc2_priv;
 	nec7210_private_t *nec_priv;
@@ -260,7 +290,7 @@ int pc2_generic_attach(gpib_board_t *board)
 	nec_priv = &pc2_priv->nec7210_priv;
 	nec_priv->read_byte = nec7210_ioport_read_byte;
 	nec_priv->write_byte = nec7210_ioport_write_byte;
-
+	nec_priv->type = chipset;
 	if(board->ibdma)
 	{
 		nec_priv->dma_buffer_length = 0x1000;
@@ -287,7 +317,7 @@ int pc2_attach(gpib_board_t *board)
 	nec7210_private_t *nec_priv;
 	int retval;
 
-	retval = pc2_generic_attach(board);
+	retval = pc2_generic_attach(board, NEC7210);
 	if(retval) return retval;
 
 	pc2_priv = board->private_data;
@@ -359,14 +389,14 @@ void pc2_detach(gpib_board_t *board)
 	free_private(board);
 }
 
-int pc2a_common_attach( gpib_board_t *board, unsigned int num_registers )
+int pc2a_common_attach(gpib_board_t *board, unsigned int num_registers, enum nec7210_chipset chipset)
 {
 	unsigned int i, err;
 	pc2_private_t *pc2_priv;
 	nec7210_private_t *nec_priv;
 	int retval;
 
-	retval = pc2_generic_attach(board);
+	retval = pc2_generic_attach(board, chipset);
 	if(retval) return retval;
 
 	pc2_priv = board->private_data;
@@ -451,12 +481,17 @@ int pc2a_common_attach( gpib_board_t *board, unsigned int num_registers )
 
 int pc2a_attach( gpib_board_t *board )
 {
-	return pc2a_common_attach( board, pc2a_iosize );
+	return pc2a_common_attach(board, pc2a_iosize, NEC7210);
+}
+
+int pc2a_cb7210_attach( gpib_board_t *board )
+{
+	return pc2a_common_attach(board, pc2a_iosize, CB7210);
 }
 
 int pc2_2a_attach( gpib_board_t *board )
 {
-	return pc2a_common_attach( board, pc2_2a_iosize );
+	return pc2a_common_attach( board, pc2_2a_iosize, NAT4882);
 }
 
 void pc2a_common_detach( gpib_board_t *board, unsigned int num_registers )
@@ -512,6 +547,7 @@ static int pc2_init_module( void )
 
 	gpib_register_driver(&pc2_interface);
 	gpib_register_driver(&pc2a_interface);
+	gpib_register_driver(&pc2a_cb7210_interface);
 	gpib_register_driver(&pc2_2a_interface);
 
 	return 0;
@@ -521,6 +557,7 @@ static void pc2_exit_module( void )
 {
 	gpib_unregister_driver(&pc2_interface);
 	gpib_unregister_driver(&pc2a_interface);
+	gpib_unregister_driver(&pc2a_cb7210_interface);
 	gpib_unregister_driver(&pc2_2a_interface);
 }
 
