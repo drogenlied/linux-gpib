@@ -36,30 +36,6 @@ function set_svar() {
 	eval "$1=$2"
 }
 
-function get_reply() {
-	if [ $1 = 1 -o $1 = 255 ];then
-	 rm -f /tmp/reply
-	dialog --clear --msgbox " 
-  \n\
-  Exit Configuration Program \n\
-  \n" 10 60
-	 reset
-	 exit 1
-	fi 
-	eval REPLY="`cat /tmp/reply`"
-	rm -f /tmp/reply
-}
-
-function get_result() {
-	if [ $1 = 1 -o $1 = 255 ];then
-	 rm -f /tmp/reply
-         eval RESULT=$DEFAULT_RESULT
-	fi 
-	eval RESULT="`cat /tmp/reply`"
-	rm -f /tmp/reply
-}
-
-
 
 case $1 in 
 ######################################################################
@@ -70,14 +46,7 @@ case $1 in
 exit 0
 ;;
 ######################################################################
---contrib)
-
-. ./Setup.contrib
-
-exit 0
-;;
 *)
-######################################################################
 
 . ./Setup.in
 

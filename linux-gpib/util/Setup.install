@@ -1,7 +1,10 @@
+#!/bin/bash
+
+set -e
 
 ##########
 #
-# installation Setup 
+# installation Setup
 #
 ##########
 
@@ -15,12 +18,10 @@ source .config
 ##########
 
 if [ ! -r /etc/gpib.conf ]; then
-        dialog --yesno "
-        /etc/gpib.conf not found\n
-                Create?" 8 60
-        if [ $? = 0 ]; then
-                cp ./templates/gpib.conf /etc/gpib.conf
-        fi
+	dialog --yesno "
+	/etc/gpib.conf not found\n
+	Create?" 8 60 && \
+	install --mode u=rw,g=r,o=r ./templates/gpib.conf /etc/gpib.conf
 fi
 
 ##########
@@ -35,25 +36,20 @@ if [ ! -c /dev/gpib0 ]; then
 			"a character device.  Delete or move it and try again."
 		exit 1
 	fi
- 
-        dialog --yesno "
-   /dev/gpib0 device file doesn't exist\n
-         Create /dev/gpib[0-15]?" 8 60
-        if [ $? = 0 ]; then
-		groupadd gpib
-		for i in $(seq 0 15);
-		do
-			mknod --mode=u+rw,g+rw,o-rw /dev/gpib${i} c $IBMAJOR ${i} || exit 1
-			chown root.gpib /dev/gpib${i}
-		done
-        fi
+
+	groupadd gpib
+	for i in $(seq 0 15);
+	do
+		mknod --mode u=rw,g=rw,o= /dev/gpib${i} c $IBMAJOR ${i} || exit 1
+		chown root.gpib /dev/gpib${i}
+	done
 fi
 
 # check major number
 ls -l /dev/gpib0 | grep -q "$IBMAJOR",
 if [ $? != 0 ]; then
 	echo "/dev/gpib0 has the wrong major number. "\
-		"Delete or move it and try again."
+		"Delete your /dev/gpibX files and try again."
 	exit 1
 fi
 

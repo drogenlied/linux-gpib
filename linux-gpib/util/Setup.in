@@ -1,8 +1,11 @@
+#!/bin/bash
 
 CONFIG=.tmpconfig
 CONFIG_H=.tmpconfig.h
 
 trap "rm -f $CONFIG $CONFIG_H $CONFIG_NEW ; exit 1" 1 2
+
+set -e
 
 #
 # Make sure we start out with a clean slate.
@@ -28,16 +31,11 @@ DEFAULT=$1
 
 dialog --clear --title "Linux-GPIB Configuration" --msgbox "\
 \n\
- Welcome to the Linux-GPIB Configuration and Setup Program\n\
+Welcome to the Linux-GPIB configuration program\n\
 \n\
  (c) 1995-1999 by C.Schroeter (clausi@chemie.fu-berlin.de)\n\
- (c) 2001,2002 by Frank Mori Hess (fmhess@users.sourceforge.net)
-\n\
-This Utility configures the Compile Time Options of the Package\n\
-And sets up the necessary things to run the software diagnostic\n\
-Program.\n
-\n
-On initial Installation you should do a 'make clean' first\n" 20 70
+ (c) 2001,2002 by Frank Mori Hess (fmhess@users.sourceforge.net)\n\
+" 10 70
 
 
 ##########
@@ -52,11 +50,10 @@ if [ -f ".config" ];then
 	source .config
 fi
 
-dialog --title "Kernel Source Directory" --inputbox "Input path to linux \
-kernel source directory" 20 70 $LINUXDIR 2>/tmp/reply
+RESULT=$(dialog --title "Kernel Source Directory" --inputbox "Input path to linux \
+kernel source directory" 10 70 $LINUXDIR 2>&1)
 
-get_reply $?
-set_svar LINUXDIR $REPLY
+set_svar LINUXDIR $RESULT
 
 #test linuxdir to make sure it is properly configured.
 if [ ! -d "$LINUXDIR" ];then
@@ -90,7 +87,7 @@ fi
 #
 ##########
 
-dialog --title "Board Type Selection" \
+RESULT=$(dialog --title "Board Type Selection" \
 --checklist "Select desired drivers" \
 	17 76 10 \
 	"PC2"  "National Instruments PCII, PCIIa, and compatible" "on" \
@@ -99,13 +96,31 @@ dialog --title "Board Type Selection" \
 	"INES" "Ines boards" "on" \
 	"CEC" "Captial Equipment Corporation / Keithley" "on" \
 	"TNT4882TMS" "NI PCI-GPIB in tms9914 mode (for testing only)" "off" \
-	2>/tmp/reply
+	2>&1)
 
 if [ $? = 0 ]; then
-	for i in `cat /tmp/reply | sed 's!\"!!g' `; do
+	for i in `echo $RESULT | sed 's!\"!!g' `; do
 		set_var $i 1
 	done
-	rm -f /tmp/reply
+fi
+
+##########
+#
+# extra options
+#
+##########
+
+RESULT=$(dialog --title "Compilation options" \
+--checklist "Select compilation options" \
+	17 76 10 \
+	"GPIB_CONFIG_PCMCIA"  "Compile in support for PCMCIA boards" "off" \
+	"GPIB_CONFIG_VERBOSE_DEBUG" "Produce verbose debugging messages" "off" \
+	2>&1)
+
+if [ $? = 0 ]; then
+	for i in `echo $RESULT | sed 's!\"!!g' `; do
+		set_var $i 1
+	done
 fi
 
 ##########
@@ -125,6 +140,10 @@ set_var IBMAJOR 160
 # get compile flags for modules from linux kernel source tree
 export LINUXDIR=$LINUXDIR
 (cd ./linux_flags && make)
+
+if [ $? != 0 ]; then
+	exit 1
+fi
 
 mv .tmpconfig .config
 mv .tmpconfig.h ../include/autoconf.h
