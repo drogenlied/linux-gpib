@@ -80,7 +80,7 @@ int ibstatus( gpib_board_t *board )
 	return general_ibstatus( board, NULL, 0, NULL);
 }
 
-int general_ibstatus( gpib_board_t *board, const gpib_device_t *device,
+int general_ibstatus( gpib_board_t *board, const gpib_status_queue_t *device,
 	int clear_mask, const gpib_descriptor_t *desc )
 {
 	int status = 0;

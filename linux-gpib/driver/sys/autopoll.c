@@ -20,13 +20,13 @@
 
 static const unsigned int serial_timeout = 1000000;
 
-unsigned int num_status_bytes( const gpib_device_t *dev )
+unsigned int num_status_bytes( const gpib_status_queue_t *dev )
 {
 	return dev->num_status_bytes;
 }
 
 // push status byte onto back of status byte fifo
-int push_status_byte( gpib_device_t *device, uint8_t poll_byte )
+int push_status_byte( gpib_status_queue_t *device, uint8_t poll_byte )
 {
 	struct list_head *head = &device->status_bytes;
 	status_byte_t *status;
@@ -59,7 +59,7 @@ int push_status_byte( gpib_device_t *device, uint8_t poll_byte )
 }
 
 // pop status byte from front of status byte fifo
-int pop_status_byte( gpib_device_t *device, uint8_t *poll_byte )
+int pop_status_byte( gpib_status_queue_t *device, uint8_t *poll_byte )
 {
 	struct list_head *head = &device->status_bytes;
 	struct list_head *front = head->next;
@@ -89,15 +89,15 @@ int pop_status_byte( gpib_device_t *device, uint8_t *poll_byte )
 	return 0;
 }
 
-gpib_device_t * get_gpib_device( gpib_board_t *board, unsigned int pad, int sad )
+gpib_status_queue_t * get_gpib_status_queue( gpib_board_t *board, unsigned int pad, int sad )
 {
-	gpib_device_t *device;
+	gpib_status_queue_t *device;
 	struct list_head *list_ptr;
 	const struct list_head *head = &board->device_list;
 
 	for( list_ptr = head->next; list_ptr != head; list_ptr = list_ptr->next )
 	{
-		device = list_entry( list_ptr, gpib_device_t, list );
+		device = list_entry( list_ptr, gpib_status_queue_t, list );
 		if( gpib_address_equal( device->pad, device->sad, pad, sad ) )
 			return device;
 	}
@@ -108,9 +108,9 @@ gpib_device_t * get_gpib_device( gpib_board_t *board, unsigned int pad, int sad 
 int get_serial_poll_byte( gpib_board_t *board, unsigned int pad, int sad, unsigned int usec_timeout,
 		uint8_t *poll_byte )
 {
-	gpib_device_t *device;
+	gpib_status_queue_t *device;
 
-	device = get_gpib_device( board, pad, sad );
+	device = get_gpib_status_queue( board, pad, sad );
 	if( device == NULL ) return -EINVAL;
 
 	if( num_status_bytes( device ) )

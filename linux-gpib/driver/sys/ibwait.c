@@ -35,7 +35,7 @@ static void init_wait_info( struct wait_info *winfo )
 	winfo->timed_out = 0;
 }
 
-static int wait_satisfied( struct wait_info *winfo, gpib_device_t *device,
+static int wait_satisfied( struct wait_info *winfo, gpib_status_queue_t *device,
 	int wait_mask, int *status, gpib_descriptor_t *desc )
 {
 	gpib_board_t *board = winfo->board;
@@ -97,11 +97,11 @@ int ibwait( gpib_board_t *board, int wait_mask, int clear_mask,
 	int *status, unsigned long usec_timeout, gpib_descriptor_t *desc )
 {
 	int retval = 0;
-	gpib_device_t *device;
+	gpib_status_queue_t *device;
 	struct wait_info winfo;
 
 	if( desc->is_board == 0 ) device = NULL;
-	else device = get_gpib_device( board, desc->pad, desc->sad );
+	else device = get_gpib_status_queue( board, desc->pad, desc->sad );
 
 	if( wait_mask == 0 )
 	{

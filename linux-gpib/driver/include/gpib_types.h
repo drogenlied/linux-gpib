@@ -227,7 +227,7 @@ typedef struct
 	short event_type;
 } gpib_event_t;
 
-/* Each board has a list of gpib_device_t to keep track of all open devices
+/* Each board has a list of gpib_status_queue_t to keep track of all open devices
  * on the bus, so we know what address to poll when we get a service request */
 typedef struct
 {
@@ -242,7 +242,7 @@ typedef struct
 	unsigned int reference_count;
 	/* flags loss of status byte error due to limit on size of queue */
 	unsigned dropped_byte : 1;
-} gpib_device_t;
+} gpib_status_queue_t;
 
 typedef struct
 {
@@ -250,7 +250,7 @@ typedef struct
 	uint8_t poll_byte;
 } status_byte_t;
 
-void init_gpib_device( gpib_device_t *device );
+void init_gpib_status_queue( gpib_status_queue_t *device );
 
 /* Used to store device-descriptor-specific information */
 typedef struct

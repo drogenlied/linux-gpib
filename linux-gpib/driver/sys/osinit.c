@@ -163,7 +163,7 @@ void init_board_array( gpib_board_t *board_array, unsigned int length )
 	}
 }
 
-void init_gpib_device( gpib_device_t *device )
+void init_gpib_status_queue( gpib_status_queue_t *device )
 {
 	INIT_LIST_HEAD( &device->list );
 	INIT_LIST_HEAD( &device->status_bytes );

@@ -536,7 +536,7 @@ static int write_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
 
 static int status_bytes_ioctl( gpib_board_t *board, unsigned long arg )
 {
-	gpib_device_t *device;
+	gpib_status_queue_t *device;
 	spoll_bytes_ioctl_t cmd;
 	int retval;
 
@@ -544,7 +544,7 @@ static int status_bytes_ioctl( gpib_board_t *board, unsigned long arg )
 	if( retval )
 		return -EFAULT;
 
-	device = get_gpib_device( board, cmd.pad, cmd.sad );
+	device = get_gpib_status_queue( board, cmd.pad, cmd.sad );
 	if( device == NULL )
 		cmd.num_bytes = 0;
 	else
@@ -560,13 +560,13 @@ static int status_bytes_ioctl( gpib_board_t *board, unsigned long arg )
 static int increment_open_device_count( struct list_head *head, unsigned int pad, int sad )
 {
 	struct list_head *list_ptr;
-	gpib_device_t *device;
+	gpib_status_queue_t *device;
 
 	/* first see if address has already been opened, then increment
 	 * open count */
 	for( list_ptr = head->next; list_ptr != head; list_ptr = list_ptr->next )
 	{
-		device = list_entry( list_ptr, gpib_device_t, list );
+		device = list_entry( list_ptr, gpib_status_queue_t, list );
 		if( gpib_address_equal( device->pad, device->sad, pad, sad ) )
 		{
 			GPIB_DPRINTK( "incrementing open count for pad %i, sad %i\n",
@@ -576,11 +576,11 @@ static int increment_open_device_count( struct list_head *head, unsigned int pad
 		}
 	}
 
-	/* otherwise we need to allocate a new gpib_device_t */
-	device = kmalloc( sizeof( gpib_device_t ), GFP_KERNEL );
+	/* otherwise we need to allocate a new gpib_status_queue_t */
+	device = kmalloc( sizeof( gpib_status_queue_t ), GFP_KERNEL );
 	if( device == NULL )
 		return -ENOMEM;
-	init_gpib_device( device );
+	init_gpib_status_queue( device );
 	device->pad = pad;
 	device->sad = sad;
 	device->reference_count = 1;
@@ -595,12 +595,12 @@ static int increment_open_device_count( struct list_head *head, unsigned int pad
 
 static int subtract_open_device_count( struct list_head *head, unsigned int pad, int sad, unsigned int count )
 {
-	gpib_device_t *device;
+	gpib_status_queue_t *device;
 	struct list_head *list_ptr;
 
 	for( list_ptr = head->next; list_ptr != head; list_ptr = list_ptr->next )
 	{
-		device = list_entry( list_ptr, gpib_device_t, list );
+		device = list_entry( list_ptr, gpib_status_queue_t, list );
 		if( gpib_address_equal( device->pad, device->sad, pad, sad ) )
 		{
 			GPIB_DPRINTK( "decrementing open count for pad %i, sad %i\n",

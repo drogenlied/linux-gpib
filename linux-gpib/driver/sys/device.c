@@ -121,7 +121,7 @@ int serial_poll_all( gpib_board_t *board, unsigned int usec_timeout )
 	int retval;
 	struct list_head *cur;
 	const struct list_head *head = &board->device_list;
-	gpib_device_t *device;
+	gpib_status_queue_t *device;
 	uint8_t result;
 	unsigned int num_bytes;
 
@@ -136,7 +136,7 @@ int serial_poll_all( gpib_board_t *board, unsigned int usec_timeout )
 
 	for( cur = head->next; cur != head; cur = cur->next )
 	{
-		device = list_entry( cur, gpib_device_t, list );
+		device = list_entry( cur, gpib_status_queue_t, list );
 		retval = read_serial_poll_byte( board,
 			device->pad, device->sad, usec_timeout, &result );
 		if( retval < 0 ) return retval;
