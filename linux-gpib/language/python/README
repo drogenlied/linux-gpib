@@ -4,18 +4,7 @@ This is a python GPIB interface to use gpib library calls from python language.
 
 Installation:
 
-
-1.) copy gpibinter.c to your python Module directory
-2.) take care that you have the installed linux-gpib library
-3.) add this line to your Module/Setup file:
-
-    ## the GPIB interface
-    #
-    gpib gpibinter.c -lgpib -lfl
-
-4.) rebuild python.
-5.) copy Gpib.py to your python library directory (normally /usr/local/lib/python)
-
+'make' then 'make install'
 
 To use the GPIB extension directly the call syntax is similar as in the C library:
 

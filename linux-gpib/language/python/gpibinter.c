@@ -14,10 +14,7 @@ static char gpib_find__doc__[] =
 ""
 ;
 
-static PyObject *
-gpib_find(self, args)
-	PyObject *self;	/* Not used */
-	PyObject *args;
+static PyObject* gpib_find(PyObject *self, PyObject *args)
 {
         char *name;
 	int ud;
@@ -37,10 +34,7 @@ static char gpib_read__doc__[] =
 ""
 ;
 
-static PyObject *
-gpib_read(self, args)
-	PyObject *self;	/* Not used */
-	PyObject *args;
+static PyObject* gpib_read(PyObject *self, PyObject *args)
 {
         char *result;
         PyObject *res;
@@ -69,10 +63,7 @@ static char gpib_write__doc__[] =
 ""
 ;
 
-static PyObject *
-gpib_write(self, args)
-	PyObject *self;	/* Not used */
-	PyObject *args;
+static PyObject* gpib_write(PyObject *self, PyObject *args)
 {
         char *command;
         int  device;
@@ -92,10 +83,7 @@ static char gpib_cmd__doc__[] =
 ""
 ;
 
-static PyObject *
-gpib_cmd(self, args)
-	PyObject *self;	/* Not used */
-	PyObject *args;
+static PyObject* gpib_cmd(PyObject *self, PyObject *args)
 {
         char *command;
         int  device;
@@ -115,13 +103,10 @@ static char gpib_ren__doc__[] =
 ""
 ;
 
-static PyObject *
-gpib_ren(self, args)
-	PyObject *self;	/* Not used */
-	PyObject *args;
+static PyObject* gpib_ren(PyObject *self, PyObject *args)
 {
         int device;
-        int val;        
+        int val;
 
 	if (!PyArg_ParseTuple(args, "ii",&device,&val))
 		return NULL;
@@ -139,16 +124,13 @@ static char gpib_clear__doc__[] =
 ""
 ;
 
-static PyObject *
-gpib_clear(self, args)
-	PyObject *self;	/* Not used */
-	PyObject *args;
+static PyObject* gpib_clear(PyObject *self, PyObject *args)
 {
         int device;
 
 	if (!PyArg_ParseTuple(args, "i",&device))
 		return NULL;
-	
+
 	if( ibclr(device) & ERR){
 	  PyErr_SetString(GpibError,"Clear Error: ibclr() failed");
 	  return NULL;
@@ -163,10 +145,7 @@ static char gpib_close__doc__[] =
 ""
 ;
 
-static PyObject *
-gpib_close(self, args)
-	PyObject *self;	/* Not used */
-	PyObject *args;
+static PyObject* gpib_close(PyObject *self, PyObject *args)
 {
         int device;
 
@@ -186,10 +165,8 @@ static char gpib_wait__doc__[] =
 ""
 ;
 
-static PyObject *
-gpib_wait(self, args)
-	PyObject *self;	/* Not used */
-	PyObject *args;
+static PyObject* gpib_wait(PyObject *self, PyObject *args)
+
 {
         int device;
         int mask;
@@ -218,10 +195,7 @@ static char gpib_rsp__doc__[] =
 ""
 ;
 
-static PyObject *
-gpib_rsp(self, args)
-	PyObject *self;	/* Not used */
-	PyObject *args;
+static PyObject* gpib_rsp(PyObject *self, PyObject *args)
 {
         int device;
 	char spr;
@@ -241,10 +215,7 @@ static char gpib_trg__doc__[] =
 ""
 ;
 
-static PyObject *
-gpib_trg(self, args)
-	PyObject *self;	/* Not used */
-	PyObject *args;
+static PyObject* gpib_trg(PyObject *self, PyObject *args)
 {
         int device;
 
@@ -264,10 +235,7 @@ static char gpib_status__doc__[] =
 ""
 ;
 
-static PyObject *
-gpib_status(self, args)
-	PyObject *self;	/* Not used */
-	PyObject *args;
+static PyObject* gpib_status(PyObject *self, PyObject *args)
 {
 
 	if (!PyArg_ParseTuple(args, ""))
@@ -290,7 +258,7 @@ static struct PyMethodDef gpib_methods[] = {
  {"rsp",	gpib_rsp,	1,	gpib_rsp__doc__},
  {"trg",	gpib_trg,	1,	gpib_trg__doc__},
  {"status",	gpib_status,	1,	gpib_status__doc__},
- 
+
 	{NULL,		NULL}		/* sentinel */
 };
 
@@ -301,8 +269,7 @@ static char gpib_module_documentation[] =
 ""
 ;
 
-void
-initgpib()
+void initgpib(void)
 {
 	PyObject *m, *d;
 
