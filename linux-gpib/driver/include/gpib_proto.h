@@ -15,7 +15,12 @@ void osRemoveTimer( gpib_board_t *board );
 void osSendEOI( void );
 void osSendEOI( void );
 void init_gpib_board( gpib_board_t *board );
-unsigned int usec_to_jiffies( unsigned int usec );
+static inline unsigned long usec_to_jiffies(unsigned int usec)
+{
+	unsigned long usec_per_jiffy = 1000000 / HZ;
+
+	return 1 + ( usec + usec_per_jiffy - 1) / usec_per_jiffy;
+};
 int serial_poll_all( gpib_board_t *board, unsigned int usec_timeout );
 void init_gpib_descriptor( gpib_descriptor_t *desc );
 int dvrsp(gpib_board_t *board, unsigned int pad, int sad,

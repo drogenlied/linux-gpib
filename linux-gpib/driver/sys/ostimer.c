@@ -28,13 +28,6 @@ void watchdog_timeout( unsigned long arg )
 	set_bit( TIMO_NUM, &board->status );
 	wake_up_interruptible( &board->wait );
 }
-// store number of jiffies to wait for various timeouts
-unsigned int usec_to_jiffies( unsigned int usec )
-{
-	unsigned int usec_per_jiffy = 1000000 / HZ;
-
-	return 1 + ( usec + usec_per_jiffy - 1) / usec_per_jiffy;
-}
 
 /* install timer interrupt handler */
 void osStartTimer( gpib_board_t *board, unsigned int usec_timeout )
