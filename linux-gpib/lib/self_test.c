@@ -60,13 +60,11 @@ int InternalTestSys( ibConf_t *conf, const Addr4882_t addressList[], short resul
 		retval = InternalReceive( conf, addressList[ i ], reply,
 			sizeof( reply ) - 1, STOPend );
 		if( retval < 0 )
-		{
-			resultList[ i ] = -1;
-		}else
-		{
-			reply[ ThreadIbcnt() ] = 0;
-			resultList[ i ] = strtol( reply, NULL, 0 );
-		}
+			return -1;
+
+		reply[ ThreadIbcnt() ] = 0;
+		resultList[ i ] = strtol( reply, NULL, 0 );
+
 		if( resultList[ i ] ) failure_count++;
 	}
 
