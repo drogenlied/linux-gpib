@@ -32,7 +32,7 @@ static int is_device_addr( int minor, int pad, int sad )
 	return 0;
 }
 
-int ibdev(int minor, int pad, int sad, int timo, int eot, int eos)
+int ibdev( int minor, int pad, int sad, int timo, int eot, int eosmode )
 {
 	int retval;
 
@@ -55,7 +55,7 @@ int ibdev(int minor, int pad, int sad, int timo, int eot, int eos)
 	}
 
 	return my_ibdev( minor, pad, sad, timeout_to_usec( timo ),
-		eot, eos & 0xff, eos & 0xff00 );
+		eot, eosmode & 0xff, eosmode & 0xff00 );
 }
 
 int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_eoi, int eos, int eos_flags)

@@ -124,6 +124,6 @@ static __inline__ ibBoard_t* interfaceBoard( const ibConf_t *conf )
 #include <stdio.h>
 int gpib_yyparse(void);
 void gpib_yyrestart(FILE*);
-int gpib_yylex(void);
+#define YY_DECL int gpib_yylex( YYSTYPE *gpib_lvalp, YYLTYPE *gpib_llocp )
 
 #endif	/* _IB_INTERNAL_H */

@@ -423,7 +423,6 @@ int ni_isapnp_find( struct pci_dev **dev )
 	if( (*dev)->ro )
 	{
 		printk( "tnt4882: atgpib/tnt board is read only?\n" );
-		return -EIO;
 	}
 	if( (*dev)->activate( *dev ) < 0 )
 	{

@@ -5,14 +5,19 @@
 #include "ibP.h"
 #include <string.h>
 #include <stdlib.h>
+#include "ibConfYacc.h"
 
 #define YYERROR_VERBOSE
+
+YY_DECL;
 
 ibConf_t ibFindConfigs[FIND_CONFIGS_LENGTH];
 unsigned int findIndex = 0;
 int bdid = 0;
 
 %}
+
+%pure_parser
 
 %union
 {
@@ -80,6 +85,8 @@ char cval;
 		| T_EOSBYTE '=' T_NUMBER  { ibFindConfigs[findIndex].eos = $3;}
 		| T_REOS T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $2 * REOS;}
 		| T_BIN  T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $2 * BIN;}
+		| T_REOS '=' T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $3 * REOS;}
+		| T_BIN '=' T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $3 * BIN;}
 		| T_TIMO '=' T_TIVAL      { ibFindConfigs[findIndex].usec_timeout = $3; }
 		| T_BASE '=' T_NUMBER     { ibBoard[bdid].base = $3; }
 		| T_IRQ  '=' T_NUMBER     { ibBoard[bdid].irq = $3; }
@@ -87,6 +94,7 @@ char cval;
 		| T_PCI_BUS  '=' T_NUMBER     { ibBoard[bdid].pci_bus = $3; }
 		| T_PCI_SLOT  '=' T_NUMBER     { ibBoard[bdid].pci_slot = $3; }
 		| T_MASTER T_BOOL	{ ibBoard[bdid].is_system_controller = $2; }
+		| T_MASTER '=' T_BOOL	{ ibBoard[bdid].is_system_controller = $3; }
 		| T_BOARD_TYPE '=' T_STRING
 			{
 				strncpy(ibBoard[bdid].board_type, $3,
@@ -126,7 +134,9 @@ char cval;
 		| T_INIT_S '=' T_STRING { strncpy(ibFindConfigs[findIndex].init_string,$3,60); }
 		| T_EOSBYTE '=' T_NUMBER  { ibFindConfigs[findIndex].eos = $3; }
 		| T_REOS T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $2 * REOS;}
-		| T_BIN  T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $2 * BIN; }
+		| T_REOS '=' T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $3 * REOS;}
+		| T_BIN T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $2 * BIN; }
+		| T_BIN '=' T_BOOL           { ibFindConfigs[findIndex].eos_flags |= $3 * BIN; }
 		| T_AUTOPOLL              { ibFindConfigs[findIndex].flags |= CN_AUTOPOLL; }
 		| T_INIT_F '=' flags
 		| T_NAME '=' T_STRING	{ strncpy(ibFindConfigs[findIndex].name,$3, sizeof(ibFindConfigs[findIndex].name));}

@@ -3,22 +3,30 @@
 %{
 
 #include "ibConfYacc.h"
-YYLTYPE yylloc;
+#include "ib_internal.h"
 
 %}
 
 %x COMMENT
+%x STRING
 
-FNAME [A-Za-z/_+-][A-Za-z0-9/_():.+-]*
-NETD  [A-Za-z*_+-][A-Za-z0-9*_():.+-]*
 %%
 
-<COMMENT,INITIAL>\n {yylloc.first_line++;}
+<COMMENT,STRING,INITIAL>\n {gpib_llocp->first_line++;}
 
-"/*"		 BEGIN(COMMENT);
+"/*" { BEGIN(COMMENT); }
 <COMMENT>[^*\n]*
 <COMMENT>"*"+[^*/i\n]*
 <COMMENT>"*"+"/" BEGIN(INITIAL);
+
+\" { BEGIN(STRING); }
+<STRING>[^\"]*\" {
+	if( strlen( gpib_yytext ) > 0 )
+		gpib_yytext[ strlen( gpib_yytext ) - 1 ] = 0;
+	gpib_lvalp->sval = gpib_yytext;
+	BEGIN(INITIAL);
+	return ( T_STRING );
+}
 
 interface 	     { return (T_INTERFACE);}
 
@@ -56,42 +64,67 @@ master        { return T_MASTER; }
 
 autopoll      { return T_AUTOPOLL; }
 
-yes         { gpib_yylval.bval=1; return(T_BOOL);}
-no          { gpib_yylval.bval=0; return(T_BOOL);}
+yes         { gpib_lvalp->bval=1; return(T_BOOL);}
+no          { gpib_lvalp->bval=0; return(T_BOOL);}
 
 
-none         { gpib_yylval.ival=0 ; return(T_TIVAL);}
-10us         { gpib_yylval.ival=10; return(T_TIVAL);}
-30us         { gpib_yylval.ival=30; return(T_TIVAL);}
-100us        { gpib_yylval.ival=100; return(T_TIVAL);}
-300us        { gpib_yylval.ival=300; return(T_TIVAL);}
-1ms          { gpib_yylval.ival=1000; return(T_TIVAL);}
-3ms          { gpib_yylval.ival=3000; return(T_TIVAL);}
-10ms         { gpib_yylval.ival=10000; return(T_TIVAL);}
-30ms         { gpib_yylval.ival=30000; return(T_TIVAL);}
-100ms        { gpib_yylval.ival=100000; return(T_TIVAL);}
-300ms        { gpib_yylval.ival=300000; return(T_TIVAL);}
-1s           { gpib_yylval.ival=1000000; return(T_TIVAL);}
-3s           { gpib_yylval.ival=3000000; return(T_TIVAL);}
-10s          { gpib_yylval.ival=1000000; return(T_TIVAL);}
-30s          { gpib_yylval.ival=30000000; return(T_TIVAL);}
-100s         { gpib_yylval.ival=100000000; return(T_TIVAL);}
-300s         { gpib_yylval.ival=300000000; return(T_TIVAL);}
-1000s        { gpib_yylval.ival=1000000000; return(T_TIVAL);}
+none         { gpib_lvalp->ival=0 ; return(T_TIVAL);}
+10us         { gpib_lvalp->ival=10; return(T_TIVAL);}
+30us         { gpib_lvalp->ival=30; return(T_TIVAL);}
+100us        { gpib_lvalp->ival=100; return(T_TIVAL);}
+300us        { gpib_lvalp->ival=300; return(T_TIVAL);}
+1ms          { gpib_lvalp->ival=1000; return(T_TIVAL);}
+3ms          { gpib_lvalp->ival=3000; return(T_TIVAL);}
+10ms         { gpib_lvalp->ival=10000; return(T_TIVAL);}
+30ms         { gpib_lvalp->ival=30000; return(T_TIVAL);}
+100ms        { gpib_lvalp->ival=100000; return(T_TIVAL);}
+300ms        { gpib_lvalp->ival=300000; return(T_TIVAL);}
+1s           { gpib_lvalp->ival=1000000; return(T_TIVAL);}
+3s           { gpib_lvalp->ival=3000000; return(T_TIVAL);}
+10s          { gpib_lvalp->ival=1000000; return(T_TIVAL);}
+30s          { gpib_lvalp->ival=30000000; return(T_TIVAL);}
+100s         { gpib_lvalp->ival=100000000; return(T_TIVAL);}
+300s         { gpib_lvalp->ival=300000000; return(T_TIVAL);}
+1000s        { gpib_lvalp->ival=1000000000; return(T_TIVAL);}
 
+TNONE         { gpib_lvalp->ival=0 ; return(T_TIVAL);}
+T10us         { gpib_lvalp->ival=10; return(T_TIVAL);}
+T30us         { gpib_lvalp->ival=30; return(T_TIVAL);}
+T100us        { gpib_lvalp->ival=100; return(T_TIVAL);}
+T300us        { gpib_lvalp->ival=300; return(T_TIVAL);}
+T1ms          { gpib_lvalp->ival=1000; return(T_TIVAL);}
+T3ms          { gpib_lvalp->ival=3000; return(T_TIVAL);}
+T10ms         { gpib_lvalp->ival=10000; return(T_TIVAL);}
+T30ms         { gpib_lvalp->ival=30000; return(T_TIVAL);}
+T100ms        { gpib_lvalp->ival=100000; return(T_TIVAL);}
+T300ms        { gpib_lvalp->ival=300000; return(T_TIVAL);}
+T1s           { gpib_lvalp->ival=1000000; return(T_TIVAL);}
+T3s           { gpib_lvalp->ival=3000000; return(T_TIVAL);}
+T10s          { gpib_lvalp->ival=1000000; return(T_TIVAL);}
+T30s          { gpib_lvalp->ival=30000000; return(T_TIVAL);}
+T100s         { gpib_lvalp->ival=100000000; return(T_TIVAL);}
+T300s         { gpib_lvalp->ival=300000000; return(T_TIVAL);}
+T1000s        { gpib_lvalp->ival=1000000000; return(T_TIVAL);}
 
-[0-9]+  { sscanf(gpib_yytext,"%d",&gpib_yylval.ival); 
-	  return( T_NUMBER );}
-0x[0-9a-fA-F]+ { sscanf(gpib_yytext,"0x%x",&gpib_yylval.ival);
-	  return( T_NUMBER );}
+0x[0-9a-fA-F]+ {
+	gpib_lvalp->ival = strtol( gpib_yytext, NULL, 0 );
+	return( T_NUMBER );
+}
 
-{FNAME}|{NETD} { gpib_yylval.sval=gpib_yytext; /*printf("<%s>\n",gpib_yytext);*/
-		       return (T_STRING);}
+(00)?[0-9]+ {
+	gpib_lvalp->ival = strtol( gpib_yytext, NULL, 0 );
+	return( T_NUMBER );
+}
 
 [ \t]
 
-.	{ return(gpib_yytext[0]);}
+[a-zA-Z0-9_\-]+ {
+	gpib_lvalp->sval = gpib_yytext;
+	printf("<%s>\n", gpib_yytext);
+	return (T_STRING);
+}
 
+. { return( gpib_yytext[0] ); }
 
 %%
 
