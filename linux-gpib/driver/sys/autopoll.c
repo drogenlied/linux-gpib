@@ -103,6 +103,7 @@ int autopoll_device( gpib_board_t *board, gpib_device_t *device )
 	static const unsigned int max_num_status_bytes = 1024;
 	uint8_t poll_byte;
 	int retval;
+	static const uint8_t request_service_bit = 0x40;
 
 	if( num_status_bytes( device ) >= max_num_status_bytes )
 	{
@@ -116,8 +117,11 @@ int autopoll_device( gpib_board_t *board, gpib_device_t *device )
 	retval = dvrsp( board, device->pad, device->sad, serial_timeout, &poll_byte );
 	if( retval < 0 ) return retval;
 
-	retval = push_status_byte( device, poll_byte );
-	if( retval < 0 ) return retval;
+	if( poll_byte & request_service_bit )
+	{
+		retval = push_status_byte( device, poll_byte );
+		if( retval < 0 ) return retval;
+	}
 
 	return 0;
 }
