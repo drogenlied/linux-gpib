@@ -13,7 +13,7 @@ BINDIR = /usr/local/bin
 LIBS =  -L../lib -lgpib -lfl
 INCLUDES = -I. -I../include  
 
-CFLAGS = $(INCLUDES) $(DEFINES)
+CFLAGS = $(INCLUDES) $(DEFINES) -Wall -O2
 
 
 ######################################################################

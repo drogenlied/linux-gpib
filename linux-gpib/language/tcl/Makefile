@@ -34,7 +34,7 @@ SUBDIRS = $(EXTSUBDIRS)
 LIBS =  $(GPIBLIBS) -lfl -lm
 INCLUDES = -I. -I$(GPIB_HOME)/include 
 
-CFLAGS = -fpic $(INCLUDES) $(DEFINES)
+CFLAGS = -fpic $(INCLUDES) $(DEFINES) -Wall
 
 
 SRCS = ibCmds.c 

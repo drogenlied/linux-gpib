@@ -17,7 +17,7 @@ SUBDIRS =
 LIBS =  -lm
 INCLUDES = -I. 
 
-CFLAGS = -fPIC $(INCLUDES) $(DEFINES)
+CFLAGS = -fPIC $(INCLUDES) $(DEFINES) -Wall
 
 
 SRCS =  tkDial.c tkStripchart.c tkPie.c tkBargraph.c MeterCmds.c tkTurndial.c

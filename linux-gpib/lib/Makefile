@@ -37,7 +37,7 @@ DEFAULT_BUILD= $(LIBNAME)
 
 export JUMP_DIR=./jump-dir
 
-CFLAGS= -I. -I../include -DDEFAULT_CONFIG_FILE=\"$(LIB_CONFIG_FILE)\" -g \
+CFLAGS= -Wall -O2 -I. -I../include -DDEFAULT_CONFIG_FILE=\"$(LIB_CONFIG_FILE)\"  \
 	$(SHARED_FLAGS)
 LDFLAGS = -L.
 

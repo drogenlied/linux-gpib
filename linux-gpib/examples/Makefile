@@ -8,7 +8,7 @@
 
 LIBNAME=../lib/libgpib.a
 
-CFLAGS= -I. -I../include 
+CFLAGS= -I. -I../include -Wall -O2
 LDFLAGS = -L../lib
 
 SRCS = ibtest.c

@@ -12,7 +12,7 @@ OBJS = rgpib_lib.o rgpib_clnt.o rgpib_xdr.o
 RPCCOM = rpcgen 
 #RPCCOM = ../utils/rpcgen -I
 
-CFLAGS = $(INCLUDES) -O2
+CFLAGS = $(INCLUDES) -O2 -Wall
 
 
 all: $(GEN) rgpib.o

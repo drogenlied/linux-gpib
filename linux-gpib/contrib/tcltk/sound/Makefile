@@ -22,7 +22,7 @@ OBJS = soundCmds.o soundIt.o
 LIBS =   
 INCLUDES = -I.
 
-CFLAGS = -fPIC $(INCLUDES) $(DEFINES)
+CFLAGS = -fPIC $(INCLUDES) $(DEFINES) -Wall
 
 
 
