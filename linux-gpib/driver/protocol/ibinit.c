@@ -50,8 +50,6 @@ unsigned long timeTable[] =
 *      1.  Ibonl must be called before any other function.
 */
 
-extern int ib_opened;
-
 int drvstat = 0;
 
 int ibonl(gpib_board_t *board, int v)
@@ -61,7 +59,7 @@ int ibonl(gpib_board_t *board, int v)
 	* if one process is working on the driver ibonl is dummied
 	*
 	*/
-	if( ib_opened == 1 || !(board->online) )
+	if( board->open_count == 1 || !(board->online) )
 	{
 		timeidx = T1s; /* initialize configuration variables... */
 		myPAD = 0;
@@ -74,7 +72,7 @@ int ibonl(gpib_board_t *board, int v)
 
 	if (v)
 	{
-		if( (ib_opened <= 1) && !(board->online))
+		if( (board->open_count <= 1) && !(board->online))
 		{
 			board->buffer_length = 0x1000;
 			if(board->buffer)
@@ -96,7 +94,7 @@ int ibonl(gpib_board_t *board, int v)
 			ibsic(board);
 	}else
 	{		/* OFFLINE: leave SYSFAIL red */
-		if( ib_opened <= 1)
+		if( board->open_count <= 1)
 		{
 			board->interface->detach(board);
 			if(board->buffer)

@@ -1,7 +1,6 @@
 #include <ibprot.h>
 #include <linux/delay.h>
 
-extern int drvstat,ib_opened;
 /*
  * IBSRE
  * Send REN true if v is non-zero or false if v is zero.

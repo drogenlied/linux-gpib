@@ -1,8 +1,6 @@
 #include <ibprot.h>
 #include <linux/delay.h>
 
-extern int drvstat,ib_opened;
-
 /*
  * IBSIC
  * Send IFC for at least 100 microseconds.
