@@ -54,18 +54,6 @@ int ibsad( gpib_board_t *board, int addr )
 }
 
 /*
- * IBTMO
- * Set the timeout value for I/O operations.  A timeout
- * of zero disables.
- */
-int ibtmo(gpib_board_t *board, unsigned int usec_timeout)
-{
-	board->usec_timeout = usec_timeout;
-
-	return 0;
-}
-
-/*
  * IBEOS
  * Set the end-of-string modes for I/O operations to v.
  *

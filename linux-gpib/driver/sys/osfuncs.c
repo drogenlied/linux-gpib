@@ -45,6 +45,7 @@ static int dma_ioctl( gpib_board_t *board, unsigned long arg );
 static int autopoll_ioctl( gpib_board_t *board);
 static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 	unsigned long arg );
+static int timeout_ioctl( gpib_board_t *board, unsigned long arg );
 
 static int cleanup_open_devices( gpib_file_private_t *file_priv, gpib_board_t *board );
 
@@ -212,7 +213,7 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			return status_ioctl( board, arg );
 			break;
 		case IBTMO:
-			return ibtmo( board, arg );
+			return timeout_ioctl( board, arg );
 			break;
 		case IBOPENDEV:
 			return open_dev_ioctl( filep, board, arg );
@@ -842,6 +843,21 @@ static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 		file_priv->holding_mutex = 0;
 		up( &board->mutex );
 	}
+
+	return 0;
+}
+
+static int timeout_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	unsigned int timeout;
+	int retval;
+
+	retval = copy_from_user( &timeout, ( void * ) arg, sizeof( timeout ) );
+	if( retval )
+		return -EFAULT;
+
+	board->usec_timeout = timeout;
+	GPIB_DPRINTK( "timeout set to %i usec\n", timeout );
 
 	return 0;
 }
