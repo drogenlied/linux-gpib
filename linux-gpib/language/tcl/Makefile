@@ -9,7 +9,7 @@
 # The switches for your GPIB library
 #
 #
-GPIBLIBS 	= -L$(ROOT)/lib -lgpib
+GPIBLIBS 	= -L$(ROOT)/lib -lgpib -lpthread
 GPIBINCLUDE 	= -I$(ROOT)/include 
 
 ######################################################################

@@ -9,6 +9,6 @@ setup(name="gpib",
 		Extension("gpib",
 		["gpibinter.c"],
 		include_dirs=["../../include"],
-		libraries=["gpib", "fl"]
+		libraries=["gpib", "pthread", "fl"]
 	)]
 )
