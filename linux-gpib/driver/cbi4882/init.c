@@ -1,15 +1,20 @@
-
-
 #include <board.h>
 #include <linux/ioport.h>
 #include <linux/sched.h>
+#include <linux/module.h>
 #include <asm/dma.h>
 
-
 unsigned long ibbase = IBBASE;	/* base addr of GPIB interface registers  */
-uint8 ibirq  = IBIRQ;	/* interrupt request line for GPIB (1-7)  */
-uint8 ibdma  = IBDMA;     /* DMA channel                            */
+unsigned int ibirq  = IBIRQ;	/* interrupt request line for GPIB (1-7)  */
+unsigned int ibdma  = IBDMA;     /* DMA channel                            */
 unsigned long remapped_ibbase = 0;
+
+MODULE_PARM(ibbase, "l");
+MODULE_PARM_DESC(ibbase, "base io address");
+MODULE_PARM(ibirq, "i");
+MODULE_PARM_DESC(ibirq, "interrupt request line");
+MODULE_PARM(ibdma, "i");
+MODULE_PARM_DESC(ibdma, "dma channel");
 
 uint8       board_type = CBI_ISA_GPIB;
 uint8       CurHSMode = 0;      /* hs mode register value */

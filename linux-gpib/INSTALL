@@ -116,8 +116,9 @@ o) read the README (and README.<card_type>)
 B) Installing Linux-GPIB
 -------------------------
 
-o) cd to your linux-gpib directory and type make
-	you'll se some screens asking for your board type, your
+o) cd to your linux-gpib directory and type 'make config'.  If you
+	have old files you want to clean up, do a 'make clean' first.
+	You'll se some screens asking for your board type, your
 	board characteristics (irq,dma etc) and configuration options
 
 	Selecting the board type:
@@ -193,7 +194,7 @@ o) cd to your linux-gpib directory and type make
 	Now you have to set the driver's Major-Number. The Major has to be
 	unique for the system (see /proc/devices for used major numbers)
 
-	Now the Package will be compiled.
+	Type 'make'.  Now the Package will be compiled.
 
 	Type 'make install' (as root).  This will copy the kernel driver to
 	/lib/modules/<kernel version>/misc as well as install the library

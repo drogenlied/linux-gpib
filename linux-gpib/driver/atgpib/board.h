@@ -1,14 +1,17 @@
 
+#ifndef _GPIB_BOARD_H
+#define _GPIB_BOARD_H
+
 #include <gpibP.h>
 #include <asm/io.h>
 
-extern unsigned long      ibbase;	/* base addr of GPIB interface registers  */
-extern uint8       ibirq;	/* interrupt request line for GPIB (1-7)  */
-extern uint8       ibdma ;      /* DMA channel                            */
+extern unsigned long ibbase;	/* base addr of GPIB interface registers  */
+extern unsigned int ibirq;	/* interrupt request line for GPIB (1-7)  */
+extern unsigned int ibdma ;      /* DMA channel                            */
 
 extern volatile int noTimo;     /* timeout flag */
-extern int          pgmstat;    /* Program state */
-extern int          auxrabits;  /* static bits for AUXRA (EOS modes) */
+extern int pgmstat;    /* Program state */
+extern int auxrabits;  /* static bits for AUXRA (EOS modes) */
 
 /* this routines are 'wrappers' for the outb() macros */
 
@@ -45,3 +48,4 @@ extern inline void bdP16out(unsigned long out_addr, uint16_t out_value)
 	outw_p(out_value, ibbase + out_addr);
 }
 
+#endif	// _GPIB_BOARD_H

@@ -17,3 +17,6 @@ modules:
 	echo RLINK="$(RLINK)" >>flags
 	echo MODLIB="$(MODLIB)" >>flags
 
+clean:
+	rm -f flags
+

@@ -20,11 +20,19 @@
 #include "board.h"
 #include <linux/ioport.h>
 #include <linux/sched.h>
+#include <linux/module.h>
 #include <asm/dma.h>
 
 unsigned long ibbase = IBBASE;
-uint8 ibirq = IBIRQ;
-uint8 ibdma = IBDMA;
+unsigned int ibirq = IBIRQ;
+unsigned int ibdma = IBDMA;
+
+MODULE_PARM(ibbase, "l");
+MODULE_PARM_DESC(ibbase, "base io address");
+MODULE_PARM(ibirq, "i");
+MODULE_PARM_DESC(ibirq, "interrupt request line");
+MODULE_PARM(ibdma, "i");
+MODULE_PARM_DESC(ibdma, "dma channel");
 
 unsigned long remapped_ibbase = 0;
 

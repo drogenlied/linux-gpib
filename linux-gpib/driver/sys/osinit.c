@@ -27,6 +27,11 @@
 #endif
 MODULE_LICENSE("GPL");
 
+MODULE_PARM(ibmajor, "i");
+MODULE_PARM_DESC(ibmajor, "major device number of gpib device file");
+MODULE_PARM(dbgMask, "i");
+MODULE_PARM_DESC(dbgMask, "controls amount of debugging information the module dumps");
+
 /* default debugging level */
 
 #if DEBUG

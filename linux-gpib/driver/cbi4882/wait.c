@@ -1,6 +1,4 @@
-#include <board.h>
-
-extern uint8 ibirq;
+#include "board.h"
 
 /*
  * BDWAIT

@@ -22,8 +22,6 @@ extern uint8       CurHSMode;
 extern int ccrbits;
 #endif
 
-extern uint8 ibirq;
-
 long serial=0L;
 
 #if USEINTS

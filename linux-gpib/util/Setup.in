@@ -142,7 +142,7 @@ set_svar BOARD_TYPE $REPLY
                        dmasupport=on
 		       ;;
 	       pcII) echo "#define NIPCII " >>../driver/include/gpib_board.h
-         	       ln -s ./pcIIa ../driver/board
+         	       ln -s ./nec7210 ../driver/board
 		       IBBASE=0x2b8
 		       IBIRQ=5
 		       IBDMA=1
@@ -150,7 +150,7 @@ set_svar BOARD_TYPE $REPLY
 
 	       pcIIa|ibm) echo "#define NIPCIIa " >>../driver/include/gpib_board.h 
                       echo "#define NIPCII " >>../driver/include/gpib_board.h 
-         	       ln -s ./pcIIa ../driver/board
+         	       ln -s ./nec7210 ../driver/board
 		       IBBASE=0x02e1
 		       IBIRQ=5
 		       IBDMA=1
@@ -201,7 +201,7 @@ set_svar BOARD_TYPE $REPLY
 
 	       modbus_pci) echo "#define NIPCII " >>../driver/include/gpib_board.h 
 			echo "#define MODBUS_PCI " >>../driver/include/gpib_board.h 
-         	       ln -s ./pcIIa ../driver/board
+         	       ln -s ./nec7210 ../driver/board
                         IBBASE=0x0
 		        IBIRQ=0
 		        IBDMA=0
@@ -211,7 +211,7 @@ set_svar BOARD_TYPE $REPLY
 
               ines_pci) echo "#define NIPCII " >>../driver/include/gpib_board.h
                         echo "#define INES_PCI " >>../driver/include/gpib_board.h
-         	       ln -s ./pcIIa ../driver/board
+         	       ln -s ./nec7210 ../driver/board
                         IBBASE=0x0
                         IBIRQ=0
                         IBDMA=0
@@ -220,7 +220,7 @@ set_svar BOARD_TYPE $REPLY
 
               ines_pcmcia) echo "#define NIPCII " >>../driver/include/gpib_board.h
                         echo "#define INES_PCMCIA " >>../driver/include/gpib_board.h
-         	       ln -s ./pcIIa ../driver/board
+         	       ln -s ./nec7210 ../driver/board
                         IBBASE=0x0
                         IBIRQ=0
                         IBDMA=0

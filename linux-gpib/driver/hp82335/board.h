@@ -1,11 +1,13 @@
+#ifndef _GPIB_BOARD_H
+#define _GPIB_BOARD_H
 
 #include <gpibP.h>
 #include <asm/io.h>
 
-extern unsigned long      ibbase;	/* base addr of GPIB interface registers  */
+extern unsigned long ibbase;	/* base addr of GPIB interface registers  */
 extern unsigned long remapped_ibbase;	// ioremapped address for memory mapped io
-extern uint8       ibirq;	/* interrupt request line for GPIB (1-7)  */
-extern uint8       ibdma ;      /* DMA channel                            */
+extern unsigned int ibirq;	/* interrupt request line for GPIB (1-7)  */
+extern unsigned int ibdma ;      /* DMA channel                            */
 
 extern volatile int noTimo;     /* timeout flag */
 extern int          pgmstat;    /* Program state */
@@ -41,6 +43,7 @@ extern inline void bdP8out(unsigned long out_addr, uint8_t out_value)
 #endif
 }
 
+#endif	// _GPIB_BOARD_H
 
 
 
