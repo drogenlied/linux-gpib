@@ -140,7 +140,6 @@ typedef struct
 	unsigned long interrupt_flags;
 	unsigned int bogus_ibsta;
 	struct urb *bulk_urb;
-	struct semaphore bulk_completion;
 	struct urb *interrupt_urb;
 	uint8_t interrupt_buffer[0x8];	
 	struct semaphore bulk_transfer_lock;
