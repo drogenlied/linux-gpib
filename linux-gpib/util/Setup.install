@@ -19,10 +19,7 @@ if [ ! -r /etc/gpib.conf ]; then
         /etc/gpib.conf not found\n
                 Create?" 8 60
         if [ $? = 0 ]; then
-                cat ./templates/gpib.conf | sed -e "s/?base?/$IBBASE/g" \
-                        -e "s/?irq?/$IBIRQ/g" \
-                        -e "s/?dma?/$IBDMA/g" \
-			-e "s/?board_type?/$BOARD_TYPE/g" > /etc/gpib.conf
+                cp ./templates/gpib.conf /etc/gpib.conf
         fi
 fi
 
