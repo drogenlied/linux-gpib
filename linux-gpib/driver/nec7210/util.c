@@ -21,7 +21,7 @@
 
 int admr_bits = HR_TRM0 | HR_TRM1;
 
-void nec7210_enable_eos(uint8_t eos_byte, int compare_8_bits)
+void nec7210_enable_eos(gpib_driver_t *driver, uint8_t eos_byte, int compare_8_bits)
 {
 	DBGin("bdSetEOS");
 	GPIBout(EOSR, eos_byte);
@@ -34,13 +34,13 @@ void nec7210_enable_eos(uint8_t eos_byte, int compare_8_bits)
 	DBGout();
 }
 
-void nec7210_disable_eos(void)
+void nec7210_disable_eos(gpib_driver_t *driver)
 {
 	auxa_bits &= ~HR_REOS;
 	GPIBout(AUXMR, auxa_bits);
 }
 
-int nec7210_parallel_poll(uint8_t *result)
+int nec7210_parallel_poll(gpib_driver_t *driver, uint8_t *result)
 {
 	int ret;
 
@@ -69,7 +69,7 @@ int nec7210_parallel_poll(uint8_t *result)
 	return 0;
 }
 
-int nec7210_serial_poll_response(uint8_t status)
+int nec7210_serial_poll_response(gpib_driver_t *driver, uint8_t status)
 {
 	GPIBout(SPMR, 0);		/* clear current serial poll status */
 	GPIBout(SPMR, status);		/* set new status to v */
@@ -77,13 +77,13 @@ int nec7210_serial_poll_response(uint8_t status)
 	return 0;
 }
 
-void nec7210_primary_address(unsigned int address)
+void nec7210_primary_address(gpib_driver_t *driver, unsigned int address)
 {
 	// put primary address in address0
 	GPIBout(ADR, (address & ADDRESS_MASK));
 }
 
-void nec7210_secondary_address(unsigned int address, int enable)
+void nec7210_secondary_address(gpib_driver_t *driver, unsigned int address, int enable)
 {
 	if(enable)
 	{
@@ -104,7 +104,7 @@ void nec7210_secondary_address(unsigned int address, int enable)
 	}
 }
 
-unsigned int nec7210_update_status(void)
+unsigned int nec7210_update_status(gpib_driver_t *driver)
 {
 	int address_status_bits = GPIBin(ADSR);
 

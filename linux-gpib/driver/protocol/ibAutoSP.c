@@ -131,7 +131,7 @@ IBLCL int ibAPWait(int pad)
        AP_LocalUnLock(pad);
        /*FIXME: there is no state that can be returned here*/
        DBGout();
-       return driver->update_status();
+       return driver->update_status(driver);
      }
 
   /* wait for SRQ interrupt */
@@ -139,7 +139,7 @@ IBLCL int ibAPWait(int pad)
        AP_UnLock();
        AP_LocalUnLock(pad);
        DBGout();
-       return driver->update_status();
+       return driver->update_status(driver);
      }
 
   /* poll all devices with AP_POLL set */
@@ -147,7 +147,7 @@ IBLCL int ibAPWait(int pad)
      for(i=0;i<MAX_DEVICES;i++){
        if( AP_Vector[i].flags & AP_POLL ){
 	 dvrsp(i,&(AP_Vector[i].spb ));
-	 AP_Vector[i].stat = driver->update_status();
+	 AP_Vector[i].stat = driver->update_status(driver);
 	 AP_Vector[i].flags  |= AP_PENDING;
          DBGprint(DBG_DATA,("device %d -> spb=0x%x",i,AP_Vector[i].spb));
        }
@@ -162,7 +162,7 @@ IBLCL int ibAPWait(int pad)
   /* Unlock device */
      AP_LocalUnLock(pad);
      DBGout();
-     return driver->update_status();
+     return driver->update_status(driver);
 }
 
 /*
@@ -192,7 +192,7 @@ IBLCL int ibAPrsp(int padsad, char *spb)
         AP_UnLock();
 	DBGout();
 
-	return driver->update_status(); 	/* 980728 TBg */
+	return driver->update_status(driver); 	/* 980728 TBg */
 }
 
 

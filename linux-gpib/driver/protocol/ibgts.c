@@ -9,14 +9,14 @@
 
 IBLCL int ibgts(void)
 {
-	int status = driver->update_status();
+	int status = driver->update_status(driver);
 
 	if((status & CIC) == 0)
 	{
 		printk("gpib: not CIC during ibgts\n");
 		return -1;
 	}
-	driver->go_to_standby();                    /* go to standby */
+	driver->go_to_standby(driver);                    /* go to standby */
 	return 0;
 }
 

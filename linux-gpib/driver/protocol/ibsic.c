@@ -19,9 +19,9 @@ IBLCL int ibsic(void)
 
 		pgmstat |= PS_SAC;
 		/* set controller state */
-		driver->interface_clear(1);                   /* assert IFC */
+		driver->interface_clear(driver, 1);                   /* assert IFC */
 		udelay(100);
-		driver->interface_clear(0);                   /* clear IFC */
+		driver->interface_clear(driver, 0);                   /* clear IFC */
 		drvstat |= DRV_IFC;
 	}
 

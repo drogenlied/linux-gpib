@@ -76,9 +76,9 @@ IBLCL int ibonl(int v)
 	{
 		if( (ib_opened <= 1) && !( drvstat & DRV_ONLINE ))
 		{
-			if(driver->attach() < 0)
+			if(driver->attach(driver) < 0)
 			{
-				driver->detach();
+				driver->detach(driver);
 				printk("GPIB Hardware Error! (Chip type not found or wrong Base Address?)\n");
 				return -1;
 			}
@@ -98,7 +98,7 @@ IBLCL int ibonl(int v)
 		if( ib_opened <= 1)
 		{
 			DBGprint(DBG_BRANCH,("Board Offline"));
-			driver->detach();
+			driver->detach(driver);
 			if (pgmstat & PS_SYSRDY)
 			osReset();	/* reset system interface */
 			pgmstat &= ~PS_ONLINE;

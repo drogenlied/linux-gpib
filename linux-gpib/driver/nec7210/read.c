@@ -19,7 +19,7 @@
 #include "board.h"
 #include <asm/dma.h>
 
-ssize_t nec7210_read(uint8_t *buffer, size_t length, int *end)
+ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int *end)
 {
 	size_t	count = 0;
 	gpib_char_t data;
@@ -31,7 +31,7 @@ ssize_t nec7210_read(uint8_t *buffer, size_t length, int *end)
 	if(length == 0) return 0;
 
 	if (pgmstat & PS_HELD) {
-		GPIBout(AUXMR, auxa_bits | HR_HLDA);
+		GPIBout(AUXMR, auxa_bits | HR_HLDA);	//XXX
 		GPIBout(AUXMR, AUX_FH);	/* set HLDA in AUXRA to ensure FH works */
 		pgmstat &= ~PS_HELD;
 	}

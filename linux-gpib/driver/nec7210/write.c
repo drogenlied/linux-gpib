@@ -19,7 +19,7 @@
 #include "board.h"
 #include <asm/dma.h>
 
-ssize_t nec7210_write(uint8_t *buffer, size_t length, int send_eoi)
+ssize_t nec7210_write(gpib_driver_t *driver, uint8_t *buffer, size_t length, int send_eoi)
 {
 	gpib_char_t data;
 	unsigned long flags;

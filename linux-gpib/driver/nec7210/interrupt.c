@@ -30,6 +30,8 @@ volatile int dma_transfer_complete = 0;
 
 void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
+	gpib_driver_t *driver = (gpib_driver_t*) arg;
+
 	nec7210_interrupt(irq, arg, registerp);
 
 	/* clear interrupt circuit */
@@ -39,6 +41,7 @@ void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp)
 void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp )
 {
 	int bits, hs_status;
+	gpib_driver_t *driver = (gpib_driver_t*) arg;
 
 	// read incoming mailbox to clear mailbox full flag
 	inl(amcc_iobase + INCOMING_MAILBOX_REG(3));
@@ -63,6 +66,7 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	gpib_char_t data;
 	int ret;
 	unsigned long flags;
+	gpib_driver_t *driver = (gpib_driver_t*) arg;
 
 	// read interrupt status (also clears status)
 

@@ -14,7 +14,7 @@ IBLCL int ibpad(int v)
 	}else
 	{
 		myPAD = v;
-		driver->primary_address( myPAD );
+		driver->primary_address(driver, myPAD );
 	}
 	return 0;
 }
@@ -38,10 +38,10 @@ IBLCL int ibsad(int v)
 			v = 0;		/* v == 0x7F also disables */
 		if ((mySAD = v))
 		{
-			driver->secondary_address(mySAD - 0x60, 1);
+			driver->secondary_address(driver, mySAD - 0x60, 1);
 		}else
 		{
-			driver->secondary_address(0,0);
+			driver->secondary_address(driver, 0,0);
 		}
 	}
 	return 0;
@@ -105,9 +105,9 @@ IBLCL int ibeos(int v)
 	{
 		if(emodes & REOS)
 		{
-			driver->enable_eos(ebyte, emodes & BIN);
+			driver->enable_eos(driver, ebyte, emodes & BIN);
 		}else
-			driver->disable_eos();
+			driver->disable_eos(driver);
 	}
 	return 0;
 }

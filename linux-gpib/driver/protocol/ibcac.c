@@ -12,14 +12,14 @@
  */
 IBLCL int ibcac(int sync)
 {
-	int status = driver->update_status();
+	int status = driver->update_status(driver);
 	if((status & CIC) == 0)
 	{
 		printk("gpib: not CIC during ibcac\n");
 		return -1;
 	}
 
-	driver->take_control(sync);
+	driver->take_control(driver, sync);
 
 	return 0;
 }

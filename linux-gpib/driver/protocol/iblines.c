@@ -16,6 +16,6 @@ IBLCL int iblines(int *buf)
 		printk("driver cannot query gpib line status\n");
 		return -1;
 	}
-	*buf = driver->line_status();
+	*buf = driver->line_status(driver);
 	return 0;
 }

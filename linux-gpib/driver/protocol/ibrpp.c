@@ -11,14 +11,14 @@
  */
 IBLCL int ibrpp(uint8_t *buf)
 {
-	int status = driver->update_status();
+	int status = driver->update_status(driver);
 	if((status * CIC) == 0)
 	{
 		return -1;
 	}
 	osStartTimer(pollTimeidx);
-	driver->take_control(0);
-	if(driver->parallel_poll(buf)) 
+	driver->take_control(driver, 0);
+	if(driver->parallel_poll(driver, buf)) 
 	{
 		printk("gpib: parallel poll failed\n");
 		return -1;

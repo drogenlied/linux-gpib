@@ -20,14 +20,21 @@
 #include <linux/delay.h>
 #include <asm/bitops.h>
 
-int nec7210_take_control(int syncronous)
+int nec7210_take_control(gpib_driver_t *driver, int syncronous)
 {
 	int i;
 	const int timeout = 1000;
 
 	if(syncronous)
+	{
+		// make sure we aren't asserting rfd holdoff
+		if(pgmstat & PS_HELD);
+		{
+			GPIBout(AUXMR, AUX_FH);
+			pgmstat &= ~PS_HELD;
+		}
 		GPIBout(AUXMR, AUX_TCS);
-	else
+	}else
 		GPIBout(AUXMR, AUX_TCA);
 	// busy wait until ATN is asserted
 	for(i = 0; i < timeout; i++)
@@ -52,7 +59,7 @@ int nec7210_take_control(int syncronous)
 	return 0;
 }
 
-int nec7210_go_to_standby(void)
+int nec7210_go_to_standby(gpib_driver_t *driver)
 {
 	int i;
 	const int timeout = 1000;
@@ -73,7 +80,7 @@ int nec7210_go_to_standby(void)
 	return 0;
 }
 
-void nec7210_interface_clear(int assert)
+void nec7210_interface_clear(gpib_driver_t *driver, int assert)
 {
 	if(assert)
 		GPIBout(AUXMR, AUX_SIFC);
@@ -81,7 +88,7 @@ void nec7210_interface_clear(int assert)
 		GPIBout(AUXMR, AUX_CIFC);
 }
 
-void nec7210_remote_enable(int enable)
+void nec7210_remote_enable(gpib_driver_t *driver, int enable)
 {
 	if(enable)
 		GPIBout(AUXMR, AUX_SREN);

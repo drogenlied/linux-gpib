@@ -204,7 +204,7 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, uns
 				}
 				remain -= ret;
 				userbuf += ret;
-			} while (remain > 0 && !(driver->update_status() & (TIMO)));
+			} while (remain > 0 && !(driver->update_status(driver) & (TIMO)));
 			ibargp->ib_ibcnt = ibargp->ib_cnt - remain;
 
 			/* Free the DMA buffer */
@@ -328,7 +328,7 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, uns
 				copy_to_user( userbuf, buf, ret );
 				remain -= ret;
 				userbuf += ret;
-			}while (remain > 0  && end_flag == 0);	//!(driver->update_status() & TIMO));
+			}while (remain > 0  && end_flag == 0);	//!(driver->update_status(driver) & TIMO));
 			ibargp->ib_ibcnt = ibargp->ib_cnt - remain;
 			/* Free the DMA buffer */
 			osFreeDMABuffer( buf );
@@ -359,7 +359,7 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, uns
 				}
 				remain -= ret;
 				userbuf += ret;
-			} while (remain > 0  && !(driver->update_status() & (TIMO)));
+			} while (remain > 0  && !(driver->update_status(driver) & (TIMO)));
 			ibargp->ib_ibcnt = ibargp->ib_cnt - remain;
 
 			/* Free the DMA buffer */
@@ -400,7 +400,7 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, uns
 
 	// return status bits
 	ibargp->ib_ibsta &= ~DRIVERBITS;
-	ibargp->ib_ibsta |= driver->update_status() & DRIVERBITS;
+	ibargp->ib_ibsta |= driver->update_status(driver) & DRIVERBITS;
 	if(retval)
 		ibargp->ib_ibsta |= ERR;
 	else

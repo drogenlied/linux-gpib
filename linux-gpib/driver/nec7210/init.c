@@ -29,14 +29,14 @@
 
 #define PCI_DEVICE_ID_CBOARDS_PCI_GPIB 0x6
 
-int pc2_attach(void);
-int pc2a_attach(void);
-int pnp_attach(void);
-int cb_pci_attach(void);
+int pc2_attach(gpib_driver_t *driver);
+int pc2a_attach(gpib_driver_t *driver);
+int pnp_attach(gpib_driver_t *driver);
+int cb_pci_attach(gpib_driver_t *driver);
 
-void pc2_detach(void);
-void pc2a_detach(void);
-void cb_pci_detach(void);
+void pc2_detach(gpib_driver_t *driver);
+void pc2a_detach(gpib_driver_t *driver);
+void cb_pci_detach(gpib_driver_t *driver);
 
 unsigned long ibbase = IBBASE;
 unsigned int ibirq = IBIRQ;
@@ -211,7 +211,7 @@ void free_buffers(void)
 	}
 }
 
-int pc2_attach(void)
+int pc2_attach(gpib_driver_t *driver)
 {
 	int isr_flags = 0;
 	const int iosize = 8;	// pc2 uses 8 ioports
@@ -231,7 +231,7 @@ int pc2_attach(void)
 	ioports_allocated = 1;
 
 	// install interrupt handler
-	if( request_irq(ibirq, nec7210_interrupt, isr_flags, "pc2", &ibbase))
+	if( request_irq(ibirq, nec7210_interrupt, isr_flags, "pc2", driver))
 	{
 		printk("gpib: can't request IRQ %d\n", ibirq);
 		return -1;
@@ -261,7 +261,7 @@ int pc2_attach(void)
 	return 0;
 }
 
-void pc2_detach(void)
+void pc2_detach(gpib_driver_t *driver)
 {
 	if(dma_allocated)
 	{
@@ -282,7 +282,7 @@ void pc2_detach(void)
 	free_buffers();
 }
 
-int pc2a_attach(void)
+int pc2a_attach(gpib_driver_t *driver)
 {
 	unsigned int i, err;
 	int isr_flags = 0;
@@ -335,7 +335,7 @@ int pc2a_attach(void)
 	request_region(pc2a_clear_intr_iobase, pc2a_clear_intr_iosize, "pc2a");
 	ioports_allocated = 1;
 
-	if( request_irq(ibirq, pc2a_interrupt, isr_flags, "pc2a", &ibbase))
+	if( request_irq(ibirq, pc2a_interrupt, isr_flags, "pc2a", driver))
 	{
 		printk("gpib: can't request IRQ %d\n", ibirq);
 		return -1;
@@ -367,7 +367,7 @@ int pc2a_attach(void)
 	return 0;
 }
 
-void pc2a_detach(void)
+void pc2a_detach(gpib_driver_t *driver)
 {
 	int i;
 	if(dma_allocated)
@@ -392,7 +392,7 @@ void pc2a_detach(void)
 }
 
 // this function will do more once I support more than one pnp board
-int pnp_attach(void)
+int pnp_attach(gpib_driver_t *driver)
 {
 
 	driver->name = "nec7210";
@@ -416,10 +416,10 @@ int pnp_attach(void)
 	driver->wait = &nec7210_wait,
 	driver->private_data = NULL;
 
-	return cb_pci_attach();
+	return cb_pci_attach(driver);
 }
 
-int cb_pci_attach(void)
+int cb_pci_attach(gpib_driver_t *driver)
 {
 	int isr_flags = 0;
 	int bits;
@@ -461,7 +461,7 @@ int cb_pci_attach(void)
 	GPIBout(AUXMR, ICR | 8);
 
 	isr_flags |= SA_SHIRQ;
-	if(request_irq(ibirq, cb_pci_interrupt, isr_flags, "pci-gpib", &ibbase))
+	if(request_irq(ibirq, cb_pci_interrupt, isr_flags, "pci-gpib", driver))
 	{
 		printk("gpib: can't request IRQ %d\n", ibirq);
 		return -1;
@@ -487,7 +487,7 @@ int cb_pci_attach(void)
 	return 0;
 }
 
-void cb_pci_detach(void)
+void cb_pci_detach(gpib_driver_t *driver)
 {
 	if(ioports_allocated)
 	{
@@ -583,7 +583,7 @@ int board_attach(void)
 #if defined(MODBUS_PCI) || defined(INES_PCI)
 	isr_flags |= SA_SHIRQ;
 #endif
-	if( request_irq(ibirq, nec7210_interrupt, isr_flags, "gpib", &ibbase))
+	if( request_irq(ibirq, nec7210_interrupt, isr_flags, "gpib", driver))
 	{
 		printk("gpib: can't request IRQ %d\n", ibirq);
 		return -1;

@@ -8,13 +8,13 @@
  */
 IBLCL int ibrsv(uint8_t poll_status)
 {
-	int status = driver->update_status();
+	int status = driver->update_status(driver);
 
-	if((status & CIC)) 
+	if((status & CIC))
 	{
 		printk("gpib: interface requested service while CIC\n");
 		return -1;
 	}
-	driver->serial_poll_response(poll_status);		/* set new status to v */
+	driver->serial_poll_response(driver, poll_status);		/* set new status to v */
 	return 0;
 }

@@ -8,7 +8,7 @@ extern int drvstat,ib_opened;
 IBLCL int ibsre(int enable)
 {
 	pgmstat |= PS_SAC;
-	driver->remote_enable(enable);	/* set or clear REN */
+	driver->remote_enable(driver, enable);	/* set or clear REN */
 	if( !enable ) drvstat &= ~DRV_REN;
 	else drvstat |= DRV_REN;
 

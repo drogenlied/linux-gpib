@@ -19,7 +19,7 @@
 #include "board.h"
 
 // XXX
-IBLCL ssize_t nec7210_command(uint8_t *buffer, size_t length)
+IBLCL ssize_t nec7210_command(gpib_driver_t *driver, uint8_t *buffer, size_t length)
 {
 	size_t count = 0;
 
