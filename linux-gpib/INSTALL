@@ -90,7 +90,7 @@ o) Unpacking the Software:
 	1) Get a copy of the kernel source that matches the kernel you are
 		running.  Unpack it and copy your kernel config file to '.config'
 		in the top directory of your kernel source.
-	2) run 'make oldconfig' in you kernel source directory.
+	2) run 'make oldconfig' in your kernel source directory.
 	3) You might need to edit the file 'Makefile' in the kernel source.
 		At the top of the Makefile, the variable EXTRAVERSION is defined.
 		If necessary, change it to match your kernel (for example, if the command

@@ -5,7 +5,6 @@
 #include <linux/fs.h>
 
 #include <autoconf.h>
-#include <gpib_board.h>
 
 #include <gpib_config.h>
 #include <gpib_debug.h>

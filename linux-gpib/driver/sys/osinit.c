@@ -29,12 +29,6 @@
 #endif
 MODULE_LICENSE("GPL");
 
-MODULE_PARM(ibmajor, "i");
-MODULE_PARM_DESC(ibmajor, "major device number of gpib device file");
-MODULE_PARM(dbgMask, "i");
-MODULE_PARM_DESC(dbgMask, "controls amount of debugging information the module
- dumps");
-
 /* default debugging level */
 
 #if DEBUG
@@ -184,8 +178,6 @@ struct file_operations ib_fops =
 	get_unmapped_area: NULL,
 };
 
-int ibmajor = IBMAJOR;   /* major number for dynamic configuration */
-
 gpib_device_t device_array[MAX_NUM_GPIB_DEVICES];
 
 LIST_HEAD(registered_drivers);
@@ -204,12 +196,12 @@ void gpib_unregister_driver(gpib_interface_t *interface)
 
 int init_module(void)
 {
-	printk("Linux-GPIB Driver Board=%s -- Major=%d\n", BOARD_TYPE, ibmajor);
+	printk("Linux-GPIB Driver ", IBMAJOR);
 	printk("-- Kernel Release %s\n", UTS_RELEASE);
 
-	if(register_chrdev(ibmajor, "gpib", &ib_fops))
+	if(register_chrdev(IBMAJOR, "gpib", &ib_fops))
 	{
-		printk("can't get Major %d\n",ibmajor);
+		printk("can't get Major %d\n", IBMAJOR);
 		return(-EIO);
 	}
 	osMemInit();
@@ -222,7 +214,7 @@ void cleanup_module(void)
 
 	osMemRelease();
 
-	if ( unregister_chrdev(ibmajor, "gpib") != 0 ) {
+	if ( unregister_chrdev(IBMAJOR, "gpib") != 0 ) {
 		printk("gpib: device busy or other module error \n");
 	} else {
 		printk("gpib: succesfully removed \n");
