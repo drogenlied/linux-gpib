@@ -10,7 +10,7 @@ int ibpad( gpib_board_t *board, unsigned int addr )
 {
 	if ( addr > 30 )
 	{
-		printk("gpib: invalid primary address\n");
+		printk("gpib: invalid primary address %u\n", addr );
 		return -1;
 	}else
 	{
@@ -33,7 +33,7 @@ int ibsad( gpib_board_t *board, int addr )
 {
 	if( addr > 30 )
 	{
-		printk("gpib: invalid secondary address, must be 0-30\n");
+		printk("gpib: invalid secondary address %i, must be 0-30\n", addr);
 		return -1;
 	}else
 	{
