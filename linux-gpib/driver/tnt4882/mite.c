@@ -99,11 +99,10 @@ int mite_setup(struct mite_struct *mite)
 		return -EIO;
 	}
 	pci_set_master(mite->pcidev);
-	addr=pci_resource_start(mite->pcidev, 0);
+	addr = pci_resource_start(mite->pcidev, 0);
 	mite->mite_phys_addr=addr;
-	start = mite->mite_phys_addr & PCI_BASE_ADDRESS_MEM_MASK;
+	start = mite->mite_phys_addr;
 	length = pci_resource_len(mite->pcidev, 0);
-// kernel automatically allocates regions for PCI-GPIB for some reason
 	// check and request io memory region
 	if(check_mem_region(start, length)){
 
@@ -114,9 +113,9 @@ int mite_setup(struct mite_struct *mite)
 	mite->mite_io_addr = ioremap(start, length);
 	printk("MITE:0x%08lx mapped to %p ",mite->mite_phys_addr,mite->mite_io_addr);
 
-	addr=pci_resource_start(mite->pcidev, 1);
+	addr = pci_resource_start(mite->pcidev, 1);
 	mite->daq_phys_addr=addr;
-	start = mite->daq_phys_addr & PCI_BASE_ADDRESS_MEM_MASK;
+	start = mite->daq_phys_addr;
 	length = pci_resource_len(mite->pcidev, 1);
 	// check and request io memory region
 	if(check_mem_region(start, length)){
