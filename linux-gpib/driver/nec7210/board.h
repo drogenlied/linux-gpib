@@ -8,8 +8,8 @@
 extern unsigned long ibbase;	/* base addr of GPIB interface registers  */
 extern unsigned long remapped_ibbase;	// ioremapped memory io address
 
-extern uint8       ibirq;	/* interrupt request line for GPIB (1-7)  */
-extern uint8       ibdma ;      /* DMA channel                            */
+extern unsigned int ibirq;	/* interrupt request line for GPIB (1-7)  */
+extern unsigned int ibdma ;      /* DMA channel                            */
 extern struct pci_dev *ib_pci_dev;	// pci_dev for plug and play boards
 
 extern volatile int noTimo;     /* timeout flag */
