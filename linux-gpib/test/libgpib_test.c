@@ -201,6 +201,8 @@ static int master_read_write_test(int board, const struct program_options *optio
 		return -1;
 	for( i = 0; i < 2; i++ )
 	{
+		if(options->verbosity)
+			fprintf(stderr, "\tloop %i\n", i);
 		status = ibwrt( ud, read_write_string1, strlen( read_write_string1 ) + 1 );
 		if( ( status & ERR ) || !( status & CMPL ) )
 		{
@@ -216,7 +218,7 @@ static int master_read_write_test(int board, const struct program_options *optio
 			ibonl( ud, 0 );
 			return -1;
 		}
-		if( strcmp( buffer, read_write_string2 ) )
+		if(strcmp(buffer, read_write_string2))
 		{
 			PRINT_FAILED();
 			fprintf( stderr, "received bytes:%s\n", buffer );
