@@ -1,0 +1,34 @@
+
+PCMCIADIR = /usr/local/src/stuff/pcmcia-cs-2.9.1
+
+OBJS =  adjcount.o cmd.o dma.o init.o lines.o read.o util.o \
+	wait.o write.o aux.o io.o gpib_cs.o gpib_pci.o
+SRCS =  adjcount.c cmd.c dma.c init.c lines.c read.c util.c \
+	wait.c write.c aux.c io.c gpib_cs.c gpib_pci.c
+
+INCLUDES = -I. -I../include -I$(PCMCIADIR)/include
+LD = ld -r
+
+
+CFLAGS = -Wall $(INCLUDES) -D__KERNEL__ -DLINUX -O6 -m486 $(OPTIONS) -DMODULE
+
+all: board_proto.h depend board.o
+
+board.o: $(OBJS)
+	$(LD) -o board.o $(OBJS)
+
+
+clean:
+	-rm *.o board_proto.h .depend
+
+
+depend .depend: $(SRCS) 
+	$(CPP) $(CFLAGS) -M $(SRCS)  >./.depend
+
+include .depend
+
+board_proto.h:
+	../../util/mkproto.sh board_proto.h
+
+
+

@@ -1,0 +1,153 @@
+#######################################################################
+#
+#  Makefile for linux at-gpib driver Version 0.1
+#  
+#   
+#
+#
+#
+########################################################################
+# Choose a unique Major number for your device look at
+# ~/linux/include/linux/majors.h
+#
+DRIVER_DEVICE_ID = 0
+#DRIVER_MAJOR = 31   no longer used
+
+DEBUG_LEVEL=0x3d
+ROOT=..
+
+include $(ROOT)/util/.config
+
+
+########################################################################
+#
+#  Configuration Options
+#
+#  -DSLOW_IO if  you need to slow down bus i/o
+#  -DREALLY_SLOW_IO (in addition to SLOW_IO) makes i/o slower
+#
+#  -DBUILD_DEBUG build version with built in debugging code that
+#                helps to trace errors (the size of the module grows up to
+#                7 pages)
+#
+#
+#  -DHAS_SEMAPHORES if your kernel has semaphores (1.0 and higher has)
+#
+#  -DUSE_DMA to enable DMA Transfer Mode
+
+OPTIONS = -DHAS_SEMAPHORES 
+
+#######################################################################
+#
+#  Do not Edit below
+#
+
+.SILENT:
+
+EXPORTED_INCLUDES = gpib_types.h gpib_registers.h gpib_ioctl.h gpib_user.h 
+EXP_INC = $(EXPORTED_INCLUDES:%=$(ROOT)/include/%)
+CWD := `pwd`
+
+OBJS =     ./sys/sys.o  ./protocol/ieee488.o  ./board/board.o #./kernel_version.o
+
+MAKE = make  OPTIONS="$(OPTIONS) " -C
+SUBDIRS = board protocol sys
+
+
+all : .proto_stamp $(EXP_INC) subdirs gpib$(DRIVER_DEVICE_ID).o
+
+
+.proto_stamp: 
+	set -e; \
+	for i in $(SUBDIRS); do \
+		$(ECHO) "|||" Generating $(BOLD)prototypes$(NBOLD) in subdirectory $(BOLD)$$i$(NBOLD)... ; \
+		$(ROOT)/util/mkproto.sh $$i >./include/"$$i"_proto.h; \
+		$(ECHO) "|||" Leaving subdirectory $(BOLD)$$i$(NBOLD)...; \
+	done	
+	touch .proto_stamp
+
+
+
+
+subdirs:
+	set -e; \
+	for i in $(SUBDIRS); do \
+		$(ECHO) "|||" Making target $(BOLD)all$(NBOLD) in subdirectory $(BOLD)$$i$(NBOLD)... ; \
+		$(MAKE) $$i all ; \
+		$(ECHO) "|||" Leaving subdirectory $(BOLD)$$i$(NBOLD)...; \
+	done	
+
+gpib$(DRIVER_DEVICE_ID).o: $(OBJS)
+	$(RLINK) -o gpib$(DRIVER_DEVICE_ID).o $(OBJS) 
+
+clean :
+	$(RM) *.o kernel_version.c $(EXP_INC)
+	set -e; \
+	for i in $(SUBDIRS); do \
+		$(ECHO) "|||" Making target $(BOLD)$@$(NBOLD) in subdirectory $(BOLD)$$i$(NBOLD)... ; \
+		$(MAKE) $$i NODEPS=y clean ; \
+		$(ECHO) "|||" Leaving subdirectory $(BOLD)$$i$(NBOLD)...; \
+	done
+	rm .proto_stamp		
+
+
+depend :
+	set -e; \
+	for i in $(SUBDIRS); do \
+		$(ECHO) "|||" Making target $(BOLD)$@$(NBOLD) in subdirectory $(BOLD)$$i$(NBOLD)... ; \
+		$(MAKE) $$i depend ; \
+		$(ECHO) "|||" Leaving subdirectory $(BOLD)$$i$(NBOLD)...; \
+	done
+
+load:
+	/sbin/insmod gpib$(DRIVER_DEVICE_ID).o 
+
+dload:
+	/sbin/insmod gpib$(DRIVER_DEVICE_ID).o dbgMask=$(DEBUG_LEVEL)
+
+unload:
+	-/sbin/rmmod gpib$(DRIVER_DEVICE_ID)
+
+test:  unload load run-test unload
+
+
+device:
+	mknod /dev/gpib$(DRIVER_DEVICE_ID)/master c $(DRIVER_MAJOR) 0
+
+
+
+install:
+	$(INSTALL) gpib$(DRIVER_DEVICE_ID).o /lib/modules/`uname -r`/misc
+
+
+
+# make module version matching kernel version
+kernel_version.c: 
+	@echo char kernel_version[] = \"`uname -r`\"\; > kernel_version.c
+
+
+
+
+
+
+rcsput:
+	ci -u $(SRCS) *.h
+
+rcsget:
+	for i in  ./RCS/*,v ; do co -l `basename $$i ,v` ;done
+
+
+include $(ROOT)/makefile.inc
+
+
+$(EXP_INC):
+	$(ECHO) --- Creating $(BOLD)$@$(NBOLD)...
+	rm -f $@
+	ln -s $(CWD)/include/`basename $@` $@
+
+
+
+
+
+
+

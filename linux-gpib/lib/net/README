@@ -1,0 +1,108 @@
+
+
+##################################################################################
+
+Remote GPIB extension for Linux-GPIB
+
+ Protocol Version 1.1 (C) C.Schroeter
+
+##################################################################################
+
+ o The files in this directory are Alpha code don't expect
+   that everything works perfectly.
+
+ 
+ Theory of operation:
+ ---------------------
+
+  The Idea of the Remote GPIB feature was to extend the GPIB transparently
+  over the network without getting the applications too complex. 
+  The remote GPIB consist of two basic elements:
+
+     1.) The GPIB Library has client routines that sends requests
+         to the rGPIB Server via RPC.
+
+     2.) The rGPIB Server checks if the connecting host is allowed to
+         connect and looks up the desired GPIB-Device in his local 
+         configuration. If the device is found and the client is
+         allowed to connect, the unit descriptor of the device is returned
+         to the client.
+
+  For the user this concept makes networking very easy. The main change
+  for applications will be that the Namespace for device will be expanded
+  to the whole network.
+  The second advantage of this concept is that applications can be tested
+  on a remote machine without having an own GPIB card.
+
+ Notes:
+ ----------------------
+
+   Since RPC is used to transfer the packets to and from the server
+   make sure that your RPC Portmapper is running on both your local
+   and the remote machine.
+
+ Example:
+ ----------------------
+   
+   Imagine you have a DVM that is connected to a host say 'beaver.chemie.fu-berlin.de'        
+   and your local machine is called 'kamikaze.chemie.fu-berlin.de'
+
+   The Busmaster configuration section of your /etc/gpib.conf on beaver
+   must contain the section for the busmaster device 'gpib0'
+
+   ----------------------------------------------------------------------
+
+   device {
+	name = gpib0
+        pad = 0
+        sad = 0
+        master
+
+        network *.fu-berlin.de:kamikaze.*:localhost:
+   }
+
+   ----------------------------------------------------------------------
+
+   The 'network' line of this entry configures the server to accept any host
+   with domain .fu-berlin.de. and requests from local clients
+
+   now start the rGPIB server on your host (kamikaze)
+
+   $rgpib_svc 
+
+   if you started the xconsole before you will see greeting messages from the server
+   on the console window now.
+
+   Now let us see how the application makes their requests to the server:
+
+   ----------------------------------------------------------------------
+
+   #include<ib.h>
+
+
+   main(){
+
+	int remote_device;
+
+
+        if(( remote_device = ibfind("kamikaze.chemie.fu-berlin.de:dvm")) & ERR ) {
+		error("Can't find device");
+                exit(1);
+        }
+
+	if( ibwrt(remote_device("D1 Hallo") & ERR ) {
+		error("ibwrt error");
+        }
+
+
+   }
+
+   ----------------------------------------------------------------------
+
+   Simple isn't it ? the only change to applications is the server's network address
+   added to the device name the unit descriptor now changes into a network unit descriptor
+   and can be used as usual.
+
+   
+
+

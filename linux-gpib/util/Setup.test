@@ -1,0 +1,42 @@
+
+
+##########
+#
+# loading and testing driver
+#
+##########
+
+errl=0
+
+(cd ..;make unload load)
+
+rm -f /tmp/ibchklog
+./ibchk >/tmp/ibchklog
+if [ $? = 1 ] ; then
+	errl=1
+fi
+
+dialog --title "Output From ibchk Program" --textbox /tmp/ibchklog 20 70
+
+
+if [ $errl = 0 ] ; then
+dialog --msgbox "
+\n\
+            Compilation Finished ! \n\
+\n\
+      Now Type 'make install' to install\n\
+      Linux-GPIB on your system " 12 60 
+
+else
+
+dialog --msgbox "
+\n\
+            An Error occured with ibchk ! \n\
+\n\
+      Now its time to read the README's and 
+      the Manuals to fix the Problem :)\n\
+
+      " 12 60 
+
+
+fi

@@ -1,0 +1,27 @@
+  /scratch3/projects/linux-gpib/driver/hp82335:
+  total 59
+  drwxr-xr-x   2 root     root         1024 Aug 24 08:49 .
+  drwxr-xr-x  10 root     root         1024 Aug 30 17:16 ..
+  -rw-r--r--   1 root     root          151 Jun 11  1997 ChangeLog
+  -rw-r--r--   1 root     root          145 Jun 11  1997 ChangeLog~
+  -rw-r--r--   1 root     root          481 Aug 24 08:49 Makefile
+  -rw-r--r--   1 root     root          472 May  5 06:45 Makefile~
+  -rw-r--r--   1 root     root          736 Feb  8  1996 adjcount.c
+  -rw-r--r--   1 root     root         1719 Apr  6  1996 aux.c
+  -rw-r--r--   1 root     root          604 Apr  9  1997 board.h
+  -rw-r--r--   1 root     root          611 Feb 21  1996 board.h~
+  -rw-r--r--   1 root     root         2608 Apr  5  1996 cmd.c
+  -rw-r--r--   1 root     root         1573 Feb  8  1996 dma.c
+  -rw-r--r--   1 root     root         3174 Jun 11  1997 init.c
+  -rw-r--r--   1 root     root         3010 Apr  9  1997 init.c~
+  -rw-r--r--   1 root     root          660 Apr  9  1997 io.c
+  -rw-r--r--   1 root     root          486 Feb 10  1996 io.c~
+  -rw-r--r--   1 root     root          209 Feb 11  1996 lines.c
+  -rw-r--r--   1 root     root         3934 Jun 11  1997 read.c
+  -rw-r--r--   1 root     root         5117 Apr  5  1996 read.c~
+  -rw-r--r--   1 root     root         5106 Aug 30 17:25 reald.c.old
+  -rw-r--r--   1 root     root         6442 Jun 11  1997 read.old.c~
+  -rw-r--r--   1 root     root         2262 Aug 13  1997 util.c
+  -rw-r--r--   1 root     root         2265 Apr  6  1996 util.c~
+  -rw-r--r--   1 root     root         2027 Apr  5  1996 wait.c
+  -rw-r--r--   1 root     root         3467 Apr  6  1996 write.c

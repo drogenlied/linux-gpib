@@ -1,0 +1,73 @@
+
+##########
+#
+# installation Setup 
+#
+##########
+
+driver_file=gpib0
+config_file=/etc/rc.d/rc.local
+insmod=/sbin/insmod
+options=""
+
+
+grep -q $driver_file $config_file
+if [ $? = 1 ]; then
+
+
+dialog --yesno "\
+
+   Your system has not been configured to 
+   load the Driver at boot-time. 
+   Add the entry to $config_file ?\
+" 10 60
+        if [ $? = 0 ];then
+
+
+	dialog --yesno "\
+
+Do you want to specify some additional options
+to insmod? This should be done if you want to use
+the VFS interface.
+
+" 10 60
+
+	  if [ $? = 0 ]; then
+		dialog --inputbox "
+            Options for insmod:
+for example 'ibbase=<my base> ibdma=<my dma>'
+
+" 13 60 2>/tmp/reply
+
+	    if [ $? = 0 ]; then
+		options=`cat /tmp/reply`
+	    else
+		echo Cancelled!
+                exit 0
+	    fi	
+	  fi
+
+	  echo installing....
+
+	  cp $config_file $config_file.bak
+
+          echo >>$config_file
+          echo "# GPIB Driver Loading" >>$config_file
+#	  echo "if [ -r $driver_file ];then " >>$config_file
+          echo "   echo Loading GPIB Module" >>$config_file
+          echo "   $insmod $driver_file $options"  >>$config_file
+#          echo "fi" >>$config_file
+
+	  dialog --clear --msgbox "\
+
+
+The old $config_file has been saved to 
+$config_file.bak. If you want to disable 
+loading at boot-time please remove
+the entry from $config_file.
+ 
+" 20 70
+
+
+	fi
+fi

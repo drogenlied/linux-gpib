@@ -1,0 +1,38 @@
+
+
+ Welcome To the new Linux GPIB Package Version
+ -------------------------------------------------------------------------
+
+   - I added support for MODBUS-PCI
+
+   - I applied some useful patches as
+
+       * the atgpib timing bug fix
+       * some Makefile cosmetics contributed by tobias blomberg
+       * some prototype cosmetics (not fully complete yet)
+       
+ 
+ ____________________________________________________________________
+  cheers
+  clausi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

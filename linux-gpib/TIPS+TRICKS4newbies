@@ -1,0 +1,110 @@
+
+**
+If you're familiar with the GPIB system for linux you need not read this file.
+**
+
+
+WHAT TO DO ON PROBLEMS ?
+----------------------------------------------------------------------
+
+If you're running into problems -- please --- before you post your problem to 
+the LLP list or me read the README files provided with the package, especially
+the board or software component relevant files. This saves some valuable time
+that could be used better for driver development/improvement.
+
+If you can't find some hints in the documentation, here are some additional 
+tips what you may do next to solve the problem. 
+
+TROUBLE DURING INSTALLATION ?
+----------------------------------------------------------------------
+
+Some strange problems during compilation may occur if software components, 
+that are normally present under linux, are missing. Here is a short list
+what packages you have to install on linux _before_ you try to compile
+the package.
+
+Checklist:
+
+   - The kernel sources
+        [ see if /usr/src/linux exists ]
+
+   - The C development environment (don't laugh, I've seen that problem)
+	[ try typing gcc and make ]
+
+   - The modutils package for loading kernel modules
+	[ see if /sbin/insmod exists ]
+
+   - The dialog package (this is normally used in the base installation disks) 
+   	[ see if the dialog command does something ]
+
+   - A newer Tcl/Tk version that supports dynamic loading (tcl7.5/tk4.0 or higher)
+        [ see if the wish or tclsh command works properly ]
+
+Read the compiler or script output carefully if you see a real
+error try to backtrace the problem.
+
+Other problems may occur if you selected the wrong configuration 
+parameters during the configuration phase. Or if you pressed once more
+a wrong <Return> on questions.
+
+PROBLEMS DURING TEST PHASE
+---------------------------------------------------------------------  
+
+The package has a automatic testing utility that checks at least some
+basic configuration components during installation and tries to give some
+useful hints what the problem could be. This utility can be used later
+to check a changed configuration or whatever you've done wrong :-).
+just try ./util/ibchk
+
+If the driver module is loaded, the default settings you choosed during the 
+setup phase are used.
+If you use the gpib library with your programs the configuration
+from /etc/gpib.conf will override this configuration and will be made 
+permanent. So sometimes a wrong interrupt or DMA channel in 
+/etc/gpib.conf may cause the problem.
+
+The next step is to configure the gpib library correctly. One problem is
+often a misconfigured EOS byte or wrong EOI modes. 
+This configuration options are used to determine the end of one message
+during transfers. The EOS byte is usually the last byte sent.
+The EOI message is sent using one hardware wire on the bus, normally a 
+transfer ends at least with the EOI message.
+The EOI modes describe how a message should be terminated.
+
+Here are some thumb rules for checking.
+
+  - See if your device can be configured to different EOS bytes
+    (usually at least 0x0a or 0x0d should be possible).
+
+  - check if your device options in the library configuration match
+    these configurations. If you get additional bytes on read
+    the EOS byte may be wrong. If the device reacts on the second or third
+    transfer this problem may be the same.
+
+If you can't determine where the problem is, check out the files
+the system logger writes (usually /usr/adm/messages or /usr/adm/syslog)
+for any GPIB relevant error messages. If you want a more verbose
+error logging output, set the debugging level to say 0x06 to see
+function entrys and exits of the driver.
+
+Avoid naming one device 'gpib0' since this name is conventionally reserved
+for the 'master' device (in other words 'raw' bus access), you should
+try another verbose name like 'joesDVM' or 'headbanger' :-) instead.
+
+WRITING THE FIRST PROGRAM
+---------------------------------------------------------------------
+
+If you want to write an own GPIB program (and I bet you want to do this)
+and you're not very familiar with this stuff, take a look to the example
+files in ./examples and try to understand what each command does.
+If you purchased a brandnew device you may get familiar with this strange 
+thing using the ibconf utility in ./application/ibconf (for this you will 
+need Tcl/Tk !), there you may issue commands to the bus and recieve its 
+results using a simple user interface. 
+BTW: the Tcl/Tk extension is really that thing that makes MS-XXX and WinXXX
+users drooling so you should give it a try (really)
+
+
+OK now slip into the fun stuff
+cheers
+clausi

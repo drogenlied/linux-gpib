@@ -1,0 +1,282 @@
+
+
+The new drivers for the Hewlett Packard HP27209/82335 is included in this Package.
+Since this card is slight different from the NI boards here some important hints:
+
+-----------------------------------------------------------------------------------
+Disclaimer
+-----------------------------------------------------------------------------------
+
+Note that this piece of code is still in alpha state so please don't expect 
+it runnig under all conditions.
+Some functions are really untested/(known to be buggy).
+
+-----------------------------------------------------------------------------------
+Configuring the cards:
+-----------------------------------------------------------------------------------
+
+
+The 27209 and the 82335 cards are "memory mapped", 
+and are different from most I/O cards, which use an port address space. 
+The legal mappings are into 16 KB blocks of the "reserved" 384 KB of DOS RAM and
+are as follows:
+
+                              +---------------+ E400
+                              | select code 8 |       <-- not recommended
+                              +---------------+ E000
+   default switch setting --> | select code 7 |
+                              +---------------+ DC00
+                              | select code 6 |
+                              +---------------+ D800
+                              | select code 5 |
+                              +---------------+ D400
+                              | select code 4 |
+                              +---------------+ D000
+                              | select code 3 |
+                              +---------------+ CC00
+                              | select code 2 |
+                              +---------------+ C800
+
+The HP 27209 card is also known under the product numbers 82990, 61062, and
+88500; it's the same card no matter what the number. The card has the layout:
+
+   +-----------------------------------------+
+   | 27209                                   |
+   |                                         +----
+   |                                         |
+   |                                         |
+   |                                         |
+   |                                         +--+
+   |                                         |  |
+   |                                         |  |
+   |                                         |  |
+   |   1 +--------+                          |  |
+   |     |        | Configuration Switches   +--+
+   |   0 +--------+ (8)                      |
+   |      87654321                           |
+   |                                         |
+   +---+                             +-------+
+       |                             |       |
+       +-----------------------------+       |
+                                             |
+
+The switches have the default settings:
+
+        27209 Default Switch Settings
+     +---------------------------------+
+   0 | +-+ +-+ +-+ +-+ +-+ +-+ +-+ +-+ |
+     | |X| | | | | | | |X| | | |X| |X| |
+     | +-+ +-+ +-+ +-+ +-+ +-+ +-+ +-+ |
+     | | | |X| |X| |X| | | |X| | | | | |
+   1 | +-+ +-+ +-+ +-+ +-+ +-+ +-+ +-+ |
+     +---------------------------------+
+        1   2   3   4   5   6   7   8
+
+Note that the diagram is upside-down relative to the DIP switch orientation in
+the board-layout diagram; this can be confusing, so I recommend that you hold
+the card upside-down while setting the switches so the orientation matches this
+illustration.
+
+=> Switches 1 to 4 control the card's memory address as follows:
+
+   ___________________________
+
+   switch   select  address
+   1234     code
+   ___________________________
+
+   0000       16    C000
+   0001        1    C400
+   0010        2    C800
+   0011        3    CC00
+   0100        4    D000
+   0101        5    D400
+   0110        6    D800
+   0111        7    DC00
+   1000        8    E000
+   1001        9    E400
+   1010       10    E800
+   1011       11    EC00
+   11xx    12-15    F000-FC00
+   ___________________________
+
+The default address is DC00, or select code 7.
+
+Switch 5 was defined to allow certain antique HP Vectra PCs to boot DOS off an
+external HPIB disk drive (when the appropriate software was installed). This
+switch should always be set to 0, since you may hang your PC if it is set to 1.
+
+Switch 6 does nothing useful, but it should be left set to 1.
+
+Switches 7 and 8 control the PC IRQ level of the card:
+
+   ________________
+
+   PC IRQ    7    8
+   ________________
+
+   3         0    0
+   4         0    1
+   5         1    0
+   6         1    1
+   ________________
+
+The default IRQ level is 3.
+
+* The HP 82335 has the same form-factor, but a different layout. (The two cards
+are easy to distinguish in practice. All the chips on the 27209 are laid out
+horizontally, parallel to the PC-bus edge connector; all the chips on the 82335
+are laid out vertically, at a right angle to the PC-bus edge connector.)
+
+   +-----------------------------------------+
+   | 82335                                   |
+   |                                         +----
+   |                  1    0                 |
+   |                1 +----+                 |
+   |                2 |    |                 |
+   |                3 |    | Configuration   +--+
+   |                4 |    | Switches        |  |
+   |                5 |    | (8)             |  |
+   |                6 |    |                 |  |
+   |                7 |    |                 |  |
+   |                8 +----+                 +--+
+   |                                         |
+   |                                         |
+   |                                         |
+   +---+                             +-------+
+       |                             |       |
+       +-----------------------------+       |
+                                             |
+
+The default settings of the switch are as follows:
+
+      +-----------------+
+   1  |   +----+----+   |  0
+      | 1 |    |XXXX| 0 |
+      |   +----+----+   |
+      | 2 |XXXX|    | 1 |
+      |   +----+----+   |
+      | 3 |XXXX|    | 1 |
+      |   +----+----+   |
+      | 4 |XXXX|    | 1 |
+      |   +----+----+   |
+      | 5 |    |XXXX| 0 |
+      |   +----+----+   |
+      | 6 |    |XXXX| 0 |
+      |   +----+----+   |
+      | 7 |    |XXXX| 0 |
+      |   +----+----+   |
+      | 8 |    |XXXX| 0 |
+      |   +----+----+   |
+      +-----------------+
+
+The switch numbering is on the left; the actual values of the default settings
+are on the right. Note that if the DIP uses slide switches, a "0" corresponds
+to the slide pushed to the right; if the DIP uses rocker switches, a "0"
+corresponds to the switch depressed on the right.
+
+Switches 1-4 control the card's PC bus address and interface select code (ISC);
+they operate the same as they do with the 27209:
+
+   _________________________
+
+   switch   select  address
+   1234     code
+   _________________________
+
+   0000       16    C000
+   0001        1    C400
+   0010        2    C800
+   0011        3    CC00
+   0100        4    D000
+   0101        5    D400
+   0110        6    D800
+   0111        7    DC00
+   1000        8    E000
+   1001        9    E400
+   1010       10    E800
+   1011       11    EC00
+   11xx    12-15    F000-FC00
+   __________________________
+
+The default setting is ISC 7. Switches 5 & 6 control the PC interrupt level;
+they operate as do switches 7 and 8 on the 27209 card:
+
+   ________________
+
+   PC IRQ    5    6
+   ________________
+
+   3         0    0
+   4         0    1
+   5         1    0
+   7         1    1
+   ________________
+
+The default setting is IRQ 3. Switches 7 and 8 are not used.
+
+
+------------------------------------------------------------------------------
+Configuring the Driver:
+------------------------------------------------------------------------------
+
+
+Select your base address the same as you jumpered on Your HPIB board
+in C-notation (in /etc/gpib.conf or with insmod):
+
+for example:
+      
+      base    = 0xdc00
+
+the last '0' is ommited in the configuration but the real memory address
+will be calculated inside the driver.
+
+
+
+
+------------------------------------------------------------------------------
+BUGS & Caveats
+------------------------------------------------------------------------------
+
+*** The code is still in untested (alpha) state.
+
+    * I tested read/write, basic commands andSRQ generation with an old 
+    prema multimeter (so I don't know if any other device works).
+
+    * The 9914 has no direct support for being secondary addressed (I leaved the
+    code in but I bet that it will not work).
+
+    * If you use raw bus access you should always send a UNL message if you
+    want to change the adressed state of the controller. UNL is implemented
+    to reset Active talker or listener state of the controller. The device
+    function code has been changed to send always UNL as first command so
+    if you use normal device access (without master flag set) everything
+    should be used as usual. 
+
+    * DMA is not supported
+
+    * the 9914 has no eosmode register, so I implemented a simple
+    emulation in hp82335/read.c.
+
+    * With some PCI systems the card is reported to have Problems
+    if the 16kb Memory block can't be excluded from cacheing.
+
+Please send your bug reports to the Linux-GPIB mailing list:
+
+gpib@listserv.llp.fu-berlin.de
+
+
+------------------------------------------------------------------------------
+ACKNOWLEDGEMENTS
+------------------------------------------------------------------------------
+
+Many thanks to Mr. Greg Goebel From HP Colorado PCTM Center 
+and Mr. Peter Kasenbacher from the German HP Support Service for their 
+great help and for sending me the HPIB card for testing.
+
+Thanks to Texas Instruments EPIC for sending me the 9914 documents and to 
+Remy Claverie who sent me the first infos about this cards and triggered me
+to do the port.
+
+(And of course thanks for Easter holiday (nights) for giving me the time  :) )
+

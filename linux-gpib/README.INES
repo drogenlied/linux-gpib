@@ -1,0 +1,54 @@
+**IMPORTANT NOTE**
+This code is still alpha, so don't expect it works immediately...
+
+Ines provided support for the PCI and PCMCIA (PCCARD) interface type  
+both are supported in nec7210 emulation mode.
+
+here some hints for installation:
+
+
+PCI-GPIB:
+   
+   just install your card on the bus, the driver will ask all
+   parameters from the PCI bios.   
+    
+PCMCIA:
+
+   with the PCMCIA board you will need david hinds PCMCIA card services
+   to be installed on your system.
+   it can be found on 
+   http://hyper.stanford.edu/~dhinds/pcmcia/pcmcia.html
+   ( I use version 2.9.1 )
+   
+   next add the GPIB card to your /etc/pcmcia/config
+   for this add 
+
+   device "ines_cs"
+      module "gpib0"
+
+   to the device section of the pcmcia config and
+
+   card "INES GPIB card"
+      version "ines, inc.", "IEEE488.2 PCMCIA", "*", "*" 
+      bind "ines_cs"
+
+   to the card section, don't forget to restart your cardmgr daemon 
+   (by sending a HUP signal ) to recognize the changes.
+
+   now it's time to install the linux-gpib system. If the compilation 
+   finished copy your new gpib driver (driver/gpib0.o) to the pcmcia
+   drivers location
+
+   cp drivers/gpib0.o /lib/modules/<your kernel version>/pcmcia
+
+   now insert your pcm-gpib card and if you hear the two beeps
+   look out in /usr/adm/debug or /usr/adm/messages if the card has 
+   been recognized by the card service manager.
+
+   try to run the util/ibchk utility to check if your configuration is OK.
+   
+
+
+Good Luck
+cheers
+clausi

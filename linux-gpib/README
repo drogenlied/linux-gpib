@@ -1,0 +1,46 @@
+
+      =====================================================
+
+
+		    The Linux GPIB Package           
+             ----------------------------------- 
+                 (c) 1994,1995,1996 by C.Schroeter       
+
+      
+      =====================================================
+
+
+
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      SEE README.PCIIa if you have a pcIIa card
+      SEE README.hp82335 if you have this card or 27209
+      SEE README.<mycard> for your card type
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+      This is Linux-GPIB the IEEE-488 card support
+      package and measurement suite for LINUX.
+
+
+      Send comments, questions and suggestions to 
+      clausi@chemie.fu-berlin.de!
+      or better to the linux-gpib mailing list
+      gpib@listserv.llp.fu-berlin.de
+
+      *************** COPYRIGHT NOTICE ***********************
+
+	If You want to use the Package for Commercial Purpose
+	Please read the COPYRIGHTS File very Carefuly.
+
+      ********************************************************
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,5 @@
+Wed Jun 11 21:05:10 1997  root  <root@localhost.(none) (root)>
+
+	* init.c 
+          : Added patches to avoid RHDF sent twice that causes byte losses
+

@@ -1,0 +1,48 @@
+
+Begin2 
+Title        = The Linux GPIB-Package
+Version      = 2.02
+Desc1        = Driver Module for National Instruments GPIB (IEEE488) boards,
+Desc2        = pcIIa (alpha), and HP82335 HPIB boards, C-Interface library,
+Desc3        = Tcl/Tk frontend.
+Desc4        = 
+Desc5        = 
+Author       = Claus Schroeter
+AuthorEmail  = clausi@chemie.fu-berlin.de
+Maintainer   = Claus Schroeter
+MaintEmail   = clausi@chemie.fu-berlin.de
+Site1        = ftp.llp.fu-berlin.de
+Path1        = /pub/linux/LINUX-LAB/IEEE488
+File1        = linux-gpib-<version>.tar.gz
+FileSize1    = ca 1M
+Site2        = 
+Path2        = 
+File2        = 
+FileSize2    = 
+Site3        = 
+Path3        = 
+File3        = 
+FileSize3    = 
+Site4        = 
+Path4        = 
+File4        = 
+FileSize4    = 
+Required1    = Linux Kernel >= 2.0.0 && <2.1.0
+Required2    = The Modutils Package, GPIB card (of course)
+Required3    = if you want to use ibsh (recommended) you have to install
+Required4    = Tcl7.5 Tk4.0
+CopyPolicy1  = GPL 
+CopyPolicy2  = 
+Keywords     = gpib, ieee488, HPIB
+Comment1     = See:
+Comment2     = http://www.llp.fu-berlin.de
+Comment3     = 
+Comment4     = 
+RelFiles1    = 
+RelFiles2    = 
+RelFiles3    = 
+Entered      = 
+EnteredBy    = Claus Schroeter
+CheckedEmail = clausi@chemie.fu-berlin.de
+End 
+ 

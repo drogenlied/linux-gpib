@@ -1,0 +1,12 @@
+
+ Here are a few examples that shows how Linux-GPIB can be used
+ using special features of the driver.
+ 
+ If you have another example and you think it is worth to have it here please let
+ me know.
+
+ Of course the examples doesn't make use of any special functionality
+ of the driver, I implemented 'compareable actions' to see the special
+ caveats with the different access methods.
+
+

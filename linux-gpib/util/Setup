@@ -1,0 +1,88 @@
+#! /bin/sh
+#
+# This script is used to configure the gpib package
+#
+[ -z "$BASH" ] && { echo "Configure requires bash" 1>&2; exit 1; }
+
+# Disable filename globbing once and for all.
+# Enable function cacheing.
+set -f -h
+
+clear 
+
+
+if [ ! -x /bin/dialog -a ! -x /usr/bin/dialog -a ! -x /usr/local/bin/dialog ] ; then
+  echo
+  echo "The dialog program is not installed correctly on your system"
+  echo "it should be in /bin/dialog, /usr/bin/dialog or /usr/local/bin/dialog,"
+  echo "please get the package from sunsite"
+  echo "or install it from your linux distribution."
+  echo 
+  echo "BTW: next time please read the INSTALL and README files"
+  echo
+exit 1
+fi
+
+
+function set_var() {
+	echo "  $1 = $2" >>$CONFIG
+	echo "#define $1 ($2)" >>$CONFIG_H
+	eval "$1=$2"
+}
+
+function set_svar() {
+	echo "  $1 = $2" >>$CONFIG
+	echo "#define $1 \"$2\"" >>$CONFIG_H
+	eval "$1=$2"
+}
+
+function get_reply() {
+	if [ $1 = 1 -o $1 = 255 ];then
+	 rm -f /tmp/reply
+	dialog --clear --msgbox " 
+  \n\
+  Exit Configuration Program \n\
+  \n" 10 60
+	 reset
+	 exit 1
+	fi 
+	eval REPLY="`cat /tmp/reply`"
+	rm -f /tmp/reply
+}
+
+function get_result() {
+	if [ $1 = 1 -o $1 = 255 ];then
+	 rm -f /tmp/reply
+         eval RESULT=$DEFAULT_RESULT
+	fi 
+	eval RESULT="`cat /tmp/reply`"
+	rm -f /tmp/reply
+}
+
+
+
+case $1 in 
+######################################################################
+--test)
+
+. ./Setup.test
+
+exit 0
+;;
+######################################################################
+--contrib)
+
+. ./Setup.contrib
+
+exit 0
+;;
+*)
+######################################################################
+
+. ./Setup.in
+
+exit 0
+;;
+######################################################################
+
+esac

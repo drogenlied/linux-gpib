@@ -1,0 +1,118 @@
+#######################################################################
+#
+#  Makefile for linux at-gpib driver Version 0.1
+#  
+#   
+#
+#
+#
+########################################################################
+# Choose a unique Major number for your device look at
+# ~/linux/include/linux/majors.h
+#
+DRIVER_DEVICE_ID = 0
+#DRIVER_MAJOR = 31   no longer used
+
+DEBUG_LEVEL=0x3d
+
+
+include ../util/.config
+
+
+########################################################################
+#
+#  Configuration Options
+#
+#  -DSLOW_IO if  you need to slow down bus i/o
+#  -DREALLY_SLOW_IO (in addition to SLOW_IO) makes i/o slower
+#
+#  -DBUILD_DEBUG build version with built in debugging code that
+#                helps to trace errors (the size of the module grows up to
+#                7 pages)
+#
+#
+#  -DHAS_SEMAPHORES if your kernel has semaphores (1.0 and higher has)
+#
+#  -DUSE_DMA to enable DMA Transfer Mode
+
+OPTIONS = -DHAS_SEMAPHORES 
+
+#######################################################################
+#
+#  Do not Edit below
+#
+
+LD = ld -r
+
+OBJS =     ./sys/sys.o  ./protocol/ieee488.o  ./board/board.o ./kernel_version.o
+
+MAKE = make  OPTIONS="$(OPTIONS) " -C
+SUBDIRS = board protocol sys
+
+
+all : subdirs gpib$(DRIVER_DEVICE_ID).o
+
+depend:
+	set -e;for i in $(SUBDIRS); do $(MAKE) $$i depend ; done
+
+subdirs:
+	set -e;for i in $(SUBDIRS); do $(MAKE) $$i ; done	
+
+gpib$(DRIVER_DEVICE_ID).o: $(OBJS)
+	$(LD) -o gpib$(DRIVER_DEVICE_ID).o $(OBJS) 
+
+clean :
+	-rm *.o kernel_version.c
+	set -e;for i in $(SUBDIRS); do $(MAKE) $$i clean ; done	
+	-rm board
+
+depend :
+	set -e;for i in $(SUBDIRS); do $(MAKE) $$i depend ; done	
+
+load:
+	/sbin/insmod gpib$(DRIVER_DEVICE_ID).o 
+
+dload:
+	/sbin/insmod gpib$(DRIVER_DEVICE_ID).o dbgMask=$(DEBUG_LEVEL)
+
+unload:
+	-/sbin/rmmod gpib$(DRIVER_DEVICE_ID)
+
+test:  unload load run-test unload
+
+
+device:
+	mknod /dev/gpib$(DRIVER_DEVICE_ID)/master c $(DRIVER_MAJOR) 0
+
+
+
+install:
+	install gpib$(DRIVER_DEVICE_ID).o /lib/modules/`uname -r`/misc
+
+
+
+# make module version matching kernel version
+kernel_version.c: 
+	@echo char kernel_version[] = \"`uname -r`\"\; > kernel_version.c
+
+
+
+
+
+
+rcsput:
+	ci -u $(SRCS) *.h
+
+rcsget:
+	for i in  ./RCS/*,v ; do co -l `basename $$i ,v` ;done
+
+
+
+
+
+
+
+
+
+
+
