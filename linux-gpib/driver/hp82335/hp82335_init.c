@@ -215,24 +215,27 @@ int hp82335_attach( gpib_board_t *board )
 		case 0xfc000:
 			break;
 		default:
-			printk( "gpib: invalid base io address 0x%lx\n", board->ibbase );
+			printk( "hp82335: invalid base io address 0x%lx\n", board->ibbase );
 			return -1;
 			break;
 	}
-	if( request_mem_region( board->ibbase, hp82335_iomem_size, "hp82335" ) == NULL )
+	if( request_mem_region( board->ibbase + hp82335_rom_size,
+		hp82335_iomem_size - hp82335_rom_size, "hp82335" ) == NULL )
 	{
-		printk( "gpib: failed to allocate io memory region 0x%lx-0x%lx\n", board->ibbase,
-			board->ibbase + hp82335_iomem_size );
+		printk( "hp82335: failed to allocate io memory region 0x%lx-0x%lx\n", board->ibbase,
+			board->ibbase + hp82335_iomem_size - 1 );
 		return -1;
 	}
 	hp_priv->raw_iobase = board->ibbase;
 	tms_priv->iobase = ( unsigned long ) ioremap( board->ibbase, hp82335_iomem_size );
+	printk("hp82335: 0x%x remapped to 0x%lx\n", hp_priv->raw_iobase,
+		tms_priv->iobase );
 
 	// get irq
 	isr_flags = 0;
 	if( request_irq( board->ibirq, hp82335_interrupt, isr_flags, "hp82335", board ) )
 	{
-		printk( "gpib: can't request IRQ %d\n", board->ibirq );
+		printk( "hp82335: can't request IRQ %d\n", board->ibirq );
 		return -1;
 	}
 	hp_priv->irq = board->ibirq;

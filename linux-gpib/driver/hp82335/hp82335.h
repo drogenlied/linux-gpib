@@ -66,6 +66,7 @@ static const int atgpib_reg_offset = 2;
 
 // size of io memory region used
 static const int hp82335_iomem_size = 0x4000;
+static const int hp82335_rom_size = 0x2000;
 
 // hp82335 register offsets
 enum hp_read_regs
