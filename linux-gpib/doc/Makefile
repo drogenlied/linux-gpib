@@ -14,7 +14,7 @@
 
 all: html man pdf
 
-gpib_version.txt:
+gpib_version.txt: ../util/version
 	cp ../util/version gpib_version.txt
 
 html: linux-gpib.sgml gpib_version.txt

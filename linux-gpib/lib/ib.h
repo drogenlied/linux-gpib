@@ -39,9 +39,9 @@ enum sad_special_address
 
 enum send_eotmode
 {
-	NULLend,
-	DABend,
-	NLend
+	NULLend = 0,
+	DABend = 1,
+	NLend = 2
 };
 
 volatile int ibsta, ibcnt, iberr;
@@ -67,8 +67,8 @@ void Receive( int board_desc, Addr4882_t address,
 void ReceiveSetup( int board_desc, Addr4882_t address );
 void ResetSys( int board_desc, const Addr4882_t addressList[] );
 void Send( int board_desc, Addr4882_t address, const void *buffer,
-	long count, int eotmode );
-void SendCmds( int board_desc, const void *buffer, long count );
+	long count, int eot_mode );
+void SendCmds( int board_desc, const void *cmds, long count );
 void SendDataBytes( int board_desc, const void *buffer,
 	long count, int eotmode );
 void SendIFC( int board_desc );

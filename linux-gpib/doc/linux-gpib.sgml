@@ -4084,7 +4084,7 @@ volatile int ibsta;
 	</title>
 	<para>
 	WaitSRQ() sleeps until either the SRQ
-	<link LINKEND="gpib-protocol-bus-lines">bus lines</link> is
+	<link LINKEND="gpib-protocol-bus-lines">bus line</link> is
 	asserted, or a timeout (see <link LINKEND="reference-function-ibtmo">ibtmo()</link>)
 	occurs.  A '1' will be written to the location specified by
 	<parameter>result</parameter> if SRQ was asserted, and a

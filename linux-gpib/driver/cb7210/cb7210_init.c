@@ -356,8 +356,8 @@ int cb_pci_attach(gpib_board_t *board)
 	if(pci_request_regions(cb_priv->pci_device, "pci-gpib"))
 		return -1;
 
-	cb_priv->amcc_iobase = pci_resource_start(cb_priv->pci_device, 0) & PCI_BASE_ADDRESS_IO_MASK;
-	nec_priv->iobase = pci_resource_start(cb_priv->pci_device, 1) & PCI_BASE_ADDRESS_IO_MASK;
+	cb_priv->amcc_iobase = pci_resource_start( cb_priv->pci_device, 0 );
+	nec_priv->iobase = pci_resource_start( cb_priv->pci_device, 1 );
 
 	isr_flags |= SA_SHIRQ;
 	if(request_irq(cb_priv->pci_device->irq, cb_pci_interrupt, isr_flags, "pci-gpib", board))

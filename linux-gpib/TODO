@@ -32,3 +32,6 @@ stuck SRQ handling
 
 add query to ibask() for support of IFC events
 
+add gpib_config program, with associated changes to more tightly 
+control bringing boards online.
+

@@ -7,8 +7,6 @@ DEPEND	= $(CC)
 RLINK	= ld -r
 LINK	= $(CC)
 INSTALL	= install 
-YACC	= bison -d -y
-LEX	= flex 
 
 
 
