@@ -60,3 +60,4 @@ void ibrsc( gpib_board_t *board, int request_control )
 	}
 	board->interface->request_system_control( board, request_control );
 }
+
