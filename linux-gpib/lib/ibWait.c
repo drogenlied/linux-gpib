@@ -136,16 +136,17 @@ void WaitSRQ( int boardID, short *result )
 	int wait_mask;
 	int status;
 
-	conf = enter_library( boardID );
+	conf = general_enter_library( boardID, 1, 0 );
 	if( conf == NULL )
 	{
-		exit_library( boardID, 1 );
+		general_exit_library( boardID, 1, 0, 0, 0, 0, 1 );
 		return;
 	}
 
 	if( conf->is_interface == 0 )
 	{
 		setIberr( EDVR );
+		general_exit_library( boardID, 1, 0, 0, 0, 0, 1 );
 		return;
 	}
 
@@ -153,7 +154,7 @@ void WaitSRQ( int boardID, short *result )
 	retval = my_wait( conf, wait_mask, 0, 0, &status );
 	if( retval < 0 )
 	{
-		exit_library( boardID, 1 );
+		general_exit_library( boardID, 1, 0, 0, 0, 0, 1 );
 		return;
 	}
 	// XXX need better query of service request state, new ioctl?
@@ -161,5 +162,5 @@ void WaitSRQ( int boardID, short *result )
 	if( ThreadIbsta() & SRQI ) *result = 1;
 	else *result = 0;
 
-	exit_library( boardID, 0 );
+	general_exit_library( boardID, 0, 0, 0, 0, 0, 1 );
 }
