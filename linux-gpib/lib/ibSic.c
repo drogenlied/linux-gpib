@@ -8,7 +8,7 @@ int ibsic(int ud)
 	ibBoard_t *board;
 	int retval;
 
-	conf = enter_library( ud, 1 );
+	conf = enter_library( ud );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 

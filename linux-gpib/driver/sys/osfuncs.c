@@ -151,11 +151,11 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 	}
 	board = &board_array[ minor ];
 
-	GPIB_DPRINTK( "minor %i ioctl %d, ifc=%s, open=%d, onl=%d\n",
-		      minor, cmd&0xff,
-		      board->interface ? board->interface->name : "",
-		      board->open_count,
-		      board->online );
+	GPIB_DPRINTK( "pid %i minor %i ioctl %d, interface=%s, open=%d, onl=%d\n",
+		current->pid, minor, cmd & 0xff,
+		board->interface ? board->interface->name : "",
+		board->open_count,
+		board->online );
 
 	switch( cmd )
 	{
@@ -647,7 +647,8 @@ static int wait_ioctl( gpib_board_t *board, unsigned long arg )
 	if( retval )
 		return -EFAULT;
 
-	retval = ibwait( board, wait_cmd.mask, wait_cmd.pad, wait_cmd.sad );
+	retval = ibwait( board, wait_cmd.mask, wait_cmd.pad,
+		wait_cmd.sad, wait_cmd.usec_timeout );
 	if( retval < 0 ) return retval;
 
 	return 0;
@@ -888,14 +889,18 @@ static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 			printk("gpib: ioctl interrupted while waiting on lock\n");
 			return -ERESTARTSYS;
 		}
+		board->locking_pid = current->pid;
 		file_priv->holding_mutex = 1;
+		clear_bit( CMPL_NUM, &board->status );
 		GPIB_DPRINTK( "locked board mutex\n" );
 	}else
 	{
 		file_priv->holding_mutex = 0;
+		set_bit( CMPL_NUM, &board->status );
 		up( &board->mutex );
 		GPIB_DPRINTK( "unlocked board mutex\n" );
 	}
+
 
 	return 0;
 }

@@ -10,6 +10,7 @@ GPIB_DUMMY_VERSION {
 		ibcac;
 		ibclr;
 		ibcmd;
+		ibcmda;
 		ibcnt;
 		ibconfig;
 		ibdev;

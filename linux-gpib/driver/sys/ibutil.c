@@ -89,7 +89,15 @@ unsigned int full_ibstatus( gpib_board_t *board, const gpib_device_t *device )
 
 	status = ibstatus( board );
 
-	if( num_status_bytes( device ) ) status |= RQS;
+	// fixup RQS, CMPL bits
+
+	if( device )
+		if( num_status_bytes( device ) ) status |= RQS;
+
+	if( ( status & CMPL ) == 0 )
+	{
+		if( board->locking_pid != current->pid ) status |= CMPL;
+	}
 
 	return status;
 }

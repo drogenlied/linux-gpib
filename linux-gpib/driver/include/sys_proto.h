@@ -10,3 +10,4 @@ extern  void osRemoveTimer( gpib_board_t *board );
 extern  void osSendEOI( void );
 extern  void osSendEOI( void );
 extern void init_gpib_board( gpib_board_t *board );
+extern unsigned int usec_to_jiffies( unsigned int usec );

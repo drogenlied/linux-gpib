@@ -1,3 +1,23 @@
+/***************************************************************************
+                          gpib_user.h  -  header file for gpib library
+                             -------------------
+
+    copyright            : (C) 2002 by Frank Mori Hess
+    email                : fmhess@users.sourceforge.net
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
+
+
+#ifndef _GPIB_USER_H
+#define _GPIB_USER_H
 
 /* IBSTA status bits (returned by all functions) */
 
@@ -34,9 +54,12 @@
 #define DCAS_NUM 0
 #define DCAS	(1 << DCAS_NUM)	// device clear state
 
-#define WAITBITS (TIMO | SRQI | RQS | CIC | TACS | LACS)
 // status bits that drivers are responsible for
 static const int DRIVERBITS = ( SRQI | LOK | REM | CIC | ATN | TACS | LACS | DTAS | DCAS );
+
+static const int device_status_mask = ERR | TIMO | END | CMPL | RQS;
+static const int board_status_mask = ERR | TIMO | END | CMPL | SPOLL |
+	EVENT | LOK | REM | CIC | ATN | TACS | LACS | DTAS | DCAS;
 
 /* IBERR error codes */
 
@@ -159,6 +182,8 @@ extern __inline__ int gpib_address_equal( unsigned int pad1, int sad1, unsigned 
 	return 0;
 }
 
+#define NOADDR -1
+
 enum ibask_option
 {
 	IbaPAD = 0x1,
@@ -195,3 +220,5 @@ enum ibask_option
 	IbaBNA = 0x200	/* device only */
 };
 
+
+#endif	/* _GPIB_USER_H */

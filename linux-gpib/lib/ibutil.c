@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 #include "parse.h"
 
 ibConf_t *ibConfigs[NUM_CONFIGS];
@@ -72,9 +73,10 @@ int ibGetDescriptor(ibConf_t p)
 	// search for an unused descriptor
 	for(ib_ndev = 0; ib_ndev < NUM_CONFIGS; ib_ndev++)
 	{
-		if(ibConfigs[ib_ndev] == NULL)
+		if( ibConfigs[ ib_ndev ] == NULL )
 		{
-			ibConfigs[ib_ndev] = malloc(sizeof(ibConf_t));
+			ibConfigs[ ib_ndev ] = malloc( sizeof( ibConf_t ) );
+			init_async_op( &ibConfigs[ ib_ndev ]->async );
 			break;
 		}
 	}
@@ -83,7 +85,7 @@ int ibGetDescriptor(ibConf_t p)
 		setIberr( ETAB );
 		return -1;
 	}
-	conf = ibConfigs[ib_ndev];
+	conf = ibConfigs[ ib_ndev ];
 	/* put entry to the table */
 	strncpy(conf->name, p.name, sizeof(conf->name) );
 	conf->board = p.board;
@@ -265,23 +267,44 @@ int unlock_board_mutex( ibBoard_t *board )
 	return retval;
 }
 
-ibConf_t * enter_library( int ud, int lock_library )
+ibConf_t * enter_library( int ud )
+{
+	return general_enter_library( ud, 0, 0 );
+}
+
+ibConf_t * general_enter_library( int ud, int no_lock_board, int ignore_eoip )
 {
 	ibConf_t *conf = ibConfigs[ ud ];
 	ibBoard_t *board;
 	int retval;
 
-	if( ibCheckDescriptor( ud ) < 0 ) return NULL;
-
+	if( ibCheckDescriptor( ud ) < 0 )
+	{
+		setIberr( EDVR );
+		return NULL;
+	}
 	conf->timed_out = 0;
 
 	board = interfaceBoard( conf );
 
-	if( lock_library )
+	if( no_lock_board == 0 )
 	{
+		if( ignore_eoip == 0 )
+		{
+			if( pthread_mutex_trylock( &conf->async.lock ) )
+			{
+				setIberr( EOIP );
+				return NULL;
+			}else
+			{
+				pthread_mutex_unlock( &conf->async.lock );
+			}
+		}
+
 		retval = lock_board_mutex( board );
 		if( retval < 0 )
 		{
+			setIberr( EDVR );
 			return NULL;
 		}
 		conf->has_lock = 1;
@@ -294,12 +317,6 @@ int ibstatus( ibConf_t *conf, int error )
 {
 	int status = 0;
 	int retval;
-	static const int common_status_mask = ERR | TIMO | END | CMPL;
-	int device_status_mask, board_status_mask;
-
-	device_status_mask = common_status_mask | RQS;
-	board_status_mask = common_status_mask | SRQI |
-		SPOLL | EVENT | LOK | REM | CIC | ATN | TACS | LACS | DTAS | DCAS;
 
 	if( conf->is_interface )
 	{
@@ -343,6 +360,11 @@ int ibstatus( ibConf_t *conf, int error )
 
 int exit_library( int ud, int error )
 {
+	return general_exit_library( ud, error, 0 );
+}
+
+int general_exit_library( int ud, int error, int keep_lock )
+{
 	ibConf_t *conf = ibConfigs[ ud ];
 	ibBoard_t *board;
 	int retval;
@@ -359,7 +381,7 @@ int exit_library( int ud, int error )
 
 	status = ibstatus( conf, error );
 
-	if( conf->has_lock )
+	if( conf->has_lock && !keep_lock )
 	{
 		conf->has_lock = 0;
 		retval = unlock_board_mutex( board );

@@ -1,7 +1,21 @@
+/***************************************************************************
+                              ostimer.c
+                             -------------------
 
-#include <ibsys.h>
+    copyright            : (C) 2001, 2002 by Frank Mori Hess
+    email                : fmhess@users.sourceforge.net
+ ***************************************************************************/
 
-extern unsigned long timeTable[];
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
+
+#include "ibsys.h"
 
 /*
  * Timer functions
@@ -10,6 +24,7 @@ void watchdog_timeout( unsigned long arg )
 /* Watchdog timeout routine */
 {
 	gpib_board_t *board = (gpib_board_t*) arg;
+
 	set_bit( TIMO_NUM, &board->status );
 	wake_up( &board->wait );
 }
@@ -18,13 +33,12 @@ unsigned int usec_to_jiffies( unsigned int usec )
 {
 	unsigned int usec_per_jiffy = 1000000 / HZ;
 
-	return ( usec + usec_per_jiffy - 1) / usec_per_jiffy;
+	return 1 + ( usec + usec_per_jiffy - 1) / usec_per_jiffy;
 }
 
 /* install timer interrupt handler */
 void osStartTimer( gpib_board_t *board, unsigned int usec_timeout )
 /* Starts the timeout task  */
-/* v = index into timeTable */
 {
 	clear_bit( TIMO_NUM, &board->status );
 
@@ -36,7 +50,6 @@ void osStartTimer( gpib_board_t *board, unsigned int usec_timeout )
 		add_timer( &board->timer );              /* add timer           */
 	}
 }
-
 
 void osRemoveTimer( gpib_board_t *board )
 /* Removes the timeout task */

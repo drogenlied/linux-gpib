@@ -7,7 +7,7 @@ int ibeot(int ud, int send_eoi)
 {
 	ibConf_t *conf;
 
-	conf = enter_library( ud, 0 );
+	conf = general_enter_library( ud, 1, 0 );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 

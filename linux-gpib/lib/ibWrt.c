@@ -36,7 +36,7 @@ int find_eos( uint8_t *buffer, size_t length, int eos, int eos_flags )
 	return -1;
 }
 
-ssize_t my_ibwrt( const ibBoard_t *board, const ibConf_t *conf,
+ssize_t my_ibwrt( ibBoard_t *board, ibConf_t *conf,
 	uint8_t *buffer, size_t count )
 {
 	read_write_ioctl_t write_cmd;
@@ -49,7 +49,7 @@ ssize_t my_ibwrt( const ibBoard_t *board, const ibConf_t *conf,
 	if( conf->is_interface == 0 )
 	{
 		// set up addressing
-		if( send_setup( board, conf ) < 0 )
+		if( send_setup( conf ) < 0 )
 		{
 			return -1;
 		}
@@ -100,7 +100,7 @@ int ibwrt(int ud, void *rd, long cnt)
 	ibBoard_t *board;
 	ssize_t count;
 
-	conf = enter_library( ud, 1 );
+	conf = enter_library( ud );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 

@@ -30,9 +30,7 @@
 
 #include "ibConf.h"
 
-#define NOADDR -1
-#define IbcAUTOPOLL 0
-
+extern void init_async_op( struct async_operation *async );
 extern int ibCheckDescriptor(int ud);
 extern  int ibBdChrConfig( ibBoard_t *board );
 extern  void ibBoardDefaultValues(void);
@@ -47,10 +45,10 @@ extern  void ibPutErrlog(int ud,char *routine);
 extern  int ibParseConfigFile(char *filename);
 extern  int ibGetDescriptor(ibConf_t conf);
 extern  int ibFindDevIndex(char *name);
-extern ssize_t my_ibcmd( const ibConf_t *conf, uint8_t *buffer, size_t length);
+extern ssize_t my_ibcmd( ibConf_t *conf, uint8_t *buffer, size_t length);
 extern int config_parsed;
 extern int send_setup_string( const ibConf_t *conf, uint8_t *cmdString );
-extern int send_setup( const ibBoard_t *board, const ibConf_t *conf );
+extern int send_setup( ibConf_t *conf );
 extern void init_ibconf( ibConf_t *conf );
 extern int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout,
 	int send_eoi, int eos, int eosflags);
@@ -65,14 +63,16 @@ extern int gpibi_change_address( ibConf_t *conf,
 extern int lock_board_mutex( ibBoard_t *board );
 extern int unlock_board_mutex( ibBoard_t *board );
 extern int exit_library( int ud, int error );
-extern ibConf_t * enter_library( int ud, int lock_library );
+extern int general_exit_library( int ud, int error, int keep_lock );
+extern ibConf_t * enter_library( int ud );
+extern ibConf_t * general_enter_library( int ud, int no_lock_board, int ignore_eoip );
 extern void setIbsta( int status );
 extern void setIberr( int error );
 extern void setIbcnt( long count );
 extern unsigned int usec_to_timeout( unsigned int usec );
 extern int query_ppc( const ibBoard_t *board );
 
-extern __inline__ ibBoard_t* interfaceBoard( ibConf_t *conf )
+extern __inline__ ibBoard_t* interfaceBoard( const ibConf_t *conf )
 {
 	return &ibBoard[ conf->board ];
 }

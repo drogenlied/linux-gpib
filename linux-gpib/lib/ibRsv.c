@@ -10,7 +10,7 @@ int ibrsv( int ud, int v )
 	int retval;
 	uint8_t status_byte = v;
 
-	conf = enter_library( ud, 1 );
+	conf = enter_library( ud );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 

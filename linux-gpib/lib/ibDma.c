@@ -7,7 +7,7 @@ int ibdma( int ud, int v )
 	ibConf_t *conf;
 	ibBoard_t *board;
 
-	conf = enter_library( ud, 1 );
+	conf = enter_library( ud );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 

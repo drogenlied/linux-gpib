@@ -20,13 +20,13 @@
 
 int ibloc(int ud)
 {
-	ibConf_t *conf = ibConfigs[ud];
+	ibConf_t *conf;
 	ibBoard_t *board;
 	uint8_t cmd[32];
 	unsigned int i;
 	ssize_t count;
 
-	conf = enter_library( ud, 1 );
+	conf = enter_library( ud );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 
@@ -40,10 +40,8 @@ int ibloc(int ud)
 	}
 	cmd[ i++ ] = GTL;
 	count = my_ibcmd( conf, cmd, i);
-
 	if(count != i)
 	{
-		setIberr( EDVR );
 		return exit_library( ud, 1 );
 	}
 

@@ -26,7 +26,7 @@ int ibbna( int ud, char *board_name )
 	int find_index;
 	int old_board_index;
 
-	conf = enter_library( ud, 1 );
+	conf = enter_library( ud );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 

@@ -38,7 +38,7 @@ int ibfind(char *dev)
 		return -1;
 	}
 
-	conf = &ibFindConfigs[index];
+	conf = &ibFindConfigs[ index ];
 
 	uDesc = my_ibdev( conf->board, conf->pad, conf->sad, conf->usec_timeout,
 		conf->send_eoi, conf->eos, conf->eos_flags );
@@ -47,7 +47,7 @@ int ibfind(char *dev)
 		fprintf(stderr, "ibfind failed to get descriptor\n");
 		return -1;
 	}
-	conf = enter_library( uDesc, 0 );
+	conf = general_enter_library( uDesc, 1, 0 );
 
 	if(conf->flags & CN_SDCL)
 	{

@@ -45,8 +45,6 @@ ssize_t ibrd(gpib_board_t *board, uint8_t *buf, size_t length, int *end_flag)
 		board->interface->go_to_standby(board);
 	}
 	osStartTimer( board, board->usec_timeout );
-	// mark io in progress
-	clear_bit(CMPL_NUM, &board->status);
 	// initialize status to END not yet received
 	clear_bit(END_NUM, &board->status);
 
@@ -61,8 +59,6 @@ ssize_t ibrd(gpib_board_t *board, uint8_t *buf, size_t length, int *end_flag)
 	}
 
 	osRemoveTimer(board);
-	// mark io completed
-	set_bit(CMPL_NUM, &board->status);
 
 	return ret ? ret : count;
 }

@@ -9,7 +9,7 @@ int ibrpp( int ud, char *ppr )
 	int retval;
 	uint8_t poll_byte;
 
-	conf = enter_library( ud, 1 );
+	conf = enter_library( ud );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 

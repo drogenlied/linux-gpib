@@ -8,18 +8,44 @@ int ibwait( int ud, int mask )
 	ibBoard_t *board;
 	int retval;
 	wait_ioctl_t cmd;
+	int board_wait_mask, device_wait_mask;
+	int status;
 
-	conf = enter_library( ud, 0 );
+	board_wait_mask = board_status_mask & ~ERR;
+	device_wait_mask = device_status_mask & ~ERR;
+
+	conf = general_enter_library( ud, 1, 0 );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 
 	board = interfaceBoard( conf );
 
-	set_timeout( board, conf->usec_timeout);
+	if( conf->is_interface == 0 &&
+		board->is_system_controller == 0 )
+	{
+		setIberr( ECIC );
+		return exit_library( ud, 1 );
+	}
 
+	cmd.usec_timeout = conf->usec_timeout;
 	cmd.mask = mask;
-	cmd.pad = conf->pad;
-	cmd.sad = conf->sad;
+	if( conf->is_interface == 0 )
+	{
+		cmd.pad = conf->pad;
+		cmd.sad = conf->sad;
+		cmd.mask &= device_wait_mask;
+	}else
+	{
+		cmd.pad = NOADDR;
+		cmd.sad = NOADDR;
+		cmd.mask &= board_wait_mask;
+	}
+
+	if( mask != cmd.mask )
+	{
+		setIberr( EARG );
+		exit_library( ud, 1 );
+	}
 
 	retval = ioctl( board->fileno, IBWAIT, &cmd );
 	if( retval < 0 )
@@ -37,5 +63,15 @@ int ibwait( int ud, int mask )
 		return exit_library( ud, 1 );
 	}
 
-	return exit_library( ud, 0 );
+	status = exit_library( ud, 0 );
+
+	if( conf->async.in_progress && ( status & CMPL ) )
+	{
+		pthread_mutex_lock( &conf->async.lock );
+		conf->async.in_progress = 0;
+		setIbcnt( conf->async.length );
+		pthread_mutex_unlock( &conf->async.lock );
+	}
+
+	return status;
 }

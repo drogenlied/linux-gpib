@@ -44,7 +44,6 @@ int device_ppc( ibConf_t *conf, int ppc_configuration )
 	retval = my_ibcmd( conf, cmd, i );
 	if( retval < 0 )
 	{
-		setIberr( EDVR );
 		return -1;
 	}
 
@@ -96,7 +95,7 @@ int ibppc( int ud, int v )
 	if( !v || (v & PPC_DISABLE) )
 		v = PPE | PPC_DISABLE;
 
-	conf = enter_library( ud, 1 );
+	conf = enter_library( ud );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 

@@ -26,7 +26,7 @@ int ibclr( int ud )
 	ssize_t count;
 	int i;
 
-	conf = enter_library( ud, 1 );
+	conf = enter_library( ud );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 
@@ -46,10 +46,10 @@ int ibclr( int ud )
 	}
 	cmd[ i++ ] = SDC;
 
+	//XXX detect no listeners (EBUS) error
 	count = my_ibcmd( conf, cmd, i );
 	if(count != i)
 	{
-		setIberr( EDVR );
 		return exit_library( ud, 1 );
 	}
 

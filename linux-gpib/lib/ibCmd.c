@@ -1,15 +1,34 @@
+/***************************************************************************
+                          lib/ibCmd.c
+                             -------------------
+
+    copyright            : (C) 2001,2002 by Frank Mori Hess
+    email                : fmhess@users.sourceforge.net
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
 
 #include "ib_internal.h"
 #include <ibP.h>
 #include <sys/ioctl.h>
+#include <pthread.h>
 
-int ibcmd(int ud, void *cmd, long cnt)
+void* start_async_cmd( void *arg );
+
+int ibcmd(int ud, void *cmd_buffer, long cnt)
 {
-	ibConf_t *conf = ibConfigs[ud];
+	ibConf_t *conf;
 	ibBoard_t *board;
 	ssize_t count;
 
-	conf = enter_library( ud, 1 );
+	conf = enter_library( ud );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 
@@ -22,19 +41,16 @@ int ibcmd(int ud, void *cmd, long cnt)
 
 	board = interfaceBoard( conf );
 
-	count = my_ibcmd( conf, cmd, cnt);
+	if( board->is_system_controller == 0 )
+	{
+		setIberr( ECIC );
+		return exit_library( ud, 1 );
+	}
 
+	count = my_ibcmd( conf, cmd_buffer, cnt);
 	if(count < 0)
 	{
-		switch( errno )
-		{
-			case ETIMEDOUT:
-				setIberr( EABO );
-				conf->timed_out = 1;
-				break;
-			default:
-				break;
-		}
+		// report no listeners error XXX
 		return exit_library( ud, 1);
 	}
 
@@ -46,15 +62,95 @@ int ibcmd(int ud, void *cmd, long cnt)
 	return exit_library( ud, 0 );
 }
 
-ssize_t my_ibcmd( const ibConf_t *conf, uint8_t *buffer, size_t count)
+int ibcmda( int ud, void *cmd_buffer, long cnt )
+{
+	ibConf_t *conf;
+	ibBoard_t *board;
+	int retval;
+
+	conf = enter_library( ud );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
+
+	// check that ud is an interface board
+	if( conf->is_interface == 0 )
+	{
+		setIberr( EARG );
+		return exit_library( ud, 1 );
+	}
+
+	board = interfaceBoard( conf );
+
+	if( board->is_system_controller == 0 )
+	{
+		setIberr( ECIC );
+		return exit_library( ud, 1 );
+	}
+
+	pthread_mutex_lock( &conf->async.lock );
+
+	conf->async.buffer = cmd_buffer;
+	conf->async.length = cnt;
+	conf->async.in_progress = 1;
+
+	retval = pthread_create( &conf->async.thread,
+		NULL, start_async_cmd, conf );
+	if( retval )
+	{
+		setIberr( EDVR );
+		setIbcnt( retval );
+
+		return exit_library( ud, 1 );
+	}
+	pthread_detach( conf->async.thread );
+
+	return general_exit_library( ud, 0, 1 );
+}
+
+void* start_async_cmd( void *arg )
+{
+	long count;
+	ibConf_t *conf;
+	int retval;
+
+	conf = arg;
+
+	// XXX my_ibcmd fiddles with iberr
+	count = my_ibcmd( conf, conf->async.buffer, conf->async.length );
+	if(count < 0)
+	{
+		conf->async.length = 0;
+	}else
+	{
+		conf->async.length = count;
+	}
+
+	conf->has_lock = 0;
+	retval = unlock_board_mutex( interfaceBoard( conf ) );
+	if( retval < 0 )
+	{
+		conf->has_lock = 1;
+		conf->async.length = 0;
+		conf->async.error = EDVR;
+	}
+
+	pthread_mutex_unlock( &conf->async.lock );
+
+	return NULL;
+}
+
+ssize_t my_ibcmd( ibConf_t *conf, uint8_t *buffer, size_t count)
 {
 	read_write_ioctl_t cmd;
 	int retval;
-	const ibBoard_t *board = &ibBoard[ conf->board ];
+	ibBoard_t *board;
+
+	board = interfaceBoard( conf );
 
 	// check that interface board is master
 	if( board->is_system_controller == 0 )
 	{
+		setIberr( ECIC );
 		return -1;
 	}
 
@@ -66,6 +162,17 @@ ssize_t my_ibcmd( const ibConf_t *conf, uint8_t *buffer, size_t count)
 	retval = ioctl( board->fileno, IBCMD, &cmd );
 	if( retval < 0 )
 	{
+		switch( errno )
+		{
+			case ETIMEDOUT:
+				setIberr( EABO );
+				conf->timed_out = 1;
+				break;
+			default:
+				setIberr( EDVR );
+				setIbcnt( errno );
+				break;
+		}
 		return -1;
 	}
 
@@ -104,7 +211,7 @@ int send_setup_string( const ibConf_t *conf,
 	return i;
 }
 
-int send_setup( const ibBoard_t *board, const ibConf_t *conf )
+int send_setup( ibConf_t *conf )
 {
 	uint8_t cmdString[8];
 	int retval;

@@ -12,6 +12,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <signal.h>
+#include <pthread.h>
 
 ibBoard_t ibBoard[ MAX_BOARDS ];
 
@@ -102,6 +103,7 @@ int ibBoardOpen( ibBoard_t *board )
 	{
 		setIberr( EDVR );
 		setIbcnt( errno );
+		fprintf( stderr, "libgpib: failed to configure board\n" );
 		return -1;
 	}
 

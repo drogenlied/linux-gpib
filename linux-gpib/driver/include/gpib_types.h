@@ -141,6 +141,8 @@ struct gpib_board_struct
 	wait_queue_head_t wait;
 	/* Lock that only allows one process to access this board at a time */
 	struct semaphore mutex;
+	/* pid of last process to lock the board mutex */
+	pid_t locking_pid;
 	/* Lock that prevents more than one process from actively autopolling
 	 * (we only need one autopoller) */
 	struct semaphore autopoll_mutex;

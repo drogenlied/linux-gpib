@@ -2,7 +2,6 @@
                               ibwrite.c
                              -------------------
 
-    begin                : Dec 2001
     copyright            : (C) 2001, 2002 by Frank Mori Hess
     email                : fmhess@users.sourceforge.net
  ***************************************************************************/
@@ -51,8 +50,6 @@ ssize_t ibwrt(gpib_board_t *board, uint8_t *buf, size_t cnt, int send_eoi)
 	{
 		board->interface->go_to_standby(board);
 	}
-	// mark io in progress
-	clear_bit(CMPL_NUM, &board->status);
 	osStartTimer( board, board->usec_timeout );
 
 	/* wait until board is addressed as talker and ATN is not asserted
@@ -81,9 +78,6 @@ ssize_t ibwrt(gpib_board_t *board, uint8_t *buf, size_t cnt, int send_eoi)
 		ret = -ETIMEDOUT;
 
 	osRemoveTimer(board);
-
-	// mark io complete
-	set_bit(CMPL_NUM, &board->status);
 
 	if(ret < 0) return ret;
 

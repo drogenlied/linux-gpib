@@ -11,7 +11,8 @@ int ibonl( int ud, int onl )
 	ibBoard_t *board;
 	online_ioctl_t online_cmd;
 
-	conf = enter_library( ud, 0 );
+	// XXX should probably lock board?
+	conf = general_enter_library( ud, 1, 0 );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 

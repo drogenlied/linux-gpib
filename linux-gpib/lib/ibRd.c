@@ -4,7 +4,7 @@
 #include <ibP.h>
 
 // sets up bus to receive data from device with address pad/sad
-int receive_setup( const ibBoard_t *board, const ibConf_t *conf )
+int receive_setup( ibBoard_t *board, ibConf_t *conf )
 {
 	uint8_t cmdString[8];
 	unsigned int i = 0;
@@ -35,7 +35,7 @@ int receive_setup( const ibBoard_t *board, const ibConf_t *conf )
 	return 0;
 }
 
-ssize_t my_ibrd( const ibBoard_t *board, const ibConf_t *conf, uint8_t *buffer, size_t count,
+ssize_t my_ibrd( ibBoard_t *board, ibConf_t *conf, uint8_t *buffer, size_t count,
 	int *end )
 {
 	read_write_ioctl_t read_cmd;
@@ -76,7 +76,7 @@ int ibrd(int ud, void *rd, long cnt)
 	ssize_t count;
 	int end;
 
-	conf = enter_library( ud, 1 );
+	conf = enter_library( ud );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 
@@ -85,19 +85,8 @@ int ibrd(int ud, void *rd, long cnt)
 	board = interfaceBoard( conf );
 
 	count = my_ibrd( board, conf, rd, cnt, &end );
-
 	if( count < 0 )
 	{
-		switch( errno )
-		{
-			case ETIMEDOUT:
-				conf->timed_out = 1;
-				setIberr( EABO );
-				break;
-			default:
-				setIberr( EDVR );
-				break;
-		}
 		return exit_library( ud, 1 );
 	}
 

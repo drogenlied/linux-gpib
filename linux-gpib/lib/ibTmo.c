@@ -100,7 +100,7 @@ int ibtmo(int ud,int v)
 		return exit_library( ud, 1 );
 	}
 
-	conf = enter_library( ud, 1 );
+	conf = general_enter_library( ud, 1, 0 );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 

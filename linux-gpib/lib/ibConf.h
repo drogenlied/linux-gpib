@@ -31,6 +31,17 @@
 
 /*---------------------------------------------------------------------- */
 
+struct async_operation
+{
+	pthread_t thread;	// thread used for asynchronous io operations
+	pthread_mutex_t lock;
+	uint8_t *buffer;
+	volatile long length;
+	int error;
+	volatile int in_progress;
+};
+
+
 typedef struct ibConfStruct
 {
 	char name[100];		/* name of the device (for ibfind())     */
@@ -44,6 +55,7 @@ typedef struct ibConfStruct
 	unsigned int usec_timeout;
 	unsigned int spoll_usec_timeout;
 	unsigned int ppoll_usec_timeout;
+	struct async_operation async;	// used by asynchronous operations ibcmda(), ibrda(), etc.
 	int ppoll_config;	// current parallel poll configuration
 	unsigned send_eoi : 1;	// assert EOI at end of writes
 	unsigned is_interface : 1;	// is interface board

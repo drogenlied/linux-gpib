@@ -337,6 +337,7 @@ int prompt_for_wait( int ud )
 {
 	int wait_mask;
 	int status;
+char cmd[10] = { UNT };
 
 	printf( "Possible wait bits:\n"
 		"\t0x%x timeout\n"
@@ -369,6 +370,7 @@ int main(int argc,char **argv)
 		ibonl(dev, 0);
 		abort();
 	}
+fprint_status( stderr, "gpib clear okay");
 
 	do
 	{
@@ -426,7 +428,7 @@ void fprint_status( FILE* filep, char *msg )
 	if ( ibsta & RQS ) fprintf( filep," RQS");
 	if ( ibsta & CMPL ) fprintf( filep," CMPL");
 	if ( ibsta & CIC )  fprintf( filep," CIC");
-	if ( ibsta & ATN )  fprintf( filep," ATM");
+	if ( ibsta & ATN )  fprintf( filep," ATN");
 	if ( ibsta & TACS ) fprintf( filep," TACS");
 	if ( ibsta & LACS ) fprintf( filep," LACS");
 
@@ -438,7 +440,7 @@ void fprint_status( FILE* filep, char *msg )
 	else if ( iberr == ECIC) fprintf( filep," ECIC <Not CIC>\n");
 	else if ( iberr == ENOL) fprintf( filep," ENOL <No Listener>\n");
 	else if ( iberr == EADR) fprintf( filep," EADR <Adress Error>\n");
-	else if ( iberr == EARG) fprintf( filep," ECIC <Board not CIC>\n");
+	else if ( iberr == EARG) fprintf( filep," EARG <Invalid argument>\n");
 	else if ( iberr == ESAC) fprintf( filep," ESAC <No Sys Ctrlr>\n");
 	else if ( iberr == EABO) fprintf( filep," EABO <Operation Aborted>\n");
 	else if ( iberr == ENEB) fprintf( filep," ENEB <No Gpib Board>\n");
@@ -448,7 +450,6 @@ void fprint_status( FILE* filep, char *msg )
 	else if ( iberr == EBUS) fprintf( filep," EBUS <Command error>\n");
 	else if ( iberr == ESTB) fprintf( filep," ESTB <Status byte lost>\n");
 	else if ( iberr == ESRQ) fprintf( filep," ESRQ <SRQ stuck on>\n");
-	else if ( iberr == ETAB) fprintf( filep," ETAB <Table Overflow>\n");
 	else if ( iberr == ETAB) fprintf( filep," ETAB <Device Table Overflow>\n");
 
 	fprintf( filep, "ibcnt = %d\n", ibcnt );

@@ -6,7 +6,7 @@ int ibeos(int ud, int v)
 {
 	ibConf_t *conf;
 
-	conf = enter_library( ud, 0 );
+	conf = general_enter_library( ud, 1, 0 );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 
@@ -26,11 +26,10 @@ int ibeos(int ud, int v)
 int iblcleos( const ibConf_t *conf )
 {
 	eos_ioctl_t eos_cmd;
-	const ibBoard_t *board = &ibBoard[ conf->board ];
 
 	eos_cmd.eos = conf->eos;
 	eos_cmd.eos_flags = conf->eos_flags;
 
-	return ioctl( board->fileno, IBEOS, &eos_cmd );
+	return ioctl( interfaceBoard( conf )->fileno, IBEOS, &eos_cmd );
 }
 

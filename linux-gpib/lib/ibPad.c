@@ -9,7 +9,7 @@ int ibpad( int ud, int addr )
 	int retval;
 	unsigned int address = addr;
 
-	conf = enter_library( ud, 1 );
+	conf = enter_library( ud );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 

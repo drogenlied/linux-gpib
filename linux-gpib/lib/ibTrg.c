@@ -16,9 +16,9 @@
  ***************************************************************************/
 
 #include "ib_internal.h"
-#include <ibP.h>
+#include "ibP.h"
 
-int ibtrg(int ud)
+int ibtrg( int ud )
 {
 	uint8_t cmd[ 16 ];
 	ibConf_t *conf;
@@ -26,7 +26,7 @@ int ibtrg(int ud)
 	ssize_t count;
 	int i;
 
-	conf = enter_library( ud, 1 );
+	conf = enter_library( ud );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 
@@ -49,7 +49,6 @@ int ibtrg(int ud)
 	count = my_ibcmd( conf, cmd, i );
 	if(count != i)
 	{
-		setIberr( EDVR );
 		return exit_library( ud, 1 );
 	}
 
