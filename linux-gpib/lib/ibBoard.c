@@ -110,14 +110,6 @@ PRIVATE int ibBoardFunc (int bd, int code, ...)
     break;
   }
 
-#if HAS_RGPIB
-  if( bd & UD_REMOTE ) {  /* board handle is a network request handle */
-      /* do request */
-      return ibRemoteFunc(bd,code,arg,buf,cnt);
-  } 
-  /**** local device operation ***/
-#endif
-
   switch (code) {
   case IBRD:
   case DVRD:

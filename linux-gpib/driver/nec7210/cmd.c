@@ -18,19 +18,19 @@
 
 #include "board.h"
 
-// XXX
 IBLCL ssize_t nec7210_command(gpib_driver_t *driver, uint8_t *buffer, size_t length)
 {
 	size_t count = 0;
 	const int timeout = 1000;
 	int i;
 	nec7210_private_t *priv = driver->private_data;
+	ssize_t retval = 0;
 
 	// enable command out interrupt
 	priv->imr2_bits |= HR_COIE;
 	priv->write_byte(priv, priv->imr2_bits, IMR2);
 
-	while(count < length && test_bit(TIMO_NUM, &driver->status) == 0)
+	while(count < length)
 	{
 		// try a busy wait first before we suspend
 		for(i = 0; i < timeout; i++)
@@ -44,21 +44,24 @@ IBLCL ssize_t nec7210_command(gpib_driver_t *driver, uint8_t *buffer, size_t len
 				test_bit(TIMO_NUM, &driver->status)))
 			{
 				printk("gpib command wait interrupted\n");
+				retval = -EINTR;
 				break;
 			}
 		}
-		if(test_bit(TIMO_NUM, &driver->status) == 0)
+		if(test_bit(TIMO_NUM, &driver->status))
 		{
-			priv->write_byte(priv, buffer[count], CDOR);
-			count++;
+			retval = -ETIMEDOUT;
+			break;
 		}
+		priv->write_byte(priv, buffer[count], CDOR);
+		count++;
 	}
 
 	// disable command out interrupt
 	priv->imr2_bits |= HR_COIE;
 	priv->write_byte(priv, priv->imr2_bits, IMR2);
 
-	return count ? count : -1;
+	return count ? count : retval;
 }
 
 

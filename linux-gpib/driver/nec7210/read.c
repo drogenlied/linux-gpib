@@ -23,7 +23,7 @@ ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int 
 {
 	size_t	count = 0;
 	gpib_char_t data;
-	int ret;
+	int ret = 0;
 	unsigned long flags;
 	nec7210_private_t *priv = driver->private_data;
 
@@ -58,8 +58,8 @@ ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int 
 
 	set_bit(DMA_IN_PROGRESS_BN, &priv->state);
 
-	// enable 'data in' interrupt
-	priv->imr1_bits |= HR_DIIE;
+	// enable 'data in' and 'end' interrupt
+	priv->imr1_bits |= HR_DIIE | HR_ENDIE;
 	priv->write_byte(priv, priv->imr1_bits, IMR1);
 
 	// enable nec7210 dma
@@ -70,8 +70,8 @@ ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int 
 	if(wait_event_interruptible(driver->wait, test_bit(DMA_IN_PROGRESS_BN, &priv->state) == 0 ||
 		test_bit(TIMO_NUM, &driver->status)))
 	{
-		printk("read wait interrupted\n");
-		return -1;
+		printk("gpib: dma read wait interrupted\n");
+		ret = -EINTR;
 	}
 
 	// disable nec7210 dma
@@ -87,11 +87,11 @@ ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int 
 
 #else	// PIO transfer
 
-	// enable 'data in' interrupt
-	priv->imr1_bits |= HR_DIIE;
+	// enable 'data in' and 'end' interrupt
+	priv->imr1_bits |= HR_DIIE | HR_ENDIE;
 	priv->write_byte(priv, priv->imr1_bits, IMR1);
 
-	while (count < length && (driver->status & TIMO) == 0)
+	while (count < length && test_bit(TIMO_NUM, &driver->status) == 0)
 	{
 		ret = gpib_buffer_get(read_buffer, &data);
 		if(ret < 0)
@@ -99,8 +99,8 @@ ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int 
 			if(wait_event_interruptible(driver->wait, atomic_read(&read_buffer->size) > 0 ||
 				test_bit(TIMO_NUM, &driver->status)))
 			{
-				printk("wait failed\n");
-				// XXX
+				printk("gpib: pio read wait interrupted\n");
+				ret = -EINTR;
 				break;
 			};
 			continue;
@@ -114,8 +114,8 @@ ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int 
 
 #endif
 
-	// disable 'data in' interrupt
-	priv->imr1_bits &= ~HR_DIIE;
+	// disable 'data in' and 'end' interrupt
+	priv->imr1_bits &= ~HR_DIIE & ~HR_ENDIE;
 	priv->write_byte(priv, priv->imr1_bits, IMR1);
 
 	if(test_bit(END_NUM, &driver->status))
@@ -125,7 +125,10 @@ ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int 
 		set_bit(RFD_HOLDOFF_BN, &priv->state);
 	}
 
-	return count ? count : -1;
+	if(test_bit(TIMO, &driver->status))
+		ret = -ETIMEDOUT;
+
+	return count ? count : ret;
 }
 
 

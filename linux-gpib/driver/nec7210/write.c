@@ -75,11 +75,10 @@ ssize_t nec7210_write(gpib_driver_t *driver, uint8_t *buffer, size_t length, int
 		priv->imr2_bits &= ~HR_DMAO;
 		priv->write_byte(priv, priv->imr2_bits, IMR2);
 
-		if(test_and_clear_bit(WRITING_BN, &priv->state) == 0)
-			count += length;
-
 		flags = claim_dma_lock();
+		clear_dma_ff(priv->dma_channel);
 		disable_dma(priv->dma_channel);
+		count += length - get_dma_residue(priv->dma_channel);
 		release_dma_lock(flags);
 	}
 
@@ -119,8 +118,7 @@ ssize_t nec7210_write(gpib_driver_t *driver, uint8_t *buffer, size_t length, int
 	if(send_eoi && err == 0)
 	{
 		/*send EOI */
-		if((pgmstat & PS_NOEOI) == 0)
-			priv->write_byte(priv, AUX_SEOI, AUXMR);
+		priv->write_byte(priv, AUX_SEOI, AUXMR);
 		set_bit(WRITING_BN, &priv->state);
 		priv->write_byte(priv, buffer[count], CDOR);
 		wait_event_interruptible(driver->wait, test_bit(WRITING_BN, &priv->state) == 0 ||

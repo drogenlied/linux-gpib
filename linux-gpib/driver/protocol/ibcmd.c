@@ -14,41 +14,42 @@
  *          must be called to initialize the GPIB and enable
  *          the interface to leave the controller idle state.
  */
-IBLCL ssize_t ibcmd(uint8_t *buf, size_t cnt)
+IBLCL ssize_t ibcmd(uint8_t *buf, size_t length)
 {
-	size_t	bytes_sent = 0;
+	size_t	count = 0;
 	ssize_t ret = 0;
 	int status = driver->update_status(driver);
 
 	if((status & CIC) == 0)
 	{
+		printk("gpib: cannot send command when not controller-in-charge\n");
 		return -1;
 	}
+	// XXX global
 	osStartTimer(timeidx);
 
-	if(driver->take_control(driver, 0))
+	if((ret = driver->take_control(driver, 0)))
 	{
 		printk("gpib error while becoming active controller\n");
-		return -1;
-	}
-	while ((bytes_sent < cnt) && !(driver->update_status(driver) & (TIMO)))
+	}else while ((count < length) &&
+		((status = driver->update_status(driver)) & (TIMO)) == 0)
 	{
-		ret = driver->command(driver, buf, cnt);
+		ret = driver->command(driver, buf, length - count);
 		if(ret < 0)
 		{
 			printk("error writing gpib command bytes\n");
 			break;
 		}
 		buf += ret;
-		bytes_sent += ret;
+		count += ret;
 	}
 
 	osRemoveTimer();
 
-	if(ret < 0)
-		return ret;
+	if(status & TIMO)
+		ret = -ETIMEDOUT;
 
-	return bytes_sent;
+	return count ? count : ret;
 }
 
 

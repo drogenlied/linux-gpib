@@ -296,7 +296,7 @@ int pc2_attach(gpib_driver_t *driver)
 	board_reset(priv);
 
 	// enable interrupts
-	priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
+	priv->imr1_bits = HR_ERRIE | HR_DECIE | 
 		HR_DETIE | HR_APTIE | HR_CPTIE;
 	priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
 	priv->write_byte(priv, priv->imr1_bits, IMR1);
@@ -493,7 +493,7 @@ int cb_pci_attach(gpib_driver_t *driver)
 	isr_flags |= SA_SHIRQ;
 	if(request_irq(priv->pci_device->irq, cb_pci_interrupt, isr_flags, "pci-gpib", driver))
 	{
-		printk("gpib: can't request IRQ %d\n", ibirq);
+		printk("gpib: can't request IRQ %d\n", priv->pci_device->irq);
 		return -1;
 	}
 	priv->irq = priv->pci_device->irq;

@@ -49,46 +49,10 @@ extern unsigned int ibirq;	/* interrupt request line for GPIB (1-7)  */
 extern unsigned int ibdma ;      /* DMA channel                            */
 extern struct pci_dev *pci_dev_ptr;	// pci_dev for plug and play boards
 
-extern int          pgmstat;    /* Program state */
-
 extern gpib_buffer_t *read_buffer, *write_buffer;
 
 // interrupt service routine
 void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp);
-
-/* this routines are 'wrappers' for the outb() macros */
-
-/*
- * Input a one-byte value from the specified I/O port
- */
-
-#if 0
-
-extern inline uint8_t GPIBin(unsigned long in_addr)
-{
-#if defined(MODBUS_PCI)
-	return readw(remapped_ibbase + in_addr) & 0xff;
-#else
-	return inb(ibbase + in_addr);
-#endif
-}
-
-
-/*
- * Output a one-byte value to the specified I/O port
- */
-extern inline void GPIBout(unsigned long out_addr, uint8_t out_value)
-{
-#if defined(MODBUS_PCI)
-	writeb(out_value, remapped_ibbase + out_addr );
-#else
-	outb(out_value, ibbase + out_addr);
-#endif
-}
-
-#endif
-
-/************************************************************************/
 
 #endif	//_GPIB_PCIIA_BOARD_H
 

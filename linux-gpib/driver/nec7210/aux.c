@@ -46,12 +46,13 @@ int nec7210_take_control(gpib_driver_t *driver, int syncronous)
 	// suspend if we still don't have ATN
 	if(i == timeout)
 	{
-		while(priv->read_byte(priv, ADSR) & HR_NATN && test_bit(TIMO_NUM, &driver->status) == 0)
+		while((priv->read_byte(priv, ADSR) & HR_NATN) &&
+			test_bit(TIMO_NUM, &driver->status) == 0)
 		{
 			if(interruptible_sleep_on_timeout(&driver->wait, 1))
 			{
-				printk("error waiting for ATN\n");
-				return -1;
+				printk("interupted for ATN\n");
+				return -EINTR;
 			}
 		}
 	}
@@ -59,7 +60,7 @@ int nec7210_take_control(gpib_driver_t *driver, int syncronous)
 	if(test_bit(TIMO_NUM, &driver->status))
 	{
 		printk("gpib: synchronous take control timed out\n");
-		return -1;
+		return -ETIMEDOUT;
 	}
 
 	return 0;
@@ -82,7 +83,7 @@ int nec7210_go_to_standby(gpib_driver_t *driver)
 	if(i == timeout)
 	{
 		printk("error waiting for NATN\n");
-		return -1;
+		return -ETIMEDOUT;
 	}
 	return 0;
 }
@@ -90,6 +91,7 @@ int nec7210_go_to_standby(gpib_driver_t *driver)
 void nec7210_interface_clear(gpib_driver_t *driver, int assert)
 {
 	nec7210_private_t *priv = driver->private_data;
+
 	if(assert)
 		priv->write_byte(priv, AUX_SIFC, AUXMR);
 	else
@@ -99,6 +101,7 @@ void nec7210_interface_clear(gpib_driver_t *driver, int assert)
 void nec7210_remote_enable(gpib_driver_t *driver, int enable)
 {
 	nec7210_private_t *priv = driver->private_data;
+	
 	if(enable)
 		priv->write_byte(priv, AUX_SREN, AUXMR);
 	else

@@ -62,7 +62,7 @@ int nec7210_parallel_poll(gpib_driver_t *driver, uint8_t *result)
 	if(ret)
 	{
 		printk("gpib: parallel poll interrupted\n");
-		return -1;
+		return -EINTR;
 	}
 
 	*result = priv->read_byte(priv, CPTR);

@@ -38,7 +38,7 @@ void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	gpib_driver_t *driver = (gpib_driver_t*) arg;
 	nec7210_private_t *priv = driver->private_data;
 
-printk("ammc staus 0x%x\n", inl(amcc_iobase + INTCSR_REG));
+printk("ammc status 0x%x\n", inl(amcc_iobase + INTCSR_REG));
 
 	// read incoming mailbox to clear mailbox full flag
 	inl(amcc_iobase + INCOMING_MAILBOX_REG(3));
@@ -51,7 +51,7 @@ printk("ammc staus 0x%x\n", inl(amcc_iobase + INTCSR_REG));
 	{
 		outb(HS_CLR_SRQ_INT | HS_CLR_EOI_INT |
 			HS_CLR_EMPTY_INT | HS_CLR_HF_INT, priv->iobase + HS_MODE);
-		printk("gpib: cbhs interrupt? 0x%x\n", hs_status);
+		printk("gpib: cbi488 interrupt? 0x%x\n", hs_status);
 	}
 
 	nec7210_interrupt(irq, arg, registerp);
@@ -66,8 +66,11 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	gpib_driver_t *driver = (gpib_driver_t*) arg;
 	nec7210_private_t *priv = driver->private_data;
 
-	// read interrupt status (also clears status)
+	/* interrupt should also update RDF_HOLDOFF in state
+	 * by checking auxa_bits and END, but I need to make
+	 * auxa_bits store handshaking bits first */
 
+	// read interrupt status (also clears status)
 	status1 = priv->read_byte(priv, ISR1);
 	status2 = priv->read_byte(priv, ISR2);
 

@@ -7,13 +7,6 @@ PUBLIC int ibonl(int ud, int onl)
   extern char ibfind_called;
   int oflags=0;
 
-#ifdef HAS_RGPIB
-  if ( ud & UD_REMOTE ){
-    ibBoardFunc( CONF(ud,board), IBONL, onl );
-    return ibsta;
-  }
-#endif
-
   if ( ud == ERR )
     return ibsta;
 
