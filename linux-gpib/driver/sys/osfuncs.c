@@ -364,6 +364,7 @@ static int read_ioctl(gpib_board_t *board, unsigned long arg)
 		{
 			return ret;
 		}
+		if( ret == 0 ) break;
 		copy_to_user(userbuf, board->buffer, ret);
 		remain -= ret;
 		userbuf += ret;
@@ -408,6 +409,7 @@ static int command_ioctl(gpib_board_t *board, unsigned long arg)
 			retval = -EIO;
 			break;
 		}
+		if( ret == 0 ) break;
 		remain -= ret;
 		userbuf += ret;
 	}
@@ -452,6 +454,7 @@ static int write_ioctl(gpib_board_t *board, unsigned long arg)
 		{
 			return ret;
 		}
+		if( ret == 0 ) break;
 		remain -= ret;
 		userbuf += ret;
 	}

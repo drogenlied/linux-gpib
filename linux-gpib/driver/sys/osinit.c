@@ -129,7 +129,7 @@ int gpib_allocate_board( gpib_board_t *board )
 {
 	if( board->buffer == NULL )
 	{
-		board->buffer_length = 0x1000;
+		board->buffer_length = 0x4000;
 		board->buffer = vmalloc( board->buffer_length );
 		if(board->buffer == NULL)
 			return -ENOMEM;

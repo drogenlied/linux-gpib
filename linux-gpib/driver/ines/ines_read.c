@@ -79,7 +79,7 @@ ssize_t ines_accel_read( gpib_board_t *board, uint8_t *buffer,
 	*end = 0;
 
 	/* release rfd holdoff */
-	outb( AUX_FH, nec_priv->iobase + AUXMR );
+	write_byte( nec_priv, AUX_FH, AUXMR );
 
 	// holdoff on END
 	nec7210_set_auxa_bits( nec_priv, HR_HANDSHAKE_MASK, 0 );

@@ -227,7 +227,8 @@ int ni_pci_attach(gpib_board_t *board)
 
 	// put it in 9914 mode
 	writeb(AUX_9914, tms_priv->iobase + AUXMR);
-
+	udelay(1);
+	
 	// chip reset command
 	write_byte(tms_priv, 0x1c, AUXCR);
 

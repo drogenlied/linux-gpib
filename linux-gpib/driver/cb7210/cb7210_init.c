@@ -223,41 +223,13 @@ int cb7210_generic_attach(gpib_board_t *board)
 	return 0;
 }
 
-/* Returns bits to be sent to base+9 to configure irq level on isa-gpib.
- * Returns zero on failure.
- */
-unsigned int intr_level_bits(unsigned int irq)
-{
-	switch(irq)
-	{
-		case 2:
-		case 3:
-		case 4:
-		case 5:
-			return irq - 1;
-			break;
-		case 7:
-			return 0x5;
-			break;
-		case 10:
-			return 0x6;
-			break;
-		case 11:
-			return 0x7;
-			break;
-		default:
-			return 0;
-			break;
-	}
-}
-
 void cb7210_init( cb7210_private_t *cb_priv, const gpib_board_t *board, int accel )
 {
 	nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
 	unsigned long iobase = nec_priv->iobase;
 
 	outb( HS_RESET7210, iobase + HS_INT_LEVEL );
-	outb( 0x7f/*intr_level_bits( board->ibirq ) */, iobase + HS_INT_LEVEL );
+	outb( irq_bits( cb_priv->irq ), iobase + HS_INT_LEVEL );
 
 	nec7210_board_reset( nec_priv, board );
 	outb( HS_TX_ENABLE | HS_RX_ENABLE | HS_CLR_SRQ_INT |
@@ -361,7 +333,7 @@ int cb_isa_attach(gpib_board_t *board)
 	int isr_flags = 0;
 	cb7210_private_t *cb_priv;
 	nec7210_private_t *nec_priv;
-	unsigned int irq_bits;
+	unsigned int bits;
 	int retval;
 
 	retval = cb7210_generic_attach(board);
@@ -374,8 +346,8 @@ int cb_isa_attach(gpib_board_t *board)
 	}
 	nec_priv->iobase = board->ibbase;
 
-	irq_bits = intr_level_bits(board->ibirq);
-	if(irq_bits == 0)
+	bits = irq_bits( board->ibirq );
+	if( bits == 0 )
 	{
 		printk("board incapable of using irq %i, try 2-5, 7, 10, or 11\n", board->ibirq);
 	}

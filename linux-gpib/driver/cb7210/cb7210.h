@@ -37,7 +37,6 @@ typedef struct
 	volatile uint8_t hs_mode_bits;
 	volatile unsigned out_fifo_half_empty : 1;
 	volatile unsigned in_fifo_half_full : 1;
-	volatile unsigned fifo_full : 1;
 } cb7210_private_t;
 
 // interfaces
@@ -49,6 +48,7 @@ extern gpib_interface_t cb_pcmcia_accel_interface;
 // interrupt service routines
 void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp);
 void cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp);
+void cb7210_internal_interrupt( gpib_board_t *board );
 
 // interface functions
 ssize_t cb7210_read( gpib_board_t *board, uint8_t *buffer, size_t length,
@@ -94,7 +94,7 @@ static const int cb7210_reg_offset = 1;
 static const int cb7210_iosize = 10;
 
 // fifo size in bytes
-static const int cb7210_fifo_size = 1024;
+static const int cb7210_fifo_size = 2048;
 static const int cb7210_fifo_width = 2;
 
 // cb7210 specific registers and bits
@@ -172,6 +172,31 @@ enum hs_int_level_bits
 {
 	HS_RESET7210 = ( 1 << 7 ),
 };
+static inline unsigned int irq_bits( unsigned int irq )
+{
+	switch( irq )
+	{
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+			return irq - 1;
+			break;
+		case 7:
+			return 0x5;
+			break;
+		case 10:
+			return 0x6;
+			break;
+		case 11:
+			return 0x7;
+			break;
+		default:
+			return 0;
+			break;
+	}
+}
+
 /*
 AUX_HISPEED     0x41
 AUX_LOSPEED     0x40

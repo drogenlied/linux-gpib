@@ -40,33 +40,30 @@ void cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	cb7210_interrupt(irq, arg, registerp);
 }
 
-void cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
+void cb7210_internal_interrupt( gpib_board_t *board )
 {
 	int hs_status, status1, status2;
-	gpib_board_t *board = arg;
 	cb7210_private_t *priv = board->private_data;
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 	int clear_bits;
-	unsigned long flags;
-
-	spin_lock_irqsave( &board->spinlock, flags );
 
 	hs_status = inb( nec_priv->iobase + HS_STATUS );
 
-	if( ( priv->hs_mode_bits & HS_TX_ENABLE ) )
+	if( ( priv->hs_mode_bits & HS_ENABLE_MASK )  )
 		status1 = 0;
 	else
 	{
-	if( ( priv->hs_mode_bits & HS_ENABLE_MASK ) )
-		outb( priv->hs_mode_bits & ~HS_ENABLE_MASK, nec_priv->iobase + HS_MODE );
-	status1 = read_byte( nec_priv, ISR1 );
-	if( ( priv->hs_mode_bits & HS_ENABLE_MASK ) )
-		outb( priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
-	}
-	status2 = read_byte( nec_priv, ISR2 );
-	nec7210_interrupt_have_status( board, nec_priv, status1, status2 );
+//		if( ( priv->hs_mode_bits & HS_ENABLE_MASK ) )
+//			outb( priv->hs_mode_bits & ~HS_ENABLE_MASK, nec_priv->iobase + HS_MODE );
+		status1 = read_byte( nec_priv, ISR1 );
+//		if( ( priv->hs_mode_bits & HS_ENABLE_MASK ) )
+//			outb( priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
+		status2 = read_byte( nec_priv, ISR2 );
 
-	GPIB_DPRINTK( "cb7210: cbi488 interrupt 0x%x\n", hs_status );
+		nec7210_interrupt_have_status( board, nec_priv, status1, status2 );
+	}
+
+	GPIB_DPRINTK( "cb7210: status 0x%x, mode 0x%x\n", hs_status, priv->hs_mode_bits );
 
 	clear_bits = 0;
 
@@ -79,9 +76,6 @@ void cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 		clear_bits |= HS_CLR_HF_INT;
 	}
 
-	if( hs_status & HS_FIFO_FULL )
-		priv->fifo_full = 1;
-		
 	if( hs_status & HS_SRQ_INT )
 		clear_bits |= HS_CLR_SRQ_INT;
 
@@ -89,6 +83,12 @@ void cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	{
 		clear_bits |= HS_CLR_EOI_EMPTY_INT;
 		set_bit( RECEIVED_END_BN, &nec_priv->state );
+		if( ( priv->hs_mode_bits & HS_ENABLE_MASK ) )
+		{
+			outb( priv->hs_mode_bits & ~HS_ENABLE_MASK, nec_priv->iobase + HS_MODE );
+			status1 = read_byte( nec_priv, ISR1 );
+			outb( priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
+		}
 	}
 
 	if( ( priv->hs_mode_bits & HS_TX_ENABLE ) &&
@@ -98,10 +98,18 @@ void cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	if( clear_bits )
 	{
 		outb( priv->hs_mode_bits | clear_bits, nec_priv->iobase + HS_MODE );
+		outb( priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
 		wake_up_interruptible( &board->wait );
 	}
+}
+void cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
+{
+	gpib_board_t *board = arg;
+	unsigned long flags;
 
-	GPIB_DPRINTK( " hs mode bits 0x%x\n", priv->hs_mode_bits );
+	spin_lock_irqsave( &board->spinlock, flags );
+
+	cb7210_internal_interrupt( board );
 
 	spin_unlock_irqrestore( &board->spinlock, flags );
 }
