@@ -463,8 +463,6 @@ int agilent_82357a_take_control(gpib_board_t *board, int synchronous)
 	struct agilent_82357a_register_pairlet write;
 	int retval;
 	
-	a_priv->bogus_ibsta |= ATN;
-	
 	write.address = AUXCR;
 	if(synchronous)
 	{
@@ -499,8 +497,6 @@ int agilent_82357a_go_to_standby(gpib_board_t *board)
 	agilent_82357a_private_t *a_priv = board->private_data;
 	struct agilent_82357a_register_pairlet write;
 	int retval;
-	
-	a_priv->bogus_ibsta &= ~ATN;
 	
 	write.address = AUXCR;
 	write.value = AUX_GTS;
@@ -600,23 +596,78 @@ void agilent_82357a_disable_eos(gpib_board_t *board)
 	
 	a_priv->eos_mode &= ~REOS;
 }
+
 unsigned int agilent_82357a_update_status( gpib_board_t *board, unsigned int clear_mask )
 {
 	agilent_82357a_private_t *a_priv = board->private_data;
-	//FIXME: implement
-	return a_priv->bogus_ibsta;
+	struct agilent_82357a_register_pairlet address_status;
+	int retval;
+	unsigned long status = a_priv->bogus_ibsta;
+	
+	board->status &= ~clear_mask;
+	
+	address_status.address = ADSR;
+	retval = agilent_82357a_read_registers(a_priv, &address_status, 1);
+	if(retval)
+	{
+		printk("%s: %s: agilent_82357a_read_registers() returned error\n", __FILE__, __FUNCTION__);
+		return 0;
+	}
+	// check for remote/local
+	if(address_status.value & HR_REM)
+		set_bit( REM_NUM, &status );
+	else
+		clear_bit( REM_NUM, &status );
+	// check for lockout
+	if(address_status.value & HR_LLO)
+		set_bit( LOK_NUM, &status );
+	else
+		clear_bit( LOK_NUM, &status );
+	// check for ATN
+	if(address_status.value & HR_ATN)
+	{
+		set_bit( ATN_NUM, &status );
+	}else
+	{
+		clear_bit( ATN_NUM, &status );
+	}
+	// check for talker/listener addressed
+	if(address_status.value & HR_TA)
+	{
+		set_bit( TACS_NUM, &status );
+	}else
+		clear_bit( TACS_NUM, &status );
+	if(address_status.value & HR_LA)
+	{
+		set_bit(LACS_NUM, &status);
+	}else
+		clear_bit( LACS_NUM, &status );
+	return status;
 }
 //FIXME: prototype should return int
 void agilent_82357a_primary_address(gpib_board_t *board, unsigned int address)
 {
-	//FIXME: implement
+	agilent_82357a_private_t *a_priv = board->private_data;
+	struct agilent_82357a_register_pairlet write;
+	int retval;
+	
+	// put primary address in address0 (not that it matters since we can only be system controller)
+	write.address = ADR;
+	write.value = address & ADDRESS_MASK;
+	retval = agilent_82357a_write_registers(a_priv, &write, 1);
+	if(retval)
+	{
+		printk("%s: %s: agilent_82357a_write_registers() returned error\n", __FILE__, __FUNCTION__);
+		return;
+	}
+	return;
 }
 
 void agilent_82357a_secondary_address(gpib_board_t *board, unsigned int address, int enable)
 {
-	//FIXME: implement
-	return; // 0;
+	return;
 }
+
 int agilent_82357a_parallel_poll(gpib_board_t *board, uint8_t *result)
 {
 	agilent_82357a_private_t *a_priv = board->private_data;
