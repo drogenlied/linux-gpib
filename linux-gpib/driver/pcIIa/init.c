@@ -21,7 +21,6 @@ ibregs_t *ib = ((ibregs_t *) 0);
 IBLCL int bdonl(int v)
 {
 	uint8		s;
-	extern uint32	osRegAddr();
 
 	DBGin("bdonl");
 

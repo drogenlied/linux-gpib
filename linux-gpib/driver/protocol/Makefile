@@ -12,7 +12,7 @@ OBJS = $(SRCS:.c=.o)
 
 INCLUDES = -I. -I../include -I../../include -I$(LINUXDIR)/include
 
-CFLAGS = $(INCLUDES)  -D__KERNEL__ -DLINUX -O2 -m486 $(OPTIONS) -Wall -DMODULE
+CFLAGS += $(INCLUDES) $(OPTIONS) 
 
 all: ieee488.o
 

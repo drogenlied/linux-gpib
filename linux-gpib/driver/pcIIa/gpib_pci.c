@@ -113,7 +113,7 @@ IBLCL void bdPCIDetach(void)
 
 /* enable or disable PCI interrupt on AMCC PCI controller */
 
-IBLCL void pci_EnableIRQ ()
+IBLCL void pci_EnableIRQ(void)
 {
 DBGin("pci_EnableIRQ");
 /*
@@ -124,7 +124,7 @@ DBGin("pci_EnableIRQ");
 DBGout();
 }
 
-IBLCL void pci_ResetIRQ ()
+IBLCL void pci_ResetIRQ (void)
 {
   /*DBGin("pci_ResetIRQ");*/
   /*
@@ -137,7 +137,7 @@ IBLCL void pci_ResetIRQ ()
 
 
 
-IBLCL void pci_DisableIRQ ()
+IBLCL void pci_DisableIRQ (void)
 {
 DBGin("pci_DisableIRQ");
 /*

@@ -11,7 +11,7 @@
 /* here set your values to enable special features */
 
 
-#define USE_SRQ 1
+#define USE_SRQ 0
 #define READS 5
 #define WAIT 1
 
@@ -101,7 +101,7 @@ int main(int argc,char **argv){
    */
 
   printf("\nsend nice string..");
-  strcpy(cmd,"D1 Init_Device");
+  strcpy(cmd,"D1");
   if( ibwrt(dev,cmd,strlen(cmd)) & ERR ){
     gpiberr("wrt err");
     exit(1);
@@ -123,7 +123,7 @@ int main(int argc,char **argv){
 #if USE_SRQ
   strcpy(cmd,"D0 L0 Q1 T1 R2 A1 S0");
 #else
-  strcpy(cmd,"D0 L0 Q0 T1 R2 A1 S0");
+  strcpy(cmd,"F1 R2 T1");
 #endif
   if( ibwrt(dev,cmd,strlen(cmd)) & ERR ){
     gpiberr("wrt err");
@@ -146,21 +146,12 @@ int main(int argc,char **argv){
    * requested the process goes to sleep again.
    *
    */
-#if 0
-  printf("\nWaiting for SRQI...");fflush(stdout);
-  if( ibwait(dev,TIMO|SRQI) & (ERR |TIMO)){
-    gpiberr("ibwait Error");
-    /*exit(1);*/
-  } else
-  printf("OK GOT IT\n");fflush(stdout);
-#else
   printf("\nWaiting for RQS...");fflush(stdout);
   if( ibwait(dev,TIMO|RQS) & (ERR |TIMO)){
     gpiberr("ibwait Error");
     /*exit(1);*/
   } else
   printf("OK GOT IT\n");fflush(stdout);
-#endif
 
 
 #endif

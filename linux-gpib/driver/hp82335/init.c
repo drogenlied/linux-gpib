@@ -21,7 +21,6 @@ IBLCL int bdonl(int v)
 {
 	uint8		s;
 	int		i;           
-	extern uint32	osRegAddr();
 
 	DBGin("bdonl");
 
@@ -89,7 +88,7 @@ IBLCL int bdonl(int v)
 #if defined(HP82335)
 #if USEINTS
 	ccrbits |= HR_INTEN;
-	GPIBout(ccr,ccrbits);
+	GPIBout(ccr[0],ccrbits);
 #if 1
 	GPIBout(imr0,0);
 	GPIBout(imr1,0);

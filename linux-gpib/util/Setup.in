@@ -552,10 +552,9 @@ fi
 #
 ##########
 
-
-#echo char kernel_version[] = \"`uname -r`\"\; > ../driver/sys/kernel_version.h
-
-
+# get compile flags for modules from linux kernel source tree
+export LINUXDIR=$LINUXDIR
+(cd ./linux_flags && make)
 
 mv .tmpconfig .config
 mv .tmpconfig.h ../include/autoconf.h

@@ -2,14 +2,12 @@
 # Makefile for directory driver/atgpib
 #
 
-include $(ROOT)/util/.config
-
 SRCS =  adjcount.c cmd.c dma.c init.c lines.c read.c util.c \
 	wait.c write.c aux.c gpib_cs.c gpib_pci.c
 OBJS =  $(SRCS:.c=.o)
 
-INCLUDES = -I. -I../include -I../../include -I$(LINUXDIR)/include 
-CFLAGS = $(INCLUDES) -D__KERNEL__ -DLINUX -O6 -m486 $(OPTIONS) -Wall -DMODULE
+INCLUDES = -I. -I../include -I../../include  
+CFLAGS += $(INCLUDES)
 
 
 

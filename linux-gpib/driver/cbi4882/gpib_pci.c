@@ -23,7 +23,7 @@ unsigned int pci_config_reg = 0x0000;
 
 
 
-IBLCL void bd_PCIInfo() 
+IBLCL void bd_PCIInfo(void) 
 {
 	extern unsigned int      ibbase;	/* base addr of GPIB interface registers  */
 	extern uint8       ibirq;	/* interrupt request line for GPIB (1-7)  */

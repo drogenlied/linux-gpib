@@ -60,14 +60,12 @@ extern inline void bdP8out(faddr_t out_addr, uint8 out_value)
 	writeb(out_value, addr );
 }
 #else
-extern inline void bdP8out(out_addr, out_value)
-short out_addr;
-uint8 out_value;
+extern inline void bdP8out(faddr_t out_addr, uint8 out_value)
 {
 #if !defined(NIPCIIa)
-	outb_p(out_value, out_addr);
+	outb_p(out_value, (unsigned int)out_addr);
 #else
-	outb_p(out_value, ((out_addr << 10) | ibbase ));
+	outb_p(out_value, (((unsigned int)(out_addr) << 10) | ibbase ));
 #endif
 }
 #endif

@@ -8,11 +8,6 @@
 #include <linux/kernel.h>
 
 
-  /* osutil.c */
-#ifndef COMPILING_SYS_OSUTIL_C	/* Dirty trick to remove some warnings */
-extern IBLCL void osPrint();
-#endif
-
 #if 0
 
   /* osadjcnt.c */

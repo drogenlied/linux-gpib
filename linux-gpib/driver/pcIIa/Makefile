@@ -9,9 +9,8 @@ SRCS =  adjcount.c cmd.c dma.c init.c lines.c read.c util.c \
 
 OBJS =  $(SRCS:.c=.o)
 
-INCLUDES = -I. -I../include -I../../include -I$(LINUXDIR)/include
-CFLAGS = $(INCLUDES) -D__KERNEL__ -DLINUX -O2 -m486 $(OPTIONS) -Wall -DMODULE
-
+INCLUDES = -I. -I../include -I../../include
+CFLAGS += $(INCLUDES) $(OPTIONS)
 
 
 all: board.o

@@ -30,10 +30,9 @@ IBLCL int bdonl(int v)
 {
   uint8		s;
   int		i;           
-  extern uint32	osRegAddr();
 
   DBGin("bdonl");
-  ib = (struct ibregs *) osRegAddr(ibbase);
+  ib = (struct ibregs *) osRegAddr((faddr_t)ibbase);
 
   if(v){
     s = GPIBpgin(csr) >> 4;	/* read chip-signature */

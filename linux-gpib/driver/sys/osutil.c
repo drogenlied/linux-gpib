@@ -18,57 +18,6 @@ IBLCL void osSendEOI(void)
 {
 }
 #endif
-/*
- * Input a one-byte value from the specified I/O port
- */
-IBLCL uint8 osP8in(short in_addr)
-{
-	uint8		retval;
-
-	retval = inb_p(in_addr);
-
-	DBGprint(DBG_REG, ("0x%x^p8_%x  ", retval, in_addr));
-
-	return retval;
-}
-
-
-/*
- * Output a one-byte value to the specified I/O port
- */
-IBLCL void osP8out(short out_addr,uint8 out_value)
-{
-
-	DBGprint(DBG_REG, ("p8_%x^0x%x  ", out_addr, out_value));
-
-	outb_p(out_value,out_addr);
-
-}
-
-/*
- * Input a two-byte value from the specified I/O port
- */
-IBLCL uint16 osP16in(short in_addr)
-{
-	uint16		retval;
-
-	retval = inw_p(in_addr);
-
-	DBGprint(DBG_REG, ("0x%x^p16_%x  ", retval, in_addr));
-	return retval;
-}
-
-
-/*
- * Output a two-byte value to the specified I/O port
- */
-IBLCL void osP16out(short out_addr, uint16 out_value)
-{
-	DBGprint(DBG_REG, ("p16_%x^0x%x  ", out_addr, out_value));
-
-	outw_p(out_value,out_addr);
-
-}
 
 IBLCL void osChngBase(int new_base)
 {

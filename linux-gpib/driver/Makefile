@@ -13,10 +13,11 @@
 DRIVER_DEVICE_ID = 0
 
 DEBUG_LEVEL=0x3d
-export ROOT
+
+export 
 
 -include $(ROOT)/util/.config
-
+-include $(ROOT)/util/linux_flags/flags
 
 ########################################################################
 #
@@ -29,13 +30,7 @@ export ROOT
 #                helps to trace errors (the size of the module grows up to
 #                7 pages)
 #
-#
-#  -DHAS_SEMAPHORES if your kernel has semaphores (1.0 and higher has)
-#
 #  -DUSE_DMA to enable DMA Transfer Mode
-
-OPTIONS = -DHAS_SEMAPHORES 
-
 #######################################################################
 #
 #  Do not Edit below
@@ -45,9 +40,9 @@ EXPORTED_INCLUDES = gpib_types.h gpib_registers.h gpib_ioctl.h gpib_user.h
 EXP_INC = $(EXPORTED_INCLUDES:%=$(ROOT)/include/%)
 CWD := `pwd`
 
-OBJS =     ./sys/sys.o  ./protocol/ieee488.o  ./board/board.o #./kernel_version.o
+OBJS =     ./sys/sys.o  ./protocol/ieee488.o  ./board/board.o 
 
-MAKE = make  OPTIONS="$(OPTIONS) " -C
+MAKE = make OPTIONS="$(OPTIONS) " -C
 SUBDIRS = board protocol sys
 
 
@@ -106,12 +101,12 @@ device:
 
 install:
 	$(INSTALL) -D gpib$(DRIVER_DEVICE_ID).o /lib/modules/`uname -r`/misc/gpib$(DRIVER_DEVICE_ID).o
-
+	depmod -a
 
 
 # make module version matching kernel version
-kernel_version.c: 
-	@echo char kernel_version[] = \"`uname -r`\"\; > kernel_version.c
+#kernel_version.c: 
+#	@echo char kernel_version[] = \"`uname -r`\"\; > kernel_version.c
 
 
 
@@ -123,9 +118,6 @@ rcsput:
 
 rcsget:
 	for i in  ./RCS/*,v ; do co -l `basename $$i ,v` ;done
-
-
-include $(ROOT)/makefile.inc
 
 
 $(EXP_INC):
