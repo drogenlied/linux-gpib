@@ -173,8 +173,11 @@ unsigned int create_send_setup( const ibBoard_t *board,
 {
 	unsigned int i, j;
 
-	if( addressList == NULL ) return 0;
-
+	if( addressList == NULL )
+	{
+		fprintf(stderr, "libgpib: bug! addressList NULL in create_send_setup()\n");
+		return 0;
+	}
 	if( addressListIsValid( addressList ) == 0 )
 	{
 		fprintf(stderr, "libgpib: bug! bad address list\n");

@@ -114,6 +114,8 @@ ssize_t my_ibwrt( ibConf_t *conf,
 
 	board = interfaceBoard( conf );
 
+	set_timeout( board, conf->usec_timeout );
+
 	if( conf->is_interface == 0 )
 	{
 		// set up addressing
@@ -122,8 +124,6 @@ ssize_t my_ibwrt( ibConf_t *conf,
 			return -1;
 		}
 	}
-
-	set_timeout( board, conf->usec_timeout );
 
 	while( count )
 	{
