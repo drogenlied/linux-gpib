@@ -177,6 +177,9 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 		case IBMUTEX:
 			return mutex_ioctl( board, arg );
 			break;
+		case IBONL:
+			return online_ioctl( board, arg );
+			break;
 		default:
 			break;
 	}
@@ -217,9 +220,6 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			break;
 		case IBAPE:
 			return auto_poll_enable_ioctl( board, arg );
-			break;
-		case IBONL:
-			return online_ioctl( board, arg );
 			break;
 		case IBSIC:
 			return ibsic( board );
