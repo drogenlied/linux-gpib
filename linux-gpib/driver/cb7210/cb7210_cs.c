@@ -64,8 +64,15 @@ static char *version =
 
 /* Parameters that can be set with 'insmod' */
 
+/* Newer, simpler way of listing specific interrupts */
+static int irq_list[4] = { -1 };
+MODULE_PARM(irq_list, "1-4i");
+
+/* The old way: bit map of interrupts to choose from */
+static int irq_mask = 0x86bc;
+MODULE_PARM(irq_mask, "i");
+
 /* Bit map of interrupts to choose from */
-static u_long irq_mask = 0x86bc;
 
 /*====================================================================*/
 
@@ -181,68 +188,72 @@ static void cs_error(client_handle_t handle, int func, int ret)
 
 static dev_link_t *gpib_attach(void)
 {
-    client_reg_t client_reg;
-    dev_link_t *link;
-    local_info_t *local;
-    int ret;
-
+	client_reg_t client_reg;
+	dev_link_t *link;
+	local_info_t *local;
+	int ret;
+	int i;
 #ifdef PCMCIA_DEBUG
-    if (pc_debug)
-	printk(KERN_DEBUG "gpib_attach()\n");
+	if (pc_debug)
+		printk(KERN_DEBUG "gpib_attach()\n");
 #endif
 
-    /* Initialize the dev_link_t structure */
-    link = kmalloc(sizeof(struct dev_link_t), GFP_KERNEL);
-    memset(link, 0, sizeof(struct dev_link_t));
-    link->release.function = &gpib_release;
-    link->release.data = (u_long)link;
+	/* Initialize the dev_link_t structure */
+	link = kmalloc(sizeof(struct dev_link_t), GFP_KERNEL);
+	memset(link, 0, sizeof(struct dev_link_t));
+	link->release.function = &gpib_release;
+	link->release.data = (u_long)link;
 
-    /* The io structure describes IO port mapping */
-    link->io.NumPorts1 = 16;
-    link->io.Attributes1 = IO_DATA_PATH_WIDTH_AUTO;
-    link->io.NumPorts2 = 16;
-    link->io.Attributes2 = IO_DATA_PATH_WIDTH_16;
-    link->io.IOAddrLines = 10;
+	/* The io structure describes IO port mapping */
+	link->io.NumPorts1 = 16;
+	link->io.Attributes1 = IO_DATA_PATH_WIDTH_AUTO;
+	link->io.NumPorts2 = 16;
+	link->io.Attributes2 = IO_DATA_PATH_WIDTH_16;
+	link->io.IOAddrLines = 10;
 
-    /* Interrupt setup */
-    link->irq.Attributes = IRQ_TYPE_EXCLUSIVE;
-    link->irq.IRQInfo1 = IRQ_INFO2_VALID|IRQ_LEVEL_ID;
-    link->irq.IRQInfo2 = irq_mask;
-    link->irq.Handler = NULL;
-    link->irq.Instance = NULL;
+	/* Interrupt setup */
+	link->irq.Attributes = IRQ_TYPE_EXCLUSIVE;
+	link->irq.IRQInfo1 = IRQ_INFO2_VALID|IRQ_LEVEL_ID;
+	if(irq_list[0] == -1)
+		link->irq.IRQInfo2 = irq_mask;
+	else
+		for(i = 0; i < 4; i++)
+			link->irq.IRQInfo2 |= 1 << irq_list[i];
+	link->irq.Handler = NULL;
+	link->irq.Instance = NULL;
 
-    /* General socket configuration */
-    link->conf.Attributes = CONF_ENABLE_IRQ;
-    link->conf.Vcc = 50;
-    link->conf.IntType = INT_MEMORY_AND_IO;
-    link->conf.ConfigIndex = 1;
-    link->conf.Present = PRESENT_OPTION;
+	/* General socket configuration */
+	link->conf.Attributes = CONF_ENABLE_IRQ;
+	link->conf.Vcc = 50;
+	link->conf.IntType = INT_MEMORY_AND_IO;
+	link->conf.ConfigIndex = 1;
+	link->conf.Present = PRESENT_OPTION;
 
-    /* Allocate space for private device-specific data */
-    local = kmalloc(sizeof(local_info_t), GFP_KERNEL);
-    memset(local, 0, sizeof(local_info_t));
-    link->priv = local;
+	/* Allocate space for private device-specific data */
+	local = kmalloc(sizeof(local_info_t), GFP_KERNEL);
+	memset(local, 0, sizeof(local_info_t));
+	link->priv = local;
 
-    /* Register with Card Services */
-    link->next = dev_list;
-    dev_list = link;
-    client_reg.dev_info = &dev_info;
-    client_reg.Attributes = INFO_IO_CLIENT | INFO_CARD_SHARE;
-    client_reg.EventMask =
+	/* Register with Card Services */
+	link->next = dev_list;
+	dev_list = link;
+	client_reg.dev_info = &dev_info;
+	client_reg.Attributes = INFO_IO_CLIENT | INFO_CARD_SHARE;
+	client_reg.EventMask =
 	CS_EVENT_CARD_INSERTION | CS_EVENT_CARD_REMOVAL |
 	CS_EVENT_RESET_PHYSICAL | CS_EVENT_CARD_RESET |
 	CS_EVENT_PM_SUSPEND | CS_EVENT_PM_RESUME;
-    client_reg.event_handler = &gpib_event;
-    client_reg.Version = 0x0210;
-    client_reg.event_callback_args.client_data = link;
-    ret = CardServices(RegisterClient, &link->handle, &client_reg);
-    if (ret != 0) {
-	cs_error(link->handle, RegisterClient, ret);
-	gpib_detach(link);
-	return NULL;
-    }
+	client_reg.event_handler = &gpib_event;
+	client_reg.Version = 0x0210;
+	client_reg.event_callback_args.client_data = link;
+	ret = CardServices(RegisterClient, &link->handle, &client_reg);
+	if (ret != 0) {
+		cs_error(link->handle, RegisterClient, ret);
+		gpib_detach(link);
+		return NULL;
+	}
 
-    return link;
+	return link;
 } /* gpib_attach */
 
 /*======================================================================
