@@ -22,7 +22,7 @@
 int nec7210_take_control(gpib_board_t *board, nec7210_private_t *priv, int syncronous)
 {
 	int i;
-	const int timeout = 10000;
+	const int timeout = 1000;
 	int retval = 0;
 	unsigned int adsr_bits = 0;
 
@@ -36,13 +36,27 @@ int nec7210_take_control(gpib_board_t *board, nec7210_private_t *priv, int syncr
 	{
 		adsr_bits = read_byte(priv, ADSR);
 		if((adsr_bits & HR_NATN) == 0)
-		{
 			break;
-		}
 		udelay(1);
 	}
+	// if busy wait has failed, try sleeping
 	if( i == timeout )
-		return -ETIMEDOUT;
+	{
+		for(i = 0; i < HZ; i++)
+		{
+			set_current_state(TASK_INTERRUPTIBLE);
+			if(schedule_timeout(1))
+				return -ERESTARTSYS;
+			adsr_bits = read_byte(priv, ADSR);
+			if((adsr_bits & HR_NATN) == 0)
+				break;
+		}
+		if(i == HZ)
+		{
+			printk("error waiting for ATN\n");
+			return -ETIMEDOUT;
+		}
+	}
 	clear_bit( WRITE_READY_BN, &priv->state );
 	return retval;
 }
@@ -50,7 +64,7 @@ int nec7210_take_control(gpib_board_t *board, nec7210_private_t *priv, int syncr
 int nec7210_go_to_standby(gpib_board_t *board, nec7210_private_t *priv)
 {
 	int i;
-	const int timeout = 10000;
+	const int timeout = 1000;
 	unsigned int adsr_bits = 0;
 	int retval = 0;
 
@@ -63,10 +77,23 @@ int nec7210_go_to_standby(gpib_board_t *board, nec7210_private_t *priv)
 			break;
 		udelay(1);
 	}
+	// if busy wait has failed, try sleeping
 	if(i == timeout)
 	{
-		printk("error waiting for NATN\n");
-		return -ETIMEDOUT;
+		for(i = 0; i < HZ; i++)
+		{
+			set_current_state(TASK_INTERRUPTIBLE);
+			if(schedule_timeout(1))
+				return -ERESTARTSYS;
+			adsr_bits = read_byte(priv, ADSR);
+			if(adsr_bits & HR_NATN)
+				break;
+		}
+		if(i == HZ)
+		{
+			printk("error waiting for NATN\n");
+			return -ETIMEDOUT;
+		}
 	}
 	clear_bit( COMMAND_READY_BN, &priv->state );
 	return retval;
