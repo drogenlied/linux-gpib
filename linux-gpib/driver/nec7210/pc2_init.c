@@ -250,14 +250,15 @@ int pc2a_attach(gpib_driver_t *driver)
 {
 	unsigned int i, err;
 	int isr_flags = 0;
-	pc2_private_t *pc2_priv = driver->private_data;
-	nec7210_private_t *nec_priv = &pc2_priv->nec7210_priv;
+	pc2_private_t *pc2_priv;
+	nec7210_private_t *nec_priv;
 
 	driver->status = 0;
 
 	if(allocate_private(driver))
 		return -ENOMEM;
 	pc2_priv = driver->private_data;
+	nec_priv = &pc2_priv->nec7210_priv;
 	nec_priv->offset = pc2a_reg_offset;
 	nec_priv->read_byte = ioport_read_byte;
 	nec_priv->write_byte = ioport_write_byte;
@@ -339,22 +340,25 @@ void pc2a_detach(gpib_driver_t *driver)
 {
 	int i;
 	pc2_private_t *pc2_priv = driver->private_data;
-	nec7210_private_t *nec_priv = &pc2_priv->nec7210_priv;
+	nec7210_private_t *nec_priv;
 
-	if(nec_priv->dma_channel)
+	if(pc2_priv)
 	{
-		free_dma(nec_priv->dma_channel);
-	}
-	if(pc2_priv->irq)
-	{
-		free_irq(pc2_priv->irq, driver);
-	}
-	if(nec_priv->iobase)
-	{
-		nec7210_board_reset(nec_priv);
-		for(i = 0; i < nec7210_num_registers; i++)
-			release_region(nec_priv->iobase + i * pc2a_reg_offset, 1);
-		release_region(pc2a_clear_intr_iobase, pc2a_clear_intr_iosize);
+		if(nec_priv->dma_channel)
+		{
+			free_dma(nec_priv->dma_channel);
+		}
+		if(pc2_priv->irq)
+		{
+			free_irq(pc2_priv->irq, driver);
+		}
+		if(nec_priv->iobase)
+		{
+			nec7210_board_reset(nec_priv);
+			for(i = 0; i < nec7210_num_registers; i++)
+				release_region(nec_priv->iobase + i * pc2a_reg_offset, 1);
+			release_region(pc2a_clear_intr_iobase, pc2a_clear_intr_iosize);
+		}
 	}
 	free_private(driver);
 }
