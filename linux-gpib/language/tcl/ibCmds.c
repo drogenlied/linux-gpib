@@ -356,10 +356,7 @@ if ( iberr == EFSO) strcat(errbuf," EFSO <File sys. error>");
 if ( iberr == EBUS) strcat(errbuf," EBUS <Command error>");
 if ( iberr == ESTB) strcat(errbuf," ESTB <Status byte lost>");
 if ( iberr == ESRQ) strcat(errbuf," ESRQ <SRQ stuck on>");
-if ( iberr == EPAR) strcat(errbuf," EPAR <Parse Error in Config>");
-if ( iberr == ECFG) strcat(errbuf," ECFG <Can't open Config>");
 if ( iberr == ETAB) strcat(errbuf," ETAB <Device Table Overflow>");
-if ( iberr == ENSD) strcat(errbuf," ENSD <Device not Found>");
 
 
 
