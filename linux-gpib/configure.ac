@@ -3,20 +3,20 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_INIT
 dnl Every other copy of the package version number gets its value from here
-AM_INIT_AUTOMAKE(linux-gpib, 3.1.99)
+AM_INIT_AUTOMAKE([linux-gpib], [3.1.99])
 
 dnl create a config.h file (Automake will add -DHAVE_CONFIG_H)
-AM_CONFIG_HEADER(config.h)
+AM_CONFIG_HEADER([config.h])
 
-AC_SUBST(VERSION)
+AC_SUBST([VERSION])
 
-ISODATE=`date +%Y-%m-%d`
-AC_SUBST(ISODATE)
+[ISODATE=`date +%Y-%m-%d`]
+AC_SUBST([ISODATE])
 
 AC_CANONICAL_HOST
 
-AC_ENABLE_SHARED(yes)
-AC_ENABLE_STATIC(no)
+AC_ENABLE_SHARED([yes])
+AC_ENABLE_STATIC([no])
 AC_ARG_ENABLE([pcmcia],[  --enable-pcmcia	Enable support for PCMCIA cards in GPIB kernel drivers],
 	[ENABLE_PCMCIA=$enableval],[ENABLE_PCMCIA="no"])
 if test "$ENABLE_PCMCIA" == "yes" ; then
@@ -41,18 +41,18 @@ AC_ARG_ENABLE([documentation],[  --disable-documentation	Disable building docume
 	[BUILD_DOCS=$enableval],[BUILD_DOCS="yes"])
 
 dnl check kernel source directory
-AC_ARG_WITH(linux-srcdir,
+AC_ARG_WITH([linux-srcdir],
 	[  --with-linux-srcdir=DIR	location of Linux kernel source directory [[DIR=/lib/modules/$(uname -r)/build/]]],
 	[LINUX_SRCDIR=$withval],[LINUX_SRCDIR=/lib/modules/$(uname -r)/build/])
 if test "$LINUX_SRCDIR" == "no" ; then
 	AC_MSG_ERROR([A Linux kernel source directory is required to compile driver modules.  Use --with-linux-srcdir=DIR.])
 fi
-AC_SUBST(LINUX_SRCDIR)
+AC_SUBST([LINUX_SRCDIR])
 AC_MSG_CHECKING([Linux kernel directory])
-if [[ ! -d "$LINUX_SRCDIR" ]];then
+if [[ ! -d "$LINUX_SRCDIR" ]]; then
 	AC_MSG_ERROR([Linux kernel directory $LINUX_SRCDIR does not exist.  Specify using --with-linux-srcdir=DIR.])
 fi
-if [[ ! -f "$LINUX_SRCDIR/.config" ]];then
+if [[ ! -f "$LINUX_SRCDIR/.config" ]]; then
 	AC_MSG_ERROR([Kernel source tree at $LINUX_SRCDIR is not configured.  Copy the
 	appropriate configuration file to $LINUX_SRCDIR/.config and then run 'make oldconfig'
 	in the kernel source directory.])
@@ -75,11 +75,16 @@ AC_PROG_CC
 AM_PROG_LEX
 AC_PROG_YACC
 AC_PROG_LIBTOOL
-AC_PATH_PROG(JW_PATH, jw, no)
+AC_PATH_PROG([JW_PATH], [jw], [no])
 if test "$JW_PATH" == "no" ; then
 	AC_MSG_NOTICE([docbook-tools (jw) not found, disabling documentation])
 	BUILD_DOCS="no"
 fi
+AC_PATH_PROG([DEPMOD], [depmod], [true], [PATH:/sbin:/usr/sbin:/usr/local/sbin])
+if test "$DEPMOD" == "true" ; then
+	AC_MSG_WARN([unable to find the 'depmod' program.  Is it in your path?])
+fi
+
 AM_PATH_PYTHON()
 PYTHON_MAJOR_VERSION=$(echo $PYTHON_VERSION | cut -d. -f1 )
 PYTHON_MINOR_VERSION=$(echo $PYTHON_VERSION | cut -d. -f2 )
@@ -131,8 +136,8 @@ AC_FUNC_ALLOCA
 AC_STRUCT_TM
 AC_STRUCT_ST_BLOCKS
 AC_FUNC_CLOSEDIR_VOID
-AC_CHECK_FUNCS(mkfifo)
-AC_CHECK_FUNC(mknod)
+AC_CHECK_FUNCS([mkfifo])
+AC_CHECK_FUNC([mknod])
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 
@@ -140,25 +145,25 @@ dnl Checks for library functions.
 
 LIBGPIB_CFLAGS="-I\$(top_srcdir)/include -D_REENTRANT"
 LIBGPIB_LDFLAGS="\$(top_srcdir)/lib/libgpib.la -lpthread"
-AC_SUBST(LIBGPIB_CFLAGS)
-AC_SUBST(LIBGPIB_LDFLAGS)
+AC_SUBST([LIBGPIB_CFLAGS])
+AC_SUBST([LIBGPIB_LDFLAGS])
 IBMAJOR=160
-AC_SUBST(IBMAJOR)
+AC_SUBST([IBMAJOR])
 AC_DEFINE([IBMAJOR],[160],[Major number of device files])
 
 echo
 echo Configuration:
-AM_CONDITIONAL(BUILD_DOCS, [test "$BUILD_DOCS" == "yes"])
+AM_CONDITIONAL([BUILD_DOCS], [test "$BUILD_DOCS" == "yes"])
 echo "SGML Documentation: $BUILD_DOCS"
-AM_CONDITIONAL(BIND_GUILE, [test "$BIND_GUILE" == "yes"])
+AM_CONDITIONAL([BIND_GUILE], [test "$BIND_GUILE" == "yes"])
 echo "Guile binding: $BIND_GUILE"
-AM_CONDITIONAL(BIND_PERL, [test "$BIND_PERL" == "yes"])
+AM_CONDITIONAL([BIND_PERL], [test "$BIND_PERL" == "yes"])
 echo "Perl binding: $BIND_PERL"
-AM_CONDITIONAL(BIND_PHP, [test "$BIND_PHP" == "yes"])
+AM_CONDITIONAL([BIND_PHP], [test "$BIND_PHP" == "yes"])
 echo "PHP binding: $BIND_PHP"
-AM_CONDITIONAL(BIND_PYTHON, [test "$BIND_PYTHON" == "yes"])
+AM_CONDITIONAL([BIND_PYTHON], [test "$BIND_PYTHON" == "yes"])
 echo "Python binding: $BIND_PYTHON"
-AM_CONDITIONAL(BIND_TCL, [test "$BIND_TCL" == "yes"])
+AM_CONDITIONAL([BIND_TCL], [test "$BIND_TCL" == "yes"])
 echo "TCL binding: $BIND_TCL"
 
 AC_OUTPUT([\

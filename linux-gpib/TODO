@@ -40,8 +40,6 @@ libgpib_test: add test for serial poll without autopolling
 
 remove devices that time out from autopoll list
 
-add depmod check to configure script
-
 better error on unknown board_type
 
 the cb7210, unlike the nec7210, does not seem to drop its
