@@ -58,7 +58,7 @@ gpib$(DRIVER_DEVICE_ID).o: $(OBJS)
 	$(RLINK) -o gpib$(DRIVER_DEVICE_ID).o $(OBJS) 
 
 clean :
-	rm -f *.o kernel_version.c $(EXP_INC) .proto_stamp
+	rm -f *.o kernel_version.c $(EXP_INC) 
 	set -e; \
 	for i in $(SUBDIRS); do \
 		test -d $$i && $(MAKE) $$i NODEPS=y clean ; \
