@@ -1,5 +1,12 @@
 Linux GPIB Package changelog
 
+3.1.101: Fixed compilation against kernels with dynamic
+HZ patch.  Fixed reporting of SRQI bit in ibsta for boards
+that support it.  Fixed double-sending of bytes during
+writes with cb7210, which could occur when operating as
+slave.  Changes to libgpib_test so it can be run with
+two boards on different computers.
+
 3.1.100: Fixed kernel oops that would occur after module
 removal with some Measurement Computing boards.  Fixed timeouts
 which could occur with some instruments when asserting/releasing
