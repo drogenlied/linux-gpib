@@ -140,4 +140,4 @@ static __inline__ unsigned int GetSAD( Addr4882_t address )
 }
 #endif
 
-#endif	// _PUBLIC_GPIB_H
+#endif	/* _PUBLIC_GPIB_H */

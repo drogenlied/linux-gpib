@@ -33,9 +33,9 @@ typedef struct gpib_board_struct gpib_board_t;
 
 struct gpib_interface_struct
 {
-	// list_head so we can make a linked list of drivers
+	/* list_head so we can make a linked list of drivers */
 	struct list_head list;
-	// name of board
+	/* name of board */
 	char *name;
 	/* attach() initializes board and allocates resources */
 	int (*attach)(gpib_board_t *board);
@@ -185,25 +185,25 @@ struct gpib_board_struct
 	unsigned int open_count;
 	/* list of open devices connected to this board */
 	struct list_head device_list;
-	// primary address
+	/* primary address */
 	unsigned int pad;
-	// secondary address
+	/* secondary address */
 	int sad;
-	// timeout for io operations, in microseconds
+	/* timeout for io operations, in microseconds */
 	unsigned int usec_timeout;
-	// board's parallel poll configuration byte
+	/* board's parallel poll configuration byte */
 	uint8_t parallel_poll_configuration;
 	/* Count that keeps track of whether board is up and running or not */
 	unsigned int online;
-	// number of processes trying to autopoll
+	/* number of processes trying to autopoll */
 	int autopollers;
-	// queue for recording received trigger/clear/ifc events
+	/* queue for recording received trigger/clear/ifc events */
 	gpib_event_queue_t event_queue;
 	/* Flag that indicates whether board is system controller of the bus */
 	unsigned master : 1;
 	/* Flag board has been opened for exclusive access */
 	unsigned exclusive : 1;
-	// error dong autopoll
+	/* error dong autopoll */
 	unsigned stuck_srq : 1;
 };
 
@@ -218,16 +218,16 @@ typedef struct
  * on the bus, so we know what address to poll when we get a service request */
 typedef struct
 {
-	// list_head so we can make a linked list of devices
+	/* list_head so we can make a linked list of devices */
 	struct list_head list;
-	unsigned int pad;	// primary gpib address
-	int sad;	// secondary gpib address (negative means disabled)
-	// stores serial poll bytes for this device
+	unsigned int pad;	/* primary gpib address */
+	int sad;	/* secondary gpib address (negative means disabled) */
+	/* stores serial poll bytes for this device */
 	struct list_head status_bytes;
 	unsigned int num_status_bytes;
-	// number of times this address is opened
+	/* number of times this address is opened */
 	unsigned int reference_count;
-	// flags loss of status byte error due to limit on size of queue
+	/* flags loss of status byte error due to limit on size of queue */
 	unsigned dropped_byte : 1;
 } gpib_device_t;
 
@@ -246,6 +246,6 @@ typedef struct
 	unsigned holding_mutex : 1;
 } gpib_file_private_t;
 
-#endif	// __KERNEL__
+#endif	/* __KERNEL__ */
 
-#endif	// _GPIB_TYPES_H
+#endif	/* _GPIB_TYPES_H */

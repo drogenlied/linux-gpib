@@ -17,6 +17,7 @@
  ***************************************************************************/
 
 #include "board.h"
+#include <linux/delay.h>
 
 void check_my_address_state( gpib_board_t *board, tms9914_private_t *priv, int cmd_byte,
 	int next_cmd_byte )
@@ -56,6 +57,8 @@ ssize_t tms9914_command(gpib_board_t *board, tms9914_private_t *priv, uint8_t *b
 			printk("gpib command wait interrupted\n");
 			break;
 		}
+		if( test_bit( TIMO_NUM, &board->status ) ) break;
+
 		spin_lock_irqsave(&board->spinlock, flags);
 		clear_bit(COMMAND_READY_BN, &priv->state);
 		write_byte(priv, buffer[count], CDOR);

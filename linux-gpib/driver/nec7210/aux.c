@@ -66,15 +66,14 @@ int nec7210_go_to_standby(gpib_board_t *board, nec7210_private_t *priv)
 			break;
 		udelay(1);
 	}
+	
+	nec7210_update_status( board, priv );
+
 	if(i == timeout)
 	{
 		printk("error waiting for NATN\n");
 		retval = -ETIMEDOUT;
 	}
-	if(adsr_bits & HR_NATN)
-		clear_bit(ATN_NUM, &board->status);
-	else
-		set_bit(ATN_NUM, &board->status);
 
 	return retval;
 }

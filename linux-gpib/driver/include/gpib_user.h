@@ -42,14 +42,14 @@ enum ibsta_bit_numbers
 /* IBSTA status bits (returned by all functions) */
 enum ibsta_bits
 {
-	DCAS = ( 1 << DCAS_NUM ),	// device clear state
-	DTAS = ( 1 << DTAS_NUM ),	// device trigger state
+	DCAS = ( 1 << DCAS_NUM ),	/* device clear state */
+	DTAS = ( 1 << DTAS_NUM ),	/* device trigger state */
 	LACS = ( 1 <<  LACS_NUM ),	/* GPIB interface is addressed as Listener */
 	TACS = ( 1 <<  TACS_NUM ),	/* GPIB interface is addressed as Talker */
 	ATN = ( 1 <<  ATN_NUM ),	/* Attention is asserted */
 	CIC = ( 1 <<  CIC_NUM ),	/* GPIB interface is Controller-in-Charge */
-	REM = ( 1 << REM_NUM ),	// remote state
-	LOK = ( 1 << LOK_NUM ),	// lockout state
+	REM = ( 1 << REM_NUM ),	/* remote state */
+	LOK = ( 1 << LOK_NUM ),	/* lockout state */
 	CMPL = ( 1 <<  CMPL_NUM ),	/* I/O is complete  */
 	EVENT = ( 1 << EVENT_NUM ),	/* DCAS, DTAS, or IFC has occurred */
 	SPOLL = ( 1 << SPOLL_NUM ),	/* board serial polled by busmaster */
@@ -60,7 +60,7 @@ enum ibsta_bits
 	ERR = ( 1 << ERR_NUM )	/* Function call terminated on error */
 };
 
-// status bits that drivers are responsible for
+/* status bits that drivers are responsible for */
 static const int DRIVERBITS = ( SRQI | LOK | REM | CIC | ATN | TACS | LACS | DTAS | DCAS );
 
 static const int device_status_mask = ERR | TIMO | END | CMPL | RQS;
@@ -211,7 +211,7 @@ static __inline__ int gpib_address_equal( unsigned int pad1, int sad1, unsigned 
 	return 0;
 }
 
-static const int gpib_addr_max = 30;	// max address for primary/secondary gpib addresses
+static const int gpib_addr_max = 30;	/* max address for primary/secondary gpib addresses */
 
 enum ibask_option
 {

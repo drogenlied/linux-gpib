@@ -28,7 +28,7 @@ typedef struct
 	char name[100];
 } board_type_ioctl_t;
 
-// argument for read/write/command ioctls
+/* argument for read/write/command ioctls */
 typedef struct
 {
 	uint8_t *buffer;

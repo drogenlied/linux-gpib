@@ -825,7 +825,6 @@ static int dma_ioctl( gpib_board_t *board, unsigned long arg )
 static int autopoll_ioctl( gpib_board_t *board )
 {
 	int retval = 0;
-
 	board->autopollers++;
 
 	if( down_interruptible( &board->autopoll_mutex ) )
@@ -851,7 +850,6 @@ static int autopoll_ioctl( gpib_board_t *board )
 		{
 			board->stuck_srq = 1;	// XXX could be better
 			set_bit( SRQI_NUM, &board->status );
-			break;
 		}
 	}
 	board->autopollers--;

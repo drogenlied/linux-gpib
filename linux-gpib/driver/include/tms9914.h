@@ -104,7 +104,9 @@ extern uint8_t tms9914_iomem_read_byte(tms9914_private_t *priv, unsigned int reg
 extern void tms9914_iomem_write_byte(tms9914_private_t *priv, uint8_t data, unsigned int register_num);
 
 // interrupt service routine
-void tms9914_interrupt(gpib_board_t *board, tms9914_private_t *priv);
+void tms9914_interrupt(gpib_board_t *board, tms9914_private_t *priv );
+void tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv, int status1,
+		int status2);
 
 // tms9914 has 8 registers
 static const int tms9914_num_registers = 8;

@@ -33,7 +33,7 @@
 
 struct async_operation
 {
-	pthread_t thread;	// thread used for asynchronous io operations
+	pthread_t thread;	/* thread used for asynchronous io operations */
 	pthread_mutex_t lock;
 	uint8_t *buffer;
 	volatile long length;
@@ -45,8 +45,8 @@ struct async_operation
 typedef struct ibConfStruct
 {
 	char name[100];		/* name of the device (for ibfind())     */
-	int pad;		// device primary address
-	int sad;		// device secodnary address (negative disables)
+	int pad;		/* device primary address */
+	int sad;		/* device secodnary address (negative disables) */
 	char init_string[100];               /* initialization string (optional) */
 	int board;                         /* board number                     */
 	char eos;                           /* local eos modes                  */
@@ -55,16 +55,16 @@ typedef struct ibConfStruct
 	unsigned int usec_timeout;
 	unsigned int spoll_usec_timeout;
 	unsigned int ppoll_usec_timeout;
-	struct async_operation async;	// used by asynchronous operations ibcmda(), ibrda(), etc.
-	int ppoll_config;	// current parallel poll configuration
-	unsigned send_eoi : 1;	// assert EOI at end of writes
-	unsigned is_interface : 1;	// is interface board
+	struct async_operation async;	/* used by asynchronous operations ibcmda(), ibrda(), etc. */
+	int ppoll_config;	/* current parallel poll configuration */
+	unsigned send_eoi : 1;	/* assert EOI at end of writes */
+	unsigned is_interface : 1;	/* is interface board */
 	unsigned dev_is_open : 1;
 	unsigned board_is_open : 1;
 	unsigned has_lock : 1;
-	unsigned end : 1;	// EOI asserted or EOS received at end of IO operation */
-	unsigned local_lockout : 1;	// send local lockout when device is brought online
-	unsigned local_ppc : 1;	// enable local configuration of board's parallel poll response */
+	unsigned end : 1;	/* EOI asserted or EOS received at end of IO operation */ 
+	unsigned local_lockout : 1;	/* send local lockout when device is brought online */
+	unsigned local_ppc : 1;	/* enable local configuration of board's parallel poll response */
 	unsigned timed_out : 1;		/* io operation timed out */
 	unsigned readdr : 1;	/* useless, exists for compatibility only at present */
 } ibConf_t;
@@ -72,18 +72,18 @@ typedef struct ibConfStruct
 /*---------------------------------------------------------------------- */
 
 typedef struct ibBoardStruct {
-	char board_type[100];	// name (model) of interface board
-	int pad;		// device primary address
-	int sad;		// device secodnary address (negative disables)
-	unsigned long base;                          /* base configuration               */
+	char board_type[100];	/* name (model) of interface board */
+	int pad;		/* device primary address */
+	int sad;		/* device secodnary address (negative disables) */
+	unsigned long base;                          /* base configuration */
 	unsigned int irq;
 	unsigned int dma;
 	int pci_bus;
 	int pci_slot;
 	int fileno;                        /* device file descriptor           */
-	char device[100];	// name of device file ( /dev/gpib0, etc.)
+	char device[100];	/* name of device file ( /dev/gpib0, etc.) */
 	pthread_t *autopoll_thread;
-	unsigned int open_count;	// reference count
+	unsigned int open_count;	/* reference count */
 	unsigned is_system_controller : 1;	/* board is busmaster or not */
 } ibBoard_t;
 

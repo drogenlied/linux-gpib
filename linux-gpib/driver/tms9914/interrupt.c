@@ -24,15 +24,22 @@
  *  interrupt service routine
  */
 
-void tms9914_interrupt(gpib_board_t *board, tms9914_private_t *priv)
+void tms9914_interrupt( gpib_board_t *board, tms9914_private_t *priv )
 {
 	int status0, status1;
 
+	// read interrupt status (also clears status)
+	status0 = read_byte( priv, ISR0 );
+	status1 = read_byte( priv, ISR1 );
+	
+	tms9914_interrupt_have_status( board, priv, status0, status1 );
+}
+
+void tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv, int status0,
+		int status1)
+{
 	spin_lock(&board->spinlock);
 
-	// read interrupt status (also clears status)
-	status0 = read_byte(priv, ISR0);
-	status1 = read_byte(priv, ISR1);
 
 	// record address status change
 	if(status0 & HR_RLC || status0 & HR_MAC)
@@ -152,5 +159,7 @@ void tms9914_interrupt(gpib_board_t *board, tms9914_private_t *priv)
 }
 
 EXPORT_SYMBOL(tms9914_interrupt);
+EXPORT_SYMBOL(tms9914_interrupt_have_status);
+
 
 

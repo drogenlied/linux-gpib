@@ -301,11 +301,15 @@ void cleanup_module(void)
 
 void hp82335_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
+	int status1, status2;
 	gpib_board_t *board = arg;
 	hp82335_private_t *priv = board->private_data;
 
-	tms9914_interrupt(board, &priv->tms9914_priv);
+	status1 = read_byte( &priv->tms9914_priv, ISR0);
+	status2 = read_byte( &priv->tms9914_priv, ISR1);
 
 	hp82335_clear_interrupt( priv );
+
+	tms9914_interrupt_have_status(board, &priv->tms9914_priv, status1, status2);
 }
 
