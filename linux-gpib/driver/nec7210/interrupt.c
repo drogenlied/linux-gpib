@@ -129,7 +129,7 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 		set_bit(END_NUM, &driver->status);
 
 	// get incoming data in PIO mode
-	if((status1 & HR_DI) & (priv->imr1_bits & HR_DIIE))
+	if((status1 & HR_DI) & (test_bit(DMA_IN_PROGRESS_BN, &priv->state) == 0))
 	{
 		data.value = priv->read_byte(priv, DIR);
 		if(status1 & HR_END)
@@ -143,7 +143,7 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	}
 
 	// check for dma read transfer complete
-	if(priv->imr2_bits & HR_DMAI)
+	if(test_bit(DMA_IN_PROGRESS_BN, &priv->state))
 	{
 		flags = claim_dma_lock();
 		disable_dma(priv->dma_channel);
