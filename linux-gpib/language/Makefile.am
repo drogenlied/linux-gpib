@@ -52,11 +52,11 @@ clean-local: $(CLEAN_PERL)
 
 .PHONY: all-perl
 all-perl: perl/Makefile
-	$(MAKE) -C perl all
+	-$(MAKE) -C perl all
 
 .PHONY: clean-perl
 clean-perl: perl/Makefile
-	$(MAKE) -C perl clean
+	-$(MAKE) -C perl clean
 
 perl/Makefile:
-	(cd perl && $(PERL) Makefile.PL)
+	-(cd perl && $(PERL) Makefile.PL)

@@ -128,8 +128,9 @@ static PyObject* gpib_writebin(PyObject *self, PyObject *args)
         char *command;
         int device;
         int length;
+	int cmdlength;
 
-        if (!PyArg_ParseTuple(args, "isi",&device,&command,&length))
+        if (!PyArg_ParseTuple(args, "is#i",&device,&command,&cmdlength,&length))
                 return NULL;
         if( ibwrt(device,command,length) & ERR ){
            PyErr_SetString(GpibError,"Write Error: ibwrt");

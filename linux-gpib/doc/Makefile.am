@@ -19,11 +19,8 @@ else
 all-local:
 endif
 
-install-data-local:
-#	$(INSTALL) -d $(mandir)/man3
-#	$(INSTALL_DATA) man/*.3 $(mandir)/man3
-	$(INSTALL) -d $(pkgdatadir)/html
-	-$(INSTALL_DATA) doc_html/* $(pkgdatadir)/html
+doc_DATA = doc_html/*
+docdir = $(pkgdatadir)/html
 
 maintainer-clean-local:
 	$(RM) gpib_version.txt

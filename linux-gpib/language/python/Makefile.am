@@ -12,11 +12,11 @@ EXTRA_DIST = gpibtest.py setup.py Gpib.py gpibinter.c
 all-local: build
 
 build: gpibinter.c
-	{ $(PYTHON) setup.py build && touch build; } || { $(RM) -r build; exit 1; }
+	-{ $(PYTHON) setup.py build && touch build; } || { $(RM) -r build; exit 1; }
 
 install-data-local:
-	$(PYTHON) setup.py install
+	-$(PYTHON) setup.py install
 
 clean-local:
-	$(RM) -r build
+	-$(RM) -r build
 

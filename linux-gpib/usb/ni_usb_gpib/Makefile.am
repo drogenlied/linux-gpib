@@ -12,7 +12,7 @@ EXTRA_DIST = ni_usb_gpib ni_usb_gpib.usermap
 HOTPLUG_USB_CONF_DIR=/etc/hotplug/usb
 USB_FIRMWARE_DIR=/usr/share/usb/
 
-install-data-local:
+usb-install-data-local:
 	test -e $(HOTPLUG_USB_CONF_DIR)/ni_usb_gpib || $(INSTALL_SCRIPT) -D ni_usb_gpib $(HOTPLUG_USB_CONF_DIR)/ni_usb_gpib
 	test -e $(HOTPLUG_USB_CONF_DIR)/ni_usb_gpib.usermap || $(INSTALL_DATA) -D ni_usb_gpib.usermap $(HOTPLUG_USB_CONF_DIR)/ni_usb_gpib.usermap
 	$(INSTALL) -d $(USB_FIRMWARE_DIR)/ni_usb_gpib
