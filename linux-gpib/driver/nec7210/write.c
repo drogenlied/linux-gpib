@@ -89,7 +89,7 @@ static ssize_t __dma_write(gpib_board_t *board, nec7210_private_t *priv, dma_add
 	clear_bit(WRITE_READY_BN, &priv->state);
 	set_bit(DMA_IN_PROGRESS_BN, &priv->state);
 
-	spin_lock_irqsave(&board->spinlock, flags);
+	spin_unlock_irqrestore(&board->spinlock, flags);
 
 	// suspend until message is sent
 	if(wait_event_interruptible(board->wait, test_bit(DMA_IN_PROGRESS_BN, &priv->state) == 0 ||
@@ -98,17 +98,17 @@ static ssize_t __dma_write(gpib_board_t *board, nec7210_private_t *priv, dma_add
 		printk("gpib write interrupted!\n");
 	}
 	if(test_bit(TIMO_NUM, &board->status))
-		retval = -ETIMEDOUT;	
+		retval = -ETIMEDOUT;
 
 	// disable board's dma
 	priv->imr2_bits &= ~HR_DMAO;
 	write_byte(priv, priv->imr2_bits, IMR2);
 
-	flags = claim_dma_lock();
+	dma_irq_flags = claim_dma_lock();
 	clear_dma_ff(priv->dma_channel);
 	disable_dma(priv->dma_channel);
 	residue = get_dma_residue(priv->dma_channel);
-	release_dma_lock(flags);
+	release_dma_lock( dma_irq_flags );
 
 	if(residue)
 		retval = -EIO;
