@@ -157,7 +157,7 @@ set_svar BOARD_TYPE $REPLY
                        ;;
 
 	       hp82335) echo "#define HP82335 " >>../driver/include/gpib_board.h 
-         	       ln -s ./hp82335 ../driver/board
+         	       ln -s ./tms9914 ../driver/board
                         IBBASE=0xDC000
 		        IBIRQ=3
 		        IBDMA=1
@@ -165,7 +165,7 @@ set_svar BOARD_TYPE $REPLY
 
 	       ziatech) echo "#define ZIATECH " >>../driver/include/gpib_board.h 
                        echo "#define TMS9914 " >>../driver/include/gpib_board.h 
-         	       ln -s ./hp82335 ../driver/board
+         	       ln -s ./tms9914 ../driver/board
                         IBBASE=0x210
 		        IBIRQ=3
 		        IBDMA=1
