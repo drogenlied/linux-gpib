@@ -303,7 +303,6 @@ void pc2_detach(gpib_board_t *board)
 int pc2a_attach(gpib_board_t *board)
 {
 	unsigned int i, err;
-	int isr_flags = 0;
 	pc2_private_t *pc2_priv;
 	nec7210_private_t *nec_priv;
 	int retval;
@@ -357,7 +356,7 @@ int pc2a_attach(gpib_board_t *board)
 	request_region(pc2a_clear_intr_iobase + board->ibirq, 1, "pc2a");
 	pc2_priv->clear_intr_addr = pc2a_clear_intr_iobase + board->ibirq;
 
-	if(request_irq(board->ibirq, pc2a_interrupt, isr_flags, "pc2a", board))
+	if(request_irq(board->ibirq, pc2a_interrupt, SA_SHIRQ, "pc2a", board))
 	{
 		printk("gpib: can't request IRQ %d\n", board->ibirq);
 		return -1;

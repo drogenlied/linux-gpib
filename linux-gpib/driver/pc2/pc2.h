@@ -50,6 +50,8 @@ void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
 // interrupt clear register address
 static const int pc2a_clear_intr_iobase = 0x2f0;
-#define CLEAR_INTR_REG(irq)	(pc2a_clear_intr_iobase + (irq))
-
+inline static unsigned int CLEAR_INTR_REG( unsigned int irq )
+{
+	return pc2a_clear_intr_iobase + irq;
+}
 #endif	// _PC2_H
