@@ -31,8 +31,42 @@
 #include <stdlib.h>
 
 ibBoard_t ibBoard[ MAX_BOARDS ];
+void cleanup_autopoll( void *arg );
 
-void ibBoardDefaultValues( void )
+void atfork_autopoll_prepare( void )
+{
+	int i;
+
+	for( i = 0; i < MAX_BOARDS; i++ )
+		pthread_mutex_lock( &ibBoard[ i ].autopoll_lock );
+}
+
+void atfork_autopoll_parent( void )
+{
+	int i;
+
+	for( i = 0; i < MAX_BOARDS; i++ )
+		pthread_mutex_unlock( &ibBoard[ i ].autopoll_lock );
+}
+
+void atfork_autopoll_child( void )
+{
+	int i, start_autopoll;
+
+	for( i = 0; i < MAX_BOARDS; i++ )
+	{
+		pthread_mutex_init( &ibBoard[ i ].autopoll_lock, NULL );
+		if( ibBoard[ i ].autopoll_thread )
+			start_autopoll = 1;
+		else
+			start_autopoll = 0;
+		cleanup_autopoll( &ibBoard[ i ] );
+		if( start_autopoll )
+			create_autopoll_thread( &ibBoard[ i ] );
+	}
+}
+
+int initIbBoardArray( void )
 {
 	int i;
 	for( i = 0; i < MAX_BOARDS; i++ )
@@ -47,20 +81,32 @@ void ibBoardDefaultValues( void )
 		strcpy( ibBoard[ i ].device, "" );
 		strcpy( ibBoard[ i ].board_type, "" );
 		ibBoard[ i ].autopoll_thread = NULL;
+		pthread_mutex_init( &ibBoard[ i ].autopoll_lock, NULL );
 		ibBoard[ i ].pci_bus = -1;
 		ibBoard[ i ].pci_slot = -1;
 	}
+
+	if( pthread_atfork( atfork_autopoll_prepare, atfork_autopoll_parent,
+		atfork_autopoll_child ) )
+	{
+		perror( "pthread_atfork()" );
+		return -1;
+	}
+
+	return 0;
 }
 
 void cleanup_autopoll( void *arg )
 {
 	ibBoard_t *board = arg;
 
+	pthread_mutex_lock( &board->autopoll_lock );
 	if( board->autopoll_thread )
 	{
 		free( board->autopoll_thread );
 		board->autopoll_thread = NULL;
 	}
+	pthread_mutex_unlock( &board->autopoll_lock );
 }
 
 void * run_autopoll( void *arg )
@@ -79,7 +125,10 @@ void * run_autopoll( void *arg )
 		fprintf( stderr, "libgpib: autopoll ioctl returned error!\n" );
 	}
 
+	pthread_setcanceltype( PTHREAD_CANCEL_DEFERRED, NULL );
+
 	pthread_cleanup_pop( 1 );
+
 	return NULL;
 }
 
@@ -87,20 +136,33 @@ int create_autopoll_thread( ibBoard_t *board )
 {
 	int retval;
 
-	if( board->autopoll_thread ) return 0;
+	pthread_mutex_lock( &board->autopoll_lock );
+
+	if( board->autopoll_thread )
+	{
+		pthread_mutex_unlock( &board->autopoll_lock );
+		return 0;
+	}
 
 	board->autopoll_thread = malloc( sizeof( pthread_t ) );
-	if( board->autopoll_thread == NULL ) return -1;
+	if( board->autopoll_thread == NULL )
+	{
+		pthread_mutex_unlock( &board->autopoll_lock );
+		return -1;
+	}
 
 	retval = pthread_create( board->autopoll_thread, NULL, run_autopoll, board );
 	if( retval )
 	{
+		fprintf( stderr, "libgpib: failed to create autopoll thread, retval=%i\n", retval );
+		pthread_mutex_unlock( &board->autopoll_lock );
 		cleanup_autopoll( board );
-		fprintf( stderr, "libgpib: failed to create autopoll thread\n");
 		return -1;
 	};
 
 	pthread_detach( *board->autopoll_thread );
+
+	pthread_mutex_unlock( &board->autopoll_lock );
 
 	return 0;
 }
@@ -108,10 +170,19 @@ int create_autopoll_thread( ibBoard_t *board )
 int destroy_autopoll_thread( ibBoard_t *board )
 {
 	int retval;
-	
-	if( board->autopoll_thread == NULL ) return 0;
+
+	pthread_mutex_lock( &board->autopoll_lock );
+
+	if( board->autopoll_thread == NULL )
+	{
+		pthread_mutex_unlock( &board->autopoll_lock );
+		return 0;
+	}
 
 	retval = pthread_cancel( *board->autopoll_thread );
+
+	pthread_mutex_unlock( &board->autopoll_lock );
+
 	if( retval )
 	{
 		fprintf( stderr, "libgpib: failed to terminate autopoll thread\n" );

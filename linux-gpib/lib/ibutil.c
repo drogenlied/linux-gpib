@@ -56,7 +56,7 @@ void setup_global_board_descriptors( void )
 }
 
 // initialize variables used in yyparse() - see ibConfYacc.y
-void init_yyparse_vars( void )
+int init_yyparse_vars( void )
 {
 	int i ;
 
@@ -69,7 +69,7 @@ void init_yyparse_vars( void )
 	// initialize line counter to 1 before calling yyparse
 	yylloc.first_line = 1;
 
-	ibBoardDefaultValues();
+	return initIbBoardArray();
 }
 
 int ibParseConfigFile( void )
@@ -97,8 +97,8 @@ int ibParseConfigFile( void )
 	gpib_yyin = infile;
 	gpib_yyrestart(gpib_yyin); /* Hmm ? */
 
-	init_yyparse_vars();
-	if(gpib_yyparse() < 0)
+	stat = init_yyparse_vars();
+	if( gpib_yyparse() < 0 )
 	{
 		fprintf(stderr, "failed to parse configuration file\n");
 		stat = -1 ;

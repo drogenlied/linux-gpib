@@ -8,7 +8,7 @@
 #######################################################################
 
 CFLAGS= -I. -I../include -I ../driver/include -Wall -O2 -D_REENTRANT 
-LDFLAGS = -L../lib -lgpib
+LDFLAGS = -L../lib -lgpib -lpthread
 
 BINS = ibtest master_write_from_file slave_read_to_file master_read_to_file \
 	slave_write_from_file

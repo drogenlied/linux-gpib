@@ -36,7 +36,7 @@ enum internal_gpib_addr
 extern void init_async_op( struct async_operation *async );
 extern int ibCheckDescriptor(int ud);
 extern int ibBdChrConfig( ibBoard_t *board );
-extern void ibBoardDefaultValues(void);
+extern int initIbBoardArray( void );
 extern int ibBoardOpen( ibBoard_t *board );
 extern int ibBoardClose( ibBoard_t *board );
 extern int ibGetNrBoards(void);
