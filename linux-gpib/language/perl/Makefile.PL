@@ -5,11 +5,11 @@ WriteMakefile(
     'NAME'					=> 'LinuxGpib',
     'VERSION_FROM'	=> 'LinuxGpib.pm', # finds $VERSION
     'PREREQ_PM'			=> {}, # e.g., Module::Name => 1.1
-    'ABSTRACT_FROM' => 'LinuxGpib.pm', # retrieve abstract from module
+#    'ABSTRACT_FROM' => 'LinuxGpib.pm', # retrieve abstract from module
     'AUTHOR'     		=> 'Thomas Nisius <tnisius@web.de>',
-    'LIBS'					=> ['-lgpib'], # e.g., '-lm'
-#   'DEFINE'				=> '', # e.g., '-DHAVE_SOMETHING'
+    'LIBS'					=> ['-L../../lib -lgpib'], # e.g., '-lm'
+#    'DEFINE'				=> '', # e.g., '-DHAVE_SOMETHING'
     'INC'						=> '-I../../include', # e.g., '-I. -I/usr/include/other'
-# 	'OBJECT'				=> '$(O_FILES)', # link all the C files too
-		'DISTNAME'			=> 'LinuxGpib',
+#    'OBJECT'				=> '$(O_FILES)', # link all the C files too
+    'DISTNAME'			=> 'LinuxGpib',
 );
