@@ -34,13 +34,12 @@
 #define IbcAUTOPOLL 0
 
 extern int ibCheckDescriptor(int ud);
-extern  int ibBdChrConfig( ibConf_t *conf );
+extern  int ibBdChrConfig( ibBoard_t *board );
 extern  void ibBoardDefaultValues(void);
-extern  int ibBoardOpen(int bd,int flags);
-extern  int ibBoardClose(int bd);
+extern int ibBoardOpen( ibBoard_t *board );
+extern  int ibBoardClose( ibBoard_t *board );
 extern  int ibGetNrBoards(void);
 extern  void yyerror(char *s);
-extern  int ibeos(int ud, int v);
 extern  int iblcleos( const ibConf_t *conf );
 extern  char *ibVerbCode(int code);
 extern  void ibPutMsg (char *format,...);
@@ -59,9 +58,9 @@ extern unsigned int timeout_to_usec( enum gpib_timeout timeout );
 extern int set_timeout( const ibBoard_t *board, unsigned int usec_timeout );
 extern int ib_lock_mutex( ibBoard_t *board );
 extern int ib_unlock_mutex( ibBoard_t *board );
-extern int close_gpib_device( ibBoard_t *board, ibConf_t *conf );
-extern int open_gpib_device( ibBoard_t *board, ibConf_t *conf );
-extern int gpibi_change_address( ibBoard_t *board, ibConf_t *conf,
+extern int close_gpib_device( ibConf_t *conf );
+extern int open_gpib_device( ibConf_t *conf );
+extern int gpibi_change_address( ibConf_t *conf,
 	unsigned int pad, int sad );
 extern int lock_board_mutex( ibBoard_t *board );
 extern int unlock_board_mutex( ibBoard_t *board );

@@ -6,6 +6,7 @@ GPIB_DUMMY_VERSION {
 		ThreadIbcnt;
 		ThreadIbcntl;
 		ibask;
+		ibbna;
 		ibcac;
 		ibclr;
 		ibcmd;

@@ -82,51 +82,58 @@ int fork_autopoll_process( ibBoard_t *board )
 }
 
 /**********************/
-int ibBoardOpen( int bd, int flags )
+int ibBoardOpen( ibBoard_t *board )
 {
 	int fd;
-	ibBoard_t *board = &ibBoard[ bd ];
+	int flags = 0;
 
-	if( board->fileno < 0 )
+	if( board->fileno >= 0 ) return 0;
+
+	if( ( fd = open( board->device, O_RDWR | flags ) ) < 0 )
 	{
-		if( ( fd = open( board->device, O_RDWR | flags ) ) < 0 )
-		{
-			setIberr( EDVR );
-			setIbcnt( errno );
-			fprintf( stderr, "libgpib: ibBoardOpen failed to open device file\n" );
-			return -1;
-		}
-		board->fileno = fd;
-
-		if( fork_autopoll_process( board ) < 0)
-		{
-			ibBoardClose( bd );
-			return -1;
-		}
+		setIberr( EDVR );
+		setIbcnt( errno );
+		fprintf( stderr, "libgpib: ibBoardOpen failed to open device file\n" );
+		return -1;
 	}
+	board->fileno = fd;
+
+	if( ibBdChrConfig( board ) < 0 )
+	{
+		setIberr( EDVR );
+		setIbcnt( errno );
+		return -1;
+	}
+
+	if( fork_autopoll_process( board ) < 0)
+	{
+		ibBoardClose( board );
+		return -1;
+	}
+
 	return 0;
 }
 
 /**********************/
-int ibBoardClose( int bd )
+int ibBoardClose( ibBoard_t *board )
 {
 	int retval;
 
-	if( ibBoard[ bd ].fileno >= 0 )
+	if( board->fileno >= 0 )
 	{
-		close( ibBoard[ bd ].fileno );
-		ibBoard[ bd ].fileno = -1;
+		close( board->fileno );
+		board->fileno = -1;
 	}
 
-	if( ibBoard[ bd ]. autopoll_pid > 0 )
+	if( board->autopoll_pid > 0 )
 	{
-		retval = kill( ibBoard[ bd ].autopoll_pid, SIGTERM );
+		retval = kill( board->autopoll_pid, SIGTERM );
 		if( retval < 0 )
 		{
 			fprintf( stderr, "libgpib: failed to terminate child autopoll process\n" );
 			return retval;
 		}
-		ibBoard[ bd ].autopoll_pid = 0;
+		board->autopoll_pid = 0;
 	}
 
 	return 0;

@@ -34,6 +34,7 @@ extern long ThreadIbcntl( void );
 
 /***** Public Functions ******/
 extern int ibask(int ud, int option, int *value );
+extern int ibbna( int ud, char *board_name );
 extern int ibcac(int ud, int v);
 extern int ibclr(int ud);
 extern int ibcmd(int ud, void *cmd, long cnt);

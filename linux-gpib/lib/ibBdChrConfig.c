@@ -4,13 +4,10 @@
 #include <sys/ioctl.h>
 #include <string.h>
 
-int ibBdChrConfig( ibConf_t *conf )
+int ibBdChrConfig( ibBoard_t *board )
 {
-	ibBoard_t *board;
 	board_type_ioctl_t boardtype;
 	int retval;
-
-	board = interfaceBoard( conf );
 
 	if( board->fileno < 0 )
 	{

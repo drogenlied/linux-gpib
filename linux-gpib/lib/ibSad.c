@@ -21,7 +21,7 @@ int ibsad( int ud, int v )
 		return exit_library( ud, 1 );
 	}
 
-	retval = gpibi_change_address( board, conf, conf->pad, sad );
+	retval = gpibi_change_address( conf, conf->pad, sad );
 	if( retval < 0 )
 	{
 		fprintf( stderr, "failed to change gpib address\n" );

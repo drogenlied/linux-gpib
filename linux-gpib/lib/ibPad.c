@@ -22,7 +22,7 @@ int ibpad( int ud, int addr )
 		return exit_library( ud, 1 );
 	}
 
-	retval = gpibi_change_address( board, conf, address, conf->sad );
+	retval = gpibi_change_address( conf, address, conf->sad );
 	if( retval < 0 )
 	{
 		setIberr( EARG );

@@ -6,7 +6,6 @@
 // XXX supposed to reset board/device if onl is nonzero
 int ibonl( int ud, int onl )
 {
-	int oflags=0;
 	ibConf_t *conf;
 	int retval;
 	ibBoard_t *board;
@@ -18,27 +17,14 @@ int ibonl( int ud, int onl )
 
 	board = interfaceBoard( conf );
 
-	// XXX
-	if( conf->flags & CN_EXCLUSIVE )
-		oflags |= O_EXCL;
-
-	if( board->fileno < 0 )
+	if( ibBoardOpen( conf ) < 0 )
 	{
-		if( ibBoardOpen( conf->board, oflags ) < 0 )
-		{
-			return exit_library( ud, 1 );
-		}
-		if( ibBdChrConfig( conf ) < 0 )
-		{
-			setIberr( EDVR );
-			setIbcnt( errno );
-			return exit_library( ud, 1 );
-		}
+		return exit_library( ud, 1 );
 	}
 
 	if( !onl )
 	{
-		retval = close_gpib_device( board, conf );
+		retval = close_gpib_device( conf );
 		if( retval < 0 )
 		{
 			fprintf( stderr, "libgpib: failed to mark device as closed!\n" );
@@ -64,7 +50,7 @@ int ibonl( int ud, int onl )
 
 	if( onl )
 	{
-		retval = open_gpib_device( board, conf );
+		retval = open_gpib_device( conf );
 		if( retval < 0 )
 		{
 			fprintf( stderr, "libgpib: failed to mark device as open\n" );
