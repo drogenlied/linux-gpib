@@ -57,6 +57,7 @@ int ines_parallel_poll(gpib_board_t *board, uint8_t *result);
 void ines_parallel_poll_response( gpib_board_t *board, uint8_t config );
 void ines_serial_poll_response(gpib_board_t *board, uint8_t status);
 uint8_t ines_serial_poll_status( gpib_board_t *board );
+int ines_line_status( gpib_board_t *board );
 
 // interrupt service routines
 void ines_interrupt(int irq, void *arg, struct pt_regs *registerp);
@@ -72,5 +73,22 @@ void ines_pcmcia_cleanup_module(void);
 
 // offset between consecutive nec7210 registers
 static const int ines_reg_offset = 1;
+
+enum ines_regs
+{
+	BUS_CONTROL_MONITOR = 0x13,
+};
+
+enum bus_control_monitor_bits
+{
+	BCM_DAV_BIT = 0x1,
+	BCM_NRFD_BIT = 0x2,
+	BCM_NDAC_BIT = 0x4,
+	BCM_IFC_BIT = 0x8,
+	BCM_ATN_BIT = 0x10,
+	BCM_SRQ_BIT = 0x20,
+	BCM_REN_BIT = 0x40,
+	BCM_EOI_BIT = 0x80,
+};
 
 #endif	// _INES_GPIB_H

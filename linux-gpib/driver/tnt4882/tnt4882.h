@@ -66,6 +66,7 @@ int tnt4882_parallel_poll(gpib_board_t *board, uint8_t *result);
 void tnt4882_parallel_poll_response( gpib_board_t *board, uint8_t config );
 void tnt4882_serial_poll_response(gpib_board_t *board, uint8_t status);
 uint8_t tnt4882_serial_poll_status( gpib_board_t *board );
+int tnt4882_line_status( const gpib_board_t *board );
 
 // pcmcia init/cleanup
 int __init init_ni_gpib_cs(void);
@@ -109,6 +110,7 @@ enum
 	STS1 = 0x10,		/* T488 Status Register 1 */
 	STS2 = 0x1c,	        /* T488 Status Register 2 */
 	ISR3 = 0x1a,		/* T488 Interrupt Status Register 3 */
+	BCSR = 0x1f,		/* bus control/status register */
 };
 
 /*============================================================*/
@@ -164,6 +166,18 @@ enum
 #define AEFN		(1<<2)	/* "A empty FIFO NOT" (0=FIFO empty) */
 #define BFFN		(1<<1)	/* "B full FIFO NOT"  (0=FIFO full)  */
 #define BEFN		(1<<0)	/* "B empty FIFO NOT" (0=FIFO empty) */
+
+enum bus_control_status_bits
+{
+	BCSR_REN_BIT = 0x1,
+	BCSR_IFC_BIT = 0x2,
+	BCSR_SRQ_BIT = 0x4,
+	BCSR_EOI_BIT = 0x5,
+	BCSR_NRFD_BIT = 0x10,
+	BCSR_NDAC_BIT = 0x20,
+	BCSR_DAV_BIT = 0x40,
+	BCSR_ATN_BIT = 0x80,
+};
 
 // Auxilliary commands
 enum

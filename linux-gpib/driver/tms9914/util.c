@@ -126,6 +126,33 @@ unsigned int tms9914_update_status(gpib_board_t *board, tms9914_private_t *priv)
 	return board->status;
 }
 
+int tms9914_line_status(gpib_board_t *board, tms9914_private_t *priv)
+{
+	int bsr_bits;
+	int status = ValidALL;
+
+	bsr_bits = read_byte(priv, BSR);
+	
+	if( bsr_bits & BSR_REN_BIT )
+		status |= BusREN;
+	if( bsr_bits & BSR_IFC_BIT )
+		status |= BusIFC;
+	if( bsr_bits & BSR_SRQ_BIT )
+		status |= BusSRQ;
+	if( bsr_bits & BSR_EOI_BIT )
+		status |= BusEOI;
+	if( bsr_bits & BSR_NRFD_BIT )
+		status |= BusNRFD;
+	if( bsr_bits & BSR_NDAC_BIT )
+		status |= BusNDAC;
+	if( bsr_bits & BSR_DAV_BIT )
+		status |= BusDAV;
+	if( bsr_bits & BSR_ATN_BIT )
+		status |= BusATN;
+
+	return status;
+}
+
 EXPORT_SYMBOL(tms9914_enable_eos);
 EXPORT_SYMBOL(tms9914_disable_eos);
 EXPORT_SYMBOL(tms9914_serial_poll_response);
@@ -135,4 +162,5 @@ EXPORT_SYMBOL(tms9914_parallel_poll_response);
 EXPORT_SYMBOL(tms9914_primary_address);
 EXPORT_SYMBOL(tms9914_secondary_address);
 EXPORT_SYMBOL(tms9914_update_status);
+EXPORT_SYMBOL(tms9914_line_status);
 

@@ -3,7 +3,7 @@
 #
 include $(ROOT)/util/.config
 
-SRCS =  cb7210_init.c cb7210_cs.c interrupt.c
+SRCS =  cb7210_init.c cb7210_cs.c interrupt.c cb7210_aux.c
 
 OBJS =  $(SRCS:.c=.o)
 

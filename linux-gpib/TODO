@@ -18,8 +18,6 @@ bus master
 
 add send_eoi option for config file
 
-fix dealing with interrupted serial autopolling
-
 check that REN is asserted when it should be
 
 implement newer NI api
@@ -32,4 +30,6 @@ a kcontrol module for configuring boards might be nice
 
 test/debug parallel poll support
 
-fix serial/parallel poll timeouts
+fix parallel poll timeouts
+
+build static version of library, link examples against it

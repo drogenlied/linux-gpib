@@ -66,6 +66,7 @@ int cb7210_parallel_poll(gpib_board_t *board, uint8_t *result);
 void cb7210_serial_poll_response(gpib_board_t *board, uint8_t status);
 uint8_t cb7210_serial_poll_status( gpib_board_t *board );
 void cb7210_parallel_poll_response(gpib_board_t *board, uint8_t configuration);
+int cb7210_line_status( const gpib_board_t *board );
 
 // utility functions
 void cb7210_generic_detach(gpib_board_t *board);
@@ -83,13 +84,39 @@ static const int cb7210_reg_offset = 1;
 static const int cb7210_iosize = 10;
 
 // cb7210 specific registers and bits
-enum
+enum cb7210_regs
+{
+	BUS_STATUS = 0x7,
+};
+enum cb7210_page_in
+{
+	BUS_STATUS_PAGE = 1,
+};
+
+static inline int page_in_bits( unsigned int page )
+{
+	return 0x50 | (page & 0xf);
+}
+
+enum hs_regs
 {
 	//write registers
 	HS_MODE = 0x8,	/* HS_MODE register */
 	HS_INT_LEVEL = 0x9,	/* HS_INT_LEVEL register */
 	//read registers
 	HS_STATUS = 0x8,	/* HS_STATUS register */
+};
+
+enum bus_status_bits
+{
+	BSR_ATN_BIT = 0x1,
+	BSR_EOI_BIT = 0x2,
+	BSR_SRQ_BIT = 0x4,
+	BSR_IFC_BIT = 0x8,
+	BSR_REN_BIT = 0x10,
+	BSR_DAV_BIT = 0x20,
+	BSR_NRFD_BIT = 0x40,
+	BSR_NDAC_BIT = 0x80,
 };
 
 /* CBI 488.2 HS control */

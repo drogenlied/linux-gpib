@@ -666,7 +666,7 @@ gpib_interface_t ni_pcmcia_interface =
 	disable_eos: tnt4882_disable_eos,
 	parallel_poll: tnt4882_parallel_poll,
 	parallel_poll_response: tnt4882_parallel_poll_response,
-	line_status: NULL,	//XXX
+	line_status: tnt4882_line_status,
 	update_status: tnt4882_update_status,
 	primary_address: tnt4882_primary_address,
 	secondary_address: tnt4882_secondary_address,

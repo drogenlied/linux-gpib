@@ -23,10 +23,10 @@
 #include <linux/sched.h>
 #include <linux/module.h>
 #include <linux/slab.h>
-#include <asm/dma.h>
 #include <linux/pci.h>
 #include <linux/pci_ids.h>
 #include <linux/string.h>
+#include <linux/delay.h>
 
 MODULE_LICENSE("GPL");
 
@@ -135,7 +135,7 @@ gpib_interface_t ni_pci_interface =
 	disable_eos: tnt4882_disable_eos,
 	parallel_poll: tnt4882_parallel_poll,
 	parallel_poll_response: tnt4882_parallel_poll_response,
-	line_status: NULL,	//XXX
+	line_status: tnt4882_line_status,
 	update_status: tnt4882_update_status,
 	primary_address: tnt4882_primary_address,
 	secondary_address: tnt4882_secondary_address,
@@ -160,7 +160,7 @@ gpib_interface_t ni_isa_interface =
 	disable_eos: tnt4882_disable_eos,
 	parallel_poll: tnt4882_parallel_poll,
 	parallel_poll_response: tnt4882_parallel_poll_response,
-	line_status: NULL,	//XXX
+	line_status: tnt4882_line_status,
 	update_status: tnt4882_update_status,
 	primary_address: tnt4882_primary_address,
 	secondary_address: tnt4882_secondary_address,

@@ -341,7 +341,7 @@ static void gpib_config(dev_link_t *link)
 	link->state &= ~DEV_CONFIG_PENDING;
 	return;
     }
-    
+
     /* Configure card */
     link->state |= DEV_CONFIG;
 
@@ -375,20 +375,18 @@ static void gpib_config(dev_link_t *link)
 
 	      if( parse.cftable_entry.io.nwin > 0) {
 	         link->io.BasePort1 = parse.cftable_entry.io.win[0].base;
-	         link->io.NumPorts1 = parse.cftable_entry.io.win[0].len;
+	         link->io.NumPorts1 = 32;
 	         link->io.BasePort2 = 0;
 	         link->io.NumPorts2 = 0;
 	         i = CardServices(RequestIO, link->handle, &link->io);
 	         if (i == CS_SUCCESS) {
 		     printk( KERN_DEBUG "ines_cs: base=0x%x len=%d registered\n",
-  	               link->io.BasePort1,
-		       parse.cftable_entry.io.win[0].len
-		       );
+  	               link->io.BasePort1, link->io.NumPorts1 );
 		     break;
 	         }
 	      }
 	      if ( next_tuple(handle,&tuple,&parse) != CS_SUCCESS ) break;
-		 
+
 	    }
 
 	  if (i != CS_SUCCESS) {
@@ -409,6 +407,7 @@ static void gpib_config(dev_link_t *link)
 	}
         printk(KERN_DEBUG "ines_cs: IRQ_Line=%d\n",link->irq.AssignedIRQ);
 
+	link->conf.Status = CCSR_IOIS8;
 	/*
 	   This actually configures the PCMCIA socket -- setting up
 	   the I/O windows and the interrupt mapping.
@@ -424,7 +423,7 @@ static void gpib_config(dev_link_t *link)
         req.Attributes=WIN_MEMORY_TYPE_AM | WIN_DATA_WIDTH_8 | WIN_ENABLE;
         req.Base=0;
         req.Size=0x1000;
-        req.AccessSpeed=2; 
+        req.AccessSpeed=2;
         i= CardServices(RequestWindow,&handle,&req);
 	if (i != CS_SUCCESS) {
 	    cs_error(link->handle, RequestWindow, i);
@@ -437,11 +436,11 @@ static void gpib_config(dev_link_t *link)
 	    cs_error(link->handle, MapMemPage, i);
 	    break;
         }
-        virt=ioremap(req.Base, req.Size);
-        writeb((link->io.BasePort1>>2) & 0xff, virt+0xf0); // IOWindow base
-        writeb(0x70,virt+0x100);                  // LevlIrq, 32 byte IOWindow 
-        writeb(0x20,virt+0x102);                  // IOis8
-        iounmap(virt); 
+//        virt=ioremap(req.Base, req.Size);
+//        writeb((link->io.BasePort1>>2) & 0xff, virt+0xf0); // IOWindow base
+//        writeb(COR_LEVEL_REQ | 0x30,virt+0x100);                  // LevlIrq, 32 byte IOWindow
+//        writeb(CCSR_IOIS8,virt+0x102);                  // IOis8
+//        iounmap(virt);
         CardServices(ReleaseWindow,handle);
     } while (0);
 
@@ -622,7 +621,7 @@ gpib_interface_t ines_pcmcia_interface =
 	disable_eos: ines_disable_eos,
 	parallel_poll: ines_parallel_poll,
 	parallel_poll_response: ines_parallel_poll_response,
-	line_status: NULL,	//XXX
+	line_status: ines_line_status,
 	update_status: ines_update_status,
 	primary_address: ines_primary_address,
 	secondary_address: ines_secondary_address,

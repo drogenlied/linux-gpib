@@ -88,6 +88,7 @@ extern void tms9914_parallel_poll_response( gpib_board_t *board,
 	tms9914_private_t *priv, uint8_t config );
 extern void tms9914_serial_poll_response(gpib_board_t *board, tms9914_private_t *priv, uint8_t status);
 extern uint8_t tms9914_serial_poll_status( gpib_board_t *board, tms9914_private_t *priv );
+extern int tms9914_line_status( gpib_board_t *board, tms9914_private_t *priv );
 
 // utility functions
 extern void tms9914_board_reset(tms9914_private_t *priv);
@@ -182,6 +183,18 @@ enum
 #define     HR_DAT     (unsigned char) (1<<5)   /*        */
 #define     HR_DAL     (unsigned char) (1<<6)   /*        */
 #define     HR_EDPA    (unsigned char) (1<<7)   /*        */
+
+enum bus_status_bits
+{
+	BSR_REN_BIT = 0x1,
+	BSR_IFC_BIT = 0x2,
+	BSR_SRQ_BIT = 0x4,
+	BSR_EOI_BIT = 0x8,
+	BSR_NRFD_BIT = 0x10,
+	BSR_NDAC_BIT = 0x20,
+	BSR_DAV_BIT = 0x40,
+	BSR_ATN_BIT = 0x80,
+};
 
 /*---------------------------------------------------------*/
 /* TMS 9914 Auxiliary Commands                             */

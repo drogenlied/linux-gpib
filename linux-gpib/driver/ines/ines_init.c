@@ -167,7 +167,7 @@ gpib_interface_t ines_pci_interface =
 	disable_eos: ines_disable_eos,
 	parallel_poll: ines_parallel_poll,
 	parallel_poll_response: ines_parallel_poll_response,
-	line_status: NULL,	//XXX
+	line_status: ines_line_status,
 	update_status: ines_update_status,
 	primary_address: ines_primary_address,
 	secondary_address: ines_secondary_address,
