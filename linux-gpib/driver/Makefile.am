@@ -7,6 +7,8 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
+EXTRA_DIST = Makefile-driver.am
+
 SUBDIRS = cb7210 cec hp82335 ines nec7210 pc2 sys tms9914 tnt4882 tnt4882-tms include
 
 -include $(top_srcdir)/util/linux_flags/flags

@@ -7,42 +7,11 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
-EXTRA_DIST = $(SRCS) hp82335.h
-
--include $(top_srcdir)/util/linux_flags/flags
-CPPFLAGS = -I$(top_srcdir) -I$(top_srcdir)/driver/include -I$(top_srcdir)/include
-CFLAGS = $(CFLAGS_LINUX)
-CC = $(CC_LINUX)
-LD = $(LD_LINUX)
-MODLIB = $(MODLIB_LINUX)
-
-SUFFIXES = .c .o
-
-SRCS = hp82335_init.c
-
-OBJS = $(SRCS:.c=.o)
-
+MODULE_EXTRA_DIST = hp82335.h
+MODULE_SRCS = hp82335_init.c
 MODULE = hp82335.o
 
-all-local: $(MODULE)
-
-clean-local:
-	$(RM) *.o
-
-$(MODULE): $(OBJS)
-	$(LD) -r -o $(MODULE) $(OBJS)
-
-install-data-local:
-	$(INSTALL_DATA) -D $(MODULE) $(MODLIB)/gpib/$(MODULE)
-
-#automatic dependency handling
--include $(SRCS:.c=.d)
-%.d: %.c
-	set -e; $(CC) -MM $(CPPFLAGS) $< \
-	| sed 's/\($*\)\.o[ :]*/\1.o $@ : /g' > $@; \
-	[ -s $@ ] || rm -f $@
-
-
+include $(top_srcdir)/driver/Makefile-driver.am
 
 
 
