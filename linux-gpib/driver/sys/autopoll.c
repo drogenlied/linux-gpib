@@ -155,6 +155,9 @@ int autopoll_all_devices( gpib_board_t *board )
 		}
 
 		up( &board->mutex );
+		/* need to wake wait queue in case someone is
+		 * waiting on RQS */
+		wake_up_interruptible( &board->wait );
 		if( current->need_resched )
 			schedule();
 	}

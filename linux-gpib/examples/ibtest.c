@@ -35,6 +35,7 @@ enum Action
 	GPIB_REQUEST_SERVICE,
 	GPIB_SERIAL_POLL,
 	GPIB_TIMEOUT,
+	GPIB_WAIT,
 	GPIB_WRITE,
 };
 
@@ -72,10 +73,11 @@ int prompt_for_device(void)
 // asks user what they want to do next
 int prompt_for_action(void)
 {
-	char input[10];
+	char input[100];
 	while(1)
 	{
 		printf("You can:\n"
+			"\tw(a)it for an event\n"
  			"\t(q)uit\n"
 			"\t(r)ead string from device\n"
 			"\tperform (s)erial poll\n"
@@ -84,8 +86,13 @@ int prompt_for_action(void)
 			"\t(w)rite string to device\n"
 			);
 		fgets( input, sizeof( input ), stdin );
+
 		switch( input[0] )
 		{
+			case 'A':
+			case 'a':
+				return GPIB_WAIT;
+				break;
 			case 'q':
 			case 'Q':
 				return GPIB_QUIT;
@@ -111,6 +118,7 @@ int prompt_for_action(void)
 				return GPIB_WRITE;
 				break;
 			default:
+				fprintf( stderr, "invalid selection\n");
 				break;
 		}
 	}
@@ -163,7 +171,7 @@ int do_serial_poll( int ud )
 		gpiberr("serial poll error");
 		return -1;
 	}
-	printf( "serial poll result: 0x%ux\n", ( unsigned int ) result );
+	printf( "serial poll result: 0x%x\n", ( unsigned int ) result );
 	return 0;
 }
 
@@ -220,6 +228,24 @@ int prompt_for_timeout( int ud )
 	return 0;
 }
 
+int prompt_for_wait( int ud )
+{
+	int wait_mask;
+	int status;
+
+	printf( "Possible wait bits:\n"
+		"\t0x%x timeout\n"
+		"\t0x%x device requesting service\n",
+		TIMO, RQS );
+	printf("Enter wait mask: ");
+	scanf( "%i", &wait_mask );
+
+	status = ibwait( ud, wait_mask );
+	gpiberr( "ibwait return status" );
+
+	return 0;
+}
+
 int main(int argc,char **argv)
 {
 	int dev;
@@ -247,6 +273,8 @@ int main(int argc,char **argv)
 
 		switch( act )
 		{
+			case GPIB_QUIT:
+				break;
 			case GPIB_READ:
 				perform_read( dev );
 				break;
@@ -259,13 +287,14 @@ int main(int argc,char **argv)
 			case GPIB_TIMEOUT:
 				prompt_for_timeout( dev );
 				break;
+			case GPIB_WAIT:
+				prompt_for_wait( dev );
+				break;
 			case GPIB_WRITE:
 				prompt_for_write( dev );
 				break;
-			case GPIB_QUIT:
-				break;
 			default:
-				fprintf( stderr, "invalid selection\n");
+				fprintf( stderr, "bug, unknown selection\n");
 				break;
 		}
 	}while( act != GPIB_QUIT );
@@ -291,6 +320,7 @@ void gpiberr(char *msg)
 	if ( ibsta & TIMO ) fprintf( stderr," TIMO");
 	if ( ibsta & END )  fprintf( stderr," END");
 	if ( ibsta & SRQI ) fprintf( stderr," SRQI");
+	if ( ibsta & RQS ) fprintf( stderr," RQS");
 	if ( ibsta & CMPL ) fprintf( stderr," CMPL");
 	if ( ibsta & CIC )  fprintf( stderr," CIC");
 	if ( ibsta & ATN )  fprintf( stderr," ATM");

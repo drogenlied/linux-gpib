@@ -2,13 +2,12 @@
 #include "ib_internal.h"
 #include <ibP.h>
 
-//broken
 int ibwait( int ud, int mask )
 {
 	ibConf_t *conf = ibConfigs[ ud ];
 	ibBoard_t *board;
 	int retval, status = ibsta & CMPL;
-	unsigned int wait_mask = mask;
+	wait_ioctl_t cmd;
 
 	if( ibCheckDescriptor( ud ) < 0 )
 	{
@@ -20,7 +19,13 @@ int ibwait( int ud, int mask )
 
 	board = &ibBoard[ conf->board ];
 
-	retval = ioctl( board->fileno, IBWAIT, &wait_mask );
+	set_timeout( board, conf->usec_timeout);
+
+	cmd.mask = mask;
+	cmd.pad = conf->pad;
+	cmd.sad = conf->sad;
+
+	retval = ioctl( board->fileno, IBWAIT, &cmd );
 	if( retval < 0 )
 	{
 		iberr = EDVR;
@@ -29,5 +34,6 @@ int ibwait( int ud, int mask )
 		return status;
 	}
 
-	return wait_mask;
+	ibsta = cmd.mask;
+	return cmd.mask;
 }

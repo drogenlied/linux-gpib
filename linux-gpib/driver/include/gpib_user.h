@@ -30,7 +30,7 @@
 #define DCAS_NUM 0
 #define DCAS	(1 << DCAS_NUM)	// device clear state
 
-#define WAITBITS (TIMO | SRQI | CIC | TACS | LACS)
+#define WAITBITS (TIMO | SRQI | RQS | CIC | TACS | LACS)
 // status bits that drivers are responsible for
 static const int DRIVERBITS = ( SRQI | LOK | REM | CIC | ATN | TACS | LACS | DTAS | DCAS );
 

@@ -599,7 +599,14 @@ static int wait_ioctl( gpib_board_t *board, unsigned long arg )
 	if( retval )
 		return -EFAULT;
 
-	return ibwait( board, wait_cmd.mask, wait_cmd.pad, wait_cmd.sad );
+	retval = ibwait( board, &wait_cmd.mask, wait_cmd.pad, wait_cmd.sad );
+	if( retval < 0 ) return retval;
+
+	retval = copy_to_user( ( void * ) arg, &wait_cmd, sizeof( wait_cmd ) );
+	if( retval )
+		return -EFAULT;
+
+	return 0;
 }
 
 static int parallel_poll_ioctl( gpib_board_t *board, unsigned long arg )

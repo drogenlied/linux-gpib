@@ -75,10 +75,10 @@ int ibeos( gpib_board_t *board, int eos, int eosflags )
 	return 0;
 }
 
-unsigned int ibstatus(gpib_board_t *board)
+unsigned int ibstatus( gpib_board_t *board )
 {
-	if(board->private_data == NULL)
+	if( board->private_data == NULL )
 		return 0;
 
-	return board->interface->update_status(board);
+	return board->interface->update_status( board );
 }
