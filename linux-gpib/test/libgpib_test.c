@@ -126,7 +126,7 @@ int read_write_test( const struct board_descriptors *boards )
 	char buffer[ 1000 ];
 	int i;
 
-	fprintf( stderr, "read/write test..." );
+	fprintf( stderr, "%s...", __FUNCTION__ );
 	status = ibask( boards->slave, IbaPAD, &pad );
 	if( status & ERR )
 	{
@@ -149,6 +149,7 @@ int read_write_test( const struct board_descriptors *boards )
 	if( pthread_create( &slave_thread, NULL, read_write_slave_thread, (void*)&param ) )
 	{
 		fprintf( stderr, "FAILED: error creating slave thread\n" );
+		ibonl( ud, 0 );
 		return -1;
 	}
 	for( i = 0; i < 2; i++ )
@@ -158,6 +159,7 @@ int read_write_test( const struct board_descriptors *boards )
 		{
 			fprintf( stderr, "FAILED: write error %i\n", ThreadIberr() );
 			pthread_join( slave_thread, NULL );
+			ibonl( ud, 0 );
 			return -1;
 		}
 		status = ibrd( ud, buffer, sizeof( buffer ) );
@@ -165,6 +167,7 @@ int read_write_test( const struct board_descriptors *boards )
 		{
 			fprintf( stderr, "FAILED: read error %i\n", ThreadIberr() );
 			pthread_join( slave_thread, NULL );
+			ibonl( ud, 0 );
 			return -1;
 		}
 		if( strcmp( buffer, read_write_string2 ) )
@@ -172,19 +175,23 @@ int read_write_test( const struct board_descriptors *boards )
 			fprintf( stderr, "FAILED: got bad data from ibrd\n" );
 			fprintf( stderr, "received %i bytes:%s\n", ThreadIbcnt(), buffer );
 			pthread_join( slave_thread, NULL );
+			ibonl( ud, 0 );
 			return -1;
 		}
 	}
 	if( pthread_join( slave_thread, NULL ) )
 	{
 		fprintf( stderr, "FAILED: error joining slave thread\n" );
+		ibonl( ud, 0 );
 		return -1;
 	}
 	if( param.retval < 0 )
 	{
+		ibonl( ud, 0 );
 		return -1;
 	}
 	fprintf( stderr, "OK\n" );
+	ibonl( ud, 0 );
 	return 0;
 }
 
