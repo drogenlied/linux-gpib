@@ -237,14 +237,6 @@ int init_module(void)
 
 void cleanup_module(void)
 {
-  DBGin("cleanup");
-
-  if (MOD_IN_USE) {
-    printk("gpib: device busy, remove delayed\n");
-  }
-  else {
-    board_detach();
-  }
 
   osMemRelease();
 
@@ -253,7 +245,6 @@ void cleanup_module(void)
   } else {
     printk("gpib: succesfully removed \n");
   }
-  DBGout();
 }
 
 

@@ -98,9 +98,29 @@ gpib_driver_t pc2a_driver =
 	private_data:	NULL,
 };
 
-gpib_driver_t pnp_driver =
+gpib_driver_t cb_pci_driver =
 {
-	attach:	pnp_attach,
+	name: "nec7210",
+	attach: cb_pci_attach,
+	detach: cb_pci_detach,
+	read: nec7210_read,
+	write: nec7210_write,
+	command: nec7210_command,
+	take_control: nec7210_take_control,
+	go_to_standby: nec7210_go_to_standby,
+	interface_clear: nec7210_interface_clear,
+	remote_enable: nec7210_remote_enable,
+	enable_eos: nec7210_enable_eos,
+	disable_eos: nec7210_disable_eos,
+	parallel_poll: nec7210_parallel_poll,
+	line_status: NULL,	//XXX
+	update_status: nec7210_update_status,
+	primary_address: nec7210_primary_address,
+	secondary_address: nec7210_secondary_address,
+	serial_poll_response: nec7210_serial_poll_response,
+	status: 0,
+	wait: &nec7210_wait,
+	private_data: NULL,
 };
 
 // this is a hack to set the driver pointer
@@ -110,8 +130,8 @@ gpib_driver_t *driver = &pc2a_driver;
 #endif
 
 #ifdef CBI_PCI
-gpib_driver_t *driver = &pnp_driver;
-#warning using pnp driver
+gpib_driver_t *driver = &cb_pci_driver;
+#warning using cb_pci driver
 #endif
 
 #if !defined(NIPCIIa) && !defined(CBI_4882)
@@ -392,34 +412,6 @@ void pc2a_detach(gpib_driver_t *driver)
 	free_buffers();
 }
 
-// this function will do more once I support more than one pnp board
-int pnp_attach(gpib_driver_t *driver)
-{
-
-	driver->name = "nec7210";
-	driver->detach = cb_pci_detach;
-	driver->read = nec7210_read;
-	driver->write = nec7210_write;
-	driver->command = nec7210_command;
-	driver->take_control = nec7210_take_control;
-	driver->go_to_standby = nec7210_go_to_standby;
-	driver->interface_clear = nec7210_interface_clear;
-	driver->remote_enable = nec7210_remote_enable;
-	driver->enable_eos = nec7210_enable_eos;
-	driver->disable_eos = nec7210_disable_eos;
-	driver->parallel_poll = nec7210_parallel_poll;
-	driver->line_status = NULL;	//XXX
-	driver->update_status = nec7210_update_status;
-	driver->primary_address = nec7210_primary_address;
-	driver->secondary_address = nec7210_secondary_address;
-	driver->serial_poll_response = nec7210_serial_poll_response;
-	driver->status = 0;
-	driver->wait = &nec7210_wait,
-	driver->private_data = NULL;
-
-	return cb_pci_attach(driver);
-}
-
 int cb_pci_attach(gpib_driver_t *driver)
 {
 	int isr_flags = 0;
@@ -454,8 +446,9 @@ int cb_pci_attach(gpib_driver_t *driver)
 		return -1;
 	ioports_allocated = 1;
 
-	/* CBI 4882 reset (trying for nec7210 compatibility mode here */
+	/* CBI 4882 reset */
 	GPIBout(HS_INT_LEVEL, HS_RESET7210 );
+	GPIBout(HS_INT_LEVEL, 0 );
 	GPIBout(HS_MODE, 0); /* disable system control */
 
 	// XXX set clock register for 20MHz? driving frequency
@@ -510,6 +503,7 @@ void cb_pci_detach(gpib_driver_t *driver)
 }
 
 // old functions
+#if 0 
 int board_attach(void)
 {
 	unsigned int i, err;
@@ -659,7 +653,7 @@ void board_detach(void)
 	free_buffers();
 }
 
-
+#endif
 
 
 
