@@ -1,8 +1,6 @@
 #include <ibprot.h>
 #include <linux/kernel.h>
 
-int pgmstat	= 0;		/* program status vector */
-
 int timeidx	= T1s;	/* timeout index into timeTable */
 int pollTimeidx = T100ms;	/* timeidx for serial and parallel polls */
 int myPAD = 0;		/* current primary address */
@@ -63,7 +61,6 @@ int ibonl(gpib_device_t *device, int v)
 	*/
 	if( ib_opened == 1 || !(device->online) )
 	{
-		pgmstat &= PS_STATIC; /* initialize program status vector */
 		timeidx = T1s; /* initialize configuration variables... */
 		myPAD = 0;
 		mySAD = 0;
@@ -83,25 +80,15 @@ int ibonl(gpib_device_t *device, int v)
 				printk("GPIB Hardware Error! (Chip type not found or wrong Base Address?)\n");
 				return -1;
 			}
-
-			if(!osInit())
-			{
-				printk("GPIB System Request Error! \n");
-				return -1;
-			}
 		}
 
 		/* initialize system support functions */
-		pgmstat |= PS_ONLINE;
 		device->online = 1;
 	}else
 	{		/* OFFLINE: leave SYSFAIL red */
 		if( ib_opened <= 1)
 		{
 			device->interface->detach(device);
-			if (pgmstat & PS_SYSRDY)
-			osReset();	/* reset system interface */
-			pgmstat &= ~PS_ONLINE;
 			device->online = 0;
 		}
 	}

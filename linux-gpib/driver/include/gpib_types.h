@@ -168,8 +168,12 @@ struct gpib_device_struct
 	/* 'private_data' can be used as seen fit by the driver to
 	 * store additional variables for this board */
 	void *private_data;
-	/* Flag that indicates wheter device is up and running or not */
+	/* Flag that indicates whether device is up and running or not */
 	unsigned int online : 1;
+	/* Flag that indicates whether device is system controller of the bus */
+	unsigned int master : 1;
+	/* Flag to send EOI at end of writes */
+	unsigned int send_eoi : 1;
 };
 
 #endif	// __KERNEL__

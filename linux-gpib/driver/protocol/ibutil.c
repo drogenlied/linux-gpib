@@ -77,13 +77,7 @@ int ibtmo(gpib_device_t *device, int v)
  */
 int ibeot(gpib_device_t *device, int send_eoi)
 {
-	if(send_eoi)
-	{
-		pgmstat &= ~PS_NOEOI;
-	}else
-	{
-		pgmstat |= PS_NOEOI;
-	}
+	device->send_eoi = send_eoi;
 	return 0;
 }
 

@@ -17,13 +17,13 @@ int ibsic(gpib_device_t *device)
 	if(!test_bit(CIC_NUM, &device->status))
 	{
 
-		pgmstat |= PS_SAC;
+		device->master = 1;
 		/* set controller state */
 		device->interface->interface_clear(device, 1);                   /* assert IFC */
 		udelay(100);
 		device->interface->interface_clear(device, 0);                   /* clear IFC */
 	}
-// is CIC going to be set by core or driver? XXX
+// CIC should be set by driver, this is a temporary hack for tms9914 XXX
 	set_bit(CIC_NUM, &device->status);
 
 	return 0;
