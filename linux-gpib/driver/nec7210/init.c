@@ -1,10 +1,10 @@
 /***************************************************************************
-                          init.c  -  description
+                          nec7210/init.c  -  description
                              -------------------
  board specific initialization stuff
 
     begin                : Dec 2001
-    copyright            : (C) 2001 by Frank Mori Hess, and unknown author(s)
+    copyright            : (C) 2001, 2002 by Frank Mori Hess
     email                : fmhess@users.sourceforge.net
  ***************************************************************************/
 
