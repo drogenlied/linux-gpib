@@ -141,12 +141,12 @@ ssize_t nec7210_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buff
 
 	if(length == 0) return 0;
 
-	/* release rfd holdoff */
-	write_byte(priv, AUX_FH, AUXMR);
 	// holdoff on END
 	priv->auxa_bits &= ~HR_HANDSHAKE_MASK;
 	priv->auxa_bits |= HR_HLDE;
 	write_byte(priv, priv->auxa_bits, AUXMR);
+	/* release rfd holdoff */
+	write_byte(priv, AUX_FH, AUXMR);
 
 	// transfer data (except for last byte)
 	length--;

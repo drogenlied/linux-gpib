@@ -37,3 +37,5 @@ possible problems when autopoll happens without remote enable
 online ioctl doesn't need to handle asserting IFC as there is a
 seperate ioctl for that
 
+need to check close down when last process stops using board
+

@@ -19,6 +19,24 @@
 #include "board.h"
 #include <linux/spinlock.h>
 
+void check_for_eos( tms9914_private_t *priv, uint8_t byte )
+{
+	if( ( priv->eos_flags & REOS ) == 0 ) return;
+
+	if( priv->eos_flags & BIN )
+	{
+		if( priv->eos == byte )
+			set_bit( RECEIVED_END_BN, &priv->state );
+	}else
+	{
+		if( ( priv->eos & 0x7f ) == ( byte & 0x7f ) )
+			set_bit( RECEIVED_END_BN, &priv->state );
+	}
+
+	if( test_bit( RECEIVED_END_BN, &priv->state ) == 0 )
+		write_byte( priv, AUX_RHDF, AUXCR );
+}
+
 static ssize_t pio_read(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buffer, size_t length)
 {
 	size_t count = 0;
@@ -40,8 +58,10 @@ static ssize_t pio_read(gpib_board_t *board, tms9914_private_t *priv, uint8_t *b
 
 		spin_lock_irqsave(&board->spinlock, flags);
 		clear_bit(READ_READY_BN, &priv->state);
-		buffer[count++] = read_byte(priv, DIR);
+		buffer[ count++ ] = read_byte( priv, DIR );
 		spin_unlock_irqrestore(&board->spinlock, flags);
+
+		check_for_eos( priv, buffer[ count - 1 ] );
 
 		if(test_bit(RECEIVED_END_BN, &priv->state))
 			break;
@@ -59,9 +79,12 @@ ssize_t tms9914_read(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buff
 
 	if(length == 0) return 0;
 
-	write_byte(priv, AUX_HLDA, AUXCR);
-	write_byte(priv, AUX_RHDF, AUXCR);
 	write_byte(priv, AUX_HLDE | AUX_CS, AUXCR);
+	if( priv->eos_flags & REOS )
+		write_byte(priv, AUX_HLDA | AUX_CS, AUXCR);
+	else
+		write_byte(priv, AUX_HLDA, AUXCR);
+	write_byte(priv, AUX_RHDF, AUXCR);
 
 	// transfer data (except for last byte)
 	length--;

@@ -21,12 +21,15 @@
 
 void tms9914_enable_eos(gpib_board_t *board, tms9914_private_t *priv, uint8_t eos_byte, int compare_8_bits)
 {
-	// XXX
+	priv->eos = eos_byte;
+	priv->eos_flags = REOS;
+	if( compare_8_bits )
+		priv->eos_flags |= BIN;
 }
 
 void tms9914_disable_eos(gpib_board_t *board, tms9914_private_t *priv)
 {
-	// XXX
+	priv->eos_flags &= ~REOS;
 }
 
 int tms9914_parallel_poll(gpib_board_t *board, tms9914_private_t *priv, uint8_t *result)
@@ -113,18 +116,18 @@ unsigned int update_status_nolock( gpib_board_t *board, tms9914_private_t *priv 
 {
 	int address_status;
 
-	address_status = read_byte(priv, ADSR);
+	address_status = read_byte( priv, ADSR );
 
 	// check for remote/local
 	if(address_status & HR_REM)
-		set_bit(REM_NUM, &board->status);
+		set_bit( REM_NUM, &board->status );
 	else
-		clear_bit(REM_NUM, &board->status);
+		clear_bit( REM_NUM, &board->status );
 	// check for lockout
 	if(address_status & HR_LLO)
-		set_bit(LOK_NUM, &board->status);
+		set_bit( LOK_NUM, &board->status );
 	else
-		clear_bit(LOK_NUM, &board->status);
+		clear_bit( LOK_NUM, &board->status );
 	// check for ATN
 	if(address_status & HR_ATN)
 	{
@@ -137,13 +140,17 @@ unsigned int update_status_nolock( gpib_board_t *board, tms9914_private_t *priv 
 	}
 	// check for talker/listener addressed
 	if(address_status & HR_TA)
-		set_bit(TACS_NUM, &board->status);
-	else
-		clear_bit(TACS_NUM, &board->status);
+	{
+		clear_bit( READ_READY_BN, &priv->state );
+		set_bit( TACS_NUM, &board->status );
+	}else
+		clear_bit( TACS_NUM, &board->status );
 	if(address_status & HR_LA)
+	{
+		clear_bit( WRITE_READY_BN, &priv->state );
 		set_bit(LACS_NUM, &board->status);
-	else
-		clear_bit(LACS_NUM, &board->status);
+	}else
+		clear_bit( LACS_NUM, &board->status );
 
 	return board->status;
 }

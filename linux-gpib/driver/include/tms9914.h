@@ -35,6 +35,8 @@ struct tms9914_private_struct
 	volatile uint8_t auxa_bits;	// bits written to auxilliary register A
 	// used to keep track of board's state, bit definitions given below
 	volatile int state;
+	uint8_t eos;	// eos character
+	short eos_flags;
 	// wrappers for outb, inb, readb, or writeb
 	uint8_t (*read_byte)(tms9914_private_t *priv, unsigned int register_number);
 	void (*write_byte)(tms9914_private_t *priv, uint8_t byte, unsigned int

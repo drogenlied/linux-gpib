@@ -357,19 +357,6 @@ int main(int argc,char **argv)
 
 	dev = prompt_for_descriptor();
 
-	/*
-	* send device reset
-	*
-	*/
-
-	printf("clearing device..\n");
-	if( (ibclr(dev) & ERR ) && iberr != EARG )
-	{
-		fprint_status( stderr, "gpib clear error");
-		ibonl(dev, 0);
-		abort();
-	}
-
 	do
 	{
 		act = prompt_for_action();

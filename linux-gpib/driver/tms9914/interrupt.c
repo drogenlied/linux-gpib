@@ -141,8 +141,9 @@ void tms9914_interrupt(gpib_board_t *board, tms9914_private_t *priv)
 
 	spin_unlock(&board->spinlock);
 
-	GPIB_DPRINTK("isr0 0x%x, imr0 0x%x, isr1 0x%x, imr1 0x%x, status 0x%x\n",
-		status0, priv->imr0_bits, status1, priv->imr1_bits, board->status);
+	if( ( status0 & priv->imr0_bits ) || ( status1 & priv->imr1_bits ) )
+		GPIB_DPRINTK("isr0 0x%x, imr0 0x%x, isr1 0x%x, imr1 0x%x, status 0x%x\n",
+			status0, priv->imr0_bits, status1, priv->imr1_bits, board->status);
 }
 
 EXPORT_SYMBOL(tms9914_interrupt);
