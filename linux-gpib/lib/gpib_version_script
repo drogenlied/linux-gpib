@@ -5,6 +5,9 @@ GPIB_DUMMY_VERSION {
 		AllSpoll;
 		DevClear;
 		DevClearList;
+		EnableLocal;
+		EnableRemote;
+		FindLstn;
 		SendSetup;
 		ThreadIbsta;
 		ThreadIberr;

@@ -466,9 +466,9 @@ int extractPAD( Addr4882_t address )
 {
 	int pad = address & 0xff;
 
-	if( address == NOADDR ) return -1;
+	if( address == NOADDR ) return ADDR_INVALID;
 
-	if( pad < 0 || pad > gpib_addr_max ) return -1;
+	if( pad < 0 || pad > gpib_addr_max ) return ADDR_INVALID;
 
 	return pad;
 }
@@ -477,12 +477,15 @@ int extractSAD( Addr4882_t address )
 {
 	int sad = ( address >> 8 ) & 0xff;
 
-	if( address == NOADDR ) return -1;
+	if( address == NOADDR ) return ADDR_INVALID;
 
-	if( sad <= 0 ) return -1;
+	if( sad == NO_SAD ) return SAD_DISABLED;
+
+	if( ( sad & 0x60 ) == 0 ) return ADDR_INVALID;
 
 	sad &= ~0x60;
-	if( sad > gpib_addr_max ) return -1;
+
+	if( sad < 0 || sad > gpib_addr_max ) return ADDR_INVALID;
 
 	return sad;
 }
@@ -503,8 +506,8 @@ int addressIsValid( Addr4882_t address )
 {
 	if( address == NOADDR ) return 1;
 
-	if( extractPAD( address ) < 0 ||
-		extractSAD( address ) < 0 ) return 0;
+	if( extractPAD( address ) == ADDR_INVALID ||
+		extractSAD( address ) == ADDR_INVALID ) return 0;
 
 	return 1;
 }
@@ -518,7 +521,11 @@ int addressListIsValid( Addr4882_t addressList[] )
 	for( i = 0; addressList[ i ] != NOADDR; i++ )
 	{
 		if( addressIsValid( addressList[ i ] ) == 0 )
+		{
+			setIberr( EARG );
+			setIbcnt( i );
 			return 0;
+		}
 	}
 
 	return 1;

@@ -41,6 +41,10 @@ extern void AllSPoll( int boardID, Addr4882_t addressList[], short resultList[] 
 extern void AllSpoll( int boardID, Addr4882_t addressList[], short resultList[] );
 extern void DevClear( int boardID, Addr4882_t address );
 extern void DevClearList( int boardID, Addr4882_t addressList[] );
+extern void EnableLocal( int boardID, Addr4882_t addressList[] );
+extern void EnableRemote( int boardID, Addr4882_t addressList[] );
+extern void FindLstn( int boardID, Addr4882_t padList[],
+	Addr4882_t resultList[], int maxNumResults );
 extern void SendSetup( int boardID, Addr4882_t addressList[] );
 extern int ThreadIbsta( void );
 extern int ThreadIberr( void );
@@ -76,6 +80,25 @@ extern int ibtmo(int ud,int v);
 extern int ibtrg(int ud);
 extern int ibwait(int ud, int mask);
 extern int ibwrt(int ud, void *rd, long count);
+
+static __inline__ Addr4882_t MakeAddr( unsigned int pad, unsigned int sad )
+{
+	Addr4882_t address;
+
+	address = ( pad & 0xff );
+	address |= ( sad << 8 ) & 0xff00;
+	return address;
+}
+
+static __inline__ unsigned int GetPAD( Addr4882_t address )
+{
+	return address & 0xff;
+}
+
+static __inline__ unsigned int GetSAD( Addr4882_t address )
+{
+	return ( address >> 8 ) & 0xff;
+}
 
 #ifdef __cplusplus
 }

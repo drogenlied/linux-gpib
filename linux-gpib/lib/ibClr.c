@@ -2,7 +2,7 @@
                           lib/ibClr.c
                              -------------------
 
-	copyright            : (C) 2001,2002 by Frank Mori Hess
+    copyright            : (C) 2001,2002 by Frank Mori Hess
     email                : fmhess@users.sourceforge.net
  ***************************************************************************/
 
@@ -16,7 +16,7 @@
  ***************************************************************************/
 
 #include "ib_internal.h"
-#include <ibP.h>
+#include "ibP.h"
 #include <stdlib.h>
 
 int ibclr( int ud )
@@ -73,7 +73,6 @@ void DevClearList( int boardID, Addr4882_t addressList[] )
 	}
 	if( addressListIsValid( addressList ) == 0 )
 	{
-		setIberr( EARG );
 		exit_library( boardID, 1 );
 		return;
 	}

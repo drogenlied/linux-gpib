@@ -260,7 +260,6 @@ void SendSetup( int boardID, Addr4882_t addressList[] )
 	if( addressListIsValid( addressList ) == 0 ||
 		numAddresses( addressList ) == 0 )
 	{
-		setIberr( EARG );
 		exit_library( boardID, 1 );
 		return;
 	}

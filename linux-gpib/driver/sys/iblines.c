@@ -13,8 +13,8 @@ int iblines( const gpib_board_t *board, short *lines)
 {
 	if( board->interface->line_status == NULL )
 	{
-		printk("driver cannot query gpib line status\n");
-		return -1;
+		*lines = 0;
+		return 0;
 	}
 	*lines = board->interface->line_status( board );
 	return 0;

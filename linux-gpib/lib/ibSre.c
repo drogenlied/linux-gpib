@@ -1,6 +1,7 @@
 
 #include "ib_internal.h"
-#include <ibP.h>
+#include "ibP.h"
+#include <stdlib.h>
 
 int remote_enable( const ibBoard_t *board, int enable )
 {
@@ -63,4 +64,81 @@ int ibsre(int ud, int v)
 
 	return exit_library( ud, 0 );
 }
+
+extern void EnableRemote( int boardID, Addr4882_t addressList[] )
+{
+	int i;
+	ibConf_t *conf;
+	ibBoard_t *board;
+	uint8_t *cmd;
+	int count;
+	int retval;
+
+	conf = enter_library( boardID );
+	if( conf == NULL )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+	if( addressListIsValid( addressList ) == 0 )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	if( conf->is_interface == 0 )
+	{
+		setIberr( EDVR );
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	board = interfaceBoard( conf );
+
+	if( board->is_system_controller == 0 )
+	{
+		setIberr( ECIC );
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	retval = remote_enable( board, 1 );
+	if( retval < 0 )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	if( numAddresses( addressList ) == 0 )
+	{
+		exit_library( boardID, 0 );
+		return;
+	}
+
+	cmd = malloc( 16 + 2 * numAddresses( addressList ) );
+	if( cmd == NULL )
+	{
+		setIberr( EDVR );
+		setIbcnt( ENOMEM );
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	i = create_send_setup( board, addressList, cmd );
+
+	//XXX detect no listeners (EBUS) error
+	count = my_ibcmd( conf, cmd, i );
+
+	free( cmd );
+	cmd = NULL;
+
+	if(count != i)
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+
+	exit_library( boardID, 0 );
+}
+
 

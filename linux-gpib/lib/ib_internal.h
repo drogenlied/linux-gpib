@@ -30,6 +30,12 @@
 
 #include "ibConf.h"
 
+enum internal_gpib_addr
+{
+	SAD_DISABLED = -1,
+	ADDR_INVALID = -2
+};
+
 extern void init_async_op( struct async_operation *async );
 extern int ibCheckDescriptor(int ud);
 extern  int ibBdChrConfig( ibBoard_t *board );
@@ -91,6 +97,8 @@ extern void internal_ibeot( ibConf_t *conf, int send_eoi );
 extern int internal_ibppc( ibConf_t *conf, int v );
 extern int internal_ibsre( ibConf_t *conf, int v );
 extern int internal_ibrsv( ibConf_t *conf, int v );
+extern int internal_iblines( ibConf_t *conf, short *line_status );
+extern int internal_ibgts( ibConf_t *conf, int shadow_handshake );
 
 static __inline__ ibBoard_t* interfaceBoard( const ibConf_t *conf )
 {

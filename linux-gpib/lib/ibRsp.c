@@ -72,7 +72,6 @@ void AllSPoll( int boardID, Addr4882_t addressList[], short resultList[] )
 	}
 	if( addressListIsValid( addressList ) == 0 )
 	{
-		setIberr( EARG );
 		exit_library( boardID, 1 );
 		return;
 	}
