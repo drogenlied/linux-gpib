@@ -313,7 +313,7 @@ IBLCL int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, uns
 			{
 				GIVE_UP(-ENOMEM);
 			}
-			if (receive_setup(ibargp->ib_arg) & ERR)
+			if (receive_setup(ibargp->ib_arg))
 				break;	// XXX
 
 			/* Read DMA buffer loads till we fill the user supplied buffer */

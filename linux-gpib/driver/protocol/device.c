@@ -87,7 +87,7 @@ IBLCL int dvrsp(int padsad, uint8_t *result)
 		DBGout();
 		return status;
 	}
-	if (!(receive_setup(padsad) & ERR))
+	if (receive_setup(padsad))
 	{
 		// send serial poll command
 		osStartTimer(pollTimeidx);
@@ -154,24 +154,17 @@ IBLCL int dvwrt(int padsad,faddr_t buf,unsigned int cnt)
  * 488.2 Controller sequences
  */
 IBLCL int receive_setup(int padsad)
-
-				/* spoll = TRUE if this is for a serial poll */
 {
 	uint8_t pad, sad;
 	char cmdString[8];
 	unsigned int i = 0;
 
-	DBGin("Rsetup");
 	pad = padsad;
 	sad = padsad >> 8;
-	DBGprint(DBG_DATA, ("pad=0x%x, sad=0x%x  ", pad, sad));
 	if ((pad > 0x1E) || (sad && ((sad < 0x60) || (sad > 0x7E)))) {
-		DBGprint(DBG_BRANCH, ("bad addr  "));
-		ibsta |= ERR;
+		printk("gpib bad addr");
 		iberr = EARG;
-		ibstat();
-		DBGout();
-		return ibsta;
+		return -1;
 	}
 
 	cmdString[i++] = UNL;
@@ -185,8 +178,7 @@ IBLCL int receive_setup(int padsad)
 
 	if ((ibcmd(cmdString, i) & ERR) && (iberr == EABO))
 		iberr = EBUS;
-	DBGout();
-	return ibsta;
+	return 0;
 }
 
 

@@ -97,8 +97,8 @@ void board_reset(void)
 	GPIBout(AUXMR, PPR | HR_PPU);               /* parallel poll unconfigure */
 
 	// holdoff on all data	XXX record current handshake state somewhere
-	auxa_bits = AUXRA | HR_HLDA;
-	GPIBout(AUXMR, auxa_bits);
+	auxa_bits = AUXRA;
+	GPIBout(AUXMR, auxa_bits | HR_HLDA);
 
 	GPIBout(AUXMR, AUXRB);                  /* set INT pin to active high */
 	GPIBout(AUXMR, AUXRE);
