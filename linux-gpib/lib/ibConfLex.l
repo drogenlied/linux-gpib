@@ -29,6 +29,7 @@ dma          { return (T_DMA);}
 device	     { return(T_DEVICE);}
 
 name         { return (T_NAME);}
+board_type         { return (T_BOARD_TYPE);}
 minor         { return (T_MINOR);}
 
 pad          { return(T_PAD);}
