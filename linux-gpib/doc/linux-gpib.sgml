@@ -46,7 +46,14 @@ A copy of the license is included in the section entitled
 <title>
 	Configuration
 </title>
-<refentry>
+<para>
+Configuration of the GPIB library is accomplished through the
+configuration file
+<link LINKEND="configuration-gpib-conf">/etc/gpib.conf</link>,
+and the administration program
+<link LINKEND="configuration-gpib-config">gpib_config</link>.
+</para>
+<refentry ID="configuration-gpib-conf">
 <refmeta>
 	<refentrytitle>gpib.conf</refentrytitle>
 	<manvolnum>5</manvolnum>
@@ -58,7 +65,9 @@ A copy of the license is included in the section entitled
 <refsect1>
 <title>Description</title>
 <para>
-The library reads its configuration information from the
+The library, and the administration tool
+<link LINKEND="configuration-gpib-config">gpib_config</link>
+read their configuration information from the
 file /etc/gpib.conf.  A template gpib.conf
 file can be found in the util/templates/ subdirectory of the linux-gpib
 package.
@@ -300,7 +309,7 @@ device {
 </refsect1>
 </refentry>
 
-<refentry>
+<refentry ID="configuration-gpib-config">
 <refmeta>
 	<refentrytitle>gpib_config</refentrytitle>
 	<manvolnum>8</manvolnum>
@@ -312,21 +321,83 @@ device {
 <refsynopsisdiv>
 <cmdsynopsis>
 <command>gpib_config</command>
-<arg>-b, --iobase <replaceable>number</replaceable></arg>
-<arg>-d, --dma <replaceable>number</replaceable></arg>
-<arg>-i, --irq <replaceable>number</replaceable></arg>
-<arg>-f, --file <replaceable>string</replaceable></arg>
-<arg>-l, --pci-slot <replaceable>number</replaceable></arg>
-<arg>-m, --minor <replaceable>number</replaceable></arg>
-<arg>-p, --pad <replaceable>number</replaceable></arg>
-<arg>-s, --sad <replaceable>number</replaceable></arg>
-<arg>-t, --board-type <replaceable>string</replaceable></arg>
-<arg>-u, --pci-bus <replaceable>number</replaceable></arg>
+<arg>--minor <replaceable>number</replaceable></arg>
+</cmdsynopsis>
+<cmdsynopsis>
+<command>gpib_config</command>
+<arg>--iobase <replaceable>number</replaceable></arg>
+<arg>--dma <replaceable>number</replaceable></arg>
+<arg>--irq <replaceable>number</replaceable></arg>
+<arg>--file <replaceable>file_path</replaceable></arg>
+<arg>--pci-slot <replaceable>number</replaceable></arg>
+<arg>--minor <replaceable>number</replaceable></arg>
+<arg>--pad <replaceable>number</replaceable></arg>
+<arg>--sad <replaceable>number</replaceable></arg>
+<arg>--board-type <replaceable>board_type</replaceable></arg>
+<arg>--pci-bus <replaceable>number</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 <refsect1>
 <title>Description</title>
-<para>blah</para>
+<para>gpib_config must be run after the kernel driver module for
+a GPIB interface board is loaded.  It performs configuration of
+driver settings
+that cannot be performed by libgpib at runtime.  This includes
+configuration which requires root privilege (for example, setting the
+base address or irq of a board), and configuration which should only
+be performed once and not automatically redone every time a program
+using libgpib is run (for example, setting the board's GPIB address).
+</para>
+<para>
+The board to be configured by gpib_config is selected by the
+<option>--minor</option> option.  By default, the board settings
+are read from the
+<link LINKEND="configuration-gpib-conf">gpib.conf</link>
+configuration file.  However, individual settings can be
+overiden by use of command-line options (see below).
+</para>
+</refsect1>
+<refsect1>
+<title>Options</title>
+<para><option>-b, --iobase <replaceable>number</replaceable></option></para>
+<para>Set io base address to <replaceable>number</replaceable> for boards
+without plug-and-play cabability.</para>
+<para><option>-d, --dma <replaceable>number</replaceable></option></para>
+<para>Specify isa dma channel <replaceable>number</replaceable> for boards
+without plug-and-play cabability.</para>
+<para><option>-i, --irq <replaceable>number</replaceable></option></para>
+<para>Specify irq line <replaceable>number</replaceable> for boards without
+plug-and-play cabability.</para>
+<para><option>-f, --file <replaceable>file_path</replaceable></option></para>
+<para>Specify file path for configuration file.  The values in the configuration
+file will be used as defaults for unspecified options.  The default configuration
+file is "/etc/gpib.conf".</para>
+<para><option>-h, --help</option></para>
+<para>Print help on options and exit.</para>
+<para><option>-l, --pci-slot <replaceable>number</replaceable></option></para>
+<para>Specify pci slot <replaceable>number</replaceable> to select a specific
+pci board. If used, you must also specify the pci bus with <option>--pci-bus</option>.
+</para>
+<para><option>-m, --minor <replaceable>number</replaceable></option></para>
+<para>
+Configure gpib device file with minor number <replaceable>number</replaceable>
+(default is 0).</para>
+<para><option>-p, --pad <replaceable>number</replaceable></option></para>
+<para>
+Specify primary gpib address.  <replaceable>number</replaceable> should be in
+the range 0 through 30.
+</para>
+<para><option>-s, --sad <replaceable>number</replaceable></option></para>
+<para>
+Specify secondary gpib address.  <replaceable>number</replaceable>
+should be 0 (disabled) or in the range 96 through 126 (0x60 through 0x7e hexadecimal).
+</para>
+<para><option>-t, --board-type <replaceable>board_type</replaceable></option></para>
+<para>Set board type to <replaceable>board_type</replaceable>.</para>
+<para><option>-u, --pci-bus <replaceable>number</replaceable></option></para>
+<para>Specify pci bus <replaceable>number</replaceable> to select a specific
+pci board.  If used, you must also specify the pci slot with <option>--pci-slot</option>.
+</para>
 </refsect1>
 </refentry>
 </section>
