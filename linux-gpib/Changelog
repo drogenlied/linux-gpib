@@ -38,3 +38,11 @@ spam to your kernel logs.  Added support for NI PCMCIA GPIB boards (probably
 doesn't work yet).  Allows 'whiptail' to be used instead of 'dialog' for gui
 during configuration.  Fixed locking in ioctl to make it safe for multiple
 processes to access devices through the same interface board.
+
+3.1.6: Made timeout for serial polls adjustable instead of being hard coded
+to 100 msec.  Removed a couple more global variables.  Fixed some problems 
+with timeout values not being updated.  Added some missing includes of string.h.
+Fixed setting of EOI on writes.  Fixed disabling of dma when dma channel is set 
+to zero after being nonzero.  Fixed ibtrg() and ibclr().  Fixed use of secondary
+addressing and return value for ibloc().
+
