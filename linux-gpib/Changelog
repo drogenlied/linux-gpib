@@ -26,5 +26,7 @@ cec/keithley pci support.
 3.1.4: (in progress) Added easier setup for python binding from Brian Donovan.
 To compile/install the Python and Tcl bindings you must run 'make', 'make
 install' in the appropriate subdirectory of the 'language' directory.  Enabled
-isa-dma in pc2-gpib driver.
+isa-dma in pc2-gpib driver.  Fixes for pc2 and NI ISA boards.  Fixed tcl binding
+for ibdev().  Made devices opened with ibfind() default to sending EOI at end
+of writes.
 

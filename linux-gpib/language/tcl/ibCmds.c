@@ -62,13 +62,15 @@ int ibRead  _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,cha
   char *buf;
 
   int len;
+	int desc;
 
   if( argc != 3 ){
-    Tcl_SetResult(interp, "Error: read <dev> <num>", TCL_STATIC);
+    Tcl_SetResult(interp, "Error: read <dev> <num bytes>", TCL_STATIC);
     return TCL_ERROR;
   }
 
-  len = atoi(argv[2]);
+	desc = strtol(argv[1], NULL, 0);
+	len = strtol(argv[2], NULL, 0);
   
 
   if ((buf = (char *)malloc( len + 1 )) == NULL) {
@@ -77,7 +79,7 @@ int ibRead  _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,cha
   }
 
 
-  if( ibrd( atoi( argv[1]) , buf, len ) & ERR ){
+  if( ibrd( desc , buf, len ) & ERR ){
 /*  ib_CreateVerboseError(interp,"ibrd");
     return TCL_ERROR;
 */
@@ -85,7 +87,7 @@ int ibRead  _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,cha
   Tcl_AppendResult(interp, "ERROR" , (char *) NULL );
   free(buf);
 
-  return TCL_OK;
+  return TCL_ERROR;
   }
 
 
@@ -380,6 +382,12 @@ int gpibCmd _ANSI_ARGS_(( ClientData clientData,
 			       char *argv[]
 			       ))
 {
+ 
+	if(argc < 2)
+	{
+		Tcl_SetResult(interp,"Error: unspecified gpib command",TCL_STATIC);
+		return TCL_ERROR;
+	}
 
 if( !strcmp(argv[1],"dev")){
   return ibDev( clientData, interp, argc-1,argv+1 );
@@ -424,9 +432,9 @@ if( !strcmp(argv[1],"trg")){
   return ibTrg( clientData, interp, argc-1,argv+1 );
 }
 
-
-Tcl_SetResult(interp,"Error: gpib without command",TCL_STATIC);
+Tcl_SetResult(interp,"Error: unrecognized gpib command",TCL_STATIC);
 return TCL_ERROR;
+
 }
 
 

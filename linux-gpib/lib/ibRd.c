@@ -26,7 +26,10 @@ int receive_setup(ibBoard_t *board, int pad, int sad)
 		cmdString[i++] = MSA(sad);
 
 	if ( __ibcmd(board, cmdString, i) < 0)
+	{
+		fprintf(stderr, "receive_setup: command failed\n");
 		return -1;
+	}
 
 	return 0;
 }

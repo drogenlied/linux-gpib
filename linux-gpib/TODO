@@ -16,3 +16,13 @@ write a macro for printing debugging messages
 
 improve error reporting during make config
 
+ask user whether they really want pcmcia support (for desktop computers
+running kernels with modular pcmcia support enabled)
+
+report error when user tries to read/write to interface board which is
+bus master
+
+add send_eoi option for config file
+
+make sure all necessary cleanups are done on close
+
