@@ -80,16 +80,18 @@ if test $JW_PATH == no ; then
 	AC_MSG_NOTICE([docbook-tools (jw) not found, disabling documentation])
 	BUILD_DOCS="no"
 fi
-AM_PATH_PYTHON
+AM_PATH_PYTHON([2.0])
 AC_PATH_PROG([PERL], [perl], [no], [])
 if test $PERL == "no"; then
 	AC_MSG_WARN([perl not found, disabling perl binding])
 	BIND_PERL="no"
 fi
-AC_PATH_PROG([TCLSH], [tclsh], [no], [])
-if test $TCLSH == "no"; then
-	AC_MSG_WARN([tclsh not found, disabling TCL binding])
+SC_PATH_TCLCONFIG
+if [[ $no_tcl ]]; then
+	AC_MSG_WARN([disabling TCL binding])
 	BIND_TCL="no"
+else
+	SC_LOAD_TCLCONFIG
 fi
 AC_PATH_PROG([PHP_CONFIG], [php-config], [no],[])
 if test $PHP_CONFIG == "no"; then
@@ -107,10 +109,7 @@ AC_CHECK_HEADERS(unistd.h sys/param.h sys/time.h time.h sys/mkdev.h sys/sysmacro
 AM_CHECK_PYTHON_HEADERS([],[BIND_PYTHON=no;AC_MSG_WARN([python headers not found, disabling python binding])])
 AC_CHECK_HEADER([libguile.h],[],[BIND_GUILE="no";AC_MSG_WARN([libguile headers not found, disabling guile binding])])
 
-if test $TCLSH != "no"; then
-TCL_LIBRARY=$(echo 'puts $tcl_library' | $TCLSH)
-TCL_CONFIG=$TCL_LIBRARY/tclConfig.sh
-TCL_INC_DIR=$(echo 'echo $TCL_INC_DIR' | cat $TCL_CONFIG - | $SHELL)
+if test $BIND_TCL != "no"; then
 AC_CHECK_HEADER([$TCL_INC_DIR/tcl.h],[],[BIND_TCL="no";AC_MSG_WARN([TCL headers not found, disabling TCL binding])])
 fi
 
