@@ -32,15 +32,17 @@ IBLCL void bdPIOwrt( ibio_op_t *wrtop)
 
 	DBGprint(DBG_DATA, ("buf=0x%p cnt=%d  ", buf, cnt));
 
-	GPIBout(AUXMR, auxrabits);	/* send EOI w/EOS if requested */
+	GPIBout(AUXMR, auxrabits);	/* normal handshaking */
 
 	DBGprint(DBG_BRANCH, ("begin PIO loop  "));
 
 	cnt-- ; /* save the last byte for sending EOI */
 
-	// enable 'data out' interrupts
-	imr1_bits |= HR_DOIE;
-	GPIBout(IMR1, imr1_bits);
+	if(test_and_set_bit(0, &write_in_progress))
+	{
+		printk("gpib: bug? write already in progress");
+		return;
+	}
 
 #if DMAOP	// isa dma transfer
 	if(ibcnt < cnt)
@@ -57,8 +59,12 @@ IBLCL void bdPIOwrt( ibio_op_t *wrtop)
 		enable_dma(ibdma);
 		release_dma_lock(flags);
 
-		// enable board's ema
-		imr1_bits |= HR_DMAO;
+		// enable board's dma for output
+		imr2_bits |= HR_DMAO;
+		GPIBout(IMR2, imr2_bits);
+
+		// enable 'data out' interrupts
+		imr1_bits |= HR_DOIE;
 		GPIBout(IMR1, imr1_bits);
 
 		// suspend until message is sent
@@ -70,9 +76,9 @@ IBLCL void bdPIOwrt( ibio_op_t *wrtop)
 
 		ibcnt += cnt;
 
-		// disable board's ema
-		imr1_bits &= ~HR_DMAO;
-		GPIBout(IMR1, imr1_bits);
+		// disable board's dma
+		imr2_bits &= ~HR_DMAO;
+		GPIBout(IMR2, imr2_bits);
 	}
 
 #else	// PIO transfer
@@ -86,11 +92,6 @@ IBLCL void bdPIOwrt( ibio_op_t *wrtop)
 		// load rest of message into buffer
 		while (ibcnt < cnt)
 		{
-			if(test_and_set_bit(0, &write_in_progress))
-			{
-				printk("gpib: bug? write already in progress");
-				break;
-			}
 			data.value = buf[ibcnt];
 			if(gpib_buffer_put(write_buffer, data))
 			{
@@ -100,6 +101,11 @@ IBLCL void bdPIOwrt( ibio_op_t *wrtop)
 			}
 			ibcnt++;
 		}
+
+		// enable 'data out' interrupts
+		imr1_bits |= HR_DOIE;
+		GPIBout(IMR1, imr1_bits);
+
 		// send first byte and let interrupt handler do the rest
 		GPIBout(CDOR, first_byte);
 
@@ -119,8 +125,6 @@ IBLCL void bdPIOwrt( ibio_op_t *wrtop)
 	if( eosmodes & XEOS )
 	{
 		DBGprint(DBG_BRANCH, ("send EOS with EOI  "));
-		// XXX check for failure
-		wait_event_interruptible(nec7210_write_wait, test_bit(0, &write_in_progress) == 0);
 		set_bit(0, &write_in_progress);
 		GPIBout(CDOR, buf[ibcnt]);
 		ibcnt++;
@@ -130,7 +134,6 @@ IBLCL void bdPIOwrt( ibio_op_t *wrtop)
 		GPIBout(CDOR, bdGetEOS() );
 	} else {
 		DBGprint(DBG_BRANCH, ("send EOI with last byte "));
-		wait_event_interruptible(nec7210_write_wait, test_bit(0, &write_in_progress) == 0);
 		set_bit(0, &write_in_progress);
 		bdSendAuxCmd(AUX_SEOI);
 		GPIBout(CDOR, buf[ibcnt]);

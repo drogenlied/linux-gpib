@@ -92,8 +92,12 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 			{	// no data left so we are done with write
 				clear_bit(0, &write_in_progress);
 				wake_up_interruptible(&nec7210_write_wait); /* wake up sleeping process */
+printk("pio write complete\n");	
 			}else	// else write data to output
+			{
 				GPIBout(CDOR, data.value);
+printk("wrote %c\n", data.value);	
+			}
 		}else	// write data, isa dma mode
 		{
 			// check if dma transfer is complete
@@ -103,6 +107,7 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 			{
 				clear_bit(0, &write_in_progress);
 				wake_up_interruptible(&nec7210_write_wait); /* wake up sleeping process */
+printk("dma write complete\n");	
 			}
 			release_dma_lock(flags);
 		}
@@ -127,7 +132,7 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 		printk("gpib output error\n");
 	}
 
-//	printk("isr1 0x%x, isr2 0x%x, ibsta 0x%x\n", status1, status2, ibsta);
+	printk("isr1 0x%x, isr2 0x%x, ibsta 0x%x\n", status1, status2, ibsta);
 
 }
 

@@ -69,11 +69,11 @@ extern inline int gpib_buffer_get(gpib_buffer_t *buffer, gpib_char_t *data)
 	{
 		return -1;
 	}
-	atomic_dec(&buffer->size);
 	*data = *buffer->front;
 	buffer->front++;
 	if(buffer->front >= buffer->array + GPIB_MAX_BUFFER_SIZE)
 		buffer->front = buffer->array;
+	atomic_dec(&buffer->size);
 	return 0;
 };
 

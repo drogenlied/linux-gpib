@@ -206,7 +206,7 @@ void board_detach(void)
 	}
 	if(irq_allocated)
 	{
-		free_irq(ibirq, 0);
+		free_irq(ibirq, &ibbase);
 		irq_allocated = 0;
 	}
 	if(ioports_allocated || iomem_allocated)
