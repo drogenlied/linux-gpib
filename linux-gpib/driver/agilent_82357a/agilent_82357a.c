@@ -232,7 +232,7 @@ int agilent_82357a_read_registers(agilent_82357a_private_t *a_priv, struct agile
 		printk("%s: kmalloc failed\n", __FILE__);
 		return -ENOMEM;
 	}
-	retval = agilent_82357a_receive_bulk_msg(a_priv, in_data, in_data_length, &bytes_read, HZ);
+	retval = agilent_82357a_receive_bulk_msg(a_priv, in_data, in_data_length, &bytes_read, 10 * HZ);
 	if(retval)
 	{
 		printk("%s: %s: agilent_82357a_receive_bulk_msg returned %i, bytes_read=%i\n", __FILE__, __FUNCTION__, retval, bytes_read);
@@ -243,7 +243,7 @@ int agilent_82357a_read_registers(agilent_82357a_private_t *a_priv, struct agile
 	i = 0;
 	if(in_data[i++] != (0xff & ~DATA_PIPE_CMD_RD_REGS))
 	{
-		printk("%s: %s: error, bulk command=0x%x != ~DATA_PIPE_CMD_WR_REGS\n", __FILE__, __FUNCTION__, in_data[0]);
+		printk("%s: %s: error, bulk command=0x%x != ~DATA_PIPE_CMD_RD_REGS\n", __FILE__, __FUNCTION__, in_data[0]);
 		return -EIO;
 	}
 	if(in_data[i++])
