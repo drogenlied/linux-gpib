@@ -226,19 +226,13 @@ enum ines_auxd_bits
 /* quancom registers */
 enum quancom_regs
 {
-	QUANCOM_IRQ_STATUS_REG = 0xfc,
-	QUANCOM_IRQ_CONTROL_REG = 0xfd, /* guess */
+	QUANCOM_IRQ_CONTROL_STATUS_REG = 0xfc,
 };
 
-enum quancom_irq_status_bits
+enum quancom_irq_control_status_bits
 {
-	QUANCOM_IRQ_ASSERTED_BIT = 0x1,
-	QUANCOM_IRQIN_ASSERTED_BIT = 0x2,
-};
-
-enum quancom_irq_control_bits
-{
-	QUANCOM_IRQ_CLEAR_BIT = 0x1, /* enable/clear interrupt */
+	QUANCOM_IRQ_ASSERTED_BIT = 0x1, /* readable (any write to the register clears the interrupt)*/
+	QUANCOM_IRQ_ENABLE_BIT = 0x4, /* writeable */
 };
 
 #endif	// _INES_GPIB_H

@@ -34,8 +34,9 @@ void ines_interrupt(int irq, void *arg, struct pt_regs *registerp)
 
 	if( priv->pci_chip_type == PCI_CHIP_QUANCOM )
 	{
-		if( ( inb( QUANCOM_IRQ_STATUS_REG ) & QUANCOM_IRQ_ASSERTED_BIT ) == 0 )
+		if((inb(nec_priv->iobase + QUANCOM_IRQ_CONTROL_STATUS_REG) & QUANCOM_IRQ_ASSERTED_BIT) == 0)
 			return;
+		outb( QUANCOM_IRQ_ENABLE_BIT, nec_priv->iobase + QUANCOM_IRQ_CONTROL_STATUS_REG );
 	}
 
 	spin_lock_irqsave( &board->spinlock, flags );
@@ -55,15 +56,6 @@ void ines_interrupt(int irq, void *arg, struct pt_regs *registerp)
 
 	if( isr4_bits & ( IN_FIFO_WATERMARK_BIT | OUT_FIFO_WATERMARK_BIT | OUT_FIFO_EMPTY_BIT ) )
 		wake_up_interruptible( &board->wait );
-
-	if( priv->pci_chip_type == PCI_CHIP_QUANCOM )
-	{
-		int i;
-		for( i = 0xf0; i < 0x100; i++ )
-		{
-			outb( QUANCOM_IRQ_CLEAR_BIT, nec_priv->iobase + i );
-		}
-	}
 
 	spin_unlock_irqrestore( &board->spinlock, flags );
 }

@@ -425,24 +425,11 @@ int ines_common_pci_attach( gpib_board_t *board )
 		bits |= amcc_wait_state_bits(region, num_wait_states);
 		outl(bits, ines_priv->amcc_iobase + AMCC_PASS_THRU_REG);
 		outl(AMCC_ADDON_INTR_ENABLE_BIT, ines_priv->amcc_iobase + AMCC_INTCS_REG);
+	}else if( ines_priv->pci_chip_type == PCI_CHIP_QUANCOM )
+	{
+		outb( QUANCOM_IRQ_ENABLE_BIT, nec_priv->iobase + QUANCOM_IRQ_CONTROL_STATUS_REG );
 	}
 	ines_online( ines_priv, board, 0 );
-
-	if( ines_priv->pci_chip_type == PCI_CHIP_QUANCOM )
-	{
-		printk( "quancom register dump:\n" );
-		for( i = 0; i < 256; i += 4 )
-		{
-			printk( "0x%lx: 0x%x\n", nec_priv->iobase + i, inb( nec_priv->iobase + i ) );
-		}
-		printk( "irq status: 0x%x\n", inb( nec_priv->iobase + QUANCOM_IRQ_STATUS_REG ) );
-		for( i = 0xf0; i < 0x100; i++ )
-		{
-			outb( QUANCOM_IRQ_CLEAR_BIT, nec_priv->iobase + i );
-			printk( "writing to: 0x%lx\n", nec_priv->iobase + i );
-			printk( "irq status: 0x%x\n", inb( nec_priv->iobase + QUANCOM_IRQ_STATUS_REG ) );
-		}
-	}
 
 	return 0;
 }
@@ -494,7 +481,7 @@ void ines_pci_detach(gpib_board_t *board)
 				break;
 			case PCI_CHIP_QUANCOM:
 				if( nec_priv->iobase )
-					outb( 0, nec_priv->iobase + QUANCOM_IRQ_CONTROL_REG );
+					outb( 0, nec_priv->iobase + QUANCOM_IRQ_CONTROL_STATUS_REG );
 				break;
 			default:
 				break;
