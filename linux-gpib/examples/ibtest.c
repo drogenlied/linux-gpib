@@ -38,6 +38,7 @@ enum Action
 	GPIB_TIMEOUT,
 	GPIB_WAIT,
 	GPIB_WRITE,
+	GPIB_LINE_STATUS,
 };
 
 void descriptor_type( int ud, int *is_board, int *is_master )
@@ -171,6 +172,7 @@ int prompt_for_action(void)
 	{
 		printf("You can:\n"
 			"\tw(a)it for an event\n"
+			"\tget bus (l)ine status (board only)\n"
  			"\t(q)uit\n"
 			"\t(r)ead string\n"
 			"\tperform (s)erial poll (device only)\n"
@@ -186,6 +188,10 @@ int prompt_for_action(void)
 			case 'A':
 			case 'a':
 				return GPIB_WAIT;
+				break;
+			case 'L':
+			case 'l':
+				return GPIB_LINE_STATUS;
 				break;
 			case 'q':
 			case 'Q':
@@ -350,6 +356,18 @@ int prompt_for_wait( int ud )
 	return 0;
 }
 
+int get_lines( int ud )
+{
+	short line_status;
+
+	if( iblines( ud, &line_status ) & ERR )
+		return -1;
+
+	printf( "Line status word is 0x%x\n", line_status );
+
+	return 0;
+}
+
 int main(int argc,char **argv)
 {
 	int dev;
@@ -365,6 +383,9 @@ int main(int argc,char **argv)
 
 		switch( act )
 		{
+			case GPIB_LINE_STATUS:
+				get_lines( dev );
+				break;
 			case GPIB_READ:
 				perform_read( dev );
 				break;
