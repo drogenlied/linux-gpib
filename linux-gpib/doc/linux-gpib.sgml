@@ -331,16 +331,22 @@ device {
 </cmdsynopsis>
 <cmdsynopsis>
 <command>gpib_config</command>
-<arg>--iobase <replaceable>number</replaceable></arg>
+<arg>--board-type <replaceable>board_type</replaceable></arg>
 <arg>--dma <replaceable>number</replaceable></arg>
-<arg>--irq <replaceable>number</replaceable></arg>
 <arg>--file <replaceable>file_path</replaceable></arg>
-<arg>--pci-slot <replaceable>number</replaceable></arg>
+<arg>--iobase <replaceable>number</replaceable></arg>
+<arg>--ifc</arg>
+<arg>--no-ifc</arg>
+<arg>--irq <replaceable>number</replaceable></arg>
 <arg>--minor <replaceable>number</replaceable></arg>
 <arg>--pad <replaceable>number</replaceable></arg>
-<arg>--sad <replaceable>number</replaceable></arg>
-<arg>--board-type <replaceable>board_type</replaceable></arg>
 <arg>--pci-bus <replaceable>number</replaceable></arg>
+<arg>--pci-slot <replaceable>number</replaceable></arg>
+<arg>--sad <replaceable>number</replaceable></arg>
+<arg>--sre</arg>
+<arg>--no-sre</arg>
+<arg>--system-controller</arg>
+<arg>--no-system-controller</arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 <refsect1>
@@ -404,6 +410,14 @@ should be 0 (disabled) or in the range 96 through 126 (0x60 through 0x7e hexadec
 <para>Specify pci bus <replaceable>number</replaceable> to select a specific
 pci board.  If used, you must also specify the pci slot with <option>--pci-slot</option>.
 </para>
+<para><option>--[no-]ifc</option></para>
+<para> Perform (or not) interface clear after bringing board online.
+Default is <option>--ifc</option>.
+<para><option>--[no-]sre</option></para>
+<para>Assert (or not) remote enable line after bringing board online.
+Default is <option>--sre</option>.</para>
+<para><option>--[no-]system-controller</option></para>
+<para>Configure board as system controller (or not).</para>
 </refsect1>
 </refentry>
 </section>
