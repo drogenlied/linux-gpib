@@ -156,22 +156,22 @@ enum ppe_bits
 	PPC_DIO_MASK = 0x7
 };
 
-extern __inline__ uint8_t MLA( unsigned int addr )
+static __inline__ uint8_t MLA( unsigned int addr )
 {
 	return addr | 0x20;
 }
 
-extern __inline__ uint8_t MTA( unsigned int addr )
+static __inline__ uint8_t MTA( unsigned int addr )
 {
 	return addr | 0x40;
 }
 
-extern __inline__ uint8_t MSA( unsigned int addr )
+static __inline__ uint8_t MSA( unsigned int addr )
 {
 	return addr | 0x60;
 }
 
-extern __inline__ int gpib_address_equal( unsigned int pad1, int sad1, unsigned int pad2, int sad2 )
+static __inline__ int gpib_address_equal( unsigned int pad1, int sad1, unsigned int pad2, int sad2 )
 {
 	if( pad1 == pad2 )
 	{
