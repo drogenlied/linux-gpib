@@ -22,6 +22,7 @@
 #include <linux/module.h>
 #include <linux/wait.h>
 #include <linux/list.h>
+#include <linux/fs.h>
 
 // early 2.4.x kernels don't define MODULE_LICENSE
 #ifndef MODULE_LICENSE
@@ -121,8 +122,9 @@ struct file_operations ib_fops =
 	lock: NULL,
 	readv: NULL,
 	writev: NULL,
-	sendpage: NULL,
-	get_unmapped_area: NULL,
+// sendpage and get_unmapped_area were added in 2.4.4		
+//	sendpage: NULL,
+//	get_unmapped_area: NULL,
 };
 
 gpib_board_t board_array[MAX_NUM_GPIB_BOARDS];
