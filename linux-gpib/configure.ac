@@ -179,7 +179,6 @@ AC_OUTPUT([\
 	driver/tms9914/Makefile \
 	driver/tnt4882/Makefile \
 	driver/tnt4882-tms/Makefile \
-	driver/Makefile \
 	doc/Makefile \
 	include/Makefile \
 	language/Makefile \
