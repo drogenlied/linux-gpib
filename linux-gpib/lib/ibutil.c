@@ -183,7 +183,7 @@ int ibGetDescriptor( ibConf_t p )
 	int retval;
 
 	/* XXX should go somewhere else XXX check validity of values */
-	if( p.settings.pad >= gpib_addr_max || p.settings.sad >= gpib_addr_max )
+	if(p.settings.pad > gpib_addr_max || p.settings.sad > gpib_addr_max)
 	{
 		setIberr( ETAB );
 		return -1;
