@@ -11,20 +11,27 @@ o) Installing your Hardware:
 	for its base-address, interrupt-level (IRQ) and dma-request channel (DMA).
 	Please choose a free base-address, irq and dma for your system
 	(refer to your
-	hardware documentation for this). Take a look to /proc/interrupts
-	or /proc/dma
-	for already used interrupt and dma lines. Now shut down your system and
+	hardware documentation for this). You can "cat" /proc/interrupts,
+	/proc/dma, /proc/ioports, and /proc/iomem to get information on
+	interrupt, dma lines, io ports, and io memory already in use by other
+	drivers. Now shut down your system and
 	install the board in your computer.
 
 o) Unpacking the Software:
 	Unpack the archives with the 'tar' program, for example
 	'tar -xzf linux-gpib.tar.gz'.
 
-	You will also need the linux kernel source code, which the linux-gpib
+	You will also need the linux kernel source code, or a reasonable approximation
+	thereof, which the linux-gpib
 	package reads for header files and compilation variables when compiling
-	the gpib kernel module.  Ideally, you have the linux source your
+	the gpib kernel modules.  Ideally, you have the linux source your
 	current kernel was compiled from, or are willing to compile
-	a fresh kernel.  Otherwise, you can prepare a kernel source tree that matches
+	a fresh kernel.  Otherwise, your distribution may provide a useable setup
+	you can compile against (usually pointed at by a symbolic link at
+	/lib/modules/<kernel_version>/build).  For example, on Debian Sarge
+	you can install the kernel-headers package which matches the kernel you
+	are running and all should be well.  
+		You could also prepare a kernel source tree that matches
 	the kernel you are currently running if you have its config file (in
 	the Debian distibution the config files for the kernel-image packages
 	are in the /boot directory).  Perform the following steps:
