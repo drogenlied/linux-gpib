@@ -431,7 +431,7 @@ int cb_isa_attach(gpib_board_t *board)
 		return -1;
 	}
 	nec_priv->iobase = board->ibbase;
-	board->fifo_iobase = nec_priv->iobase;
+	cb_priv->fifo_iobase = nec_priv->iobase;
 	
 	bits = irq_bits( board->ibirq );
 	if( bits == 0 )
