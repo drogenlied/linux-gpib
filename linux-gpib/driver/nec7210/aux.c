@@ -42,7 +42,7 @@ int nec7210_take_control(gpib_board_t *board, nec7210_private_t *priv, int syncr
 		udelay(1);
 	}
 	if( i == timeout )
-		retval = -ETIMEDOUT;
+		return -ETIMEDOUT;
 	clear_bit( WRITE_READY_BN, &priv->state );
 	return retval;
 }
@@ -66,7 +66,7 @@ int nec7210_go_to_standby(gpib_board_t *board, nec7210_private_t *priv)
 	if(i == timeout)
 	{
 		printk("error waiting for NATN\n");
-		retval = -ETIMEDOUT;
+		return -ETIMEDOUT;
 	}
 	clear_bit( COMMAND_READY_BN, &priv->state );
 	return retval;
