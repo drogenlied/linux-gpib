@@ -105,10 +105,11 @@ int conf_online( ibConf_t *conf, int online )
 
 	if( online )
 	{
+		conf->board_is_open = 1;
+		
 		retval = conf_lock_board( conf );
 		if( retval < 0 ) return retval;
 
-		conf->board_is_open = 1;
 		retval = open_gpib_device( conf );
 		if( retval < 0 ) return retval;
 
