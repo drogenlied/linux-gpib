@@ -39,8 +39,9 @@ ssize_t nec7210_command(gpib_board_t *board, nec7210_private_t *priv, uint8_t
 		{
 			break;
 		}
-		if(test_bit( BUS_ERROR_BN, &priv->state))
+		if(test_and_clear_bit( BUS_ERROR_BN, &priv->state))
 		{
+			printk("nec7210: bus error on command byte\n");
 			break;
 		}
 
@@ -66,8 +67,9 @@ ssize_t nec7210_command(gpib_board_t *board, nec7210_private_t *priv, uint8_t
 		printk("gpib command timed out\n");
 		retval = -ETIMEDOUT;
 	}
-	if(test_bit( BUS_ERROR_BN, &priv->state))
+	if(test_and_clear_bit( BUS_ERROR_BN, &priv->state))
 	{
+		printk("nec7210: bus error on command byte\n");
 		retval = -EIO;
 	}
 

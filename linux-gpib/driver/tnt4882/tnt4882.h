@@ -171,7 +171,7 @@ enum bus_control_status_bits
 /* CFG -- Configuration Register (write only) */
 enum cfg_bits
 {
-	TNT_COMMAND = 0x80,	/* bytes are command bytes instead of data bytes */
+	TNT_COMMAND = 0x80,	/* bytes are command bytes instead of data bytes (tnt4882 one-chip and newer only?)*/
 	TNT_TLCHE = ( 1 << 6 ),	/* halt transfer on imr0, imr1, or imr2 interrupt */
 	TNT_IN = ( 1 << 5 ),	/* transfer is GPIB read                 */
 	TNT_A_B = ( 1 << 4 ),	/* order to use fifos 1=fifa A first(big endian), 0=fifo b first(little endian) */

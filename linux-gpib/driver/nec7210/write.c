@@ -171,7 +171,7 @@ ssize_t nec7210_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buf
 	size_t count = 0;
 	ssize_t retval = 0;
 
-	clear_bit( DEV_CLEAR_BN, &priv->state );
+	clear_bit( DEV_CLEAR_BN, &priv->state ); //XXX
 	clear_bit( BUS_ERROR_BN, &priv->state );
 
 	if(send_eoi)

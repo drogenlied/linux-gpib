@@ -64,6 +64,7 @@ ssize_t tnt4882_write(gpib_board_t *board, uint8_t *buffer, size_t length, int s
 ssize_t tnt4882_command_unaccel(gpib_board_t *board, uint8_t *buffer, size_t length)
 {
 	tnt4882_private_t *priv = board->private_data;
+
 	return nec7210_command(board, &priv->nec7210_priv, buffer, length);
 }
 int tnt4882_take_control(gpib_board_t *board, int synchronous)
@@ -448,7 +449,7 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 	// read-clear isr0
 	tnt_readb( tnt_priv, ISR0 );
 
-	// enable passing of nec7210 interrupts
+	// enable passing of nat4882 interrupts
 	tnt_priv->imr3_bits = HR_TLCI;
 	tnt_writeb( tnt_priv, tnt_priv->imr3_bits, IMR3 );
 
@@ -463,7 +464,7 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 
 	nec7210_board_online( nec_priv, board );
 	// enable interface clear interrupt for event queue
-	tnt_priv->imr0_bits = TNT_IMR0_ALWAYS_BITS | /*TNT_ATNI_BIT |*/ TNT_IFCIE_BIT;
+	tnt_priv->imr0_bits = TNT_IMR0_ALWAYS_BITS | TNT_ATNI_BIT | TNT_IFCIE_BIT;
 	tnt_writeb( tnt_priv, tnt_priv->imr0_bits, IMR0 );
 }
 

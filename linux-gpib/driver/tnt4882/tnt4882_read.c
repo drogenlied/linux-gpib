@@ -67,6 +67,31 @@ static int drain_fifo_words(tnt4882_private_t *tnt_priv, uint8_t *buffer, int nu
 	return count;
 }
 
+static void tnt4882_release_holdoff(gpib_board_t *board, tnt4882_private_t *tnt_priv)
+{
+	nec7210_private_t *nec_priv = &tnt_priv->nec7210_priv;
+	unsigned short sasr_bits;
+
+	sasr_bits = tnt_readb(tnt_priv, SASR);
+
+	/*tnt4882 not in one-chip mode won't always release holdoff unless we
+	 * are in the right mode when release handshake command is given */
+	if(sasr_bits & AEHS_BIT) /* holding off due to holdoff on end mode*/
+	{
+		nec7210_set_handshake_mode(board, nec_priv, HR_HLDE);
+		write_byte(nec_priv, AUX_FH, AUXMR);
+	}else if(sasr_bits & ANHS1_BIT) /* held off due to holdoff on all data mode*/
+	{
+		nec7210_set_handshake_mode(board, nec_priv, HR_HLDA);
+		write_byte(nec_priv, AUX_FH, AUXMR);
+		nec7210_set_handshake_mode(board, nec_priv, HR_HLDE);
+	}else /* held off due to holdoff immediately command */
+	{
+		nec7210_set_handshake_mode(board, nec_priv, HR_HLDE);
+		write_byte(nec_priv, AUX_FH, AUXMR);
+	}
+}
+
 ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end )
 {
 	size_t count = 0;
@@ -102,12 +127,7 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 	tnt_writeb( tnt_priv, ( hw_count >> 16 ) & 0xff, CNT2 );
 	tnt_writeb( tnt_priv, ( hw_count >> 24 ) & 0xff, CNT3 );
 
-/* XXX could do a SASR check, is this what is causing problems
- * for nat4882 mode? */
-//	nec7210_set_handshake_mode( board, nec_priv, HR_HLDA );
-	nec7210_set_handshake_mode( board, nec_priv, HR_HLDE );
-	write_byte( nec_priv, AUX_FH, AUXMR );
-//	nec7210_set_handshake_mode( board, nec_priv, HR_HLDE );
+	tnt4882_release_holdoff(board, tnt_priv);
 
 	tnt_writeb( tnt_priv, GO, CMDR );
 	udelay(1);
@@ -188,16 +208,6 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 			buffer[ count++ ] = tnt_readb( tnt_priv, FIFOB );
 		}
 	}
-	/* we need to check isr1 register to make sure RECEIVED_END is
-	 * in sync */
-	spin_lock_irqsave( &board->spinlock, flags );
-	nec7210_interrupt(board, nec_priv);
-	if( test_and_clear_bit( RECEIVED_END_BN, &nec_priv->state ) )
-	{
-		*end = 1;
-	}
-	spin_unlock_irqrestore( &board->spinlock, flags );
-
 	tnt_writeb( tnt_priv, STOP, CMDR );
 	udelay(1);
 
@@ -205,6 +215,15 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 	nec7210_set_reg_bits( nec_priv, IMR2, 0xff, imr2_bits );
 	tnt_priv->imr0_bits = imr0_bits;
 	tnt_writeb(tnt_priv, tnt_priv->imr0_bits, IMR0);
+	/* force handling of any pending interrupts (seems to be needed
+	 * to keep interrupts from getting hosed, plus for syncing
+	 * with RECEIVED_END below) */
+	tnt4882_interrupt(0, board, NULL);
+	/* RECEIVED_END should be in sync now */
+	if( test_and_clear_bit( RECEIVED_END_BN, &nec_priv->state ) )
+	{
+		*end = 1;
+	}
 	if( retval < 0 )
 	{
 		// force immediate holdoff
