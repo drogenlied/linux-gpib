@@ -65,7 +65,10 @@ int dvrsp(gpib_board_t *board, int padsad, uint8_t *result)
 		cmd_string[i++] = sad;
 
 	if (board->interface->command(board, cmd_string, i) < i)
+	{
+		printk("gpib: failed to setup serial poll\n");
 		return -1;
+	}
 
 	board->interface->go_to_standby(board);
 
@@ -83,6 +86,7 @@ int dvrsp(gpib_board_t *board, int padsad, uint8_t *result)
 	cmd_string[1] = UNT;
 	if(board->interface->command(board, cmd_string, 2) < 2 )
 	{
+		printk("gpib: failed to disable serial poll\n");
 		return -1;
 	}
 	osRemoveTimer(board);
