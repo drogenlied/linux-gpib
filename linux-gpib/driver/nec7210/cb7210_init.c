@@ -32,8 +32,10 @@
 #define PCI_DEVICE_ID_CBOARDS_PCI_GPIB 0x6
 
 int cb_pci_attach(gpib_device_t *device);
+int cb_isa_attach(gpib_device_t *device);
 
 void cb_pci_detach(gpib_device_t *device);
+void cb_isa_detach(gpib_device_t *device);
 
 // wrappers for interface functions
 ssize_t cb7210_read(gpib_device_t *device, uint8_t *buffer, size_t length, int *end)
@@ -129,6 +131,28 @@ gpib_interface_t cb_pci_interface =
 	serial_poll_response: cb7210_serial_poll_response,
 };
 
+gpib_interface_t cb_isa_interface =
+{
+	name: "cbi4882",
+	attach: cb_isa_attach,
+	detach: cb_isa_detach,
+	read: cb7210_read,
+	write: cb7210_write,
+	command: cb7210_command,
+	take_control: cb7210_take_control,
+	go_to_standby: cb7210_go_to_standby,
+	interface_clear: cb7210_interface_clear,
+	remote_enable: cb7210_remote_enable,
+	enable_eos: cb7210_enable_eos,
+	disable_eos: cb7210_disable_eos,
+	parallel_poll: cb7210_parallel_poll,
+	line_status: NULL,	//XXX
+	update_status: cb7210_update_status,
+	primary_address: cb7210_primary_address,
+	secondary_address: cb7210_secondary_address,
+	serial_poll_response: cb7210_serial_poll_response,
+};
+
 int cb7210_allocate_private(gpib_device_t *device)
 {
 	device->private_data = kmalloc(sizeof(cb7210_private_t), GFP_KERNEL);
@@ -181,7 +205,6 @@ int cb_pci_attach(gpib_device_t *device)
 	if(pci_request_regions(cb_priv->pci_device, "pci-gpib"))
 		return -1;
 
-	//XXX global
 	cb_priv->amcc_iobase = pci_resource_start(cb_priv->pci_device, 0) & PCI_BASE_ADDRESS_IO_MASK;
 	nec_priv->iobase = pci_resource_start(cb_priv->pci_device, 1) & PCI_BASE_ADDRESS_IO_MASK;
 
@@ -243,3 +266,111 @@ void cb_pci_detach(gpib_device_t *device)
 	cb7210_free_private(device);
 }
 
+/* Returns bits to be sent to base+9 to configure irq level on isa-gpib.
+ * Returns zero on failure.
+ */
+unsigned int intr_level_bits(unsigned int irq)
+{
+	switch(irq)
+	{
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+			return irq - 1;
+			break;
+		case 7:
+			return 0x5;
+			break;
+		case 10:
+			return 0x6;
+			break;
+		case 11:
+			return 0x7;
+			break;
+		default:
+			return 0;
+			break;
+	}
+}
+
+int cb_isa_attach(gpib_device_t *device)
+{
+	int isr_flags = 0;
+	cb7210_private_t *cb_priv;
+	nec7210_private_t *nec_priv;
+	unsigned int irq_bits;
+
+	device->status = 0;
+
+	if(cb7210_allocate_private(device))
+		return -ENOMEM;
+	cb_priv = device->private_data;
+	nec_priv = &cb_priv->nec7210_priv;
+	nec_priv->offset = cb7210_reg_offset;
+	nec_priv->read_byte = ioport_read_byte;
+	nec_priv->write_byte = ioport_write_byte;
+
+	if(request_region(device->ibbase, cb7210_iosize, "isa-gpib"));
+	{
+		printk("gpib: ioports are already in use");
+		return -1;
+	}
+	nec_priv->iobase = device->ibbase;
+
+	irq_bits = intr_level_bits(device->ibirq);
+	if(irq_bits == 0)
+	{
+		printk("board incapable of using irq %i, try 2-5, 7, 10, or 11\n", device->ibirq);
+	}
+
+	// install interrupt handler
+	if(request_irq(device->ibirq, cb7210_interrupt, isr_flags, "isa-gpib", device))
+	{
+		printk("gpib: can't request IRQ %d\n", device->ibirq);
+		return -1;
+	}
+	cb_priv->irq = device->ibirq;
+
+	// put in nec7210 compatibility mode and configure board irq
+	nec_priv->write_byte(nec_priv, HS_RESET7210, HS_INT_LEVEL);
+	nec_priv->write_byte(nec_priv, irq_bits, HS_INT_LEVEL);
+	nec_priv->write_byte(nec_priv, 0, HS_MODE); /* disable system control */
+
+	nec7210_board_reset(nec_priv);
+
+	// XXX set clock register for unknown? driving frequency
+	nec_priv->write_byte(nec_priv, ICR | 8, AUXMR);
+
+	// enable interrupts
+	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE |
+		HR_DETIE | HR_APTIE | HR_CPTIE;
+	nec_priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
+	nec_priv->write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
+	nec_priv->write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
+
+	nec_priv->write_byte(nec_priv, AUX_PON, AUXMR);
+
+	return 0;
+}
+
+void cb_isa_detach(gpib_device_t *device)
+{
+	cb7210_private_t *cb_priv = device->private_data;
+	nec7210_private_t *nec_priv;
+
+	if(cb_priv)
+	{
+		nec_priv = &cb_priv->nec7210_priv;
+		if(cb_priv->irq)
+		{
+			free_irq(cb_priv->irq, device);
+		}
+		if(nec_priv->iobase)
+		{
+			nec7210_board_reset(nec_priv);
+			release_region(nec_priv->iobase, cb7210_iosize);
+		}
+	}
+	cb7210_free_private(device);
+}

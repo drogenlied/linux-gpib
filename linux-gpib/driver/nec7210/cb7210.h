@@ -39,6 +39,7 @@ typedef struct
 
 // interfaces
 extern gpib_interface_t cb_pci_interface;
+extern gpib_interface_t cb_isa_interface;
 extern gpib_interface_t cb_pcmcia_interface;
 
 // interrupt service routines
@@ -75,6 +76,9 @@ void pcmcia_cleanup_module(void);
 
 // pci-gpib register offset
 static const int cb7210_reg_offset = 1;
+
+// uses 10 ioports
+static const int cb7210_iosize = 10;
 
 // cb7210 specific registers and bits
 
