@@ -97,7 +97,38 @@ int ibRead  _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,cha
 }
 
 /**********************************************************************/
-static int Gpib_find_called = 0;
+
+int ibDev _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]))
+{
+	int dev;
+	char res[10];
+	int minor, pad, sad, timo, eot, eos;
+
+	if( argc != 7 )
+	{
+		Tcl_SetResult(interp, "Error: ibdev <minor> <pad> <sad> <timo> <eot> <eosmode>", TCL_STATIC);
+		return TCL_ERROR;
+	}
+
+	minor = strtol(argv[1], NULL, 0);
+	pad = strtol(argv[2], NULL, 0);
+	sad = strtol(argv[3], NULL, 0);
+	timo = strtol(argv[4], NULL, 0);
+	eot = strtol(argv[5], NULL, 0);
+	eos = strtol(argv[6], NULL, 0);
+
+	if(( dev = ibdev(minor, pad, sad, timo, eot, eos)) < 0);
+	{
+		ib_CreateVerboseError(interp,"ibdev");
+		return TCL_ERROR;
+	}
+
+	sprintf(res, "%4d", dev);
+	Tcl_SetResult( interp, res, TCL_VOLATILE );
+
+	return TCL_OK;
+}
+/**********************************************************************/
 
 int ibFind  _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,char *argv[]))
 {
@@ -110,7 +141,7 @@ int ibFind  _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp, int argc,cha
 		return TCL_ERROR;
 	}
 
-	if(( dev = ibfind(argv[1])) & ERR )
+	if(( dev = ibfind(argv[1])) < 0 )
 	{
 		ib_CreateVerboseError(interp,"ibfind");
 		return TCL_ERROR;
