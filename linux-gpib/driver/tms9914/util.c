@@ -153,11 +153,9 @@ unsigned int update_status_nolock( gpib_board_t *board, tms9914_private_t *priv 
 	if(address_status & HR_ATN)
 	{
 		set_bit( ATN_NUM, &board->status );
-		clear_bit( WRITE_READY_BN, &priv->state );
 	}else
 	{
 		clear_bit( ATN_NUM, &board->status );
-		clear_bit( COMMAND_READY_BN, &priv->state );
 	}
 	// check for talker/listener addressed
 	if(address_status & HR_TA)
@@ -167,7 +165,6 @@ unsigned int update_status_nolock( gpib_board_t *board, tms9914_private_t *priv 
 		clear_bit( TACS_NUM, &board->status );
 	if(address_status & HR_LA)
 	{
-		clear_bit( WRITE_READY_BN, &priv->state );
 		set_bit(LACS_NUM, &board->status);
 	}else
 		clear_bit( LACS_NUM, &board->status );
