@@ -32,7 +32,7 @@ MODULE_LICENSE("GPL");
 // size of modbus pci memory io region
 static const int iomem_size = 0x2000;
 
-void tms9914_board_reset(tms9914_private_t *priv)
+void tms9914_board_reset( tms9914_private_t *priv )
 {
 	/* chip reset */
 	write_byte(priv, AUX_CR | AUX_CS, AUXCR);
@@ -47,16 +47,15 @@ void tms9914_board_reset(tms9914_private_t *priv)
 	write_byte(priv, priv->imr0_bits, IMR0);
 	priv->imr1_bits = 0;
 	write_byte(priv, priv->imr1_bits, IMR1);
-	write_byte(priv, 0, SPMR);
 	write_byte(priv, AUX_DAI | AUX_CS, AUXCR);
+
+	write_byte(priv, 0, SPMR);
 
 //	write_byte(priv, 0, EOSR);
 
 	/* parallel poll unconfigure */
 	write_byte(priv, 0, PPR);
 
-	/* set GPIB address XXX */
-	write_byte(priv, 0 & ADDRESS_MASK, ADR);
 //	priv->admr_bits = HR_TRM0 | HR_TRM1;
 
 #if 0
@@ -77,6 +76,24 @@ void tms9914_board_reset(tms9914_private_t *priv)
 
 	// request for data holdoff
 	write_byte(priv, AUX_HLDA | AUX_CS, AUXCR);
+}
+
+void tms9914_online( gpib_board_t *board, tms9914_private_t *priv )
+{
+	/* set GPIB address */
+	tms9914_primary_address( board, priv, board->pad );
+	tms9914_secondary_address( board, priv, board->sad, board->sad >=0 );
+
+	// enable tms9914 interrupts
+	priv->imr0_bits |= HR_MACIE | HR_RLCIE | HR_ENDIE | HR_BOIE | HR_BIIE;
+	priv->imr1_bits |= HR_MAIE | HR_SRQIE | HR_UNCIE | HR_ERRIE | HR_IFCIE |
+		HR_GETIE| HR_DCASIE;
+	write_byte(priv, priv->imr0_bits, IMR0);
+	write_byte(priv, priv->imr1_bits, IMR1);
+	write_byte(priv, AUX_DAI, AUXCR);
+
+	// turn off reset state
+	write_byte(priv, AUX_CR, AUXCR);
 }
 
 // wrapper for inb
@@ -115,7 +132,7 @@ void cleanup_module(void)
 }
 
 EXPORT_SYMBOL(tms9914_board_reset);
-
+EXPORT_SYMBOL(tms9914_online);
 EXPORT_SYMBOL(tms9914_ioport_read_byte);
 EXPORT_SYMBOL(tms9914_ioport_write_byte);
 EXPORT_SYMBOL(tms9914_iomem_read_byte);

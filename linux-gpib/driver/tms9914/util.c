@@ -72,7 +72,7 @@ void tms9914_parallel_poll_response( gpib_board_t *board,
 
 void tms9914_serial_poll_response(gpib_board_t *board, tms9914_private_t *priv, uint8_t status)
 {
-	write_byte(priv, status, SPMR);		/* set new status to v */
+	write_byte(priv, status, SPMR);	/* set new status to v */
 }
 
 uint8_t tms9914_serial_poll_status( gpib_board_t *board, tms9914_private_t *priv )
@@ -89,7 +89,12 @@ void tms9914_primary_address(gpib_board_t *board, tms9914_private_t *priv, unsig
 
 void tms9914_secondary_address(gpib_board_t *board, tms9914_private_t *priv, unsigned int address, int enable)
 {
-	//XXX
+	if( enable )
+		priv->imr1_bits |= HR_APTIE;
+	else
+		priv->imr1_bits &= ~HR_APTIE;
+
+	write_byte( priv, priv->imr1_bits, IMR1 );
 }
 
 unsigned int tms9914_update_status(gpib_board_t *board, tms9914_private_t *priv)

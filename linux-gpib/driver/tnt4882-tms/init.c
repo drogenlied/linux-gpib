@@ -225,8 +225,6 @@ int ni_pci_attach(gpib_board_t *board)
 	// clear SWAP bit
 	writeb(0x0, tms_priv->iobase + KEYREG);
 
-printk("CSR 0x%x\n", readb(tms_priv->iobase + KEYREG));
-
 	// put it in 9914 mode
 	writeb(AUX_9914, tms_priv->iobase + AUXMR);
 
@@ -241,16 +239,7 @@ printk("CSR 0x%x\n", readb(tms_priv->iobase + KEYREG));
 	// enable interrupt
 	writeb(0x1, tms_priv->iobase + INTRT);
 
-	// enable tms9914 interrupts
-	tms_priv->imr0_bits = HR_MACIE | HR_RLCIE | HR_ENDIE | HR_BOIE | HR_BIIE;
-	tms_priv->imr1_bits = HR_MAIE | HR_SRQIE | HR_UNCIE | HR_ERRIE;
-	write_byte(tms_priv, tms_priv->imr0_bits, IMR0);
-	write_byte(tms_priv, tms_priv->imr1_bits, IMR1);
-	write_byte(tms_priv, AUX_DAI, AUXCR);
-
-	write_byte(tms_priv, AUX_CR, AUXCR);
-
-printk("CSR 0x%x\n", readb(tms_priv->iobase + 0x17));
+	tms9914_online( board, tms_priv );
 
 	return 0;
 }

@@ -148,7 +148,7 @@ void nec7210_interrupt(gpib_board_t *board, nec7210_private_t *priv)
 
 	if( status1 & HR_DET )
 	{
-		push_gpib_event( &board->event_queue, EventDevTrig );
+		push_gpib_event( &board->event_queue, EventDevTrg );
 	}
 
 	spin_unlock(&board->spinlock);

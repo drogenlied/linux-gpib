@@ -283,7 +283,7 @@ static const int request_service_bit = 0x40;
 enum events
 {
 	EventNone = 0,
-	EventDevTrig = 1,
+	EventDevTrg = 1,
 	EventDevClr = 2,
 	EventIFC = 3
 };

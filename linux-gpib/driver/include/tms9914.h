@@ -92,6 +92,7 @@ extern int tms9914_line_status( const gpib_board_t *board, tms9914_private_t *pr
 
 // utility functions
 extern void tms9914_board_reset(tms9914_private_t *priv);
+extern void tms9914_online( gpib_board_t *board, tms9914_private_t *priv );
 
 // wrappers for io functions
 extern uint8_t tms9914_ioport_read_byte(tms9914_private_t *priv, unsigned int register_num);
@@ -222,8 +223,8 @@ enum aux_cmd_bits
 {
 	AUX_CS = 0x80,	/* set bit instead of clearing it, used with commands marked 'd' below */
 	AUX_CR = 0x0,	/* d Chip reset                   */
-	AUX_DHDF = 0x1,	// release dac holdoff (nonvalid)
-	AUX_VAL = ( AUX_DHDF | AUX_CS ),	// release dac holdoff, valid
+	AUX_INVAL = 0x1,	// release dac holdoff, invalid command byte
+	AUX_VAL = ( AUX_INVAL | AUX_CS ),	// release dac holdoff, valid command byte
 	AUX_RHDF = 0x2,	/* X Release RFD holdoff          */
 	AUX_HLDA = 0x3,	/* d holdoff on all data          */
 	AUX_HLDE = 0x4,	/* d holdoff on EOI only          */
