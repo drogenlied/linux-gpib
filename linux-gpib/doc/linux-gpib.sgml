@@ -1007,7 +1007,9 @@ volatile int ibsta;
 	<entry>RQS</entry>
 	<entry>0x800</entry>
 	<entry>RQS indicates that the device has requested service, and one
-	or more status bytes are available for reading with ibrsp().</entry>
+	or more status bytes are available for reading with ibrsp().  RQS will
+	only be set if you have automatic serial polling enabled (see
+	<link LINKEND="reference-function-ibconfig">ibconfig()</link>).</entry>
 	<entry>device</entry>
 	</row>
 	<row>
@@ -1016,7 +1018,9 @@ volatile int ibsta;
 	<entry>SRQI indicates that a device connected to the board is asserting
 	the SRQ line.  It
 	is only set if the board is the controller-in-charge.  If
-	automatic serial polling is enabled, SRQI will generally be cleared,
+	automatic serial polling is enabled (see
+	<link LINKEND="reference-function-ibconfig">ibconfig()</link>), 
+	SRQI will generally be cleared,
 	since when a device requests service it will be automatically
 	polled and then unassert SRQ.</entry>
 	<entry>board</entry>
