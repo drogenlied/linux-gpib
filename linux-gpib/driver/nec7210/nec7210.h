@@ -47,6 +47,7 @@ enum
 {
 	PIO_IN_PROGRESS_BN,	// pio transfer in progress
 	DMA_IN_PROGRESS_BN,	// dma transfer in progress
+	WRITE_READY_BN,	// board is ready to send a data byte
 	COMMAND_READY_BN,	// board is ready to send a command byte
 	RFD_HOLDOFF_BN,	// board is asserting a request for data holdoff
 };

@@ -164,18 +164,9 @@ void nec7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 
 	if((status1 & HR_DO))
 	{
-		// write data, pio mode
-		if(test_bit(PIO_IN_PROGRESS_BN, &priv->state))
-		{
-			if(gpib_buffer_get(&priv->buffer, &data))
-			{	// no data left so we are done with write
-				clear_bit(PIO_IN_PROGRESS_BN, &priv->state);
-				wake_up_interruptible(&driver->wait); /* wake up sleeping process */
-			}else	// else write data to output
-			{
-				priv->write_byte(priv, data, CDOR);
-			}
-		}else if(test_bit(DMA_IN_PROGRESS_BN, &priv->state))	// write data, isa dma mode
+		// for writing data, pio mode
+		set_bit(WRITE_READY_BN, &priv->state);
+		if(test_bit(DMA_IN_PROGRESS_BN, &priv->state))	// write data, isa dma mode
 		{
 			// check if dma transfer is complete
 			flags = claim_dma_lock();

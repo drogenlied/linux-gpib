@@ -21,31 +21,37 @@
 
 ssize_t pio_write(gpib_driver_t *driver, nec7210_private_t *priv, uint8_t *buffer, size_t length)
 {
+	size_t count = 0;
 	ssize_t retval = 0;
-
-	init_gpib_buffer(&priv->buffer, buffer, length);
-	atomic_set(&priv->buffer.size, length);
-
-	set_bit(PIO_IN_PROGRESS_BN, &priv->state);
 
 	// enable 'data out' interrupts
 	priv->imr1_bits |= HR_DOIE;
 	priv->write_byte(priv, priv->imr1_bits, IMR1);
 
-	// suspend until message is sent
-	if(wait_event_interruptible(driver->wait, test_bit(PIO_IN_PROGRESS_BN, &priv->state) == 0 ||
-		test_bit(TIMO_NUM, &driver->status)))
+	while(count < length)
 	{
-		printk("gpib write interrupted!\n");
-		retval = -EINTR;
+		clear_bit(WRITE_READY_BN, &priv->state);
+		priv->write_byte(priv, buffer[count++], CDOR);
+		// XXX should try busy wait
+		// suspend until byte is sent
+		if(wait_event_interruptible(driver->wait, test_bit(WRITE_READY_BN, &priv->state) ||
+			test_bit(TIMO_NUM, &driver->status)))
+		{
+			printk("gpib write interrupted!\n");
+			retval = -EINTR;
+			break;
+		}
+		if(test_bit(TIMO_NUM, &driver->status))
+		{
+			retval = -ETIMEDOUT;
+			break;
+		}
 	}
 
 	// disable 'data out' interrupts
 	priv->imr1_bits &= ~HR_DOIE;
 	priv->write_byte(priv, priv->imr1_bits, IMR1);
 
-	if(priv->buffer.error_flag)
-		return -EIO;
 	if(retval)
 		return retval;
 
