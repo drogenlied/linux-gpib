@@ -1,5 +1,5 @@
 /*
- * module.h compatibility header (copied from comedi)
+ * module.h compatibility header
  */
 
 #ifndef _COMPAT_MODULE_H
@@ -15,6 +15,10 @@
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,4,10)
 #define MODULE_LICENSE(x)
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,4,11)
+#define EXPORT_SYMBOL_GPL(x) EXPORT_SYMBOL(x)
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,2,18)		/* ? */
