@@ -143,7 +143,7 @@ enum bus_control_status_bits
 	BCSR_REN_BIT = 0x1,
 	BCSR_IFC_BIT = 0x2,
 	BCSR_SRQ_BIT = 0x4,
-	BCSR_EOI_BIT = 0x5,
+	BCSR_EOI_BIT = 0x8,
 	BCSR_NRFD_BIT = 0x10,
 	BCSR_NDAC_BIT = 0x20,
 	BCSR_DAV_BIT = 0x40,
