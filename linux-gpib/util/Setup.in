@@ -32,6 +32,7 @@ dialog --clear --title "Linux-GPIB Configuration" --msgbox "\
  Welcome to the Linux-GPIB Configuration and Setup Program\n\
 \n\
       (c) 1995-1999 by C.Schroeter (clausi@chemie.fu-berlin.de)
+      (c) 2001 by Frank Mori Hess (fmhess@users.sourceforge.net)
 \n\
 This Utility configures the Compile Time Options of the Package\n\
 And sets up the necessary things to run the software diagnostic\n\
@@ -39,19 +40,6 @@ Program. If no /etc/gpib.conf exists one will be created.\n
 \n
 On initial Installation you should do a 'make clean' first\n" 20 70
 
-
-
-
-##########
-#
-# release notes
-#
-##########
-
-
-if [ ! -r ../.config.stat ];then
-dialog --title "Release Notes, Please Read" --textbox ../RELEASE.NOTES 20 70
-fi
 
 ##########
 #
