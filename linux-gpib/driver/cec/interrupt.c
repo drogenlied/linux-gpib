@@ -28,11 +28,13 @@ void cec_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
 	gpib_board_t *board = arg;
 	cec_private_t *priv = board->private_data;
-static int i = 0;
-i++;
+
 printk("plx intcsr 0x%x\n", inl(priv->plx_iobase + PLX_INTCSR_REG));
-if(i > 100) outl(0, priv->plx_iobase + PLX_INTCSR_REG);
 
 	nec7210_interrupt(board, &priv->nec7210_priv);
+
+// crash safety : if interrupt didn't clear, disable it
+if(inl(priv->plx_iobase + PLX_INTCSR_REG) & LINTR1_STATUS_BIT) 
+	outl(0, priv->plx_iobase + PLX_INTCSR_REG);
 }
 
