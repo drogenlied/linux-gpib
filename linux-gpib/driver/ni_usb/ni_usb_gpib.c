@@ -594,13 +594,13 @@ unsigned int ni_usb_update_status( gpib_board_t *board, unsigned int clear_mask 
 	ni_usb_parse_status_block(buffer, &status);
 	kfree(buffer);
 	board->status &= ~clear_mask;
-	board->status &= ni_usb_ibsta_mask;
+	board->status &= ~ni_usb_ibsta_mask;
 	board->status |= status.ibsta & ni_usb_ibsta_mask;	
 	if(status.ibsta & ~ni_usb_ibsta_mask)
 	{
 		printk("%s: debug: ibsta from status block is 0x%x\n", __FILE__, status.ibsta);
 	}
-	return 0;
+	return board->status;
 }
 //FIXME: prototype should return int
 void ni_usb_primary_address(gpib_board_t *board, unsigned int address)
@@ -777,6 +777,11 @@ int ni_usb_init(gpib_board_t *board)
 	int i = 0, j;
 	struct ni_usb_status_block status;
 	
+/*
+on startup,
+windows driver writes: 08 04 03 08 03 09 03 0a 03 0b 00 00 04 00 00 00
+then reads back: 34 01 0a c3 34 e2 0a c3 35 01 00 00 04 00 00 00
+*/
 	usb_dev = interface_to_usbdev(ni_priv->bus_interface);
 	out_pipe = usb_sndbulkpipe(usb_dev, NIUSB_BULK_OUT_ENDPOINT);
 	out_data_length = 0x100;
@@ -821,6 +826,7 @@ int ni_usb_init(gpib_board_t *board)
 	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, nec7210_to_tnt4882_offset(AUXMR), AUX_CPPF);		
 	while(i % 4)
 		out_data[i++] = 0x0;
+#if 0
 	out_data[i++] = NIUSB_UNKNOWN3_ID;
 	out_data[i++] = 0x1; // don't know what this means
 	out_data[i++] = 0x0;
@@ -836,6 +842,7 @@ int ni_usb_init(gpib_board_t *board)
 	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_UNKNOWN2, 0x7, 0xfb);
 	while(i % 4)
 		out_data[i++] = 0x0;
+#endif
 	i += ni_usb_bulk_termination(&out_data[i]);
 	retval = usb_bulk_msg(usb_dev, out_pipe, out_data, i, &bytes_written, HZ /*FIXME set timeout properly */);
 printk("out_data:\n");
@@ -859,7 +866,7 @@ printk("\n");
 	}
 	in_pipe = usb_rcvbulkpipe(usb_dev, NIUSB_BULK_IN_ENDPOINT);
 	retval = usb_bulk_msg(usb_dev, in_pipe, in_data, in_data_length, &bytes_read, HZ /*FIXME set timeout properly */);
-	if(retval || bytes_read != 0x20)
+	if(retval || bytes_read != 0x10)
 	{
 		printk("%s: %s: usb_bulk_msg returned %i, bytes_read=%i\n", __FILE__, __FUNCTION__, retval, bytes_read);		
 		kfree(in_data);
