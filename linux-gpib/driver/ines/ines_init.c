@@ -246,8 +246,8 @@ void ines_online( ines_private_t *ines_priv, const gpib_board_t *board, int use_
 	write_byte( nec_priv, ICR | 8, AUXMR );
 
 	write_byte( nec_priv, INES_AUX_XMODE, AUXMR );
-	write_byte( nec_priv, INES_AUX_CLR_IN_FIFO );
-	write_byte( nec_priv, INES_AUX_CLR_OUT_FIFO );
+	write_byte( nec_priv, INES_AUX_CLR_IN_FIFO, AUXMR );
+	write_byte( nec_priv, INES_AUX_CLR_OUT_FIFO, AUXMR );
 	write_byte( nec_priv, INES_AUXD | 0, AUXMR );
 	outb( IFC_ACTIVE_BIT | FIFO_ERROR_BIT, nec_priv->iobase + IMR3 );
 	outb( 0, nec_priv->iobase + XDMA_CONTROL );
