@@ -2318,8 +2318,10 @@ volatile int ibsta;
 	</title>
 	<para>
 	ibrpp() causes the interface board to perform a parallel poll, and stores
-	the resulting byte in the
-	location specified by <parameter>ppoll_result</parameter>.  The devices
+	the resulting parallel poll byte in the
+	location specified by <parameter>ppoll_result</parameter>.  Bits 0 to 7
+	of the parallel poll byte correspond to the dio lines 1 to 8, with
+	a 1 indicating the corresponding dio line is asserted.  The devices
 	on the bus you wish to poll should be configured beforehand with
 	<link LINKEND="reference-function-ibppc">ibppc()</link>.  The board
 	which performs the parallel poll must be controller-in-charge, and
@@ -2944,7 +2946,7 @@ volatile int ibsta;
 </refmeta>
 <refnamediv>
 	<refname>AllSPoll</refname>
-	<refpurpose>Serial poll multiple devices</refpurpose>
+	<refpurpose>serial poll multiple devices</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
@@ -2990,7 +2992,7 @@ volatile int ibsta;
 </refmeta>
 <refnamediv>
 	<refname>DevClear</refname>
-	<refpurpose>Clear a device</refpurpose>
+	<refpurpose>clear a device</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
@@ -3022,7 +3024,7 @@ volatile int ibsta;
 </refmeta>
 <refnamediv>
 	<refname>DevClearList</refname>
-	<refpurpose>Clear multiple devices</refpurpose>
+	<refpurpose>clear multiple devices</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
@@ -3057,7 +3059,7 @@ volatile int ibsta;
 </refmeta>
 <refnamediv>
 	<refname>EnableLocal</refname>
-	<refpurpose>Put devices into local mode.</refpurpose>
+	<refpurpose>put devices into local mode.</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
@@ -3096,7 +3098,7 @@ volatile int ibsta;
 </refmeta>
 <refnamediv>
 	<refname>EnableRemote</refname>
-	<refpurpose>Put devices into remote mode.</refpurpose>
+	<refpurpose>put devices into remote mode.</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
@@ -3128,7 +3130,7 @@ volatile int ibsta;
 </refmeta>
 <refnamediv>
 	<refname>FindLstn</refname>
-	<refpurpose>Find devices</refpurpose>
+	<refpurpose>find devices</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
@@ -3172,7 +3174,7 @@ volatile int ibsta;
 </refmeta>
 <refnamediv>
 	<refname>FindRQS</refname>
-	<refpurpose>Find device requesting service and read its status byte</refpurpose>
+	<refpurpose>find device requesting service and read its status byte</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
@@ -3209,7 +3211,7 @@ volatile int ibsta;
 </refmeta>
 <refnamediv>
 	<refname>PassControl</refname>
-	<refpurpose>Make device controller-in-charge</refpurpose>
+	<refpurpose>make device controller-in-charge</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
@@ -3231,6 +3233,113 @@ volatile int ibsta;
 	On success, the device becomes the new controller-in-charge.
 	</para>
 </refsect1>
+
+</refentry>
+<refentry ID="reference-function-ppoll">
+<refmeta>
+	<refentrytitle>PPoll</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>PPoll</refname>
+	<refpurpose>parallel poll devices</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>PPoll</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>short *<parameter>result</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	PPoll() is similar to the 'traditional' API function
+	<link LINKEND="reference-function-ibrpp">ibrpp()</link>.
+	It causes the interface board to perform a parallel poll, and stores
+	the parallel poll byte in the
+	location specified by <parameter>result</parameter>.  Bits 0 to 7
+	of the parallel poll byte correspond to the dio lines 1 to 8, with
+	a 1 indicating the corresponding dio line is asserted.  The devices
+	on the bus you wish to poll should be configured beforehand with
+	<link LINKEND="reference-function-ppollconfig">PPollConfig()</link>.
+	The board must be controller-in-charge to perform a parallel poll.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-ppollconfig">
+<refmeta>
+	<refentrytitle>PPollConfig</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>PPollConfig</refname>
+	<refpurpose>configure a device's parallel poll response</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>PPollConfig</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>Addr4882_t <parameter>address</parameter></paramdef>
+		<paramdef>int <parameter>dio_line</parameter></paramdef>
+		<paramdef>int <parameter>line_sense</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	PPollConfig() configures the device specified by <parameter>address</parameter>
+	to respond to parallel polls.
+	The <parameter>dio_line</parameter> (valid values are 1 through 8)
+	specifies which dio line the device being configured should use to send
+	back its parallel poll response.  The <parameter>line_sense</parameter> argument
+	specifies the polarity of the response.  If <parameter>line_sense</parameter>
+	is nonzero, then the specified dio line will be asserted to indicate
+	that the 'individual status bit' (or 'ist') is 1.  If <parameter>sense</parameter>
+	is zero, then the specified dio line will be asserted when ist is zero.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-ppollunconfig">
+<refmeta>
+	<refentrytitle>PPollUnconfig</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>PPollUnconfig</refname>
+	<refpurpose>disable a device's parallel poll response</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>PPollUnconfig</function></funcdef>
+		<paramdef>int <parameter>board_desc</parameter></paramdef>
+		<paramdef>Addr4882_t <parameter>addressList[]</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	PPollUnconfig() configures the devices specified by <parameter>addressList</parameter>
+	to ignore parallel polls.
+	</para>
+</refsect1>
 </refentry>
 
 <refentry ID="reference-function-readstatusbyte">
@@ -3240,7 +3349,7 @@ volatile int ibsta;
 </refmeta>
 <refnamediv>
 	<refname>ReadStatusByte</refname>
-	<refpurpose>Serial poll a device</refpurpose>
+	<refpurpose>serial poll a device</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
@@ -3416,7 +3525,7 @@ addressList[ 4 ] = NOADDR;
 </refmeta>
 <refnamediv>
 	<refname>MLA</refname>
-	<refpurpose>Generate 'my listen address' command byte</refpurpose>
+	<refpurpose>generate 'my listen address' command byte</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
@@ -3455,7 +3564,7 @@ addressList[ 4 ] = NOADDR;
 </refmeta>
 <refnamediv>
 	<refname>MSA</refname>
-	<refpurpose>Generate 'my secondary address' command byte</refpurpose>
+	<refpurpose>generate 'my secondary address' command byte</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
@@ -3496,7 +3605,7 @@ addressList[ 4 ] = NOADDR;
 </refmeta>
 <refnamediv>
 	<refname>MTA</refname>
-	<refpurpose>Generate 'my talk address' command byte</refpurpose>
+	<refpurpose>generate 'my talk address' command byte</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
@@ -3535,7 +3644,7 @@ addressList[ 4 ] = NOADDR;
 </refmeta>
 <refnamediv>
 	<refname>PPE_byte</refname>
-	<refpurpose>Generate 'parallel poll enable' command byte</refpurpose>
+	<refpurpose>generate 'parallel poll enable' command byte</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
@@ -3581,7 +3690,7 @@ addressList[ 4 ] = NOADDR;
 </refmeta>
 <refnamediv>
 	<refname>ThreadIbcnt and ThreadIbcntl</refname>
-	<refpurpose>Thread-specific ibcnt and ibcntl values</refpurpose>
+	<refpurpose>thread-specific ibcnt and ibcntl values</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
@@ -3625,7 +3734,7 @@ addressList[ 4 ] = NOADDR;
 </refmeta>
 <refnamediv>
 	<refname>ThreadIberr</refname>
-	<refpurpose>Thread-specific iberr value</refpurpose>
+	<refpurpose>thread-specific iberr value</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
@@ -3664,7 +3773,7 @@ addressList[ 4 ] = NOADDR;
 </refmeta>
 <refnamediv>
 	<refname>ThreadIbsta</refname>
-	<refpurpose>Thread-specific ibsta value</refpurpose>
+	<refpurpose>thread-specific ibsta value</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
