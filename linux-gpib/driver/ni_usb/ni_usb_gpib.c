@@ -1246,8 +1246,6 @@ void ni_usb_return_to_local( gpib_board_t *board )
 }
 int ni_usb_line_status( const gpib_board_t *board )
 {
-	struct usb_device *usb_dev;
-	unsigned int out_pipe, in_pipe;	
 	int retval;
 	ni_usb_private_t *ni_priv = board->private_data;
 	uint8_t *out_data, *in_data;
@@ -1258,23 +1256,11 @@ int ni_usb_line_status( const gpib_board_t *board )
 	int line_status = ValidALL;
 	// NI windows driver reads 0xd(HSSEL), 0xc (ARD0), 0x1f (BSR)
 	
-	/* this is to prevent possible blocking when this function is called by 
-		general_ibstatus */
-	retval = down_trylock(&ni_priv->bulk_transfer_lock);
-	if(retval) return -EBUSY;
-	if(ni_priv->bus_interface == NULL)
-	{
-		up(&ni_priv->bulk_transfer_lock);
-		return -ENODEV;
-	}
-	usb_dev = interface_to_usbdev(ni_priv->bus_interface);
-	out_pipe = usb_sndbulkpipe(usb_dev, NIUSB_BULK_OUT_ENDPOINT);
 	out_data_length = 0x20;
 	out_data = kmalloc(out_data_length, GFP_KERNEL);
 	if(out_data == NULL)
 	{	
 		printk("%s: kmalloc failed\n", __FILE__);
-		up(&ni_priv->bulk_transfer_lock);
 		return -ENOMEM;
 	}
 	i += ni_usb_bulk_register_read_header(&out_data[i], 1);
@@ -1282,12 +1268,11 @@ int ni_usb_line_status( const gpib_board_t *board )
 	while(i % 4)
 		out_data[i++] = 0x0;
 	i += ni_usb_bulk_termination(&out_data[i]);
-	retval = usb_bulk_msg(usb_dev, out_pipe, out_data, i, &bytes_written, HZ );
+	retval = ni_usb_send_bulk_msg(ni_priv, out_data, i, &bytes_written, HZ);
 	kfree(out_data);
 	if(retval || bytes_written != i)
 	{
 		printk("%s: ni_usb_send_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, bytes_written, i);		
-		up(&ni_priv->bulk_transfer_lock);
 		return retval;
 	}
 	in_data_length = 0x20;
@@ -1295,12 +1280,9 @@ int ni_usb_line_status( const gpib_board_t *board )
 	if(in_data == NULL)
 	{
 		printk("%s: kmalloc failed\n", __FILE__);
-		up(&ni_priv->bulk_transfer_lock);
 		return -ENOMEM;
 	}
-	in_pipe = usb_rcvbulkpipe(usb_dev, NIUSB_BULK_IN_ENDPOINT);
-	retval = usb_bulk_msg(usb_dev, in_pipe, in_data, in_data_length, &bytes_read, HZ);
-	up(&ni_priv->bulk_transfer_lock);
+	retval = ni_usb_receive_bulk_msg(ni_priv, in_data, in_data_length, &bytes_read, HZ);
 	if(retval)
 	{
 		printk("%s: %s: ni_usb_receive_bulk_msg returned %i, bytes_read=%i\n", __FILE__, __FUNCTION__, retval, bytes_read);		
