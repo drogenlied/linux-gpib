@@ -50,7 +50,7 @@ int iblines( int ud, short *line_status )
 	ibConf_t *conf;
 	int retval;
 
-	conf = enter_library( ud );
+	conf = general_enter_library( ud, 1, 1 );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 
