@@ -426,9 +426,13 @@ Default is <option>--sre</option>.</para>
 <title>
 	Supported Hardware
 </title>
+<section ID="hardware-matrix">
+<title>
+	Supported Hardware Matrix
+</title>
 <para>
 	<table COLSEP="1" ROWSEP="1" ORIENT="port" PGWIDE="1">
-	<title>Supported GPIB interface boards</title>
+	<title>Linux-GPIB Supported Hardware Matrix</title>
 	<tgroup COLS="4" ALIGN="left" >
 	<thead>
 	<row>
@@ -441,9 +445,15 @@ Default is <option>--sre</option>.</para>
 	<tbody>
 	<row>
 	<entry>Agilent</entry>
-	<entry>82357A</entry>
+	<entry>	<link LINKEND="agilent-82357a">82357A</link></entry>
 	<entry>agilent_82357a.ko</entry>
 	<entry>agilent_82357a</entry>
+	</row>
+	<row>
+	<entry>Agilent</entry>
+	<entry>82350B</entry>
+	<entry>agilent_82350b.ko</entry>
+	<entry>agilent_82350b</entry>
 	</row>
 	<row>
 	<entry>Capital Equipment Corporation</entry>
@@ -634,6 +644,34 @@ Default is <option>--sre</option>.</para>
 	</tbody>
 	</table>
 </para>
+</section>
+<section ID="board-specific-notes">
+<title>Board-Specific Notes</title>
+<section ID="agilent-82357a">
+<title>Agilent 82357A</title>
+<para>
+The Agilent 82357A has a few limitations due to its firmware code:
+<itemizedlist>
+<listitem>
+<para>
+It cannot be run as a device, it must be the system controller.
+</para>
+</listitem>
+<listitem>
+<para>
+It cannot be assigned a seconday address.
+</para>
+</listitem>
+<listitem>
+<para>
+It cannot do 7 bit compares when looking for the end-of-string character (it always
+compares all 8 bits).
+</para>
+</listitem>
+</itemizedList>
+</para>
+</section>
+</section>
 </section>
 
 <section ID="reference">
