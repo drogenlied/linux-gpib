@@ -626,7 +626,7 @@ void ni_usb_primary_address(gpib_board_t *board, unsigned int address)
 	}
 	i += ni_usb_bulk_register_write_header(&out_data[i], 2);
 	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, nec7210_to_tnt4882_offset(ADR), address);
-	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_UNKNOWN, 0x0, address);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_UNKNOWN2, 0x0, address);
 	while(i % 4)
 		out_data[i++] = 0x0;
 	i += ni_usb_bulk_termination(&out_data[i]);
@@ -685,16 +685,16 @@ void ni_usb_secondary_address(gpib_board_t *board, unsigned int address, int ena
 	if(enable)
 	{
 		adr_bits |= address;
-		admr_bits |= HR_ADM0;
+		admr_bits |= HR_ADM1;
 	}else
 	{
 		adr_bits |= HR_DT | HR_DL;
-		admr_bits |= HR_ADM1;
+		admr_bits |= HR_ADM0;
 	}
 	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, nec7210_to_tnt4882_offset(ADR), adr_bits);
 
 	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, nec7210_to_tnt4882_offset(ADMR), admr_bits);
-	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_UNKNOWN, 0x1, MSA(address));
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_UNKNOWN2, 0x1, enable ? MSA(address) : 0x0);
 	while(i % 4)
 		out_data[i++] = 0x0;
 	i += ni_usb_bulk_termination(&out_data[i]);
@@ -765,6 +765,112 @@ int ni_usb_allocate_private(gpib_board_t *board)
 	return 0;
 }
 
+int ni_usb_init(gpib_board_t *board)
+{
+	int retval;
+	ni_usb_private_t *ni_priv = board->private_data;
+	struct usb_device *usb_dev;
+	int out_pipe, in_pipe;
+	uint8_t *out_data, *in_data;
+	int out_data_length, in_data_length;
+	int bytes_written, bytes_read;
+	int i = 0, j;
+	struct ni_usb_status_block status;
+	
+	usb_dev = interface_to_usbdev(ni_priv->bus_interface);
+	out_pipe = usb_sndbulkpipe(usb_dev, NIUSB_BULK_OUT_ENDPOINT);
+	out_data_length = 0x100;
+	out_data = kmalloc(out_data_length, GFP_KERNEL);
+	if(out_data == NULL)
+	{	
+		printk("%s: kmalloc failed\n", __FILE__);
+		return -ENOMEM;
+	}
+	i += ni_usb_bulk_register_write_header(&out_data[i], 26);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_UNKNOWN3, 0x10, 0x0);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, CMDR, SOFT_RESET);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, nec7210_to_tnt4882_offset(AUXMR), AUX_7210);
+	// don't know why NI writes 0x99 to the SPMR
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, nec7210_to_tnt4882_offset(SPMR), 0x99);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, HSSEL, TNT_ONE_CHIP_BIT);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, nec7210_to_tnt4882_offset(AUXMR), AUX_CR);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, IMR0, TNT_IMR0_ALWAYS_BITS);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, nec7210_to_tnt4882_offset(IMR1), 0x0);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, nec7210_to_tnt4882_offset(IMR2), 0x0);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, IMR3, 0x0);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, nec7210_to_tnt4882_offset(AUXMR), AUX_HLDI);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, nec7210_to_tnt4882_offset(AUXMR), AUXRI | SISB | USTD);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, nec7210_to_tnt4882_offset(AUXMR), AUXRB | HR_TRI);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, KEYREG, 0x0);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, nec7210_to_tnt4882_offset(AUXMR), AUXRG | NTNL_BIT);
+	// request system control
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, CMDR, SETSC);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, nec7210_to_tnt4882_offset(AUXMR), AUX_CIFC);
+	// primary address 0
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, nec7210_to_tnt4882_offset(ADR), 0x0);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_UNKNOWN2, 0x0, 0x0);
+	// secondary address disabled
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, nec7210_to_tnt4882_offset(ADR), HR_ARS | HR_DT | HR_DL);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, nec7210_to_tnt4882_offset(ADMR), HR_TRM0 | HR_TRM1 | HR_ADM0);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_UNKNOWN2, 0x1, 0x0);
+	// is this a timeout?
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_UNKNOWN2, 0x2, 0xfd);
+	// what is this?  There is no documented tnt4882 register at offset 0xf
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, 0xf, 0x11);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, nec7210_to_tnt4882_offset(AUXMR), AUX_PON);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, nec7210_to_tnt4882_offset(AUXMR), AUX_CPPF);		
+	while(i % 4)
+		out_data[i++] = 0x0;
+	out_data[i++] = NIUSB_UNKNOWN3_ID;
+	out_data[i++] = 0x1; // don't know what this means
+	out_data[i++] = 0x0;
+	out_data[i++] = 0x0;
+	i += ni_usb_bulk_register_write_header(&out_data[i], 1);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_UNKNOWN2, 0x3, 0x1);
+	while(i % 4)
+		out_data[i++] = 0x0;
+		i += ni_usb_bulk_register_write_header(&out_data[i], 4);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_UNKNOWN2, 0x4, 0x1);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_UNKNOWN2, 0x5, 0x1);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_UNKNOWN2, 0x6, 0x0);
+	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_UNKNOWN2, 0x7, 0xfb);
+	while(i % 4)
+		out_data[i++] = 0x0;
+	i += ni_usb_bulk_termination(&out_data[i]);
+	retval = usb_bulk_msg(usb_dev, out_pipe, out_data, i, &bytes_written, HZ /*FIXME set timeout properly */);
+printk("out_data:\n");
+for(j=0;j<i;j++)	
+{
+	printk("%.2x ", (int)out_data[j]);
+}
+printk("\n");
+	kfree(out_data);
+	if(retval || bytes_written != i)
+	{
+		printk("%s: usb_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, bytes_written, i);		
+		return retval;
+	}
+	in_data_length = 0x30;
+	in_data = kmalloc(in_data_length, GFP_KERNEL);
+	if(in_data == NULL)
+	{
+		printk("%s: kmalloc failed\n", __FILE__);
+		return -ENOMEM;
+	}
+	in_pipe = usb_rcvbulkpipe(usb_dev, NIUSB_BULK_IN_ENDPOINT);
+	retval = usb_bulk_msg(usb_dev, in_pipe, in_data, in_data_length, &bytes_read, HZ /*FIXME set timeout properly */);
+	if(retval || bytes_read != 0x20)
+	{
+		printk("%s: %s: usb_bulk_msg returned %i, bytes_read=%i\n", __FILE__, __FUNCTION__, retval, bytes_read);		
+		kfree(in_data);
+		return retval;
+	}
+	ni_usb_parse_status_block(in_data, &status);
+	kfree(in_data);
+	//FIXME update ibsta using status info
+	return 0;
+}
+
 int ni_usb_attach(gpib_board_t *board)
 {
 	int retval;
@@ -789,8 +895,8 @@ int ni_usb_attach(gpib_board_t *board)
 		printk("no NI usb-b gpib adapters found\n");
 		return -1;
 	}
-	
-	return 0;
+
+	return ni_usb_init(board);
 }
 
 void ni_usb_detach(gpib_board_t *board)
