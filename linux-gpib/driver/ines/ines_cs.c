@@ -68,14 +68,14 @@ static u_long irq_mask = 0xdeb8;
 
 
 static int get_tuple(int fn, client_handle_t handle, tuple_t *tuple,
-		     cisparse_t *parse)
+	cisparse_t *parse)
 {
-    int i;
-    i = CardServices(fn, handle, tuple);
-    if (i != CS_SUCCESS) return i;
-    i = CardServices(GetTupleData, handle, tuple);
-    if (i != CS_SUCCESS) return i;
-    return CardServices(ParseTuple, handle, tuple, parse);
+	int i;
+	i = CardServices(fn, handle, tuple);
+	if (i != CS_SUCCESS) return i;
+	i = CardServices(GetTupleData, handle, tuple);
+	if (i != CS_SUCCESS) return i;
+	return CardServices(ParseTuple, handle, tuple, parse);
 }
 
 #define first_tuple(a, b, c) get_tuple(GetFirstTuple, a, b, c)
@@ -149,7 +149,7 @@ static dev_link_t *dev_list = NULL;
    structure.  We allocate them in the card's private data structure,
    because they generally can't be allocated dynamically.
 */
-   
+
 typedef struct local_info_t {
     dev_node_t	node;
     u_short manfid;
@@ -173,72 +173,72 @@ static void cs_error(client_handle_t handle, int func, int ret)
     The dev_link structure is initialized, but we don't actually
     configure the card at this point -- we wait until we receive a
     card insertion event.
-    
+
 ======================================================================*/
 
 static dev_link_t *gpib_attach(void)
 {
-    client_reg_t client_reg;
-    dev_link_t *link;
-    local_info_t *local;
-    int ret;
-    
+	client_reg_t client_reg;
+	dev_link_t *link;
+	local_info_t *local;
+	int ret;
+
 #ifdef PCMCIA_DEBUG
-    if (pc_debug)
-	printk(KERN_DEBUG "gpib_attach()\n");
+	if (pc_debug)
+		printk(KERN_DEBUG "gpib_attach()\n");
 #endif
 
-    /* Initialize the dev_link_t structure */
-    link = kmalloc(sizeof(struct dev_link_t), GFP_KERNEL);
-    memset(link, 0, sizeof(struct dev_link_t));
-    link->release.function = &gpib_release;
-    link->release.data = (u_long)link;
+	/* Initialize the dev_link_t structure */
+	link = kmalloc(sizeof(struct dev_link_t), GFP_KERNEL);
+	memset(link, 0, sizeof(struct dev_link_t));
+	link->release.function = &gpib_release;
+	link->release.data = (u_long)link;
 
-    /* The io structure describes IO port mapping */
-    link->io.NumPorts1 =32;
-    link->io.Attributes1 = IO_DATA_PATH_WIDTH_8;
-    link->io.NumPorts2 = 0;
-    link->io.Attributes2 =0;
-    link->io.IOAddrLines = 10;
+	/* The io structure describes IO port mapping */
+	link->io.NumPorts1 =32;
+	link->io.Attributes1 = IO_DATA_PATH_WIDTH_8;
+	link->io.NumPorts2 = 0;
+	link->io.Attributes2 =0;
+	link->io.IOAddrLines = 10;	// XXX 5 lines?
 
-    /* Interrupt setup */
-    link->irq.Attributes = IRQ_TYPE_EXCLUSIVE;
-    link->irq.IRQInfo1 = IRQ_INFO2_VALID|IRQ_LEVEL_ID;
-    link->irq.IRQInfo2 = irq_mask;
-    link->irq.Handler = NULL;
-    
-    /* General socket configuration */
-    link->conf.Attributes = CONF_ENABLE_IRQ;
-    link->conf.Vcc = 50;
-    link->conf.IntType = INT_MEMORY_AND_IO;
-    link->conf.ConfigIndex = 1;
-    link->conf.Present = PRESENT_OPTION;
+	/* Interrupt setup */
+	link->irq.Attributes = IRQ_TYPE_EXCLUSIVE;
+	link->irq.IRQInfo1 = IRQ_INFO2_VALID|IRQ_LEVEL_ID;
+	link->irq.IRQInfo2 = irq_mask;
+	link->irq.Handler = NULL;
 
-    /* Allocate space for private device-specific data */
-    local = kmalloc(sizeof(local_info_t), GFP_KERNEL);
-    memset(local, 0, sizeof(local_info_t));
-    link->priv = local;
-    
-    /* Register with Card Services */
-    link->next = dev_list;
-    dev_list = link;
-    client_reg.dev_info = &dev_info;
-    client_reg.Attributes = INFO_IO_CLIENT | INFO_CARD_SHARE;
-    client_reg.EventMask =
+	/* General socket configuration */
+	link->conf.Attributes = CONF_ENABLE_IRQ;
+	link->conf.Vcc = 50;
+	link->conf.IntType = INT_MEMORY_AND_IO;
+	link->conf.ConfigIndex = 1;
+	link->conf.Present = PRESENT_OPTION;
+
+	/* Allocate space for private device-specific data */
+	local = kmalloc(sizeof(local_info_t), GFP_KERNEL);
+	memset(local, 0, sizeof(local_info_t));
+	link->priv = local;
+
+	/* Register with Card Services */
+	link->next = dev_list;
+	dev_list = link;
+	client_reg.dev_info = &dev_info;
+	client_reg.Attributes = INFO_IO_CLIENT | INFO_CARD_SHARE;
+	client_reg.EventMask =
 	CS_EVENT_CARD_INSERTION | CS_EVENT_CARD_REMOVAL |
 	CS_EVENT_RESET_PHYSICAL | CS_EVENT_CARD_RESET |
 	CS_EVENT_PM_SUSPEND | CS_EVENT_PM_RESUME;
-    client_reg.event_handler = &gpib_event;
-    client_reg.Version = 0x0210;
-    client_reg.event_callback_args.client_data = link;
-    ret = CardServices(RegisterClient, &link->handle, &client_reg);
-    if (ret != CS_SUCCESS) { 
-	cs_error(link->handle, RegisterClient, ret);
-	gpib_detach(link);
-	return NULL;
-    }
+	client_reg.event_handler = &gpib_event;
+	client_reg.Version = 0x0210;
+	client_reg.event_callback_args.client_data = link;
+	ret = CardServices(RegisterClient, &link->handle, &client_reg);
+	if (ret != CS_SUCCESS) {
+		cs_error(link->handle, RegisterClient, ret);
+		gpib_detach(link);
+		return NULL;
+	}
 
-    return link;
+	return link;
 } /* gpib_attach */
 
 /*======================================================================
@@ -252,43 +252,42 @@ static dev_link_t *gpib_attach(void)
 
 static void gpib_detach(dev_link_t *link)
 {
-    dev_link_t **linkp;
+	dev_link_t **linkp;
 
 #ifdef PCMCIA_DEBUG
-    if (pc_debug)
-	printk(KERN_DEBUG "gpib_detach(0x%p)\n", link);
+	if (pc_debug)
+		printk(KERN_DEBUG "gpib_detach(0x%p)\n", link);
 #endif
-    
-    /* Locate device structure */
-    for (linkp = &dev_list; *linkp; linkp = &(*linkp)->next)
+
+	/* Locate device structure */
+	for (linkp = &dev_list; *linkp; linkp = &(*linkp)->next)
 	if (*linkp == link) break;
-    if (*linkp == NULL)
-	return;
+	if (*linkp == NULL) return;
 
-    /*
-       If the device is currently configured and active, we won't
-       actually delete it yet.  Instead, it is marked so that when
-       the release() function is called, that will trigger a proper
-       detach().
-    */
-    if (link->state & DEV_CONFIG) {
+	/*
+		If the device is currently configured and active, we won't
+		actually delete it yet.  Instead, it is marked so that when
+		the release() function is called, that will trigger a proper
+		detach().
+	*/
+	if (link->state & DEV_CONFIG) {
 #ifdef PCMCIA_DEBUG
-	printk(KERN_DEBUG "ines_cs: detach postponed, '%s' "
-	       "still locked\n", link->dev->dev_name);
+		printk(KERN_DEBUG "ines_cs: detach postponed, '%s' "
+			"still locked\n", link->dev->dev_name);
 #endif
-	link->state |= DEV_STALE_LINK;
-	return;
-    }
+		link->state |= DEV_STALE_LINK;
+		return;
+	}
 
     /* Break the link with Card Services */
-    if (link->handle)
-	CardServices(DeregisterClient, link->handle);
+	if (link->handle)
+		CardServices(DeregisterClient, link->handle);
 
-    /* Unlink device structure, free pieces */
-    *linkp = link->next;
-    if (link->priv) {
-	kfree(link->priv);
-    }
+	/* Unlink device structure, free pieces */
+	*linkp = link->next;
+	if (link->priv) {
+		kfree(link->priv);
+	}
 
 } /* gpib_detach */
 
@@ -302,162 +301,160 @@ static void gpib_detach(dev_link_t *link)
 /*@*/
 static void gpib_config(dev_link_t *link)
 {
-    client_handle_t handle;
-    tuple_t tuple;
-    cisparse_t parse;
-    local_info_t *dev;
-    int i;
-    u_char buf[64];
-    win_req_t req;
-    memreq_t mem;
-    handle = link->handle;
-    dev = link->priv;
+	client_handle_t handle;
+	tuple_t tuple;
+	cisparse_t parse;
+	local_info_t *dev;
+	int i;
+	u_char buf[64];
+	win_req_t req;
+	memreq_t mem;
+	handle = link->handle;
+	dev = link->priv;
 
 #ifdef PCMCIA_DEBUG
-    if (pc_debug)
-	printk(KERN_DEBUG "gpib_config(0x%p)\n", link);
+	if (pc_debug)
+		printk(KERN_DEBUG "gpib_config(0x%p)\n", link);
 #endif
-
-    /*
-       This reads the card's CONFIG tuple to find its configuration
-       registers.
-    */
-    do {
-	tuple.DesiredTuple = CISTPL_CONFIG;
-	i = CardServices(GetFirstTuple, handle, &tuple);
-	if (i != CS_SUCCESS) break;
-	tuple.TupleData = buf;
-	tuple.TupleDataMax = 64;
-	tuple.TupleOffset = 0;
-	i = CardServices(GetTupleData, handle, &tuple);
-	if (i != CS_SUCCESS) break;
-	i = CardServices(ParseTuple, handle, &tuple, &parse);
-	if (i != CS_SUCCESS) break;
-	link->conf.ConfigBase = parse.config.base;
-    } while (0);
-    if (i != CS_SUCCESS) {
-	cs_error(link->handle, ParseTuple, i);
-	link->state &= ~DEV_CONFIG_PENDING;
-	return;
-    }
-
-    /* Configure card */
-    link->state |= DEV_CONFIG;
-
-    do {
-        /*
-	 * try to get manufacturer and card  ID
-	 */
-
-        tuple.DesiredTuple = CISTPL_MANFID;
-        tuple.Attributes   = TUPLE_RETURN_COMMON;
-        if( first_tuple(handle,&tuple,&parse) == CS_SUCCESS ) {
-	   dev->manfid = parse.manfid.manf;
-	   dev->cardid = parse.manfid.card;
-#ifdef PCMCIA_DEBUG
-	  printk(KERN_DEBUG "ines_cs: manufacturer: 0x%x card: 0x%x\n",
-		 dev->manfid,dev->cardid);
-#endif
-	}
-        /* try to get board information from CIS */
-
-         tuple.DesiredTuple = CISTPL_CFTABLE_ENTRY;
-         tuple.Attributes = 0;
-         if( first_tuple(handle,&tuple,&parse) == CS_SUCCESS ) {
-	    while(1) {
-	      /*if this tuple has an IRQ info, keep it for later use */
-	      if( parse.cftable_entry.irq.IRQInfo1 & IRQ_INFO2_VALID ) {
-		printk(KERN_DEBUG "ines_cs: irqmask=0x%x\n",
-		       parse.cftable_entry.irq.IRQInfo2 );
-		link->irq.IRQInfo2 = parse.cftable_entry.irq.IRQInfo2;
-	      }
-
-	      if( parse.cftable_entry.io.nwin > 0) {
-	         link->io.BasePort1 = parse.cftable_entry.io.win[0].base;
-	         link->io.NumPorts1 = 32;
-	         link->io.BasePort2 = 0;
-	         link->io.NumPorts2 = 0;
-	         i = CardServices(RequestIO, link->handle, &link->io);
-	         if (i == CS_SUCCESS) {
-		     printk( KERN_DEBUG "ines_cs: base=0x%x len=%d registered\n",
-  	               link->io.BasePort1, link->io.NumPorts1 );
-		     break;
-	         }
-	      }
-	      if ( next_tuple(handle,&tuple,&parse) != CS_SUCCESS ) break;
-
-	    }
-
-	  if (i != CS_SUCCESS) {
-	      cs_error(link->handle, RequestIO, i);
-	  }
-	 } else {
-	    printk("ines_cs: can't get card information\n");
-	 }
 
 	/*
-	   Now allocate an interrupt line.  Note that this does not
-	   actually assign a handler to the interrupt.
+		This reads the card's CONFIG tuple to find its configuration
+		registers.
 	*/
-	i = CardServices(RequestIRQ, link->handle, &link->irq);
+	do {
+		tuple.DesiredTuple = CISTPL_CONFIG;
+		i = CardServices(GetFirstTuple, handle, &tuple);
+		if (i != CS_SUCCESS) break;
+		tuple.TupleData = buf;
+		tuple.TupleDataMax = 64;
+		tuple.TupleOffset = 0;
+		i = CardServices(GetTupleData, handle, &tuple);
+		if (i != CS_SUCCESS) break;
+		i = CardServices(ParseTuple, handle, &tuple, &parse);
+		if (i != CS_SUCCESS) break;
+		link->conf.ConfigBase = parse.config.base;
+    } while (0);
 	if (i != CS_SUCCESS) {
-	    cs_error(link->handle, RequestIRQ, i);
-	    break;
+		cs_error(link->handle, ParseTuple, i);
+		link->state &= ~DEV_CONFIG_PENDING;
+		return;
 	}
-        printk(KERN_DEBUG "ines_cs: IRQ_Line=%d\n",link->irq.AssignedIRQ);
 
-	link->conf.Status = CCSR_IOIS8;
+	/* Configure card */
+	link->state |= DEV_CONFIG;
+	do {
+		/*
+		 * try to get manufacturer and card  ID
+		 */
+		tuple.DesiredTuple = CISTPL_MANFID;
+		tuple.Attributes = TUPLE_RETURN_COMMON;
+		if( first_tuple(handle,&tuple,&parse) == CS_SUCCESS ) {
+			dev->manfid = parse.manfid.manf;
+			dev->cardid = parse.manfid.card;
+#ifdef PCMCIA_DEBUG
+			printk(KERN_DEBUG "ines_cs: manufacturer: 0x%x card: 0x%x\n",
+			dev->manfid, dev->cardid);
+#endif
+		}
+		/* try to get board information from CIS */
+
+		tuple.DesiredTuple = CISTPL_CFTABLE_ENTRY;
+		tuple.Attributes = 0;
+		if( first_tuple(handle,&tuple,&parse) == CS_SUCCESS ) {
+			while(1) {
+				/*if this tuple has an IRQ info, keep it for later use */
+				if( parse.cftable_entry.irq.IRQInfo1 & IRQ_INFO2_VALID ) {
+					printk(KERN_DEBUG "ines_cs: irqmask=0x%x\n",
+					parse.cftable_entry.irq.IRQInfo2 );
+					link->irq.IRQInfo2 = parse.cftable_entry.irq.IRQInfo2;
+				}
+				if( parse.cftable_entry.io.nwin > 0) {
+					link->io.BasePort1 = parse.cftable_entry.io.win[0].base;
+					link->io.NumPorts1 = 32;
+					link->io.BasePort2 = 0;
+					link->io.NumPorts2 = 0;
+					i = CardServices(RequestIO, link->handle, &link->io);
+					if (i == CS_SUCCESS) {
+					printk( KERN_DEBUG "ines_cs: base=0x%x len=%d registered\n",
+						link->io.BasePort1, link->io.NumPorts1 );
+					break;
+					}
+				}
+				if ( next_tuple(handle,&tuple,&parse) != CS_SUCCESS ) break;
+			}
+
+			if (i != CS_SUCCESS) {
+				cs_error(link->handle, RequestIO, i);
+			}
+		} else {
+			printk("ines_cs: can't get card information\n");
+		}
+
+		/*
+		Now allocate an interrupt line.  Note that this does not
+		actually assign a handler to the interrupt.
+		*/
+		i = CardServices(RequestIRQ, link->handle, &link->irq);
+		if (i != CS_SUCCESS) {
+			cs_error(link->handle, RequestIRQ, i);
+			break;
+		}
+		printk(KERN_DEBUG "ines_cs: IRQ_Line=%d\n",link->irq.AssignedIRQ);
+
+		link->conf.Status = CCSR_IOIS8;
+
+		/*  for the ines card we have to setup the configuration registers in
+			attribute memory here
+		*/
+		req.Attributes=WIN_MEMORY_TYPE_AM | WIN_DATA_WIDTH_8 | WIN_ENABLE;
+		req.Base=0;
+		req.Size=0x1000;
+		req.AccessSpeed=2;
+		i= CardServices(RequestWindow,&handle,&req);
+		if (i != CS_SUCCESS) {
+			cs_error(link->handle, RequestWindow, i);
+			break;
+		}
+		mem.CardOffset=0;
+		mem.Page=0;
+		i= CardServices(MapMemPage,handle,&mem);
+		if (i != CS_SUCCESS) {
+			cs_error(link->handle, MapMemPage, i);
+			break;
+		}
+//		virt=ioremap(req.Base, req.Size);
+//		writeb((link->io.BasePort1>>2) & 0xff, virt+0xf0); // IOWindow base
+//		writeb(COR_LEVEL_REQ | 0x30,virt+0x100);                  // LevlIrq, 32 byte IOWindow
+//		writeb(CCSR_IOIS8,virt+0x102);                  // IOis8
+//		iounmap(virt);
+//		CardServices(ReleaseWindow,handle);
+
+	} while (0);
+
 	/*
-	   This actually configures the PCMCIA socket -- setting up
-	   the I/O windows and the interrupt mapping.
+	This actually configures the PCMCIA socket -- setting up
+	the I/O windows and the interrupt mapping.
 	*/
 	i = CardServices(RequestConfiguration, link->handle, &link->conf);
 	if (i != CS_SUCCESS) {
-	    cs_error(link->handle, RequestConfiguration, i);
-	    break;
+		cs_error(link->handle, RequestConfiguration, i);
 	}
-        /*  for the ines card we have to setup the configuration registers in
-            attribute memory here
-        */
-        req.Attributes=WIN_MEMORY_TYPE_AM | WIN_DATA_WIDTH_8 | WIN_ENABLE;
-        req.Base=0;
-        req.Size=0x1000;
-        req.AccessSpeed=2;
-        i= CardServices(RequestWindow,&handle,&req);
+
+	/* At this point, the dev_node_t structure(s) should be
+	initialized and arranged in a linked list at link->dev. */
+	sprintf(dev->node.dev_name, "ines_cs");
+	dev->node.major = 0;
+	dev->node.minor = 0;
+	link->dev = &dev->node;
+
+	link->state &= ~DEV_CONFIG_PENDING;
+	/* If any step failed, release any partially configured state */
 	if (i != CS_SUCCESS) {
-	    cs_error(link->handle, RequestWindow, i);
-	    break;
-        }
-        mem.CardOffset=0;
-        mem.Page=0;
-        i= CardServices(MapMemPage,handle,&mem);
-	if (i != CS_SUCCESS) {
-	    cs_error(link->handle, MapMemPage, i);
-	    break;
-        }
-//        virt=ioremap(req.Base, req.Size);
-//        writeb((link->io.BasePort1>>2) & 0xff, virt+0xf0); // IOWindow base
-//        writeb(COR_LEVEL_REQ | 0x30,virt+0x100);                  // LevlIrq, 32 byte IOWindow
-//        writeb(CCSR_IOIS8,virt+0x102);                  // IOis8
-//        iounmap(virt);
-        CardServices(ReleaseWindow,handle);
-    } while (0);
+		gpib_release((u_long)link);
+		return;
+	}
 
-    /* At this point, the dev_node_t structure(s) should be
-       initialized and arranged in a linked list at link->dev. */
-    sprintf(dev->node.dev_name, "ines_cs");
-    dev->node.major = 0;
-    dev->node.minor = 0;
-    link->dev = &dev->node;
-
-    link->state &= ~DEV_CONFIG_PENDING;
-    /* If any step failed, release any partially configured state */
-    if (i != 0) {
-	gpib_release((u_long)link);
-	return;
-    }
-
-    printk(KERN_DEBUG "gpib device loaded\n");
+	printk(KERN_DEBUG "gpib device loaded\n");
 } /* gpib_config */
 
 /*======================================================================
@@ -633,7 +630,6 @@ int ines_pcmcia_attach(gpib_board_t *board)
 {
 	ines_private_t *ines_priv;
 	nec7210_private_t *nec_priv;
-	int isr_flags = 0;
 	int retval;
 
 	if(dev_list == NULL)
@@ -650,7 +646,7 @@ int ines_pcmcia_attach(gpib_board_t *board)
 
 	nec_priv->iobase = dev_list->io.BasePort1;
 
-	if(request_irq(dev_list->irq.AssignedIRQ, ines_interrupt, isr_flags, "pcmcia-gpib", board))
+	if(request_irq(dev_list->irq.AssignedIRQ, ines_interrupt, 0, "pcmcia-gpib", board))
 	{
 		printk("gpib: can't request IRQ %d\n", dev_list->irq.AssignedIRQ);
 		return -1;
