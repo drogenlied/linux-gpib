@@ -1261,6 +1261,11 @@ int ni_usb_line_status( const gpib_board_t *board )
 		general_ibstatus */
 	retval = down_trylock(&ni_priv->bulk_transfer_lock);
 	if(retval) return -EBUSY;
+	if(ni_priv->bus_interface == NULL)
+	{
+		up(&ni_priv->bulk_transfer_lock);
+		return -ENODEV;
+	}
 	usb_dev = interface_to_usbdev(ni_priv->bus_interface);
 	out_pipe = usb_sndbulkpipe(usb_dev, NIUSB_BULK_OUT_ENDPOINT);
 	out_data_length = 0x20;
