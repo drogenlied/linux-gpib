@@ -28,11 +28,10 @@ extern  void ibPutErrlog(int ud,char *routine);
 extern  int ibParseConfigFile(char *filename);
 extern  int ibGetDescriptor(ibConf_t conf);
 extern  int ibFindDevIndex(char *name);
-extern ssize_t __ibcmd(ibBoard_t *board, uint8_t *buffer, size_t length);
-extern int __ibtmo(ibBoard_t *board, int timeout);
+extern ssize_t __ibcmd( const ibBoard_t *board, const ibConf_t *conf, uint8_t *buffer, size_t length);
+extern int __ibtmo( const ibBoard_t *board, int timeout);
 extern int config_parsed;
-extern int send_setup(ibBoard_t *board, int pad, int sad);
-extern ssize_t device_command(ibBoard_t *board, uint8_t *cmd, size_t length, int pad, int sad);
+extern int send_setup( const ibBoard_t *board, const ibConf_t *conf );
 extern void init_ibconf( ibConf_t *conf );
 
 #include <stdio.h>

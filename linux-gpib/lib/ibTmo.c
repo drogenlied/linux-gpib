@@ -20,7 +20,7 @@ int ibtmo(int ud,int v)
 	return ibsta;
 }
 
-int __ibtmo(ibBoard_t *board, int timeout)
+int __ibtmo( const ibBoard_t *board, int timeout)
 {
 	ioctl(board->fileno, IBTMO, timeout);
 

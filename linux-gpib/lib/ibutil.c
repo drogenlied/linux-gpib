@@ -104,16 +104,6 @@ int ibCheckDescriptor(int ud)
 	return 0;
 }
 
-ssize_t device_command(ibBoard_t *board, uint8_t *cmd, size_t count, int pad, int sad)
-{
-	if(send_setup(board, pad, sad) < 0)
-	{
-		return -1;
-	}
-
-	return __ibcmd(board, cmd, count);
-}
-
 void init_ibconf( ibConf_t *conf )
 {
 	conf->name[0] = 0;

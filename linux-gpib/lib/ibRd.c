@@ -5,10 +5,12 @@
 #include <sys/ioctl.h>
 
 // sets up bus to receive data from device with address pad/sad
-int receive_setup(ibBoard_t *board, int pad, int sad)
+int receive_setup( const ibBoard_t *board, const ibConf_t *conf )
 {
 	uint8_t cmdString[8];
 	unsigned int i = 0;
+	int pad = conf->pad;
+	int sad = conf->sad;
 
 	if( pad < 0 || pad > gpib_addr_max || sad > gpib_addr_max)
 	{
@@ -25,7 +27,7 @@ int receive_setup(ibBoard_t *board, int pad, int sad)
 	if(sad >= 0)
 		cmdString[i++] = MSA(sad);
 
-	if ( __ibcmd(board, cmdString, i) < 0)
+	if ( __ibcmd(board, conf, cmdString, i) < 0)
 	{
 		fprintf(stderr, "receive_setup: command failed\n");
 		return -1;
@@ -60,7 +62,7 @@ int ibrd(int ud, void *rd, unsigned long cnt)
 	if(conf->is_interface == 0)
 	{
 		// set up addressing
-		if(receive_setup(board, conf->pad, conf->sad) < 0)
+		if( receive_setup( board, conf) < 0 )
 		{
 			iberr = EDVR;
 			status |= ERR;

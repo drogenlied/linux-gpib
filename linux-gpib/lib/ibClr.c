@@ -17,7 +17,7 @@ int ibclr(int ud)
 
 	board = &ibBoard[conf->board];
 
-	count = device_command(board, &cmd, 1, conf->pad, conf->sad);
+	count = __ibcmd( board, conf, &cmd, 1 );
 	if(count != 1)
 	{
 		iberr = EDVR;

@@ -42,7 +42,7 @@ int ibwrt(int ud, void *rd, unsigned long cnt)
 	if(conf->is_interface == 0)
 	{
 		// set up addressing
-		if(send_setup(board, conf->pad, conf->sad) < 0)
+		if(send_setup( board, conf ) < 0)
 		{
 			iberr = EDVR;
 			status |= ERR;
