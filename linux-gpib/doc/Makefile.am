@@ -7,7 +7,7 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
-docs = html linux-gpib.pdf #man
+docs = doc_html linux-gpib.pdf #man
 
 SGML = linux-gpib.sgml gpib_version.txt
 
@@ -23,7 +23,7 @@ install-data-local:
 #	$(INSTALL) -d $(mandir)/man3
 #	$(INSTALL_DATA) man/*.3 $(mandir)/man3
 	$(INSTALL) -d $(pkgdatadir)/html
-	-$(INSTALL_DATA) html/* $(pkgdatadir)/html
+	-$(INSTALL_DATA) doc_html/* $(pkgdatadir)/html
 
 maintainer-clean-local:
 	$(RM) gpib_version.txt
@@ -32,8 +32,8 @@ maintainer-clean-local:
 linux-gpib.pdf: $(SGML)
 	$(JW_PATH) -f docbook -b pdf linux-gpib.sgml
 
-html: $(SGML)
-	{ $(JW_PATH) -f docbook -b html -o html linux-gpib.sgml && touch html; } || { $(RM) -r html; exit 1; }
+doc_html: $(SGML)
+	{ $(JW_PATH) -f docbook -b html -o doc_html linux-gpib.sgml && touch doc_html; } || { $(RM) -r doc_html; exit 1; }
 
 man: $(SGML)
 	{ $(JW_PATH) -f docbook -b man -o man linux-gpib.sgml && touch man; } || { $(RM) -r man; exit 1; }
