@@ -74,7 +74,13 @@ static const int num_pci_chips = sizeof(pci_ids) / sizeof(pci_ids[0]);
 ssize_t ines_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end)
 {
 	ines_private_t *priv = board->private_data;
-	return nec7210_read(board, &priv->nec7210_priv, buffer, length, end);
+	nec7210_private_t *nec_priv = &priv->nec7210_priv;
+	ssize_t retval;
+
+	retval = nec7210_read(board, &priv->nec7210_priv, buffer, length, end);
+	if( retval < 0 )
+		write_byte( nec_priv, INES_RFD_HLD_IMMEDIATE, AUXMR );
+	return retval;
 }
 ssize_t ines_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi)
 {
@@ -255,6 +261,7 @@ void ines_online( ines_private_t *ines_priv, const gpib_board_t *board, int use_
 	write_byte( nec_priv, INES_AUX_XMODE, AUXMR );
 	write_byte( nec_priv, INES_AUX_CLR_IN_FIFO, AUXMR );
 	write_byte( nec_priv, INES_AUX_CLR_OUT_FIFO, AUXMR );
+	write_byte( nec_priv, INES_RFD_HLD_IMMEDIATE, AUXMR );
 	write_byte( nec_priv, INES_AUXD | 0, AUXMR );
 	outb( 0, nec_priv->iobase + XDMA_CONTROL );
 	ines_priv->extend_mode_bits = 0;

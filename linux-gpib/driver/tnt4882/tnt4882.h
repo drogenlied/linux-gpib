@@ -227,8 +227,9 @@ enum bus_control_status_bits
 // Auxilliary commands
 enum
 {
-	AUX_7210 = 0x99,	// switch to 7210 mode
 	AUX_9914 = 0x15,	// switch to 9914 mode
+	AUX_HLDI = 0x51,	// rfd holdoff immediately
+	AUX_7210 = 0x99,	// switch to 7210 mode
 };
 
 #endif	// _TNT4882_H

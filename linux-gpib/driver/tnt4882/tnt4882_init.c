@@ -40,7 +40,16 @@ void ni_pci_detach(gpib_board_t *board);
 ssize_t tnt4882_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end)
 {
 	tnt4882_private_t *priv = board->private_data;
-	return nec7210_read(board, &priv->nec7210_priv, buffer, length, end);
+	nec7210_private_t *nec_priv = &priv->nec7210_priv;
+	ssize_t retval;
+
+	retval = nec7210_read(board, &priv->nec7210_priv, buffer, length, end);
+
+	if( retval < 0 )
+		// force immediate holdoff
+		write_byte( nec_priv, AUX_HLDI, AUXMR );
+
+	return retval;
 }
 ssize_t tnt4882_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi)
 {
@@ -65,7 +74,14 @@ int tnt4882_go_to_standby(gpib_board_t *board)
 void tnt4882_request_system_control( gpib_board_t *board, int request_control )
 {
 	tnt4882_private_t *priv = board->private_data;
+	unsigned long iobase = priv->nec7210_priv.iobase;
+
 	nec7210_request_system_control( board, &priv->nec7210_priv, request_control );
+	if( request_control )
+		priv->io_write( SETSC, iobase + CMDR );
+	else
+		priv->io_write( CLRSC, iobase + CMDR );
+	udelay(1);
 }
 void tnt4882_interface_clear(gpib_board_t *board, int assert)
 {
@@ -200,10 +216,8 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 	const unsigned long iobase = nec_priv->iobase;
 
 	/* NAT 4882 reset */
-	udelay(1);
 	tnt_priv->io_write( SFTRST, iobase + CMDR );	/* Turbo488 software reset */
 	udelay(1);
-	tnt_priv->io_write( SETSC, iobase + CMDR );
 
 	// turn off one-chip mode
 	tnt_priv->io_write(NODMA, iobase + HSSEL);
@@ -215,7 +229,7 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 	tnt_priv->io_write(AUX_7210, iobase +  SWAPPED_AUXCR);
 	udelay(1);
 
-	nec7210_board_reset( &tnt_priv->nec7210_priv, board );
+	nec7210_board_reset( nec_priv, board );
 	// read-clear isr0
 	tnt_priv->io_read( iobase + ISR0 );
 
@@ -228,7 +242,10 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 	// enable interrupt
 	tnt_priv->io_write(0x1, iobase + INTRT);
 
-	nec7210_board_online( &tnt_priv->nec7210_priv, board );
+	// force immediate holdoff
+	write_byte( nec_priv, AUX_HLDI, AUXMR );
+
+	nec7210_board_online( nec_priv, board );
 	// enable interface clear interrupt for event queue
 	tnt_priv->io_write( TNT_IMR0_ALWAYS_BITS | TNT_IFCIE_BIT,
 		iobase + IMR0 );
