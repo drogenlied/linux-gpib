@@ -332,10 +332,11 @@ int conf_lock_board( ibConf_t *conf )
 
 	board = interfaceBoard( conf );
 
+	assert( conf->has_lock == 0 );
+
 	retval = lock_board_mutex( board );
 	if( retval < 0 ) return retval;
 
-	assert( conf->has_lock == 0 );
 	conf->has_lock = 1;
 
 	return retval;

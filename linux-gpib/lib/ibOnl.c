@@ -69,11 +69,6 @@ int board_online( ibBoard_t *board, int online )
 				return retval;
 			}
 		}
-		if( create_autopoll_thread( board ) < 0)
-		{
-			unlock_board_mutex( board );
-			return -1;
-		}
 		retval = unlock_board_mutex( board );
 		if( retval < 0 ) return retval;
 	}else ibBoardClose( board );

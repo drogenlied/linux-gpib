@@ -182,6 +182,8 @@ int destroy_autopoll_thread( ibBoard_t *board )
 	}
 
 	retval = pthread_cancel( *board->autopoll_thread );
+	free( board->autopoll_thread );
+	board->autopoll_thread = NULL;
 
 	pthread_mutex_unlock( &board->autopoll_lock );
 
