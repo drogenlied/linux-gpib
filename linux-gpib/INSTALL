@@ -65,8 +65,12 @@ o) cd to your linux-gpib directory and run the './configure' script.
 	shared library to is listed in your /etc/ld.so.conf file,
 	so that ld can find libgpib.so.  If the directory is not listed,
 	add it and then run 'ldconfig'.
+
 	If you are using a PCMCIA board, copy the files in the etc/pcmcia
-	subdirectory to /etc/pcmcia.
+	subdirectory to /etc/pcmcia.  You may need to send a SIGHUP signal
+	to the cardmgr daemon to force it to reload the files in 
+	/etc/pcmcia (alternatively you could use your pcmcia init.d script
+	to restart the cardmgr, or you could just reboot).
 
 	To give a user access to the computer's gpib board you will have to add
 	them to the group 'gpib' (you can use the 'usermod' tool to change the
