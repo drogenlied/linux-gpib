@@ -365,7 +365,7 @@ int cb_pci_attach(gpib_board_t *board)
 		return -1;
 	}
 
-	if(pci_request_regions(cb_priv->pci_device, "pci-gpib"))
+	if(pci_request_regions(cb_priv->pci_device, "cb7210"))
 		return -1;
 
 	cb_priv->amcc_iobase = pci_resource_start( cb_priv->pci_device, 0 );
@@ -373,7 +373,7 @@ int cb_pci_attach(gpib_board_t *board)
 	cb_priv->fifo_iobase = pci_resource_start( cb_priv->pci_device, 2 );
 
 	isr_flags |= SA_SHIRQ;
-	if(request_irq(cb_priv->pci_device->irq, cb_pci_interrupt, isr_flags, "pci-gpib", board))
+	if(request_irq(cb_priv->pci_device->irq, cb_pci_interrupt, isr_flags, "cb7210", board))
 	{
 		printk( "cb7210: can't request IRQ %d\n",cb_priv->pci_device->irq );
 		return -1;
@@ -424,11 +424,12 @@ int cb_isa_attach(gpib_board_t *board)
 
 	retval = cb7210_generic_attach(board);
 	if(retval) return retval;
-
-	if( request_region(board->ibbase, cb7210_iosize, "isa-gpib") == 0 );
+	cb_priv = board->private_data;
+	nec_priv = &cb_priv->nec7210_priv;
+	if(request_region(board->ibbase, cb7210_iosize, "cb7210") == 0)
 	{
-		printk("gpib: ioports are already in use");
-		return -1;
+		printk("gpib: ioports starting at 0x%lx are already in use\n", board->ibbase);
+		return -EIO;
 	}
 	nec_priv->iobase = board->ibbase;
 	cb_priv->fifo_iobase = nec_priv->iobase;
@@ -440,10 +441,10 @@ int cb_isa_attach(gpib_board_t *board)
 	}
 
 	// install interrupt handler
-	if(request_irq(board->ibirq, cb7210_interrupt, isr_flags, "isa-gpib", board))
+	if(request_irq(board->ibirq, cb7210_interrupt, isr_flags, "cb7210", board))
 	{
 		printk("gpib: can't request IRQ %d\n", board->ibirq);
-		return -1;
+		return -EBUSY;
 	}
 	cb_priv->irq = board->ibirq;
 
