@@ -169,16 +169,6 @@ AC_OUTPUT([\
 	test/Makefile \
 	driver/Makefile \
 	driver/include/Makefile \
-	driver/cb7210/Makefile \
-	driver/cec/Makefile \
-	driver/hp82335/Makefile \
-	driver/ines/Makefile \
-	driver/nec7210/Makefile \
-	driver/pc2/Makefile \
-	driver/sys/Makefile \
-	driver/tms9914/Makefile \
-	driver/tnt4882/Makefile \
-	driver/tnt4882-tms/Makefile \
 	doc/Makefile \
 	include/Makefile \
 	language/Makefile \

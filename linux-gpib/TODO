@@ -44,3 +44,6 @@ add depmod check to configure script
 
 better error on unknown board_type
 
+the cb7210, unlike the nec7210, does not seem to drop its
+output byte on a bus error.
+
