@@ -23,7 +23,7 @@ extern int ibsta,ibcnt,iberr;
 
 char spr;
 char cmd[130];
-Char res[1024];
+char res[1024];
 
 void gpiberr(char *msga);
 

@@ -1,4 +1,8 @@
 #include <ibsys.h>
+#include <linux/version.h>
+#include <linux/module.h>
+
+MODULE_LICENSE("GPL");
 
 /* default debugging level */
 
@@ -207,7 +211,6 @@ int ibmajor = IBMAJOR;   /* major number for dynamic configuration */
 
 int init_module(void)
 {
-        extern char kernel_version[];
 
 #if DEBUG
 	if(dbgMask != 0 )
@@ -248,7 +251,7 @@ int init_module(void)
 #if DEBUG
 	printk("-- DebugMask = 0x%x\n",dbgMask);
 #endif
-	printk("-- Kernel Release %s\n",kernel_version);
+	printk("-- Kernel Release %s\n", UTS_RELEASE);
 
   	DBGin("ibinstall");
 	
