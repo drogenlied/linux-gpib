@@ -54,6 +54,7 @@ typedef struct
 	uint8_t eos_char;
 	unsigned short eos_mode;
 	unsigned int monitored_ibsta_bits;
+	struct urb *bulk_urb;
 	struct urb *interrupt_urb;
 	uint8_t interrupt_buffer[0x11];
 	struct semaphore bulk_transfer_lock;
