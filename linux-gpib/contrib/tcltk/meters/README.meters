@@ -1,0 +1,83 @@
+		     The VUW Meters Tk Widget Set
+		     ----------------------------
+
+1. Introduction
+
+  At the Computer Science department at Victoria University of
+Wellington, our work in management of distributed systems requires
+various graphical displays to allow easy comprehension and comparison
+of empirical data.
+
+  Especially because we wish the explore various approaches in data
+display, the flexibility of Tcl and Tk appeared very useful.
+Accordingly, we have developed widget types within the Tcl and Tk
+model specifically for display of empirical data.
+
+Some examples of these are in this package. They are:
+
+  BarGraph - Shows a filled in rectangular bar against a set scale
+      length, width, range, scale, and orientation are configurable.
+
+  Dial - shows a needle set against a scaled circular dial; radius,
+      range, scale, and dial portion are configurable.
+
+  Stripchart - shows a bar sequence of bars set against a scale,
+      indicating the recent values set; length, width, range, scale,
+      and number in the sequence are configurable. This widget is
+      similar to the `xload' stripchart. 
+
+  PieGraph - shows a circular `pie', divided into wedges, with a key,
+      label and value configuable for each wedge; radius, key style,
+      and exploded piece are configurable.
+
+Tcl is interpreted statement by statement, however, and that is a
+liability where efficient real-time monitoring of live data is
+required.  In addition to the conventional Tcl/Tk use of these
+widgets, therefore, a lower level of interaction is also provided.
+
+The VUW meter widgets, allow other functions to be specified to
+provide values to set the widget.  The widgets include operations to
+<start> and <stop> this background activity, and a configurable
+<interval> setting that determines how often it takes place.  In this
+way, we have access to the great flexibility of Tcl and Tk for widget
+arrangement and user interaction -- where the interpreted nature of
+Tcl is an advantage and presents no impact on overall performance.
+But we also have access to the low levels to efficiently update values
+very frequently so we can display in real-time live data from various
+sources in the system.
+
+
+2. Documentation
+
+Included with the distribution are man pages for each of the four
+meter widgets: tk_bargraph.3, tk_dial.3, tk_stripchart.3 and tk_pie.3.
+
+Also included is details of how to install the widgets (the INSTALL
+file), and two patch files to aid this (tk.h.patch and tkWindow.c.patch).
+
+3. Compiling.
+
+To install the Meters widgets, patch the files tk.h and tkWindow.c as
+per the corresponding patch files, then compile the meter widgets.
+Then rebuild wish including these object files.  eg:
+	patch < tk.h.patch
+	...
+	$(CC) -I. -I$(TCL_DIR) -c tkDial.c
+	...
+	$(CC) main.o libtk.a $(TCL_DIR)/libtcl.a tkDial.o tkStripchart.o \
+		tkBargraph.o tkPie.o -lX11 -lm -o wish 
+
+4. Feedback.
+
+Bug fixes, comments or any feedback to jules@comp.vuw.ac.nz
+
+5. Bugs.
+
+The widgets should be more user-active, ie should be able to move the
+needle of the dial, or select wedges of the pie.
+
+Pie should have better configuration for key, etc.
+
+Spacing problems in stipchart/bargraph, especially with negative
+values.
+
