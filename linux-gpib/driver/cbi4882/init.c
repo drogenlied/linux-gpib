@@ -15,7 +15,7 @@ uint8       CurHSMode = 0;      /* hs mode register value */
 uint8       CurIRQreg = 0;      /* hs IRQ register value */
 
 // flags to indicate if various resources have been allocated
-static unsigned int ioports_allocated = 0, irq_allocated = 0, dma_allocated = 0;
+static unsigned int ioports_allocated = 0, irq_allocated = 0, dma_allocated = 0, pcmcia_initialized = 0;
 
 // number of ioports cbi boards use (probably underestimate)
 static const int cbi_iosize = 0xa;
@@ -73,15 +73,16 @@ int board_attach(void)
 {
 	int isr_flags = 0;
 
+	// nothing is allocated yet
+	ioports_allocated = irq_allocated = dma_allocated = pcmcia_initialized = 0;
+
 #ifdef CBI_PCMCIA
 	pcmcia_init_module();
+	pcmcia_initialized = 1;
 #endif
 #if defined(CBI_PCI)
 	bd_PCIInfo();
 #endif
-	// nothing is allocated yet
-	ioports_allocated = irq_allocated = dma_allocated = 0;
-
 	// allocate ioports
 	if(check_region(ibbase, cbi_iosize) < 0)
 	{
@@ -161,9 +162,11 @@ void board_detach(void)
 		release_region(ibbase, cbi_iosize);
 		ioports_allocated = 0;
 	}
-#ifdef CBI_PCMCIA
-	pcmcia_cleanup_module();
-#endif
+	if(pcmcia_initialized)
+	{
+		pcmcia_cleanup_module();
+		pcmcia_initialized = 0;
+	}
 }
 
 

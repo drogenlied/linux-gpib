@@ -19,10 +19,6 @@ IBLCL void bdwait(unsigned int mask)
 		s2 = GPIBin(ISR2)  ;
 
    		GPIBout(IMR2, 0);   /* clear IMR2 IE bits */
-#ifdef NIPCIIa
-                /* clear interrupt logic */
-                osP8out( (0x2f0 | ibirq ),0xff );
-#endif
 		imr2mask = 0;
 		if (mask & SRQI)
 			imr2mask |= HR_SRQIE;

@@ -27,7 +27,8 @@ uint8 ibirq = IBIRQ;
 uint8 ibdma = IBDMA;
 
 // flags to indicate if various resources have been allocated
-static unsigned int ioports_allocated = 0, iomem_allocated = 0, irq_allocated = 0, dma_allocated = 0;
+static unsigned int ioports_allocated = 0, iomem_allocated = 0,
+	irq_allocated = 0, dma_allocated = 0, pcmcia_initialized = 0;
 
 // nec7210 has 8 registers
 static const int nec7210_num_registers = 8;
@@ -36,6 +37,10 @@ static const int iomem_size = 0x2000;
 
 void board_reset(void)
 {
+#ifdef MODBUS_PCI
+	GPIBout(0x20, 0xff); /* enable controller mode */
+#endif
+
 	GPIBout(AUXMR, AUX_CR);                     /* 7210 chip reset */
         /*GPIBout(INTRT, 1);*/
 
@@ -71,9 +76,11 @@ int board_attach(void)
 	int isr_flags = 0;
 
 	// nothing is allocated yet
-	ioports_allocated = irq_allocated = dma_allocated = 0;
+	ioports_allocated = iomem_allocated = irq_allocated = 
+		dma_allocated = pcmcia_initialized = 0;
 #ifdef INES_PCMCIA
-   pcmcia_init_module();
+	pcmcia_init_module();
+	pcmcia_initialized = 1;
 #endif
 #if defined(MODBUS_PCI) || defined(INES_PCI)
    bd_PCIInfo();
@@ -106,6 +113,7 @@ int board_attach(void)
 		return -1;
 	}
 	request_mem_region(ibbase, iomem_size, "gpib");
+	remapped_ibbase = (unsigned long) ioremap(ibbase, iomem_size);
 	iomem_allocated = 1;
 #else
 	/* nec7210 registers can be spread out to varying degrees, so allocate
@@ -184,15 +192,15 @@ void board_detach(void)
 	}
 	if(iomem_allocated)
 	{
+		iounmap((void*) remapped_ibbase);
 		release_mem_region(ibbase, iomem_size);
 		iomem_allocated = 0;
 	}
-#ifdef MODBUS_PCI
-	bdPCIDetach();
-#endif
-#ifdef INES_PCMCIA
-	pcmcia_cleanup_module();
-#endif
+	if(pcmcia_initialized)
+	{
+		pcmcia_cleanup_module();
+		pcmcia_initialized = 0;
+	}
 }
 
 

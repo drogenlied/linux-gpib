@@ -468,7 +468,7 @@ dialog --title "Driver Major Number Settings" \
                  "250" "Default Major for GPIB Driver"\
                  "240" "Alternate Major for GPIB Driver"\
                  "254" "Alternate Major for GPIB Driver"\
-                 "Custom" "Specify Your Own Setting\n(a number between 240 and 254 is recommended)" \
+                 "Custom" "Specify Your Own Setting" \
                  2>/tmp/reply
 
 if [ $? = 0 ];then
