@@ -1,3 +1,24 @@
+/***************************************************************************
+                              lib/ibP.h
+                             -------------------
+
+    copyright            : (C) 2001,2002 by Frank Mori Hess
+    email                : fmhess@users.sourceforge.net
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
+
+#ifndef _IBP_H
+#define _IBP_H
+
+#include "ibConf.h"
 
 /* Unit descriptor flag */
 
@@ -17,7 +38,7 @@ extern ibConf_t ibFindConfigs[ FIND_CONFIGS_LENGTH ];
 static const int sad_offset = 0x60;
 static const int gpib_addr_max = 30;	// max address for primary/secondary gpib addresses
 
-// deal with stupid pad/sad packing scheme
+/* deal with stupid pad/sad packing scheme */
 extern __inline__ int padsad(int pad, int sad)
 {
 	int padsad = pad & 0xff;
@@ -26,3 +47,4 @@ extern __inline__ int padsad(int pad, int sad)
 	return padsad;
 }
 
+#endif	/* _IBP_H */

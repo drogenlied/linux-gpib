@@ -11,6 +11,7 @@ int ibfind(char *dev)
 	int retval;
 	int uDesc;
 	ibConf_t *conf;
+	int status;
 
 	/* load config */
 
@@ -23,18 +24,17 @@ int ibfind(char *dev)
 			retval = ibParseConfigFile(DEFAULT_CONFIG_FILE);
 		if(retval < 0)
 		{
-			ibsta |= ERR;
-			ibPutErrlog(-1,"ibParseConfig");
+			setIberr( EDVR );
+			setIbsta( ERR );
 			return -1;
 		}
 		config_parsed = 1;
 	}
 
 	if((index = ibFindDevIndex(dev)) < 0)
-	{     /* find desired entry */
-		iberr = ENSD;
-		ibsta = ERR;
-		ibPutErrlog(-1,"ibFindDevIndex");
+	{ /* find desired entry */
+		setIberr( ENSD );
+		setIbsta( ERR );
 		return -1;
 	}
 
@@ -47,20 +47,19 @@ int ibfind(char *dev)
 		fprintf(stderr, "ibfind failed to get descriptor\n");
 		return -1;
 	}
-	conf = ibConfigs[uDesc];
+	conf = enter_library( uDesc, 0 );
 
 	if(conf->flags & CN_SDCL)
 	{
-		ibPutMsg("CLR ");
-		if(ibclr(uDesc) & ERR ) return -1;
+		status = ibclr(uDesc);
+		if( status & ERR ) return -1;
 	}
 
-	ibPutMsg("INIT: ");
 	if(strcmp(conf->init_string, ""))
 	{
-		if(ibwrt(uDesc, conf->init_string, strlen(conf->init_string)) & ERR )
+		status = ibwrt(uDesc, conf->init_string, strlen(conf->init_string));
+		if( status & ERR )
 			return -1;
-		ibPutMsg(conf->init_string);
 	}
 
 	return uDesc;

@@ -4,20 +4,16 @@
 
 int ibwait( int ud, int mask )
 {
-	ibConf_t *conf = ibConfigs[ ud ];
+	ibConf_t *conf;
 	ibBoard_t *board;
-	int retval, status = ibsta & CMPL;
+	int retval;
 	wait_ioctl_t cmd;
 
-	if( ibCheckDescriptor( ud ) < 0 )
-	{
-		iberr = EDVR;
-		status |= ERR;
-		ibsta = status;
-		return status;
-	}
+	conf = enter_library( ud, 0 );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
 
-	board = &ibBoard[ conf->board ];
+	board = interfaceBoard( conf );
 
 	set_timeout( board, conf->usec_timeout);
 
@@ -28,12 +24,9 @@ int ibwait( int ud, int mask )
 	retval = ioctl( board->fileno, IBWAIT, &cmd );
 	if( retval < 0 )
 	{
-		iberr = EDVR;
-		status |= ERR;
-		ibsta = status;
-		return status;
+		setIberr( EDVR );
+		return exit_library( ud, 1 );
 	}
 
-	ibsta = cmd.mask;
-	return cmd.mask;
+	return exit_library( ud, 0 );
 }

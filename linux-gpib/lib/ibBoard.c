@@ -30,6 +30,7 @@ void ibBoardDefaultValues( void )
 		strcpy( ibBoard[ i ].device, "" );
 		strcpy( ibBoard[ i ].board_type, "" );
 		ibBoard[ i ].autopoll_pid = 0;
+		ibBoard[ i ].timed_out = 0;
 	}
 }
 

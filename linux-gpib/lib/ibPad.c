@@ -4,39 +4,31 @@
 
 int ibpad( int ud, int addr )
 {
-	ibConf_t *conf = ibConfigs[ ud ];
+	ibConf_t *conf;
 	ibBoard_t *board;
-	int status = ibsta & CMPL;
 	int retval;
 	unsigned int address = addr;
 
-	if( ibCheckDescriptor( ud ) < 0 )
-	{
-		status |= ERR;
-		ibsta = status;
-		iberr = EDVR;
-		return status;
-	}
+	conf = enter_library( ud, 1 );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
 
-	board = &ibBoard[ conf->board ];
+	board = interfaceBoard( conf );
 
 	if( address > 30 )
 	{
-		status |= ERR;
-		ibsta = status;
-		iberr = EARG;
+		setIberr( EARG );
 		fprintf( stderr, "invalid gpib address\n" );
+		return exit_library( ud, 1 );
 	}
 
 	retval = gpibi_change_address( board, conf, address, conf->sad );
 	if( retval < 0 )
 	{
-		status |= ERR;
-		ibsta = status;
-		iberr = EARG;
+		setIberr( EARG );
 		fprintf( stderr, "failed to change gpib address\n" );
+		return exit_library( ud, 1 );
 	}
 
-	ibsta = status;
-	return status;
+	return exit_library( ud, 0 );
 }

@@ -1,9 +1,30 @@
+/***************************************************************************
+                              lib/ib_internal.h
+                             -------------------
+
+    copyright            : (C) 2001,2002 by Frank Mori Hess
+    email                : fmhess@users.sourceforge.net
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
+
+#ifndef _IB_INTERNAL_H
+#define _IB_INTERNAL_H
+
 #include <autoconf.h>
 
 #include "ib.h"
-#include <gpib_types.h>
-#include <gpib_registers.h>
-#include <gpib_ioctl.h>
+#include "ibP.h"
+#include "gpib_types.h"
+#include "gpib_registers.h"
+#include "gpib_ioctl.h"
 #include <unistd.h>
 #include <sys/ioctl.h>
 
@@ -50,8 +71,14 @@ extern void setIbsta( int status );
 extern void setIberr( int error );
 extern void setIbcnt( long count );
 
+extern __inline__ ibBoard_t* interfaceBoard( ibConf_t *conf )
+{
+	return &ibBoard[ conf->board ];
+}
+
 #include <stdio.h>
 int gpib_yyparse(void);
 void gpib_yyrestart(FILE*);
 int gpib_yylex(void);
 
+#endif	/* _IB_INTERNAL_H */

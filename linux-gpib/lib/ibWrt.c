@@ -1,6 +1,22 @@
+/***************************************************************************
+                          lib/ibWrt.c
+                             -------------------
+
+	copyright            : (C) 2001,2002 by Frank Mori Hess
+    email                : fmhess@users.sourceforge.net
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
 
 #include "ib_internal.h"
-#include <ibP.h>
+#include "ibP.h"
 #include <sys/ioctl.h>
 
 ssize_t my_ibwrt( const ibBoard_t *board, const ibConf_t *conf,
@@ -32,82 +48,47 @@ ssize_t my_ibwrt( const ibBoard_t *board, const ibConf_t *conf,
 	return write_cmd.count;
 }
 
-int ibwrt(int ud, void *rd, unsigned long cnt)
+int ibwrt(int ud, void *rd, long cnt)
 {
-	ibConf_t *conf = ibConfigs[ud];
+	ibConf_t *conf;
 	ibBoard_t *board;
 	ssize_t count;
-	int status = ibsta & (RQS | CMPL);
-	int retval, status_ret = 0;
 
-	if( ibCheckDescriptor( ud ) < 0 )
-	{
-		iberr = EDVR;
-		status |= ERR;
-		ibsta = status;
-		return status;
-	}
+	conf = enter_library( ud, 1 );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
 
-	board = &ibBoard[ conf->board ];
+	conf->end = 0;
 
-	retval = lock_board_mutex( board );
-	if( retval < 0 )
-	{
-		status |= ERR;
-		iberr = EDVR;
-		ibsta = status;
-		return status;
-	}
+	board = interfaceBoard( conf );
 
 	count = my_ibwrt( board, conf, rd, cnt );
-
-	// get more status bits from interface board if appropriate
-	if( conf->is_interface )
-	{
-		int board_status = 0;
-		status_ret = ioctl( board->fileno, IBSTATUS, &board_status );
-		status |= board_status & DRIVERBITS;
-	}
-
-	retval = unlock_board_mutex( board );
-	if( retval < 0 || status_ret < 0 )
-	{
-		status |= ERR;
-		iberr = EDVR;
-		ibsta = status;
-		return status;
-	}
 
 	if( count < 0 )
 	{
 		switch( errno )
 		{
 			case ETIMEDOUT:
-				iberr = EABO;
-				status |= TIMO;
+				setIberr( EABO );
+				board->timed_out = 1;
 				break;
 			default:
 				break;
 		}
-		status |= ERR;
-		iberr = EDVR;
-		ibsta = status;
-		return status;
+		return exit_library( ud, 1 );
 	}
 
 	if(count != cnt)
 	{
-		iberr = EDVR;
-		status |= ERR;
+		setIberr( EDVR );
+		return exit_library( ud, 1 );
 	}
 
-	status |= CMPL;
-	if(conf->send_eoi)
-		status |= END;
-	ibcnt = count;
-	ibsta = status;
+	if( conf->send_eoi )
+		conf->end = 1;
+	setIbcnt( count );
 
-	return status;
+	return exit_library( ud, 0 );
 }
 
 

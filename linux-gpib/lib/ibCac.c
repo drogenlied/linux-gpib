@@ -9,13 +9,11 @@ int ibcac( int ud, int synchronous )
 	int retval;
 	int status = CMPL;
 
-	if(ibCheckDescriptor(ud) < 0)
-	{
-		iberr = EDVR;
-		return ibsta | ERR;
-	}
+	conf = enter_library( ud, 1 );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
 
-	board = &ibBoard[ conf->board ];
+	board = interfaceBoard( conf );
 
 	retval = ioctl( board->fileno, IBCAC, &synchronous );
 	if(retval < 0)
@@ -23,12 +21,11 @@ int ibcac( int ud, int synchronous )
 		switch( errno )
 		{
 			default:
-				iberr = EDVR;
+				setIberr( EDVR );
 				break;
 		}
-		status |= ERR;
+		return exit_library( ud, 1 );
 	}
 
-	ibsta = status;
-	return status;
+	return exit_library( ud, 0 );
 }

@@ -4,20 +4,16 @@
 
 int ibeos(int ud, int v)
 {
-	ibConf_t *conf = ibConfigs[ud];
+	ibConf_t *conf;
 
-	ibsta &= ~ERR;
-
-	if(ibCheckDescriptor(ud) < 0)
-	{
-		ibsta |= ERR;
-		return ibsta;
-	}
+	conf = enter_library( ud, 0 );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
 
 	conf->eos = v & 0xff;
 	conf->eos_flags = (v >> 8) & 0xff;
 
-	return ibsta;
+	return exit_library( ud, 0 );
 }
 
 /*

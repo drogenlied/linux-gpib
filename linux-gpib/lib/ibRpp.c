@@ -4,34 +4,26 @@
 
 int ibrpp( int ud, char *ppr )
 {
-	ibConf_t *conf = ibConfigs[ ud ];
+	ibConf_t *conf;
 	ibBoard_t *board;
 	int retval;
-	int status = ibsta & CMPL;
 	uint8_t poll_byte;
 
-	if( ibCheckDescriptor( ud ) < 0 )
-	{
-		status |= ERR;
-		ibsta = status;
-		iberr = EDVR;
-		return status;
-	}
+	conf = enter_library( ud, 1 );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
 
-	board = &ibBoard[ conf->board ];
+	board = interfaceBoard( conf );
 
 	set_timeout( board, conf->usec_timeout );
 
 	retval = ioctl( board->fileno, IBRPP, &poll_byte );
 	if( retval < 0 )
 	{
-		status |= ERR;
-		ibsta = status;
-		return status;
+		return exit_library( ud, 1 );
 	}
 
 	*ppr = poll_byte;
 
-	ibsta = status;
-	return status;
+	return exit_library( ud, 0 );
 }

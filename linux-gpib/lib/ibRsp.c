@@ -4,19 +4,16 @@
 
 int ibrsp(int ud, char *spr)
 {
-	ibConf_t *conf = ibConfigs[ud];
+	ibConf_t *conf;
 	ibBoard_t *board;
 	serial_poll_ioctl_t poll_cmd;
 	int retval;
-	int status = CMPL;
 
-	if(ibCheckDescriptor(ud) < 0)
-	{
-		iberr = EDVR;
-		return ibsta | ERR;
-	}
+	conf = enter_library( ud, 1 );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
 
-	board = &ibBoard[ conf->board ];
+	board = interfaceBoard( conf );
 
 	poll_cmd.pad = conf->pad;
 	poll_cmd.sad = conf->sad;
@@ -29,20 +26,17 @@ int ibrsp(int ud, char *spr)
 		switch( errno )
 		{
 			case ETIMEDOUT:
-				status |= TIMO;
-				iberr = EABO;
+				board->timed_out = 1;
+				setIberr( EABO );
 				break;
 			default:
-				iberr = EDVR;
+				setIberr( EDVR );
 				break;
 		}
-		status |= ERR;
-		ibsta = status;
-		return status;
+		return exit_library( ud, 1 );
 	}
 
 	*spr = poll_cmd.status_byte;
 
-	ibsta = status;
-	return status;
+	return exit_library( ud, 0 );
 }

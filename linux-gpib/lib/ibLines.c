@@ -7,15 +7,12 @@ int iblines( int ud, short *line_status )
 	ibConf_t *conf = ibConfigs[ud];
 	ibBoard_t *board;
 	int retval;
-	int status = CMPL;
 
-	if( ibCheckDescriptor( ud ) < 0 )
-	{
-		iberr = EDVR;
-		return ibsta | ERR;
-	}
+	conf = enter_library( ud, 1 );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
 
-	board = &ibBoard[ conf->board ];
+	board = interfaceBoard( conf );
 
 	retval = ioctl( board->fileno, IBLINES, line_status );
 	if( retval < 0 )
@@ -23,12 +20,11 @@ int iblines( int ud, short *line_status )
 		switch( errno )
 		{
 			default:
-				iberr = EDVR;
+				setIberr( EDVR );
 				break;
 		}
-		status |= ERR;
+		return exit_library( ud, 1 );
 	}
 
-	ibsta = status;
-	return status;
+	return exit_library( ud, 0 );
 }

@@ -1,3 +1,22 @@
+/***************************************************************************
+                              lib/ibConf.h
+                             -------------------
+
+    copyright            : (C) 2001,2002 by Frank Mori Hess
+    email                : fmhess@users.sourceforge.net
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
+
+#ifndef _IBCONF_H
+#define _IBCONF_H
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -21,12 +40,13 @@ typedef struct ibConfStruct
 	int board;                         /* board number                     */
 	char eos;                           /* local eos modes                  */
 	int eos_flags;
-	int flags;                         /* some flags                       */
+	int flags;                         /* some flags, deprecated          */
 	unsigned int usec_timeout;
 	unsigned send_eoi : 1;	// assert EOI at end of writes
 	unsigned is_interface : 1;	// is interface board
 	unsigned is_open : 1;
 	unsigned has_lock : 1;
+	unsigned end : 1;	// EOI asserted or EOS received at end of IO operation */
 } ibConf_t;
 
 /*---------------------------------------------------------------------- */
@@ -43,9 +63,11 @@ typedef struct ibBoardStruct {
 	/* pid of child process conducting autopolls,
 	so we can kill it on exit */
 	pid_t autopoll_pid;
-	int is_system_controller : 1;	/* board is busmaster or not */
+	unsigned is_system_controller : 1;	/* board is busmaster or not */
+	unsigned timed_out : 1;		/* io operation timed out */
 } ibBoard_t;
 
+#endif	/* _IBCONF_H */
 
 
 

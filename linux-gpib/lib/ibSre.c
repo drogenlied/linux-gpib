@@ -4,28 +4,22 @@
 
 int ibsre(int ud, int v)
 {
-	ibConf_t *conf = ibConfigs[ ud ];
+	ibConf_t *conf;
 	ibBoard_t *board;
 	int retval;
-	int status = ibsta & CMPL;
 
-	if( ibCheckDescriptor( ud ) < 0 )
-	{
-		status |= ERR;
-		ibsta = status;
-		iberr = EDVR;
-		return status;
-	}
+	conf = enter_library( ud, 1 );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
 
-	board = &ibBoard[ conf->board ];
+	board = interfaceBoard( conf );
 
 	retval = ioctl( board->fileno, IBSRE, &v );
 	if( retval < 0 )
 	{
-		status |= ERR;
+		return exit_library( ud, 1 );
 	}
 
-	ibsta = status;
-	return status;
+	return exit_library( ud, 0 );
 }
 

@@ -1,6 +1,22 @@
+/***************************************************************************
+                          lib/ibutil.c
+                             -------------------
+
+	copyright            : (C) 2001,2002 by Frank Mori Hess
+    email                : fmhess@users.sourceforge.net
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
 
 #include "ib_internal.h"
-#include <ibP.h>
+#include "ibP.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -236,7 +252,8 @@ ibConf_t * enter_library( int ud, int lock_library )
 
 	if( ibCheckDescriptor( ud ) < 0 ) return NULL;
 
-	board = &ibBoard[ conf->board ];
+	board = interfaceBoard( conf );
+	board->timed_out = 0;
 
 	if( lock_library )
 	{
@@ -251,15 +268,34 @@ ibConf_t * enter_library( int ud, int lock_library )
 	return conf;
 }
 
+
 //XXX
 int ibstatus( ibConf_t *conf, int error )
 {
 	int status = 0;
+	int retval;
+	int board_status;
+
+	// get more status bits from interface board
+	if( conf->is_interface )
+	{
+		retval = ioctl( interfaceBoard( conf )->fileno, IBSTATUS, &board_status );
+		if( retval < 0 )
+		{
+			error++;
+			setIberr( EDVR );
+		}else
+			status |= board_status;
+	}
 
 	status |= CMPL;
 	if( error ) status |= ERR;
+	if( interfaceBoard( conf )->timed_out )
+		status |= TIMO;
+	if( conf->end )
+		status |= END;
 
-	ibsta = status;
+	setIbsta( status );
 
 	return status;
 }
@@ -269,10 +305,18 @@ int exit_library( int ud, int error )
 	ibConf_t *conf = ibConfigs[ ud ];
 	ibBoard_t *board;
 	int retval;
+	int status;
 
-	if( ibCheckDescriptor( ud ) < 0 ) return ERR;
+	if( ibCheckDescriptor( ud ) < 0 )
+	{
+		setIberr( EDVR );
+		setIbsta( ERR );
+		return ERR;
+	}
 
-	board = &ibBoard[ conf->board ];
+	board = interfaceBoard( conf );
+
+	status = ibstatus( conf, error );
 
 	if( conf->has_lock )
 	{
@@ -280,9 +324,11 @@ int exit_library( int ud, int error )
 		retval = unlock_board_mutex( board );
 		if( retval < 0 )
 		{
-			error++;
+			setIberr( EDVR );
+			conf->has_lock = 1;
+			status = ibstatus( conf, error );
 		}
 	}
-	
-	return ibstatus( conf, error );
+
+	return status;
 }

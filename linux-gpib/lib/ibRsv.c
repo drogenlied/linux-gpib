@@ -5,28 +5,23 @@
 // should return old status byte in iberr on success
 int ibrsv( int ud, int v )
 {
-	ibConf_t *conf = ibConfigs[ ud ];
+	ibConf_t *conf;
 	ibBoard_t *board;
 	int retval;
-	int status = ibsta & CMPL;
 	uint8_t status_byte = v;
 
-	if( ibCheckDescriptor( ud ) < 0 || 
-		conf->is_interface == 0 )
-	{
-		iberr = EDVR;
-		return ibsta | ERR;
-	}
-	
-	board = &ibBoard[ conf->board ];
+	conf = enter_library( ud, 1 );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
+
+	board = interfaceBoard( conf );
 
 	retval = ioctl( board->fileno, IBRSV, &status_byte );
 	if( retval < 0 )
 	{
-		status |= ERR;
-		ibsta = status;
+		return exit_library( ud, 1 );
 	}
 
-	return status;
+	return exit_library( ud, 0 );
 }
 

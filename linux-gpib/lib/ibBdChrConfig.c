@@ -10,7 +10,7 @@ int ibBdChrConfig( ibConf_t *conf )
 	board_type_ioctl_t boardtype;
 	int retval;
 
-	board = &ibBoard[ conf->board ];
+	board = interfaceBoard( conf );
 
 	if( board->fileno < 0 )
 	{

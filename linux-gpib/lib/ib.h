@@ -35,7 +35,7 @@ extern long ThreadIbcntl( void );
 /***** Public Functions ******/
 extern int ibcac(int ud, int v);
 extern int ibclr(int ud);
-extern int ibcmd(int ud, void *cmd, unsigned long cnt);
+extern int ibcmd(int ud, void *cmd, long cnt);
 extern int ibconfig( int ud, int option, int value );
 extern int ibdev(int minor, int pad, int sad, int timo, int eot, int eos);
 extern int ibdma( int ud, int v );
@@ -48,7 +48,7 @@ extern int ibloc(int ud);
 extern int ibonl(int ud, int onl);
 extern int ibpad(int ud, int v);
 extern int ibppc( int ud, int v );
-extern int ibrd(int ud, void *rd, unsigned long cnt);
+extern int ibrd(int ud, void *rd, long count);
 extern int ibrpp(int ud, char *ppr);
 extern int ibrsp(int ud, char *spr);
 extern int ibrsv(int ud, int v);
@@ -58,7 +58,7 @@ extern int ibsre(int ud, int v);
 extern int ibtmo(int ud,int v);
 extern int ibtrg(int ud);
 extern int ibwait(int ud, int mask);
-extern int ibwrt(int ud, void *rd, unsigned long cnt);
+extern int ibwrt(int ud, void *rd, long count);
 
 #ifdef __cplusplus
 }

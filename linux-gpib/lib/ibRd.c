@@ -69,77 +69,43 @@ ssize_t my_ibrd( const ibBoard_t *board, const ibConf_t *conf, uint8_t *buffer, 
 	return read_cmd.count;
 }
 
-int ibrd(int ud, void *rd, unsigned long cnt)
+int ibrd(int ud, void *rd, long cnt)
 {
 	ibConf_t *conf = ibConfigs[ud];
 	ibBoard_t *board;
-	int retval, status_ret = 0;
-	int status = ibsta & (RQS | CMPL);
 	ssize_t count;
 	int end;
 
-	if( ibCheckDescriptor( ud ) < 0 )
-	{
-		iberr = EDVR;
-		status |= ERR;
-		ibsta = status;
-		return status;
-	}
+	conf = enter_library( ud, 1 );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
 
-	board = &ibBoard[conf->board];
+	conf->end = 0;
 
-	retval = lock_board_mutex( board );
-	if( retval < 0 )
-	{
-		status |= ERR;
-		iberr = EDVR;
-		ibsta = status;
-		return status;
-	}
+	board = interfaceBoard( conf );
 
 	count = my_ibrd( board, conf, rd, cnt, &end );
-
-	// get more status bits from interface board if appropriate
-	if( conf->is_interface )
-	{
-		int board_status = 0;
-		status_ret = ioctl(board->fileno, IBSTATUS, &board_status);
-		status |= board_status & DRIVERBITS;
-	}
-
-	retval = unlock_board_mutex( board );
-	if( retval < 0 || status_ret < 0 )
-	{
-		status |= ERR;
-		iberr = EDVR;
-		ibsta = status;
-		return status;
-	}
 
 	if( count < 0 )
 	{
 		switch( errno )
 		{
 			case ETIMEDOUT:
-				status |= TIMO;
-				iberr = EABO;
+				board->timed_out = 1;
+				setIberr( EABO );
 				break;
 			default:
-				iberr = EDVR;
+				setIberr( EDVR );
 				break;
 		}
-		status |= ERR;
-		ibsta = status;
-		return status;
+		return exit_library( ud, 1 );
 	}
 
-	ibcnt = count;
-	status |= CMPL;
-	if( end )
-		status |= END;
-	ibsta = status;
+	setIbcnt( count );
 
-	return status;
+	if( end ) conf->end = 1;
+
+	return exit_library( ud, 0 );
 }
 
 

@@ -47,8 +47,7 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 			retval = ibParseConfigFile(DEFAULT_CONFIG_FILE);
 		if(retval < 0)
 		{
-			ibsta |= ERR;
-			ibPutErrlog(-1,"ibParseConfig");
+			setIbsta( ERR );
 			return -1;
 		}
 		config_parsed = 1;
@@ -66,7 +65,7 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 	else
 		conf.send_eoi = 0;
 	// check if it is an interface board
-	board = &ibBoard[minor];
+	board = &ibBoard[ minor ];
 	if( gpib_address_equal( board->pad, board->sad, conf.pad, conf.sad ) )
 	{
 		conf.is_interface = 1;
@@ -76,18 +75,20 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 	uDesc = ibGetDescriptor(conf);
 	if(uDesc < 0)
 	{
-		fprintf(stderr, "ibdev failed to get descriptor\n");
+		fprintf(stderr, "libgpib: ibdev failed to get descriptor\n");
 		return -1;
 	}
 
 	if( ibonl( uDesc, 1 ) & ERR )
 	{
-		fprintf(stderr, "failed to bring device online\n");
+		fprintf(stderr, "libgpib: failed to bring device online\n");
+		// XXX free descriptors resources
 		return -1;
 	}
 
 	if( board->is_system_controller )
 	{
+		// XXX free descriptors resources
 		if( ibsre( uDesc, 1 ) & ERR ) return -1;
 	}
 

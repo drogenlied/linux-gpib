@@ -4,38 +4,31 @@
 
 int ibsad( int ud, int v )
 {
-	ibConf_t *conf = ibConfigs[ ud ];
+	ibConf_t *conf;
 	ibBoard_t *board;
-	int status = ibsta & CMPL;
 	int retval;
 	int sad = v - sad_offset;
 
-	if( ibCheckDescriptor( ud ) < 0 )
-	{
-		status |= ERR;
-		ibsta = status;
-		iberr = EDVR;
-		return status;
-	}
+	conf = enter_library( ud, 1 );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
 
-	board = &ibBoard[ conf->board ];
+	board = interfaceBoard( conf );
 
 	if( sad > 30 )
 	{
-		ibsta = CMPL | ERR;
-		iberr = EARG;
-		ibcnt = errno;
-		ibPutErrlog(-1, ibVerbCode(IBSAD));
+		setIberr( EARG );
+		return exit_library( ud, 1 );
 	}
 
 	retval = gpibi_change_address( board, conf, conf->pad, sad );
 	if( retval < 0 )
 	{
-		status |= ERR;
-		ibsta = status;
-		iberr = EARG;
 		fprintf( stderr, "failed to change gpib address\n" );
+		setIberr( EARG );
+		setIbcnt( errno );
+		return exit_library( ud, 1 );
 	}
 
-	return ibsta;
+	return exit_library( ud, 0 );
 }

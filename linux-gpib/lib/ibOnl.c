@@ -3,23 +3,20 @@
 #include <ibP.h>
 #include <stdlib.h>
 
+// XXX supposed to reset board/device if onl is nonzero
 int ibonl( int ud, int onl )
 {
 	int oflags=0;
-	ibConf_t *conf = ibConfigs[ud];
+	ibConf_t *conf;
 	int retval;
 	ibBoard_t *board;
-	int status = ibsta & CMPL;
 	online_ioctl_t online_cmd;
 
-	if( ibCheckDescriptor( ud ) < 0 )
-	{
-		status |= ERR;
-		ibsta = status;
-		return status;
-	}
+	conf = enter_library( ud, 0 );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
 
-	board = &ibBoard[ conf->board ];
+	board = interfaceBoard( conf );
 
 	// XXX
 	if( conf->flags & CN_EXCLUSIVE )
@@ -27,21 +24,17 @@ int ibonl( int ud, int onl )
 
 	if( board->fileno < 0 )
 	{
-		if( ibBoardOpen( conf->board, oflags ) & ERR ) 
+		if( ibBoardOpen( conf->board, oflags ) & ERR )
 		{
-			status |= ERR;
-			iberr = EDVR;
-			ibcnt = errno;
-			ibsta = status;
-			return status;
+			setIberr( EDVR );
+			setIbcnt( errno );
+			return exit_library( ud, 1 );
 		}
 		if( ibBdChrConfig( conf ) < 0 )
 		{
-			status |= ERR;
-			iberr = EDVR;
-			ibcnt = errno;
-			ibsta = status;
-			return status;
+			setIberr( EDVR );
+			setIbcnt( errno );
+			return exit_library( ud, 1 );
 		}
 	}
 
@@ -51,6 +44,9 @@ int ibonl( int ud, int onl )
 		if( retval < 0 )
 		{
 			fprintf( stderr, "libgpib: failed to mark device as closed!\n" );
+			setIberr( EDVR );
+			setIbcnt( errno );
+			return exit_library( ud, 1 );
 		}
 	}
 
@@ -62,12 +58,10 @@ int ibonl( int ud, int onl )
 		switch( errno )
 		{
 			default:
-				iberr = EDVR;
+				setIberr( EDVR );
 				break;
 		}
-		status |= ERR;
-		ibsta = status;
-		return status;
+		return exit_library( ud, 1 );
 	}
 
 	if( onl )
@@ -76,6 +70,9 @@ int ibonl( int ud, int onl )
 		if( retval < 0 )
 		{
 			fprintf( stderr, "libgpib: failed to mark device as open\n" );
+			setIberr( EDVR );
+			setIbcnt( errno );
+			return exit_library( ud, 1 );
 		}
 	}else
 	{
@@ -83,9 +80,11 @@ int ibonl( int ud, int onl )
 			ibBoardClose( conf->board );
 		free( ibConfigs[ ud ] );
 		ibConfigs[ ud ] = NULL;
+		setIbsta( 0 );
+		return 0;
 	}
 
-	return status;
+	return exit_library( ud, 0 );
 }
 
 

@@ -68,19 +68,21 @@ unsigned int timeout_to_usec( enum gpib_timeout timeout )
 
 int ibtmo(int ud,int v)
 {
-	ibConf_t *conf = ibConfigs[ud];
+	ibConf_t *conf;
 
-	if ((v < TNONE) || (v > T1000s) || ibCheckDescriptor(ud) < 0)
+	if( (v < TNONE) || (v > T1000s) )
 	{
-		ibsta = CMPL | ERR;
-		iberr = EARG;
-		return ibsta;
+		setIberr( EARG );
+		return exit_library( ud, 1 );
 	}
+
+	conf = enter_library( ud, 1 );
+	if( conf == NULL )
+		return exit_library( ud, 1 );
 
 	conf->usec_timeout = timeout_to_usec( v );
 
-	ibsta = CMPL;
-	return ibsta;
+	return exit_library( ud, 0 );
 }
 
 int set_timeout( const ibBoard_t *board, unsigned int usec_timeout)

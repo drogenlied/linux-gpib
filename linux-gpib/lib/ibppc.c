@@ -17,19 +17,21 @@
  ***************************************************************************/
 
 #include "ib_internal.h"
-#include <ibP.h>
+#include "ibP.h"
 
 int ibppc( int ud, int v )
 {
 	ibConf_t *conf;
 	uint8_t cmd[16];
-	static const int ppc_mask = 0x7f;
+	static const int ppc_mask = 0xe0;
+	static const int ppc_code = 0x60;
 	int i;
 	int retval;
 
-	if( ( v & ppc_mask ) != v )
+	if( ( v & ppc_mask ) != ppc_code )
 	{
 		fprintf( stderr, "libgpib: illegal parallel poll configuration\n" );
+		setIberr( EARG );
 		return exit_library( ud, 1 );
 	}
 
@@ -37,14 +39,28 @@ int ibppc( int ud, int v )
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 
+	if( interfaceBoard( conf )->is_system_controller == 0 )
+	{
+		setIberr( ECIC );
+		return exit_library( ud, 1 );
+	}
+
 	i = send_setup_string( conf, cmd );
-	if( i < 0 ) return exit_library( ud, 1 );
+	if( i < 0 )
+	{
+		setIberr( EDVR );
+		return exit_library( ud, 1 );
+	}
 
 	cmd[ i++ ] = PPC;
 	cmd[ i++ ] = v;
 
 	retval = my_ibcmd( conf, cmd, i );
-	if( retval < 0 ) return exit_library( ud, 1 );
+	if( retval < 0 )
+	{
+		setIberr( EDVR );
+		return exit_library( ud, 1 );
+	}
 
 	return exit_library( ud, 0 );
 }
