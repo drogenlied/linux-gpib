@@ -20,7 +20,6 @@ IBLCL void bdPIOwrt( ibio_op_t *wrtop)
 	faddr_t		buf;
 	unsigned	cnt;
 	extern int eosmodes;
-	uint8_t first_byte;
 	gpib_char_t data;
 	unsigned long flags;
 
@@ -86,10 +85,7 @@ IBLCL void bdPIOwrt( ibio_op_t *wrtop)
 	data.end = 0;
 	if(ibcnt < cnt)
 	{
-		// store first byte which we will have to send manually
-		first_byte = buf[ibcnt];
-		ibcnt++;
-		// load rest of message into buffer
+		// load message into buffer
 		while (ibcnt < cnt)
 		{
 			data.value = buf[ibcnt];
@@ -105,9 +101,6 @@ IBLCL void bdPIOwrt( ibio_op_t *wrtop)
 		// enable 'data out' interrupts
 		imr1_bits |= HR_DOIE;
 		GPIBout(IMR1, imr1_bits);
-
-		// send first byte and let interrupt handler do the rest
-		GPIBout(CDOR, first_byte);
 
 		// suspend until message is sent
 		if(wait_event_interruptible(nec7210_write_wait, test_bit(0, &write_in_progress) == 0))
