@@ -36,7 +36,7 @@ static int pio_write_wait( gpib_board_t *board, nec7210_private_t *priv )
 		return -ETIMEDOUT;
 	if( test_bit( DEV_CLEAR_BN, &priv->state ) )
 		return -EINTR;
-	if( test_bit( BUS_ERROR_BN, &priv->state ) )
+	if( test_and_clear_bit( BUS_ERROR_BN, &priv->state ) )
 		return -EIO;
 
 	return 0;
@@ -48,11 +48,21 @@ static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 	size_t count = 0;
 	ssize_t retval = 0;
 	unsigned long flags;
+	const int max_bus_errors = (length > 1000) ? length : 1000;
+	int bus_error_count = 0;
 
 	while( count < length )
 	{
 		retval = pio_write_wait( board, priv );
-		if( retval < 0 ) return retval;
+		if(retval == -EIO)
+		{
+			/* resend last byte on bus error */
+			count--;
+			/* we can get unrecoverable bus errors,
+			 * so give up after a while */
+			bus_error_count++;
+			if(bus_error_count > max_bus_errors) return retval;
+		}else if( retval < 0 ) return retval;
 
 		spin_lock_irqsave(&board->spinlock, flags);
 		clear_bit(WRITE_READY_BN, &priv->state);
@@ -160,12 +170,16 @@ ssize_t nec7210_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buf
 
 	if(length > 0)
 	{
-		if(priv->dma_channel)
+		if(0 /*priv->dma_channel*/)
 		{	// isa dma transfer
+/* dma writes are unreliable since they can't recover from bus errors
+ * (which happen when ATN is asserted in the middle of a write) */
+#if 0
 			retval = dma_write(board, priv, buffer, length);
 			if(retval < 0)
 				return retval;
 			else count += retval;
+#endif
 		}else
 		{	// PIO transfer
 			retval = pio_write(board, priv, buffer, length);
