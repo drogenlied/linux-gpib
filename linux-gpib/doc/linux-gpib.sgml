@@ -43,38 +43,52 @@ A copy of the license is included in the section entitled
 
 <section ID="configuration">
 <title>
-	Run-Time Configuration: gpib.conf
+	Configuration: gpib.conf
 </title>
 <para>
-The library reads its configuration information at run time from the
-file /etc/gpib.conf.  A different file path for the configuration file
+The library reads its configuration information from the
+file /etc/gpib.conf.  An alternate file path for the configuration information
 can be specified
 by setting the IB_CONFIG environment variable.  A template gpib.conf
 file can be found in the util/templates/ subdirectory of the linux-gpib
 package.
 </para>
 <para>
-The configuration file must contain one or more 'interface' sections.  Two
-example interface entries follow.
+The configuration file must contain one or more 'interface' entries, and
+can contain zero or more 'device' entries.  'device' entries are only
+required if you wish to open device descriptors with
+<link LINKEND="reference-function-ibfind">ibfind()</link> instead
+of using <link LINKEND="reference-function-ibdev">ibdev()</link>.
+Several example entries, and a table summarizing the possible
+options follow.
 </para>
+<para>
 <programlisting>
+
 interface {
 	minor = 0
 	board_type = "ni_pci"
 	pad = 0
-	sad = 0
-	pci_bus = 0
-	pci_slot = 0x9
 	master = yes
 }
 
 interface {
 	minor = 1
-	board_type = "pcII"
+	board_type = "ines_pci_accel"
 	name = "joe"
+	pad = 5
+	sad = 0
+	timeout = T10s
+	pci_bus = 0
+	pci_slot = 0xd
+	master = no
+}
+
+interface {
+	minor = 2
+	board_type = "pcII"
 	pad = 3
 	sad = 0x62
-	timeout = T3s
 	eos = 0x0d
 	set-reos = yes
 	set-bin = no
@@ -85,7 +99,28 @@ interface {
 	dma  = 0
 	master = no
 }
+
+device {
+	minor = 0
+	name = "counter"
+	pad = 24
+}
+
+device {
+	minor = 0
+	name = "voltmeter"
+	pad = 7
+	sad = 110
+	eos = 0xa
+	set-reos = yes
+	set-bin = no
+	set-xeos = yes
+	set-eot = no
+	timeout = T1s
+}
+
 </programlisting>
+</para>
 <para>
 	<table COLSEP="1" ROWSEP="1" ORIENT="port" PGWIDE="1">
 	<title>configuration options</title>
@@ -100,12 +135,26 @@ interface {
 	</thead>
 	<tbody>
 	<row>
+	<entry>base</entry>
+	<entry>Specifies the base ioport or io memory address for a
+	board that lacks plug-and-play capability.</entry>
+	<entry>interface</entry>
+	<entry>optional</entry>
+	</row>
+	<row>
 	<entry>board_type</entry>
 	<entry>Specifies the type of interface board.  See the drivers.txt
 	file for a list of possible board types, and the kernel driver
 	module that supports them.</entry>
 	<entry>interface</entry>
 	<entry>required</entry>
+	</row>
+	<row>
+	<entry>dma</entry>
+	<entry>Specifies the dma channel for a board that lacks plug-and-play
+	capability.</entry>
+	<entry>interface</entry>
+	<entry>optional</entry>
 	</row>
 	<row>
 	<entry>eos</entry>
@@ -116,9 +165,17 @@ interface {
 	<entry>optional</entry>
 	</row>
 	<row>
+	<entry>irq</entry>
+	<entry>Specifies the interrupt level for a board that lacks
+	plug-and-play capability.</entry>
+	<entry>interface</entry>
+	<entry>optional</entry>
+	</row>
+	<row>
 	<entry>master</entry>
 	<entry>Set to 'yes' if you want the interface board to
-	be the system controller of the bus.</entry>
+	be the system controller of the bus.  There can only
+	be one system controller on a bus.</entry>
 	<entry>interface</entry>
 	<entry>required</entry>
 	</row>
@@ -225,12 +282,6 @@ interface {
 	used by <link LINKEND="reference-function-ibtmo">ibtmo()</link>.</entry>
 	<entry>interface or device</entry>
 	<entry>optional</entry>
-	</row>
-	<row>
-	<entry></entry>
-	<entry></entry>
-	<entry></entry>
-	<entry></entry>
 	</row>
 	</tbody>
 	</tgroup>
@@ -763,6 +814,48 @@ volatile int ibsta;
 	</title>
 	<para>
 	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-ibfind">
+<refmeta>
+	<refentrytitle>ibfind</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibfind</refname>
+	<refpurpose>open a board or device (board or device)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibfind</function></funcdef>
+		<paramdef>const char* <parameter>name</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibfind() returns a board or device descriptor based on the information
+	found in the <link LINKEND="configuration">configuration file</link>.
+	It is not required to use this function, since device descriptors
+	can be obtained with <link LINKEND="reference-function-ibdev">ibdev()</link>
+	and the 'board index' (minor number in the configuration file)
+	can be used directly as a board descriptor.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	If sucessful, returns a (non-negative) board or device descriptor.
+	On failure, -1 is returned.
 	</para>
 </refsect1>
 </refentry>
