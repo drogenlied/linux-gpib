@@ -59,6 +59,7 @@ static int autospoll_thread(void *board_void)
 			up(&board->autopoll_mutex);
 			continue;
 		}
+
 		retval = autopoll_all_devices(board);
 		if(retval <= 0)
 		{

@@ -84,6 +84,7 @@ int general_ibstatus( gpib_board_t *board, const gpib_status_queue_t *device,
 	int clear_mask, int set_mask, gpib_descriptor_t *desc )
 {
 	int status = 0;
+	short line_status;
 
 	if( board->private_data )
 	{
@@ -91,6 +92,18 @@ int general_ibstatus( gpib_board_t *board, const gpib_status_queue_t *device,
 		/* XXX should probably stop having drivers use TIMO bit in
 		 * board->status to avoid confusion */
 		status &= ~TIMO;
+		/* get real SRQI status if we can */
+		iblines(board, &line_status);
+		if((line_status & ValidSRQ))
+		{
+			if((line_status & BusSRQ))
+			{
+				status |= SRQI;
+			}else
+			{
+				status &= ~SRQI;
+			}
+		}
 	}
 	if( device )
 		if( num_status_bytes( device ) ) status |= RQS;
