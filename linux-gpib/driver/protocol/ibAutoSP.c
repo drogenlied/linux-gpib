@@ -143,7 +143,10 @@ IBLCL int ibAPWait(int pad)
      }
 
   /* poll all devices with AP_POLL set */
-     osLockMutex();
+	//XXX
+     if(down_interruptible(&inode_mutex))
+	printk("interrupted waiting on lock in ibAPWait\n");
+
      for(i=0;i<MAX_DEVICES;i++){
        if( AP_Vector[i].flags & AP_POLL ){
 	 dvrsp(i,&(AP_Vector[i].spb ));
@@ -152,7 +155,7 @@ IBLCL int ibAPWait(int pad)
          DBGprint(DBG_DATA,("device %d -> spb=0x%x",i,AP_Vector[i].spb));
        }
      }
-     osUnlockMutex();
+     up(&inode_mutex);
      if(! (AP_Vector[pad].spb & 0x40 ) ) {
        printk("Ouups: No RQS after Autopoll Operation ?\n");
      }

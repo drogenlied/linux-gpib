@@ -67,7 +67,7 @@ ssize_t nec7210_read(gpib_driver_t *driver, uint8_t *buffer, size_t length, int 
 	priv->write_byte(priv, priv->imr2_bits, IMR2);
 
 	// wait for data to transfer
-	if(wait_event_interruptible(nec7210_wait, test_bit(DMA_IN_PROGRESS_BN, &priv->state) == 0 ||
+	if(wait_event_interruptible(driver->wait, test_bit(DMA_IN_PROGRESS_BN, &priv->state) == 0 ||
 		test_bit(TIMO_NUM, &driver->status)))
 	{
 		printk("read wait interrupted\n");

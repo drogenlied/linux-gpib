@@ -58,11 +58,11 @@ ssize_t nec7210_write(gpib_driver_t *driver, uint8_t *buffer, size_t length, int
 
 		// enable board's dma for output
 		priv->imr2_bits |= HR_DMAO;
-		priv->write_byte(priv, imr2_bits, IMR2);
+		priv->write_byte(priv, priv->imr2_bits, IMR2);
 
 		// enable 'data out' interrupts
-		imr1_bits |= HR_DOIE;
-		priv->write_byte(priv, imr1_bits, IMR1);
+		priv->imr1_bits |= HR_DOIE;
+		priv->write_byte(priv, priv->imr1_bits, IMR1);
 
 		// suspend until message is sent
 		if(wait_event_interruptible(driver->wait, test_bit(WRITING_BN, &priv->state) == 0 ||
@@ -73,7 +73,7 @@ ssize_t nec7210_write(gpib_driver_t *driver, uint8_t *buffer, size_t length, int
 
 		// disable board's dma
 		priv->imr2_bits &= ~HR_DMAO;
-		priv->write_byte(priv, imr2_bits, IMR2);
+		priv->write_byte(priv, priv->imr2_bits, IMR2);
 
 		if(test_and_clear_bit(WRITING_BN, &priv->state) == 0)
 			count += length;

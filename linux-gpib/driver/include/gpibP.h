@@ -14,4 +14,5 @@
 #include <gpib_user.h>
 
 extern gpib_driver_t *driver;
+extern struct semaphore inode_mutex;
 
