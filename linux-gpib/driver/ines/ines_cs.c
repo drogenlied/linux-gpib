@@ -203,7 +203,7 @@ static dev_link_t *gpib_attach(void)
 	link->conf.Attributes = CONF_ENABLE_IRQ;
 	link->conf.Vcc = 50;
 	link->conf.IntType = INT_MEMORY_AND_IO;
-	link->conf.ConfigIndex = 1;
+	link->conf.ConfigIndex = 0x30;
 	link->conf.Present = PRESENT_OPTION;
 
 	/* Allocate space for private device-specific data */
@@ -407,8 +407,8 @@ static void gpib_config(dev_link_t *link)
 		}
 		virt = ( unsigned long ) ioremap( req.Base, req.Size );
 		writeb( ( link->io.BasePort1 >> 2 ) & 0xff, virt + 0xf0 ); // IOWindow base
-		writeb(COR_LEVEL_REQ | 0x30, virt + 0x100 );                  // LevlIrq, 32 byte IOWindow
-		writeb(CCSR_IOIS8, virt + 0x102 );                  // IOis8
+//		writeb(COR_LEVEL_REQ | 0x30, virt + 0x100 );                  // LevlIrq, 32 byte IOWindow
+//		writeb(CCSR_IOIS8, virt + 0x102 );                  // IOis8
 		iounmap( ( void* ) virt );
 //		CardServices(ReleaseWindow,handle);
 
