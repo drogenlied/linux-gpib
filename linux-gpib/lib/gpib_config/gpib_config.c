@@ -336,6 +336,8 @@ int main( int argc, char *argv[] )
 		else
 			options.sad = -1;
 	}
+	if( options.is_system_controller < 0 )
+		options.is_system_controller = board->is_system_controller;
 	board->fileno = open( devicefile, O_RDWR );
 	if( board->fileno < 0 )
 	{
