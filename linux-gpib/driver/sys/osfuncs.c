@@ -19,6 +19,7 @@
 #include "autopoll.h"
 
 #include <linux/fcntl.h>
+#include <linux/kmod.h>
 
 static int board_type_ioctl(gpib_board_t *board, unsigned long arg);
 static int read_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
@@ -125,6 +126,19 @@ int ibopen(struct inode *inode, struct file *filep)
 	init_gpib_file_private( ( gpib_file_private_t * ) filep->private_data );
 
 	GPIB_DPRINTK( "gpib: opening minor %d\n", minor );
+
+	if( board->open_count == 0 )
+	{
+		char module_string[ 32 ];
+		int retval;
+
+		snprintf( module_string, sizeof( module_string ), "char-major-%i-%i", IBMAJOR, minor );
+		retval = request_module( module_string );
+		if( retval )
+		{
+			printk( "gpib: request module returned %i\n", retval );
+		}
+	}
 
 	board->open_count++;
 
