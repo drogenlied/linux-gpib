@@ -118,10 +118,10 @@ static const int atgpib_iosize = 32;
 // tnt4882 register offsets
 enum
 {
-	ACCWR = 0x5,
+	ACCWR = 0x5,	//tnt4882-only register
 	// offset of auxilliary command register in 9914 mode
 	AUXCR = 0x6,
-	INTRT = 0x7,
+	INTRT = 0x7,	//tnt4882-only register
 	// register number for auxilliary command register when swap bit is set (9914 mode)
 	SWAPPED_AUXCR = 0xa,
 	HSSEL = 0xd,	// handshake select register
@@ -192,7 +192,9 @@ enum cmdr_bits
 /* HSSEL -- handshake select register (write only) */
 enum hssel_bits
 {
+	TNT_ONE_CHIP_BIT = 0x1,
 	NODMA = 0x10,
+	TNT_GO2SIDS_BIT = 0x20,
 };
 
 /* IMR0 -- Interrupt Mode Register 0 */
@@ -355,7 +357,8 @@ static inline void tnt_writeb( tnt4882_private_t *priv, unsigned int value, unsi
 			break;
 		}
 		break;
-	case HSSEL:
+	case ACCWR:
+	case INTRT:
 		switch( priv->chipset )
 		{
 		case TNT4882:
