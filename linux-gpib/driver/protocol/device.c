@@ -121,22 +121,24 @@ IBLCL int dvrsp(int padsad, uint8_t *result)
 	if (sad)
 		cmd_string[i++] = sad;
 
-	if (ibcmd(cmd_string, i) < 0)
+	if (driver->command(driver, cmd_string, i) < i)
 		return -1;
 
 	driver->go_to_standby(driver);
 
 	// read poll result
 	ret = driver->read(driver, result, 1, &end_flag);
-	if(ret <= 0)
+	if(ret < 1)
 	{
 		printk("gpib: serial poll failed\n");
 		return -1;
 	}
 
+	driver->take_control(driver, 0);
+
 	cmd_string[0] = SPD;	/* disable serial poll bytes */
 	cmd_string[1] = UNT;
-	if(ibcmd(cmd_string, 2) < 0 )
+	if(driver->command(driver, cmd_string, 2) < 2 )
 	{
 		return -1;
 	}
