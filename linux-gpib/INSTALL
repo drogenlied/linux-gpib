@@ -146,7 +146,8 @@ o) USB devices
 	http://linux-gpib.sourceforge.net/firmware/.  Make sure you have
 	the "hotplug" and "fxload" packages installed on your computer.  The hotplug system
 	will automatically upload the firmware to your device and load the driver module when
-	needed.
+	the device is plugged in.  If you have errors, check your system log files (not dmesg)
+	for messages from the hotplug scripts.
 
 E) Trying it out
 ----------------
