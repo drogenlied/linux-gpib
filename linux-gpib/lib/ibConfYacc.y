@@ -91,7 +91,7 @@ int parse_gpib_conf( const char *filename, ibConf_t *configs, unsigned int confi
 
 	if( retval == 0 )
 	{
-		for( i = 0; i < priv.configs_length && strlen( priv.configs[ i ].name ); i++ )
+		for(i = 0; i < priv.configs_length && priv.configs[ i ].defaults.board >= 0; i++)
 		{
 			priv.configs[ i ].settings = priv.configs[ i ].defaults;
 		}

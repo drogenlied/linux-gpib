@@ -83,11 +83,12 @@ int setup_global_board_descriptors( void )
 	int i;
 	int retval = 0;
 
-	for( i = 0; i < FIND_CONFIGS_LENGTH && strlen( ibFindConfigs[ i ].name ); i++ )
+	for( i = 0; i < FIND_CONFIGS_LENGTH; i++ )
 	{
-		if( ibFindConfigs[ i ].is_interface )
+		if(ibFindConfigs[ i ].is_interface && ibFindConfigs[ i ].settings.board >= 0 &&
+			ibFindConfigs[ i ].settings.board < GPIB_MAX_NUM_BOARDS)
 		{
-			if( insert_descriptor( ibFindConfigs[ i ], ibFindConfigs[ i ].settings.board ) < 0 )
+			if(insert_descriptor( ibFindConfigs[ i ], ibFindConfigs[ i ].settings.board) < 0 )
 			{
 				retval = -1;
 			}
