@@ -72,13 +72,17 @@ static ssize_t fifo_read( gpib_board_t *board, cb7210_private_t *cb_priv, uint8_
 	size_t count = 0;
 	ssize_t retval = 0;
 	nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
-	unsigned long iobase = nec_priv->iobase;
+	unsigned long iobase=cb_priv->fifo_iobase;
 	int hs_status;
 	uint16_t word;
 	unsigned long flags;
 
+	if(iobase == 0)
+	{
+		printk("cb7210: fifo iobase is zero!\n");
+		return -EIO;
+	}
 	*end = 0;
-
 	if( length <= cb7210_fifo_size )
 	{
 		printk("cb7210: bug! fifo_read() with length < fifo size\n" );

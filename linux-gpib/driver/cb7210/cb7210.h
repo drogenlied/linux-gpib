@@ -40,6 +40,7 @@ typedef struct
 	struct pci_dev *pci_device;
 	// base address of amccs5933 pci chip
 	unsigned long amcc_iobase;
+	unsigned long fifo_iobase;
 	unsigned int irq;
 	volatile uint8_t hs_mode_bits;
 	volatile unsigned out_fifo_half_empty : 1;

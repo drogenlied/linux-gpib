@@ -670,6 +670,7 @@ int cb_pcmcia_attach( gpib_board_t *board )
 	nec_priv = &cb_priv->nec7210_priv;
 
 	nec_priv->iobase = dev_list->io.BasePort1;
+	cb_priv->fifo_iobase = nec_priv->iobase;
 
 	if(request_irq(dev_list->irq.AssignedIRQ, cb7210_interrupt, SA_SHIRQ,
 		"cb7210", board))

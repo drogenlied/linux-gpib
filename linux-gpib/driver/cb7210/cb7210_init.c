@@ -370,6 +370,7 @@ int cb_pci_attach(gpib_board_t *board)
 
 	cb_priv->amcc_iobase = pci_resource_start( cb_priv->pci_device, 0 );
 	nec_priv->iobase = pci_resource_start( cb_priv->pci_device, 1 );
+	cb_priv->fifo_iobase = pci_resource_start( cb_priv->pci_device, 2 );
 
 	isr_flags |= SA_SHIRQ;
 	if(request_irq(cb_priv->pci_device->irq, cb_pci_interrupt, isr_flags, "pci-gpib", board))
@@ -430,7 +431,8 @@ int cb_isa_attach(gpib_board_t *board)
 		return -1;
 	}
 	nec_priv->iobase = board->ibbase;
-
+	board->fifo_iobase = nec_priv->iobase;
+	
 	bits = irq_bits( board->ibirq );
 	if( bits == 0 )
 	{
