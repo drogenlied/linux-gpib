@@ -34,16 +34,21 @@
  *          well as the interface board itself must be
  *          addressed by calling ibcmd.
  */
-IBLCL ssize_t ibwrt(uint8_t *buf, size_t cnt, unsigned int more)
+IBLCL ssize_t ibwrt(uint8_t *buf, size_t cnt, int more)
 {
 	size_t bytes_sent = 0;
 	ssize_t ret = 0;
 	int status = board.update_status();
 
-	DBGin("ibwrt");
 	if((status & TACS) == 0)
 	{
 		printk("gpib: not talker during write\n");
+		return -1;
+	}
+
+	if(cnt == 0 && more == 0)
+	{
+		printk("gpib: ibwrt called with no data\n");
 		return -1;
 	}
 	board.go_to_standby();

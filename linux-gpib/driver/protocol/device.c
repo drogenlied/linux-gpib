@@ -84,31 +84,55 @@ IBLCL int dvclr(int padsad)
 
 IBLCL int dvrsp(int padsad, uint8_t *result)
 {
-	uint8_t cmd_string[2];
+	uint8_t cmd_string[8];
 	int status = board.update_status();
 	int end_flag;
 	ssize_t ret;
+	unsigned int pad, sad;
+	int i;
 
 	if((status & CIC) == 0)
 	{
 		printk("gpib: not CIC during serial poll\n");
 		return -1;
 	}
-	if(receive_setup(padsad) < 0)
-		return -1;
 
-	// send serial poll command
+	pad = padsad & 0xff;
+	sad = (padsad >> 8) & 0xff;
+	if ((pad > 0x1E) || (sad && ((sad < 0x60) || (sad > 0x7E)))) {
+		printk("gpib: bad address for serial poll");
+		return -1;
+	}
+
 	osStartTimer(pollTimeidx);
 
-	cmd_string[0] = SPE;
-	ibcmd(cmd_string, 1);
+	board.take_control(0);
 
+	i = 0;
+	cmd_string[i++] = UNL;
+	cmd_string[i++] = myPAD | LAD;	/* controller's listen address */
+	if (mySAD)
+		cmd_string[i++] = mySAD;
+	cmd_string[i++] = SPE;	//serial poll enable
+	// send talk address
+	cmd_string[i++] = pad | TAD;
+	if (sad)
+		cmd_string[i++] = sad;
+
+	if (ibcmd(cmd_string, i) < 0)
+		return -1;
+
+	board.go_to_standby();
+
+	// read poll result
 	ret = board.read(result, 1, &end_flag);
 	if(ret <= 0)
 	{
-		printk("gpib serial poll failed\n");
+		printk("gpib: serial poll failed\n");
 		return -1;
 	}
+
+	board.take_control(1);
 
 	cmd_string[0] = SPD;	/* disable serial poll bytes */
 	cmd_string[1] = UNT;

@@ -42,9 +42,9 @@ IBLCL ssize_t nec7210_command(uint8_t *buffer, size_t length)
 	imr2_bits |= HR_COIE;
 	GPIBout(IMR2, imr2_bits);
 
-	if (!noTimo) {
-		board.status |= (ERR | TIMO);
-		iberr = EABO;
+	if (!noTimo)
+	{
+		board.status |= TIMO;
 	}
 	return count;
 }

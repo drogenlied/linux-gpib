@@ -43,11 +43,6 @@ IBLCL ssize_t ibcmd(uint8_t *buf, size_t cnt)
 		bytes_sent += ret;
 	}
 
-	if(board.go_to_standby())
-	{
-		printk("gpib error while going to standby\n");
-	}
-
 	osRemoveTimer();
 
 	if(ret < 0)
