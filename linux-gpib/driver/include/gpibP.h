@@ -28,5 +28,26 @@ extern struct list_head registered_drivers;
 #define GPIB_DPRINTK( arg... )
 #endif
 
+#include <asm/io.h>
+extern inline void writeb_wrapper( unsigned int value, unsigned long address )
+{
+	writeb( value, address );
+}
+
+extern inline unsigned int readb_wrapper( unsigned long address )
+{
+	return readb( address );
+}
+
+extern inline void outb_wrapper( unsigned int value, unsigned long address )
+{
+	outb( value, address );
+}
+
+extern inline unsigned int inb_wrapper( unsigned long address )
+{
+	return inb( address );
+}
+
 #endif	// _GPIB_P_H
 

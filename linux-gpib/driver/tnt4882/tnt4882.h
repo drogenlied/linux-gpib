@@ -35,10 +35,14 @@ typedef struct
 	nec7210_private_t nec7210_priv;
 	struct mite_struct *mite;
 	unsigned int irq;
+	void (*io_write)( unsigned int value, unsigned long address );
+	unsigned int (*io_read)( unsigned long address );
 } tnt4882_private_t;
 
 // interfaces
 extern gpib_interface_t ni_isa_interface;
+extern gpib_interface_t ni_pci_interface;
+extern gpib_interface_t ni_pcmcia_interface;
 
 // interface functions
 ssize_t tnt4882_read(gpib_board_t *board, uint8_t *buffer, size_t length, int
@@ -60,6 +64,10 @@ void tnt4882_secondary_address(gpib_board_t *board, unsigned int address, int
 int tnt4882_parallel_poll(gpib_board_t *board, uint8_t *result);
 int tnt4882_serial_poll_response(gpib_board_t *board, uint8_t status);
 
+// pcmcia init/cleanup
+int __init init_ni_gpib_cs(void);
+int __exit exit_ni_gpib_cs(void);
+
 // interrupt service routines
 void tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp);
 
@@ -77,9 +85,9 @@ static const int atgpib_iosize = 32;
 enum
 {
 	ACCWR = 0x5,
-	INTRT = 0x7,
 	// offset of auxilliary command register in 9914 mode
 	AUXCR = 0x6,
+	INTRT = 0x7,
 	// register number for auxilliary command register when swap bit is set (9914 mode)
 	SWAPPED_AUXCR = 0xa,
 	HSSEL = 0xd,	// handshake select register

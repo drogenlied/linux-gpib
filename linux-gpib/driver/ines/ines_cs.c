@@ -118,7 +118,7 @@ static void gpib_detach(dev_link_t *);
    database.
 */
 
-static dev_info_t dev_info = "ines_cs";
+static dev_info_t dev_info = "ines_gpib_cs";
 
 /*
    A linked list of "instances" of the gpib device.  Each actual

@@ -172,6 +172,48 @@ void tnt4882_free_private(gpib_board_t *board)
 	}
 }
 
+void tnt4882_init( tnt4882_private_t *tnt_priv )
+{
+	nec7210_private_t *nec_priv = &tnt_priv->nec7210_priv;
+	const unsigned long iobase = nec_priv->iobase;
+
+	/* NAT 4882 reset */
+	udelay(1);
+	tnt_priv->io_write( SFTRST, iobase + CMDR );	/* Turbo488 software reset */
+	udelay(1);
+	tnt_priv->io_write(SETSC, iobase + CMDR);
+
+	// turn off one-chip mode
+	tnt_priv->io_write(NODMA, iobase + HSSEL);
+
+	// make sure we are in 7210 mode
+	tnt_priv->io_write(AUX_7210, iobase + AUXCR);
+	udelay(1);
+	// registers might be swapped, so write it to the swapped address too
+	tnt_priv->io_write(AUX_7210, iobase +  SWAPPED_AUXCR);
+	udelay(1);
+
+	nec7210_board_reset( &tnt_priv->nec7210_priv );
+
+	// turn off one chip mode and dma
+	tnt_priv->io_write( NODMA , iobase + HSSEL);
+
+	// enable passing of nec7210 interrupts
+	tnt_priv->io_write(0x2, iobase + IMR3);
+
+	// enable interrupt
+	tnt_priv->io_write(0x1, iobase + INTRT);
+
+	// enable nec7210 interrupts
+	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
+		HR_DETIE | HR_APTIE | HR_CPTIE | HR_DOIE | HR_DIIE;
+	nec_priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
+	write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
+	write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
+
+	write_byte(nec_priv, AUX_PON, AUXMR);
+}
+
 int ni_pci_attach(gpib_board_t *board)
 {
 	tnt4882_private_t *tnt_priv;
@@ -183,6 +225,8 @@ int ni_pci_attach(gpib_board_t *board)
 	if(tnt4882_allocate_private(board))
 		return -ENOMEM;
 	tnt_priv = board->private_data;
+	tnt_priv->io_write = writeb_wrapper;
+	tnt_priv->io_read = readb_wrapper;
 	nec_priv = &tnt_priv->nec7210_priv;
 	nec_priv->read_byte = nec7210_iomem_read_byte;
 	nec_priv->write_byte = nec7210_iomem_write_byte;
@@ -217,46 +261,12 @@ int ni_pci_attach(gpib_board_t *board)
 	// get irq
 	if(request_irq(mite_irq(tnt_priv->mite), tnt4882_interrupt, isr_flags, "ni-pci-gpib", board))
 	{
-		printk("gpib: can't request IRQ %d\n", board->ibirq);
+		printk("gpib: can't request IRQ %d\n", mite_irq( tnt_priv->mite ) );
 		return -1;
 	}
 	tnt_priv->irq = mite_irq(tnt_priv->mite);
 
-	/* NAT 4882 reset */
-	udelay(1);
-	writeb(SFTRST, nec_priv->iobase + CMDR);	/* Turbo488 software reset */
-	udelay(1);
-	writeb(SETSC, nec_priv->iobase + CMDR);	
-
-	// turn off one-chip mode
-	writeb(NODMA, nec_priv->iobase + HSSEL);
-
-	// make sure we are in 7210 mode
-	writeb(AUX_7210, nec_priv->iobase + AUXCR);
-	udelay(1);
-	// registers might be swapped, so write it to the swapped address too
-	writeb(AUX_7210, nec_priv->iobase +  SWAPPED_AUXCR);
-	udelay(1);
-
-	nec7210_board_reset(nec_priv);
-
-	// turn off one chip mode and dma
-	writeb(0x10, nec_priv->iobase + 0xd);	
-
-	// enable passing of nec7210 interrupts
-	writeb(0x2, nec_priv->iobase + IMR3);
-
-	// enable interrupt
-	writeb(0x1, nec_priv->iobase + INTRT);
-
-	// enable nec7210 interrupts
-	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
-		HR_DETIE | HR_APTIE | HR_CPTIE | HR_DOIE | HR_DIIE;
-	nec_priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
-	write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
-	write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
-
-	write_byte(nec_priv, AUX_PON, AUXMR);
+	tnt4882_init( tnt_priv );
 
 	return 0;
 }
@@ -294,6 +304,8 @@ int ni_isa_attach(gpib_board_t *board)
 	if(tnt4882_allocate_private(board))
 		return -ENOMEM;
 	tnt_priv = board->private_data;
+	tnt_priv->io_write = outb_wrapper;
+	tnt_priv->io_read = inb_wrapper;
 	nec_priv = &tnt_priv->nec7210_priv;
 	nec_priv->read_byte = nec7210_ioport_read_byte;
 	nec_priv->write_byte = nec7210_ioport_write_byte;
@@ -315,38 +327,7 @@ int ni_isa_attach(gpib_board_t *board)
 	}
 	tnt_priv->irq = board->ibirq;
 
-	/* NAT 4882 reset */
-	udelay(1);
-	outb(SFTRST, nec_priv->iobase + CMDR);	/* Turbo488 software reset */
-	udelay(1);
-	outb(SETSC, nec_priv->iobase + CMDR);	
-
-	// turn off one-chip mode
-	outb(NODMA, nec_priv->iobase + HSSEL);
-
-	// make sure we are in 7210 mode
-	outb(AUX_7210, nec_priv->iobase + AUXCR);
-	udelay(1);
-	// registers might be swapped, so write it to the swapped address too
-	outb(AUX_7210, nec_priv->iobase +  SWAPPED_AUXCR);
-	udelay(1);
-
-	nec7210_board_reset(nec_priv);
-
-	// enable passing of nec7210 interrupts
-	outb(0x2, nec_priv->iobase + IMR3);
-
-	// enable interrupt
-	outb(0x1, nec_priv->iobase + INTRT);
-
-	// enable nec7210 interrupts
-	nec_priv->imr1_bits = HR_ERRIE | HR_DECIE | HR_ENDIE |
-		HR_DETIE | HR_APTIE | HR_CPTIE | HR_DOIE | HR_DIIE;
-	nec_priv->imr2_bits = IMR2_ENABLE_INTR_MASK;
-	write_byte(nec_priv, nec_priv->imr1_bits, IMR1);
-	write_byte(nec_priv, nec_priv->imr2_bits, IMR2);
-
-	write_byte(nec_priv, AUX_PON, AUXMR);
+	tnt4882_init( tnt_priv );
 
 	return 0;
 }
@@ -382,6 +363,14 @@ int init_module(void)
 	gpib_register_driver(&ni_isa_interface);
 	gpib_register_driver(&ni_pci_interface);
 
+#if defined(GPIB_CONFIG_PCMCIA)
+	INIT_LIST_HEAD(&ni_pcmcia_interface.list);
+
+	gpib_register_driver(&ni_pcmcia_interface);
+	if( init_ni_gpib_cs() < 0 )
+		return -1;
+#endif
+
 	mite_init();
 	mite_list_devices();
 
@@ -392,6 +381,10 @@ void cleanup_module(void)
 {
 	gpib_unregister_driver(&ni_isa_interface);
 	gpib_unregister_driver(&ni_pci_interface);
+#if defined(GPIB_CONFIG_PCMCIA)
+	gpib_unregister_driver(&ni_pcmcia_interface);
+	exit_ni_gpib_cs();
+#endif
 
 	mite_cleanup();
 }
