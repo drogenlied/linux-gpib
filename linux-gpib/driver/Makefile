@@ -54,6 +54,9 @@ endif
 ifdef TNT4882TMS
 SUBDIRS += tnt4882-tms
 endif
+ifdef CEC
+SUBDIRS += cec
+endif
 
 all : $(EXP_INC) subdirs gpib-common.o
 

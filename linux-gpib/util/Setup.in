@@ -97,6 +97,7 @@ dialog --title "Board Type Selection" \
 	"TNT4882" "National Instruments boards with tnt4882 chip" "on" \
 	"CB7210" "Measurement Computing (Computer Boards) boards" "on" \
 	"INES" "Ines boards" "on" \
+	"CEC" "Captial Equipment Corporation" "on" \
 	"TNT4882TMS" "NI PCI-GPIB in tms9914 mode (for testing only)" "off" \
 	2>/tmp/reply
 
