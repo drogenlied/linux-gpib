@@ -36,12 +36,12 @@ Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.2
 or any later version published by the Free Software Foundation;
 with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts.
-A copy of the license is included in the section entitled "GNU
-Free Documentation License".
+A copy of the license is included in the section entitled
+<link LINKEND="gfdl">"GNU Free Documentation License"</link>.
 </para>
 </section>
 
-<section>
+<section ID="reference">
 <title>
 	Linux-GPIB Reference
 </title>
@@ -53,7 +53,7 @@ Free Documentation License".
 	Linux-GPIB Function Reference
 </title>
 
-<refentry id="function-reference-ibdev">
+<refentry ID="function-reference-ibdev">
 <refmeta>
 	<refentrytitle>ibdev</refentrytitle>
 	<manvolnum>3</manvolnum>
@@ -108,7 +108,7 @@ Free Documentation License".
 </refsect1>
 </refentry>
 
-<refentry id="function-reference-ibeos">
+<refentry ID="function-reference-ibeos">
 <refmeta>
 	<refentrytitle>ibeos</refentrytitle>
 	<manvolnum>3</manvolnum>
@@ -138,7 +138,7 @@ Free Documentation License".
 	bits to set the eos mode:
 	</para>
 	<para>
-	<table COLSEP="1" ROWSEP="1" TOCENTRY="1" ORIENT="port" PGWIDE="1">
+	<table COLSEP="1" ROWSEP="1" ORIENT="port" PGWIDE="1">
 	<title>End-of-String Mode Bits</title>
 	<tgroup COLS="3" ALIGN="left" >
 	<thead>
@@ -180,7 +180,7 @@ Free Documentation License".
 </refsect1>
 </refentry>
 
-<refentry id="function-reference-ibeot">
+<refentry ID="function-reference-ibeot">
 <refmeta>
 	<refentrytitle>ibeot</refentrytitle>
 	<manvolnum>3</manvolnum>
@@ -204,7 +204,10 @@ Free Documentation License".
 	Description
 	</title>
 	<para>
-	ibeot()
+	If <parameter>send_eoi</parameter> is non-zero, then the EOI
+	line will be asserted with the last byte sent by
+	calls to <link LINKEND="function-reference-ibwrt">ibwrt()</link>
+	and related functions.
 	</para>
 </refsect1>
 <refsect1>
@@ -217,7 +220,7 @@ Free Documentation License".
 </refsect1>
 </refentry>
 
-<refentry id="function-reference-ibpad">
+<refentry ID="function-reference-ibpad">
 <refmeta>
 	<refentrytitle>ibpad</refentrytitle>
 	<manvolnum>3</manvolnum>
@@ -254,7 +257,7 @@ Free Documentation License".
 </refsect1>
 </refentry>
 
-<refentry id="function-reference-ibrd">
+<refentry ID="function-reference-ibrd">
 <refmeta>
 	<refentrytitle>ibrd</refentrytitle>
 	<manvolnum>3</manvolnum>
@@ -306,7 +309,7 @@ Free Documentation License".
 </refsect1>
 </refentry>
 
-<refentry id="function-reference-ibsad">
+<refentry ID="function-reference-ibsad">
 <refmeta>
 	<refentrytitle>ibsad</refentrytitle>
 	<manvolnum>3</manvolnum>
@@ -343,7 +346,7 @@ Free Documentation License".
 </refsect1>
 </refentry>
 
-<refentry id="function-reference-ibtmo">
+<refentry ID="function-reference-ibtmo">
 <refmeta>
 	<refentrytitle>ibtmo</refentrytitle>
 	<manvolnum>3</manvolnum>
@@ -380,7 +383,7 @@ Free Documentation License".
 </refsect1>
 </refentry>
 
-<refentry id="function-reference-ibwrt">
+<refentry ID="function-reference-ibwrt">
 <refmeta>
 	<refentrytitle>ibwrt</refentrytitle>
 	<manvolnum>3</manvolnum>
