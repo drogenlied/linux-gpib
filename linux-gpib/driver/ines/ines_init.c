@@ -191,6 +191,7 @@ gpib_interface_t ines_pci_interface =
 	secondary_address: ines_secondary_address,
 	serial_poll_response: ines_serial_poll_response,
 	serial_poll_status: ines_serial_poll_status,
+	t1_delay: ines_t1_delay,
 	provider_module: &__this_module,
 };
 
@@ -217,6 +218,7 @@ gpib_interface_t ines_pci_accel_interface =
 	secondary_address: ines_secondary_address,
 	serial_poll_response: ines_serial_poll_response,
 	serial_poll_status: ines_serial_poll_status,
+	t1_delay: ines_t1_delay,
 	provider_module: &__this_module,
 };
 
@@ -260,8 +262,8 @@ void ines_online( ines_private_t *ines_priv, const gpib_board_t *board, int use_
 {
 	nec7210_private_t *nec_priv = &ines_priv->nec7210_priv;
 
-	/* set internal counter register for 8 MHz input clock */
-	write_byte( nec_priv, ICR | 8, AUXMR );
+	/* ines doesn't seem to use internal count register */
+	write_byte( nec_priv, ICR | 0, AUXMR );
 
 	write_byte( nec_priv, INES_AUX_XMODE, AUXMR );
 	write_byte( nec_priv, INES_AUX_CLR_IN_FIFO, AUXMR );

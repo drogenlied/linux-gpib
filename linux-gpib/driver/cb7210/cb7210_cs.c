@@ -607,6 +607,7 @@ gpib_interface_t cb_pcmcia_interface =
 	secondary_address: cb7210_secondary_address,
 	serial_poll_response: cb7210_serial_poll_response,
 	serial_poll_status: cb7210_serial_poll_status,
+	t1_delay: cb7210_t1_delay,
 	provider_module: &__this_module,
 };
 
@@ -633,6 +634,7 @@ gpib_interface_t cb_pcmcia_accel_interface =
 	secondary_address: cb7210_secondary_address,
 	serial_poll_response: cb7210_serial_poll_response,
 	serial_poll_status: cb7210_serial_poll_status,
+	t1_delay: cb7210_t1_delay,
 	provider_module: &__this_module,
 };
 

@@ -95,6 +95,8 @@ extern void nec7210_parallel_poll_response( gpib_board_t *board,
 	nec7210_private_t *priv, unsigned int configuration );
 extern uint8_t nec7210_serial_poll_status( gpib_board_t *board,
 	nec7210_private_t *priv );
+extern unsigned int nec7210_t1_delay( gpib_board_t *board,
+	nec7210_private_t *priv, unsigned int nano_sec );
 
 // utility functions
 extern void nec7210_board_reset( nec7210_private_t *priv, const gpib_board_t *board );

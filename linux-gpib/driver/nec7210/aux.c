@@ -112,6 +112,26 @@ void nec7210_release_rfd_holdoff( gpib_board_t *board, nec7210_private_t *priv )
 	spin_unlock_irqrestore( &board->spinlock, flags );
 }
 
+unsigned int nec720_t1_delay( gpib_board_t *board, nec7210_private_t *priv,
+	unsigned int nano_sec )
+{
+	unsigned int retval;
+
+	if( nano_sec <= 500 )
+	{
+		priv->auxb_bits |= HR_TRI;
+		retval = 500;
+	}else
+	{
+		priv->auxb_bits &= ~HR_TRI;
+		retval = 2000;
+	}
+	write_byte( priv, priv->auxb_bits, AUXMR );
+
+	return retval;
+}
+
+EXPORT_SYMBOL( nec7210_t1_delay );
 EXPORT_SYMBOL( nec7210_request_system_control );
 EXPORT_SYMBOL( nec7210_take_control );
 EXPORT_SYMBOL( nec7210_go_to_standby );

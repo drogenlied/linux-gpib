@@ -157,6 +157,7 @@ gpib_interface_t cb_pci_interface =
 	secondary_address: cb7210_secondary_address,
 	serial_poll_response: cb7210_serial_poll_response,
 	serial_poll_status: cb7210_serial_poll_status,
+	t1_delay: cb7210_t1_delay,
 	provider_module: &__this_module,
 };
 
@@ -183,6 +184,7 @@ gpib_interface_t cb_pci_accel_interface =
 	secondary_address: cb7210_secondary_address,
 	serial_poll_response: cb7210_serial_poll_response,
 	serial_poll_status: cb7210_serial_poll_status,
+	t1_delay: cb7210_t1_delay,
 	provider_module: &__this_module,
 };
 
@@ -209,6 +211,7 @@ gpib_interface_t cb_isa_interface =
 	secondary_address: cb7210_secondary_address,
 	serial_poll_response: cb7210_serial_poll_response,
 	serial_poll_status: cb7210_serial_poll_status,
+	t1_delay: cb7210_t1_delay,
 	provider_module: &__this_module,
 };
 
@@ -235,6 +238,7 @@ gpib_interface_t cb_isa_accel_interface =
 	secondary_address: cb7210_secondary_address,
 	serial_poll_response: cb7210_serial_poll_response,
 	serial_poll_status: cb7210_serial_poll_status,
+	t1_delay: cb7210_t1_delay,
 	provider_module: &__this_module,
 };
 
@@ -290,6 +294,7 @@ void cb7210_init( cb7210_private_t *cb_priv, const gpib_board_t *board )
 	cb_priv->hs_mode_bits = HS_HF_INT_EN;
 	outb( cb_priv->hs_mode_bits, iobase + HS_MODE );
 
+	write_byte( nec_priv, AUX_LO_SPEED, AUXMR );
 	/* set clock register for maximum (20 MHz) driving frequency
 	 * ICR should be set to clock in megahertz (1-15) and to zero
 	 * for clocks faster than 15 MHz (max 20MHz) */

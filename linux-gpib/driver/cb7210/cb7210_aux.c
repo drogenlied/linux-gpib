@@ -58,3 +58,21 @@ int cb7210_line_status( const gpib_board_t *board )
 
 	return status;
 }
+
+unsigned int cb7210_t1_delay( gpib_board_t *board, unsigned int nano_sec )
+{
+	cb7210_private_t *cb_priv = board->private_data;
+	nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
+	unsigned int retval;
+
+	retval = nec7210_t1_delay( board, nec_priv, nano_sec );
+
+	if( nano_sec <= 350 )
+	{
+		write_byte( nec_priv, AUX_HI_SPEED, AUXMR );
+		retval = 350;
+	}else
+		write_byte( nec_priv, AUX_LO_SPEED, AUXMR );
+
+	return retval;
+}

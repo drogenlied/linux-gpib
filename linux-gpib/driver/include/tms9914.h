@@ -94,6 +94,8 @@ extern void tms9914_parallel_poll_response( gpib_board_t *board,
 extern void tms9914_serial_poll_response(gpib_board_t *board, tms9914_private_t *priv, uint8_t status);
 extern uint8_t tms9914_serial_poll_status( gpib_board_t *board, tms9914_private_t *priv );
 extern int tms9914_line_status( const gpib_board_t *board, tms9914_private_t *priv );
+extern unsigned int tms9914_t1_delay( gpib_board_t *board, tms9914_private_t *priv,
+	unsigned int nano_sec );
 
 // utility functions
 extern void tms9914_board_reset(tms9914_private_t *priv);
@@ -253,8 +255,8 @@ enum aux_cmd_bits
 	AUX_PTS = 0x14,	/* X pass through next secondary  */
 	AUX_STDL = 0x15,	/* d short T1 delay                 */
 	AUX_SHDW = 0x16,	/* d shadow handshake             */
-	AUX_VSTDL = 0x17,	/* d very short T1 delay              */
-	AUX_RSV2 = 0x18,	// d request service bit 2
+	AUX_VSTDL = 0x17,	/* d very short T1 delay (smj9914 extension) */
+	AUX_RSV2 = 0x18,	/* d request service bit 2 (smj9914 extension) */
 };
 
 #endif	//_TMS9914_H

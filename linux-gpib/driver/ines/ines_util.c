@@ -63,4 +63,30 @@ void ines_set_xfer_counter( ines_private_t *priv, unsigned int count )
 	outb( count & 0xff, iobase( priv ) + XFER_COUNT_LOWER );
 }
 
+unsigned int ines_t1_delay( gpib_board_t *board, unsigned int nano_sec )
+{
+	ines_private_t *ines_priv = board->private_data;
+	nec7210_private_t *nec_priv = &ines_priv->nec7210_priv;
+	unsigned int retval;
 
+	retval = nec7210_t1_delay( board, nec_priv, nano_sec );
+
+	if( nano_sec <= 250 )
+	{
+		write_byte( nec_priv, INES_AUXD | INES_FOLLOWING_T1_250ns |
+			INES_INITIAL_T1_2000ns, AUXMR );
+		retval = 250;
+	}else if( nano_sec <=350 )
+	{
+		write_byte( nec_priv, INES_AUXD | INES_FOLLOWING_T1_350ns |
+			INES_INITIAL_T1_2000ns, AUXMR );
+		retval = 350;
+	}else if( nano_sec <= 500 )
+	{
+		write_byte( nec_priv, INES_AUXD | INES_FOLLOWING_T1_500ns |
+			INES_INITIAL_T1_2000ns, AUXMR );
+		retval = 500;
+	}
+	
+	return retval;
+}

@@ -122,6 +122,11 @@ int hp82335_line_status( const gpib_board_t *board )
 	hp82335_private_t *priv = board->private_data;
 	return tms9914_line_status( board, &priv->tms9914_priv );
 }
+unsigned int hp82335_t1_delay( gpib_board_t *board, unsigned int nano_sec )
+{
+	hp82335_private_t *priv = board->private_data;
+	return tms9914_t1_delay( board, &priv->tms9914_priv, nano_sec );
+}
 
 gpib_interface_t hp82335_interface =
 {
@@ -144,6 +149,7 @@ gpib_interface_t hp82335_interface =
 	primary_address: hp82335_primary_address,
 	secondary_address: hp82335_secondary_address,
 	serial_poll_response: hp82335_serial_poll_response,
+	t1_delay: hp82335_t1_delay,
 	provider_module: &__this_module,
 };
 

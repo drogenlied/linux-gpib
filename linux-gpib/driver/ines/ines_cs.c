@@ -616,6 +616,7 @@ gpib_interface_t ines_pcmcia_interface =
 	secondary_address: ines_secondary_address,
 	serial_poll_response: ines_serial_poll_response,
 	serial_poll_status: ines_serial_poll_status,
+	t1_delay: ines_t1_delay,
 	provider_module: &__this_module,
 };
 
@@ -642,6 +643,7 @@ gpib_interface_t ines_pcmcia_accel_interface =
 	secondary_address: ines_secondary_address,
 	serial_poll_response: ines_serial_poll_response,
 	serial_poll_status: ines_serial_poll_status,
+	t1_delay: ines_t1_delay,
 	provider_module: &__this_module,
 };
 

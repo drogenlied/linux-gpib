@@ -64,6 +64,7 @@ void ines_parallel_poll_response( gpib_board_t *board, uint8_t config );
 void ines_serial_poll_response(gpib_board_t *board, uint8_t status);
 uint8_t ines_serial_poll_status( gpib_board_t *board );
 int ines_line_status( const gpib_board_t *board );
+unsigned int ines_t1_delay( gpib_board_t *board, unsigned int nano_sec );
 
 // interrupt service routines
 void ines_interrupt(int irq, void *arg, struct pt_regs *registerp);
@@ -191,6 +192,18 @@ enum ines_aux_cmds
 	INES_AUX_CLR_OUT_FIFO = 0x5,
 	INES_AUX_CLR_IN_FIFO = 0x6,
 	INES_AUX_XMODE = 0xa,
+};
+
+enum ines_auxd_bits
+{
+	INES_FOLLOWING_T1_MASK = 0x3,
+	INES_FOLLOWING_T1_500ns = 0x0,
+	INES_FOLLOWING_T1_350ns = 0x1,
+	INES_FOLLOWING_T1_250ns = 0x2,
+	INES_INITIAL_TI_MASK = 0xc,
+	INES_INITIAL_T1_2000ns = 0x0,
+	INES_INITIAL_T1_1100ns = 0x4,
+	INES_INITIAL_T1_700ns = 0x8,
 };
 
 #endif	// _INES_GPIB_H

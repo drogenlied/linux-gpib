@@ -673,6 +673,7 @@ gpib_interface_t ni_pcmcia_interface =
 	secondary_address: tnt4882_secondary_address,
 	serial_poll_response: tnt4882_serial_poll_response,
 	serial_poll_status: tnt4882_serial_poll_status,
+	t1_delay: tnt4882_t1_delay,
 	provider_module: &__this_module,
 };
 

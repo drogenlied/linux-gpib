@@ -117,6 +117,11 @@ uint8_t tnt4882_serial_poll_status( gpib_board_t *board )
 	tnt4882_private_t *priv = board->private_data;
 	return tms9914_serial_poll_status( board, &priv->tms9914_priv );
 }
+unsigned int tnt4882_t1_delay( gpib_board_t *board, unsigned int nano_sec )
+{
+	tnt4882_private_t *priv = board->private_data;
+	return tms9914_t1_delay( board, &priv->tms9914_priv, nano_sec );
+}
 
 gpib_interface_t ni_pci_interface =
 {
@@ -138,6 +143,7 @@ gpib_interface_t ni_pci_interface =
 	primary_address: tnt4882_primary_address,
 	secondary_address: tnt4882_secondary_address,
 	serial_poll_response: tnt4882_serial_poll_response,
+	t1_delay: tnt4882_t1_delay,
 	provider_module: &__this_module,
 };
 

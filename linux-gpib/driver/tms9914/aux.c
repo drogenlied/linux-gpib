@@ -100,6 +100,32 @@ void tms9914_request_system_control( gpib_board_t *board, tms9914_private_t *pri
 	}
 }
 
+unsigned int tms9914_t1_delay( gpib_board_t *board, tms9914_private_t *priv,
+	unsigned int nano_sec )
+{
+	static const int clock_period = 200;	// assuming 5Mhz input clock
+	int num_cycles;
+
+	num_cycles = 12;
+
+	if( nano_sec <= 8 * clock_period )
+	{
+		write_byte( priv, AUX_STDL | AUX_CS, AUXCR );
+		num_cycles = 8;
+	}else
+		write_byte( priv, AUX_STDL, AUXCR );
+
+	if( nano_sec <= 4 * clock_period )
+	{
+		write_byte( priv, AUX_VSTDL | AUX_CS, AUXCR );
+		num_cycles = 4;
+	}else
+		write_byte( priv, AUX_VSTDL, AUXCR );
+
+	return num_cycles * clock_period;
+}
+
+EXPORT_SYMBOL( tms9914_t1_delay );
 EXPORT_SYMBOL( tms9914_request_system_control );
 EXPORT_SYMBOL( tms9914_take_control );
 EXPORT_SYMBOL( tms9914_go_to_standby );

@@ -58,27 +58,23 @@ unsigned int tnt4882_t1_delay( gpib_board_t *board, unsigned int nano_sec )
 	tnt4882_private_t *tnt_priv = board->private_data;
 	nec7210_private_t *nec_priv = &tnt_priv->nec7210_priv;
 	unsigned long iobase = nec_priv->iobase;
+	unsigned int retval;
+
+	retval = nec7210_t1_delay( board, nec_priv, nano_sec );
 
 	if( nano_sec <= 350 )
+	{
 		tnt_priv->io_write( MSTD, iobase + KEYREG );
-	else
+		retval = 350;
+	}else
 		tnt_priv->io_write( 0, iobase + KEYREG );
 
-	if( nano_sec <= 500 )
-	{
-		nec_priv->auxb_bits |= HR_TRI;
-	}else
-		nec_priv->auxb_bits &= ~HR_TRI;
-	write_byte( nec_priv, nec_priv->auxb_bits, AUXMR );
-
-	if( nano_sec <= 1100 )
+	if( nano_sec > 500 && nano_sec <= 1100 )
 	{
 		write_byte( nec_priv, AUXRI | USTD, AUXMR );
+		retval = 1100;
 	}else
 		write_byte( nec_priv, AUXRI, AUXMR );
 
-	if( nano_sec <= 350 ) return 350;
-	if( nano_sec <= 500 ) return 500;
-	if( nano_sec <= 1100 ) return 1100;
-	return 2000;
+	return retval;
 }
