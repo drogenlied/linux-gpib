@@ -8,7 +8,7 @@
 
 void ib_CreateVerboseError(Tcl_Interp *interp,char *entry );
 
-int Gpib_Init ( Tcl_Interp *interp ){
+int Gpib_tcl_Init ( Tcl_Interp *interp ){
 
 
 extern int gpibCmd _ANSI_ARGS_(( ClientData clientData,
