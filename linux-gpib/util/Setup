@@ -13,9 +13,9 @@ clear
 DIALOG=0
 
 if hash dialog ; then
-	DIALOG=$(hash -t dialog)
+	DIALOG=$(type -p dialog)
 elif hash whiptail ; then
-	DIALOG=$(hash -t whiptail)
+	DIALOG=$(type -p whiptail)
 fi
 
 if [ $DIALOG == 0 ] ; then
