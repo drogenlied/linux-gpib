@@ -36,6 +36,7 @@ IBLCL void bd_PCIInfo(void)
 
 	pci_config_reg = ib_pci_dev->resource[0].start & PCI_BASE_ADDRESS_IO_MASK;
 	ibbase = ib_pci_dev->resource[1].start & PCI_BASE_ADDRESS_IO_MASK;
+	// there is also a resource[2] of size 16
 	ibirq = ib_pci_dev->irq;
 
 	pci_DisableIRQ ();
