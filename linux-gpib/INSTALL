@@ -2,21 +2,6 @@
 Installing Linux-GPIB
 --------------------------------------------------------------------
 
-Supported Hardware:
----------------------------------------------------------------------
-
-See the file named drivers.txt
-
-------------------------------------------------------------------------
-
-Important Note:
-
-You'll need the 'dialog' or 'whiptail' package installed on your system 
-to run the installation scripts correctly.
-
--------------------------------------------------------------------------
-
-
 A) First steps:
 ---------------
 
@@ -58,34 +43,24 @@ o) Unpacking the Software:
 	3) run 'make oldconfig' in your kernel source directory.
 	4) run 'make dep' in the kernel source directory.
 
-o) Installing additional Software:
-	If you want to use TCL language support for the GPIB system
-	you have to get the newest TCL version and install it on your system.
-	The GPIB module can be loaded with the dynamic link facility
-	using
-
-	load <path>/libgpib-tcl.so
-
 
 B) Installing Linux-GPIB
 -------------------------
 
-o) cd to your linux-gpib directory and type 'make config'.  If you
-	have old files you want to clean up, do a 'make clean' first.
-	You will be prompted for the path to your linux kernel source,
-	and which gpib drivers you wish to compile.
+o) cd to your linux-gpib directory and run the './configure' script.
+	run './configure --help' for a list of the possible options.
+	In particular, the '--with-linux-srcdir' option is useful for
+	specifying the location of your Linux kernel source directory,
+	and the '--enable-pcmcia' option is useful for laptops.
 
 	Type 'make'.  Now the Package will be compiled.
 
 	Type 'make install' (as root).  This will copy the kernel driver to
-	/lib/modules/<kernel version>/misc as well as install the library
-	and headers files into /usr/local.  Make sure the directory you installed
-	the shared library to (/usr/local/lib) is listed in your /etc/ld.so.conf file,
-	so that ld can find libgpib.so.  If it is not listed, add it and then run 'ldconfig'.
-	 Lastly the configuration utility looks
-	for linux-gpib related files on your system and asks if you wish to create
-	them if there aren't any.
-
+	/lib/modules/<kernel version>/gpib as well as install the library
+	and headers files.  Make sure the directory you installed the
+	shared library to is listed in your /etc/ld.so.conf file,
+	so that ld can find libgpib.so.  If it is not listed, add it and then run
+	'ldconfig'.
 	If you are using a PCMCIA board, copy the files in the etc/pcmcia
 	subdirectory to /etc/pcmcia.
 
@@ -93,13 +68,13 @@ o) cd to your linux-gpib directory and type 'make config'.  If you
 	them to the group 'gpib' (you can use the 'usermod' tool to change the
 	groups a user belongs to).  Or, you could change the
 	permissions on the device files /dev/gpib[0-15] to something you like
-	better, using 'chmod' (or editing devfsd.conf if you are using devfs).
+	better, using 'chmod' (or edit devfsd.conf if you are using devfs).
 
 C) Configuring the GPIB-Library
 -------------------------------
 
 	Edit /etc/gpib.conf to match your interface board, and any devices you wish
-	to open via ibfind().  See the documentation in doc/html or doc/pdf for
+	to open via ibfind().  See the documentation in doc/ for
 	more information.
 
 D) Loading the driver module
@@ -109,7 +84,7 @@ D) Loading the driver module
 
 		modprobe <driver name>
 
-	See the file 'drivers.txt' to see which driver your board is supported
+	See the documentation in doc/ to see which driver your board is supported
 	by.
 
 	You need to run the 'gpib_config' utility to setup the driver
@@ -126,9 +101,9 @@ D) Loading the driver module
 	post-install tnt4882 export PATH=/sbin:/usr/sbin:/usr/local/sbin:$PATH;gpib_config --minor 0
 
 	to /etc/modules.conf, which would autoload the tnt4882.o module when
-	the library is used.  
-	
-	For PCMCIA cards, you may need to edit the gpib_config call in the 
+	the library is used.
+
+	For PCMCIA cards, you may need to edit the gpib_config call in the
 	/etc/pcmcia/linux-gpib-pcmcia script.
 
 	You may find the examples/ibtest program useful as a starting point in trying
