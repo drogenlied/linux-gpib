@@ -490,14 +490,12 @@ FUN_ACCESSOR(iberr)
 ZEND_FUNCTION(gpib_error_string)
 {
   long n;
-	char *s;
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, 
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
 				  "l", &n
 		) == FAILURE) {
 		return;
 	}
-	s = gpib_error_string(n);
-	RETURN_STRING(s,1);
+	RETURN_STRING((char*)gpib_error_string(n), 1);
 }
 #endif
 
