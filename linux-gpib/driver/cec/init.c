@@ -236,7 +236,7 @@ int cec_pci_attach(gpib_board_t *board)
 	cec_priv->irq = cec_priv->pci_device->irq;
 
 	// enable interrupts on plx chip
-	outl(LINTR1_EN_BIT | PCI_INTR_EN_BIT,
+	outl(LINTR1_EN_BIT | LINTR2_EN_BIT | PCI_INTR_EN_BIT,
 		cec_priv->plx_iobase + PLX_INTCSR_REG);
 
 	cec_init(cec_priv);
