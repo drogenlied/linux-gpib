@@ -182,7 +182,7 @@ int ibconfig( int ud, int option, int value )
 				return exit_library( ud, 0 );
 				break;
 			case IbcAUTOPOLL:
-				retval = configure_autopoll( conf, value );
+				retval = configure_autospoll( conf, value );
 				if( retval < 0 ) return exit_library( ud, 1 );
 				return exit_library( ud, 0 );
 				break;

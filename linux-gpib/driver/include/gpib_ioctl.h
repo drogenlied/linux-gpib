@@ -125,6 +125,7 @@ typedef struct
 typedef short event_ioctl_t;
 typedef int rsc_ioctl_t;
 typedef unsigned int t1_delay_ioctl_t;
+typedef short autospoll_ioctl_t;
 
 /* Standard functions. */
 enum gpib_ioctl
@@ -152,7 +153,7 @@ enum gpib_ioctl
 	CFCIRQ = _IOW( GPIB_CODE, 22, unsigned int ),
 	CFCDMA = _IOW( GPIB_CODE, 23, unsigned int ),
 	CFCBOARDTYPE = _IOW( GPIB_CODE, 24, board_type_ioctl_t ),
-	IBAUTOPOLL = _IO( GPIB_CODE, 25 ),
+
 	IBMUTEX = _IOW( GPIB_CODE, 26, int ),
 	IBSPOLL_BYTES = _IOWR( GPIB_CODE, 27, spoll_bytes_ioctl_t ),
 	IBPPC = _IOW( GPIB_CODE, 28, ppoll_config_ioctl_t ),
@@ -164,7 +165,8 @@ enum gpib_ioctl
 	IBRSC = _IOW( GPIB_CODE, 34, rsc_ioctl_t ),
 	IB_T1_DELAY = _IOW( GPIB_CODE, 35, t1_delay_ioctl_t ),
 	IBLOC = _IO( GPIB_CODE, 36 ),
-	IBONL = _IOW( GPIB_CODE, 37, online_ioctl_t )
+	IBONL = _IOW( GPIB_CODE, 37, online_ioctl_t ),
+	IBAUTOSPOLL = _IOW( GPIB_CODE, 38, autospoll_ioctl_t )
 };
 
 #endif	/* _GPIB_IOCTL_H */

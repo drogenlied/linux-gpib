@@ -36,13 +36,11 @@ enum internal_gpib_addr
 
 int my_wait( ibConf_t *conf, int wait_mask, int clear_mask, int set_mask, int *status );
 void init_async_op( struct async_operation *async );
-int initIbBoardAtFork( void );
 int ibBoardOpen( ibBoard_t *board );
 int ibBoardClose( ibBoard_t *board );
 int ibGetNrBoards(void);
 void yyerror(char *s);
 int iblcleos( const ibConf_t *conf );
-char *ibVerbCode(int code);
 void ibPutMsg (char *format,...);
 void ibPutErrlog(int ud,char *routine);
 int ibParseConfigFile( void );
@@ -85,7 +83,7 @@ int query_ist( const ibBoard_t *board );
 int query_pad( const ibBoard_t *board, unsigned int *pad );
 int query_sad( const ibBoard_t *board, int *sad );
 int conf_online( ibConf_t *conf, int online );
-int configure_autopoll( ibConf_t *conf, int enable );
+int configure_autospoll( ibConf_t *conf, int enable );
 int extractPAD( Addr4882_t address );
 int extractSAD( Addr4882_t address );
 Addr4882_t packAddress( unsigned int pad, int sad );
@@ -96,8 +94,6 @@ int remote_enable( const ibBoard_t *board, int enable );
 int config_read_eos( ibBoard_t *board, int use_eos_char,
 	int eos_char, int compare_8_bits );
 void sync_globals( void );
-int create_autopoll_thread( ibBoard_t *board );
-int destroy_autopoll_thread( ibBoard_t *board );
 int is_system_controller( const ibBoard_t *board );
 int is_cic( const ibBoard_t *board );
 int assert_ifc( ibBoard_t *board, unsigned int usec );

@@ -11,8 +11,6 @@ bus master
 
 a kcontrol module for configuring boards might be nice
 
-fix parallel poll timeouts
-
 possible problems when autopoll happens without remote enable
 
 timeouts on read/write should handle data that was able to be
@@ -32,3 +30,12 @@ is set in the environment as well.  Should warn about this somewhere.
 
 add links to web page (maybe comedi and vimms)
 
+split off parts of library that need libpthread, so we can
+provide a pthread free version (that would lack ibwrta(), etc.).
+Add pthread_atfork() calls for async io safety.
+
+lock on board online/offline
+
+seeing occasional read failure?
+
+libgpib_test: add test for serial poll without autopolling

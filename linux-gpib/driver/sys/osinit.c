@@ -117,7 +117,8 @@ void init_gpib_board( gpib_board_t *board )
 	board->usec_timeout = 3000000;
 	board->parallel_poll_configuration = 0;
 	board->online = 0;
-	board->autopollers = 0;
+	board->autospollers = 0;
+	board->autospoll_pid = 0;
 	init_event_queue( &board->event_queue );
 	board->master = 1;
 	board->exclusive = 0;

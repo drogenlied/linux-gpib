@@ -20,17 +20,12 @@
 
 int board_online( ibBoard_t *board, int online )
 {
-	int retval;
-
 	if( online )
 	{
 		if( ibBoardOpen( board ) < 0 )
 			return -1;
 	}else
 	{
-		retval = destroy_autopoll_thread( board );
-		if( retval < 0 )
-			return retval;
 		ibBoardClose( board );
 	}
 

@@ -125,7 +125,6 @@ int ibParseConfigFile( void )
 		pthread_mutex_unlock( &config_lock );
 		return retval;
 	}
-	initIbBoardAtFork();
 	retval = setup_global_board_descriptors();
 
 	config_parsed = 1;

@@ -207,7 +207,9 @@ struct gpib_board_struct
 	/* Count that keeps track of whether board is up and running or not */
 	unsigned int online;
 	/* number of processes trying to autopoll */
-	int autopollers;
+	int autospollers;
+	/* pid of autospoll kernel thread */
+	long autospoll_pid;
 	/* queue for recording received trigger/clear/ifc events */
 	gpib_event_queue_t event_queue;
 	/* Flag that indicates whether board is system controller of the bus */

@@ -46,7 +46,7 @@ static int request_service_ioctl( gpib_board_t *board, unsigned long arg );
 static int iobase_ioctl( gpib_board_t *board, unsigned long arg );
 static int irq_ioctl( gpib_board_t *board, unsigned long arg );
 static int dma_ioctl( gpib_board_t *board, unsigned long arg );
-static int autopoll_ioctl( gpib_board_t *board);
+static int autospoll_ioctl(gpib_board_t *board, unsigned long arg);
 static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 	unsigned long arg );
 static int timeout_ioctl( gpib_board_t *board, unsigned long arg );
@@ -207,9 +207,6 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 		case CFCBOARDTYPE:
 			return board_type_ioctl(board, arg);
 			break;
-		case IBAUTOPOLL:
-			return autopoll_ioctl( board );
-			break;
 		default:
 			break;
 	}
@@ -230,6 +227,9 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			break;
 		case CFCDMA:
 			return dma_ioctl( board, arg );
+			break;
+		case IBAUTOSPOLL:
+			return autospoll_ioctl(board, arg);
 			break;
 		case IBBOARD_INFO:
 			return board_info_ioctl( board, arg );
@@ -1000,44 +1000,35 @@ static int dma_ioctl( gpib_board_t *board, unsigned long arg )
 	return 0;
 }
 
-static int autopoll_ioctl( gpib_board_t *board )
+static int autospoll_ioctl(gpib_board_t *board, unsigned long arg)
 {
-	int retval = 0;
-	board->autopollers++;
+	autospoll_ioctl_t enable;
+	int retval;
 
-	if( down_interruptible( &board->autopoll_mutex ) )
+	retval = copy_from_user( &enable, ( void * ) arg, sizeof( enable ) );
+	if(retval)
+		return -EFAULT;
+
+	if(down_interruptible(&board->autopoll_mutex))
 	{
-		board->autopollers--;
 		return -ERESTARTSYS;
 	}
 
-	GPIB_DPRINTK( "entering autopoll loop\n" );
-	while( 1 )
+	if(enable)
+		board->autospollers++;
+	else
 	{
-		if( wait_event_interruptible( board->wait,
-			board->master && board->online &&
-			board->stuck_srq == 0 &&
-			test_and_clear_bit( SRQI_NUM, &board->status) ) )
+		if(board->autospollers <= 0)
 		{
-			retval = -ERESTARTSYS;
-			break;
-		}
-
-		retval = autopoll_all_devices( board );
-		if( retval <= 0 )
+			printk("gpib: tried to set number of autospollers negative\n");
+			retval = -EINVAL;
+		}else
 		{
-			board->stuck_srq = 1;	// XXX could be better
-			set_bit( SRQI_NUM, &board->status );
+			board->autospollers--;
+			retval = 0;
 		}
 	}
-	board->autopollers--;
-	if( board->autopollers < 0 )
-	{
-		printk( "gpib: bug! negative number of autopolling processes\n" );
-	}
-	GPIB_DPRINTK( "left autopoll loop\n" );
 	up( &board->autopoll_mutex );
-
 	return retval;
 }
 
@@ -1155,7 +1146,7 @@ static int board_info_ioctl( const gpib_board_t *board, unsigned long arg)
 	info.sad = board->sad;
 	info.parallel_poll_configuration = board->parallel_poll_configuration;
 	info.is_system_controller = board->master;
-	if( board->autopollers )
+	if( board->autospollers )
 		info.autopolling = 1;
 	else
 		info.autopolling = 0;
