@@ -431,8 +431,7 @@ static int write_ioctl(gpib_board_t *board, unsigned long arg)
 			board->buffer_length : remain, send_eoi);
 		if(ret < 0)
 		{
-			retval = -EIO;
-			break;
+			return ret;
 		}
 		remain -= ret;
 		userbuf += ret;
