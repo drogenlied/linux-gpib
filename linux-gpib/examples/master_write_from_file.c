@@ -54,10 +54,7 @@ int main( int argc, char *argv[] )
 	}
 
 	printf( "Device online: board index=%i, pad=%i, sad=%i\n"
-		"\tfile path=%s\n"
-		"\tPress enter to start transfer\n", board_index, pad, sad, file_path );
-
-	fgetc( stdin );
+		"\tfile path=%s\n", board_index, pad, sad, file_path );
 
 	gettimeofday( &start_time, NULL );
 
@@ -79,3 +76,4 @@ int main( int argc, char *argv[] )
 
 	return 0;
 }
+
