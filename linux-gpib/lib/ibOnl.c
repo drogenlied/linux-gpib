@@ -106,7 +106,7 @@ int conf_online( ibConf_t *conf, int online )
 	if( online )
 	{
 		conf->board_is_open = 1;
-		
+
 		retval = conf_lock_board( conf );
 		if( retval < 0 ) return retval;
 
@@ -123,6 +123,30 @@ int conf_online( ibConf_t *conf, int online )
 	return 0;
 }
 
+int reinit_descriptor( ibConf_t *conf )
+{
+	int retval;
+
+	retval = internal_ibpad( conf, conf->defaults.pad );
+	if( retval < 0 ) return retval;
+	retval = internal_ibsad( conf, conf->defaults.sad );
+	if( retval < 0 ) return retval;
+	retval = my_ibbna( conf, conf->defaults.board );
+	if( retval < 0 ) return retval;
+	conf->settings.usec_timeout = conf->defaults.usec_timeout;
+	conf->settings.spoll_usec_timeout = conf->defaults.usec_timeout;
+	conf->settings.ppoll_usec_timeout = conf->defaults.usec_timeout;
+	conf->settings.eos = conf->defaults.eos;
+	conf->settings.eos_flags = conf->defaults.eos_flags;
+	conf->settings.eos = conf->defaults.eos;
+	conf->settings.ppoll_config = conf->defaults.ppoll_config;
+	internal_ibeot( conf, conf->defaults.send_eoi );
+	conf->settings.local_lockout = conf->defaults.local_lockout;
+	conf->settings.local_ppc = conf->defaults.local_ppc;
+	conf->settings.readdr = conf->defaults.readdr;
+	return 0;
+}
+
 int ibonl( int ud, int onl )
 {
 	ibConf_t *conf;
@@ -133,8 +157,12 @@ int ibonl( int ud, int onl )
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 
-	// XXX supposed to reset board/device if onl is nonzero
-	if( onl ) return exit_library( ud, 0 );
+	if( onl )
+	{
+		retval = reinit_descriptor( conf );
+		if( retval < 0 ) return exit_library( ud, 1 );
+		else return exit_library( ud, 0 );
+	}
 
 	board = interfaceBoard( conf );
 
