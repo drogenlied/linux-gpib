@@ -24,8 +24,8 @@ int InternalReceiveSetup( ibConf_t *conf, Addr4882_t address )
 	ibBoard_t *board;
 	uint8_t cmdString[8];
 	unsigned int i = 0;
-	int pad;
-	int sad;
+	unsigned int pad, board_pad;
+	int sad, board_sad;
 
 	if( addressIsValid( address ) == 0 ||
 		address == NOADDR )
@@ -33,17 +33,19 @@ int InternalReceiveSetup( ibConf_t *conf, Addr4882_t address )
 		setIberr( EARG );
 		return -1;
 	}
-
 	board = interfaceBoard( conf );
+
+	if( query_pad( board, &board_pad ) < 0 ) return -1;
+	if( query_sad( board, &board_sad ) < 0 ) return -1;
 
 	pad = extractPAD( address );
 	sad = extractSAD( address );
 
 	cmdString[ i++ ] = UNL;
 
-	cmdString[ i++ ] = MLA( board->pad );	/* controller's listen address */
-	if ( board->sad >= 0 )
-		cmdString[ i++ ] = MSA( board->sad );
+	cmdString[ i++ ] = MLA( board_pad );	/* controller's listen address */
+	if ( board_sad >= 0 )
+		cmdString[ i++ ] = MSA( board_sad );
 	cmdString[ i++ ] = MTA( pad );
 	if( sad >= 0 )
 		cmdString[ i++ ] = MSA( sad );

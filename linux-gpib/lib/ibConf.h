@@ -78,8 +78,6 @@ typedef struct ibConfStruct
 
 typedef struct ibBoardStruct {
 	char board_type[100];	/* name (model) of interface board */
-	int pad;		/* device primary address */
-	int sad;		/* device secodnary address (negative disables) */
 	unsigned long base;                          /* base configuration */
 	unsigned int irq;
 	unsigned int dma;

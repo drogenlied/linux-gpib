@@ -79,6 +79,8 @@ void setIbcnt( long count );
 unsigned int usec_to_timeout( unsigned int usec );
 int query_ppc( const ibBoard_t *board );
 int query_ist( const ibBoard_t *board );
+int query_pad( const ibBoard_t *board, unsigned int *pad );
+int query_sad( const ibBoard_t *board, int *sad );
 int conf_online( ibConf_t *conf, int online );
 int configure_autopoll( ibConf_t *conf, int enable );
 int extractPAD( Addr4882_t address );

@@ -68,8 +68,6 @@ void atfork_autopoll_child( void )
 
 void init_ibboard( ibBoard_t *board )
 {
-	board->pad = 0;
-	board->sad = -1;
 	board->base = 0;
 	board->irq = 0;
 	board->dma = 0;

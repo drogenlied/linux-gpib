@@ -172,6 +172,8 @@ unsigned int create_send_setup( const ibBoard_t *board,
 	const Addr4882_t addressList[], uint8_t *cmdString )
 {
 	unsigned int i, j;
+	unsigned int board_pad;
+	int board_sad;
 
 	if( addressList == NULL )
 	{
@@ -198,9 +200,11 @@ unsigned int create_send_setup( const ibBoard_t *board,
 			cmdString[ i++ ] = MSA( sad );
 	}
 	/* controller's talk address */
-	cmdString[ i++ ] = MTA( board->pad );
-	if( board->sad >= 0 )
-		cmdString[ i++ ] = MSA( board->sad );
+	if( query_pad( board, &board_pad ) < 0 ) return 0;
+	cmdString[ i++ ] = MTA( board_pad );
+	if( query_sad( board, &board_sad ) < 0 ) return 0;
+	if( board_sad >= 0 )
+		cmdString[ i++ ] = MSA( board_sad );
 
 	return i;
 }

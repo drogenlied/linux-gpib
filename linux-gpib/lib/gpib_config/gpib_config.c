@@ -146,7 +146,7 @@ static void parse_options( int argc, char *argv[], parsed_options_t *settings )
 	}
 }
 
-static int configure_board( ibBoard_t *board )
+static int configure_board( ibBoard_t *board, unsigned int pad, int sad )
 {
 	board_type_ioctl_t boardtype;
 	select_pci_ioctl_t pci_selection;
@@ -161,9 +161,9 @@ static int configure_board( ibBoard_t *board )
 	if( retval < 0 ) return retval;
 	retval = ioctl( board->fileno, CFCDMA, &board->dma );
 	if( retval < 0 ) return retval;
- 	retval = ioctl( board->fileno, IBPAD, &board->pad );
+ 	retval = ioctl( board->fileno, IBPAD, &pad );
 	if( retval < 0 ) return retval;
-	retval = ioctl( board->fileno, IBSAD, &board->sad );
+	retval = ioctl( board->fileno, IBSAD, &sad );
 	if( retval < 0 ) return retval;
 
 	pci_selection.pci_bus = board->pci_bus;
@@ -182,6 +182,10 @@ int main( int argc, char *argv[] )
 	int retval;
 	parsed_options_t options;
 	ibBoard_t *board;
+	ibConf_t *conf;
+	unsigned int pad = 0;
+	int sad = -1;
+	int i;
 
 	parse_options( argc, argv, &options );
 
@@ -204,6 +208,15 @@ int main( int argc, char *argv[] )
 		return -1;
 	}
 
+	for( i = 0; i < FIND_CONFIGS_LENGTH; i++ )
+	{
+		if( configs[ i ].is_interface == 0 ) continue;
+		if( configs[ i ].settings.board != options.minor ) continue;
+		conf = &configs[ i ];
+		pad = conf->settings.pad;
+		sad = conf->settings.sad;
+		break;
+	}
 	board = &boards[ options.minor ];
 
 	asprintf( &devicefile, "/dev/gpib%i", options.minor );
@@ -225,9 +238,9 @@ int main( int argc, char *argv[] )
 	if( options.pci_slot >= 0 )
 		board->pci_slot = options.pci_slot;
 	if( options.pad >= 0 )
-		board->pad = options.pad;
+		pad = options.pad;
 	if( options.sad >= 0 )
-		board->sad = options.sad - sad_offset;
+		sad = options.sad - sad_offset;
 
 	board->fileno = open( devicefile, O_RDWR );
 	if( board->fileno < 0 )
@@ -236,7 +249,7 @@ int main( int argc, char *argv[] )
 		perror( __FUNCTION__ );
 		return board->fileno;
 	}
-	retval = configure_board( board );
+	retval = configure_board( board, pad, sad );
 	if( retval < 0 )
 	{
 		fprintf( stderr, "failed to configure board\n" );

@@ -21,10 +21,15 @@
 static int is_device_addr( int minor, int pad, int sad )
 {
 	ibBoard_t *board;
+	unsigned int board_pad;
+	int board_sad;
 
 	board = &ibBoard[ minor ];
 
-	if( gpib_address_equal( board->pad, board->sad, pad, sad ) == 0 )
+	if( query_pad( board, &board_pad ) < 0 ) return -1;
+	if( query_sad( board, &board_sad ) < 0 ) return -1;
+
+	if( gpib_address_equal( board_pad, board_sad, pad, sad ) == 0 )
 	{
 		return 1;
 	}
@@ -63,7 +68,6 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 	int uDesc;
 	ibConf_t new_conf;
 	ibConf_t *conf;
-	ibBoard_t *board;
 
 	init_ibconf( &new_conf );
 	new_conf.settings.pad = pad;
@@ -77,14 +81,12 @@ int my_ibdev( int minor, int pad, int sad, unsigned int usec_timeout, int send_e
 	else
 		new_conf.settings.send_eoi = 0;
 	new_conf.defaults = new_conf.settings;
-	
-	// check if it is an interface board
-	board = &ibBoard[ minor ];
-	if( gpib_address_equal( board->pad, board->sad, new_conf.settings.pad, new_conf.settings.sad ) )
+
+	if( is_device_addr( minor, new_conf.settings.pad, new_conf.settings.sad ) )
 	{
-		new_conf.is_interface = 1;
-	}else
 		new_conf.is_interface = 0;
+	}else
+		new_conf.is_interface = 1;
 
 	uDesc = ibGetDescriptor(new_conf);
 	if(uDesc < 0)

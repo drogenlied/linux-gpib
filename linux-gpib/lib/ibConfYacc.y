@@ -162,8 +162,8 @@ char cval;
 			}
 		;
 
-	statement: T_PAD '=' T_NUMBER      { current_board( parse_arg )->pad =  $3; current_config( parse_arg )->defaults.pad = $3;}
-		| T_SAD '=' T_NUMBER      { current_board( parse_arg )->sad = $3 - sad_offset; current_config( parse_arg )->defaults.sad = $3 - sad_offset;}
+	statement: T_PAD '=' T_NUMBER      { current_config( parse_arg )->defaults.pad = $3;}
+		| T_SAD '=' T_NUMBER      { current_config( parse_arg )->defaults.sad = $3 - sad_offset;}
 		| T_EOSBYTE '=' T_NUMBER  { current_config( parse_arg )->defaults.eos = $3;}
 		| T_REOS T_BOOL           { current_config( parse_arg )->defaults.eos_flags |= $2 * REOS;}
 		| T_BIN  T_BOOL           { current_config( parse_arg )->defaults.eos_flags |= $2 * BIN;}

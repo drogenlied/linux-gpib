@@ -99,7 +99,7 @@ int query_board_rsv( const ibBoard_t *board )
 	return status;
 }
 
-int query_pad( const ibBoard_t *board )
+int query_pad( const ibBoard_t *board, unsigned int *pad )
 {
 	int retval;
 	board_info_ioctl_t info;
@@ -112,7 +112,8 @@ int query_pad( const ibBoard_t *board )
 		return retval;
 	}
 
-	return info.pad;
+	*pad = info.pad;
+	return 0;
 }
 
 int query_sad( const ibBoard_t *board, int *sad )
@@ -149,9 +150,11 @@ int ibask( int ud, int option, int *value )
 		case IbaPAD:
 			if( conf->is_interface )
 			{
-				retval = query_pad( board );
+				unsigned int pad;
+
+				retval = query_pad( board, &pad );
 				if( retval < 0 ) return exit_library( ud, 1 );
-				conf->settings.pad = retval;
+				conf->settings.pad = pad;
 			}
 			*value = conf->settings.pad;
 			return exit_library( ud, 0 );
