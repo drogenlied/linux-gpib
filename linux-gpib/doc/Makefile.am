@@ -10,7 +10,7 @@
 SGML = linux-gpib.sgml gpib_version.txt
 EXTRA_DIST = linux-gpib.sgml fdl.xml html linux-gpib.pdf gpib_version.txt #man
 
-if HAVE_DOCBOOK
+if BUILD_DOCS
 all-local: html linux-gpib.pdf #man
 
 install-data-local:

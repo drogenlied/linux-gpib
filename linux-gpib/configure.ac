@@ -37,6 +37,8 @@ AC_ARG_ENABLE([python-binding],[  --disable-python-binding	Disable Python bindin
 	[BIND_PYTHON=$enableval],[BIND_PYTHON="yes"])
 AC_ARG_ENABLE([tcl-binding],[  --disable-tcl-binding	Disable TCL binding to libgpib],
 	[BIND_TCL=$enableval],[BIND_TCL="yes"])
+AC_ARG_ENABLE([documentation],[  --disable-documentation	Disable building documentation from SGML sources],
+	[BUILD_DOCS=$enableval],[BUILD_DOCS="yes"])
 
 dnl check kernel source directory
 AC_ARG_WITH(linux-srcdir,
@@ -75,7 +77,8 @@ AC_PROG_YACC
 AC_PROG_LIBTOOL
 AC_PATH_PROG(JW_PATH, jw, no)
 if test $JW_PATH == no ; then
-  AC_MSG_NOTICE([docbook-tools (jw) not found, disabling documentation])
+	AC_MSG_NOTICE([docbook-tools (jw) not found, disabling documentation])
+	BUILD_DOCS="no"
 fi
 AM_PATH_PYTHON
 AC_PATH_PROG([PERL], [perl], [no], [])
@@ -140,13 +143,8 @@ AC_DEFINE([IBMAJOR],[160],[Major number of device files])
 
 echo
 echo Configuration:
-AM_CONDITIONAL(HAVE_DOCBOOK, [test "$JW_PATH" != "no"])
-echo -n "Documentation: "
-if test $JW_PATH == "no"; then
-	echo no;
-else
-	echo yes;
-fi
+AM_CONDITIONAL(BUILD_DOCS, [test "$BUILD_DOCS" == "yes"])
+echo "SGML Documentation: $BUILD_DOCS"
 AM_CONDITIONAL(BIND_GUILE, [test "$BIND_GUILE" == "yes"])
 echo "Guile binding: $BIND_GUILE"
 AM_CONDITIONAL(BIND_PERL, [test "$BIND_PERL" == "yes"])
