@@ -98,36 +98,6 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 		return -ENODEV;
 	}
 	board = &board_array[minor];
-	if(cmd == CFCBOARDTYPE)
-		return board_type_ioctl(board, arg);
-	if(board->interface == NULL)
-	{
-		printk("gpib: no gpib board configured on /dev/gpib%i\n", minor);
-		return -ENODEV;
-	}
-
-//printk("minor %i ioctl %i\n", minor, cmd);
-
-	switch( cmd )
-	{
-		case IBRD:
-			return read_ioctl(board, arg);
-			break;
-		case IBWRT:
-			return write_ioctl(board, arg);
-			break;
-		case IBCMD:
-			return command_ioctl(board, arg);
-			break;
-		case IBSTATUS:
-			return status_ioctl(board, arg);
-			break;
-		case IBTMO:
-			retval = ibtmo(board, arg);
-			break;
-		default:
-			break;
-	}
 
 	/* XXX lock other processes from performing commands */
 	retval = down_interruptible(&board->mutex);
@@ -137,19 +107,59 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 		return -ERESTARTSYS;
 	}
 
+	if(cmd == CFCBOARDTYPE)
+	{
+		retval = board_type_ioctl(board, arg);
+		GIVE_UP( retval );
+	}
+
+	if(board->interface == NULL)
+	{
+		printk("gpib: no gpib board configured on /dev/gpib%i\n", minor);
+		GIVE_UP( -ENODEV );
+	}
+
+//printk("minor %i ioctl %i\n", minor, cmd);
+
+	switch( cmd )
+	{
+		case IBRD:
+			retval = read_ioctl(board, arg);
+			GIVE_UP( retval );
+			break;
+		case IBWRT:
+			retval = write_ioctl(board, arg);
+			GIVE_UP( retval );
+			break;
+		case IBCMD:
+			retval = command_ioctl(board, arg);
+			GIVE_UP( retval );
+			break;
+		case IBSTATUS:
+			retval = status_ioctl(board, arg);
+			GIVE_UP( retval );
+			break;
+		case IBTMO:
+			retval = ibtmo(board, arg);
+			GIVE_UP( retval );
+			break;
+		default:
+			break;
+	}
+
 	ibargp = (ibarg_t *) &m_ibarg;
 
 	/* Check the arg buffer is readable & writable by the current process */
 	retval = verify_area(VERIFY_WRITE, (void *)arg, sizeof(ibarg_t));
 	if (retval)
 	{
-		return (retval);
+		GIVE_UP (retval);
 	}
 
 	retval = verify_area(VERIFY_READ, (void *)arg, sizeof(ibarg_t));
 	if (retval)
 	{
-		return (retval);
+		GIVE_UP (retval);
 	}
 
 	copy_from_user( ibargp , (ibarg_t *) arg , sizeof(ibarg_t));
