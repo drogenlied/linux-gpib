@@ -9,7 +9,7 @@ actual tcl library path.
 
 to load this extension just add the line
 
-load [info library]/libgpib.so
+load [info library]/libgpib-tcl.so
 
 near the beginning of your scripts.
 now you may use the gpib tcl commands as usual.
