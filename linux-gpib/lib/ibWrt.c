@@ -59,6 +59,7 @@ long send_data( ibConf_t *conf, void *buffer, unsigned long count, int send_eoi 
 				break;
 			default:
 				setIberr( EDVR );
+				setIbcnt( errno );
 				break;
 		}
 		return -1;
