@@ -187,17 +187,28 @@ enum ppe_bits
 
 static __inline__ uint8_t MLA( unsigned int addr )
 {
-	return addr | 0x20;
+	return addr | LAD;
 }
 
 static __inline__ uint8_t MTA( unsigned int addr )
 {
-	return addr | 0x40;
+	return addr | TAD;
 }
 
 static __inline__ uint8_t MSA( unsigned int addr )
 {
 	return addr | 0x60;
+}
+
+static __inline__ uint8_t PPE_byte( unsigned int dio_line, int sense )
+{
+	uint8_t cmd;
+
+	cmd = PPE;
+	if( sense )
+		cmd |= PPC_SENSE;
+	cmd |= ( dio_line - 1 ) & 0x7;
+	return cmd;
 }
 
 static __inline__ int gpib_address_equal( unsigned int pad1, int sad1, unsigned int pad2, int sad2 )
