@@ -73,7 +73,7 @@ int ibopen(struct inode *inode, struct file *filep)
 	if(minor >= MAX_NUM_GPIB_BOARDS)
 	{
 		printk("gpib: invalid minor number of device file\n");
-		return -ENODEV;
+		return -ENXIO;
 	}
 
 	board = &board_array[minor];
