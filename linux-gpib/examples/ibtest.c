@@ -337,7 +337,6 @@ int prompt_for_wait( int ud )
 {
 	int wait_mask;
 	int status;
-char cmd[10] = { UNT };
 
 	printf( "Possible wait bits:\n"
 		"\t0x%x timeout\n"
@@ -370,7 +369,6 @@ int main(int argc,char **argv)
 		ibonl(dev, 0);
 		abort();
 	}
-fprint_status( stderr, "gpib clear okay");
 
 	do
 	{
