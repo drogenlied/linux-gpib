@@ -145,6 +145,21 @@ static inline void init_event_queue( gpib_event_queue_t *queue )
 	spin_lock_init( &queue->lock );
 }
 
+/* struct for supporting polling operation when irq is not available */
+struct gpib_pseudo_irq
+{
+	struct timer_list timer;
+	void (*handler)(int, void *, struct pt_regs *);
+	volatile short active;
+};
+
+static inline void init_gpib_pseudo_irq( struct gpib_pseudo_irq *pseudo_irq)
+{
+	pseudo_irq->handler = NULL;
+	init_timer(&pseudo_irq->timer);
+	pseudo_irq->active = 0;
+}
+
 /* One gpib_board_t is allocated for each physical board in the computer.
  * It provides storage for variables local to each board, and interface
  * functions for performing operations on the board */
@@ -216,6 +231,8 @@ struct gpib_board_struct
 	gpib_event_queue_t event_queue;
 	/* minor number for this board's device file */
 	int minor;
+	/* struct to deal with polling mode*/
+	struct gpib_pseudo_irq pseudo_irq;
 	/* Flag that indicates whether board is system controller of the bus */
 	unsigned master : 1;
 	/* Flag board has been opened for exclusive access */

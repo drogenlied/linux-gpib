@@ -300,7 +300,7 @@ int cb7210_generic_attach(gpib_board_t *board)
 	return 0;
 }
 
-void cb7210_init( cb7210_private_t *cb_priv, const gpib_board_t *board )
+int cb7210_init( cb7210_private_t *cb_priv, gpib_board_t *board )
 {
 	nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
 	unsigned long iobase = nec_priv->iobase;
@@ -322,6 +322,14 @@ void cb7210_init( cb7210_private_t *cb_priv, const gpib_board_t *board )
 	write_byte(nec_priv, ICR | 0, AUXMR);
 
 	nec7210_board_online( nec_priv, board );
+
+	/* poll so we can detect assertion of ATN */
+	if(gpib_request_pseudo_irq(board, cb_pci_interrupt))
+	{
+		printk("pc2_gpib: failed to allocate pseudo_irq\n");
+		return -1;
+	}
+	return 0;
 }
 
 int cb_pci_attach(gpib_board_t *board)
@@ -378,9 +386,7 @@ int cb_pci_attach(gpib_board_t *board)
 		INBOX_INTR_CS_BIT;
 	outl(bits, cb_priv->amcc_iobase + INTCSR_REG );
 
-	cb7210_init( cb_priv, board );
-
-	return 0;
+	return cb7210_init( cb_priv, board );
 }
 
 void cb_pci_detach(gpib_board_t *board)
@@ -390,6 +396,7 @@ void cb_pci_detach(gpib_board_t *board)
 
 	if(cb_priv)
 	{
+		gpib_free_pseudo_irq(board);
 		nec_priv = &cb_priv->nec7210_priv;
 		if(cb_priv->irq)
 		{
@@ -438,9 +445,7 @@ int cb_isa_attach(gpib_board_t *board)
 	}
 	cb_priv->irq = board->ibirq;
 
-	cb7210_init( cb_priv, board );
-
-	return 0;
+	return cb7210_init( cb_priv, board );
 }
 
 void cb_isa_detach(gpib_board_t *board)

@@ -20,6 +20,23 @@
 #include <asm/bitops.h>
 #include <asm/dma.h>
 
+static inline short nec7210_atn_has_changed(gpib_board_t *board, nec7210_private_t *priv)
+{
+	short address_status_bits = read_byte(priv, ADSR);
+
+	if(address_status_bits & HR_NATN)
+	{
+		if(test_bit(ATN_NUM, &board->status))
+			return 1;
+		else return 0;
+	}else
+	{
+		if(test_bit(ATN_NUM, &board->status))
+			return 0;
+		else return 1;
+	}
+	return -1;
+}
 /*
  *  interrupt service routine
  */
@@ -149,7 +166,8 @@ void nec7210_interrupt_have_status( gpib_board_t *board,
 	}
 
 	if((status1 & priv->reg_bits[ IMR1 ]) ||
-		(status2 & (priv->reg_bits[ IMR2 ] & IMR2_ENABLE_INTR_MASK)))
+		(status2 & (priv->reg_bits[ IMR2 ] & IMR2_ENABLE_INTR_MASK)) ||
+		nec7210_atn_has_changed(board, priv))
 	{
 		GPIB_DPRINTK( "minor %i, isr1 0x%x, imr1 0x%x, isr2 0x%x, imr2 0x%x\n",
 			board->minor, status1, priv->reg_bits[ IMR1 ], status2, priv->reg_bits[ IMR2 ] );

@@ -82,7 +82,7 @@ void gpib_unregister_driver(gpib_interface_t *interface)
 		{
 			if( board->open_count > 0 )
 				printk("gpib: Warning:"
-					" deregisted interface %s in use\n",
+					" deregistered interface %s in use\n",
 					interface->name);
 			iboffline( board );
 			board->interface = NULL;
@@ -122,6 +122,7 @@ void init_gpib_board( gpib_board_t *board )
 	init_MUTEX_LOCKED(&board->autospoll_completion);
 	init_event_queue( &board->event_queue );
 	board->minor = -1;
+	init_gpib_pseudo_irq(&board->pseudo_irq);
 	board->master = 1;
 	board->exclusive = 0;
 	board->stuck_srq = 0;

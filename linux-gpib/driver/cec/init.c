@@ -266,7 +266,11 @@ int cec_pci_attach(gpib_board_t *board)
 		return -1;
 	}
 	cec_priv->irq = cec_priv->pci_device->irq;
-
+	if(gpib_request_pseudo_irq(board, cec_interrupt))
+	{
+		printk("cec: failed to allocate pseudo irq\n");
+		return -1;
+	}
 	cec_init( cec_priv, board );
 
 	// enable interrupts on plx chip
@@ -284,6 +288,7 @@ void cec_pci_detach(gpib_board_t *board)
 	if(cec_priv)
 	{
 		nec_priv = &cec_priv->nec7210_priv;
+		gpib_free_pseudo_irq(board);
 		if(cec_priv->irq)
 		{
 			// disable plx9050 interrupts

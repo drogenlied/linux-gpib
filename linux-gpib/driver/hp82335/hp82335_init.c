@@ -15,6 +15,9 @@
  *                                                                         *
  ***************************************************************************/
 
+/*should enable ATN interrupts (and update board->status on occurance),
+	implement recovery from bus errors (if necessary) */
+
 #include "hp82335.h"
 #include <linux/ioport.h>
 #include <linux/sched.h>

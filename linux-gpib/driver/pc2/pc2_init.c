@@ -277,7 +277,6 @@ int pc2_generic_attach(gpib_board_t *board)
 		}
 		nec_priv->dma_channel = board->ibdma;
 	}
-
 	return 0;
 }
 
@@ -295,7 +294,7 @@ int pc2_attach(gpib_board_t *board)
 	nec_priv = &pc2_priv->nec7210_priv;
 	nec_priv->offset = pc2_reg_offset;
 
-	if( request_region(board->ibbase, pc2_iosize, "pc2") == 0 )
+	if(request_region(board->ibbase, pc2_iosize, "pc2") == 0)
 	{
 		printk("gpib: ioports are already in use\n");
 		return -1;
@@ -305,13 +304,21 @@ int pc2_attach(gpib_board_t *board)
 	nec7210_board_reset( nec_priv, board );
 
 	// install interrupt handler
-	if( request_irq(board->ibirq, pc2_interrupt, isr_flags, "pc2", board))
+	if(board->ibirq)
 	{
-		printk("gpib: can't request IRQ %d\n", board->ibirq);
-		return -1;
+		if(request_irq(board->ibirq, pc2_interrupt, isr_flags, "pc2", board))
+		{
+			printk("gpib: can't request IRQ %d\n", board->ibirq);
+			return -1;
+		}
 	}
 	pc2_priv->irq = board->ibirq;
-
+	/* poll so we can detect assertion of ATN */
+	if(gpib_request_pseudo_irq(board, pc2_interrupt))
+	{
+		printk("pc2_gpib: failed to allocate pseudo_irq\n");
+		return -1;
+	}
 	/* set internal counter register for 8 MHz input clock */
 	write_byte( nec_priv, ICR | 8, AUXMR );
 
@@ -332,6 +339,7 @@ void pc2_detach(gpib_board_t *board)
 		{
 			free_dma(nec_priv->dma_channel);
 		}
+		gpib_free_pseudo_irq(board);
 		if(pc2_priv->irq)
 		{
 			free_irq(pc2_priv->irq, board);
@@ -378,19 +386,24 @@ int pc2a_common_attach( gpib_board_t *board, unsigned int num_registers )
 			break;
 	}
 
-	if(board->ibirq < 2 || board->ibirq > 7 )
+	if(board->ibirq)
 	{
-		printk("Illegal Interrupt Level \n");
-		return -1;
+		if(board->ibirq < 2 || board->ibirq > 7)
+		{
+			printk("pc2_gpib: illegal interrupt level %i\n", board->ibirq);
+			return -1;
+		}
+	}else
+	{
+		printk("pc2_gpib: interrupt disabled, using polling mode (slow)\n");
 	}
-
 	err = 0;
 	for(i = 0; i < num_registers; i++)
 	{
 		if(check_region(board->ibbase + i * pc2a_reg_offset, 1))
 			err++;
 	}
-	if(check_region(pc2a_clear_intr_iobase + board->ibirq, 1))
+	if(board->ibirq && check_region(pc2a_clear_intr_iobase + board->ibirq, 1))
 	{
 		err++;
 	}
@@ -404,18 +417,27 @@ int pc2a_common_attach( gpib_board_t *board, unsigned int num_registers )
 		request_region(board->ibbase + i * pc2a_reg_offset, 1, "pc2a");
 	}
 	nec_priv->iobase = board->ibbase;
-	request_region(pc2a_clear_intr_iobase + board->ibirq, 1, "pc2a");
-	pc2_priv->clear_intr_addr = pc2a_clear_intr_iobase + board->ibirq;
-
-	if(request_irq(board->ibirq, pc2a_interrupt, SA_SHIRQ, "pc2a", board))
+	if(board->ibirq)
 	{
-		printk("gpib: can't request IRQ %d\n", board->ibirq);
-		return -1;
+		request_region(pc2a_clear_intr_iobase + board->ibirq, 1, "pc2a");
+		pc2_priv->clear_intr_addr = pc2a_clear_intr_iobase + board->ibirq;
+		if(request_irq(board->ibirq, pc2a_interrupt, SA_SHIRQ, "pc2a", board))
+		{
+			printk("gpib: can't request IRQ %d\n", board->ibirq);
+			return -1;
+		}
 	}
 	pc2_priv->irq = board->ibirq;
+	/* poll so we can detect assertion of ATN */
+	if(gpib_request_pseudo_irq(board, pc2_interrupt))
+	{
+		printk("pc2_gpib: failed to allocate pseudo_irq\n");
+		return -1;
+	}
 
 	// make sure interrupt is clear
-	outb(0xff , CLEAR_INTR_REG(pc2_priv->irq));
+	if(pc2_priv->irq)
+		outb(0xff , CLEAR_INTR_REG(pc2_priv->irq));
 
 	nec7210_board_reset( nec_priv, board );
 
@@ -450,6 +472,7 @@ void pc2a_common_detach( gpib_board_t *board, unsigned int num_registers )
 		{
 			free_dma(nec_priv->dma_channel);
 		}
+		gpib_free_pseudo_irq(board);
 		if(pc2_priv->irq)
 		{
 			free_irq(pc2_priv->irq, board);

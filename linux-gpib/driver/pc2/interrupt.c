@@ -49,7 +49,8 @@ void pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	status2 = read_byte( &priv->nec7210_priv, ISR2 );
 
 	/* clear interrupt circuit */
-	outb(0xff , CLEAR_INTR_REG(priv->irq) );
+	if(priv->irq)
+		outb(0xff , CLEAR_INTR_REG(priv->irq) );
 
 	nec7210_interrupt_have_status( board, &priv->nec7210_priv, status1, status2 );
 
