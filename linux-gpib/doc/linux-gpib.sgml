@@ -2454,6 +2454,125 @@ volatile int ibsta;
 	Utility Functions
 </title>
 
+<refentry ID="reference-function-mla">
+<refmeta>
+	<refentrytitle>MLA</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>MLA</refname>
+	<refpurpose>Generate 'my listen address' command byte</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>uint8_t <function>MLA</function></funcdef>
+		<paramdef>unsigned int <parameter>address</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	MLA() returns a 'my listen address'
+	<link LINKEND="reference-command-bytes">command byte</link> corresponding
+	to the <parameter>address</parameter> argument.  The <parameter>address</parameter>
+	my be between 0 and 30.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The appropriate MLA command byte is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-msa">
+<refmeta>
+	<refentrytitle>MSA</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>MSA</refname>
+	<refpurpose>Generate 'my secondary address' command byte</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>uint8_t <function>MSA</function></funcdef>
+		<paramdef>unsigned int <parameter>address</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	MSA() returns a 'my secondary address'
+	<link LINKEND="reference-command-bytes">command byte</link> corresponding
+	to the <parameter>address</parameter> argument.  The <parameter>address</parameter>
+	my be between 0 and 30.  This macro is also useful for mangling
+	secondary addresses from the 'real' values between 0 and 30 to the
+	range 0x60 to 0x7e used by most of the library's functions.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The appropriate MSA command byte is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-mta">
+<refmeta>
+	<refentrytitle>MTA</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>MTA</refname>
+	<refpurpose>Generate 'my talk address' command byte</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>uint8_t <function>MTA</function></funcdef>
+		<paramdef>unsigned int <parameter>address</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	MTA() returns a 'my talk address'
+	<link LINKEND="reference-command-bytes">command byte</link> corresponding
+	to the <parameter>address</parameter> argument.  The <parameter>address</parameter>
+	my be between 0 and 30.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The appropriate MTA command byte is returned.
+	</para>
+</refsect1>
+</refentry>
+
 <refentry ID="reference-function-ppe-byte">
 <refmeta>
 	<refentrytitle>PPE_byte</refentrytitle>
@@ -2461,7 +2580,7 @@ volatile int ibsta;
 </refmeta>
 <refnamediv>
 	<refname>PPE_byte</refname>
-	<refpurpose>Generate parallel poll enable command byte</refpurpose>
+	<refpurpose>Generate 'parallel poll enable' command byte</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
