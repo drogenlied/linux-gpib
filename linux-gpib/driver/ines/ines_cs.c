@@ -422,7 +422,7 @@ static void gpib_config(dev_link_t *link)
         */
         req.Attributes=WIN_MEMORY_TYPE_AM | WIN_DATA_WIDTH_8 | WIN_ENABLE;
         req.Base=0;
-        req.Size=0x800;
+        req.Size=0x1000;
         req.AccessSpeed=2; 
         i= CardServices(RequestWindow,&handle,&req);
 	if (i != CS_SUCCESS) {
@@ -436,7 +436,7 @@ static void gpib_config(dev_link_t *link)
 	    cs_error(link->handle, MapMemPage, i);
 	    break;
         }
-        virt=ioremap(req.Base,0x800);
+        virt=ioremap(req.Base, req.Size);
         writeb((link->io.BasePort1>>2) & 0xff, virt+0xf0); // IOWindow base
         writeb(0x70,virt+0x100);                  // LevlIrq, 32 byte IOWindow 
         writeb(0x20,virt+0x102);                  // IOis8
