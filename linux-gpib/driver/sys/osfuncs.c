@@ -87,7 +87,6 @@ int ibopen(struct inode *inode, struct file *filep)
 	}
 	init_gpib_file_private( ( gpib_file_private_t * ) filep->private_data );
 
-	MOD_INC_USE_COUNT;
 	board->open_count++;
 
 	return 0;
@@ -111,7 +110,6 @@ int ibclose(struct inode *inode, struct file *filep)
 	if( board->online && board->open_count == 1 )
 		iboffline( board );
 
-	MOD_DEC_USE_COUNT;
 	board->open_count--;
 
 	if( board->exclusive )
