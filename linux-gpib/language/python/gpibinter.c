@@ -36,27 +36,31 @@ static char gpib_read__doc__[] =
 
 static PyObject* gpib_read(PyObject *self, PyObject *args)
 {
-        char *result;
-        PyObject *res;
+        static char *result = 0x0;
+	static int result_len = 0;
+
 	int device;
         int len;
 
 	if (!PyArg_ParseTuple(args, "ii",&device,&len))
 		return NULL;
 
-	if(( result = malloc(len+1)) == NULL ){
-	   PyErr_SetString(GpibError,"Read Error: can't get Memory ");
-	   return NULL;
-	}
+	if (result_len < len+1) 
+	  {
+	    if((result = realloc(result, len+1)) == NULL)
+	      {
+		PyErr_SetString(GpibError,"Read Error: can't get Memory ");
+		return NULL;
+	      }
+	  }
 	
         if( ibrd(device,result,len) & ERR ){
 	   PyErr_SetString(GpibError,"Read Error: ibrd() failed");
-	   free(result);
 	   return NULL;
 	}
-	res =  Py_BuildValue("s",result);
-	free(result);
-	return res;
+	result[ibcnt] = '\0';
+
+	return Py_BuildValue("s", result);
 }
 
 static char gpib_write__doc__[] =
