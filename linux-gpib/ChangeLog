@@ -1,5 +1,7 @@
 Linux GPIB Package changelog
 
+3.2.00: Port to 2.6.xx Linux kernels.
+
 3.1.101: Fixed compilation against kernels with dynamic
 HZ patch.  Fixed reporting of SRQI bit in ibsta for boards
 that support it.  Fixed double-sending of bytes during
