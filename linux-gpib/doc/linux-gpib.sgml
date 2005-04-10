@@ -99,7 +99,7 @@ interface {
 
 interface {
 	minor = 1
-	board_type = "ines_pci_accel"
+	board_type = "ines_pci"
 	name = "joe"
 	pad = 5
 	sad = 0
@@ -487,21 +487,33 @@ Default is <option>--sre</option>.</para>
 	</row>
 	<row>
 	<entry>Ines</entry>
+	<entry>GPIB-HS-NT</entry>
+	<entry>ines_gpib.ko</entry>
+	<entry>ines_isa</entry>
+	</row>
+	<row>
+	<entry>Ines</entry>
 	<entry>GPIB for Compact PCI</entry>
 	<entry>ines_gpib.ko</entry>
-	<entry>ines_pci, ines_pci_accel</entry>
+	<entry>ines_pci, ines_pci_unaccel</entry>
 	</row>
 	<row>
 	<entry>Ines</entry>
 	<entry>GPIB for PCI</entry>
 	<entry>ines_gpib.ko</entry>
-	<entry>ines_pci, ines_pci_accel</entry>
+	<entry>ines_pci, ines_pci_unaccel</entry>
 	</row>
 	<row>
 	<entry>Ines</entry>
 	<entry>GPIB for PCMCIA</entry>
 	<entry>ines_gpib.ko</entry>
-	<entry>ines_pcmcia, ines_pcmcia_accel</entry>
+	<entry>ines_pcmcia, ines_pcmcia_unaccel</entry>
+	</row>
+	<row>
+	<entry>Ines</entry>
+	<entry>GPIB PC/104</entry>
+	<entry>ines_gpib.ko</entry>
+	<entry>ines_isa</entry>
 	</row>
 	<row>
 	<entry>Iotech</entry>
@@ -591,25 +603,25 @@ Default is <option>--sre</option>.</para>
 	<entry>National Instruments</entry>
 	<entry>PCI-GPIB</entry>
 	<entry>tnt4882.ko</entry>
-	<entry>ni_pci, ni_pci_accel</entry>
+	<entry>ni_pci</entry>
 	</row>
 	<row>
 	<entry>National Instruments</entry>
 	<entry>PCI-GPIB+</entry>
 	<entry>tnt4882.ko</entry>
-	<entry>ni_pci, ni_pci_accel</entry>
+	<entry>ni_pci</entry>
 	</row>
 	<row>
 	<entry>National Instruments</entry>
 	<entry>PCM-GPIB</entry>
 	<entry>tnt4882.ko</entry>
-	<entry>ni_pci, ni_pci_accel</entry>
+	<entry>ni_pci</entry>
 	</row>
 	<row>
 	<entry>National Instruments</entry>
 	<entry>PXI-GPIB</entry>
 	<entry>tnt4882.ko</entry>
-	<entry>ni_pci, ni_pci_accel</entry>
+	<entry>ni_pci</entry>
 	</row>
 	<row>
 	<entry>National Instruments</entry>
@@ -639,7 +651,7 @@ Default is <option>--sre</option>.</para>
 	<entry>Quancom</entry>
 	<entry>PCIGPIB-1</entry>
 	<entry>ines_gpib.ko</entry>
-	<entry>ines_pci, ines_pci_accel</entry>
+	<entry>ines_pci, ines_pci_unaccel</entry>
 	</row>
 	</tbody>
 	</tgroup>
