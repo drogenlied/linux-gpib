@@ -271,7 +271,7 @@ int agilent_82350b_generic_attach(gpib_board_t *board, int use_fifos)
 	tms_priv->offset = 1;
 
 	// find board
-	a_priv->pci_device = gpib_pci_find_device(board, PCI_VENDOR_ID_AGILENT,
+	a_priv->pci_device = gpib_pci_get_device(board, PCI_VENDOR_ID_AGILENT,
 		PCI_DEVICE_ID_82350B, NULL);
 	if(a_priv->pci_device == NULL)
 	{
@@ -360,6 +360,8 @@ void agilent_82350b_detach(gpib_board_t *board)
 			iounmap((void *)a_priv->gpib_base);
 			pci_release_regions(a_priv->pci_device);
 		}
+		if(a_priv->pci_device)
+			pci_dev_put(a_priv->pci_device);
 	}
 	agilent_82350b_free_private( board );
 }

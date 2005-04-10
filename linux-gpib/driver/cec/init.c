@@ -229,7 +229,7 @@ int cec_pci_attach(gpib_board_t *board)
 
 	// find board
 	cec_priv->pci_device = NULL;
-	while( ( cec_priv->pci_device = gpib_pci_find_device( board, CEC_VENDOR_ID,
+	while( ( cec_priv->pci_device = gpib_pci_get_device( board, CEC_VENDOR_ID,
 		CEC_DEV_ID, cec_priv->pci_device ) ) )
 	{
 		// check for board with plx9050 controller
@@ -299,6 +299,8 @@ void cec_pci_detach(gpib_board_t *board)
 			nec7210_board_reset( nec_priv, board );
 			pci_release_regions(cec_priv->pci_device);
 		}
+		if(cec_priv->pci_device)
+			pci_dev_put(cec_priv->pci_device);
 	}
 	cec_free_private(board);
 }

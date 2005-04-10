@@ -441,10 +441,10 @@ int ines_common_pci_attach( gpib_board_t *board )
 		do
 		{
 			if( pci_ids[i].subsystem_vendor_id >= 0 && pci_ids[i].subsystem_device_id >= 0 )
-				pdev = pci_find_subsys(pci_ids[i].vendor_id, pci_ids[i].device_id,
+				pdev = pci_get_subsys(pci_ids[i].vendor_id, pci_ids[i].device_id,
 					pci_ids[i].subsystem_vendor_id, pci_ids[i].subsystem_device_id, pdev);
 			else
-				pdev = pci_find_device(pci_ids[i].vendor_id, pci_ids[i].device_id, pdev);
+				pdev = pci_get_device(pci_ids[i].vendor_id, pci_ids[i].device_id, pdev);
 			if( pdev == NULL )
 				break;
 			if( board->pci_bus >=0 && board->pci_bus != pdev->bus->number )
@@ -638,6 +638,8 @@ void ines_pci_detach(gpib_board_t *board)
 			nec7210_board_reset( nec_priv, board );
 			pci_release_regions(ines_priv->pci_device);
 		}
+		if(ines_priv->pci_device)
+			pci_dev_put(ines_priv->pci_device);
 	}
 	ines_free_private(board);
 }

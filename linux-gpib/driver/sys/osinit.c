@@ -246,12 +246,12 @@ static void __exit gpib_common_exit_module( void )
 module_init( gpib_common_init_module );
 module_exit( gpib_common_exit_module );
 
-struct pci_dev* gpib_pci_find_device( const gpib_board_t *board, unsigned int vendor_id,
-	unsigned int device_id, const struct pci_dev *from)
+struct pci_dev* gpib_pci_get_device( const gpib_board_t *board, unsigned int vendor_id,
+	unsigned int device_id, struct pci_dev *from)
 {
-	struct pci_dev *pci_device = ( struct pci_dev* ) from;
+	struct pci_dev *pci_device = from;
 
-	while( ( pci_device = pci_find_device( vendor_id, device_id, pci_device ) ) )
+	while( ( pci_device = pci_get_device( vendor_id, device_id, pci_device ) ) )
 	{
 		if( board->pci_bus >=0 && board->pci_bus != pci_device->bus->number )
 			continue;
@@ -265,4 +265,4 @@ struct pci_dev* gpib_pci_find_device( const gpib_board_t *board, unsigned int ve
 
 EXPORT_SYMBOL( gpib_register_driver );
 EXPORT_SYMBOL( gpib_unregister_driver );
-EXPORT_SYMBOL( gpib_pci_find_device );
+EXPORT_SYMBOL( gpib_pci_get_device );

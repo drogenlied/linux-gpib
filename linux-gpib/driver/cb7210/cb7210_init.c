@@ -342,11 +342,11 @@ int cb_pci_attach(gpib_board_t *board)
 	cb_priv = board->private_data;
 	nec_priv = &cb_priv->nec7210_priv;
 
-	cb_priv->pci_device = gpib_pci_find_device( board, PCI_VENDOR_ID_CBOARDS,
+	cb_priv->pci_device = gpib_pci_get_device( board, PCI_VENDOR_ID_CBOARDS,
 		PCI_DEVICE_ID_CBOARDS_PCI_GPIB, NULL);
 	if(cb_priv->pci_device == NULL)
 	{
-		cb_priv->pci_device = gpib_pci_find_device( board, PCI_VENDOR_ID_CBOARDS,
+		cb_priv->pci_device = gpib_pci_get_device( board, PCI_VENDOR_ID_CBOARDS,
 			PCI_DEVICE_ID_CBOARDS_CPCI_GPIB, NULL);
 	}
 	if(cb_priv->pci_device == NULL)
@@ -406,6 +406,8 @@ void cb_pci_detach(gpib_board_t *board)
 			nec7210_board_reset( nec_priv, board );
 			pci_release_regions(cb_priv->pci_device);
 		}
+		if(cb_priv->pci_device)
+			pci_dev_put(cb_priv->pci_device);
 	}
 	cb7210_generic_detach(board);
 }
