@@ -27,7 +27,7 @@ typedef struct
 {
 	tms9914_private_t tms9914_priv;
 	unsigned int irq;
-	unsigned int raw_iobase;
+	unsigned long raw_iobase;
 } hp82335_private_t;
 
 // interfaces

@@ -256,10 +256,10 @@ int hp82335_attach( gpib_board_t *board )
 	}
 	hp_priv->raw_iobase = board->ibbase;
 	tms_priv->iobase = ( unsigned long ) ioremap( board->ibbase, hp82335_iomem_size );
-	printk("hp82335: base address 0x%x remapped to 0x%lx\n", hp_priv->raw_iobase,
+	printk("hp82335: base address 0x%lx remapped to 0x%lx\n", hp_priv->raw_iobase,
 		tms_priv->iobase );
 
-	if(request_irq( board->ibirq, hp82335_interrupt, SA_SHIRQ, "hp82335", board))
+	if(request_irq( board->ibirq, hp82335_interrupt, 0, "hp82335", board))
 	{
 		printk( "hp82335: can't request IRQ %d\n", board->ibirq );
 		return -1;
