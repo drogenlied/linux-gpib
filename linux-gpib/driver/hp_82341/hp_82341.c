@@ -1,8 +1,9 @@
 /***************************************************************************
                           hp_82341/hp_82341.c  -  description
                              -------------------
-
-    copyright            : (C) 2002 by Frank Mori Hess
+Driver for hp 82341a/b/c/d boards.  Might be worth merging with Agilent
+82350b driver.
+    copyright            : (C) 2002, 2005 by Frank Mori Hess
     email                : fmhess@users.sourceforge.net
  ***************************************************************************/
 
@@ -21,6 +22,7 @@
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/init.h>
+#include <linux/isapnp.h>
 
 MODULE_LICENSE("GPL");
 
@@ -187,18 +189,41 @@ void hp_82341_free_private( gpib_board_t *board )
 
 uint8_t hp_82341_read_byte( tms9914_private_t *priv, unsigned int register_num )
 {
-	return readb(priv->iobase + 0x10 + register_num);
+	return inb(priv->iobase + TMS9914_BASE_REG + register_num);
 }
 
 void hp_82341_write_byte( tms9914_private_t *priv, uint8_t data, unsigned int register_num )
 {
-	writeb(data, priv->iobase + 0x800 + register_num);
+	outb(data, priv->iobase + TMS9914_BASE_REG + register_num);
 }
 
-void hp_82341_clear_interrupt( hp_82341_private_t *hp_priv )
+int hp_82341_find_isapnp_board(struct pnp_dev **dev)
 {
-	tms9914_private_t *tms_priv = &hp_priv->tms9914_priv;
-	writeb(TI_INTERRUPT_EVENT_BIT, tms_priv->iobase + EVENT_STATUS_REG);
+	*dev = pnp_find_dev(NULL, ISAPNP_VENDOR('H', 'W', 'P'),
+		ISAPNP_FUNCTION(0x1411), NULL );
+	if(*dev == NULL || (*dev)->card == NULL)
+	{
+		printk( "hp_82341: failed to find isapnp board\n" );
+		return -ENODEV;
+	}
+	if(pnp_device_attach(*dev) < 0)
+ 	{
+		printk( "hp_82341: atgpib/tnt board already active, skipping\n" );
+		return -EBUSY;
+	}
+	if(pnp_activate_dev(*dev) < 0 )
+	{
+		pnp_device_detach(*dev);
+		printk( "hp_82341: failed to activate() atgpib/tnt, aborting\n" );
+		return -EAGAIN;
+	}
+	if(!pnp_port_valid(*dev, 0) || !pnp_irq_valid(*dev, 0))
+	{
+		pnp_device_detach(*dev);
+		printk( "hp_82341: invalid port or irq for atgpib/tnt, aborting\n" );
+		return -ENOMEM;
+	}
+	return 0;
 }
 
 int hp_82341_attach( gpib_board_t *board )
@@ -216,22 +241,24 @@ int hp_82341_attach( gpib_board_t *board )
 	tms_priv->write_byte = hp_82341_write_byte;
 	tms_priv->offset = 1;
 
-	if(request_mem_region(board->ibbase, hp_82341_iomem_size, "hp_82341" ) == NULL)
+	if(board->ibbase == 0)
 	{
-		printk( "hp_82341: failed to allocate io memory region 0x%lx-0x%lx\n",
+		struct pnp_dev *dev;
+		int retval = hp_82341_find_isapnp_board(&dev);
+		if(retval < 0)
+			return retval;
+		hp_priv->pnp_dev = dev;
+		board->ibbase = pnp_port_start(dev, 0);
+		board->ibirq = pnp_irq(dev, 0);
+	}
+	if(request_region(board->ibbase, hp_82341_iosize, "hp_82341" ) == NULL)
+	{
+		printk( "hp_82341: failed to allocate io ports 0x%lx-0x%lx\n",
 			board->ibbase,
-			board->ibbase + hp_82341_iomem_size - 1);
+			board->ibbase + hp_82341_iosize - 1);
 		return -EIO;
 	}
-	hp_priv->raw_iobase = board->ibbase;
-	tms_priv->iobase = (unsigned long) ioremap(board->ibbase, hp_82341_iomem_size);
-	printk("hp_82341: base address 0x%lx remapped to 0x%lx\n", hp_priv->raw_iobase,
-		tms_priv->iobase );
-	if(board->ibirq > 7 || board->ibirq < 1)
-	{
-		printk("hp_82341: bad irq=%i, must be in the range 1 through 7\n", board->ibirq);
-		return -EINVAL;
-	}
+	tms_priv->iobase = board->ibbase;
 	if(request_irq(board->ibirq, hp_82341_interrupt, 0, "hp_82341", board))
 	{
 		printk( "hp_82341: failed to allocate IRQ %d\n", board->ibirq);
@@ -239,12 +266,14 @@ int hp_82341_attach( gpib_board_t *board )
 	}
 	hp_priv->irq = board->ibirq;
 	printk("hp_82341: IRQ %d\n", board->ibirq);
+	//write clear event register
+	writeb((TI_INTERRUPT_EVENT_BIT | POINTERS_EQUAL_EVENT_BIT |
+		BUFFER_END_EVENT_BIT | TERMINAL_COUNT_EVENT_BIT),
+		tms_priv->iobase + EVENT_STATUS_REG);	
 	hp_priv->mode_control_bits |= ENABLE_IRQ_CONFIG_BIT;
 	writeb(hp_priv->mode_control_bits, tms_priv->iobase + MODE_CONTROL_STATUS_REG);
 	writeb(IRQ_SELECT_BITS(board->ibirq), tms_priv->iobase + CONFIG_CONTROL_STATUS_REG);
 	tms9914_board_reset(tms_priv);
-
-	hp_82341_clear_interrupt( hp_priv );
 
 	writeb(ENABLE_TI_INTERRUPT_BIT, tms_priv->iobase + INTERRUPT_ENABLE_REG);
 
@@ -261,19 +290,16 @@ void hp_82341_detach(gpib_board_t *board)
 	if( hp_priv )
 	{
 		tms_priv = &hp_priv->tms9914_priv;
-		if( hp_priv->irq )
-		{
-			free_irq( hp_priv->irq, board );
-		}
-		if( tms_priv->iobase )
+		if(tms_priv->iobase)
 		{
 			writeb(0, tms_priv->iobase + INTERRUPT_ENABLE_REG);
 			tms9914_board_reset( tms_priv );
-			iounmap( ( void * ) tms_priv->iobase );
+			if( hp_priv->irq )
+			{
+				free_irq(hp_priv->irq, board);
+			}
+			release_region(tms_priv->iobase, hp_82341_iosize);
 		}
-		if(hp_priv->raw_iobase)
-			release_mem_region(hp_priv->raw_iobase,
-				hp_82341_iomem_size);
 	}
 	hp_82341_free_private( board );
 }
@@ -301,15 +327,32 @@ irqreturn_t hp_82341_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
 	int status1, status2;
 	gpib_board_t *board = arg;
-	hp_82341_private_t *priv = board->private_data;
+	hp_82341_private_t *hp_priv = board->private_data;
+	tms9914_private_t *tms_priv = &hp_priv->tms9914_priv;
 	unsigned long flags;
-	irqreturn_t retval;
-	
+	irqreturn_t retval = IRQ_NONE;
+	int event_status;
+		
 	spin_lock_irqsave( &board->spinlock, flags );
-	status1 = read_byte( &priv->tms9914_priv, ISR0);
-	status2 = read_byte( &priv->tms9914_priv, ISR1);
-	hp_82341_clear_interrupt( priv );
-	retval = tms9914_interrupt_have_status(board, &priv->tms9914_priv, status1, status2);
+	event_status = readb(tms_priv->iobase + EVENT_STATUS_REG);
+	if(event_status & INTERRUPT_PENDING_EVENT_BIT)
+	{
+		retval = IRQ_HANDLED;
+	}
+	//write-clear status bits
+	if(event_status & (TI_INTERRUPT_EVENT_BIT | POINTERS_EQUAL_EVENT_BIT |
+		BUFFER_END_EVENT_BIT | TERMINAL_COUNT_EVENT_BIT))
+	{
+		writeb(event_status & (TI_INTERRUPT_EVENT_BIT | POINTERS_EQUAL_EVENT_BIT |
+			BUFFER_END_EVENT_BIT | TERMINAL_COUNT_EVENT_BIT),
+			tms_priv->iobase + EVENT_STATUS_REG);
+	}
+	if(event_status & TI_INTERRUPT_EVENT_BIT)
+	{
+		status1 = read_byte(tms_priv, ISR0);
+		status2 = read_byte(tms_priv, ISR1);
+		tms9914_interrupt_have_status(board, tms_priv, status1, status2);
+	}
 	spin_unlock_irqrestore( &board->spinlock, flags );
 	return retval;
 }

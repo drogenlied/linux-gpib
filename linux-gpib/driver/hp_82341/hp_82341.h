@@ -2,7 +2,7 @@
                               hp_82341/hp_82341.h
                              -------------------
 
-    copyright            : (C) 2002 by Frank Mori Hess
+    copyright            : (C) 2002, 2005 by Frank Mori Hess
     email                : fmhess@users.sourceforge.net
  ***************************************************************************/
 
@@ -27,8 +27,8 @@ typedef struct
 {
 	tms9914_private_t tms9914_priv;
 	unsigned int irq;
-	unsigned long raw_iobase;
 	unsigned short mode_control_bits;
+	struct pnp_dev *pnp_dev;
 } hp_82341_private_t;
 
 // interfaces
@@ -63,8 +63,8 @@ irqreturn_t hp_82341_interrupt(int irq, void *arg, struct pt_regs *registerp);
 int hp_82341_allocate_private(gpib_board_t *board);
 void hp_82341_free_private(gpib_board_t *board);
 
-// size of io memory region used
-static const int hp_82341_iomem_size = 0x1000;
+// size of io region used
+static const int hp_82341_iosize = 0x10;
 
 // hp 82341 register offsets
 enum hp_82341_registers
@@ -76,26 +76,17 @@ enum hp_82341_registers
 	INTERRUPT_ENABLE_REG = 0x3,
 	EVENT_STATUS_REG = 0x4,
 	EVENT_ENABLE_REG = 0x5,
-	RESTART_REG = 0x7,
+	STREAM_STATUS_REG = 0x7,
 	ID0_READ_REG = 0xa,
 	ID1_READ_REG = 0xb,
-	TRANSFER_COUNT_LOW_READ_REG = 0xc,
-	TRANSFER_COUNT_MID_READ_REG = 0xd,
-	TRANSFER_COUNT_HIGH_READ_REG = 0xe,
-	BUFFER_PORT_LOW_READ_REG = 0x18,
-	BUFFER_PORT_HIGH_READ_REG = 0x19,
-	ID2_READ_REG = 0x1a,
-	ID3_READ_REG = 0x1b,
-	ID0_WRITE_REG = 0x402,
-	ID1_WRITE_REG = 0x403,
-	TRANSFER_COUNT_LOW_WRITE_REG = 0x404,
-	TRANSFER_COUNT_MID_WRITE_REG = 0x405,
-	TRANSFER_COUNT_HIGH_WRITE_REG = 0x406,
-	BUFFER_PORT_LOW_WRITE_REG = 0xc00,
-	BUFFER_PORT_HIGH_WRITE_REG = 0xc01,
-	ID2_WRITE_REG = 0xc02,
-	ID3_WRITE_REG = 0xc03,
-	BUFFER_FLUSH_REG = 0xc04,
+	TRANSFER_COUNT_LOW_REG = 0xc,
+	TRANSFER_COUNT_MID_REG = 0xd,
+	TRANSFER_COUNT_HIGH_REG = 0xe,
+	TMS9914_BASE_REG = 0x10,
+	BUFFER_PORT_LOW_REG = 0x18,
+	BUFFER_PORT_HIGH_REG = 0x19,
+	ID2_REG = 0x1a,
+	ID3_REG = 0x1b,
 };
 
 enum config_control_status_bits
@@ -166,7 +157,7 @@ enum event_enable_bits
 	ENABLE_DMA_TERMINAL_COUNT_EVENT_BIT = 0x80,	// write clear
 };
 
-enum restart_bits
+enum stream_status_bits
 {
 	HALTED_BIT = 0x1,	//read
 	RESTART_BIT = 0x1	//write
