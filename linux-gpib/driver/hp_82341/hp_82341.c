@@ -300,10 +300,20 @@ void hp_82341_detach(gpib_board_t *board)
 			}
 			release_region(tms_priv->iobase, hp_82341_iosize);
 		}
+		if(hp_priv->pnp_dev)
+		{			
+			pnp_device_detach(hp_priv->pnp_dev);
+		}
 	}
 	hp_82341_free_private( board );
 }
 
+static const struct pnp_device_id hp_82341_pnp_table[] __devinitdata = 
+{
+	{.id = "HWP1411"},
+	{.id = ""}
+};
+MODULE_DEVICE_TABLE(pnp, hp_82341_pnp_table);
 
 static int hp_82341_init_module( void )
 {
