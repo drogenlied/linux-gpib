@@ -63,7 +63,7 @@ void hp_82341_request_system_control( gpib_board_t *board, int request_control )
 		priv->mode_control_bits |= SYSTEM_CONTROLLER_BIT;
 	else
 		priv->mode_control_bits &= ~SYSTEM_CONTROLLER_BIT;
-	writeb(priv->mode_control_bits, priv->tms9914_priv.iobase + MODE_CONTROL_STATUS_REG);
+	outb(priv->mode_control_bits, priv->tms9914_priv.iobase + MODE_CONTROL_STATUS_REG);
 	tms9914_request_system_control( board, &priv->tms9914_priv, request_control );
 }
 void hp_82341_interface_clear( gpib_board_t *board, int assert )
@@ -208,7 +208,7 @@ int hp_82341_find_isapnp_board(struct pnp_dev **dev)
 	}
 	if(pnp_device_attach(*dev) < 0)
  	{
-		printk( "hp_82341: atgpib/tnt board already active, skipping\n" );
+		printk( "hp_82341: board already active, skipping\n" );
 		return -EBUSY;
 	}
 	if(pnp_activate_dev(*dev) < 0 )
@@ -259,6 +259,7 @@ int hp_82341_attach( gpib_board_t *board )
 		return -EIO;
 	}
 	tms_priv->iobase = board->ibbase;
+	printk("hp_82341: base io 0x%lx\n", tms_priv->iobase);
 	if(request_irq(board->ibirq, hp_82341_interrupt, 0, "hp_82341", board))
 	{
 		printk( "hp_82341: failed to allocate IRQ %d\n", board->ibirq);
@@ -267,15 +268,15 @@ int hp_82341_attach( gpib_board_t *board )
 	hp_priv->irq = board->ibirq;
 	printk("hp_82341: IRQ %d\n", board->ibirq);
 	//write clear event register
-	writeb((TI_INTERRUPT_EVENT_BIT | POINTERS_EQUAL_EVENT_BIT |
+	outb((TI_INTERRUPT_EVENT_BIT | POINTERS_EQUAL_EVENT_BIT |
 		BUFFER_END_EVENT_BIT | TERMINAL_COUNT_EVENT_BIT),
 		tms_priv->iobase + EVENT_STATUS_REG);	
 	hp_priv->mode_control_bits |= ENABLE_IRQ_CONFIG_BIT;
-	writeb(hp_priv->mode_control_bits, tms_priv->iobase + MODE_CONTROL_STATUS_REG);
-	writeb(IRQ_SELECT_BITS(board->ibirq), tms_priv->iobase + CONFIG_CONTROL_STATUS_REG);
+	outb(hp_priv->mode_control_bits, tms_priv->iobase + MODE_CONTROL_STATUS_REG);
+	outb(IRQ_SELECT_BITS(board->ibirq), tms_priv->iobase + CONFIG_CONTROL_STATUS_REG);
 	tms9914_board_reset(tms_priv);
 
-	writeb(ENABLE_TI_INTERRUPT_BIT, tms_priv->iobase + INTERRUPT_ENABLE_REG);
+	outb(ENABLE_TI_INTERRUPT_BIT, tms_priv->iobase + INTERRUPT_ENABLE_REG);
 
 	tms9914_online( board, tms_priv );
 
@@ -292,7 +293,7 @@ void hp_82341_detach(gpib_board_t *board)
 		tms_priv = &hp_priv->tms9914_priv;
 		if(tms_priv->iobase)
 		{
-			writeb(0, tms_priv->iobase + INTERRUPT_ENABLE_REG);
+			outb(0, tms_priv->iobase + INTERRUPT_ENABLE_REG);
 			tms9914_board_reset( tms_priv );
 			if( hp_priv->irq )
 			{
@@ -344,7 +345,7 @@ irqreturn_t hp_82341_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	int event_status;
 		
 	spin_lock_irqsave( &board->spinlock, flags );
-	event_status = readb(tms_priv->iobase + EVENT_STATUS_REG);
+	event_status = inb(tms_priv->iobase + EVENT_STATUS_REG);
 	if(event_status & INTERRUPT_PENDING_EVENT_BIT)
 	{
 		retval = IRQ_HANDLED;
@@ -353,7 +354,7 @@ irqreturn_t hp_82341_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	if(event_status & (TI_INTERRUPT_EVENT_BIT | POINTERS_EQUAL_EVENT_BIT |
 		BUFFER_END_EVENT_BIT | TERMINAL_COUNT_EVENT_BIT))
 	{
-		writeb(event_status & (TI_INTERRUPT_EVENT_BIT | POINTERS_EQUAL_EVENT_BIT |
+		outb(event_status & (TI_INTERRUPT_EVENT_BIT | POINTERS_EQUAL_EVENT_BIT |
 			BUFFER_END_EVENT_BIT | TERMINAL_COUNT_EVENT_BIT),
 			tms_priv->iobase + EVENT_STATUS_REG);
 	}
