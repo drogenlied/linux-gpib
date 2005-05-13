@@ -267,16 +267,19 @@ int hp_82341_attach( gpib_board_t *board )
 	}
 	hp_priv->irq = board->ibirq;
 	printk("hp_82341: IRQ %d\n", board->ibirq);
+	printk("hp_82341: config status=0x%x\n", inb(tms_priv->iobase + CONFIG_CONTROL_STATUS_REG));
+	hp_priv->mode_control_bits |= ENABLE_IRQ_CONFIG_BIT;
+	outb(hp_priv->mode_control_bits, tms_priv->iobase + MODE_CONTROL_STATUS_REG);
+	outb(IRQ_SELECT_BITS(board->ibirq), tms_priv->iobase + CONFIG_CONTROL_STATUS_REG);
+	hp_priv->mode_control_bits &= ~ENABLE_IRQ_CONFIG_BIT;
+	outb(hp_priv->mode_control_bits, tms_priv->iobase + MODE_CONTROL_STATUS_REG);
+	tms9914_board_reset(tms_priv);
+	outb(ENABLE_TI_INTERRUPT_EVENT_BIT, tms_priv->iobase +  EVENT_ENABLE_REG);
+	outb(ENABLE_TI_INTERRUPT_BIT, tms_priv->iobase + INTERRUPT_ENABLE_REG);
 	//write clear event register
 	outb((TI_INTERRUPT_EVENT_BIT | POINTERS_EQUAL_EVENT_BIT |
 		BUFFER_END_EVENT_BIT | TERMINAL_COUNT_EVENT_BIT),
 		tms_priv->iobase + EVENT_STATUS_REG);	
-	hp_priv->mode_control_bits |= ENABLE_IRQ_CONFIG_BIT;
-	outb(hp_priv->mode_control_bits, tms_priv->iobase + MODE_CONTROL_STATUS_REG);
-	outb(IRQ_SELECT_BITS(board->ibirq), tms_priv->iobase + CONFIG_CONTROL_STATUS_REG);
-	tms9914_board_reset(tms_priv);
-
-	outb(ENABLE_TI_INTERRUPT_BIT, tms_priv->iobase + INTERRUPT_ENABLE_REG);
 
 	tms9914_online( board, tms_priv );
 
@@ -346,6 +349,7 @@ irqreturn_t hp_82341_interrupt(int irq, void *arg, struct pt_regs *registerp)
 		
 	spin_lock_irqsave( &board->spinlock, flags );
 	event_status = inb(tms_priv->iobase + EVENT_STATUS_REG);
+	printk("hp_82341: interrupt event_status=0x%x\n", event_status);
 	if(event_status & INTERRUPT_PENDING_EVENT_BIT)
 	{
 		retval = IRQ_HANDLED;
@@ -363,6 +367,8 @@ irqreturn_t hp_82341_interrupt(int irq, void *arg, struct pt_regs *registerp)
 		status1 = read_byte(tms_priv, ISR0);
 		status2 = read_byte(tms_priv, ISR1);
 		tms9914_interrupt_have_status(board, tms_priv, status1, status2);
+		printk("hp_82341: interrupt status1=0x%x status2=0x%x\n",
+			status1, status2);
 	}
 	spin_unlock_irqrestore( &board->spinlock, flags );
 	return retval;
