@@ -474,6 +474,18 @@ Default is <option>--sre</option>.</para>
 	<entry>pcIIa</entry>
 	</row>
 	<row>
+	<entry>Hameg</entry>
+	<entry>HO80</entry>
+	<entry>pc2_gpib.ko</entry>
+	<entry>pcII</entry>
+	</row>
+	<row>
+	<entry>Hameg</entry>
+	<entry>HO80-2</entry>
+	<entry>ines_gpib.ko</entry>
+	<entry>ines_isa</entry>
+	</row>
+	<row>
 	<entry>Hewlett Packard</entry>
 	<entry>HP82335</entry>
 	<entry>hp82335.ko</entry>
@@ -669,7 +681,7 @@ line is asserted.  Thus if you use the REOS
 flag for a read, the board's fifos will
 not be used for the transfer.  This will greatly reduce the maximum transfer
 rate for your board (which may or may not be noticeable depending on the
-device you are reading from).
+device you are talking to).
 </para>
 </section>
 <section ID="agilent-82357a">
@@ -684,7 +696,7 @@ It cannot be run as a device, it must be the system controller.
 </listitem>
 <listitem>
 <para>
-It cannot be assigned a seconday address.
+It cannot be assigned a secondary address.
 </para>
 </listitem>
 <listitem>
