@@ -260,6 +260,13 @@ int hp_82341_attach( gpib_board_t *board )
 	}
 	tms_priv->iobase = board->ibbase;
 	printk("hp_82341: base io 0x%lx\n", tms_priv->iobase);
+	/* temporary hack to get board running until we figure out how to make
+	 interrupts work */
+	if(gpib_request_pseudo_irq(board, hp_82341_interrupt))
+	{
+		printk("hp_82341: failed to allocate pseudo_irq\n");
+		return -EIO;
+	}	
 	if(request_irq(board->ibirq, hp_82341_interrupt, 0, "hp_82341", board))
 	{
 		printk( "hp_82341: failed to allocate IRQ %d\n", board->ibirq);
@@ -302,6 +309,7 @@ void hp_82341_detach(gpib_board_t *board)
 			{
 				free_irq(hp_priv->irq, board);
 			}
+			gpib_free_pseudo_irq(board);
 			release_region(tms_priv->iobase, hp_82341_iosize);
 		}
 		if(hp_priv->pnp_dev)
