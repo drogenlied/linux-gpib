@@ -27,6 +27,7 @@ typedef struct
 {
 	tms9914_private_t tms9914_priv;
 	unsigned int irq;
+	unsigned short config_control_bits;
 	unsigned short mode_control_bits;
 	struct pnp_dev *pnp_dev;
 } hp_82341_private_t;
@@ -87,6 +88,7 @@ enum hp_82341_registers
 	BUFFER_PORT_HIGH_REG = 0x19,
 	ID2_REG = 0x1a,
 	ID3_REG = 0x1b,
+	BUFFER_CONTROL_REG = 0x1f
 };
 
 enum config_control_status_bits
@@ -161,6 +163,13 @@ enum stream_status_bits
 {
 	HALTED_BIT = 0x1,	//read
 	RESTART_BIT = 0x1	//write
+};
+
+enum buffer_control_bits
+{
+	XFR_IN_OUT_L_BIT = 0x20,	// transfer direction (set for gpib to host)
+	EN_TI_BUF = 0x40,	//enable fifo
+	FAST_WR_EN_BIT = 0x80,
 };
 
 #endif	// _HP82335_H
