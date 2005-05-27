@@ -253,6 +253,26 @@ printf("\n");
 	return Py_None;
 }
 
+static char gpib_tmo__doc__[] =
+""
+;
+
+static PyObject* gpib_tmo(PyObject *self, PyObject *args)
+
+{
+        int device;
+        int value;
+
+	if (!PyArg_ParseTuple(args, "ii",&device,&value))
+		return NULL;
+	if( ibtmo(device, value) & ERR){
+	  PyErr_SetString(GpibError,"Timeout Error: ibtmo() failed");
+	  return NULL;
+	}
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
 static char gpib_rsp__doc__[] =
 ""
 ;
@@ -332,6 +352,7 @@ static struct PyMethodDef gpib_methods[] = {
  {"clear",	gpib_clear,	1,	gpib_clear__doc__},
  {"close",	gpib_close,	1,	gpib_close__doc__},
  {"wait",	gpib_wait,	1,	gpib_wait__doc__},
+ {"tmo",	gpib_tmo,	1,	gpib_tmo__doc__},
  {"rsp",	gpib_rsp,	1,	gpib_rsp__doc__},
  {"trg",	gpib_trg,	1,	gpib_trg__doc__},
  {"ibsta",	gpib_ibsta,	1,	gpib_ibsta__doc__},

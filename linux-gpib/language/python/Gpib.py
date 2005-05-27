@@ -50,3 +50,5 @@ class Gpib:
 		self.res = gpib.ibcnt()
 		return self.res
 
+	def tmo(self,value):
+		return gpib.tmo(self.id,value)
