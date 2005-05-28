@@ -250,11 +250,6 @@ void agilent_82350b_free_private( gpib_board_t *board )
 	}
 }
 
-static inline unsigned int tms9914_to_agilent_82350b_offset( unsigned int register_num )
-{
-	return 0x3ff8 + register_num;
-}
-
 int agilent_82350b_generic_attach(gpib_board_t *board, int use_fifos)
 {
 	agilent_82350b_private_t *a_priv;
