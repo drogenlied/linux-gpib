@@ -46,7 +46,7 @@ static void agilent_82357a_timeout_handler(unsigned long arg)
 }
 
 int agilent_82357a_send_bulk_msg(agilent_82357a_private_t *a_priv, void *data, int data_length, int *actual_data_length, 
-	int timeout_jiffies)
+	int timeout_msecs)
 {
 	struct usb_device *usb_dev;
 	int retval;
@@ -80,7 +80,7 @@ int agilent_82357a_send_bulk_msg(agilent_82357a_private_t *a_priv, void *data, i
 	usb_fill_bulk_urb(a_priv->bulk_urb, usb_dev, out_pipe, data, data_length, 
 		agilent_82357a_bulk_complete, &context);
 	init_timer(&timer);
-	timer.expires = jiffies + timeout_jiffies;
+	timer.expires = jiffies + msecs_to_jiffies(timeout_msecs);
 	timer.function = agilent_82357a_timeout_handler;
 	timer.data = (unsigned long) &context;
 	add_timer(&timer);
@@ -122,7 +122,7 @@ int agilent_82357a_send_bulk_msg(agilent_82357a_private_t *a_priv, void *data, i
 }
 
 int agilent_82357a_receive_bulk_msg(agilent_82357a_private_t *a_priv, void *data, int data_length, int *actual_data_length, 
-	int timeout_jiffies)
+	int timeout_msecs)
 {
 	struct usb_device *usb_dev;
 	int retval;
@@ -156,7 +156,7 @@ int agilent_82357a_receive_bulk_msg(agilent_82357a_private_t *a_priv, void *data
 	usb_fill_bulk_urb(a_priv->bulk_urb, usb_dev, in_pipe, data, data_length, 
 		agilent_82357a_bulk_complete, &context);
 	init_timer(&timer);
-	timer.expires = jiffies + timeout_jiffies;
+	timer.expires = jiffies + msecs_to_jiffies(timeout_msecs);
 	timer.function = agilent_82357a_timeout_handler;
 	timer.data = (unsigned long) &context;
 	add_timer(&timer);
@@ -199,7 +199,7 @@ int agilent_82357a_receive_bulk_msg(agilent_82357a_private_t *a_priv, void *data
 }
 
 int agilent_82357a_receive_control_msg(agilent_82357a_private_t *a_priv, __u8 request, __u8 requesttype, __u16 value, 
-	__u16 index, void *data, __u16 size, int timeout_jiffies)
+	__u16 index, void *data, __u16 size, int timeout_msecs)
 {
 	struct usb_device *usb_dev;
 	int retval;
@@ -214,7 +214,7 @@ int agilent_82357a_receive_control_msg(agilent_82357a_private_t *a_priv, __u8 re
 	}
 	usb_dev = interface_to_usbdev(a_priv->bus_interface);
 	in_pipe = usb_rcvctrlpipe(usb_dev, AGILENT_82357A_CONTROL_ENDPOINT);
-	retval = usb_control_msg(usb_dev, in_pipe, request, requesttype, value, index, data, size, timeout_jiffies);
+	retval = USB_CONTROL_MSG(usb_dev, in_pipe, request, requesttype, value, index, data, size, timeout_msecs);
 	up(&a_priv->control_transfer_lock);
 	return retval;
 }
@@ -269,7 +269,7 @@ int agilent_82357a_write_registers(agilent_82357a_private_t *a_priv, const struc
 	{
 		printk("%s: bug! buffer overrun\n", __FUNCTION__);
 	}
-	retval = agilent_82357a_send_bulk_msg(a_priv, out_data, i, &bytes_written, HZ);
+	retval = agilent_82357a_send_bulk_msg(a_priv, out_data, i, &bytes_written, 1000);
 	kfree(out_data);
 	if(retval)
 	{
@@ -284,7 +284,7 @@ int agilent_82357a_write_registers(agilent_82357a_private_t *a_priv, const struc
 		printk("%s: kmalloc failed\n", __FILE__);
 		return -ENOMEM;
 	}
-	retval = agilent_82357a_receive_bulk_msg(a_priv, in_data, in_data_length, &bytes_read, HZ);
+	retval = agilent_82357a_receive_bulk_msg(a_priv, in_data, in_data_length, &bytes_read, 1000);
 	if(retval)
 	{
 		printk("%s: %s: agilent_82357a_receive_bulk_msg returned %i, bytes_read=%i\n", __FILE__, __FUNCTION__, retval, bytes_read);
@@ -339,7 +339,7 @@ int agilent_82357a_read_registers(agilent_82357a_private_t *a_priv, struct agile
 	{
 		printk("%s: bug! buffer overrun\n", __FUNCTION__);
 	}
-	retval = agilent_82357a_send_bulk_msg(a_priv, out_data, i, &bytes_written, HZ);
+	retval = agilent_82357a_send_bulk_msg(a_priv, out_data, i, &bytes_written, 1000);
 	kfree(out_data);
 	if(retval)
 	{
@@ -354,7 +354,7 @@ int agilent_82357a_read_registers(agilent_82357a_private_t *a_priv, struct agile
 		printk("%s: kmalloc failed\n", __FILE__);
 		return -ENOMEM;
 	}
-	retval = agilent_82357a_receive_bulk_msg(a_priv, in_data, in_data_length, &bytes_read, 10 * HZ);
+	retval = agilent_82357a_receive_bulk_msg(a_priv, in_data, in_data_length, &bytes_read, 10000);
 	if(retval)
 	{
 		printk("%s: %s: agilent_82357a_receive_bulk_msg returned %i, bytes_read=%i\n", __FILE__, __FUNCTION__, retval, bytes_read);
@@ -390,7 +390,7 @@ static int agilent_82357a_abort(agilent_82357a_private_t *a_priv, int flush)
 	if(flush)
 		wIndex |= XA_FLUSH;
 	retval = agilent_82357a_receive_control_msg(a_priv, agilent_82357a_control_request, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE, 
-		XFER_ABORT, wIndex, status_data, sizeof(status_data), HZ / 10);
+		XFER_ABORT, wIndex, status_data, sizeof(status_data), 100);
 	if(retval < 0)
 	{
 		printk("%s: %s: agilent_82357a_receive_control_msg() returned %i\n", __FILE__, __FUNCTION__, retval);
@@ -447,7 +447,7 @@ ssize_t agilent_82357a_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 	out_data[i++] = (length >> 24) & 0xff;
 	out_data[i++] = a_priv->eos_char;
 	jiffie_timeout = usec_to_jiffies(board->usec_timeout);
-	retval = agilent_82357a_send_bulk_msg(a_priv, out_data, i, &bytes_written, jiffie_timeout);
+	retval = agilent_82357a_send_bulk_msg(a_priv, out_data, i, &bytes_written, jiffies_to_msecs(jiffie_timeout));
 	kfree(out_data);
 	if(retval || bytes_written != i)
 	{
@@ -462,7 +462,7 @@ ssize_t agilent_82357a_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 	if(jiffie_timeout > 0)
 	{
 		retval = agilent_82357a_receive_bulk_msg(a_priv, in_data, in_data_length, 
-			&bytes_read, jiffie_timeout);
+			&bytes_read, jiffies_to_msecs(jiffie_timeout));
 	}else
 	{
 		retval = -ETIMEDOUT;
@@ -473,7 +473,7 @@ ssize_t agilent_82357a_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 		int extra_bytes_read;
 		agilent_82357a_abort(a_priv, 1);
 		retval = agilent_82357a_receive_bulk_msg(a_priv, in_data + bytes_read, in_data_length - bytes_read, 
-			&extra_bytes_read, HZ / 10);
+			&extra_bytes_read, 100);
 		printk("%s: %s: agilent_82357a_receive_bulk_msg timed out, bytes_read=%i, extra_bytes_read=%i\n", 
 			__FILE__, __FUNCTION__, bytes_read, extra_bytes_read);
 		bytes_read += extra_bytes_read;
@@ -537,7 +537,7 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 	//printk("%s: sending bulk msg(), send_commands=%i\n", __FUNCTION__, send_commands);
 	clear_bit(AIF_WRITE_COMPLETE_BN, &a_priv->interrupt_flags);
 	jiffie_timeout = usec_to_jiffies(board->usec_timeout);
-	retval = agilent_82357a_send_bulk_msg(a_priv, out_data, i, &bytes_written, jiffie_timeout);
+	retval = agilent_82357a_send_bulk_msg(a_priv, out_data, i, &bytes_written, jiffies_to_msecs(jiffie_timeout));
 	kfree(out_data);
 	if(retval == -ETIMEDOUT)
 	{
@@ -565,7 +565,7 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 	}
 	//printk("%s: receiving control msg\n", __FUNCTION__);
 	retval = agilent_82357a_receive_control_msg(a_priv, agilent_82357a_control_request, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE, 
-		XFER_STATUS, 0, status_data, sizeof(status_data), HZ / 10);
+		XFER_STATUS, 0, status_data, sizeof(status_data), 100);
 	if(retval < 0)
 	{
 		printk("%s: %s: agilent_82357a_receive_control_msg() returned %i\n", __FILE__, __FUNCTION__, retval);
