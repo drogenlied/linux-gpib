@@ -22,6 +22,12 @@
 #include "gpibP.h"
 
 
+enum hp_82341_hardware_version
+{
+	HW_VERSION_82341C,
+	HW_VERSION_82341D,
+}; 
+
 // struct which defines private_data for board
 typedef struct
 {
@@ -30,6 +36,9 @@ typedef struct
 	unsigned short config_control_bits;
 	unsigned short mode_control_bits;
 	struct pnp_dev *pnp_dev;
+	unsigned long iobase[4];
+	unsigned long io_region_offset;
+	enum hp_82341_hardware_version hw_version; 
 } hp_82341_private_t;
 
 // interfaces
@@ -64,11 +73,12 @@ irqreturn_t hp_82341_interrupt(int irq, void *arg, struct pt_regs *registerp);
 int hp_82341_allocate_private(gpib_board_t *board);
 void hp_82341_free_private(gpib_board_t *board);
 
-// size of io region used
-static const int hp_82341_iosize = 0x10;
+// size of io regions used
+static const int hp_82341_region_iosize = 0x8;
+static const int hp_82341_num_io_regions = 4;
 
 // hp 82341 register offsets
-enum hp_82341_registers
+enum hp_82341_region_0_registers
 {
 	CONFIG_CONTROL_STATUS_REG = 0x0,
 	MODE_CONTROL_STATUS_REG = 0x1,
@@ -78,17 +88,25 @@ enum hp_82341_registers
 	EVENT_STATUS_REG = 0x4,
 	EVENT_ENABLE_REG = 0x5,
 	STREAM_STATUS_REG = 0x7,
-	ID0_READ_REG = 0xa,
-	ID1_READ_REG = 0xb,
-	TRANSFER_COUNT_LOW_REG = 0xc,
-	TRANSFER_COUNT_MID_REG = 0xd,
-	TRANSFER_COUNT_HIGH_REG = 0xe,
-	TMS9914_BASE_REG = 0x10,
-	BUFFER_PORT_LOW_REG = 0x18,
-	BUFFER_PORT_HIGH_REG = 0x19,
-	ID2_REG = 0x1a,
-	ID3_REG = 0x1b,
-	BUFFER_CONTROL_REG = 0x1f
+};
+
+enum hp_82341_region_1_registers
+{
+	ID0_READ_REG = 0x2,
+	ID1_READ_REG = 0x3,
+	TRANSFER_COUNT_LOW_REG = 0x4,
+	TRANSFER_COUNT_MID_REG = 0x5,
+	TRANSFER_COUNT_HIGH_REG = 0x6,
+};
+
+enum hp_82341_region_3_registers
+{
+	BUFFER_PORT_LOW_REG = 0x0,
+	BUFFER_PORT_HIGH_REG = 0x1,
+	ID2_REG = 0x2,
+	ID3_REG = 0x3,
+	BUFFER_FLUSH_REG = 0x4,
+	BUFFER_CONTROL_REG = 0x7
 };
 
 enum config_control_status_bits
@@ -101,11 +119,35 @@ enum config_control_status_bits
 };
 static inline unsigned IRQ_SELECT_BITS(int irq)
 {
-	return irq & IRQ_SELECT_MASK;
-};
-static inline unsigned DMA_CONFIG_BITS(int dma_channel)
-{
-	return (dma_channel << 3) & DMA_CONFIG_MASK;
+	switch(irq)
+	{
+	case 3:
+		return 0x3;
+		break;
+	case 5:
+		return 0x2;
+		break;
+	case 7:
+		return 0x1;
+		break;
+	case 9:
+		return 0x0;
+		break;
+	case 10:
+		return 0x7;
+		break;
+	case 11:
+		return 0x6;
+		break;
+	case 12:
+		return 0x5;
+		break;
+	case 15:
+		return 0x4;
+		break;	
+	default:
+		return 0x0;
+	}
 };
 
 enum mode_control_status_bits
@@ -169,7 +211,22 @@ enum buffer_control_bits
 {
 	XFR_IN_OUT_L_BIT = 0x20,	// transfer direction (set for gpib to host)
 	EN_TI_BUF = 0x40,	//enable fifo
-	FAST_WR_EN_BIT = 0x80,
+	FAST_WR_EN_BIT = 0x80,	// 350 ns t1 delay?
+};
+
+// registers accessible through isapnp chip on 82341d
+enum hp_82341d_pnp_registers
+{
+	PIO_DATA_REG = 0x20,	//read/write pio data lines 
+	PIO_DIRECTION_REG = 0x21,	// set pio data line directions (set for input)
+};
+
+enum hp_82341d_pnp_pio_bits
+{
+	HP_82341D_XILINX_READY_BIT = 0x1,
+	HP_82341D_XILINX_DONE_BIT = 0x2,
+	HP_82341D_LEGACY_MODE_BIT = 0x4,	// use register layout compatible with C and older versions instead of 32 contiguous ioports
+	HP_82341D_NOT_PROG_BIT = 0x8,	// clear to reinitialize xilinx
 };
 
 #endif	// _HP82335_H

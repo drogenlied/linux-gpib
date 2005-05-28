@@ -17,6 +17,9 @@ Driver for hp 82341a/b/c/d boards.  Might be worth merging with Agilent
  ***************************************************************************/
 
 #include "hp_82341.h"
+#include "hp_82341c_fw.h"
+#include "hp_82341d_fw.h"
+#include <linux/delay.h>
 #include <linux/ioport.h>
 #include <linux/sched.h>
 #include <linux/module.h>
@@ -63,7 +66,7 @@ void hp_82341_request_system_control( gpib_board_t *board, int request_control )
 		priv->mode_control_bits |= SYSTEM_CONTROLLER_BIT;
 	else
 		priv->mode_control_bits &= ~SYSTEM_CONTROLLER_BIT;
-	outb(priv->mode_control_bits, priv->tms9914_priv.iobase + MODE_CONTROL_STATUS_REG);
+	outb(priv->mode_control_bits, priv->iobase[0] + MODE_CONTROL_STATUS_REG);
 	tms9914_request_system_control( board, &priv->tms9914_priv, request_control );
 }
 void hp_82341_interface_clear( gpib_board_t *board, int assert )
@@ -173,7 +176,7 @@ int hp_82341_allocate_private( gpib_board_t *board )
 {
 	board->private_data = kmalloc( sizeof( hp_82341_private_t ), GFP_KERNEL );
 	if( board->private_data == NULL )
-		return -1;
+		return -ENOMEM;
 	memset( board->private_data, 0, sizeof( hp_82341_private_t ) );
 	return 0;
 }
@@ -189,12 +192,12 @@ void hp_82341_free_private( gpib_board_t *board )
 
 uint8_t hp_82341_read_byte( tms9914_private_t *priv, unsigned int register_num )
 {
-	return inb(priv->iobase + TMS9914_BASE_REG + register_num);
+	return inb(priv->iobase + register_num);
 }
 
 void hp_82341_write_byte( tms9914_private_t *priv, uint8_t data, unsigned int register_num )
 {
-	outb(data, priv->iobase + TMS9914_BASE_REG + register_num);
+	outb(data, priv->iobase + register_num);
 }
 
 int hp_82341_find_isapnp_board(struct pnp_dev **dev)
@@ -226,14 +229,111 @@ int hp_82341_find_isapnp_board(struct pnp_dev **dev)
 	return 0;
 }
 
-int hp_82341_attach( gpib_board_t *board )
+int xilinx_ready(hp_82341_private_t *hp_priv)
+{
+	switch(hp_priv->hw_version)
+	{
+	case HW_VERSION_82341C:
+		if(inb(hp_priv->iobase[0] + CONFIG_CONTROL_STATUS_REG) & XILINX_READY_BIT)
+			return 1;
+		else 
+			return 0;
+		break;
+	case HW_VERSION_82341D:
+		if(isapnp_read_byte(PIO_DATA_REG) & HP_82341D_XILINX_READY_BIT) return 1;
+		else return 0;
+		break;
+	default:
+		printk("hp_82341: %s: bug! unknown hw_version\n", __FUNCTION__); 
+		break;
+	}
+	return 0;
+}
+
+int xilinx_done(hp_82341_private_t *hp_priv)
+{
+	switch(hp_priv->hw_version)
+	{
+	case HW_VERSION_82341C:
+		if(inb(hp_priv->iobase[0] + CONFIG_CONTROL_STATUS_REG) & DONE_PGL_BIT)
+			return 1;
+		else 
+			return 0;
+		break;
+	case HW_VERSION_82341D:
+		if(isapnp_read_byte(PIO_DATA_REG) & HP_82341D_XILINX_DONE_BIT) return 1;
+		else return 0;
+		break;
+	default:
+		printk("hp_82341: %s: bug! unknown hw_version\n", __FUNCTION__); 
+		break;
+	}
+	return 0;
+}
+
+int hp_82341_load_firmware_array(hp_82341_private_t *hp_priv, const unsigned char *firmware_data, 
+	unsigned int firmware_length)
+{
+	int i, j;
+	static const int timeout = 100;
+	for(i = 0; i < firmware_length; ++i)
+	{
+		for(j = 0; j < timeout; ++j)
+		{
+			if(need_resched()) schedule();
+			if(xilinx_ready(hp_priv))
+				break;
+			udelay(10);
+		}
+		if(j == timeout)
+		{
+			printk("hp_82341: timed out waiting for Xilinx ready.\n");
+			return -ETIMEDOUT;
+		}
+		outb(firmware_data[i], hp_priv->iobase[0] + XILINX_DATA_REG);
+	}
+	for(j = 0; j < timeout; ++j)
+	{
+		if(xilinx_done(hp_priv))
+			break;
+		if(need_resched()) schedule();
+		udelay(10);
+	}
+	if(j == timeout)
+	{
+		printk("hp_82341: timed out waiting for Xilinx done.\n");
+		return -ETIMEDOUT;
+	}	
+	return 0;
+}
+
+int hp_82341_load_firmware(hp_82341_private_t *hp_priv)
+{
+	switch(hp_priv->hw_version)
+	{
+	case HW_VERSION_82341C:
+		return hp_82341_load_firmware_array(hp_priv, hp_82341c_firmware_data, hp_82341c_firmware_length);
+		break;
+	case HW_VERSION_82341D:
+		return hp_82341_load_firmware_array(hp_priv, hp_82341d_firmware_data, hp_82341d_firmware_length);
+		break;
+	default:
+		printk("hp_82341: %s: bug! unknown hw_version\n", __FUNCTION__); 
+		break;
+	}
+	return -EINVAL;
+}
+
+int hp_82341_attach(gpib_board_t *board)
 {
 	hp_82341_private_t *hp_priv;
 	tms9914_private_t *tms_priv;
-
+	unsigned long start_addr;
 	board->status = 0;
-
-	if( hp_82341_allocate_private( board ) )
+	int i;
+	int retval;
+	
+	if(hp_82341_allocate_private(board))
 		return -ENOMEM;
 	hp_priv = board->private_data;
 	tms_priv = &hp_priv->tms9914_priv;
@@ -250,23 +350,48 @@ int hp_82341_attach( gpib_board_t *board )
 		hp_priv->pnp_dev = dev;
 		board->ibbase = pnp_port_start(dev, 0);
 		board->ibirq = pnp_irq(dev, 0);
-	}
-	if(request_region(board->ibbase, hp_82341_iosize, "hp_82341" ) == NULL)
+		hp_priv->hw_version = HW_VERSION_82341D;
+		hp_priv->io_region_offset = 0x8;
+	}else
 	{
-		printk( "hp_82341: failed to allocate io ports 0x%lx-0x%lx\n",
-			board->ibbase,
-			board->ibbase + hp_82341_iosize - 1);
-		return -EIO;
-	}
-	tms_priv->iobase = board->ibbase;
-	printk("hp_82341: base io 0x%lx\n", tms_priv->iobase);
-	/* temporary hack to get board running until we figure out how to make
-	 interrupts work */
-	if(gpib_request_pseudo_irq(board, hp_82341_interrupt))
-	{
-		printk("hp_82341: failed to allocate pseudo_irq\n");
-		return -EIO;
+		hp_priv->hw_version = HW_VERSION_82341C;
+		hp_priv->io_region_offset = 0x400;
 	}	
+	printk("hp_82341: base io 0x%lx\n", board->ibbase);
+	for(i = 0; i < hp_82341_num_io_regions; ++i)
+	{
+		start_addr = board->ibbase + i * hp_priv->io_region_offset;
+		if(request_region(start_addr, hp_82341_region_iosize, "hp_82341" ) == NULL)
+		{
+			printk( "hp_82341: failed to allocate io ports 0x%lx-0x%lx\n",
+				start_addr,
+				start_addr + hp_82341_region_iosize - 1);
+			return -EIO;
+		}
+		hp_priv->iobase[i] = start_addr;
+	}
+	tms_priv->iobase = hp_priv->iobase[2];
+	if(hp_priv->hw_version == HW_VERSION_82341D)
+	{
+		retval = isapnp_cfg_begin(hp_priv->pnp_dev->card->number, hp_priv->pnp_dev->number);
+		if(retval < 0) 
+		{
+			printk("hp_82341: isapnp_cfg_begin returned error\n");
+			return retval;
+		}
+		isapnp_write_byte(PIO_DIRECTION_REG, HP_82341D_XILINX_READY_BIT | HP_82341D_XILINX_DONE_BIT);
+		// clear xilinx firmware
+		isapnp_write_byte(PIO_DATA_REG, 0x0);
+		if(msleep_interruptible(1)) return -EINTR;
+		isapnp_write_byte(PIO_DATA_REG, HP_82341D_NOT_PROG_BIT);
+		if(msleep_interruptible(1)) return -EINTR;
+	}
+	retval = hp_82341_load_firmware(hp_priv);
+	if(retval < 0) return retval;
+	if(hp_priv->hw_version == HW_VERSION_82341D)
+	{
+		isapnp_cfg_end();
+	}
 	if(request_irq(board->ibirq, hp_82341_interrupt, 0, "hp_82341", board))
 	{
 		printk( "hp_82341: failed to allocate IRQ %d\n", board->ibirq);
@@ -274,21 +399,18 @@ int hp_82341_attach( gpib_board_t *board )
 	}
 	hp_priv->irq = board->ibirq;
 	printk("hp_82341: IRQ %d\n", board->ibirq);
-	printk("hp_82341: config status=0x%x\n", inb(tms_priv->iobase + CONFIG_CONTROL_STATUS_REG));
+	outb(IRQ_SELECT_BITS(board->ibirq), hp_priv->iobase[0] + CONFIG_CONTROL_STATUS_REG);
 	hp_priv->mode_control_bits |= ENABLE_IRQ_CONFIG_BIT;
-	outb(hp_priv->mode_control_bits, tms_priv->iobase + MODE_CONTROL_STATUS_REG);
-	outb(IRQ_SELECT_BITS(board->ibirq), tms_priv->iobase + CONFIG_CONTROL_STATUS_REG);
-	hp_priv->mode_control_bits &= ~ENABLE_IRQ_CONFIG_BIT;
-	outb(hp_priv->mode_control_bits, tms_priv->iobase + MODE_CONTROL_STATUS_REG);
+	outb(hp_priv->mode_control_bits, hp_priv->iobase[0] + MODE_CONTROL_STATUS_REG);
 	tms9914_board_reset(tms_priv);
-	outb(ENABLE_TI_INTERRUPT_EVENT_BIT, tms_priv->iobase +  EVENT_ENABLE_REG);
-	outb(ENABLE_TI_INTERRUPT_BIT, tms_priv->iobase + INTERRUPT_ENABLE_REG);
+	outb(ENABLE_TI_INTERRUPT_EVENT_BIT, hp_priv->iobase[0] +  EVENT_ENABLE_REG);
+	outb(ENABLE_TI_INTERRUPT_BIT, hp_priv->iobase[0] + INTERRUPT_ENABLE_REG);
 	//write clear event register
 	outb((TI_INTERRUPT_EVENT_BIT | POINTERS_EQUAL_EVENT_BIT |
 		BUFFER_END_EVENT_BIT | TERMINAL_COUNT_EVENT_BIT),
-		tms_priv->iobase + EVENT_STATUS_REG);	
+		hp_priv->iobase[0] + EVENT_STATUS_REG);	
 
-	tms9914_online( board, tms_priv );
+	tms9914_online(board, tms_priv);
 
 	return 0;
 }
@@ -297,20 +419,24 @@ void hp_82341_detach(gpib_board_t *board)
 {
 	hp_82341_private_t *hp_priv = board->private_data;
 	tms9914_private_t *tms_priv;
-
+	int i;
 	if( hp_priv )
 	{
 		tms_priv = &hp_priv->tms9914_priv;
-		if(tms_priv->iobase)
+		if(hp_priv->iobase[0])
 		{
-			outb(0, tms_priv->iobase + INTERRUPT_ENABLE_REG);
-			tms9914_board_reset( tms_priv );
+			outb(0, hp_priv->iobase[0] + INTERRUPT_ENABLE_REG);
+			if(tms_priv->iobase)
+				tms9914_board_reset(tms_priv);
 			if( hp_priv->irq )
 			{
 				free_irq(hp_priv->irq, board);
 			}
-			gpib_free_pseudo_irq(board);
-			release_region(tms_priv->iobase, hp_82341_iosize);
+		}
+		for(i = 0; i < hp_82341_num_io_regions; ++i)
+		{
+			if(hp_priv->iobase[i])
+				release_region(hp_priv->iobase[i], hp_82341_region_iosize);
 		}
 		if(hp_priv->pnp_dev)
 		{			
@@ -356,7 +482,7 @@ irqreturn_t hp_82341_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	int event_status;
 		
 	spin_lock_irqsave( &board->spinlock, flags );
-	event_status = inb(tms_priv->iobase + EVENT_STATUS_REG);
+	event_status = inb(hp_priv->iobase[0] + EVENT_STATUS_REG);
 	printk("hp_82341: interrupt event_status=0x%x\n", event_status);
 	if(event_status & INTERRUPT_PENDING_EVENT_BIT)
 	{
@@ -368,7 +494,7 @@ irqreturn_t hp_82341_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	{
 		outb(event_status & (TI_INTERRUPT_EVENT_BIT | POINTERS_EQUAL_EVENT_BIT |
 			BUFFER_END_EVENT_BIT | TERMINAL_COUNT_EVENT_BIT),
-			tms_priv->iobase + EVENT_STATUS_REG);
+			hp_priv->iobase[0] + EVENT_STATUS_REG);
 	}
 	if(event_status & TI_INTERRUPT_EVENT_BIT)
 	{
