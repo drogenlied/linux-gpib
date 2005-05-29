@@ -40,12 +40,16 @@ irqreturn_t tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t
 	if(status0 & HR_END)
 	{
 		set_bit(RECEIVED_END_BN, &priv->state);
+		if(priv->holdoff_mode == TMS9914_HOLDOFF_EOI)
+			priv->holdoff_active = 1;
 	}
 
 	// get incoming data in PIO mode
 	if((status0 & HR_BI))
 	{
 		set_bit(READ_READY_BN, &priv->state);
+		if(priv->holdoff_mode == TMS9914_HOLDOFF_ALL)
+			priv->holdoff_active = 1;
 	}
 
 	if((status0 & HR_BO))

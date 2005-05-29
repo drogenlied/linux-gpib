@@ -128,12 +128,50 @@ void tms9914_return_to_local( const gpib_board_t *board, tms9914_private_t *priv
 	write_byte( priv, AUX_RTL, AUXCR );
 }
 
-EXPORT_SYMBOL_GPL( tms9914_t1_delay );
-EXPORT_SYMBOL_GPL( tms9914_request_system_control );
-EXPORT_SYMBOL_GPL( tms9914_take_control );
-EXPORT_SYMBOL_GPL( tms9914_go_to_standby );
-EXPORT_SYMBOL_GPL( tms9914_interface_clear );
-EXPORT_SYMBOL_GPL( tms9914_remote_enable );
-EXPORT_SYMBOL_GPL( tms9914_return_to_local );
+void tms9914_set_holdoff_mode(gpib_board_t *board, tms9914_private_t *priv, enum tms9914_holdoff_mode mode)
+{
+	if(test_bit(LACS_NUM, &board->status) && priv->holdoff_active == 0)
+	{
+		printk("tms9914: race! changing the holdoff mode while in a dangerous state.\n");
+	}
+	switch(mode)
+	{
+	case TMS9914_HOLDOFF_NONE:
+		write_byte(priv, AUX_HLDE, AUXCR);
+		write_byte(priv, AUX_HLDA, AUXCR);
+		break;
+	case TMS9914_HOLDOFF_EOI:
+		write_byte(priv, AUX_HLDE | AUX_CS, AUXCR);
+		write_byte(priv, AUX_HLDA, AUXCR);
+		break;
+	case TMS9914_HOLDOFF_ALL:
+		write_byte(priv, AUX_HLDE, AUXCR);
+		write_byte(priv, AUX_HLDA | AUX_CS, AUXCR);
+		break;
+	}
+	priv->holdoff_mode = mode;
+}
+
+void tms9914_release_holdoff(gpib_board_t *board, tms9914_private_t *priv)
+{
+	unsigned long flags;
+	spin_lock_irqsave(&board->spinlock, flags);
+	if(priv->holdoff_active)
+	{
+		write_byte( priv, AUX_RHDF, AUXCR );
+		priv->holdoff_active = 0;
+	}
+	spin_unlock_irqrestore(&board->spinlock, flags);
+}
+
+EXPORT_SYMBOL_GPL(tms9914_t1_delay);
+EXPORT_SYMBOL_GPL(tms9914_request_system_control);
+EXPORT_SYMBOL_GPL(tms9914_take_control);
+EXPORT_SYMBOL_GPL(tms9914_go_to_standby);
+EXPORT_SYMBOL_GPL(tms9914_interface_clear);
+EXPORT_SYMBOL_GPL(tms9914_remote_enable);
+EXPORT_SYMBOL_GPL(tms9914_return_to_local);
+EXPORT_SYMBOL_GPL(tms9914_set_holdoff_mode);
+EXPORT_SYMBOL_GPL(tms9914_release_holdoff);
 
 

@@ -24,6 +24,7 @@ ssize_t agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t 
 	int retval = 0;
 	unsigned short event_status;
 	int need_release;
+	int i, num_fifo_bytes;
 	//hardware doesn't support checking for end-of-string character when using fifo
 	if(tms_priv->eos_flags & REOS) 
 	{
@@ -34,12 +35,10 @@ ssize_t agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t 
 	*end = 0;
 	*nbytes = 0;
 	if(length == 0) return 0;
-	--length;
 	//disable fifo for the moment
 	writeb(DIRECTION_GPIB_TO_HOST, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG);
 	// handle corner case of board not in holdoff and one byte has slipped in already
-	need_release = tms9914_need_release_holdoff(board, tms_priv);
-	if(!need_release)
+	if(tms_priv->holdoff_active == 0)
 	{
 		int bytes_read;
 		retval = tms9914_read(board, tms_priv, buffer, 1, end, &bytes_read);
@@ -49,17 +48,20 @@ ssize_t agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t 
 			printk("%s: retval=%i end=%i\n", __FUNCTION__, retval, *end);
 			return retval;
 		}
+		++buffer;
+		--length;
 	}
-	write_byte(tms_priv, AUX_HLDE | AUX_CS, AUXCR);
-	write_byte(tms_priv, AUX_HLDA, AUXCR);
-	write_byte(tms_priv, AUX_RHDF, AUXCR);
-	while(*nbytes < length && *end == 0)
+	tms9914_set_holdoff_mode(board, tms_priv, TMS9914_HOLDOFF_EOI);
+	tms9914_release_holdoff(board, tms_priv);
+	i = 0;
+	num_fifo_bytes = length - 2;
+	while(i < num_fifo_bytes && *end == 0)
 	{
 		int block_size;
 		int j;
 		int count;
-		if(length - *nbytes < agilent_82350b_fifo_size)
-			block_size = length - *nbytes;
+		if(num_fifo_bytes - i < agilent_82350b_fifo_size)
+			block_size = num_fifo_bytes - i;
 		else
 			block_size = agilent_82350b_fifo_size;
 		set_transfer_counter(a_priv, block_size);
@@ -77,8 +79,8 @@ ssize_t agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t 
 			break;
 		}
 		count = block_size - read_transfer_counter(a_priv);
-		for(j = 0; j < count && *nbytes < length; ++j)
-			buffer[(*nbytes)++] = readb(a_priv->sram_base + j); 
+		for(j = 0; j < count && i < num_fifo_bytes; ++j)
+			buffer[i++] = readb(a_priv->sram_base + j); 
 		if(test_bit(TIMO_NUM, &board->status))
 		{
 			printk("%s: minor %i: write timed out\n", __FILE__, board->minor);
@@ -97,16 +99,17 @@ ssize_t agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t 
 			*end = 1;
 		}
 	}
-	write_byte(tms_priv, AUX_HLDA | AUX_CS, AUXCR);
-	write_byte(tms_priv, AUX_HLDE, AUXCR);
+	*nbytes += i;
+	buffer += i;
+	length -= i;
 	writeb(DIRECTION_GPIB_TO_HOST, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG);
 	if(retval < 0) return retval;
-	// read last byte if we havn't received an END yet
+	// read last bytes if we havn't received an END yet
 	if(*end == 0)
 	{
 		int bytes_read;
 		// try to make sure we holdoff after last byte read
-		retval = tms9914_read(board, tms_priv, &buffer[*nbytes], 1, end, &bytes_read);
+		retval = tms9914_read(board, tms_priv, buffer, length, end, &bytes_read);
 		*nbytes += bytes_read;
 		if(retval < 0)
 			return retval;

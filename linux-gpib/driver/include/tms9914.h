@@ -22,6 +22,12 @@
 #include <linux/interrupt.h>
 #include <gpib_types.h>
 
+enum tms9914_holdoff_mode
+{
+	TMS9914_HOLDOFF_NONE,
+	TMS9914_HOLDOFF_EOI,
+	TMS9914_HOLDOFF_ALL,
+};
 /* struct used to provide variables local to a tms9914 chip */
 typedef struct tms9914_private_struct tms9914_private_t;
 struct tms9914_private_struct
@@ -30,24 +36,28 @@ struct tms9914_private_struct
 	unsigned int offset;	// offset between successive tms9914 io addresses
 	unsigned int dma_channel;
 	// software copy of bits written to interrupt mask registers
-	volatile uint8_t imr0_bits, imr1_bits;
+	uint8_t imr0_bits, imr1_bits;
 	// bits written to address mode register
-	volatile uint8_t admr_bits;
-	volatile uint8_t auxa_bits;	// bits written to auxilliary register A
+	uint8_t admr_bits;
+	uint8_t auxa_bits;	// bits written to auxilliary register A
 	// used to keep track of board's state, bit definitions given below
-	volatile unsigned long state;
+	unsigned long state;
 	uint8_t eos;	// eos character
 	short eos_flags;
-	volatile uint8_t spoll_status;
+	uint8_t spoll_status;
+	enum tms9914_holdoff_mode holdoff_mode;
 	unsigned int ppoll_line;
 	unsigned ppoll_sense : 1;
 	unsigned ppoll_enable : 1;
 	unsigned primary_listen_addressed : 1;
 	unsigned primary_talk_addressed : 1;
+	unsigned holdoff_on_end : 1;
+	unsigned holdoff_on_all : 1;
+	unsigned holdoff_active : 1;
 	// wrappers for outb, inb, readb, or writeb
 	uint8_t (*read_byte)(tms9914_private_t *priv, unsigned int register_number);
 	void (*write_byte)(tms9914_private_t *priv, uint8_t byte, unsigned int
- register_number);
+		register_number);
 };
 
 // slightly shorter way to access read_byte and write_byte
@@ -112,7 +122,8 @@ void tms9914_return_to_local( const gpib_board_t *board, tms9914_private_t *priv
 // utility functions
 void tms9914_board_reset(tms9914_private_t *priv);
 void tms9914_online( gpib_board_t *board, tms9914_private_t *priv );
-int tms9914_need_release_holdoff(gpib_board_t *board, tms9914_private_t *priv);
+void tms9914_release_holdoff(gpib_board_t *board, tms9914_private_t *priv);
+void tms9914_set_holdoff_mode(gpib_board_t *board, tms9914_private_t *priv, enum tms9914_holdoff_mode mode);
 
 // wrappers for io functions
 uint8_t tms9914_ioport_read_byte(tms9914_private_t *priv, unsigned int register_num);
