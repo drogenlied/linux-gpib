@@ -23,17 +23,14 @@ int restart_write_fifo(gpib_board_t *board, hp_82341_private_t *hp_priv)
 	tms9914_private_t *tms_priv = &hp_priv->tms9914_priv;
 	if((inb(hp_priv->iobase[0] + STREAM_STATUS_REG) & HALTED_STATUS_BIT) == 0)
 		return 0; 
-	int count = 0;
 	while(1) 
 	{
 		int status;
-++count;
 		//restart doesn't work if data holdoff is in effect
 		status = tms9914_line_status(board, tms_priv);
 		if((status & BusNRFD) == 0)
 		{
 			outb(RESTART_STREAM_BIT, hp_priv->iobase[0] + STREAM_STATUS_REG); 
-printk("restarted after count %i\n", count);
 			return 0;
 		}
 		if(test_bit(DEV_CLEAR_BN, &tms_priv->state))
@@ -81,7 +78,6 @@ ssize_t hp_82341_accel_write( gpib_board_t *board, uint8_t *buffer, size_t lengt
 			}
 			outw(data_word, hp_priv->iobase[3] + BUFFER_PORT_LOW_REG); 
 		}
-		printk("restarting write stream\n");
 		clear_bit(WRITE_READY_BN, &tms_priv->state);
 		outb(ENABLE_TI_BUFFER_BIT, hp_priv->iobase[3] + BUFFER_CONTROL_REG); 
 		retval = restart_write_fifo(board, hp_priv);
@@ -89,8 +85,7 @@ ssize_t hp_82341_accel_write( gpib_board_t *board, uint8_t *buffer, size_t lengt
 		{
 			printk("hp82341: failed to restart write stream\n");			
 			break;
-		}else
-			printk("hp82341: restarted write stream\n");			
+		}
 		if(wait_event_interruptible(board->wait, 
 			((event_status = read_and_clear_event_status(board)) & TERMINAL_COUNT_EVENT_BIT) ||
 			test_bit(DEV_CLEAR_BN, &tms_priv->state) ||
@@ -113,16 +108,12 @@ ssize_t hp_82341_accel_write( gpib_board_t *board, uint8_t *buffer, size_t lengt
 			break;
 		}
 	}
-printk("turning off output fifo\n");	
 	outb(0, hp_priv->iobase[3] + BUFFER_CONTROL_REG); 
 	if(retval) return retval;
 	if(send_eoi)
 	{
-printk("sending eoi byte\n");	
 		retval = hp_82341_write(board, buffer + fifoTransferLength, 1, 1);
 		if(retval < 0) return retval;
-printk("done\n");	
-printk("read ready=%i\n", test_bit(READ_READY_BN, &tms_priv->state));	
 	}
 	return length;
 }
