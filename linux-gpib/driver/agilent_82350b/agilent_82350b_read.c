@@ -37,14 +37,13 @@ ssize_t agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t 
 	//disable fifo for the moment
 	writeb(DIRECTION_GPIB_TO_HOST, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG);
 	// handle corner case of board not in holdoff and one byte might slip in early
-	for(i = 0; (tms_priv->holdoff_active == 0 || test_bit(READ_READY_BN, &tms_priv->state)) && 
-		length > 0; ++i)
+	if(tms_priv->holdoff_active == 0)
 	{
 		int bytes_read;
 		retval = tms9914_read(board, tms_priv, buffer, 1, end, &bytes_read);
 		*nbytes += bytes_read;
 		if(retval < 0)
-			printk("tms9914_read failed retval=%i, i=%i\n", retval, i);
+			printk("tms9914_read failed retval=%i\n", retval);
 		if(retval < 0 || *end)
 		{
 			return retval;
@@ -55,7 +54,7 @@ ssize_t agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t 
 	tms9914_set_holdoff_mode(tms_priv, TMS9914_HOLDOFF_EOI);
 	tms9914_release_holdoff(tms_priv);
 	i = 0;
-	num_fifo_bytes = length - 2;
+	num_fifo_bytes = length - 1;
 	while(i < num_fifo_bytes && *end == 0)
 	{
 		int block_size;
@@ -85,6 +84,7 @@ ssize_t agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t 
 		if(event_status & BUFFER_END_STATUS_BIT)
 		{
 			clear_bit(RECEIVED_END_BN, &tms_priv->state);
+			tms_priv->holdoff_active = 1;
 			*end = 1;
 		}
 		if(test_bit(TIMO_NUM, &board->status))
