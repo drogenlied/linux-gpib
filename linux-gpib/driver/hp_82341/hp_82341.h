@@ -24,6 +24,7 @@
 
 enum hp_82341_hardware_version
 {
+	HW_VERSION_UNKNOWN,
 	HW_VERSION_82341C,
 	HW_VERSION_82341D,
 }; 
@@ -77,6 +78,7 @@ void hp_82341_free_private(gpib_board_t *board);
 // size of io regions used
 static const int hp_82341_region_iosize = 0x8;
 static const int hp_82341_num_io_regions = 4;
+static const int hp_82341_fifo_size = 0xffe;
 
 // hp 82341 register offsets
 enum hp_82341_region_0_registers
@@ -159,7 +161,7 @@ enum mode_control_status_bits
 	SYSTEM_CONTROLLER_BIT = 0x8,
 	MONITOR_BIT = 0x10,
 	ENABLE_IRQ_CONFIG_BIT = 0x20,
-	ENABLE_TI_STR_BIT = 0x40
+	ENABLE_TI_STREAM_BIT = 0x40
 };
 
 enum monitor_bits
@@ -204,14 +206,14 @@ enum event_enable_bits
 
 enum stream_status_bits
 {
-	HALTED_BIT = 0x1,	//read
-	RESTART_BIT = 0x1	//write
+	HALTED_STATUS_BIT = 0x1,	//read
+	RESTART_STREAM_BIT = 0x1	//write
 };
 
 enum buffer_control_bits
 {
-	XFR_IN_OUT_L_BIT = 0x20,	// transfer direction (set for gpib to host)
-	EN_TI_BUF = 0x40,	//enable fifo
+	DIRECTION_GPIB_TO_HOST_BIT = 0x20,	// transfer direction (set for gpib to host)
+	ENABLE_TI_BUFFER_BIT = 0x40,	//enable fifo
 	FAST_WR_EN_BIT = 0x80,	// 350 ns t1 delay?
 };
 
@@ -231,6 +233,9 @@ enum hp_82341d_pnp_pio_bits
 };
 
 ssize_t hp_82341_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes);
+ssize_t hp_82341_accel_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi);
 unsigned short read_and_clear_event_status(gpib_board_t *board);
+int read_transfer_counter(hp_82341_private_t *hp_priv);
+void set_transfer_counter(hp_82341_private_t *hp_priv, int count);
 
 #endif	// _HP82335_H

@@ -145,13 +145,40 @@ void hp_82341_return_to_local( gpib_board_t *board )
 	tms9914_return_to_local( board, &priv->tms9914_priv );
 }
 
+gpib_interface_t hp_82341_unaccel_interface =
+{
+	name: "hp_82341_unaccel",
+	attach: hp_82341_attach,
+	detach: hp_82341_detach,
+	read: hp_82341_read,
+	write: hp_82341_write,
+	command: hp_82341_command,
+	request_system_control: hp_82341_request_system_control,
+	take_control: hp_82341_take_control,
+	go_to_standby: hp_82341_go_to_standby,
+	interface_clear: hp_82341_interface_clear,
+	remote_enable: hp_82341_remote_enable,
+	enable_eos: hp_82341_enable_eos,
+	disable_eos: hp_82341_disable_eos,
+	parallel_poll: hp_82341_parallel_poll,
+	parallel_poll_configure: hp_82341_parallel_poll_configure,
+	parallel_poll_response: hp_82341_parallel_poll_response,
+	line_status: hp_82341_line_status,
+	update_status: hp_82341_update_status,
+	primary_address: hp_82341_primary_address,
+	secondary_address: hp_82341_secondary_address,
+	serial_poll_response: hp_82341_serial_poll_response,
+	t1_delay: hp_82341_t1_delay,
+	return_to_local: hp_82341_return_to_local,
+};
+
 gpib_interface_t hp_82341_interface =
 {
 	name: "hp_82341",
 	attach: hp_82341_attach,
 	detach: hp_82341_detach,
-	read: hp_82341_read,
-	write: hp_82341_write,
+	read: hp_82341_accel_read,
+	write: hp_82341_accel_write,
 	command: hp_82341_command,
 	request_system_control: hp_82341_request_system_control,
 	take_control: hp_82341_take_control,
@@ -403,8 +430,10 @@ int hp_82341_attach(gpib_board_t *board)
 	hp_priv->mode_control_bits |= ENABLE_IRQ_CONFIG_BIT;
 	outb(hp_priv->mode_control_bits, hp_priv->iobase[0] + MODE_CONTROL_STATUS_REG);
 	tms9914_board_reset(tms_priv);
-	outb(ENABLE_TI_INTERRUPT_EVENT_BIT, hp_priv->iobase[0] +  EVENT_ENABLE_REG);
-	outb(ENABLE_TI_INTERRUPT_BIT, hp_priv->iobase[0] + INTERRUPT_ENABLE_REG);
+	outb(ENABLE_BUFFER_END_EVENT_BIT | ENABLE_TERMINAL_COUNT_EVENT_BIT |
+		ENABLE_TI_INTERRUPT_EVENT_BIT, hp_priv->iobase[0] +  EVENT_ENABLE_REG);
+	outb(ENABLE_BUFFER_END_INTERRUPT_BIT | ENABLE_TERMINAL_COUNT_INTERRUPT_BIT | 
+		ENABLE_TI_INTERRUPT_BIT, hp_priv->iobase[0] + INTERRUPT_ENABLE_REG);
 	//write clear event register
 	outb((TI_INTERRUPT_EVENT_BIT | POINTERS_EQUAL_EVENT_BIT |
 		BUFFER_END_EVENT_BIT | TERMINAL_COUNT_EVENT_BIT),
@@ -457,6 +486,7 @@ MODULE_DEVICE_TABLE(pnp, hp_82341_pnp_table);
 
 static int hp_82341_init_module( void )
 {
+	gpib_register_driver(&hp_82341_unaccel_interface, &__this_module);
 	gpib_register_driver(&hp_82341_interface, &__this_module);
 	return 0;
 }
@@ -464,6 +494,7 @@ static int hp_82341_init_module( void )
 static void hp_82341_exit_module( void )
 {
 	gpib_unregister_driver(&hp_82341_interface);
+	gpib_unregister_driver(&hp_82341_unaccel_interface);
 }
 
 module_init( hp_82341_init_module );
@@ -520,5 +551,24 @@ irqreturn_t hp_82341_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	}
 	spin_unlock_irqrestore( &board->spinlock, flags );
 	return retval;
+}
+
+int read_transfer_counter(hp_82341_private_t *hp_priv)
+{
+	int lo, mid, value;
+	lo = inb(hp_priv->iobase[1] + TRANSFER_COUNT_LOW_REG);
+	mid = inb(hp_priv->iobase[1] + TRANSFER_COUNT_MID_REG);
+	value = (lo & 0xff) | ((mid << 8) & 0x7f00);
+	value = ~(value - 1) & 0x7fff;
+	return value;
+}
+	
+void set_transfer_counter(hp_82341_private_t *hp_priv, int count)
+{
+	int complement = -count;
+	outb(complement & 0xff, hp_priv->iobase[1] + TRANSFER_COUNT_LOW_REG);
+	outb((complement >> 8) & 0xff, hp_priv->iobase[1] + TRANSFER_COUNT_MID_REG);
+	//I don't think the hi count reg is even used, but oh well
+	outb((complement >> 16) & 0xf, hp_priv->iobase[1] + TRANSFER_COUNT_HIGH_REG);
 }
 

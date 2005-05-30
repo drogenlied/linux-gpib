@@ -37,7 +37,7 @@ ssize_t agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t 
 	//disable fifo for the moment
 	writeb(DIRECTION_GPIB_TO_HOST, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG);
 	// handle corner case of board not in holdoff and one byte might slip in early
-	if(tms_priv->holdoff_active == 0)
+	if(tms_priv->holdoff_active == 0 && length > 1)
 	{
 		int bytes_read;
 		retval = tms9914_read(board, tms_priv, buffer, 1, end, &bytes_read);

@@ -46,6 +46,7 @@ ssize_t agilent_82350b_accel_write( gpib_board_t *board, uint8_t *buffer, size_t
 			// load data into board's sram
 			writeb(buffer[i], a_priv->sram_base + j); 
 		}
+		clear_bit(WRITE_READY_BN, &tms_priv->state);
 		writeb(ENABLE_TI_TO_SRAM, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG); 
 		if(readb(a_priv->gpib_base + STREAM_STATUS_REG) & HALTED_STATUS_BIT) 
 			writeb(RESTART_STREAM_BIT, a_priv->gpib_base + STREAM_STATUS_REG); 
