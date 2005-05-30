@@ -49,6 +49,7 @@ struct tms9914_private_struct
 	unsigned int ppoll_line;
 	unsigned ppoll_sense : 1;
 	unsigned ppoll_enable : 1;
+	unsigned ppoll_configure_state : 1;
 	unsigned primary_listen_addressed : 1;
 	unsigned primary_talk_addressed : 1;
 	unsigned holdoff_on_end : 1;
@@ -122,8 +123,8 @@ void tms9914_return_to_local( const gpib_board_t *board, tms9914_private_t *priv
 // utility functions
 void tms9914_board_reset(tms9914_private_t *priv);
 void tms9914_online( gpib_board_t *board, tms9914_private_t *priv );
-void tms9914_release_holdoff(gpib_board_t *board, tms9914_private_t *priv);
-void tms9914_set_holdoff_mode(gpib_board_t *board, tms9914_private_t *priv, enum tms9914_holdoff_mode mode);
+void tms9914_release_holdoff(tms9914_private_t *priv);
+void tms9914_set_holdoff_mode(tms9914_private_t *priv, enum tms9914_holdoff_mode mode);
 
 // wrappers for io functions
 uint8_t tms9914_ioport_read_byte(tms9914_private_t *priv, unsigned int register_num);

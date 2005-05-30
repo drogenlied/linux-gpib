@@ -40,16 +40,12 @@ irqreturn_t tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t
 	if(status0 & HR_END)
 	{
 		set_bit(RECEIVED_END_BN, &priv->state);
-		if(priv->holdoff_mode == TMS9914_HOLDOFF_EOI)
-			priv->holdoff_active = 1;
 	}
 
 	// get incoming data in PIO mode
 	if((status0 & HR_BI))
 	{
 		set_bit(READ_READY_BN, &priv->state);
-		if(priv->holdoff_mode == TMS9914_HOLDOFF_ALL)
-			priv->holdoff_active = 1;
 	}
 
 	if((status0 & HR_BO))
@@ -63,9 +59,10 @@ irqreturn_t tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t
 		}
 	}
 
-	if( status0 & HR_SPAS )
+	if(status0 & HR_SPAS)
 	{
 		priv->spoll_status &= ~request_service_bit;
+		write_byte(priv, priv->spoll_status, SPMR);
 	}
 
 	// record service request in status
@@ -84,9 +81,37 @@ irqreturn_t tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t
 	// unrecognized command received
 	if(status1 & HR_UNC)
 	{
-		printk("gpib command pass thru 0x%x\n", read_byte(priv, CPTR));
-		// clear dac holdoff
-		write_byte(priv, AUX_INVAL, AUXCR);
+		unsigned short command_byte = read_byte(priv, CPTR);
+// 		printk("tms9914: command pass thru 0x%x\n", command_byte);
+		switch(command_byte)
+		{
+		case PPConfig:
+			priv->ppoll_configure_state = 1;
+			write_byte(priv, AUX_PTS, AUXCR);
+			write_byte(priv, AUX_VAL, AUXCR);
+			break;
+		case PPU:
+			tms9914_parallel_poll_configure(board, priv, PPD);
+			write_byte(priv, AUX_VAL, AUXCR);	
+		default:
+			if(priv->ppoll_configure_state)
+			{
+				priv->ppoll_configure_state = 0;
+				if(command_byte >= PPE && command_byte <= PPD + 0xd)
+				{
+					tms9914_parallel_poll_configure(board, priv, command_byte);
+					write_byte(priv, AUX_VAL, AUXCR);
+				}else
+				{
+					write_byte(priv, AUX_INVAL, AUXCR);
+				}
+				break;
+			}
+			printk("tms9914: unknown gpib command pass thru 0x%x\n", command_byte);
+			// clear dac holdoff
+			write_byte(priv, AUX_INVAL, AUXCR);
+			break;
+		}
 	}
 
 	if(status1 & HR_ERR)

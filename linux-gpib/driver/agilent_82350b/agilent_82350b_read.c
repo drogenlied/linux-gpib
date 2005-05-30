@@ -23,7 +23,6 @@ ssize_t agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t 
 	tms9914_private_t *tms_priv = &a_priv->tms9914_priv;
 	int retval = 0;
 	unsigned short event_status;
-	int need_release;
 	int i, num_fifo_bytes;
 	//hardware doesn't support checking for end-of-string character when using fifo
 	if(tms_priv->eos_flags & REOS) 
@@ -37,22 +36,24 @@ ssize_t agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t 
 	if(length == 0) return 0;
 	//disable fifo for the moment
 	writeb(DIRECTION_GPIB_TO_HOST, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG);
-	// handle corner case of board not in holdoff and one byte has slipped in already
-	if(tms_priv->holdoff_active == 0)
+	// handle corner case of board not in holdoff and one byte might slip in early
+	for(i = 0; (tms_priv->holdoff_active == 0 || test_bit(READ_READY_BN, &tms_priv->state)) && 
+		length > 0; ++i)
 	{
 		int bytes_read;
 		retval = tms9914_read(board, tms_priv, buffer, 1, end, &bytes_read);
 		*nbytes += bytes_read;
+		if(retval < 0)
+			printk("tms9914_read failed retval=%i, i=%i\n", retval, i);
 		if(retval < 0 || *end)
 		{
-			printk("%s: retval=%i end=%i\n", __FUNCTION__, retval, *end);
 			return retval;
 		}
 		++buffer;
 		--length;
 	}
-	tms9914_set_holdoff_mode(board, tms_priv, TMS9914_HOLDOFF_EOI);
-	tms9914_release_holdoff(board, tms_priv);
+	tms9914_set_holdoff_mode(tms_priv, TMS9914_HOLDOFF_EOI);
+	tms9914_release_holdoff(tms_priv);
 	i = 0;
 	num_fifo_bytes = length - 2;
 	while(i < num_fifo_bytes && *end == 0)
@@ -81,9 +82,14 @@ ssize_t agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t 
 		count = block_size - read_transfer_counter(a_priv);
 		for(j = 0; j < count && i < num_fifo_bytes; ++j)
 			buffer[i++] = readb(a_priv->sram_base + j); 
+		if(event_status & BUFFER_END_STATUS_BIT)
+		{
+			clear_bit(RECEIVED_END_BN, &tms_priv->state);
+			*end = 1;
+		}
 		if(test_bit(TIMO_NUM, &board->status))
 		{
-			printk("%s: minor %i: write timed out\n", __FILE__, board->minor);
+			printk("%s: minor %i: read timed out\n", __FILE__, board->minor);
 			retval = -ETIMEDOUT;
 			break;
 		}
@@ -92,11 +98,6 @@ ssize_t agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t 
 			printk("%s: device clear interrupted write\n", __FILE__);
 			retval = -EINTR;
 			break;
-		}
-		if(event_status & BUFFER_END_STATUS_BIT)
-		{
-			clear_bit(RECEIVED_END_BN, &tms_priv->state);
-			*end = 1;
 		}
 	}
 	*nbytes += i;

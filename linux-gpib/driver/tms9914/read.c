@@ -19,19 +19,22 @@
 #include "board.h"
 #include <linux/spinlock.h>
 
-static void check_for_eos( tms9914_private_t *priv, uint8_t byte )
+static int check_for_eos( tms9914_private_t *priv, uint8_t byte )
 {
-	if( ( priv->eos_flags & REOS ) == 0 ) return;
+	static const uint8_t sevenBitCompareMask = 0x7f;
+	
+	if( ( priv->eos_flags & REOS ) == 0 ) return 0;
 
 	if( priv->eos_flags & BIN )
 	{
 		if( priv->eos == byte )
-			set_bit( RECEIVED_END_BN, &priv->state );
+			return 1;
 	}else
 	{
-		if( ( priv->eos & 0x7f ) == ( byte & 0x7f ) )
-			set_bit( RECEIVED_END_BN, &priv->state );
+		if((priv->eos & sevenBitCompareMask) == (byte & sevenBitCompareMask))
+			return 1;
 	}
+	return 0;
 }
 
 static int wait_for_read_byte(gpib_board_t *board, tms9914_private_t *priv)
@@ -55,30 +58,53 @@ static int wait_for_read_byte(gpib_board_t *board, tms9914_private_t *priv)
 	return 0;
 }
 
+static inline uint8_t tms9914_read_data_in(gpib_board_t *board, tms9914_private_t *priv, int *end)
+{
+	unsigned long flags;
+	uint8_t data;
+
+	spin_lock_irqsave(&board->spinlock, flags);
+	clear_bit(READ_READY_BN, &priv->state);
+	data = read_byte( priv, DIR );
+	if(test_and_clear_bit(RECEIVED_END_BN, &priv->state))
+		*end = 1;
+	else
+		*end = 0;	
+	switch(priv->holdoff_mode)
+	{
+	case TMS9914_HOLDOFF_EOI:
+		if(*end)
+			priv->holdoff_active = 1;
+		break;
+	case TMS9914_HOLDOFF_ALL:
+		priv->holdoff_active = 1;
+		break;
+	case TMS9914_HOLDOFF_NONE:
+		break;
+	default:
+		printk("%s: bug! bad holdoff mode %i\n", __FUNCTION__, priv->holdoff_mode);
+		break;
+	};
+	spin_unlock_irqrestore(&board->spinlock, flags);
+
+	return data;
+}
+
 static ssize_t pio_read(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buffer, size_t length, int *end, int *nbytes)
 {
 	ssize_t retval = 0;
-	unsigned long flags;
 
 	*nbytes = 0;
 	*end = 0;
-	while(*nbytes < length)
+	while(*nbytes < length && *end == 0)
 	{
-		tms9914_release_holdoff(board, priv);
+		tms9914_release_holdoff(priv);
 		retval = wait_for_read_byte(board, priv);
 		if(retval < 0) return retval;;
-		spin_lock_irqsave( &board->spinlock, flags );
-		clear_bit( READ_READY_BN, &priv->state );
-		buffer[ (*nbytes)++ ] = read_byte( priv, DIR );
-		spin_unlock_irqrestore( &board->spinlock, flags );
+		buffer[ (*nbytes)++ ] = tms9914_read_data_in(board, priv, end);
 
-		check_for_eos( priv, buffer[ *nbytes - 1 ] );
-
-		if(test_and_clear_bit( RECEIVED_END_BN, &priv->state ) )
-		{
+		if(check_for_eos(priv, buffer[*nbytes - 1]))
 			*end = 1;
-			break;
-		}
 	}
 
 	return retval;
@@ -95,30 +121,27 @@ ssize_t tms9914_read(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buff
 
 	clear_bit( DEV_CLEAR_BN, &priv->state );
 
-	if(priv->holdoff_active == 0)
-	{
-		retval = wait_for_read_byte(board, priv);
-		if(retval < 0) return retval;
-	}
-	if( priv->eos_flags & REOS )
-		tms9914_set_holdoff_mode(board, priv, TMS9914_HOLDOFF_ALL);
-	else
-		tms9914_set_holdoff_mode(board, priv, TMS9914_HOLDOFF_EOI);
 	// transfer data (except for last byte)
 	if(length > 1)
 	{
+		if( priv->eos_flags & REOS )
+			tms9914_set_holdoff_mode(priv, TMS9914_HOLDOFF_ALL);
+		else
+			tms9914_set_holdoff_mode(priv, TMS9914_HOLDOFF_EOI);
 		// PIO transfer
 		retval = pio_read(board, priv, buffer, length - 1, end, &bytes_read);
 		*nbytes += bytes_read;
 		if(retval < 0)
 			return retval;
+		buffer += bytes_read;
+		length -= bytes_read;
 	}
-	// read last byte if we havn't received an END yet
+	// read last bytes if we havn't received an END yet
 	if(*end == 0)
 	{
 		// make sure we holdoff after last byte read
-		tms9914_set_holdoff_mode(board, priv, TMS9914_HOLDOFF_ALL);
-		retval = pio_read(board, priv, &buffer[*nbytes], 1, end, &bytes_read);
+		tms9914_set_holdoff_mode(priv, TMS9914_HOLDOFF_ALL);
+		retval = pio_read(board, priv, buffer, length, end, &bytes_read);
 		*nbytes += bytes_read;
 		if(retval < 0)
 			return retval;

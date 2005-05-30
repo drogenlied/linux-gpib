@@ -23,7 +23,7 @@ int tms9914_take_control(gpib_board_t *board, tms9914_private_t *priv, int synch
 {
 	int i;
 	const int timeout = 1000;
-
+	
 	if(synchronous)
 	{
 		write_byte(priv, AUX_TCS, AUXCR);
@@ -128,12 +128,8 @@ void tms9914_return_to_local( const gpib_board_t *board, tms9914_private_t *priv
 	write_byte( priv, AUX_RTL, AUXCR );
 }
 
-void tms9914_set_holdoff_mode(gpib_board_t *board, tms9914_private_t *priv, enum tms9914_holdoff_mode mode)
+void tms9914_set_holdoff_mode(tms9914_private_t *priv, enum tms9914_holdoff_mode mode)
 {
-	if(test_bit(LACS_NUM, &board->status) && priv->holdoff_active == 0)
-	{
-		printk("tms9914: race! changing the holdoff mode while in a dangerous state.\n");
-	}
 	switch(mode)
 	{
 	case TMS9914_HOLDOFF_NONE:
@@ -148,20 +144,20 @@ void tms9914_set_holdoff_mode(gpib_board_t *board, tms9914_private_t *priv, enum
 		write_byte(priv, AUX_HLDE, AUXCR);
 		write_byte(priv, AUX_HLDA | AUX_CS, AUXCR);
 		break;
+	default:
+		printk("%s: bug! bad holdoff mode %i\n", __FUNCTION__, mode);
+		break;
 	}
 	priv->holdoff_mode = mode;
 }
 
-void tms9914_release_holdoff(gpib_board_t *board, tms9914_private_t *priv)
+void tms9914_release_holdoff(tms9914_private_t *priv)
 {
-	unsigned long flags;
-	spin_lock_irqsave(&board->spinlock, flags);
 	if(priv->holdoff_active)
 	{
 		write_byte( priv, AUX_RHDF, AUXCR );
 		priv->holdoff_active = 0;
 	}
-	spin_unlock_irqrestore(&board->spinlock, flags);
 }
 
 EXPORT_SYMBOL_GPL(tms9914_t1_delay);

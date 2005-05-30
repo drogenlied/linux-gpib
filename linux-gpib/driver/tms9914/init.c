@@ -54,9 +54,8 @@ void tms9914_board_reset( tms9914_private_t *priv )
 
 	/* parallel poll unconfigure */
 	write_byte(priv, 0, PPR);
-
 	// request for data holdoff
-	write_byte(priv, AUX_HLDA | AUX_CS, AUXCR);
+	tms9914_set_holdoff_mode(priv, TMS9914_HOLDOFF_ALL);
 }
 
 void tms9914_online( gpib_board_t *board, tms9914_private_t *priv )

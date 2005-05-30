@@ -50,10 +50,12 @@ void set_ppoll_reg( tms9914_private_t *priv, int enable,
 
 	if( enable && ( ( sense && ist ) || ( !sense && !ist ) ) )
 	{
-		dio_byte = 1 << ( 8 - dio_line );
+		dio_byte = 1 << (dio_line - 1);
 		write_byte( priv, dio_byte, PPR );
 	}else
+	{
 		write_byte( priv, 0, PPR );
+	}
 }
 
 void tms9914_parallel_poll_configure( gpib_board_t *board,
@@ -78,6 +80,10 @@ void tms9914_serial_poll_response(gpib_board_t *board, tms9914_private_t *priv, 
 	spin_lock_irqsave( &board->spinlock, flags );
 	write_byte(priv, status, SPMR);
 	priv->spoll_status = status;
+	if(status & request_service_bit)
+		write_byte(priv, AUX_RSV2 | AUX_CS, AUXCR);
+	else
+		write_byte(priv, AUX_RSV2, AUXCR);
 	spin_unlock_irqrestore( &board->spinlock, flags );
 }
 

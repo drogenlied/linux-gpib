@@ -46,15 +46,16 @@ static int autospoll_thread(void *board_void)
 			retval = -ERESTARTSYS;
 			break;
 		}
-
+		GPIB_DPRINTK("autospoll wait satisfied\n" );
 		if(down_interruptible(&board->autopoll_mutex))
 		{
 			retval = -ERESTARTSYS;
 			break;
 		}
-		/* make sure autopolling is still on now after we have
+		GPIB_DPRINTK("autospoll lock obtained\n" );
+		/* make sure we are still good after we have
 		 * lock */
-		if(board->autospollers <= 0)
+		if(board->autospollers <= 0 || board->master == 0)
 		{
 			up(&board->autopoll_mutex);
 			continue;
@@ -68,6 +69,7 @@ static int autospoll_thread(void *board_void)
 			printk("gpib%i: %s: try_module_get() failed!\n", board->minor, __FUNCTION__);
 		if(retval <= 0)
 		{
+			printk("gpib%i: %s: struck SRQ\n", board->minor, __FUNCTION__);
 			board->stuck_srq = 1;	// XXX could be better
 			set_bit(SRQI_NUM, &board->status);
 		}

@@ -35,6 +35,7 @@ typedef struct
 	unsigned int irq;
 	unsigned short config_control_bits;
 	unsigned short mode_control_bits;
+	unsigned short event_status_bits;
 	struct pnp_dev *pnp_dev;
 	unsigned long iobase[4];
 	unsigned long io_region_offset;
@@ -92,8 +93,8 @@ enum hp_82341_region_0_registers
 
 enum hp_82341_region_1_registers
 {
-	ID0_READ_REG = 0x2,
-	ID1_READ_REG = 0x3,
+	ID0_REG = 0x2,
+	ID1_REG = 0x3,
 	TRANSFER_COUNT_LOW_REG = 0x4,
 	TRANSFER_COUNT_MID_REG = 0x5,
 	TRANSFER_COUNT_HIGH_REG = 0x6,
@@ -228,5 +229,8 @@ enum hp_82341d_pnp_pio_bits
 	HP_82341D_LEGACY_MODE_BIT = 0x4,	// use register layout compatible with C and older versions instead of 32 contiguous ioports
 	HP_82341D_NOT_PROG_BIT = 0x8,	// clear to reinitialize xilinx
 };
+
+ssize_t hp_82341_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes);
+unsigned short read_and_clear_event_status(gpib_board_t *board);
 
 #endif	// _HP82335_H
