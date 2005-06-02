@@ -9,7 +9,7 @@
 
 EXTRA_DIST = amcc5920.h amccs5933.h gpibP.h gpib_ioctl.h gpib_proto.h \
 	gpib_types.h gpib_user.h nec7210.h plx9050.h tms9914.h tnt4882_registers.h \
-	linux/
+	linux/*.h
 
 headersdir = $(includedir)/gpib
 headers_HEADERS = gpib_user.h
