@@ -351,6 +351,38 @@ int hp_82341_load_firmware(hp_82341_private_t *hp_priv)
 	return -EINVAL;
 }
 
+void set_xilinx_not_prog(hp_82341_private_t *hp_priv, int assert)
+{
+	switch(hp_priv->hw_version)
+	{
+	case HW_VERSION_82341C:
+		if(assert)
+			hp_priv->config_control_bits |= DONE_PGL_BIT;
+		else
+			hp_priv->config_control_bits &= ~DONE_PGL_BIT;
+		outb(hp_priv->config_control_bits, hp_priv->iobase[0] + CONFIG_CONTROL_STATUS_REG);
+		break;
+	case HW_VERSION_82341D:
+		if(assert)
+			isapnp_write_byte(PIO_DATA_REG, HP_82341D_NOT_PROG_BIT);
+		else
+			isapnp_write_byte(PIO_DATA_REG, 0x0);
+		break;
+	default:
+		break;
+	}
+}
+
+// clear xilinx firmware
+int clear_xilinx(hp_82341_private_t *hp_priv)
+{
+	set_xilinx_not_prog(hp_priv, 0);	
+	if(msleep_interruptible(1)) return -EINTR;
+	set_xilinx_not_prog(hp_priv, 1);	
+	if(msleep_interruptible(1)) return -EINTR;
+	return 0;
+}
+
 int hp_82341_attach(gpib_board_t *board)
 {
 	hp_82341_private_t *hp_priv;
@@ -407,12 +439,9 @@ int hp_82341_attach(gpib_board_t *board)
 			return retval;
 		}
 		isapnp_write_byte(PIO_DIRECTION_REG, HP_82341D_XILINX_READY_BIT | HP_82341D_XILINX_DONE_BIT);
-		// clear xilinx firmware
-		isapnp_write_byte(PIO_DATA_REG, 0x0);
-		if(msleep_interruptible(1)) return -EINTR;
-		isapnp_write_byte(PIO_DATA_REG, HP_82341D_NOT_PROG_BIT);
-		if(msleep_interruptible(1)) return -EINTR;
 	}
+	retval = clear_xilinx(hp_priv);
+	if(retval < 0) return retval;
 	retval = hp_82341_load_firmware(hp_priv);
 	if(retval < 0) return retval;
 	if(hp_priv->hw_version == HW_VERSION_82341D)
@@ -426,7 +455,9 @@ int hp_82341_attach(gpib_board_t *board)
 	}
 	hp_priv->irq = board->ibirq;
 	printk("hp_82341: IRQ %d\n", board->ibirq);
-	outb(IRQ_SELECT_BITS(board->ibirq), hp_priv->iobase[0] + CONFIG_CONTROL_STATUS_REG);
+	hp_priv->config_control_bits &= ~IRQ_SELECT_MASK;
+	hp_priv->config_control_bits |= IRQ_SELECT_BITS(board->ibirq);	
+	outb(hp_priv->config_control_bits, hp_priv->iobase[0] + CONFIG_CONTROL_STATUS_REG);
 	hp_priv->mode_control_bits |= ENABLE_IRQ_CONFIG_BIT;
 	outb(hp_priv->mode_control_bits, hp_priv->iobase[0] + MODE_CONTROL_STATUS_REG);
 	tms9914_board_reset(tms_priv);
