@@ -23,7 +23,7 @@
 </author>
 
 <copyright>
-<year>2003, 2004</year>
+<year>2003-2005</year>
 <holder>Frank Mori Hess</holder>
 </copyright>
 </articleinfo>
@@ -443,6 +443,18 @@ Default is <option>--sre</option>.</para>
 	</row>
 	</thead>
 	<tbody>
+	<row>
+	<entry>Agilent (HP)</entry>
+	<entry>82341C</entry>
+	<entry>hp_82341.ko</entry>
+	<entry>hp_82341</entry>
+	</row>
+	<row>
+	<entry>Agilent (HP)</entry>
+	<entry>82341D</entry>
+	<entry>hp_82341.ko</entry>
+	<entry>hp_82341</entry>
+	</row>
 	<row>
 	<entry>Agilent</entry>
 	<entry><link LINKEND="agilent-82350b">82350B</link></entry>
