@@ -1163,7 +1163,7 @@ static int agilent_82357a_init(gpib_board_t *board)
 	return 0;
 }
 
-int agilent_82357a_attach(gpib_board_t *board)
+int agilent_82357a_attach(gpib_board_t *board, gpib_board_config_t config)
 {
 	int retval;
 	int i;

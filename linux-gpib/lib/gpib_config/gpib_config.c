@@ -38,6 +38,8 @@ typedef struct
 	int assert_remote_enable;
 	int offline;
 	int is_system_controller;
+	void *init_data;
+	int init_data_length;
 } parsed_options_t;
 
 static void help( void )
@@ -49,6 +51,8 @@ static void help( void )
 		"\t\tSpecify isa dma channel NUM for boards without plug-and-play cabability.\n");
 	printf("\t-b, --iobase NUM\n"
 		"\t\tSet io base address to NUM for boards without plug-and-play cabability.\n");
+	printf("\t-I, --init-data FILE_PATH\n"
+		"\t\tSpecify file containing binary initialization data (firmware) for board.\n");
 	printf("\t-i, --irq NUM\n"
 		"\t\tSpecify irq line NUM for boards without plug-and-play cabability.\n");
 	printf("\t-f, --file FILEPATH\n"
@@ -80,16 +84,62 @@ static void help( void )
 		"\t\t96 through 126 (0x60 through 0x7e hexadecimal).\n");
 }
 
+static int load_init_data(parsed_options_t *settings, const char *file_path)
+{
+	int retval;
+	FILE *init_file = fopen(file_path, "r");
+	if(init_file)
+	{
+		struct stat file_status;
+		if(fstat(fileno(init_file), &file_status) == 0)
+		{
+			settings->init_data = malloc(file_status.st_size);
+			if(settings->init_data)
+			{
+				settings->init_data_length = fread(settings->init_data, 1, file_status.st_size, init_file);
+				if(settings->init_data_length == file_status.st_size)
+					retval = 0;
+				else
+				{
+					settings->init_data_length = 0;
+					free(settings->init_data);
+					settings->init_data = NULL;
+					fprintf(stderr, "fread() returned short read\n");
+					retval = -EIO;
+				}
+			}else
+			{
+				fprintf(stderr, "malloc() failed.\n");
+				perror(__FUNCTION__);
+				retval = -errno;
+			}
+		}else
+		{
+			fprintf(stderr, "fstat() failed on file \'%s\'.\n", file_path);
+			perror(__FUNCTION__);
+			retval = -errno;
+		}
+	}else
+	{
+		fprintf(stderr, "Failed to open file \'%s\' for reading.\n", file_path);
+		perror(__FUNCTION__);
+		retval = -errno;
+	}
+	fclose(init_file);
+	return retval;
+}
 static void parse_options( int argc, char *argv[], parsed_options_t *settings )
 {
 	int c, index;
-
+	int retval;
+	
 	struct option options[] =
 	{
 		{ "iobase", required_argument, NULL, 'b' },
 		{ "dma", required_argument, NULL, 'd' },
 		{ "file", required_argument, NULL, 'f' },
 		{ "help", no_argument, NULL, 'h' },
+		{ "init-data", required_argument, NULL, 'I' },
 		{ "irq", required_argument, NULL, 'i' },
 		{ "pci-slot", required_argument, NULL, 'l' },
 		{ "minor", required_argument, NULL, 'm' },
@@ -121,10 +171,12 @@ static void parse_options( int argc, char *argv[], parsed_options_t *settings )
 	settings->assert_remote_enable = 1;
 	settings->offline = 0;
 	settings->is_system_controller = -1;
-
+	settings->init_data = NULL;
+	settings->init_data_length = 0;
+	
 	while( 1 )
 	{
-		c = getopt_long(argc, argv, "ab:cd:f:hi:l:m:op:s:t:u:", options, &index);
+		c = getopt_long(argc, argv, "b:d:f:hi:I:l:m:op:s:t:u:", options, &index);
 		if( c == -1 ) break;
 		switch( c )
 		{
@@ -142,6 +194,11 @@ static void parse_options( int argc, char *argv[], parsed_options_t *settings )
 		case 'h':
 			help();
 			exit( 0 );
+			break;
+		case 'I':
+			retval = load_init_data(settings, optarg);
+			if(retval < 0)
+				exit(retval);
 			break;
 		case 'i':
 			settings->irq = strtol( optarg, NULL, 0 );
@@ -220,6 +277,8 @@ static int configure_board( int fileno, const parsed_options_t *options )
 		return 0;
 
 	online_cmd.online = 1;
+	online_cmd.init_data = options->init_data;
+	online_cmd.init_data_length = options->init_data_length;
 	retval = ioctl( fileno, IBONL, &online_cmd );
 	if( retval < 0 )
 	{
@@ -355,8 +414,9 @@ int main( int argc, char *argv[] )
 	close( board->fileno );
 	board->fileno = -1;
 	free( devicefile );
-	if( options.config_file ) free( options.config_file );
-	if( options.board_type ) free( options.board_type );
+	free(options.init_data);
+	free( options.config_file );
+	free( options.board_type );
 
 	return 0;
 }

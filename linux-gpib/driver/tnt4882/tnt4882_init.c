@@ -30,10 +30,10 @@
 
 MODULE_LICENSE("GPL");
 
-int ni_tnt_isa_attach( gpib_board_t *board );
-int ni_nat4882_isa_attach( gpib_board_t *board );
-int ni_nec_isa_attach( gpib_board_t *board );
-int ni_pci_attach(gpib_board_t *board);
+int ni_tnt_isa_attach( gpib_board_t *board, gpib_board_config_t config );
+int ni_nat4882_isa_attach( gpib_board_t *board, gpib_board_config_t config );
+int ni_nec_isa_attach( gpib_board_t *board, gpib_board_config_t config );
+int ni_pci_attach(gpib_board_t *board, gpib_board_config_t config);
 
 void ni_isa_detach(gpib_board_t *board);
 void ni_pci_detach(gpib_board_t *board);
@@ -465,7 +465,7 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 	tnt_writeb( tnt_priv, tnt_priv->imr0_bits, IMR0 );
 }
 
-int ni_pci_attach(gpib_board_t *board)
+int ni_pci_attach(gpib_board_t *board, gpib_board_config_t config)
 {
 	tnt4882_private_t *tnt_priv;
 	nec7210_private_t *nec_priv;
@@ -645,17 +645,17 @@ int ni_isa_attach_common( gpib_board_t *board, enum nec7210_chipset chipset )
 	return 0;
 }
 
-int ni_tnt_isa_attach( gpib_board_t *board )
+int ni_tnt_isa_attach( gpib_board_t *board, gpib_board_config_t config )
 {
 	return ni_isa_attach_common( board, TNT4882 );
 }
 
-int ni_nat4882_isa_attach( gpib_board_t *board )
+int ni_nat4882_isa_attach( gpib_board_t *board, gpib_board_config_t config )
 {
 	return ni_isa_attach_common( board, NAT4882 );
 }
 
-int ni_nec_isa_attach( gpib_board_t *board )
+int ni_nec_isa_attach( gpib_board_t *board, gpib_board_config_t config )
 {
 	return ni_isa_attach_common( board, NEC7210 );
 }

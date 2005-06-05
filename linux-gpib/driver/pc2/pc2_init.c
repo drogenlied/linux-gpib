@@ -29,10 +29,10 @@
 
 MODULE_LICENSE("GPL");
 
-int pc2_attach(gpib_board_t *board);
-int pc2a_attach(gpib_board_t *board);
-int pc2a_cb7210_attach(gpib_board_t *board);
-int pc2_2a_attach(gpib_board_t *board);
+int pc2_attach(gpib_board_t *board, gpib_board_config_t config);
+int pc2a_attach(gpib_board_t *board, gpib_board_config_t config);
+int pc2a_cb7210_attach(gpib_board_t *board, gpib_board_config_t config);
+int pc2_2a_attach(gpib_board_t *board, gpib_board_config_t config);
 
 void pc2_detach(gpib_board_t *board);
 void pc2a_detach(gpib_board_t *board);
@@ -306,7 +306,7 @@ int pc2_generic_attach(gpib_board_t *board, enum nec7210_chipset chipset)
 	return 0;
 }
 
-int pc2_attach(gpib_board_t *board)
+int pc2_attach(gpib_board_t *board, gpib_board_config_t config)
 {
 	int isr_flags = 0;
 	pc2_private_t *pc2_priv;
@@ -475,17 +475,17 @@ int pc2a_common_attach(gpib_board_t *board, unsigned int num_registers, enum nec
 	return 0;
 }
 
-int pc2a_attach( gpib_board_t *board )
+int pc2a_attach( gpib_board_t *board, gpib_board_config_t config )
 {
 	return pc2a_common_attach(board, pc2a_iosize, NEC7210);
 }
 
-int pc2a_cb7210_attach( gpib_board_t *board )
+int pc2a_cb7210_attach( gpib_board_t *board, gpib_board_config_t config )
 {
 	return pc2a_common_attach(board, pc2a_iosize, CB7210);
 }
 
-int pc2_2a_attach( gpib_board_t *board )
+int pc2_2a_attach( gpib_board_t *board, gpib_board_config_t config )
 {
 	return pc2a_common_attach( board, pc2_2a_iosize, NAT4882);
 }

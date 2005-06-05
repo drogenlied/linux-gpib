@@ -77,6 +77,8 @@ typedef struct
 typedef struct
 {
 	int online;
+	void *init_data;
+	int init_data_length;
 } online_ioctl_t;
 
 typedef struct
@@ -165,8 +167,9 @@ enum gpib_ioctl
 	IBRSC = _IOW( GPIB_CODE, 34, rsc_ioctl_t ),
 	IB_T1_DELAY = _IOW( GPIB_CODE, 35, t1_delay_ioctl_t ),
 	IBLOC = _IO( GPIB_CODE, 36 ),
-	IBONL = _IOW( GPIB_CODE, 37, online_ioctl_t ),
-	IBAUTOSPOLL = _IOW( GPIB_CODE, 38, autospoll_ioctl_t )
+	
+	IBAUTOSPOLL = _IOW( GPIB_CODE, 38, autospoll_ioctl_t ),
+	IBONL = _IOW( GPIB_CODE, 39, online_ioctl_t )
 };
 
 #endif	/* _GPIB_IOCTL_H */

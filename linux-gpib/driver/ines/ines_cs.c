@@ -565,8 +565,8 @@ void ines_pcmcia_cleanup_module(void)
     }
 }
 
-int ines_pcmcia_attach(gpib_board_t *board);
-int ines_pcmcia_accel_attach(gpib_board_t *board);
+int ines_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config);
+int ines_pcmcia_accel_attach(gpib_board_t *board, gpib_board_config_t config);
 void ines_pcmcia_detach(gpib_board_t *board);
 
 gpib_interface_t ines_pcmcia_unaccel_interface =
@@ -685,7 +685,7 @@ int ines_common_pcmcia_attach( gpib_board_t *board )
 	return 0;
 }
 
-int ines_pcmcia_attach( gpib_board_t *board )
+int ines_pcmcia_attach( gpib_board_t *board , gpib_board_config_t config)
 {
 	ines_private_t *ines_priv;
 	int retval;
@@ -699,7 +699,7 @@ int ines_pcmcia_attach( gpib_board_t *board )
 	return 0;
 }
 
-int ines_pcmcia_accel_attach( gpib_board_t *board )
+int ines_pcmcia_accel_attach( gpib_board_t *board , gpib_board_config_t config)
 {
 	ines_private_t *ines_priv;
 	int retval;

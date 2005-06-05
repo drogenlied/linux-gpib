@@ -31,7 +31,7 @@
 
 MODULE_LICENSE("GPL");
 
-int hp82335_attach( gpib_board_t *board );
+int hp82335_attach(gpib_board_t *board, gpib_board_config_t config);
 
 void hp82335_detach( gpib_board_t *board );
 
@@ -208,7 +208,7 @@ void hp82335_clear_interrupt( hp82335_private_t *hp_priv )
 	writeb( 0, tms_priv->iobase + HPREG_INTR_CLEAR );
 }
 
-int hp82335_attach( gpib_board_t *board )
+int hp82335_attach( gpib_board_t *board, gpib_board_config_t config )
 {
 	hp82335_private_t *hp_priv;
 	tms9914_private_t *tms_priv;

@@ -28,8 +28,8 @@
 
 MODULE_LICENSE("GPL");
 
-int agilent_82350b_unaccel_attach( gpib_board_t *board );
-int agilent_82350b_accel_attach( gpib_board_t *board );
+int agilent_82350b_unaccel_attach(gpib_board_t *board, gpib_board_config_t config);
+int agilent_82350b_accel_attach(gpib_board_t *board, gpib_board_config_t config);
 
 void agilent_82350b_detach( gpib_board_t *board );
 
@@ -325,12 +325,12 @@ int agilent_82350b_generic_attach(gpib_board_t *board, int use_fifos)
 	return 0;
 }
 
-int agilent_82350b_unaccel_attach(gpib_board_t *board)
+int agilent_82350b_unaccel_attach(gpib_board_t *board, gpib_board_config_t config)
 {
 	return agilent_82350b_generic_attach(board, 0);
 }
 
-int agilent_82350b_accel_attach(gpib_board_t *board)
+int agilent_82350b_accel_attach(gpib_board_t *board, gpib_board_config_t config)
 {
 	return agilent_82350b_generic_attach(board, 1);
 }

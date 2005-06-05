@@ -80,7 +80,7 @@ static int autospoll_thread(void *board_void)
 	return retval;
 }
 
-int ibonline( gpib_board_t *board )
+int ibonline(gpib_board_t *board, gpib_board_config_t config)
 {
 	int retval;
 
@@ -89,7 +89,7 @@ int ibonline( gpib_board_t *board )
 	retval = gpib_allocate_board( board );
 	if( retval < 0 ) return retval;
 
-	if( board->interface->attach( board ) < 0 )
+	if( board->interface->attach(board, config) < 0 )
 	{
 		board->interface->detach(board);
 		printk("gpib: interface attach failed\n");

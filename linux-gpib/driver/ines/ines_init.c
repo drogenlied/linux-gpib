@@ -30,9 +30,9 @@
 
 MODULE_LICENSE("GPL");
 
-int ines_pci_attach(gpib_board_t *board);
-int ines_pci_accel_attach(gpib_board_t *board);
-int ines_isa_attach(gpib_board_t *board);
+int ines_pci_attach(gpib_board_t *board, gpib_board_config_t config);
+int ines_pci_accel_attach(gpib_board_t *board, gpib_board_config_t config);
+int ines_isa_attach(gpib_board_t *board, gpib_board_config_t config);
 
 void ines_pci_detach(gpib_board_t *board);
 void ines_isa_detach(gpib_board_t *board);
@@ -547,7 +547,7 @@ int ines_common_pci_attach( gpib_board_t *board )
 	return 0;
 }
 
-int ines_pci_attach( gpib_board_t *board )
+int ines_pci_attach( gpib_board_t *board, gpib_board_config_t config )
 {
 	ines_private_t *ines_priv;
 	int retval;
@@ -561,7 +561,7 @@ int ines_pci_attach( gpib_board_t *board )
 	return 0;
 }
 
-int ines_pci_accel_attach( gpib_board_t *board )
+int ines_pci_accel_attach( gpib_board_t *board, gpib_board_config_t config )
 {
 	ines_private_t *ines_priv;
 	int retval;
@@ -575,7 +575,7 @@ int ines_pci_accel_attach( gpib_board_t *board )
 	return 0;
 }
 
-int ines_isa_attach( gpib_board_t *board )
+int ines_isa_attach( gpib_board_t *board, gpib_board_config_t config )
 {
 	ines_private_t *ines_priv;
 	nec7210_private_t *nec_priv;

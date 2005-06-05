@@ -29,7 +29,7 @@ Driver for hp 82341a/b/c/d boards.  Might be worth merging with Agilent
 
 MODULE_LICENSE("GPL");
 
-int hp_82341_attach( gpib_board_t *board );
+int hp_82341_attach(gpib_board_t *board, gpib_board_config_t config);
 
 void hp_82341_detach( gpib_board_t *board );
 
@@ -383,7 +383,7 @@ int clear_xilinx(hp_82341_private_t *hp_priv)
 	return 0;
 }
 
-int hp_82341_attach(gpib_board_t *board)
+int hp_82341_attach(gpib_board_t *board, gpib_board_config_t config)
 {
 	hp_82341_private_t *hp_priv;
 	tms9914_private_t *tms_priv;

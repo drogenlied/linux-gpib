@@ -33,12 +33,18 @@
 typedef struct gpib_interface_struct gpib_interface_t;
 typedef struct gpib_board_struct gpib_board_t;
 
+typedef struct
+{
+	void *init_data;
+	int init_data_length;
+} gpib_board_config_t;
+
 struct gpib_interface_struct
 {
 	/* name of board */
 	char *name;
 	/* attach() initializes board and allocates resources */
-	int (*attach)(gpib_board_t *board);
+	int (*attach)(gpib_board_t *board, gpib_board_config_t config);
 	/* detach() shuts down board and frees resources */
 	void (*detach)(gpib_board_t *board);
 	/* read() should read at most 'length' bytes from the bus into

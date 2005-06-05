@@ -821,21 +821,39 @@ static int parallel_poll_ioctl( gpib_board_t *board, unsigned long arg )
 static int online_ioctl( gpib_board_t *board, unsigned long arg )
 {
 	online_ioctl_t online_cmd;
+	gpib_board_config_t config;
 	int retval;
-
+	
 	if(!capable(CAP_SYS_ADMIN))
 		return -EPERM;
 		
 	retval = copy_from_user( &online_cmd, ( void * ) arg, sizeof( online_cmd ) );
-	if( retval )
+	if(retval)
 		return -EFAULT;
-
-	if( online_cmd.online )
-		return ibonline( board );
+	if(online_cmd.init_data_length > 0)
+	{
+		config.init_data = vmalloc(online_cmd.init_data_length);
+		if(config.init_data == NULL)
+			return -ENOMEM;
+		retval = copy_from_user(config.init_data, online_cmd.init_data, online_cmd.init_data_length);
+		if(retval)
+		{
+			vfree(config.init_data);
+			return -EFAULT;
+		}
+		config.init_data_length = online_cmd.init_data_length;
+	}else
+	{
+		config.init_data = NULL;
+		config.init_data_length = 0;
+	}
+	if(online_cmd.online)
+		retval = ibonline(board, config);
 	else
-		return iboffline( board );
-
-	return 0;
+		retval = iboffline(board);
+	if(online_cmd.init_data)
+		vfree(config.init_data);
+	return retval;
 }
 
 static int remote_enable_ioctl( gpib_board_t *board, unsigned long arg )

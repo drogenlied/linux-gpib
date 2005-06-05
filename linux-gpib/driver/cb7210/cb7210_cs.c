@@ -590,7 +590,7 @@ void cb_pcmcia_cleanup_module(void)
     }
 }
 
-int cb_pcmcia_attach(gpib_board_t *board);
+int cb_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config);
 void cb_pcmcia_detach(gpib_board_t *board);
 
 gpib_interface_t cb_pcmcia_interface =
@@ -649,7 +649,7 @@ gpib_interface_t cb_pcmcia_accel_interface =
 	return_to_local: cb7210_return_to_local,
 };
 
-int cb_pcmcia_attach( gpib_board_t *board )
+int cb_pcmcia_attach( gpib_board_t *board, gpib_board_config_t config )
 {
 	cb7210_private_t *cb_priv;
 	nec7210_private_t *nec_priv;

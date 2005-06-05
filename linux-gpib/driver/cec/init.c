@@ -28,7 +28,7 @@ MODULE_LICENSE("GPL");
 #define CEC_DEV_ID    0x5cec
 #define CEC_SUBID 0x9050
 
-int cec_pci_attach(gpib_board_t *board);
+int cec_pci_attach(gpib_board_t *board, gpib_board_config_t config);
 
 void cec_pci_detach(gpib_board_t *board);
 
@@ -214,7 +214,7 @@ void cec_init( cec_private_t *cec_priv, const gpib_board_t *board )
 	nec7210_board_online( nec_priv, board );
 }
 
-int cec_pci_attach(gpib_board_t *board)
+int cec_pci_attach(gpib_board_t *board, gpib_board_config_t config)
 {
 	cec_private_t *cec_priv;
 	nec7210_private_t *nec_priv;

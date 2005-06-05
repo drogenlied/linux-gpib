@@ -1653,7 +1653,7 @@ static void ni_usb_cleanup_urbs(ni_usb_private_t *ni_priv)
 	}
 };
 
-int ni_usb_attach(gpib_board_t *board)
+int ni_usb_attach(gpib_board_t *board, gpib_board_config_t config)
 {
 	int retval;
 	int i;

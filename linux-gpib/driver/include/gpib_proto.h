@@ -31,7 +31,7 @@ void ibAPE(gpib_board_t *board, int pad, int v);
 int ibcac(gpib_board_t *board, int sync);
 ssize_t ibcmd( gpib_board_t *board, uint8_t *buf, size_t length );
 int ibgts(gpib_board_t *board);
-int ibonline( gpib_board_t *board );
+int ibonline(gpib_board_t *board, gpib_board_config_t config);
 int iboffline( gpib_board_t *board );
 int iblines( const gpib_board_t *board, short *lines );
 ssize_t ibrd(gpib_board_t *board, uint8_t *buf, size_t length, int *end_flag,int *nbytes);

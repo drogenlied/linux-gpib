@@ -31,8 +31,8 @@
 
 MODULE_LICENSE("GPL");
 
-int cb_pci_attach(gpib_board_t *board);
-int cb_isa_attach(gpib_board_t *board);
+int cb_pci_attach(gpib_board_t *board, gpib_board_config_t config);
+int cb_isa_attach(gpib_board_t *board, gpib_board_config_t config);
 
 void cb_pci_detach(gpib_board_t *board);
 void cb_isa_detach(gpib_board_t *board);
@@ -328,7 +328,7 @@ int cb7210_init( cb7210_private_t *cb_priv, gpib_board_t *board )
 	return 0;
 }
 
-int cb_pci_attach(gpib_board_t *board)
+int cb_pci_attach(gpib_board_t *board, gpib_board_config_t config)
 {
 	cb7210_private_t *cb_priv;
 	nec7210_private_t *nec_priv;
@@ -412,7 +412,7 @@ void cb_pci_detach(gpib_board_t *board)
 	cb7210_generic_detach(board);
 }
 
-int cb_isa_attach(gpib_board_t *board)
+int cb_isa_attach(gpib_board_t *board, gpib_board_config_t config)
 {
 	int isr_flags = 0;
 	cb7210_private_t *cb_priv;
