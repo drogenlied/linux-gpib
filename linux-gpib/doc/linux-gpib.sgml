@@ -377,6 +377,9 @@ without plug-and-play cabability.</para>
 <para><option>-d, --dma <replaceable>number</replaceable></option></para>
 <para>Specify isa dma channel <replaceable>number</replaceable> for boards
 without plug-and-play cabability.</para>
+<para><option>-I, --init-data <replaceable>file_path</replaceable></option></para>
+<para>Upload binary initialization data (firmware) from <replaceable>file_path</replaceable>
+to board.</para>
 <para><option>-i, --irq <replaceable>number</replaceable></option></para>
 <para>Specify irq line <replaceable>number</replaceable> for boards without
 plug-and-play cabability.</para>
