@@ -17,8 +17,6 @@ Driver for hp 82341a/b/c/d boards.  Might be worth merging with Agilent
  ***************************************************************************/
 
 #include "hp_82341.h"
-#include "hp_82341c_fw.h"
-#include "hp_82341d_fw.h"
 #include <linux/delay.h>
 #include <linux/ioport.h>
 #include <linux/sched.h>
@@ -298,6 +296,39 @@ int xilinx_done(hp_82341_private_t *hp_priv)
 	return 0;
 }
 
+int irq_valid(hp_82341_private_t *hp_priv, int irq)
+{
+	switch(hp_priv->hw_version)
+	{
+	case HW_VERSION_82341C:
+		switch(irq)
+		{
+		case 3:
+		case 5:
+		case 7:
+		case 9:
+		case 10:
+		case 11:
+		case 12:
+		case 15:
+			return 1;
+			break;
+		default:
+			printk("hp_82341: invalid irq=%i for 82341C, irq must be 3, 5, 7, 9, 10, 11, 12, or 15.\n", irq); 
+			return 0;
+			break;
+		}
+		break;
+	case HW_VERSION_82341D:
+		return 1;
+		break;
+	default:
+		printk("hp_82341: %s: bug! unknown hw_version\n", __FUNCTION__); 
+		break;
+	}
+	return 0;
+}
+
 int hp_82341_load_firmware_array(hp_82341_private_t *hp_priv, const unsigned char *firmware_data, 
 	unsigned int firmware_length)
 {
@@ -334,21 +365,42 @@ int hp_82341_load_firmware_array(hp_82341_private_t *hp_priv, const unsigned cha
 	return 0;
 }
 
-int hp_82341_load_firmware(hp_82341_private_t *hp_priv)
+int hp_82341_load_firmware(hp_82341_private_t *hp_priv, gpib_board_config_t config)
 {
+	if(config.init_data_length == 0)
+	{
+		if(xilinx_done(hp_priv))
+			return 0;
+		else
+		{
+			printk("hp_82341: board needs be initialized with firmware upload.\n"
+				"\tUse the --init-data option of gpib_config.\n");
+			return -EINVAL;
+		}
+	}
 	switch(hp_priv->hw_version)
 	{
 	case HW_VERSION_82341C:
-		return hp_82341_load_firmware_array(hp_priv, hp_82341c_firmware_data, hp_82341c_firmware_length);
+		if(config.init_data_length != hp_82341c_firmware_length)
+		{
+			printk("hp_82341: bad firmware length=%i for 82341c (expected %i).\n",
+				config.init_data_length, hp_82341c_firmware_length);
+			return -EINVAL;
+		}
 		break;
 	case HW_VERSION_82341D:
-		return hp_82341_load_firmware_array(hp_priv, hp_82341d_firmware_data, hp_82341d_firmware_length);
+		if(config.init_data_length != hp_82341d_firmware_length)
+		{
+			printk("hp_82341: bad firmware length=%i for 82341d (expected %i).\n",
+				config.init_data_length, hp_82341d_firmware_length);
+			return -EINVAL;
+		}
 		break;
 	default:
 		printk("hp_82341: %s: bug! unknown hw_version\n", __FUNCTION__); 
 		break;
 	}
-	return -EINVAL;
+	return hp_82341_load_firmware_array(hp_priv, config.init_data, config.init_data_length);
 }
 
 void set_xilinx_not_prog(hp_82341_private_t *hp_priv, int assert)
@@ -442,11 +494,15 @@ int hp_82341_attach(gpib_board_t *board, gpib_board_config_t config)
 	}
 	retval = clear_xilinx(hp_priv);
 	if(retval < 0) return retval;
-	retval = hp_82341_load_firmware(hp_priv);
-	if(retval < 0) return retval;
+	retval = hp_82341_load_firmware(hp_priv, config);
 	if(hp_priv->hw_version == HW_VERSION_82341D)
 	{
 		isapnp_cfg_end();
+	}
+	if(retval < 0) return retval;
+	if(irq_valid(hp_priv, board->ibirq) == 0)
+	{
+		return -EINVAL;
 	}
 	if(request_irq(board->ibirq, hp_82341_interrupt, 0, "hp_82341", board))
 	{

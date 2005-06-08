@@ -75,10 +75,11 @@ irqreturn_t hp_82341_interrupt(int irq, void *arg, struct pt_regs *registerp);
 int hp_82341_allocate_private(gpib_board_t *board);
 void hp_82341_free_private(gpib_board_t *board);
 
-// size of io regions used
 static const int hp_82341_region_iosize = 0x8;
 static const int hp_82341_num_io_regions = 4;
 static const int hp_82341_fifo_size = 0xffe;
+static const int hp_82341c_firmware_length = 5764;
+static const int hp_82341d_firmware_length = 5302;
 
 // hp 82341 register offsets
 enum hp_82341_region_0_registers
