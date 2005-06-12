@@ -428,6 +428,8 @@ void set_xilinx_not_prog(hp_82341_private_t *hp_priv, int assert)
 // clear xilinx firmware
 int clear_xilinx(hp_82341_private_t *hp_priv)
 {
+	set_xilinx_not_prog(hp_priv, 1);	
+	if(msleep_interruptible(1)) return -EINTR;
 	set_xilinx_not_prog(hp_priv, 0);	
 	if(msleep_interruptible(1)) return -EINTR;
 	set_xilinx_not_prog(hp_priv, 1);	
