@@ -1,5 +1,22 @@
 Linux GPIB Package changelog
 
+3.2.04:  Fixed parallel poll timeout bug, fixed 
+slave_write_from_file.c example program, and
+fixed bug in ibrdf() (Christopher Lang).  Fixed interrupt
+polarity on Quancom board (Simon Zeller).  Added python
+binding for ibtmo() (Sandro shannemann@gmail.com).
+Added support for fifo on ISA boards 
+using Ines igpib chips.  Added support for
+Agilent/HP 82341C/D boards (requires download of gpib_firmware 
+tarball).  Fixed USB timeouts on kernels 2.6.12 and later.
+Fixed some problems with data holdoffs on TI 9914 based boards,
+which could cause the loss of the first byte on reads in 
+certain circumstances.  Fixed problems with parallel and
+serial polling on TI 9914 based boards when acting as devices.
+This release includes changes to the ioctl driver interface
+to support firmware uploads, thus drivers from 3.2.04 will not work
+with gpib_config from earlier releases (and vice-versa).
+
 3.2.03: Fixed compilation problems against 2.6.10 and later kernels, 
 due to removal of urb->timeout from kernel.  Added module device 
 tables for pci and isapnp boards, so they can be autoloaded by hotplug 
