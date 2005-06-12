@@ -37,8 +37,12 @@ ssize_t hp_82341_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 	if(length == 0) return 0;
 	//disable fifo for the moment
 	outb(DIRECTION_GPIB_TO_HOST_BIT, hp_priv->iobase[3] + BUFFER_CONTROL_REG);
-	// handle corner case of board not in holdoff and one byte has slipped in already
-	if(tms_priv->holdoff_active == 0 && length > 1)
+	// Handle corner case of board not in holdoff and one byte has slipped in already.
+	// Also, board sometimes has problems (spurious 1 byte reads) when read fifo is 
+	// started up with board in
+	// TACS under certain data holdoff conditions.  Doing a 1 byte tms9914-style
+	// read avoids these problems.
+	if(/*tms_priv->holdoff_active == 0 && */length > 1)
 	{
 		int bytes_read;
 		retval = tms9914_read(board, tms_priv, buffer, 1, end, &bytes_read);
