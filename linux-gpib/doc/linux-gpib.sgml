@@ -448,13 +448,13 @@ Default is <option>--sre</option>.</para>
 	<tbody>
 	<row>
 	<entry>Agilent (HP)</entry>
-	<entry>82341C</entry>
+	<entry><link LINKEND="hp-82341">82341C</link></entry>
 	<entry>hp_82341.ko</entry>
 	<entry>hp_82341</entry>
 	</row>
 	<row>
 	<entry>Agilent (HP)</entry>
-	<entry>82341D</entry>
+	<entry><link LINKEND="hp-82341">82341D</link></entry>
 	<entry>hp_82341.ko</entry>
 	<entry>hp_82341</entry>
 	</row>
@@ -622,7 +622,7 @@ Default is <option>--sre</option>.</para>
 	</row>
 	<row>
 	<entry>National Instruments</entry>
-	<entry>GPIB-USB-B</entry>
+	<entry><link LINKEND="ni-usb-b">GPIB-USB-B</link></entry>
 	<entry>ni_usb_gpib.ko</entry>
 	<entry>ni_usb_b</entry>
 	</row>
@@ -687,6 +687,32 @@ Default is <option>--sre</option>.</para>
 </section>
 <section ID="board-specific-notes">
 <title>Board-Specific Notes</title>
+<section ID="hp-82341">
+<title>Agilent (HP) 82341</title>
+<para>
+After power-up, the Agilent 82341 boards require a firmware upload before they
+can be used.  This can be accomplished using the "--init-data" option of
+<link LINKEND="configuration-gpib-config">gpib_config</link>.  The 
+firmware data can be found in the gpib_firmware
+tarball available from the 
+<ulink URL="http://linux-gpib.sourceforge.net/">Linux-GPIB home page</ulink>.
+Note the C and D versions use different firmware data.
+</para>
+<para>
+If you specify a non-zero base address in /etc/gpib.conf, the driver will
+assume you are trying to configure a 82341C.  Otherwise, the driver will
+use the kernel's ISAPNP support to attempt to configure an 82341D.
+</para>
+<para>
+The 82341 does not support detection of an end-of-string character
+in hardware, it only automatically detects the when the EOI 
+line is asserted.  Thus if you use the REOS 
+flag for a read, the board's fifos will
+not be used for the transfer.  This will greatly reduce the maximum transfer
+rate for your board (which may or may not be noticeable depending on the
+device you are talking to).
+</para>
+</section>
 <section ID="agilent-82350b">
 <title>Agilent 82350B</title>
 <para>
@@ -702,7 +728,18 @@ device you are talking to).
 <section ID="agilent-82357a">
 <title>Agilent 82357A</title>
 <para>
-The Agilent 82357A has a few limitations due to its firmware code:
+The Agilent 82357A requires a firmware upload (before gpib_config is
+run) to become functional
+after being plugged in.  The linux-gpib tarball contains hotplug scripts
+for automatically running the fxload program to upload the firmware (and
+to run gpib_config after the firmware is uploaded).  
+However, the actual firmware
+data itself must be obtained seperately, as part of the gpib_firmware
+tarball available from the 
+<ulink URL="http://linux-gpib.sourceforge.net/">Linux-GPIB home page</ulink>.
+</para>
+<para>
+The 82357A has a few limitations due to its firmware code:
 <itemizedlist>
 <listitem>
 <para>
@@ -716,11 +753,25 @@ It cannot be assigned a secondary address.
 </listitem>
 <listitem>
 <para>
-It cannot do 7 bit compares when looking for the end-of-string character (it always
+It cannot do 7 bit compares when looking for an end-of-string character (it always
 compares all 8 bits).
 </para>
 </listitem>
 </itemizedList>
+</para>
+</section>
+<section ID="ni-usb-b">
+<title>National Instruments GPIB-USB-B</title>
+<para>
+The USB-B requires a firmware upload (before gpib_config is
+run) to become functional
+after being plugged in.  The linux-gpib tarball contains hotplug scripts
+for automatically running the fxload program to upload the firmware (and
+to run gpib_config after the firmware is uploaded).  
+However, the actual firmware
+data itself must be obtained seperately, as part of the gpib_firmware
+tarball available from the 
+<ulink URL="http://linux-gpib.sourceforge.net/">Linux-GPIB home page</ulink>.
 </para>
 </section>
 </section>
