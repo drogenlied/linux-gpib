@@ -1,5 +1,9 @@
 Linux GPIB Package changelog
 
+3.2.05: One-line compile fix for ines driver when pcmcia
+support is enabled (Robert Jordens).  Otherwise, identical
+to 3.2.04.
+
 3.2.04:  Fixed parallel poll timeout bug, fixed 
 slave_write_from_file.c example program, and
 fixed bug in ibrdf() (Christopher Lang).  Fixed interrupt
