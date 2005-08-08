@@ -267,6 +267,8 @@ static int configure_board( int fileno, const parsed_options_t *options )
 	if( retval < 0 ) return retval;
 
 	online_cmd.online = 0;
+	online_cmd.init_data = 0;
+	online_cmd.init_data_length = 0;
 	retval = ioctl( fileno, IBONL, &online_cmd );
 	if( retval < 0 )
 	{

@@ -20,8 +20,8 @@
 
 void fixup_status_bits( const ibConf_t *conf, int *status )
 {
-	static const int board_wait_mask = board_status_mask & ~ERR;
-	static const int device_wait_mask = device_status_mask & ~ERR;
+	const int board_wait_mask = board_status_mask & ~ERR;
+	const int device_wait_mask = device_status_mask & ~ERR;
 
 	if( conf->is_interface == 0 )
 	{

@@ -30,6 +30,10 @@ irqreturn_t cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	gpib_board_t *board = arg;
 	cb7210_private_t *priv = board->private_data;
 
+	// first task check if this is really our interrupt in a shared irq environment
+	if((inl(priv->amcc_iobase + INTCSR_REG) & (INBOX_INTR_CS_BIT | INTR_ASSERTED_BIT)) == 0)
+		return IRQ_NONE;
+    
 	// read incoming mailbox to clear mailbox full flag
 	inl(priv->amcc_iobase + INCOMING_MAILBOX_REG(3));
 	// clear amccs5933 interrupt
