@@ -688,7 +688,7 @@ void ni_isa_detach(gpib_board_t *board)
 	tnt4882_free_private(board);
 }
 
-static struct pci_device_id tnt4882_pci_table[] __devinitdata = 
+static const struct pci_device_id tnt4882_pci_table[] = 
 {
 	{PCI_DEVICE(PCI_VENDOR_ID_NATINST, PCI_DEVICE_ID_NI_GPIB)},
 	{PCI_DEVICE(PCI_VENDOR_ID_NATINST, PCI_DEVICE_ID_NI_GPIB_PLUS)},

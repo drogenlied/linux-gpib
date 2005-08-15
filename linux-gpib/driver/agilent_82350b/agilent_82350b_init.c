@@ -361,7 +361,7 @@ void agilent_82350b_detach(gpib_board_t *board)
 	agilent_82350b_free_private( board );
 }
 
-static struct pci_device_id agilent_82350b_pci_table[] __devinitdata = 
+static const struct pci_device_id agilent_82350b_pci_table[] = 
 {
 	{ PCI_VENDOR_ID_AGILENT, PCI_DEVICE_ID_82350B, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
 	{ 0 }

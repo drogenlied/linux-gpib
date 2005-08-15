@@ -471,7 +471,7 @@ void cb_isa_detach(gpib_board_t *board)
 	cb7210_generic_detach(board);
 }
 
-static struct pci_device_id cb7210_pci_table[] __devinitdata = 
+static const struct pci_device_id cb7210_pci_table[] = 
 {
 	{PCI_VENDOR_ID_CBOARDS, PCI_DEVICE_ID_CBOARDS_PCI_GPIB, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
 	{PCI_VENDOR_ID_CBOARDS, PCI_DEVICE_ID_CBOARDS_CPCI_GPIB, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },

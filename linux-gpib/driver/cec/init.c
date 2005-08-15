@@ -305,7 +305,7 @@ void cec_pci_detach(gpib_board_t *board)
 	cec_free_private(board);
 }
 
-static struct pci_device_id cec_pci_table[] __devinitdata = 
+static const struct pci_device_id cec_pci_table[] = 
 {
 	{CEC_VENDOR_ID, CEC_DEV_ID, PCI_ANY_ID, CEC_SUBID, 0, 0, 0 },
 	{0}

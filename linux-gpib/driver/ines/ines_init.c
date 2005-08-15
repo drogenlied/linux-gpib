@@ -54,7 +54,7 @@ enum ines_pci_subdevice_ids
 	PCI_SUBDEVICE_ID_INES_GPIB = 0x1072
 };
 
-static struct pci_device_id ines_pci_table[] __devinitdata = 
+static struct pci_device_id ines_pci_table[] = 
 {
 	{PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050, PCI_VENDOR_ID_PLX, PCI_SUBDEVICE_ID_INES_GPIB, 0, 0, 0},
 	{PCI_VENDOR_ID_AMCC, PCI_DEVICE_ID_INES_GPIB_AMCC, PCI_VENDOR_ID_AMCC, PCI_SUBDEVICE_ID_INES_GPIB, 0, 0, 0},

@@ -566,7 +566,7 @@ void hp_82341_detach(gpib_board_t *board)
 	hp_82341_free_private( board );
 }
 
-static const struct pnp_device_id hp_82341_pnp_table[] __devinitdata = 
+static const struct pnp_device_id hp_82341_pnp_table[] = 
 {
 	{.id = "HWP1411"},
 	{.id = ""}
