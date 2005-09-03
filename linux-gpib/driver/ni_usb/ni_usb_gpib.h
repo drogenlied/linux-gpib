@@ -23,7 +23,7 @@
 #include <linux/timer.h>
 #include "gpibP.h"
 
-enum 
+enum
 {
 	USB_VENDOR_ID_NI = 0x3923
 };
@@ -31,7 +31,8 @@ enum
 enum
 {
 	USB_DEVICE_ID_NI_USB_B = 0x702a,
-	USB_DEVICE_ID_NI_USB_B_PREINIT = 0x702b	// device id before firmware is loaded
+	USB_DEVICE_ID_NI_USB_B_PREINIT = 0x702b,	// device id before firmware is loaded
+	USB_DEVICE_ID_NI_USB_HS = 0x709b
 };
 
 enum ni_usb_device
@@ -43,15 +44,28 @@ enum ni_usb_device
 
 enum endpoint_addresses
 {
-	NIUSB_BULK_OUT_ENDPOINT = 0x2,
-	NIUSB_BULK_IN_ENDPOINT = 0x2,
-	NIUSB_INTERRUPT_IN_ENDPOINT = 0x4,
+	NIUSB_B_BULK_OUT_ENDPOINT = 0x2,
+	NIUSB_B_BULK_IN_ENDPOINT = 0x2,
+	NIUSB_B_BULK_IN_ALT_ENDPOINT = 0x6,
+	NIUSB_B_INTERRUPT_IN_ENDPOINT = 0x4,
+};
+
+enum hs_enpoint_addresses
+{
+	NIUSB_HS_BULK_OUT_ENDPOINT = 0x2,
+	NIUSB_HS_BULK_OUT_ALT_ENDPOINT = 0x6,
+	NIUSB_HS_BULK_IN_ENDPOINT = 0x4,
+	NIUSB_HS_BULK_IN_ALT_ENDPOINT = 0x8,
+	NIUSB_HS_INTERRUPT_IN_ENDPOINT = 0x1,
 };
 
 // struct which defines private_data for ni_usb devices
 typedef struct
 {
 	struct usb_interface *bus_interface;
+	int bulk_out_endpoint;
+	int bulk_in_endpoint;
+	int interrupt_in_endpoint;
 	uint8_t eos_char;
 	unsigned short eos_mode;
 	unsigned int monitored_ibsta_bits;
@@ -97,6 +111,7 @@ enum ni_usb_bulk_ids
 	NIUSB_REGISTER_READ_DATA_START_ID = 0x34,
 	NIUSB_REGISTER_READ_DATA_END_ID = 0x35,
 	NIUSB_IBRD_DATA_ID = 0x36,
+	NIUSB_IBRD_EXTENDED_DATA_ID = 0x37,
 	NIUSB_IBRD_STATUS_ID = 0x38
 };
 
@@ -123,50 +138,50 @@ static inline int nec7210_to_tnt4882_offset(int offset)
 static inline int ni_usb_bulk_termination(uint8_t *buffer)
 {
 	int i = 0;
-	
+
 	buffer[i++] = NIUSB_TERM_ID;
 	buffer[i++] = 0x0;
 	buffer[i++] = 0x0;
 	buffer[i++] = 0x0;
-	return i;	
+	return i;
 }
 
 static inline int ni_usb_bulk_register_write_header(uint8_t *buffer, int num_writes)
 {
 	int i = 0;
-	
+
 	buffer[i++] = NIUSB_REG_WRITE_ID;
 	buffer[i++] = num_writes;
 	buffer[i++] = 0x0;
-	return i;	
+	return i;
 }
 
 static inline int ni_usb_bulk_register_write(uint8_t *buffer, struct ni_usb_register reg)
 {
 	int i = 0;
-	
+
 	buffer[i++] = reg.device;
 	buffer[i++] = reg.address;
 	buffer[i++] = reg.value;
-	return i;	
+	return i;
 }
 
 static inline int ni_usb_bulk_register_read_header(uint8_t *buffer, int num_reads)
 {
 	int i = 0;
-	
+
 	buffer[i++] = NIUSB_REG_READ_ID;
 	buffer[i++] = num_reads;
-	return i;	
+	return i;
 }
 
 static inline int ni_usb_bulk_register_read(uint8_t *buffer, int device, int address)
 {
 	int i = 0;
-	
+
 	buffer[i++] = device;
 	buffer[i++] = address;
-	return i;	
+	return i;
 }
 
 #endif	// _NI_USB_GPIB_H
