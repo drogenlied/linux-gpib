@@ -132,7 +132,7 @@ static void parse_options( int argc, char *argv[], parsed_options_t *settings )
 {
 	int c, index;
 	int retval;
-	
+
 	struct option options[] =
 	{
 		{ "iobase", required_argument, NULL, 'b' },
@@ -173,7 +173,7 @@ static void parse_options( int argc, char *argv[], parsed_options_t *settings )
 	settings->is_system_controller = -1;
 	settings->init_data = NULL;
 	settings->init_data_length = 0;
-	
+
 	while( 1 )
 	{
 		c = getopt_long(argc, argv, "b:d:f:hi:I:l:m:op:s:t:u:", options, &index);
@@ -243,29 +243,53 @@ static int configure_board( int fileno, const parsed_options_t *options )
 
 	strncpy( boardtype.name, options->board_type, sizeof( boardtype.name ) );
 	retval = ioctl( fileno, CFCBOARDTYPE, &boardtype );
-	if( retval < 0 ) return retval;
+	if( retval < 0 )
+	{
+		fprintf(stderr, "failed to configure boardtype: %s\n", boardtype.name);
+		return retval;
+	}
 	retval = ioctl( fileno, CFCBASE, &options->iobase );
-	if( retval < 0 ) return retval;
+	if( retval < 0 )
+	{
+		fprintf(stderr, "failed to configure base address\n");
+		return retval;
+	}
 	retval = ioctl( fileno, CFCIRQ, &options->irq );
-	if( retval < 0 ) return retval;
+	if( retval < 0 )
+	{
+		fprintf(stderr, "failed to configure irq\n");
+		return retval;
+	}
 	retval = ioctl( fileno, CFCDMA, &options->dma );
-	if( retval < 0 ) return retval;
-
+	if( retval < 0 )
+	{
+		fprintf(stderr, "failed to configure dma channel\n");
+		return retval;
+	}
 	pad_cmd.handle = 0;
 	pad_cmd.pad = options->pad;
 	retval = ioctl( fileno, IBPAD, &pad_cmd );
-	if( retval < 0 ) return retval;
-
+	if( retval < 0 )
+	{
+		fprintf(stderr, "failed to configure pad\n");
+		return retval;
+	}
 	sad_cmd.handle = 0;
 	sad_cmd.sad = options->sad;
 	retval = ioctl( fileno, IBSAD, &sad_cmd );
-	if( retval < 0 ) return retval;
-
+	if( retval < 0 )
+	{
+		fprintf(stderr, "failed to configure sad\n");
+		return retval;
+	}
 	pci_selection.pci_bus = options->pci_bus;
 	pci_selection.pci_slot = options->pci_slot;
 	retval = ioctl( fileno, IBSELECT_PCI, &pci_selection );
-	if( retval < 0 ) return retval;
-
+	if( retval < 0 )
+	{
+		fprintf(stderr, "failed to configure pci bus\n");
+		return retval;
+	}
 	online_cmd.online = 0;
 	online_cmd.init_data = 0;
 	online_cmd.init_data_length = 0;
@@ -364,6 +388,7 @@ int main( int argc, char *argv[] )
 	asprintf( &devicefile, "/dev/gpib%i", options.minor );
 	if( devicefile == NULL )
 	{
+		fprintf(stderr, "asprintf() failed\n");
 		perror( __FUNCTION__ );
 		return -1;
 	}
