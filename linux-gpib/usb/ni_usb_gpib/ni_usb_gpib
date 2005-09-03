@@ -22,10 +22,15 @@ case $PRODUCT in
 	SS_LOADER=$DATADIR/usb/ni_usb_gpib/niusbb_loader.hex
 	;;
 
+# ni-usb-hs
+3923/709b/*)
+	gpib_config $GPIB_CONFIG_OPTIONS
+	;;
+
 esac
 
 
-# quit unless we were called to download some firmware 
+# quit unless we were called to download some firmware
 if [ "$FIRMWARE" = "" ]; then
     # OR:  restructure to do other things for
     # specific post-renumeration devices
