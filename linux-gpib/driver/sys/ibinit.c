@@ -24,7 +24,7 @@ static int autospoll_thread(void *board_void)
 {
 	gpib_board_t *board = board_void;
 	int retval = 0;
-	
+
 	lock_kernel();
 	/* This thread doesn't need any user-level access,
 	 * so get rid of all our resources..
@@ -89,11 +89,12 @@ int ibonline(gpib_board_t *board, gpib_board_config_t config)
 	retval = gpib_allocate_board( board );
 	if( retval < 0 ) return retval;
 
-	if( board->interface->attach(board, config) < 0 )
+	retval = board->interface->attach(board, config);
+	if(retval < 0)
 	{
 		board->interface->detach(board);
 		printk("gpib: interface attach failed\n");
-		return -1;
+		return retval;
 	}
 	board->autospoll_pid = kernel_thread(autospoll_thread, board, 0);
 	if(board->autospoll_pid < 0)
