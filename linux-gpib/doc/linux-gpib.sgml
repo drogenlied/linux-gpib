@@ -628,6 +628,12 @@ Default is <option>--sre</option>.</para>
 	</row>
 	<row>
 	<entry>National Instruments</entry>
+	<entry><link LINKEND="ni-usb-hs">GPIB-USB-HS</link></entry>
+	<entry>ni_usb_gpib.ko</entry>
+	<entry>ni_usb_b</entry>
+	</row>
+	<row>
+	<entry>National Instruments</entry>
 	<entry>PCI-GPIB</entry>
 	<entry>tnt4882.ko</entry>
 	<entry>ni_pci</entry>
@@ -692,9 +698,9 @@ Default is <option>--sre</option>.</para>
 <para>
 After power-up, the Agilent 82341 boards require a firmware upload before they
 can be used.  This can be accomplished using the "--init-data" option of
-<link LINKEND="configuration-gpib-config">gpib_config</link>.  The 
+<link LINKEND="configuration-gpib-config">gpib_config</link>.  The
 firmware data can be found in the gpib_firmware
-tarball available from the 
+tarball available from the
 <ulink URL="http://linux-gpib.sourceforge.net/">Linux-GPIB home page</ulink>.
 Note the C and D versions use different firmware data.
 </para>
@@ -705,8 +711,8 @@ use the kernel's ISAPNP support to attempt to configure an 82341D.
 </para>
 <para>
 The 82341 does not support detection of an end-of-string character
-in hardware, it only automatically detects the when the EOI 
-line is asserted.  Thus if you use the REOS 
+in hardware, it only automatically detects the when the EOI
+line is asserted.  Thus if you use the REOS
 flag for a read, the board's fifos will
 not be used for the transfer.  This will greatly reduce the maximum transfer
 rate for your board (which may or may not be noticeable depending on the
@@ -717,8 +723,8 @@ device you are talking to).
 <title>Agilent 82350B</title>
 <para>
 The Agilent 82350B does not support detection of an end-of-string character
-in hardware, it only automatically detects the when the EOI 
-line is asserted.  Thus if you use the REOS 
+in hardware, it only automatically detects the when the EOI
+line is asserted.  Thus if you use the REOS
 flag for a read, the board's fifos will
 not be used for the transfer.  This will greatly reduce the maximum transfer
 rate for your board (which may or may not be noticeable depending on the
@@ -732,10 +738,10 @@ The Agilent 82357A requires a firmware upload (before gpib_config is
 run) to become functional
 after being plugged in.  The linux-gpib tarball contains hotplug scripts
 for automatically running the fxload program to upload the firmware (and
-to run gpib_config after the firmware is uploaded).  
+to run gpib_config after the firmware is uploaded).
 However, the actual firmware
 data itself must be obtained seperately, as part of the gpib_firmware
-tarball available from the 
+tarball available from the
 <ulink URL="http://linux-gpib.sourceforge.net/">Linux-GPIB home page</ulink>.
 </para>
 <para>
@@ -767,11 +773,20 @@ The USB-B requires a firmware upload (before gpib_config is
 run) to become functional
 after being plugged in.  The linux-gpib tarball contains hotplug scripts
 for automatically running the fxload program to upload the firmware (and
-to run gpib_config after the firmware is uploaded).  
+to run gpib_config after the firmware is uploaded).
 However, the actual firmware
 data itself must be obtained seperately, as part of the gpib_firmware
-tarball available from the 
+tarball available from the
 <ulink URL="http://linux-gpib.sourceforge.net/">Linux-GPIB home page</ulink>.
+</para>
+</section>
+<section ID="ni-usb-hs">
+<title>National Instruments GPIB-USB-HS</title>
+<para>
+Unlike the USB-B, the USB-HS does not require a firmware upload to become
+functional
+after being plugged in.  The linux-gpib tarball contains hotplug scripts
+which will automatically run gpib_config after the device is plugged in.
 </para>
 </section>
 </section>
@@ -1121,7 +1136,7 @@ volatile int ibsta;
 	the SRQ line.  It
 	is only set if the board is the controller-in-charge.  If
 	automatic serial polling is enabled (see
-	<link LINKEND="reference-function-ibconfig">ibconfig()</link>), 
+	<link LINKEND="reference-function-ibconfig">ibconfig()</link>),
 	SRQI will generally be cleared,
 	since when a device requests service it will be automatically
 	polled and then unassert SRQ.</entry>
