@@ -105,7 +105,7 @@ static void* do_aio( void *varg )
 	struct gpib_aio_arg arg;
 	ibConf_t *conf;
 	int retval;
-	
+
 	arg = *((struct gpib_aio_arg*) varg);
 	free( varg ); varg = NULL;
 
@@ -128,7 +128,7 @@ static void* do_aio( void *varg )
 	switch( arg.gpib_aio_type )
 	{
 	case GPIB_AIO_COMMAND:
-		count = retval =my_ibcmd( conf, conf->async.buffer, conf->async.buffer_length );
+		count = retval = my_ibcmd( conf, conf->async.buffer, conf->async.buffer_length );
 		break;
 	case GPIB_AIO_READ:
 		retval = my_ibrd( conf, conf->async.buffer, conf->async.buffer_length, &count);
@@ -142,11 +142,10 @@ static void* do_aio( void *varg )
 		break;
 	}
 	pthread_setcancelstate( PTHREAD_CANCEL_DISABLE, NULL );
-
 	pthread_mutex_lock( &conf->async.lock );
 	if(retval < 0)
 	{
-		conf->async.ibcntl = 0;
+		conf->async.ibcntl = ThreadIbcntl();
 		conf->async.iberr = ThreadIberr();
 		conf->async.ibsta = CMPL | ERR;
 	}else
