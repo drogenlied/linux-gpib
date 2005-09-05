@@ -1504,7 +1504,7 @@ then reads back: 34 01 0a c3 34 e2 0a c3 35 01 00 00 04 00 00 00
 	writes[i].value = SOFT_RESET;
 	i++;
 	writes[i].device = NIUSB_SUBDEV_TNT4882;
-	writes[i].address = NIUSB_SUBDEV_TNT4882, nec7210_to_tnt4882_offset(AUXMR);
+	writes[i].address = nec7210_to_tnt4882_offset(AUXMR);
 	writes[i].value = AUX_7210;
 	i++;
 	writes[i].device = NIUSB_SUBDEV_TNT4882;
@@ -1642,7 +1642,6 @@ static int ni_usb_set_interrupt_monitor(gpib_board_t *board, unsigned int monito
 	uint8_t *buffer;
 	struct ni_usb_status_block status;
 	unsigned long flags;
-	unsigned int control_value;
 	//printk("%s: receive control pipe is %i\n", __FILE__, pipe);
 	buffer = kmalloc(bufferLength, GFP_KERNEL);
 	if(buffer == NULL)
@@ -1650,12 +1649,8 @@ static int ni_usb_set_interrupt_monitor(gpib_board_t *board, unsigned int monito
 		printk("%s: kmalloc failed!\n", __FILE__);
 		return -ENOMEM;
 	}
-	if(ni_usb_ibsta_monitor_mask & monitored_bits)
-		control_value = 0x300;
-	else
-		control_value = 0x100;
 	retval = ni_usb_receive_control_msg(ni_priv, ni_usb_control_request, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
-		control_value, ni_usb_ibsta_monitor_mask & monitored_bits, buffer, bufferLength, 1000);
+		0x300, ni_usb_ibsta_monitor_mask & monitored_bits, buffer, bufferLength, 1000);
 	if(retval != bufferLength)
 	{
 		printk("%s: usb_control_msg returned %i\n", __FILE__, retval);
@@ -1961,6 +1956,36 @@ int ni_usb_attach(gpib_board_t *board, gpib_board_config_t config)
 	return retval;
 }
 
+static int ni_usb_shutdown_hardware(ni_usb_private_t *ni_priv)
+{	
+	int retval;
+	int i = 0;
+	struct ni_usb_register writes[2];
+	static const int writes_length = sizeof(writes) / sizeof(writes[0]);
+	unsigned int ibsta;
+
+	writes[i].device = NIUSB_SUBDEV_TNT4882;
+	writes[i].address = nec7210_to_tnt4882_offset(AUXMR);
+	writes[i].value = AUX_CR;
+	i++;
+	writes[i].device = NIUSB_SUBDEV_UNKNOWN3;
+	writes[i].address = 0x10;
+	writes[i].value = 0x0;
+	i++;
+	if(i > writes_length)
+	{
+		printk("%s: %s: bug!, buffer overrun, i=%i\n", __FILE__, __FUNCTION__, i);
+		return -EINVAL;
+	}
+	retval = ni_usb_write_registers(ni_priv, writes, i, &ibsta);
+	if(retval)
+	{
+		printk("%s: %s: register write failed, retval=%i\n", __FILE__, __FUNCTION__, retval);
+		return retval;
+	}
+	return 0;
+}
+
 void ni_usb_detach(gpib_board_t *board)
 {
 	ni_usb_private_t *ni_priv;
@@ -1974,6 +1999,7 @@ void ni_usb_detach(gpib_board_t *board)
 		if(ni_priv->bus_interface)
 		{
 			ni_usb_set_interrupt_monitor(board, 0);
+			ni_usb_shutdown_hardware(ni_priv);
 			usb_set_intfdata(ni_priv->bus_interface, NULL);
 		}
 		down(&ni_priv->bulk_transfer_lock);
@@ -2082,6 +2108,9 @@ static void ni_usb_driver_disconnect(struct usb_interface *interface)
 				ni_usb_private_t *ni_priv = board->private_data;
 				if(ni_priv)
 				{
+					/* ni_usb_shutdown_hardware() is only here for case when disconnect is
+					 * called by module unloading */
+					ni_usb_shutdown_hardware(ni_priv);
 					down(&ni_priv->bulk_transfer_lock);
 					down(&ni_priv->control_transfer_lock);
 					down(&ni_priv->interrupt_transfer_lock);
