@@ -99,8 +99,8 @@ int ibwait( int ud, int mask )
 	ibConf_t *conf;
 	int retval;
 	int status;
-	int error = 0;
 	int clear_mask;
+	int error = 0;
 
 	conf = general_enter_library( ud, 1, 0 );
 	if( conf == NULL )
@@ -112,7 +112,7 @@ int ibwait( int ud, int mask )
 		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
 
 //XXX
-	if( conf->async.in_progress )
+	if( conf->async.in_progress && (mask & CMPL))
 	{
 		if( gpib_aio_join( &conf->async ) )
 			error++;
@@ -124,9 +124,13 @@ int ibwait( int ud, int mask )
 		if( conf->async.ibsta & ERR )
 		{
 			error++;
-			setIberr( conf->async.iberr );
 		}
 		pthread_mutex_unlock( &conf->async.lock );
+		if(error && (ThreadIbsta() & ERR) == 0)
+		{
+			status |= ERR;
+			setIbsta(status);
+		}
 	}
 
 	general_exit_library( ud, error, 0, 1, 0, 0, 1 );
