@@ -112,7 +112,7 @@ int ibwait( int ud, int mask )
 		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
 
 //XXX
-	if( conf->async.in_progress && (mask & CMPL))
+	if(conf->async.in_progress)
 	{
 		if( gpib_aio_join( &conf->async ) )
 			error++;
