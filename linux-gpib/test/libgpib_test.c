@@ -303,7 +303,7 @@ static int master_async_read_write_test(int board, const struct program_options 
 		if((status & (ERR | TIMO)) || !(status & CMPL) )
 		{
 			PRINT_FAILED();
-			fprintf( stderr, "write status 0x%x, error %i\n", ThreadIbsta(),
+			fprintf( stderr, "loop %i write status 0x%x, error %i\n", i, ThreadIbsta(),
 				ThreadIberr() );
 			ibonl( ud, 0 );
 			return -1;
@@ -347,7 +347,7 @@ static int slave_async_read_write_test(int board, const struct program_options *
 		if(strcmp(buffer, read_write_string1))
 		{
 			PRINT_FAILED();
-			fprintf( stderr, "got bad data from ibrd\n" );
+			fprintf( stderr, "loop %i got bad data from ibrd\n", i);
 			fprintf( stderr, "received %i bytes:%s\n", ThreadIbcnt(), buffer );
 			return -1;
 		}
