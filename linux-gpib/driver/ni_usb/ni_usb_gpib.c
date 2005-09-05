@@ -82,7 +82,7 @@ static void ni_usb_timeout_handler(unsigned long arg)
 	up(&context->complete);
 };
 
-int ni_usb_send_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_length, int *actual_data_length, int timeout_msecs)
+int ni_usb_nonblocking_send_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_length, int *actual_data_length, int timeout_msecs)
 {
 	struct usb_device *usb_dev;
 	int retval;
@@ -158,7 +158,23 @@ int ni_usb_send_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_length,
 	return retval;
 }
 
-int ni_usb_receive_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_length, int *actual_data_length, int timeout_jiffies)
+static int ni_usb_send_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_length, int *actual_data_length, int timeout_msecs)
+{
+	int retval;
+	int timeout_msecs_remaining = timeout_msecs;
+	retval = ni_usb_nonblocking_send_bulk_msg(ni_priv, data, data_length, actual_data_length, timeout_msecs_remaining);
+	while(retval == -EAGAIN && timeout_msecs_remaining > 0)
+	{
+		if(msleep_interruptible(1))
+			return -ERESTARTSYS;
+		retval = ni_usb_nonblocking_send_bulk_msg(ni_priv, data, data_length, actual_data_length, timeout_msecs_remaining);
+		--timeout_msecs_remaining;
+	}
+	if(timeout_msecs_remaining <= 0) return -ETIMEDOUT;
+	return retval;
+}
+
+int ni_usb_nonblocking_receive_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_length, int *actual_data_length, int timeout_msecs)
 {
 	struct usb_device *usb_dev;
 	int retval;
@@ -192,7 +208,7 @@ int ni_usb_receive_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_leng
 	usb_fill_bulk_urb(ni_priv->bulk_urb, usb_dev, in_pipe, data, data_length,
 		ni_usb_bulk_complete, &context);
 	init_timer(&timer);
-	timer.expires = jiffies + timeout_jiffies;
+	timer.expires = jiffies + msecs_to_jiffies(timeout_msecs);
 	timer.function = ni_usb_timeout_handler;
 	timer.data = (unsigned long) &context;
 	add_timer(&timer);
@@ -231,6 +247,22 @@ int ni_usb_receive_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_leng
 	usb_free_urb(ni_priv->bulk_urb);
 	ni_priv->bulk_urb = NULL;
 	up(&ni_priv->bulk_transfer_lock);
+	return retval;
+}
+
+static int ni_usb_receive_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_length, int *actual_data_length, int timeout_msecs)
+{
+	int retval;
+	int timeout_msecs_remaining = timeout_msecs;
+	retval = ni_usb_nonblocking_receive_bulk_msg(ni_priv, data, data_length, actual_data_length, timeout_msecs_remaining);
+	while(retval == -EAGAIN && timeout_msecs_remaining > 0)
+	{
+		if(msleep_interruptible(1))
+			return -ERESTARTSYS;
+		retval = ni_usb_nonblocking_receive_bulk_msg(ni_priv, data, data_length, actual_data_length, timeout_msecs_remaining);
+		--timeout_msecs_remaining;
+	}
+	if(timeout_msecs_remaining <= 0) return -ETIMEDOUT;
 	return retval;
 }
 
@@ -333,7 +365,7 @@ int ni_usb_parse_register_read_block(const uint8_t *raw_data, unsigned int *resu
 // I sometimes get 0x10 for raw_data[3], I don't know what (if anything) it means
 		if(raw_data[i++] != 0)
 		{
-			printk("%s: %s: unexpected data: raw_data[%i]=%i, expected 0\n",
+			printk("%s: %s: unexpected data: raw_data[%i]=0x%x, expected 0\n",
 				__FILE__, __FUNCTION__, i - 1, (int)raw_data[i - 1]);
 			unexpected = 1;
 		}
@@ -355,7 +387,7 @@ int ni_usb_parse_register_read_block(const uint8_t *raw_data, unsigned int *resu
 	{
 		if(raw_data[i++] != 0)
 		{
-			printk("%s: %s: unexpected data: raw_data[%i]=%i, expected 0\n",
+			printk("%s: %s: unexpected data: raw_data[%i]=0x%x, expected 0\n",
 				__FILE__, __FUNCTION__, i - 1, (int)raw_data[i - 1]);
 			unexpected = 1;
 		}
@@ -407,7 +439,7 @@ int parse_board_ibrd_readback(const uint8_t *raw_data, struct ni_usb_status_bloc
 			data_block_length = ibrd_extended_data_block_length;
 			if(raw_data[++i] != 0)
 			{
-				printk("%s: %s: unexpected data: raw_data[%i]=%i, expected 0\n",
+				printk("%s: %s: unexpected data: raw_data[%i]=0x%x, expected 0\n",
 					__FILE__, __FUNCTION__, i, (int)raw_data[i]);
 				unexpected = 1;
 			}
@@ -444,7 +476,7 @@ int parse_board_ibrd_readback(const uint8_t *raw_data, struct ni_usb_status_bloc
 	for(k = 0; k < 2; k++)
 		if(raw_data[i++] != 0)
 		{
-			printk("%s: %s: unexpected data: raw_data[%i]=%i, expected 0\n",
+			printk("%s: %s: unexpected data: raw_data[%i]=0x%x, expected 0\n",
 				__FILE__, __FUNCTION__, i - 1, (int)raw_data[i - 1]);
 			unexpected = 1;
 		}
@@ -464,7 +496,7 @@ int parse_board_ibrd_readback(const uint8_t *raw_data, struct ni_usb_status_bloc
 	for(k = 0; k < 3; k++)
 		if(raw_data[i++] != 0)
 		{
-			printk("%s: %s: unexpected data: raw_data[%i]=%i, expected 0\n",
+			printk("%s: %s: unexpected data: raw_data[%i]=0x%x, expected 0\n",
 				__FILE__, __FUNCTION__, i - 1, (int)raw_data[i - 1]);
 			unexpected = 1;
 		}
@@ -609,7 +641,7 @@ ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *en
 	kfree(out_data);
 	if(retval || bytes_written != i)
 	{
-		printk("%s: ni_usb_send_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, bytes_written, i);
+		printk("%s: %s: ni_usb_send_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, __FUNCTION__, retval, bytes_written, i);
 		return retval;
 	}
 	in_data_length = (length / 15 + 1) * 0x10 + 0x20;
@@ -701,7 +733,7 @@ static ssize_t ni_usb_write(gpib_board_t *board, uint8_t *buffer, size_t length,
 	kfree(out_data);
 	if(retval || bytes_written != i)
 	{
-		printk("%s: ni_usb_send_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, bytes_written, i);
+		printk("%s: %s: ni_usb_send_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, __FUNCTION__, retval, bytes_written, i);
 		return retval;
 	}
 	in_data_length = 0x10;
@@ -771,7 +803,14 @@ ssize_t ni_usb_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 	kfree(out_data);
 	if(retval || bytes_written != i)
 	{
-		printk("%s: ni_usb_send_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, bytes_written, i);
+		int k;
+		printk("%s: %s: ni_usb_send_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, __FUNCTION__, retval, bytes_written, i);
+		printk("\t was attempting to write command bytes:\n");
+		for(k = 0; k < length; ++k)
+		{
+			printk(" 0x%2x", buffer[k]);
+		}
+		printk("\n");
 		return retval;
 	}
 	in_data_length = 0x10;
@@ -832,7 +871,7 @@ int ni_usb_take_control(gpib_board_t *board, int synchronous)
 	kfree(out_data);
 	if(retval || bytes_written != i)
 	{
-		printk("%s: ni_usb_send_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, bytes_written, i);
+		printk("%s: %s: ni_usb_send_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, __FUNCTION__, retval, bytes_written, i);
 		return retval;
 	}
 	in_data_length = 0x10;
@@ -880,7 +919,7 @@ int ni_usb_go_to_standby(gpib_board_t *board)
 	kfree(out_data);
 	if(retval || bytes_written != i)
 	{
-		printk("%s: ni_usb_send_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, bytes_written, i);
+		printk("%s: %s: ni_usb_send_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, __FUNCTION__, retval, bytes_written, i);
 		return retval;
 	}
 	in_data_length = 0x20;
@@ -1315,11 +1354,12 @@ int ni_usb_line_status( const gpib_board_t *board )
 	while(i % 4)
 		out_data[i++] = 0x0;
 	i += ni_usb_bulk_termination(&out_data[i]);
-	retval = ni_usb_send_bulk_msg(ni_priv, out_data, i, &bytes_written, 1000);
+	retval = ni_usb_nonblocking_send_bulk_msg(ni_priv, out_data, i, &bytes_written, 1000);
 	kfree(out_data);
 	if(retval || bytes_written != i)
 	{
-		printk("%s: ni_usb_send_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, bytes_written, i);
+		if(retval != -EAGAIN)
+			printk("%s: %s: ni_usb_send_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, __FUNCTION__, retval, bytes_written, i);
 		return retval;
 	}
 	in_data_length = 0x20;
@@ -1329,10 +1369,11 @@ int ni_usb_line_status( const gpib_board_t *board )
 		printk("%s: kmalloc failed\n", __FILE__);
 		return -ENOMEM;
 	}
-	retval = ni_usb_receive_bulk_msg(ni_priv, in_data, in_data_length, &bytes_read, 1000);
+	retval = ni_usb_nonblocking_receive_bulk_msg(ni_priv, in_data, in_data_length, &bytes_read, 1000);
 	if(retval)
 	{
-		printk("%s: %s: ni_usb_receive_bulk_msg returned %i, bytes_read=%i\n", __FILE__, __FUNCTION__, retval, bytes_read);
+		if(retval != -EAGAIN)
+			printk("%s: %s: ni_usb_receive_bulk_msg returned %i, bytes_read=%i\n", __FILE__, __FUNCTION__, retval, bytes_read);
 		kfree(in_data);
 		return retval;
 	}
@@ -1601,7 +1642,7 @@ static int ni_usb_set_interrupt_monitor(gpib_board_t *board, unsigned int monito
 	uint8_t *buffer;
 	struct ni_usb_status_block status;
 	unsigned long flags;
-
+	unsigned int control_value;
 	//printk("%s: receive control pipe is %i\n", __FILE__, pipe);
 	buffer = kmalloc(bufferLength, GFP_KERNEL);
 	if(buffer == NULL)
@@ -1609,8 +1650,12 @@ static int ni_usb_set_interrupt_monitor(gpib_board_t *board, unsigned int monito
 		printk("%s: kmalloc failed!\n", __FILE__);
 		return -ENOMEM;
 	}
+	if(ni_usb_ibsta_monitor_mask & monitored_bits)
+		control_value = 0x300;
+	else
+		control_value = 0x100;
 	retval = ni_usb_receive_control_msg(ni_priv, ni_usb_control_request, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
-		0x300, ni_usb_ibsta_monitor_mask & monitored_bits, buffer, bufferLength, 1000);
+		control_value, ni_usb_ibsta_monitor_mask & monitored_bits, buffer, bufferLength, 1000);
 	if(retval != bufferLength)
 	{
 		printk("%s: usb_control_msg returned %i\n", __FILE__, retval);
@@ -1672,6 +1717,160 @@ static void ni_usb_cleanup_urbs(ni_usb_private_t *ni_priv)
 	}
 };
 
+static int ni_usb_hs_wait_for_ready(ni_usb_private_t *ni_priv)
+{
+	uint8_t buffer[0x10] = {0};
+	int retval;
+	static const int timeout = 50;
+	static const int msec_sleep_duration = 100;
+	int i;
+	static const int poll_ready_request = 0x40;
+	static const int unknown_request = 0x41;
+	int j;
+	int unexpected = 0;
+	retval = ni_usb_receive_control_msg(ni_priv, unknown_request, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+		0x0, 0x0, buffer, sizeof(buffer), 1000);
+	if(retval < 0)
+	{
+		printk("%s: usb_control_msg request 0x%x returned %i\n", __FILE__, unknown_request, retval);
+		return retval;
+	}
+	j = 0;
+	if(buffer[j] != unknown_request)
+	{
+		printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
+			__FILE__, __FUNCTION__, j, (int)buffer[j], unknown_request);
+		unexpected = 1;
+	}
+	if(buffer[++j] != 0x53)
+	{
+		printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
+			__FILE__, __FUNCTION__, j, (int)buffer[j], 0x53);
+		unexpected = 1;
+	}
+	if(buffer[++j] != 0x1)
+	{
+		printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
+			__FILE__, __FUNCTION__, j, (int)buffer[j], 0x1);
+		unexpected = 1;
+	}
+	if(buffer[++j] != 0x14)
+	{
+		printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
+			__FILE__, __FUNCTION__, j, (int)buffer[j], 0x14);
+		unexpected = 1;
+	}
+	if(buffer[++j] != 0x1)
+	{
+		printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
+			__FILE__, __FUNCTION__, j, (int)buffer[j], 0x1);
+		unexpected = 1;
+	}
+	if(unexpected)
+		ni_usb_dump_raw_block(buffer, retval);
+	for(i = 0; i < timeout; ++i)
+	{
+		int ready = 0;
+		retval = ni_usb_receive_control_msg(ni_priv, poll_ready_request, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+			0x0, 0x0, buffer, sizeof(buffer), 100);
+		if(retval < 0)
+		{
+			printk("%s: usb_control_msg request 0x%x returned %i\n", __FILE__, poll_ready_request, retval);
+			return retval;
+		}
+		j = 0;
+		unexpected = 0;
+		if(buffer[j] != poll_ready_request)
+		{
+			printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
+				__FILE__, __FUNCTION__, j, (int)buffer[j], poll_ready_request);
+			unexpected = 1;
+		}
+		if(buffer[++j] != 0x1)
+		{
+			printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
+				__FILE__, __FUNCTION__, j, (int)buffer[j], 0x1);
+			unexpected = 1;
+		}
+		if(buffer[++j] != 0x0)
+		{
+			printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
+				__FILE__, __FUNCTION__, j, (int)buffer[j], 0x0);
+			unexpected = 1;
+		}
+		if(buffer[++j] != 0x1)
+		{
+			printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
+				__FILE__, __FUNCTION__, j, (int)buffer[j], 0x1);
+			unexpected = 1;
+		}
+		if(buffer[++j] != 0x30)
+		{
+			printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
+				__FILE__, __FUNCTION__, j, (int)buffer[j], 0x30);
+			unexpected = 1;
+		}
+		if(buffer[++j] != 0x1)
+		{
+			printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
+				__FILE__, __FUNCTION__, j, (int)buffer[j], 0x1);
+			unexpected = 1;
+		}
+		if(buffer[++j] != 0x0)
+		{
+			ready = 1;
+			if(buffer[j] != 0x2)
+			{
+				printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
+					__FILE__, __FUNCTION__, j, (int)buffer[j], 0x2);
+				unexpected = 1;
+			}
+		}
+		if(buffer[++j] != 0x0)
+		{
+			ready = 1;
+			if(buffer[j] != 0x3)
+			{
+				printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
+					__FILE__, __FUNCTION__, j, (int)buffer[j], 0x3);
+				unexpected = 1;
+			}
+		}
+		if(buffer[++j] != 0x0)
+		{
+			printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
+				__FILE__, __FUNCTION__, j, (int)buffer[j], 0x0);
+			unexpected = 1;
+		}
+		if(buffer[++j] != 0x0)
+		{
+			printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
+				__FILE__, __FUNCTION__, j, (int)buffer[j], 0x0);
+			unexpected = 1;
+		}
+		if(buffer[++j] != 0x0)
+		{
+			ready = 1;
+			if(buffer[j] != 0x96)
+			{
+				printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
+					__FILE__, __FUNCTION__, j, (int)buffer[j], 0x96);
+				unexpected = 1;
+			}
+		}
+		if(unexpected)
+			ni_usb_dump_raw_block(buffer, retval);
+		if(ready) break;
+		retval = msleep_interruptible(msec_sleep_duration);
+		if(retval)
+		{
+			printk("ni_usb_gpib: msleep interrupted\n");
+			return -ERESTARTSYS;
+		}
+	}
+	return 0;
+}
+
 int ni_usb_attach(gpib_board_t *board, gpib_board_config_t config)
 {
 	int retval;
@@ -1706,8 +1905,12 @@ int ni_usb_attach(gpib_board_t *board, gpib_board_config_t config)
 		printk("No supported NI usb gpib adapters found, have you loaded its firmware?\n");
 		return -ENODEV;
 	}
+	if(usb_reset_configuration(interface_to_usbdev(ni_priv->bus_interface)))
+	{
+		printk("ni_usb_gpib: usb_reset_configuration() failed.\n");
+	}
 	int product_id = interface_to_usbdev(ni_priv->bus_interface)->descriptor.idProduct;
-	printk("\t product id=0x%x\n", product_id);
+	printk("\tproduct id=0x%x\n", product_id);
 	if(product_id == USB_DEVICE_ID_NI_USB_B)
 	{
 		ni_priv->bulk_out_endpoint = NIUSB_B_BULK_OUT_ENDPOINT;
@@ -1718,6 +1921,12 @@ int ni_usb_attach(gpib_board_t *board, gpib_board_config_t config)
 		ni_priv->bulk_out_endpoint = NIUSB_HS_BULK_OUT_ENDPOINT;
 		ni_priv->bulk_in_endpoint = NIUSB_HS_BULK_IN_ENDPOINT;
 		ni_priv->interrupt_in_endpoint = NIUSB_HS_INTERRUPT_IN_ENDPOINT;
+		retval = ni_usb_hs_wait_for_ready(ni_priv);
+		if(retval < 0)
+		{
+			up(&ni_usb_hotplug_lock);
+			return retval;
+		}
 	}else
 	{
 		up(&ni_usb_hotplug_lock);
@@ -1758,6 +1967,7 @@ void ni_usb_detach(gpib_board_t *board)
 
 	down(&ni_usb_hotplug_lock);
 //	printk("%s: enter\n", __FUNCTION__);
+// under windows, software unplug does chip_reset nec7210 aux command, then writes 0x0 to address 0x10 of device 3
 	ni_priv = board->private_data;
 	if(ni_priv)
 	{
@@ -1838,7 +2048,7 @@ static int ni_usb_driver_probe(struct usb_interface *interface,
 	{
 		usb_put_dev(interface_to_usbdev(interface));
 		up(&ni_usb_hotplug_lock);
-		printk("out of space in ni_usb_driver_interfaces[]\n");
+		printk("ni_usb_gpib: out of space in ni_usb_driver_interfaces[]\n");
 		return -1;
 	}
 	path = kmalloc(pathLength, GFP_KERNEL);
@@ -1849,7 +2059,7 @@ static int ni_usb_driver_probe(struct usb_interface *interface,
 		return -ENOMEM;
 	}
 	usb_make_path(interface_to_usbdev(interface), path, pathLength);
-	printk("probe succeeded for path: %s\n", path);
+	printk("ni_usb_gpib: probe succeeded for path: %s\n", path);
 	kfree(path);
 	up(&ni_usb_hotplug_lock);
 	return 0;
