@@ -217,6 +217,7 @@ static int master_read_write_test(int board, const struct program_options *optio
 		if( ( status & ERR ) || !( status & CMPL ) || !( status & END ) )
 		{
 			PRINT_FAILED();
+			fprintf(stderr, "loop %i\n", i);
 			ibonl( ud, 0 );
 			return -1;
 		}
@@ -471,6 +472,11 @@ static int master_parallel_poll_test(int board, const struct program_options *op
 		PRINT_FAILED();
 		return -1;
 	}
+	if(send_sync_message(ud, "ist is 1"))
+	{
+		ibonl( ud, 0 );
+		return -1;
+	}
 	ibrpp( board, &result );
 	if( ThreadIbsta() & ERR )
 	{
@@ -478,6 +484,28 @@ static int master_parallel_poll_test(int board, const struct program_options *op
 		return -1;
 	}
 	if((result & (1 << (line - 1))) == 0)
+	{
+		PRINT_FAILED();
+		fprintf( stderr, "parallel poll result: 0x%x\n", (unsigned int)result );
+		return -1;
+	}
+	if(send_sync_message(ud, "set ist is 0"))
+	{
+		ibonl( ud, 0 );
+		return -1;
+	}
+	if(send_sync_message(ud, "ist is 0"))
+	{
+		ibonl( ud, 0 );
+		return -1;
+	}
+	ibrpp( board, &result );
+	if( ThreadIbsta() & ERR )
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	if((result & (1 << (line - 1))))
 	{
 		PRINT_FAILED();
 		fprintf( stderr, "parallel poll result: 0x%x\n", (unsigned int)result );
@@ -497,6 +525,30 @@ static int slave_parallel_poll_test(int board, const struct program_options *opt
 {
 	fprintf( stderr, "%s...", __FUNCTION__ );
 
+	ibist(board, 1);
+	if( ThreadIbsta() & ERR )
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	if(receive_sync_message(board))
+	{
+		return -1;
+	}
+	if(receive_sync_message(board))
+	{
+		return -1;
+	}
+	ibist(board, 0);
+	if( ThreadIbsta() & ERR )
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	if(receive_sync_message(board))
+	{
+		return -1;
+	}
 	fprintf( stderr, "OK\n" );
 	return 0;
 }
