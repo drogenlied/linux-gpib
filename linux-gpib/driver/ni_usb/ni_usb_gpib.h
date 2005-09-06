@@ -120,6 +120,8 @@ enum ni_usb_error_codes
 	NIUSB_NO_ERROR = 0,
 	// NIUSB_ADDRESSING_ERROR occurs when you do a board read/write as CIC but are not in LACS/TACS
 	NIUSB_ADDRESSING_ERROR = 3,
+	// I've seen error 4 on reads for reasons undetermined
+	NIUSB_UNKNOWN4_ERROR = 4,
 	// NIUSB_NO_BUS_ERROR occurs when you try to write a command byte but there are no devices connected to the gpib bus
 	NIUSB_NO_BUS_ERROR = 5,
 	// NIUSB_NO_LISTENER_ERROR occurs when you do a board write as CIC with no listener

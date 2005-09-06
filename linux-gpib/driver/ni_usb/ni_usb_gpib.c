@@ -46,7 +46,7 @@ static unsigned short ni_usb_timeout_code(unsigned int usec)
 	else if( usec <= 30 ) return 0xf2;
 	else if( usec <= 100 ) return 0xf3;
 	else if( usec <= 300 ) return 0xf4;
-	else if( usec <= 1000 ) return 0x5;
+	else if( usec <= 1000 ) return 0xf5;
 	else if( usec <= 3000 ) return 0xf6;
 	else if( usec <= 10000 ) return 0xf7;
 	else if( usec <= 30000 ) return 0xf8;
@@ -82,6 +82,7 @@ static void ni_usb_timeout_handler(unsigned long arg)
 	up(&context->complete);
 };
 
+// I'm using nonblocking loosely here, it only means -EAGAIN can be returned in certain cases
 int ni_usb_nonblocking_send_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_length, int *actual_data_length, int timeout_msecs)
 {
 	struct usb_device *usb_dev;
@@ -174,6 +175,7 @@ static int ni_usb_send_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_
 	return retval;
 }
 
+// I'm using nonblocking loosely here, it only means -EAGAIN can be returned in certain cases
 int ni_usb_nonblocking_receive_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_length, int *actual_data_length, int timeout_msecs)
 {
 	struct usb_device *usb_dev;
@@ -304,13 +306,17 @@ void ni_usb_soft_update_status(gpib_board_t *board, unsigned int ni_usb_ibsta, u
 	//FIXME should generate events on DTAS and DCAS
 	need_monitoring_bits = ni_usb_ibsta_monitor_mask;
 	spin_lock_irqsave(&board->spinlock, flags);
+	ni_priv->monitored_ibsta_bits &= ~ni_usb_ibsta;
 	need_monitoring_bits &= ~ni_priv->monitored_ibsta_bits;
 	spin_unlock_irqrestore(&board->spinlock, flags);
-	need_monitoring_bits &= ~ni_usb_ibsta;
-	if(need_monitoring_bits)
+	if(need_monitoring_bits & ~ni_usb_ibsta)
 	{
 		ni_usb_set_interrupt_monitor(board, ni_usb_ibsta_monitor_mask);
+	}else if(need_monitoring_bits & ni_usb_ibsta)
+	{
+		wake_up_interruptible( &board->wait );
 	}
+// 	printk("%s: ni_usb_ibsta=0x%x\n", __FUNCTION__, ni_usb_ibsta);
 	return;
 }
 
@@ -468,7 +474,10 @@ int parse_board_ibrd_readback(const uint8_t *raw_data, struct ni_usb_status_bloc
 	if(num_data_blocks)
 		*actual_bytes_read = (num_data_blocks - 1) * data_block_length + raw_data[i++];
 	else
+	{
+		++i;
 		*actual_bytes_read = 0;
+	}
 	if(*actual_bytes_read > j)
 	{
 		printk("%s: bug: discarded data. actual_bytes_read=%i, j=%i\n", __FILE__, *actual_bytes_read, j);
@@ -644,7 +653,7 @@ ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *en
 		printk("%s: %s: ni_usb_send_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, __FUNCTION__, retval, bytes_written, i);
 		return retval;
 	}
-	in_data_length = (length / 15 + 1) * 0x10 + 0x20;
+	in_data_length = (length / 30 + 1) * 0x20 + 0x20;
 	in_data = kmalloc(in_data_length, GFP_KERNEL);
 	if(in_data == NULL) return -ENOMEM;
 	retval = ni_usb_receive_bulk_msg(ni_priv, in_data, in_data_length, &bytes_read,
@@ -1208,7 +1217,7 @@ int ni_usb_parallel_poll(gpib_board_t *board, uint8_t *result)
 		return -ENOMEM;
 	}
 	out_data[i++] = NIUSB_IBRPP_ID;
-	out_data[i++] = 0x0;	//FIXME: this should be the parallel poll timeout code
+	out_data[i++] = 0xf0;	//FIXME: this should be the parallel poll timeout code
 	out_data[i++] = 0x0;
 	out_data[i++] = 0x0;
 	i += ni_usb_bulk_termination(&out_data[i]);
@@ -1614,16 +1623,18 @@ void ni_usb_interrupt_complete(struct urb *urb, struct pt_regs *regs)
 	struct ni_usb_status_block status;
 	unsigned long flags;
 
-//	printk("debug: %s: %s: status=0x%x, error_count=%i, actual_length=%i\n", __FILE__, __FUNCTION__,
-//		urb->status, urb->error_count, urb->actual_length);
+// 	printk("debug: %s: %s: status=0x%x, error_count=%i, actual_length=%i\n", __FILE__, __FUNCTION__,
+// 		urb->status, urb->error_count, urb->actual_length);
 
 	// don't resubmit if urb was unlinked
 	if(urb->status) return;
 	ni_usb_parse_status_block(urb->transfer_buffer, &status);
-//	printk("debug: ibsta=0x%x\n", status.ibsta);
+// 	printk("debug: ibsta=0x%x\n", status.ibsta);
 
 	spin_lock_irqsave(&board->spinlock, flags);
-	ni_priv->monitored_ibsta_bits &= ~status.ibsta;
+//	ni_priv->monitored_ibsta_bits &= ~status.ibsta;
+	ni_priv->monitored_ibsta_bits = 0;
+// 	printk("debug: monitored_ibsta_bits=0x%x\n", ni_priv->monitored_ibsta_bits);
 	spin_unlock_irqrestore(&board->spinlock, flags);
 
 	retval = usb_submit_urb(ni_priv->interrupt_urb, GFP_ATOMIC);
@@ -1649,6 +1660,10 @@ static int ni_usb_set_interrupt_monitor(gpib_board_t *board, unsigned int monito
 		printk("%s: kmalloc failed!\n", __FILE__);
 		return -ENOMEM;
 	}
+	spin_lock_irqsave(&board->spinlock, flags);
+	ni_priv->monitored_ibsta_bits = ni_usb_ibsta_monitor_mask & monitored_bits;
+// 	printk("debug: %s: monitored_ibsta_bits=0x%x\n", __FUNCTION__, ni_priv->monitored_ibsta_bits);
+	spin_unlock_irqrestore(&board->spinlock, flags);
 	retval = ni_usb_receive_control_msg(ni_priv, ni_usb_control_request, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 		0x300, ni_usb_ibsta_monitor_mask & monitored_bits, buffer, bufferLength, 1000);
 	if(retval != bufferLength)
@@ -1659,11 +1674,6 @@ static int ni_usb_set_interrupt_monitor(gpib_board_t *board, unsigned int monito
 	}
 	ni_usb_parse_status_block(buffer, &status);
 	kfree(buffer);
-	spin_lock_irqsave(&board->spinlock, flags);
-	ni_priv->monitored_ibsta_bits = ni_usb_ibsta_monitor_mask;
-	ni_priv->monitored_ibsta_bits &= ~status.ibsta;
-	spin_unlock_irqrestore(&board->spinlock, flags);
-
 	return 0;
 }
 
@@ -1711,6 +1721,54 @@ static void ni_usb_cleanup_urbs(ni_usb_private_t *ni_priv)
 			usb_kill_urb(ni_priv->bulk_urb);
 	}
 };
+
+static int ni_usb_b_startup_check(ni_usb_private_t *ni_priv)
+{
+/*
+on startup,
+windows driver writes: 08 04 03 08 03 09 03 0a 03 0b 00 00 04 00 00 00
+then reads back: 34 01 0a c3 34 e2 0a c3 35 01 00 00 04 00 00 00
+
+It looks like a register read from subdevice 3, but the data read back
+doesn't make sense to me.
+*/
+	int retval;
+	uint8_t out_data[] = {0x8, 0x4, 0x3, 0x8, 0x3, 0x9, 0x3, 0xa, 0x3, 0xb, 0x0, 0x0, 0x4, 0x0, 0x0, 0x0};
+	uint8_t expected_in_data[] = {0x34, 0x1, 0xa, 0xc3, 0x34, 0xe2, 0xa, 0xc3, 0x35, 0x1, 0x0, 0x0, 0x4, 0x0, 0x0, 0x0};
+	uint8_t in_data[0x10];
+	int bytes_written = 0, bytes_read = 0;
+	int i = 0;
+	int unexpected = 0;
+
+// 	printk("%s: %s\n", __FILE__, __FUNCTION__);
+	retval = ni_usb_send_bulk_msg(ni_priv, out_data, sizeof(out_data), &bytes_written, 1000);
+	if(retval)
+	{
+		printk("%s: %s: ni_usb_send_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, __FUNCTION__,
+			retval, bytes_written, sizeof(out_data));
+		return retval;
+	}
+	retval = ni_usb_receive_bulk_msg(ni_priv, in_data, sizeof(in_data), &bytes_read, 1000);
+	if(retval)
+	{
+		printk("%s: %s: ni_usb_receive_bulk_msg returned %i, bytes_read=%i\n", __FILE__, __FUNCTION__, retval, bytes_read);
+		ni_usb_dump_raw_block(in_data, bytes_read);
+		return retval;
+	}
+	if(bytes_read != sizeof(expected_in_data))
+		unexpected = 1;
+	for(i = 0; unexpected == 0 && i < sizeof(expected_in_data); ++i)
+	{
+		if(in_data[i] != expected_in_data[i])
+			unexpected = 1;
+	}
+	if(unexpected)
+	{
+		printk("%s: %s: unexpected response.\n", __FILE__, __FUNCTION__);
+		ni_usb_dump_raw_block(in_data, bytes_read);
+	}
+	return 0;
+}
 
 static int ni_usb_hs_wait_for_ready(ni_usb_private_t *ni_priv)
 {
@@ -1911,6 +1969,7 @@ int ni_usb_attach(gpib_board_t *board, gpib_board_config_t config)
 		ni_priv->bulk_out_endpoint = NIUSB_B_BULK_OUT_ENDPOINT;
 		ni_priv->bulk_in_endpoint = NIUSB_B_BULK_IN_ENDPOINT;
 		ni_priv->interrupt_in_endpoint = NIUSB_B_INTERRUPT_IN_ENDPOINT;
+		ni_usb_b_startup_check(ni_priv);
 	}else if(product_id == USB_DEVICE_ID_NI_USB_HS)
 	{
 		ni_priv->bulk_out_endpoint = NIUSB_HS_BULK_OUT_ENDPOINT;
@@ -1957,13 +2016,14 @@ int ni_usb_attach(gpib_board_t *board, gpib_board_config_t config)
 }
 
 static int ni_usb_shutdown_hardware(ni_usb_private_t *ni_priv)
-{	
+{
 	int retval;
 	int i = 0;
 	struct ni_usb_register writes[2];
 	static const int writes_length = sizeof(writes) / sizeof(writes[0]);
 	unsigned int ibsta;
 
+// 	printk("%s: %s\n", __FILE__, __FUNCTION__);
 	writes[i].device = NIUSB_SUBDEV_TNT4882;
 	writes[i].address = nec7210_to_tnt4882_offset(AUXMR);
 	writes[i].value = AUX_CR;
@@ -2108,9 +2168,6 @@ static void ni_usb_driver_disconnect(struct usb_interface *interface)
 				ni_usb_private_t *ni_priv = board->private_data;
 				if(ni_priv)
 				{
-					/* ni_usb_shutdown_hardware() is only here for case when disconnect is
-					 * called by module unloading */
-					ni_usb_shutdown_hardware(ni_priv);
 					down(&ni_priv->bulk_transfer_lock);
 					down(&ni_priv->control_transfer_lock);
 					down(&ni_priv->interrupt_transfer_lock);
