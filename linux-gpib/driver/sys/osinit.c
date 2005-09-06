@@ -67,7 +67,7 @@ void init_gpib_descriptor( gpib_descriptor_t *desc )
 void gpib_register_driver(gpib_interface_t *interface, struct module *provider_module)
 {
 	struct gpib_interface_list_struct *entry;
-	
+
 	entry = kmalloc(sizeof(struct gpib_interface_list_struct), GFP_KERNEL);
 	if(entry == NULL)
 	{
@@ -203,6 +203,7 @@ static struct class_simple *gpib_class;
 
 static int __init gpib_common_init_module( void )
 {
+	int i;
 	printk("Linux-GPIB %s Driver -- Kernel Release %s\n", VERSION, UTS_RELEASE);
 	init_board_array(board_array, GPIB_MAX_NUM_BOARDS);
 	if(register_chrdev(IBMAJOR, "gpib", &ib_fops))
@@ -217,7 +218,6 @@ static int __init gpib_common_init_module( void )
 		unregister_chrdev(IBMAJOR, "gpib");
 		return PTR_ERR(gpib_class);
 	}
-	int i;
 	for(i = 0; i < GPIB_MAX_NUM_BOARDS; ++i)
 	{
 		class_simple_device_add(gpib_class, MKDEV(IBMAJOR, i), NULL, "gpib%i", i);
@@ -228,16 +228,17 @@ static int __init gpib_common_init_module( void )
 static void __exit gpib_common_exit_module( void )
 {
 	int i;
+	int retval;
 	for(i = 0; i < GPIB_MAX_NUM_BOARDS; ++i)
 	{
 		class_simple_device_remove(MKDEV(IBMAJOR, i));
 	}
 	class_simple_destroy(gpib_class);
-	int retval = unregister_chrdev(IBMAJOR, "gpib");
-	if(retval) 
+	retval = unregister_chrdev(IBMAJOR, "gpib");
+	if(retval)
 	{
 		printk("gpib: unregister_chrdev() returned error %i\n", retval);
-	}else 
+	}else
 	{
 		printk("gpib: succesfully removed \n");
 	}

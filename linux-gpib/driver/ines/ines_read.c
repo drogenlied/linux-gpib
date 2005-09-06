@@ -48,7 +48,7 @@ static ssize_t pio_read( gpib_board_t *board, ines_private_t *ines_priv, uint8_t
 		num_fifo_bytes = num_in_fifo_bytes( ines_priv );
 		if( num_fifo_bytes + *nbytes > length )
 		{
-			printk( "ines: counter allowed %i extra byte(s)\n", num_fifo_bytes - (length - *nbytes));
+			printk( "ines: counter allowed %li extra byte(s)\n", (long)(num_fifo_bytes - (length - *nbytes)));
 			num_fifo_bytes = length - *nbytes;
 		}
 		for( i = 0; i < num_fifo_bytes; i++ )

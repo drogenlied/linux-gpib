@@ -73,7 +73,7 @@ ssize_t read_data(ibConf_t *conf, uint8_t *buffer, size_t count, size_t *bytes_r
 	read_cmd.count = count;
 	read_cmd.handle = conf->handle;
 	read_cmd.end = 0;
-	
+
 	set_timeout( board, conf->settings.usec_timeout );
 	conf->end = 0;
 
@@ -188,8 +188,8 @@ int ibrdf(int ud, const char *file_path )
 	do
 	{
 		int fwrite_count;
-		int bytes_read;
-		
+		size_t bytes_read;
+
 		retval = read_data(conf, buffer, sizeof(buffer), &bytes_read);
 		fwrite_count = fwrite( buffer, 1, bytes_read, save_file );
 		if( fwrite_count != bytes_read )
@@ -225,7 +225,7 @@ int InternalRcvRespMsg( ibConf_t *conf, void *buffer, long count, int terminatio
 	int retval;
 	int use_eos;
 	size_t bytes_read;
-	
+
 	if( conf->is_interface == 0 )
 	{
 		setIberr( EDVR );

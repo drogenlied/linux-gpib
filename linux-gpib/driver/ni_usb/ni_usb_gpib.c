@@ -672,7 +672,7 @@ ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *en
 	kfree(in_data);
 	if(actual_length != length - status.count)
 	{
-		printk("%s: %s: actual_length=%i expected=%i\n", __FILE__, __FUNCTION__, actual_length, length - status.count);
+		printk("%s: %s: actual_length=%i expected=%li\n", __FILE__, __FUNCTION__, actual_length, (long)(length - status.count));
 		ni_usb_dump_raw_block(in_data, bytes_read);
 	}
 	switch(status.error_code)
@@ -1754,8 +1754,8 @@ doesn't make sense to me.
 	retval = ni_usb_send_bulk_msg(ni_priv, out_data, sizeof(out_data), &bytes_written, 1000);
 	if(retval)
 	{
-		printk("%s: %s: ni_usb_send_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, __FUNCTION__,
-			retval, bytes_written, sizeof(out_data));
+		printk("%s: %s: ni_usb_send_bulk_msg returned %i, bytes_written=%i, i=%li\n", __FILE__, __FUNCTION__,
+			retval, bytes_written, (long)(sizeof(out_data)));
 		return retval;
 	}
 	retval = ni_usb_receive_bulk_msg(ni_priv, in_data, sizeof(in_data), &bytes_read, 1000);
@@ -1939,6 +1939,7 @@ int ni_usb_attach(gpib_board_t *board, gpib_board_config_t config)
 	int retval;
 	int i;
 	ni_usb_private_t *ni_priv;
+	int product_id;
 
 	printk("ni_usb_gpib: attach\n");
 	if(down_interruptible(&ni_usb_hotplug_lock))
@@ -1972,7 +1973,7 @@ int ni_usb_attach(gpib_board_t *board, gpib_board_config_t config)
 	{
 		printk("ni_usb_gpib: usb_reset_configuration() failed.\n");
 	}
-	int product_id = interface_to_usbdev(ni_priv->bus_interface)->descriptor.idProduct;
+	product_id = interface_to_usbdev(ni_priv->bus_interface)->descriptor.idProduct;
 	printk("\tproduct id=0x%x\n", product_id);
 	if(product_id == USB_DEVICE_ID_NI_USB_B)
 	{
