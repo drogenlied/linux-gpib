@@ -678,23 +678,28 @@ ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *en
 	switch(status.error_code)
 	{
 	case NIUSB_NO_ERROR:
+		retval = 0;
 		break;
 	case NIUSB_ADDRESSING_ERROR:
-		return -EIO;
+		retval = -EIO;
 		break;
 	case NIUSB_TIMEOUT_ERROR:
-		return -ETIMEDOUT;
+		retval = -ETIMEDOUT;
+		break;
+	case NIUSB_EOSMODE_ERROR:
+		printk("%s: %s: driver bug, we should have been able to avoid NIUSB_EOSMODE_ERROR.\n", __FILE__, __FUNCTION__);
+		retval = -EINVAL;
 		break;
 	default:
 		printk("%s: %s: unknown error code=%i\n", __FILE__, __FUNCTION__, status.error_code);
-		return -EIO;
+		retval = -EIO;
 		break;
 	}
 	ni_usb_soft_update_status(board, status.ibsta, 0);
 	if(status.ibsta & END) *end = 1;
 	else *end = 0;
 	*nbytes = actual_length;
-	return 0;
+	return retval;
 }
 
 static ssize_t ni_usb_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi)
@@ -1077,6 +1082,7 @@ void ni_usb_remote_enable(gpib_board_t *board, int enable)
 	ni_usb_soft_update_status(board, ibsta, 0);
 	return;// 0;
 }
+
 void ni_usb_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits)
 {
 	ni_usb_private_t *ni_priv = board->private_data;
@@ -1088,12 +1094,16 @@ void ni_usb_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits
 	else
 		ni_priv->eos_mode &= ~BIN;
 }
+
 void ni_usb_disable_eos(gpib_board_t *board)
 {
 	ni_usb_private_t *ni_priv = board->private_data;
-
-	ni_priv->eos_mode &= ~REOS;
+	/* adapter gets unhappy if you don't zero all the bits
+		for the eos mode and eos char (returns error 4 on reads). */
+	ni_priv->eos_mode = 0;
+	ni_priv->eos_char = 0;
 }
+
 unsigned int ni_usb_update_status( gpib_board_t *board, unsigned int clear_mask )
 {
 	int retval;
