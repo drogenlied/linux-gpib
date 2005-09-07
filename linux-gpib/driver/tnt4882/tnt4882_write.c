@@ -80,7 +80,6 @@ static ssize_t generic_write( gpib_board_t *board, uint8_t *buffer, size_t lengt
 	ssize_t retval = 0;
 	tnt4882_private_t *tnt_priv = board->private_data;
 	nec7210_private_t *nec_priv = &tnt_priv->nec7210_priv;
-	unsigned long iobase = nec_priv->iobase;
 	unsigned int bits, imr0_bits, imr1_bits, imr2_bits;
 	int32_t hw_count;
 	unsigned long flags;
@@ -142,7 +141,7 @@ static ssize_t generic_write( gpib_board_t *board, uint8_t *buffer, size_t lengt
 			word = buffer[ count++ ] & 0xff;
 			if( count < length )
 				word |= ( buffer[ count++ ] << 8 ) & 0xff00;
-			tnt_priv->io_writew( word, iobase + FIFOB );
+			tnt_priv->io_writew( word, nec_priv->iobase + FIFOB );
 		}
 		tnt_priv->imr3_bits |= HR_NFF;
 		tnt_writeb( tnt_priv, tnt_priv->imr3_bits, IMR3 );

@@ -51,14 +51,14 @@ extern struct list_head registered_drivers;
 
 #include <asm/io.h>
 
-void writeb_wrapper( unsigned int value, unsigned long address );
-unsigned int readb_wrapper( unsigned long address );
-void outb_wrapper( unsigned int value, unsigned long address );
-unsigned int inb_wrapper( unsigned long address );
-void writew_wrapper( unsigned int value, unsigned long address );
-unsigned int readw_wrapper( unsigned long address );
-void outw_wrapper( unsigned int value, unsigned long address );
-unsigned int inw_wrapper( unsigned long address );
+void writeb_wrapper(unsigned int value, void *address);
+unsigned int readb_wrapper(void *address);
+void outb_wrapper(unsigned int value, void *address);
+unsigned int inb_wrapper(void *address);
+void writew_wrapper(unsigned int value, void *address);
+unsigned int readw_wrapper(void *address);
+void outw_wrapper(unsigned int value, void *address);
+unsigned int inw_wrapper(void *address);
 
 #endif	// _GPIB_P_H
 

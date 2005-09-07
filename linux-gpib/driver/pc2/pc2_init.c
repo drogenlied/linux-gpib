@@ -320,7 +320,7 @@ int pc2_attach(gpib_board_t *board, gpib_board_config_t config)
 	nec_priv = &pc2_priv->nec7210_priv;
 	nec_priv->offset = pc2_reg_offset;
 
-	if(request_region(board->ibbase, pc2_iosize, "pc2") == 0)
+	if(request_region((unsigned long)(board->ibbase), pc2_iosize, "pc2") == 0)
 	{
 		printk("gpib: ioports are already in use\n");
 		return -1;
@@ -373,7 +373,7 @@ void pc2_detach(gpib_board_t *board)
 		if(nec_priv->iobase)
 		{
 			nec7210_board_reset( nec_priv, board );
-			release_region(nec_priv->iobase, pc2_iosize);
+			release_region((unsigned long)(nec_priv->iobase), pc2_iosize);
 		}
 		if(nec_priv->dma_buffer)
 		{
@@ -399,15 +399,15 @@ int pc2a_common_attach(gpib_board_t *board, unsigned int num_registers, enum nec
 	nec_priv = &pc2_priv->nec7210_priv;
 	nec_priv->offset = pc2a_reg_offset;
 
-	switch( board->ibbase ){
-
+	switch((unsigned long)(board->ibbase))
+	{
 		case 0x02e1:
 		case 0x22e1:
 		case 0x42e1:
 		case 0x62e1:
 			break;
 		default:
-			printk("PCIIa base range invalid, must be one of [0246]2e1 is %lx \n", board->ibbase);
+			printk("PCIIa base range invalid, must be one of 0x[0246]2e1, but is 0x%p \n", board->ibbase);
 			return -1;
 			break;
 	}
@@ -426,7 +426,7 @@ int pc2a_common_attach(gpib_board_t *board, unsigned int num_registers, enum nec
 	err = 0;
 	for(i = 0; i < num_registers; i++)
 	{
-		if(check_region(board->ibbase + i * pc2a_reg_offset, 1))
+		if(check_region((unsigned long)(board->ibbase) + i * pc2a_reg_offset, 1))
 			err++;
 	}
 	if(board->ibirq && check_region(pc2a_clear_intr_iobase + board->ibirq, 1))
@@ -440,7 +440,7 @@ int pc2a_common_attach(gpib_board_t *board, unsigned int num_registers, enum nec
 	}
 	for(i = 0; i < num_registers; i++)
 	{
-		request_region(board->ibbase + i * pc2a_reg_offset, 1, "pc2a");
+		request_region((unsigned long)(board->ibbase) + i * pc2a_reg_offset, 1, "pc2a");
 	}
 	nec_priv->iobase = board->ibbase;
 	if(board->ibirq)
@@ -512,7 +512,7 @@ void pc2a_common_detach( gpib_board_t *board, unsigned int num_registers )
 		{
 			nec7210_board_reset( nec_priv, board );
 			for(i = 0; i < num_registers; i++)
-				release_region(nec_priv->iobase + i * pc2a_reg_offset, 1);
+				release_region((unsigned long)(nec_priv->iobase) + i * pc2a_reg_offset, 1);
 		}
 		if(pc2_priv->clear_intr_addr)
 			release_region(pc2_priv->clear_intr_addr, 1);

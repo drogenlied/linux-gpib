@@ -46,10 +46,10 @@ typedef struct
 	unsigned int irq;
 	volatile short imr0_bits;
 	volatile short imr3_bits;
-	void (*io_writeb)( unsigned int value, unsigned long address );
-	void (*io_writew)( unsigned int value, unsigned long address );
-	unsigned int (*io_readb)( unsigned long address );
-	unsigned int (*io_readw)( unsigned long address );
+	void (*io_writeb)(unsigned int value, void *address);
+	void (*io_writew)(unsigned int value, void *address);
+	unsigned int (*io_readb)(void *address);
+	unsigned int (*io_readw)(void *address);
 } tnt4882_private_t;
 
 // interfaces
@@ -114,25 +114,21 @@ static const int atgpib_iosize = 32;
 /* paged io */
 static inline unsigned int tnt_paged_readb( tnt4882_private_t *priv, unsigned long offset )
 {
-	unsigned long iobase = priv->nec7210_priv.iobase;
-
-	priv->io_writeb(AUX_PAGEIN, iobase + AUXMR * priv->nec7210_priv.offset);
+	priv->io_writeb(AUX_PAGEIN, priv->nec7210_priv.iobase + AUXMR * priv->nec7210_priv.offset);
 	udelay(1);
-	return priv->io_readb(iobase + offset);
+	return priv->io_readb(priv->nec7210_priv.iobase + offset);
 }
 static inline void tnt_paged_writeb(tnt4882_private_t *priv, unsigned int value, unsigned long offset )
 {
-	unsigned long iobase = priv->nec7210_priv.iobase;
-
-	priv->io_writeb(AUX_PAGEIN, iobase + AUXMR * priv->nec7210_priv.offset);
+	priv->io_writeb(AUX_PAGEIN, priv->nec7210_priv.iobase + AUXMR * priv->nec7210_priv.offset);
 	udelay(1);
-	priv->io_writeb(value, iobase + offset);
+	priv->io_writeb(value, priv->nec7210_priv.iobase + offset);
 }
 
 /* readb/writeb wrappers */
 static inline unsigned short tnt_readb( tnt4882_private_t *priv, unsigned long offset )
 {
-	unsigned long address = priv->nec7210_priv.iobase + offset;
+	void *address = priv->nec7210_priv.iobase + offset;
 	unsigned long flags;
 	unsigned short retval;
 	spinlock_t *register_lock = &priv->nec7210_priv.register_page_lock;
@@ -147,7 +143,7 @@ static inline unsigned short tnt_readb( tnt4882_private_t *priv, unsigned long o
 		switch(priv->nec7210_priv.type)
 		{
 		case TNT4882:
-			retval = priv->io_readb( address );
+			retval = priv->io_readb(address);
 			break;
 		case NAT4882:
 			retval = tnt_paged_readb( priv, offset - tnt_pagein_offset );
@@ -171,7 +167,7 @@ static inline unsigned short tnt_readb( tnt4882_private_t *priv, unsigned long o
 
 static inline void tnt_writeb( tnt4882_private_t *priv, unsigned short value, unsigned long offset)
 {
-	unsigned long address = priv->nec7210_priv.iobase + offset;
+	void *address = priv->nec7210_priv.iobase + offset;
 	unsigned long flags;
 	spinlock_t *register_lock = &priv->nec7210_priv.register_page_lock;
 

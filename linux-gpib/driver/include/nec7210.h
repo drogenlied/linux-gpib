@@ -38,7 +38,7 @@ enum nec7210_chipset
 typedef struct nec7210_private_struct nec7210_private_t;
 struct nec7210_private_struct
 {
-	unsigned long iobase;
+	void *iobase;
 	unsigned int offset;	// offset between successive nec7210 io addresses
 	unsigned int dma_channel;
 	uint8_t *dma_buffer;

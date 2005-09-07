@@ -275,16 +275,16 @@ int agilent_82350b_generic_attach(gpib_board_t *board, int use_fifos)
 	}
 	if(pci_request_regions(a_priv->pci_device, "agilent_82350b"))
 		return -EIO;
-	a_priv->gpib_base = (unsigned long) ioremap(pci_resource_start(a_priv->pci_device, GPIB_REGION),
+	a_priv->gpib_base = ioremap(pci_resource_start(a_priv->pci_device, GPIB_REGION),
 		pci_resource_len(a_priv->pci_device, GPIB_REGION));
-	printk("%s: gpib base address remapped to 0x%lx\n", __FUNCTION__, a_priv->gpib_base );
+	printk("%s: gpib base address remapped to 0x%p\n", __FUNCTION__, a_priv->gpib_base );
 	tms_priv->iobase = a_priv->gpib_base + TMS9914_BASE_REG;
-	a_priv->sram_base = (unsigned long) ioremap(pci_resource_start(a_priv->pci_device, SRAM_REGION),
+	a_priv->sram_base = ioremap(pci_resource_start(a_priv->pci_device, SRAM_REGION),
 		pci_resource_len(a_priv->pci_device, SRAM_REGION));
-	printk("%s: sram base address remapped to 0x%lx\n", __FUNCTION__, a_priv->sram_base );
-	a_priv->misc_base = (unsigned long) ioremap(pci_resource_start(a_priv->pci_device, MISC_REGION),
+	printk("%s: sram base address remapped to 0x%p\n", __FUNCTION__, a_priv->sram_base );
+	a_priv->misc_base = ioremap(pci_resource_start(a_priv->pci_device, MISC_REGION),
 		pci_resource_len(a_priv->pci_device, MISC_REGION));
-	printk("%s: misc base address remapped to 0x%lx\n", __FUNCTION__, a_priv->misc_base );
+	printk("%s: misc base address remapped to 0x%p\n", __FUNCTION__, a_priv->misc_base );
 
 	if(request_irq(a_priv->pci_device->irq, agilent_82350b_interrupt, SA_SHIRQ, "agilent_82350b", board))
 	{

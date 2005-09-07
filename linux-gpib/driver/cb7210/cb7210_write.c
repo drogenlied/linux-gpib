@@ -20,9 +20,7 @@
 
 int output_fifo_empty( const cb7210_private_t *cb_priv )
 {
-	const nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
-
-	if( ( inb( nec_priv->iobase + HS_STATUS ) & ( HS_TX_MSB_NOT_EMPTY | HS_TX_LSB_NOT_EMPTY ) ) == 0 )
+	if( ( inb(nec7210_iobase(cb_priv) + HS_STATUS ) & ( HS_TX_MSB_NOT_EMPTY | HS_TX_LSB_NOT_EMPTY ) ) == 0 )
 		return 1;
 	else
 		return 0;
@@ -43,20 +41,20 @@ static inline void output_fifo_enable( gpib_board_t *board, int enable )
 
 		outb( HS_RX_ENABLE | HS_TX_ENABLE | HS_CLR_SRQ_INT |
 			HS_CLR_EOI_EMPTY_INT | HS_CLR_HF_INT | cb_priv->hs_mode_bits,
-			nec_priv->iobase + HS_MODE );
+			nec7210_iobase(cb_priv) + HS_MODE );
 
 		cb_priv->hs_mode_bits &= ~HS_ENABLE_MASK;
 		cb_priv->hs_mode_bits |= HS_TX_ENABLE;
-		outb( cb_priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
+		outb( cb_priv->hs_mode_bits, nec7210_iobase(cb_priv) + HS_MODE );
 
-		outb( irq_bits( cb_priv->irq ), nec_priv->iobase + HS_INT_LEVEL );
+		outb( irq_bits( cb_priv->irq ), nec7210_iobase(cb_priv) + HS_INT_LEVEL );
 
 		clear_bit( WRITE_READY_BN, &nec_priv->state );
 
 	}else
 	{
 		cb_priv->hs_mode_bits &= ~HS_ENABLE_MASK;
-		outb( cb_priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
+		outb( cb_priv->hs_mode_bits, nec7210_iobase(cb_priv) + HS_MODE );
 
 		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAO, 0 );
 		nec7210_set_reg_bits( nec_priv, IMR1, HR_DOIE, HR_DOIE );
@@ -71,11 +69,10 @@ ssize_t fifo_write( gpib_board_t *board, uint8_t *buffer, size_t length )
 	ssize_t retval = 0;
 	cb7210_private_t *cb_priv = board->private_data;
 	nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
-	unsigned long iobase = cb_priv->fifo_iobase;
 	unsigned int num_bytes, i;
 	unsigned long flags;
 
-	if(iobase == 0)
+	if(cb_priv->fifo_iobase == 0)
 	{
 		printk("cb7210: fifo iobase is zero!\n");
 		return -EIO;
@@ -127,11 +124,11 @@ ssize_t fifo_write( gpib_board_t *board, uint8_t *buffer, size_t length )
 
 			word = buffer[ count++ ] & 0xff;
 			word |= ( buffer[ count++ ] << 8 ) & 0xff00;
-			outw( word, iobase + CDOR );
+			outw( word, cb_priv->fifo_iobase + CDOR );
 		}
 		cb_priv->out_fifo_half_empty = 0;
-		outb( cb_priv->hs_mode_bits | HS_CLR_EOI_EMPTY_INT | HS_CLR_HF_INT, nec_priv->iobase + HS_MODE );
-		outb( cb_priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
+		outb( cb_priv->hs_mode_bits | HS_CLR_EOI_EMPTY_INT | HS_CLR_HF_INT, nec7210_iobase(cb_priv) + HS_MODE );
+		outb( cb_priv->hs_mode_bits, nec7210_iobase(cb_priv) + HS_MODE );
 		spin_unlock_irqrestore( &board->spinlock, flags );
 	}
 	// wait last byte has been sent

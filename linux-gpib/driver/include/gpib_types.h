@@ -205,7 +205,7 @@ struct gpib_board_struct
 	/* Watchdog timer to enable timeouts */
 	struct timer_list timer;
 	/* IO base address to use for non-pnp cards (set by core, driver should make local copy) */
-	unsigned long ibbase;
+	void *ibbase;
 	/* IRQ to use for non-pnp cards (set by core, driver should make local copy) */
 	unsigned int ibirq;
 	/* dma channel to use for non-pnp cards (set by core, driver should make local copy) */

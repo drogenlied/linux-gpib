@@ -74,8 +74,8 @@ void cb7210_request_system_control( gpib_board_t *board, int request_control )
 	}else
 		priv->hs_mode_bits &= ~HS_SYS_CONTROL;
 
-	outb( priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
-	nec7210_request_system_control( board, &priv->nec7210_priv, request_control );
+	outb( priv->hs_mode_bits, nec7210_iobase(priv) + HS_MODE );
+	nec7210_request_system_control( board, nec_priv, request_control );
 }
 void cb7210_interface_clear(gpib_board_t *board, int assert)
 {
@@ -299,17 +299,16 @@ int cb7210_generic_attach(gpib_board_t *board)
 int cb7210_init( cb7210_private_t *cb_priv, gpib_board_t *board )
 {
 	nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
-	unsigned long iobase = nec_priv->iobase;
 
-	outb( HS_RESET7210, iobase + HS_INT_LEVEL );
-	outb( irq_bits( cb_priv->irq ), iobase + HS_INT_LEVEL );
+	outb( HS_RESET7210, nec7210_iobase(cb_priv) + HS_INT_LEVEL );
+	outb( irq_bits( cb_priv->irq ), nec7210_iobase(cb_priv) + HS_INT_LEVEL );
 
 	nec7210_board_reset( nec_priv, board );
 	outb( HS_TX_ENABLE | HS_RX_ENABLE | HS_CLR_SRQ_INT |
-		HS_CLR_EOI_EMPTY_INT | HS_CLR_HF_INT, iobase + HS_MODE );
+		HS_CLR_EOI_EMPTY_INT | HS_CLR_HF_INT, nec7210_iobase(cb_priv) + HS_MODE );
 
 	cb_priv->hs_mode_bits = HS_HF_INT_EN;
-	outb( cb_priv->hs_mode_bits, iobase + HS_MODE );
+	outb( cb_priv->hs_mode_bits, nec7210_iobase(cb_priv) + HS_MODE );
 
 	write_byte( nec_priv, AUX_LO_SPEED, AUXMR );
 	/* set clock register for maximum (20 MHz) driving frequency
@@ -365,7 +364,7 @@ int cb_pci_attach(gpib_board_t *board, gpib_board_config_t config)
 		return -1;
 
 	cb_priv->amcc_iobase = pci_resource_start( cb_priv->pci_device, 0 );
-	nec_priv->iobase = pci_resource_start( cb_priv->pci_device, 1 );
+	nec_priv->iobase = (void*)(pci_resource_start( cb_priv->pci_device, 1 ));
 	cb_priv->fifo_iobase = pci_resource_start( cb_priv->pci_device, 2 );
 
 	isr_flags |= SA_SHIRQ;
@@ -424,13 +423,13 @@ int cb_isa_attach(gpib_board_t *board, gpib_board_config_t config)
 	if(retval) return retval;
 	cb_priv = board->private_data;
 	nec_priv = &cb_priv->nec7210_priv;
-	if(request_region(board->ibbase, cb7210_iosize, "cb7210") == 0)
+	if(request_region((unsigned long)(board->ibbase), cb7210_iosize, "cb7210") == 0)
 	{
-		printk("gpib: ioports starting at 0x%lx are already in use\n", board->ibbase);
+		printk("gpib: ioports starting at 0x%p are already in use\n", board->ibbase);
 		return -EIO;
 	}
 	nec_priv->iobase = board->ibbase;
-	cb_priv->fifo_iobase = nec_priv->iobase;
+	cb_priv->fifo_iobase = nec7210_iobase(cb_priv);
 	
 	bits = irq_bits( board->ibirq );
 	if( bits == 0 )
@@ -465,7 +464,7 @@ void cb_isa_detach(gpib_board_t *board)
 		if(nec_priv->iobase)
 		{
 			nec7210_board_reset( nec_priv, board );
-			release_region(nec_priv->iobase, cb7210_iosize);
+			release_region(nec7210_iobase(cb_priv), cb7210_iosize);
 		}
 	}
 	cb7210_generic_detach(board);

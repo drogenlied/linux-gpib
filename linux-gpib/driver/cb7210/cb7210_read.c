@@ -19,9 +19,7 @@
 
 static inline int have_fifo_word( const cb7210_private_t *cb_priv )
 {
-	const nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
-
-	if( ( ( inb( nec_priv->iobase + HS_STATUS ) ) &
+	if( ( ( inb(nec7210_iobase(cb_priv) + HS_STATUS ) ) &
 			( HS_RX_MSB_NOT_EMPTY | HS_RX_LSB_NOT_EMPTY ) ) ==
 			( HS_RX_MSB_NOT_EMPTY | HS_RX_LSB_NOT_EMPTY ) )
 		return 1;
@@ -44,21 +42,21 @@ static inline void input_fifo_enable( gpib_board_t *board, int enable )
 
 		outb( HS_RX_ENABLE | HS_TX_ENABLE | HS_CLR_SRQ_INT |
 			HS_CLR_EOI_EMPTY_INT | HS_CLR_HF_INT | cb_priv->hs_mode_bits,
-			nec_priv->iobase + HS_MODE );
+			nec7210_iobase(cb_priv) + HS_MODE );
 
 		cb_priv->hs_mode_bits &= ~HS_ENABLE_MASK;
-		outb( cb_priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
+		outb( cb_priv->hs_mode_bits, nec7210_iobase(cb_priv) + HS_MODE );
 
-		outb( irq_bits( cb_priv->irq ), nec_priv->iobase + HS_INT_LEVEL );
+		outb( irq_bits( cb_priv->irq ), nec7210_iobase(cb_priv) + HS_INT_LEVEL );
 
 		cb_priv->hs_mode_bits |= HS_RX_ENABLE;
-		outb( cb_priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
+		outb( cb_priv->hs_mode_bits, nec7210_iobase(cb_priv) + HS_MODE );
 	}else
 	{
 		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAI, 0 );
 
 		cb_priv->hs_mode_bits &= ~HS_ENABLE_MASK;
-		outb( cb_priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
+		outb( cb_priv->hs_mode_bits, nec7210_iobase(cb_priv) + HS_MODE );
 
 		clear_bit( READ_READY_BN, &nec_priv->state );
 	}
@@ -71,13 +69,12 @@ static ssize_t fifo_read(gpib_board_t *board, cb7210_private_t *cb_priv, uint8_t
 {
 	ssize_t retval = 0;
 	nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
-	unsigned long iobase=cb_priv->fifo_iobase;
 	int hs_status;
 	uint16_t word;
 	unsigned long flags;
 	
 	*nbytes = 0;
-	if(iobase == 0)
+	if(cb_priv->fifo_iobase == 0)
 	{
 		printk("cb7210: fifo iobase is zero!\n");
 		return -EIO;
@@ -113,14 +110,14 @@ static ssize_t fifo_read(gpib_board_t *board, cb7210_private_t *cb_priv, uint8_t
 
 		while( have_fifo_word( cb_priv ) )
 		{
-			word = inw( iobase + DIR );
+			word = inw(cb_priv->fifo_iobase + DIR );
 			buffer[ (*nbytes)++ ] = word & 0xff;
 			buffer[ (*nbytes)++ ] = ( word >> 8 ) & 0xff;
 		}
 
 		cb_priv->in_fifo_half_full = 0;
 
-		hs_status = inb( nec_priv->iobase + HS_STATUS );
+		hs_status = inb(nec7210_iobase(cb_priv) + HS_STATUS );
 
 		spin_unlock_irqrestore( &board->spinlock, flags );
 
@@ -142,10 +139,10 @@ static ssize_t fifo_read(gpib_board_t *board, cb7210_private_t *cb_priv, uint8_t
 			break;
 		}
 	}
-	hs_status = inb( nec_priv->iobase + HS_STATUS );
+	hs_status = inb(nec7210_iobase(cb_priv) + HS_STATUS );
 	if( hs_status & HS_RX_LSB_NOT_EMPTY )
 	{
-		word = inw( iobase + DIR );
+		word = inw(cb_priv->fifo_iobase + DIR );
 		buffer[ (*nbytes)++ ] = word & 0xff;
 	}
 

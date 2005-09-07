@@ -118,6 +118,11 @@ enum cb7210_page_in
 	BUS_STATUS_PAGE = 1,
 };
 
+static inline unsigned long nec7210_iobase(const cb7210_private_t *cb_priv)
+{
+	return (unsigned long)(cb_priv->nec7210_priv.iobase);
+}
+
 static inline int cb7210_page_in_bits( unsigned int page )
 {
 	return 0x50 | (page & 0xf);
@@ -130,9 +135,9 @@ static inline uint8_t cb7210_paged_read_byte( cb7210_private_t *cb_priv,
 	unsigned long flags;
 
 	spin_lock_irqsave( &nec_priv->register_page_lock, flags );
-	outb( cb7210_page_in_bits( page ), nec_priv->iobase + AUXMR * nec_priv->offset );
+	outb(cb7210_page_in_bits( page ), nec7210_iobase(cb_priv) + AUXMR * nec_priv->offset );
 	udelay(1);
-	retval = inb( nec_priv->iobase + register_num * nec_priv->offset);
+	retval = inb(nec7210_iobase(cb_priv) + register_num * nec_priv->offset);
 	spin_unlock_irqrestore( &nec_priv->register_page_lock, flags );
 	return retval;
 }
@@ -143,9 +148,9 @@ static inline void cb7210_paged_write_byte( cb7210_private_t *cb_priv,
 	unsigned long flags;
 
 	spin_lock_irqsave( &nec_priv->register_page_lock, flags );
-	outb( cb7210_page_in_bits( page ), nec_priv->iobase + AUXMR * nec_priv->offset );
+	outb(cb7210_page_in_bits( page ), nec7210_iobase(cb_priv) + AUXMR * nec_priv->offset );
 	udelay(1);
-	outb(data, nec_priv->iobase + register_num * nec_priv->offset);
+	outb(data, nec7210_iobase(cb_priv) + register_num * nec_priv->offset);
 	spin_unlock_irqrestore( &nec_priv->register_page_lock, flags );
 }
 

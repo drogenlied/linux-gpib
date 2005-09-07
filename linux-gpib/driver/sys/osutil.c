@@ -3,44 +3,44 @@
 #include <asm/io.h>
 #include <linux/sched.h>
 
-void writeb_wrapper( unsigned int value, unsigned long address )
+void writeb_wrapper(unsigned int value, void *address)
 {
-	writeb( value, address );
+	writeb(value, address);
 };
 
-void writew_wrapper( unsigned int value, unsigned long address )
+void writew_wrapper(unsigned int value, void *address)
 {
-	writew( value, address );
+	writew(value, address);
 };
 
-unsigned int readb_wrapper( unsigned long address )
+unsigned int readb_wrapper(void *address)
 {
-	return readb( address );
+	return readb(address);
 };
 
-unsigned int readw_wrapper( unsigned long address )
+unsigned int readw_wrapper(void *address)
 {
-	return readw( address );
+	return readw(address);
 };
 
-void outb_wrapper( unsigned int value, unsigned long address )
+void outb_wrapper(unsigned int value, void *address)
 {
-	outb( value, address );
+	outb(value, (unsigned long)(address));
 };
 
-void outw_wrapper( unsigned int value, unsigned long address )
+void outw_wrapper(unsigned int value, void *address)
 {
-	outw( value, address );
+	outw(value, (unsigned long)(address));
 };
 
-unsigned int inb_wrapper( unsigned long address )
+unsigned int inb_wrapper(void *address)
 {
-	return inb( address );
+	return inb((unsigned long)(address));
 };
 
-unsigned int inw_wrapper( unsigned long address )
+unsigned int inw_wrapper(void *address)
 {
-	return inw( address );
+	return inw((unsigned long)(address));
 };
 /* this is a function instead of a constant because of Suse
  * defining HZ to be a function call to get_hz() */

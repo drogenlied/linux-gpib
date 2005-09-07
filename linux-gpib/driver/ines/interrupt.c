@@ -37,7 +37,7 @@ irqreturn_t ines_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	{
 /*		if((inb(nec_priv->iobase + QUANCOM_IRQ_CONTROL_STATUS_REG) & QUANCOM_IRQ_ASSERTED_BIT) == 0)
 			return IRQ_NONE;*/
-		outb( QUANCOM_IRQ_ENABLE_BIT, nec_priv->iobase + QUANCOM_IRQ_CONTROL_STATUS_REG );
+		outb(QUANCOM_IRQ_ENABLE_BIT, (unsigned long)(nec_priv->iobase) + QUANCOM_IRQ_CONTROL_STATUS_REG );
 	}
 
 	spin_lock_irqsave( &board->spinlock, flags );

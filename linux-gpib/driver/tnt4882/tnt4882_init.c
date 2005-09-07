@@ -520,7 +520,7 @@ int ni_pci_attach(gpib_board_t *board, gpib_board_config_t config)
 		return -1;
 	}
 
-	nec_priv->iobase = mite_iobase(tnt_priv->mite);
+	nec_priv->iobase = tnt_priv->mite->daq_io_addr;
 
 	// get irq
 	if(request_irq(mite_irq(tnt_priv->mite), tnt4882_interrupt, isr_flags, "ni-pci-gpib", board))
@@ -593,7 +593,7 @@ int ni_isa_attach_common( gpib_board_t *board, enum nec7210_chipset chipset )
 	tnt4882_private_t *tnt_priv;
 	nec7210_private_t *nec_priv;
 	int isr_flags = 0;
-	unsigned long iobase;
+	void *iobase;
 
 	board->status = 0;
 
@@ -619,13 +619,13 @@ int ni_isa_attach_common( gpib_board_t *board, enum nec7210_chipset chipset )
 		retval = ni_isapnp_find( &dev );
 		if( retval < 0 ) return retval;
 		tnt_priv->pnp_dev = dev;
-		iobase = pnp_port_start(dev, 0);
+		iobase = (void*)(pnp_port_start(dev, 0));
 		board->ibirq = pnp_irq(dev, 0);
 	}else
 		iobase = board->ibbase;
 
 	// allocate ioports
-	if( request_region( iobase, atgpib_iosize, "atgpib") == NULL )
+	if(request_region((unsigned long)(iobase), atgpib_iosize, "atgpib") == NULL)
 	{
 		printk("tnt4882: failed to allocate ioports\n");
 		return -1;
@@ -678,7 +678,7 @@ void ni_isa_detach(gpib_board_t *board)
 		}
 		if( nec_priv->iobase )
 		{
-			release_region(nec_priv->iobase, atgpib_iosize);
+			release_region((unsigned long)(nec_priv->iobase), atgpib_iosize);
 		}
 		if(tnt_priv->pnp_dev)
 		{			

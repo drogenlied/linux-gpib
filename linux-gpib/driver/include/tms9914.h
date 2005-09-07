@@ -32,7 +32,7 @@ enum tms9914_holdoff_mode
 typedef struct tms9914_private_struct tms9914_private_t;
 struct tms9914_private_struct
 {
-	unsigned long iobase;
+	void *iobase;
 	unsigned int offset;	// offset between successive tms9914 io addresses
 	unsigned int dma_channel;
 	// software copy of bits written to interrupt mask registers

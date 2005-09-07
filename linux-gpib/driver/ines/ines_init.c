@@ -471,7 +471,7 @@ int ines_common_pci_attach( gpib_board_t *board )
 
 	if(pci_request_regions(ines_priv->pci_device, "ines-gpib"))
 		return -1;
-	nec_priv->iobase = pci_resource_start(ines_priv->pci_device, found_id.gpib_region);
+	nec_priv->iobase = (void*)(pci_resource_start(ines_priv->pci_device, found_id.gpib_region));
 
 	ines_priv->pci_chip_type = found_id.pci_chip_type;
 	nec_priv->offset = found_id.io_offset;
@@ -534,7 +534,7 @@ int ines_common_pci_attach( gpib_board_t *board )
 			}
 			break;
 		case PCI_CHIP_QUANCOM:
-			outb( QUANCOM_IRQ_ENABLE_BIT, nec_priv->iobase + QUANCOM_IRQ_CONTROL_STATUS_REG );
+			outb( QUANCOM_IRQ_ENABLE_BIT, (unsigned long)(nec_priv->iobase) + QUANCOM_IRQ_CONTROL_STATUS_REG );
 			break;
 		case PCI_CHIP_QUICKLOGIC5030:
 			break;
@@ -589,9 +589,9 @@ int ines_isa_attach( gpib_board_t *board, gpib_board_config_t config )
 	nec_priv = &ines_priv->nec7210_priv;
 
 	
-	if(request_region(board->ibbase, ines_isa_iosize, "ines_gpib") == 0)
+	if(request_region((unsigned long)(board->ibbase), ines_isa_iosize, "ines_gpib") == 0)
 	{
-		printk("ines_gpib: ioports at 0x%lx already in use\n", board->ibbase);
+		printk("ines_gpib: ioports at 0x%p already in use\n", board->ibbase);
 		return -1;
 	}
 	nec_priv->iobase = board->ibbase;
@@ -626,7 +626,7 @@ void ines_pci_detach(gpib_board_t *board)
 				break;
 			case PCI_CHIP_QUANCOM:
 				if( nec_priv->iobase )
-					outb( 0, nec_priv->iobase + QUANCOM_IRQ_CONTROL_STATUS_REG );
+					outb( 0, (unsigned long)(nec_priv->iobase) + QUANCOM_IRQ_CONTROL_STATUS_REG );
 				break;
 			default:
 				break;
@@ -659,7 +659,7 @@ void ines_isa_detach(gpib_board_t *board)
 		if(nec_priv->iobase)
 		{
 			nec7210_board_reset( nec_priv, board );
-			release_region(nec_priv->iobase, ines_isa_iosize);
+			release_region((unsigned long)(nec_priv->iobase), ines_isa_iosize);
 		}
 	}
 	ines_free_private(board);

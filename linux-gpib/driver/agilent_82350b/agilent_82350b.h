@@ -44,9 +44,9 @@ typedef struct
 {
 	tms9914_private_t tms9914_priv;
 	struct pci_dev *pci_device;
-	unsigned long gpib_base;
-	unsigned long sram_base;
-	unsigned long misc_base;
+	void *gpib_base;
+	void *sram_base;
+	void *misc_base;
 	int irq;
 	unsigned short card_mode_bits;
 	unsigned short event_status_bits;

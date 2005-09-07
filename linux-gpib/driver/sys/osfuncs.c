@@ -431,8 +431,7 @@ static int read_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
 	if( desc == NULL ) return -EINVAL;
 
 	/* Check write access to buffer */
-	retval = verify_area(VERIFY_WRITE, read_cmd.buffer, read_cmd.count);
-	if (retval)
+	if(!access_ok(VERIFY_WRITE, read_cmd.buffer, read_cmd.count))
 		return -EFAULT;
 
 	desc->io_in_progress = 1;
@@ -479,8 +478,7 @@ static int command_ioctl( gpib_file_private_t *file_priv,
 	if( desc == NULL ) return -EINVAL;
 
 	/* Check read access to buffer */
-	retval = verify_area(VERIFY_READ, cmd.buffer, cmd.count);
-	if (retval)
+	if(!access_ok(VERIFY_READ, cmd.buffer, cmd.count))
 		return -EFAULT;
 
 	/* Write buffer loads till we empty the user supplied buffer */
@@ -534,8 +532,7 @@ static int write_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
 	if( desc == NULL ) return -EINVAL;
 
 	/* Check read access to buffer */
-	retval = verify_area(VERIFY_READ, write_cmd.buffer, write_cmd.count);
-	if (retval)
+	if(!access_ok(VERIFY_READ, write_cmd.buffer, write_cmd.count))
 		return -EFAULT;
 
 	desc->io_in_progress = 1;
@@ -1001,7 +998,7 @@ static int iobase_ioctl( gpib_board_t *board, unsigned long arg )
 	if( retval )
 		return -EFAULT;
 
-	board->ibbase = base_addr;
+	board->ibbase = (void*)(base_addr);
 
 	return 0;
 }

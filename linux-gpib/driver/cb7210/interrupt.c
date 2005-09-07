@@ -53,7 +53,7 @@ irqreturn_t cb7210_internal_interrupt( gpib_board_t *board )
 
 	if((priv->hs_mode_bits & HS_ENABLE_MASK))
 	{	status1 = 0;
-		hs_status = inb( nec_priv->iobase + HS_STATUS );
+		hs_status = inb(nec7210_iobase(priv) + HS_STATUS );
 	}else
 	{
 //		if( ( priv->hs_mode_bits & HS_ENABLE_MASK ) )
@@ -99,8 +99,8 @@ irqreturn_t cb7210_internal_interrupt( gpib_board_t *board )
 
 	if( clear_bits )
 	{
-		outb( priv->hs_mode_bits | clear_bits, nec_priv->iobase + HS_MODE );
-		outb( priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
+		outb( priv->hs_mode_bits | clear_bits, nec7210_iobase(priv) + HS_MODE );
+		outb( priv->hs_mode_bits, nec7210_iobase(priv) + HS_MODE );
 		wake_up_interruptible( &board->wait );
 	}
 	return IRQ_HANDLED;

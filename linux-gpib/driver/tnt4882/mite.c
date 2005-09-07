@@ -222,41 +222,40 @@ void mite_dma_disarm(struct mite_struct *mite)
 
 void mite_dump_regs(struct mite_struct *mite)
 {
-	unsigned long mite_io_addr = (unsigned long) mite->mite_io_addr;
-	unsigned long addr=0;
+	void *addr=0;
 	unsigned long temp=0;
 
-	printk("mite address is  =0x%08lx\n",mite_io_addr);
+	printk("mite address is  =0x%p\n", mite->mite_io_addr);
 		
-	addr = mite_io_addr+MITE_CHOR+CHAN_OFFSET(0);
-	printk("mite status[CHOR]at 0x%08lx =0x%08lx\n",addr, temp=readl(addr));
+	addr = mite->mite_io_addr + MITE_CHOR + CHAN_OFFSET(0);
+	printk("mite status[CHOR]at 0x%p =0x%08lx\n", addr, temp=readl(addr));
 	//mite_decode(mite_CHOR_strings,temp);
-	addr = mite_io_addr+MITE_CHCR+CHAN_OFFSET(0);
-	printk("mite status[CHCR]at 0x%08lx =0x%08lx\n",addr, temp=readl(addr));
+	addr = mite->mite_io_addr + MITE_CHCR + CHAN_OFFSET(0);
+	printk("mite status[CHCR]at 0x%p =0x%08lx\n", addr, temp=readl(addr));
 	//mite_decode(mite_CHCR_strings,temp);
-	addr = mite_io_addr+MITE_TCR+CHAN_OFFSET(0);
-	printk("mite status[TCR] at 0x%08lx =0x%08x\n",addr, readl(addr));
-	addr = mite_io_addr+MITE_MCR+CHAN_OFFSET(0);
-	printk("mite status[MCR] at 0x%08lx =0x%08lx\n",addr, temp=readl(addr));
+	addr = mite->mite_io_addr + MITE_TCR + CHAN_OFFSET(0);
+	printk("mite status[TCR] at 0x%p =0x%08x\n", addr, readl(addr));
+	addr = mite->mite_io_addr + MITE_MCR + CHAN_OFFSET(0);
+	printk("mite status[MCR] at 0x%p =0x%08lx\n", addr, temp=readl(addr));
 	//mite_decode(mite_MCR_strings,temp);
 	
-	addr = mite_io_addr+MITE_MAR+CHAN_OFFSET(0);
-	printk("mite status[MAR] at 0x%08lx =0x%08x\n",addr, readl(addr));
-	addr = mite_io_addr+MITE_DCR+CHAN_OFFSET(0);
-	printk("mite status[DCR] at 0x%08lx =0x%08lx\n",addr, temp=readl(addr));
+	addr = mite->mite_io_addr + MITE_MAR + CHAN_OFFSET(0);
+	printk("mite status[MAR] at 0x%p =0x%08x\n", addr, readl(addr));
+	addr = mite->mite_io_addr + MITE_DCR + CHAN_OFFSET(0);
+	printk("mite status[DCR] at 0x%p =0x%08lx\n", addr, temp=readl(addr));
 	//mite_decode(mite_CR_strings,temp);
-	addr = mite_io_addr+MITE_DAR+CHAN_OFFSET(0);
-	printk("mite status[DAR] at 0x%08lx =0x%08x\n",addr, readl(addr));
-	addr = mite_io_addr+MITE_LKCR+CHAN_OFFSET(0);
-	printk("mite status[LKCR]at 0x%08lx =0x%08lx\n",addr, temp=readl(addr));
+	addr = mite->mite_io_addr + MITE_DAR + CHAN_OFFSET(0);
+	printk("mite status[DAR] at 0x%p =0x%08x\n", addr, readl(addr));
+	addr = mite->mite_io_addr + MITE_LKCR + CHAN_OFFSET(0);
+	printk("mite status[LKCR]at 0x%p =0x%08lx\n", addr, temp=readl(addr));
 	//mite_decode(mite_CR_strings,temp);
-	addr = mite_io_addr+MITE_LKAR+CHAN_OFFSET(0);
-	printk("mite status[LKAR]at 0x%08lx =0x%08x\n",addr, readl(addr));
+	addr = mite->mite_io_addr + MITE_LKAR + CHAN_OFFSET(0);
+	printk("mite status[LKAR]at 0x%p =0x%08x\n", addr, readl(addr));
 
-	addr = mite_io_addr+MITE_CHSR+CHAN_OFFSET(0);
-	printk("mite status[CHSR]at 0x%08lx =0x%08lx\n",addr, temp=readl(addr));
+	addr = mite->mite_io_addr + MITE_CHSR + CHAN_OFFSET(0);
+	printk("mite status[CHSR]at 0x%p =0x%08lx\n", addr, temp=readl(addr));
 	//mite_decode(mite_CHSR_strings,temp);
-	addr = mite_io_addr+MITE_FCR+CHAN_OFFSET(0);
-	printk("mite status[FCR] at 0x%08lx =0x%08x\n\n",addr, readl(addr));
+	addr = mite->mite_io_addr + MITE_FCR + CHAN_OFFSET(0);
+	printk("mite status[FCR] at 0x%p =0x%08x\n\n", addr, readl(addr));
 }
 

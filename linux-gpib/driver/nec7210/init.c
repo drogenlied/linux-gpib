@@ -82,7 +82,7 @@ void nec7210_board_online( nec7210_private_t *priv, const gpib_board_t *board )
 /* wrappers for io */
 uint8_t nec7210_ioport_read_byte(nec7210_private_t *priv, unsigned int register_num)
 {
-	return inb(priv->iobase + register_num * priv->offset);
+	return inb((unsigned long)(priv->iobase) + register_num * priv->offset);
 }
 void nec7210_ioport_write_byte(nec7210_private_t *priv, uint8_t data, unsigned int register_num)
 {
@@ -92,7 +92,7 @@ void nec7210_ioport_write_byte(nec7210_private_t *priv, uint8_t data, unsigned i
 		 * AUXMR register faster than once per microsecond */
 		nec7210_locking_ioport_write_byte( priv, data, register_num );
 	}else
-		outb(data, priv->iobase + register_num * priv->offset);
+		outb(data, (unsigned long)(priv->iobase) + register_num * priv->offset);
 }
 uint8_t nec7210_iomem_read_byte(nec7210_private_t *priv, unsigned int register_num)
 {
@@ -115,7 +115,7 @@ uint8_t nec7210_locking_ioport_read_byte(nec7210_private_t *priv, unsigned int r
 	unsigned long flags;
 
 	spin_lock_irqsave( &priv->register_page_lock, flags );
-	retval = inb(priv->iobase + register_num * priv->offset);
+	retval = inb((unsigned long)(priv->iobase) + register_num * priv->offset);
 	spin_unlock_irqrestore( &priv->register_page_lock, flags );
 	return retval;
 }
@@ -126,7 +126,7 @@ void nec7210_locking_ioport_write_byte(nec7210_private_t *priv, uint8_t data, un
 	spin_lock_irqsave( &priv->register_page_lock, flags );
 	if(register_num == AUXMR)
 		udelay(1);
-	outb(data, priv->iobase + register_num * priv->offset);
+	outb(data, (unsigned long)(priv->iobase) + register_num * priv->offset);
 	spin_unlock_irqrestore( &priv->register_page_lock, flags );
 }
 uint8_t nec7210_locking_iomem_read_byte(nec7210_private_t *priv, unsigned int register_num)

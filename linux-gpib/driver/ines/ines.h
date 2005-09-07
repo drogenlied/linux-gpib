@@ -92,11 +92,11 @@ void ines_set_xfer_counter( ines_private_t *priv, unsigned int count );
 /* inb/outb wrappers */
 static inline unsigned int ines_inb( ines_private_t *priv, unsigned int register_number )
 {
-	return inb( priv->nec7210_priv.iobase + register_number * priv->nec7210_priv.offset );
+	return inb((unsigned long)(priv->nec7210_priv.iobase) + register_number * priv->nec7210_priv.offset );
 }
 static inline void ines_outb( ines_private_t *priv, unsigned int value, unsigned int register_number )
 {
-	outb( value, priv->nec7210_priv.iobase + register_number * priv->nec7210_priv.offset );
+	outb( value, (unsigned long)(priv->nec7210_priv.iobase) + register_number * priv->nec7210_priv.offset );
 }
 
 // pcmcia init/cleanup

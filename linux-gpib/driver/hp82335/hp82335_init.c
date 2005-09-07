@@ -223,7 +223,7 @@ int hp82335_attach( gpib_board_t *board, gpib_board_config_t config )
 	tms_priv->write_byte = hp82335_write_byte;
 	tms_priv->offset = 1;
 
-	switch( board->ibbase )
+	switch((unsigned long)(board->ibbase))
 	{
 		case 0xc4000:
 		case 0xc8000:
@@ -242,22 +242,20 @@ int hp82335_attach( gpib_board_t *board, gpib_board_config_t config )
 		case 0xfc000:
 			break;
 		default:
-			printk( "hp82335: invalid base io address 0x%lx\n", board->ibbase );
+			printk( "hp82335: invalid base io address 0x%p\n", board->ibbase );
 			return -1;
 			break;
 	}
-	if( request_mem_region( board->ibbase + hp82335_rom_size,
-		hp82335_iomem_size - hp82335_rom_size, "hp82335" ) == NULL )
+	if(request_mem_region((unsigned long)(board->ibbase), hp82335_iomem_size, "hp82335" ) == NULL )
 	{
-		printk( "hp82335: failed to allocate io memory region 0x%lx-0x%lx\n",
-			board->ibbase + hp82335_rom_size,
-			board->ibbase + hp82335_iomem_size - hp82335_rom_size - 1 );
+		printk( "hp82335: failed to allocate io memory region 0x%p-0x%p\n",
+			board->ibbase, board->ibbase + hp82335_iomem_size - 1 );
 		return -1;
 	}
-	hp_priv->raw_iobase = board->ibbase;
-	tms_priv->iobase = ( unsigned long ) ioremap( board->ibbase, hp82335_iomem_size );
-	printk("hp82335: base address 0x%lx remapped to 0x%lx\n", hp_priv->raw_iobase,
-		tms_priv->iobase );
+	hp_priv->raw_iobase = (unsigned long)(board->ibbase);
+	tms_priv->iobase = ioremap((unsigned long)(board->ibbase), hp82335_iomem_size);
+	printk("hp82335: base address 0x%lx remapped to 0x%p\n", hp_priv->raw_iobase,
+		tms_priv->iobase);
 
 	if(request_irq( board->ibirq, hp82335_interrupt, 0, "hp82335", board))
 	{
@@ -297,8 +295,7 @@ void hp82335_detach(gpib_board_t *board)
 			iounmap( ( void * ) tms_priv->iobase );
 		}
 		if( hp_priv->raw_iobase )
-			release_mem_region( hp_priv->raw_iobase + hp82335_rom_size,
-				hp82335_iomem_size - hp82335_rom_size );
+			release_mem_region(hp_priv->raw_iobase, hp82335_iomem_size);
 	}
 	hp82335_free_private( board );
 }

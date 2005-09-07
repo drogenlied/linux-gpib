@@ -80,12 +80,12 @@ void tms9914_online( gpib_board_t *board, tms9914_private_t *priv )
 // wrapper for inb
 uint8_t tms9914_ioport_read_byte(tms9914_private_t *priv, unsigned int register_num)
 {
-	return inb(priv->iobase + register_num * priv->offset);
+	return inb((unsigned long)(priv->iobase) + register_num * priv->offset);
 }
 // wrapper for outb
 void tms9914_ioport_write_byte(tms9914_private_t *priv, uint8_t data, unsigned int register_num)
 {
-	outb(data, priv->iobase + register_num * priv->offset);
+	outb(data, (unsigned long)(priv->iobase) + register_num * priv->offset);
 	if(register_num == AUXCR)
 		udelay(1);
 }
