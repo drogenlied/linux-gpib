@@ -58,14 +58,20 @@ static int send_sync_message(int ud, const char *message)
 	return 0;
 }
 
-static int receive_sync_message(int ud)
+static int receive_sync_message(int ud, const char *message)
 {
-	char buffer[1024];
+	char buffer[1024] = {0};
 
-	if(ibrd(ud, buffer, sizeof(buffer)) & ERR)
+	if(ibrd(ud, buffer, sizeof(buffer) - 1) & ERR)
 	{
 		PRINT_FAILED();
 		return -1;
+	}
+	if(strcmp(message, buffer))
+	{
+		fprintf(stderr, "received unexpected sync message: %s\n", buffer);
+		fprintf(stderr, "expected: %s\n", message);
+		PRINT_FAILED();
 	}
 	return 0;
 }
@@ -167,6 +173,18 @@ static int find_board(int *board, const struct program_options *options)
 	}
 	fprintf( stderr, "OK\n" );
 	return 0;
+}
+
+Addr4882_t slaveAddress(const struct program_options *options)
+{
+	Addr4882_t address;
+	int sad;
+	if(options->sad >= 0)
+		sad = MSA(options->sad);
+	else
+		sad = 0;
+	address = MakeAddr(options->pad, sad);
+	return address;	
 }
 
 static int open_slave_device_descriptor(int board, const struct program_options *options,
@@ -433,8 +451,9 @@ static int slave_serial_poll_test(int board, const struct program_options *optio
 {
 	fprintf( stderr, "%s...", __FUNCTION__ );
 
-	if(receive_sync_message(board))
+	if(receive_sync_message(board, "request service"))
 	{
+		PRINT_FAILED();
 		return -1;
 	}
 	ibrsv(board, status_byte);
@@ -489,7 +508,7 @@ static int master_parallel_poll_test(int board, const struct program_options *op
 		fprintf( stderr, "parallel poll result: 0x%x\n", (unsigned int)result );
 		return -1;
 	}
-	if(send_sync_message(ud, "set ist is 0"))
+	if(send_sync_message(ud, "set ist to 0"))
 	{
 		ibonl( ud, 0 );
 		return -1;
@@ -531,12 +550,14 @@ static int slave_parallel_poll_test(int board, const struct program_options *opt
 		PRINT_FAILED();
 		return -1;
 	}
-	if(receive_sync_message(board))
+	if(receive_sync_message(board, "ist is 1"))
 	{
+		PRINT_FAILED();
 		return -1;
 	}
-	if(receive_sync_message(board))
+	if(receive_sync_message(board, "set ist to 0"))
 	{
+		PRINT_FAILED();
 		return -1;
 	}
 	ibist(board, 0);
@@ -545,8 +566,9 @@ static int slave_parallel_poll_test(int board, const struct program_options *opt
 		PRINT_FAILED();
 		return -1;
 	}
-	if(receive_sync_message(board))
+	if(receive_sync_message(board, "ist is 0"))
 	{
+		PRINT_FAILED();
 		return -1;
 	}
 	fprintf( stderr, "OK\n" );
@@ -666,6 +688,152 @@ static int eos_test(int board, const struct program_options *options)
 		return master_eos_test(board, options);
 	else
 		return slave_eos_test(board, options);
+};
+
+static int master_remote_and_lockout_test(int board, const struct program_options *options)
+{
+	Addr4882_t addressList[] = {slaveAddress(options), NOADDR};
+	int ud = open_slave_device_descriptor(board, options, T3s, 1, 0);
+	if( ud < 0 )
+		return -1;
+	EnableLocal(board, addressList);
+	if(ThreadIbsta() & ERR)
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	if(send_sync_message(ud, "gone to local"))
+	{
+		ibonl( ud, 0 );
+		return -1;
+	}
+	if(send_sync_message(ud, "local detected"))
+	{
+		ibonl( ud, 0 );
+		return -1;
+	}
+	SetRWLS(board, addressList);
+	if(ThreadIbsta() & ERR)
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	if(send_sync_message(ud, "set remote with lockout"))
+	{
+		ibonl( ud, 0 );
+		return -1;
+	}
+	if(send_sync_message(ud, "lockout detected"))
+	{
+		ibonl( ud, 0 );
+		return -1;
+	}
+	if(ibsre(board, 0) & ERR)
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	if(send_sync_message(ud, "lockout cleared"))
+	{
+		ibonl( ud, 0 );
+		return -1;
+	}
+	if(send_sync_message(ud, "lockout clear detected"))
+	{
+		ibonl( ud, 0 );
+		return -1;
+	}	
+	EnableRemote(board, addressList);
+	if(ThreadIbsta() & ERR)
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	if(send_sync_message(ud, "remote enabled"))
+	{
+		ibonl( ud, 0 );
+		return -1;
+	}
+	if(send_sync_message(ud, "remote detected"))
+	{
+		ibonl( ud, 0 );
+		return -1;
+	}
+	ibonl( ud, 0 );
+	return 0;
+}
+
+static int slave_remote_and_lockout_test(int board, const struct program_options *options)
+{
+	if(receive_sync_message(board, "gone to local"))
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	if(ibwait(board, 0) & REM)
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	if(receive_sync_message(board, "local detected"))
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	if(receive_sync_message(board, "set remote with lockout"))
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	if((ibwait(board, LOK | TIMO) & (REM | LOK)) != (REM | LOK))
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	if(receive_sync_message(board, "lockout detected"))
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	if(receive_sync_message(board, "lockout cleared"))
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	if(ibwait(board, 0) & LOK)
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	if(receive_sync_message(board, "lockout clear detected"))
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	if(receive_sync_message(board, "remote enabled"))
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	if((ibwait(board, REM | TIMO) & REM) == 0)
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	if(receive_sync_message(board, "remote detected"))
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	return 0;
+}
+
+static int remote_and_lockout_test(int board, const struct program_options *options)
+{
+	if(options->master)
+		return master_remote_and_lockout_test(board, options);
+	else
+		return slave_remote_and_lockout_test(board, options);
 };
 
 static void daemonize(void)
@@ -816,7 +984,9 @@ int main( int argc, char *argv[] )
 		if( retval < 0 ) return retval;
 		retval = eos_test(board, &options);
 		if( retval < 0 ) return retval;
- }
+		retval = remote_and_lockout_test(board, &options);
+		if( retval < 0 ) return retval;
+	}
 	return 0;
 }
 
