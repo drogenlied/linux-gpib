@@ -3751,9 +3751,17 @@ volatile int ibsta;
 
 <section>
 <title>
-	'Multidevice' API Functions
+	"Multidevice" API Functions
 </title>
-
+<para>
+The "Multidevice" API functions provide similar functionality to the "Traditional" API functions.
+However, some of the "multidevice" functions can be
+to be performed on multiple devices simultaneously.  For example,
+<link LINKEND="reference-function-sendlist">SendList()</link> 
+can be used to write a message to multiple devices.  Such functions take an array of Addr4882_t
+as an argument.  The end of the array is specified by setting the last element to the
+constant NOADDR.
+</para>
 <refentry ID="reference-function-allspoll">
 <refmeta>
 	<refentrytitle>AllSPoll</refentrytitle>
@@ -4635,7 +4643,8 @@ volatile int ibsta;
 	RWLS (remote with lockout state), and all other devices
 	will enter LWLS (local with lockout state).  Local lockout means
 	the remote/local mode of devices cannot be changed though the
-	devices' front-panel controls.
+	devices' front-panel controls.  Unasserting the REN line should
+	bring the devices out of lockout state.
 	</para>
 	<para>
 	The
@@ -4720,7 +4729,8 @@ volatile int ibsta;
 	RWLS (remote with lockout state), and all other devices
 	will enter LWLS (local with lockout state).  Local lockout means
 	the remote/local mode of devices cannot be changed though the
-	devices' front-panel controls.
+	devices' front-panel controls.  Unasserting the REN line should
+	bring the devices out of the lockout state.
 	</para>
 </refsect1>
 </refentry>
