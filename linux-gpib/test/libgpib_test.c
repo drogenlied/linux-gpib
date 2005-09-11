@@ -694,7 +694,7 @@ static int master_remote_and_lockout_test(int board, const struct program_option
 {
 	Addr4882_t addressList[] = {slaveAddress(options), NOADDR};
 	int ud;
-
+	
 	fprintf( stderr, "%s...", __FUNCTION__ );
 
 	ud = open_slave_device_descriptor(board, options, T3s, 1, 0);
@@ -712,8 +712,6 @@ static int master_remote_and_lockout_test(int board, const struct program_option
 		ibonl( ud, 0 );
 		return -1;
 	}
-// drivers don't report lockout status correctly yet
-#ifdef TEST_LOCKOUT_STATUS
 	SetRWLS(board, addressList);
 	if(ThreadIbsta() & ERR)
 	{
@@ -730,7 +728,6 @@ static int master_remote_and_lockout_test(int board, const struct program_option
 		ibonl( ud, 0 );
 		return -1;
 	}
-#endif
 	if(ibsre(board, 0) & ERR)
 	{
 		PRINT_FAILED();
@@ -771,7 +768,8 @@ static int slave_remote_and_lockout_test(int board, const struct program_options
 {
 	int i;
 	static const int timeout = 10;
-
+	int failed = 0;
+	
 	fprintf( stderr, "%s...", __FUNCTION__ );
 
 	// can't use a sync message here, because the  addressing will put the board back into remote mode
@@ -785,14 +783,13 @@ static int slave_remote_and_lockout_test(int board, const struct program_options
 	{
 		fprintf(stderr, "timed out waiting to see REM clear.  ibsta=0x%x\n", ThreadIbsta());
 		PRINT_FAILED();
-		return -1;
+		++failed;
 	}
 	if(receive_sync_message(board, "local detected"))
 	{
 		PRINT_FAILED();
 		return -1;
 	}
-#ifdef TEST_LOCKOUT_STATUS
 	if(receive_sync_message(board, "set remote with lockout"))
 	{
 		PRINT_FAILED();
@@ -802,14 +799,13 @@ static int slave_remote_and_lockout_test(int board, const struct program_options
 	{
 		fprintf(stderr, "failed to detect LOK status.  ibsta=0x%x\n", ThreadIbsta());
 		PRINT_FAILED();
-		return -1;
+		++failed;
 	}
 	if(receive_sync_message(board, "lockout detected"))
 	{
 		PRINT_FAILED();
 		return -1;
 	}
-#endif
 	if(receive_sync_message(board, "lockout cleared"))
 	{
 		PRINT_FAILED();
@@ -818,7 +814,7 @@ static int slave_remote_and_lockout_test(int board, const struct program_options
 	if(ibwait(board, 0) & LOK)
 	{
 		PRINT_FAILED();
-		return -1;
+		++failed;
 	}
 	if(receive_sync_message(board, "lockout clear detected"))
 	{
@@ -833,15 +829,19 @@ static int slave_remote_and_lockout_test(int board, const struct program_options
 	if((ibwait(board, REM | TIMO) & REM) == 0)
 	{
 		PRINT_FAILED();
-		return -1;
+		++failed;
 	}
 	if(receive_sync_message(board, "remote detected"))
 	{
 		PRINT_FAILED();
 		return -1;
 	}
-	fprintf( stderr, "OK\n" );
-	return 0;
+	if(failed == 0)
+	{
+		fprintf( stderr, "OK\n" );
+		return 0;
+	}else
+		return -1;
 }
 
 static int remote_and_lockout_test(int board, const struct program_options *options)
