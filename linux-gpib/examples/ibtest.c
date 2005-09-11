@@ -307,7 +307,7 @@ int prompt_for_commands(int ud)
 	{
 		buffer[i] = strtol(next, &end, 0);
 		if(end == next) break;
-		next = end; 
+		next = end;
 	}
 	printf("writing %i command bytes to the bus\n", i);
 	if(ibcmd(ud, buffer, i) & ERR)
@@ -485,7 +485,7 @@ int prompt_for_remote_enable( int ud )
 	status = ibsre( ud, assert );
 	if( status & ERR )
 		return -1;
-		
+
 	return 0;
 }
 
@@ -566,6 +566,8 @@ void fprint_status( FILE* filep, char *msg )
 	if ( ThreadIbsta() & RQS ) fprintf( filep, "RQS " );
 	if ( ThreadIbsta() & CMPL ) fprintf( filep, "CMPL " );
 	if ( ThreadIbsta() & CIC )  fprintf( filep, "CIC " );
+	if ( ThreadIbsta() & REM )  fprintf( filep, "REM " );
+	if ( ThreadIbsta() & LOK )  fprintf( filep, "LOK " );
 	if ( ThreadIbsta() & ATN )  fprintf( filep, "ATN " );
 	if ( ThreadIbsta() & TACS ) fprintf( filep, "TACS " );
 	if ( ThreadIbsta() & LACS ) fprintf( filep, "LACS " );
