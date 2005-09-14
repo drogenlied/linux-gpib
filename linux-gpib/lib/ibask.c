@@ -80,7 +80,8 @@ int query_board_t1_delay( const ibBoard_t *board )
 
 	if(info.t1_delay == 0)
 	{
-		fprintf(stderr, "%s: bug! we don't know what the T1 delay is because it has never been set.\n");
+		fprintf(stderr, "%s: bug! we don't know what the T1 delay is because it has never been set.\n",
+				__FUNCTION__);
 		return -EIO;
 	}else if( info.t1_delay < 500 ) return T1_DELAY_350ns;
 	else if( info.t1_delay < 2000 ) return T1_DELAY_500ns;
