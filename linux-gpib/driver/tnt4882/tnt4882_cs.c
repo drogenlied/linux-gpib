@@ -671,15 +671,6 @@ static struct pcmcia_driver ni_gpib_cs_driver =
 
 int __init init_ni_gpib_cs(void)
 {
-	servinfo_t serv;
-	
-	DEBUG(0, "%s\n", version);
-	pcmcia_get_card_services_info(&serv);
-	if (serv.Revision != CS_RELEASE_CODE) {
-		printk( "ni_gpib_cs: Card Services release "
-			"does not match!  Revision = %i, CS_RELEASE_CODE = %i\n", serv.Revision, CS_RELEASE_CODE );
-		return -EINVAL;
-	}
 	pcmcia_register_driver(&ni_gpib_cs_driver);
 	return 0;
 }

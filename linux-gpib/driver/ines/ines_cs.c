@@ -538,16 +538,6 @@ static struct pcmcia_driver ines_gpib_cs_driver =
 
 int ines_pcmcia_init_module(void)
 {
-	servinfo_t serv;
-	if (pc_debug)
-		printk(KERN_INFO "%s\n", version);
-	pcmcia_get_card_services_info(&serv);
-	if (serv.Revision != CS_RELEASE_CODE)
-	{
-		printk(KERN_NOTICE "gpib: Card Services release "
-			"does not match!\n");
-		return -1;
-	}
 	pcmcia_register_driver(&ines_gpib_cs_driver);
 	return 0;
 }
