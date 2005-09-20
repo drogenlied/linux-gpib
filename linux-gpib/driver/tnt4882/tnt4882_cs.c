@@ -686,7 +686,7 @@ void __exit exit_ni_gpib_cs(void)
 	}
 }
 
-int ni_pcmcia_attach(gpib_board_t *board);
+int ni_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config);
 void ni_pcmcia_detach(gpib_board_t *board);
 
 gpib_interface_t ni_pcmcia_interface =
@@ -745,7 +745,7 @@ gpib_interface_t ni_pcmcia_accel_interface =
 	return_to_local: tnt4882_return_to_local,
 };
 
-int ni_pcmcia_attach(gpib_board_t *board)
+int ni_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config)
 {
 	tnt4882_private_t *tnt_priv;
 	nec7210_private_t *nec_priv;
@@ -773,7 +773,7 @@ int ni_pcmcia_attach(gpib_board_t *board)
 	nec_priv->offset = atgpib_reg_offset;
 
 	GPIB_DPRINTK( "ioport1 window attributes: 0x%x\n", dev_list->io.Attributes1 );
-	nec_priv->iobase = dev_list->io.BasePort1;
+	nec_priv->iobase = (void*)(unsigned long)dev_list->io.BasePort1;
 
 	// get irq
 	if( request_irq( dev_list->irq.AssignedIRQ, tnt4882_interrupt, isr_flags, "tnt4882", board))

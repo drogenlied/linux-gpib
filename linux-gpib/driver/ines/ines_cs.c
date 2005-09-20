@@ -41,8 +41,6 @@
 
 
 static int pc_debug = 1;
-static char *version =
-	"$Id$";
 
 /* Parameters that can be set with 'insmod' */
 
@@ -290,7 +288,7 @@ static void gpib_config(dev_link_t *link)
 	u_char buf[64];
 	win_req_t req;
 	memreq_t mem;
-	unsigned long virt;
+	void *virt;
 
 	dev = link->priv;
 
@@ -384,7 +382,7 @@ static void gpib_config(dev_link_t *link)
 			cs_error(link->handle, MapMemPage, i);
 			break;
 		}
-		virt = ( unsigned long ) ioremap( req.Base, req.Size );
+		virt = ioremap( req.Base, req.Size );
 		writeb( ( link->io.BasePort1 >> 2 ) & 0xff, virt + 0xf0 ); // IOWindow base
 		iounmap( ( void* ) virt );
 
@@ -661,7 +659,7 @@ int ines_common_pcmcia_attach( gpib_board_t *board )
 	ines_priv = board->private_data;
 	nec_priv = &ines_priv->nec7210_priv;
 
-	nec_priv->iobase = dev_list->io.BasePort1;
+	nec_priv->iobase = (void*)(unsigned long)dev_list->io.BasePort1;
 
 	nec7210_board_reset( nec_priv, board );
 

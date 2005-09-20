@@ -56,8 +56,6 @@
 
 #ifdef PCMCIA_DEBUG
 static int pc_debug = PCMCIA_DEBUG;
-static char *version =
-"cb7210_cs.c 0.11";
 #endif
 
 /*====================================================================*/
@@ -656,8 +654,8 @@ int cb_pcmcia_attach( gpib_board_t *board, gpib_board_config_t config )
 	cb_priv = board->private_data;
 	nec_priv = &cb_priv->nec7210_priv;
 
-	nec_priv->iobase = dev_list->io.BasePort1;
-	cb_priv->fifo_iobase = nec_priv->iobase;
+	nec_priv->iobase = (void*)(unsigned long)dev_list->io.BasePort1;
+	cb_priv->fifo_iobase = dev_list->io.BasePort1;
 
 	if(request_irq(dev_list->irq.AssignedIRQ, cb7210_interrupt, SA_SHIRQ,
 		"cb7210", board))
