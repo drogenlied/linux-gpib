@@ -199,7 +199,7 @@ void init_gpib_status_queue( gpib_status_queue_t *device )
 	device->dropped_byte = 0;
 }
 
-static struct class_simple *gpib_class;
+static struct class *gpib_class;
 
 static int __init gpib_common_init_module( void )
 {
@@ -211,7 +211,7 @@ static int __init gpib_common_init_module( void )
 		printk( "gpib: can't get major %d\n", IBMAJOR );
 		return -EIO;
 	}
-	gpib_class = class_simple_create(THIS_MODULE, "gpib_common");
+	gpib_class = class_create(THIS_MODULE, "gpib_common");
 	if(IS_ERR(gpib_class))
 	{
 		printk("gpib: failed to create gpib class\n");
@@ -220,7 +220,7 @@ static int __init gpib_common_init_module( void )
 	}
 	for(i = 0; i < GPIB_MAX_NUM_BOARDS; ++i)
 	{
-		class_simple_device_add(gpib_class, MKDEV(IBMAJOR, i), NULL, "gpib%i", i);
+		class_device_create(gpib_class, MKDEV(IBMAJOR, i), NULL, "gpib%i", i);
 	}
 	return 0;
 }
@@ -231,9 +231,9 @@ static void __exit gpib_common_exit_module( void )
 	int retval;
 	for(i = 0; i < GPIB_MAX_NUM_BOARDS; ++i)
 	{
-		class_simple_device_remove(MKDEV(IBMAJOR, i));
+		class_device_destroy(gpib_class, MKDEV(IBMAJOR, i));
 	}
-	class_simple_destroy(gpib_class);
+	class_destroy(gpib_class);
 	retval = unregister_chrdev(IBMAJOR, "gpib");
 	if(retval)
 	{
