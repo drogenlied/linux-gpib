@@ -85,10 +85,14 @@ o) cd to your linux-gpib directory and run the './configure' script.
 	add it and then run 'ldconfig'.
 
 	To give a user access to the computer's gpib board you will have to add
-	them to the group 'gpib' (you can use the 'usermod' tool to change the
-	groups a user belongs to).  Or, you could change the
+	them to the group 'gpib' (you can use the 'usermod' tool or edit
+	/etc/groups to change the groups a user belongs to).  Or, you could change the
 	permissions on the device files /dev/gpib[0-15] to something you like
 	better, using 'chmod' (or edit devfsd.conf if you are using devfs).
+	If you are using udev, you can set the permissions on the gpib device
+	files by adding a line like:
+	KERNEL="gpib[0-9]*",    MODE="0660", GROUP="gpib"
+	to your udev rules (/etc/udev/permissions.rules on Debian Sarge).
 
 C) Configuring the GPIB-Library
 -------------------------------
