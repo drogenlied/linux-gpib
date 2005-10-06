@@ -423,7 +423,7 @@ if( !strcmp(argv[1],"rsp")){
   return ibRsp( clientData, interp, argc-1,argv+1 );
 }
 if( !strcmp(argv[1],"rsv")){
-  return ibRsp( clientData, interp, argc-1,argv+1 );
+  return ibRsv( clientData, interp, argc-1,argv+1 );
 }
 if( !strcmp(argv[1],"trg")){
   return ibTrg( clientData, interp, argc-1,argv+1 );
