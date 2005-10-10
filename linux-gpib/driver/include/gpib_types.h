@@ -300,6 +300,8 @@ typedef struct
 {
 	volatile short holding_mutex;
 	gpib_descriptor_t *descriptors[ GPIB_MAX_NUM_DESCRIPTORS ];
+	/* locked while descriptors are being allocated/deallocated */
+	struct semaphore descriptors_mutex;
 	unsigned got_module : 1;
 } gpib_file_private_t;
 

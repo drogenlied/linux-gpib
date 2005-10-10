@@ -45,8 +45,6 @@ int conf_online( ibConf_t *conf, int online )
 
 	retval = board_online( board, online );
 	if( retval < 0 ) return retval;
-
-	retval = conf_lock_board( conf );
 	if( retval < 0 ) return retval;
 	if( online )
 	{
@@ -55,7 +53,6 @@ int conf_online( ibConf_t *conf, int online )
 	{
 		retval = close_gpib_handle( conf );
 	}
-	conf_unlock_board( conf );
 	if( retval < 0 ) return retval;
 
 	conf->board_is_open = online != 0;

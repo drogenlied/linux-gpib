@@ -32,7 +32,6 @@ add links to web page (maybe comedi and vimms)
 
 split off parts of library that need libpthread, so we can
 provide a pthread free version (that would lack ibwrta(), etc.).
-Add pthread_atfork() calls for async io safety.
 
 lock on board online/offline
 
@@ -44,4 +43,8 @@ better error on unknown board_type
 
 being addressed as listener should abort writes, being addressed
 as talker should abort reads
+
+maybe use 1-1 relationship between file descriptors and
+gpib device/board descriptors instead of maintaining our own
+lists of gpib device descriptors.
 

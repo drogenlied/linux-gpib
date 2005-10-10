@@ -85,6 +85,7 @@ static int init_gpib_file_private( gpib_file_private_t *priv )
 	}
 	init_gpib_descriptor( priv->descriptors[ 0 ] );
 	priv->descriptors[ 0 ]->is_board = 1;
+	init_MUTEX(&priv->descriptors_mutex);
 	return 0;
 }
 
@@ -264,6 +265,12 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 		case IBEVENT:
 			return event_ioctl( board, arg );
 			break;
+		case IBCLOSEDEV:
+			return close_dev_ioctl( filep, board, arg );
+			break;
+		case IBOPENDEV:
+			return open_dev_ioctl( filep, board, arg );
+			break;
 		case IBSPOLL_BYTES:
 			return status_bytes_ioctl( board, arg );
 			break;
@@ -296,9 +303,6 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 		case IBCAC:
 			return take_control_ioctl( board, arg );
 			break;
-		case IBCLOSEDEV:
-			return close_dev_ioctl( filep, board, arg );
-			break;
 		case IBCMD:
 			return command_ioctl( file_priv, board, arg );
 			break;
@@ -307,9 +311,6 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			break;
 		case IBGTS:
 			return ibgts( board );
-			break;
-		case IBOPENDEV:
-			return open_dev_ioctl( filep, board, arg );
 			break;
 		case IBPPC:
 			return ppc_ioctl( board, arg );
@@ -612,7 +613,7 @@ static int increment_open_device_count( struct list_head *head, unsigned int pad
 	}
 
 	/* otherwise we need to allocate a new gpib_status_queue_t */
-	device = kmalloc( sizeof( gpib_status_queue_t ), GFP_KERNEL );
+	device = kmalloc( sizeof( gpib_status_queue_t ), GFP_ATOMIC );
 	if( device == NULL )
 		return -ENOMEM;
 	init_gpib_status_queue( device );
@@ -701,18 +702,26 @@ static int open_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned lon
 	if (retval)
 		return -EFAULT;
 
+	if(down_interruptible(&file_priv->descriptors_mutex))
+	{
+		return -ERESTARTSYS;
+	}
 	for( i = 0; i < GPIB_MAX_NUM_DESCRIPTORS; i++ )
 		if( file_priv->descriptors[ i ] == NULL ) break;
 	if( i == GPIB_MAX_NUM_DESCRIPTORS )
 		return -ERANGE;
 	file_priv->descriptors[ i ] = kmalloc( sizeof( gpib_descriptor_t ), GFP_KERNEL );
 	if( file_priv->descriptors[ i ] == NULL )
+	{
+		up(&file_priv->descriptors_mutex);
 		return -ENOMEM;
+	}
 	init_gpib_descriptor( file_priv->descriptors[ i ] );
 
 	file_priv->descriptors[ i ]->pad = open_dev_cmd.pad;
 	file_priv->descriptors[ i ]->sad = open_dev_cmd.sad;
 	file_priv->descriptors[ i ]->is_board = open_dev_cmd.is_board;
+	up(&file_priv->descriptors_mutex);
 
 	retval = increment_open_device_count( &board->device_list, open_dev_cmd.pad, open_dev_cmd.sad );
 	if( retval < 0 )
