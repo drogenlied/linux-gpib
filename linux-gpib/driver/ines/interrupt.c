@@ -60,7 +60,6 @@ irqreturn_t ines_interrupt(int irq, void *arg, struct pt_regs *registerp)
 		wake++;
 
 	if(wake) wake_up_interruptible(&board->wait);
-
 	spin_unlock_irqrestore( &board->spinlock, flags );
 	return IRQ_HANDLED;
 }

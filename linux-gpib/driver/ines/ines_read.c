@@ -34,8 +34,9 @@ static ssize_t pio_read( gpib_board_t *board, ines_private_t *ines_priv, uint8_t
 	{
 		if( wait_event_interruptible( board->wait,
 			num_in_fifo_bytes( ines_priv ) ||
-			test_bit( DEV_CLEAR_BN, &nec_priv->state ) ||
-			test_bit( TIMO_NUM, &board->status ) ) )
+			test_bit(RECEIVED_END_BN, &nec_priv->state) ||
+			test_bit(DEV_CLEAR_BN, &nec_priv->state) ||
+			test_bit(TIMO_NUM, &board->status)))
 		{
 			printk("gpib: pio read wait interrupted\n");
 			return -ERESTARTSYS;
