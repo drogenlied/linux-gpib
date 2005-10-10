@@ -2,23 +2,15 @@ libgpib_test is used by developers to test the library, feel free to add
 tests for untested functions.  It requires two gpib boards on the same GPIB
 bus, exactly one of which is the system controller.  Two instances of
 libgpib_test must be run, one with the --master option and one with
---slave.  Start the slave first.
+--slave.  Their stdin and stdout need to be connected to each other (see the
+"runtest" script in this directory) so they can synchronize at various
+points in the tests.
 
-Example:
-On computer with slave gpib board, run
 
-./libgpib_test --slave --pad 10
-
-Then on computer with bus master gpib board, run
-
-./libgpib_test --master --pad 10
-
-Options:
+libgpib_test options:
 
 -n, --num_loops N
 	loop through tests N times
--d, --daemonize [N]
-	daemonize after Nth loop
 -M, --minor
 	Specify board index to use
 -m, --master

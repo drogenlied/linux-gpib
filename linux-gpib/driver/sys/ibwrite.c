@@ -50,7 +50,7 @@ ssize_t ibwrt(gpib_board_t *board, uint8_t *buf, size_t cnt, int send_eoi)
 	ret = board->interface->write(board, buf, cnt, send_eoi);
 	if(ret < 0)
 	{
-		printk("gpib write error\n");
+/*		printk("gpib write error\n");*/
 	}else
 	{
 		buf += ret;

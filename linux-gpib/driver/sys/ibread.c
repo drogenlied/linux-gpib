@@ -61,7 +61,7 @@ ssize_t ibrd(gpib_board_t *board, uint8_t *buf, size_t length, int *end_flag, in
 		ret = board->interface->read(board, buf, length - *nbytes, end_flag, &bytes_read);
 		if(ret < 0)
 		{
-			printk("gpib read error\n");
+/*			printk("gpib read error\n");*/
 		}
 		buf += bytes_read;
 		*nbytes += bytes_read;

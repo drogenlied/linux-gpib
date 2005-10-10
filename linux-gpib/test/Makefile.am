@@ -1,4 +1,6 @@
 
+EXTRA_DIST = runtest
+
 noinst_PROGRAMS = libgpib_test
 
 libgpib_test_SOURCES = libgpib_test.c
