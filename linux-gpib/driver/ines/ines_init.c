@@ -170,10 +170,10 @@ void ines_remote_enable(gpib_board_t *board, int enable)
 	ines_private_t *priv = board->private_data;
 	nec7210_remote_enable(board, &priv->nec7210_priv, enable);
 }
-void ines_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits)
+int ines_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits)
 {
 	ines_private_t *priv = board->private_data;
-	nec7210_enable_eos(board, &priv->nec7210_priv, eos_byte, compare_8_bits);
+	return nec7210_enable_eos(board, &priv->nec7210_priv, eos_byte, compare_8_bits);
 }
 void ines_disable_eos(gpib_board_t *board)
 {

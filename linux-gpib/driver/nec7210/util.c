@@ -19,7 +19,7 @@
 #include "board.h"
 #include <linux/delay.h>
 
-void nec7210_enable_eos(gpib_board_t *board, nec7210_private_t *priv, uint8_t eos_byte, int compare_8_bits)
+int nec7210_enable_eos(gpib_board_t *board, nec7210_private_t *priv, uint8_t eos_byte, int compare_8_bits)
 {
 	write_byte(priv, eos_byte, EOSR);
 	priv->auxa_bits |= HR_REOS;
@@ -28,6 +28,7 @@ void nec7210_enable_eos(gpib_board_t *board, nec7210_private_t *priv, uint8_t eo
 	else
 		priv->auxa_bits &= ~HR_BIN;
 	write_byte(priv, priv->auxa_bits, AUXMR);
+	return 0;
 }
 
 void nec7210_disable_eos(gpib_board_t *board, nec7210_private_t *priv)

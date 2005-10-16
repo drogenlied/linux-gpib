@@ -46,10 +46,14 @@ struct program_options
 	fprintf( stderr, "FAILED: %s line %i, ibsta 0x%x, iberr %i, ibcntl %li\n", \
 		__FILE__, __LINE__, ThreadIbsta(), ThreadIberr(), ThreadIbcntl() ); \
 
-static int sync_message(int master, const char *message)
+static int sync_message(const struct program_options *options, const char *message)
 {
 	char buffer[1024] = {0};
-	if(master)
+	if(options->verbosity)
+	{
+		fprintf(stderr, "syncing: master=%i, message=%s\n", options->master, message);
+	}
+	if(options->master)
 	{
 		fprintf(stdout, "%s\n", message);
 		fflush(stdout);
@@ -62,7 +66,7 @@ static int sync_message(int master, const char *message)
 		PRINT_FAILED();
 		return -1;
 	}
-	if(master == 0)
+	if(options->master == 0)
 	{
 		// echo back
 		fprintf(stdout, "%s\n", message);
@@ -315,7 +319,7 @@ static int master_async_read_write_test(int board, const struct program_options 
 		if((status & (ERR | TIMO)) || !(status & CMPL) )
 		{
 			PRINT_FAILED();
-			fprintf( stderr, "loop %i write status 0x%x, error %i\n", i, ThreadIbsta(),
+			fprintf( stderr, "loop %i, write status 0x%x, error %i\n", i, ThreadIbsta(),
 				ThreadIberr() );
 			ibonl( ud, 0 );
 			return -1;
@@ -352,7 +356,7 @@ static int slave_async_read_write_test(int board, const struct program_options *
 		if((status & (ERR | TIMO)) || !(status & CMPL))
 		{
 			PRINT_FAILED();
-			fprintf( stderr, "write status 0x%x, error %i\n", ThreadIbsta(),
+			fprintf( stderr, "loop %i, read status 0x%x, error %i\n", i, ThreadIbsta(),
 				ThreadIberr() );
 			return -1;
 		}
@@ -395,7 +399,7 @@ static int master_serial_poll_test(int board, const struct program_options *opti
 		ibonl( ud, 0 );
 		return -1;
 	}
-	if(sync_message(options->master, "request service"))
+	if(sync_message(options, "request service"))
 	{
 		ibonl( ud, 0 );
 		return -1;
@@ -436,7 +440,7 @@ static int slave_serial_poll_test(int board, const struct program_options *optio
 {
 	fprintf( stderr, "%s...", __FUNCTION__ );
 
-	if(sync_message(options->master, "request service"))
+	if(sync_message(options, "request service"))
 	{
 		PRINT_FAILED();
 		return -1;
@@ -461,16 +465,22 @@ static int master_parallel_poll_test(int board, const struct program_options *op
 	ud = open_slave_device_descriptor(board, options, T3s, 1, 0 );
 	if( ud < 0 )
 		return -1;
-	line = 2; sense = 1;
+	if(sync_message(options, "ist is 1"))
+	{
+		ibonl( ud, 0 );
+		return -1;
+	}
+	line = 4; sense = 1;
 	ibppc(ud, PPE_byte(line, sense));
 	if(ibsta & ERR)
 	{
 		PRINT_FAILED();
 		return -1;
 	}
-	if(sync_message(options->master, "ist is 1"))
+	ibcac(board, 1);
+	if(ibsta & ERR)
 	{
-		ibonl( ud, 0 );
+		PRINT_FAILED();
 		return -1;
 	}
 	ibrpp( board, &result );
@@ -485,12 +495,12 @@ static int master_parallel_poll_test(int board, const struct program_options *op
 		fprintf( stderr, "parallel poll result: 0x%x\n", (unsigned int)result );
 		return -1;
 	}
-	if(sync_message(options->master, "set ist to 0"))
+	if(sync_message(options, "set ist to 0"))
 	{
 		ibonl( ud, 0 );
 		return -1;
 	}
-	if(sync_message(options->master, "ist is 0"))
+	if(sync_message(options, "ist is 0"))
 	{
 		ibonl( ud, 0 );
 		return -1;
@@ -527,12 +537,12 @@ static int slave_parallel_poll_test(int board, const struct program_options *opt
 		PRINT_FAILED();
 		return -1;
 	}
-	if(sync_message(options->master, "ist is 1"))
+	if(sync_message(options, "ist is 1"))
 	{
 		PRINT_FAILED();
 		return -1;
 	}
-	if(sync_message(options->master, "set ist to 0"))
+	if(sync_message(options, "set ist to 0"))
 	{
 		PRINT_FAILED();
 		return -1;
@@ -543,7 +553,7 @@ static int slave_parallel_poll_test(int board, const struct program_options *opt
 		PRINT_FAILED();
 		return -1;
 	}
-	if(sync_message(options->master, "ist is 0"))
+	if(sync_message(options, "ist is 0"))
 	{
 		PRINT_FAILED();
 		return -1;
@@ -559,7 +569,7 @@ static int do_master_eos_pass(int board, const struct program_options *options,
 	int ud;
 	char buffer[1024];
 
-	ud = open_slave_device_descriptor(board, options, T3s, 0, eosmode );
+	ud = open_slave_device_descriptor(board, options, T3s, 0, eosmode);
 	if( ud < 0 )
 		return -1;
 	ibrd(ud, buffer, sizeof(buffer) - 1);
@@ -623,12 +633,27 @@ static int do_slave_eos_pass(int board, const struct program_options *options,
 static int master_eos_test(int board, const struct program_options *options)
 {
 	int retval;
+	int seven_bit_eos;
 	fprintf( stderr, "%s...", __FUNCTION__ );
 
-	retval = do_master_eos_pass(board, options, 'x' | REOS, "adfis\xf8gibblex",
-		"adfis\xf8", "gibblex");
-	if(retval < 0) return retval;
-
+	//check if board supports 7 bit eos compares
+	if(ibask(board, Iba7BitEOS, &seven_bit_eos) & ERR)
+	{
+		PRINT_FAILED();
+		return -1;
+	}
+	if(seven_bit_eos == 0)
+	{
+		fprintf(stderr, "board does not support 7 bit eos comparisons, skipping 7 bit eos test.\n");
+		retval = do_master_eos_pass(board, options, 0, "adfis\xf8gibblex",
+			"adfis\xf8gibblex", NULL);
+		if(retval < 0) return retval;
+	}else
+	{
+		retval = do_master_eos_pass(board, options, 'x' | REOS, "adfis\xf8gibblex",
+			"adfis\xf8", "gibblex");
+		if(retval < 0) return retval;
+	}
 	retval = do_master_eos_pass(board, options, 'x' | REOS | BIN, "adfis\xf8gibblex",
 		"adfis\xf8gibblex", NULL);
 	if(retval < 0) return retval;
@@ -666,7 +691,7 @@ static int master_remote_and_lockout_test(int board, const struct program_option
 		return -1;
 
 	EnableLocal(board, addressList);
-	if(sync_message(options->master, "set local mode"))
+	if(sync_message(options, "set local mode"))
 	{
 		ibonl( ud, 0 );
 		return -1;
@@ -676,7 +701,7 @@ static int master_remote_and_lockout_test(int board, const struct program_option
 		PRINT_FAILED();
 		return -1;
 	}
-	if(sync_message(options->master, "local detected"))
+	if(sync_message(options, "local detected"))
 	{
 		ibonl( ud, 0 );
 		return -1;
@@ -687,12 +712,12 @@ static int master_remote_and_lockout_test(int board, const struct program_option
 		PRINT_FAILED();
 		return -1;
 	}
-	if(sync_message(options->master, "set remote with lockout"))
+	if(sync_message(options, "set remote with lockout"))
 	{
 		ibonl( ud, 0 );
 		return -1;
 	}
-	if(sync_message(options->master, "lockout detected"))
+	if(sync_message(options, "lockout detected"))
 	{
 		ibonl( ud, 0 );
 		return -1;
@@ -702,12 +727,12 @@ static int master_remote_and_lockout_test(int board, const struct program_option
 		PRINT_FAILED();
 		return -1;
 	}
-	if(sync_message(options->master, "lockout cleared"))
+	if(sync_message(options, "lockout cleared"))
 	{
 		ibonl( ud, 0 );
 		return -1;
 	}
-	if(sync_message(options->master, "lockout clear detected"))
+	if(sync_message(options, "lockout clear detected"))
 	{
 		ibonl( ud, 0 );
 		return -1;
@@ -718,12 +743,12 @@ static int master_remote_and_lockout_test(int board, const struct program_option
 		PRINT_FAILED();
 		return -1;
 	}
-	if(sync_message(options->master, "remote enabled"))
+	if(sync_message(options, "remote enabled"))
 	{
 		ibonl( ud, 0 );
 		return -1;
 	}
-	if(sync_message(options->master, "remote detected"))
+	if(sync_message(options, "remote detected"))
 	{
 		ibonl( ud, 0 );
 		return -1;
@@ -741,7 +766,7 @@ static int slave_remote_and_lockout_test(int board, const struct program_options
 	
 	fprintf( stderr, "%s...", __FUNCTION__ );
 
-	if(sync_message(options->master, "set local mode"))
+	if(sync_message(options, "set local mode"))
 	{
 		PRINT_FAILED();
 		return -1;
@@ -752,12 +777,12 @@ static int slave_remote_and_lockout_test(int board, const struct program_options
 		PRINT_FAILED();
 		++failed;
 	}
-	if(sync_message(options->master, "local detected"))
+	if(sync_message(options, "local detected"))
 	{
 		PRINT_FAILED();
 		return -1;
 	}
-	if(sync_message(options->master, "set remote with lockout"))
+	if(sync_message(options, "set remote with lockout"))
 	{
 		PRINT_FAILED();
 		return -1;
@@ -768,12 +793,12 @@ static int slave_remote_and_lockout_test(int board, const struct program_options
 		PRINT_FAILED();
 		++failed;
 	}
-	if(sync_message(options->master, "lockout detected"))
+	if(sync_message(options, "lockout detected"))
 	{
 		PRINT_FAILED();
 		return -1;
 	}
-	if(sync_message(options->master, "lockout cleared"))
+	if(sync_message(options, "lockout cleared"))
 	{
 		PRINT_FAILED();
 		return -1;
@@ -783,12 +808,12 @@ static int slave_remote_and_lockout_test(int board, const struct program_options
 		PRINT_FAILED();
 		++failed;
 	}
-	if(sync_message(options->master, "lockout clear detected"))
+	if(sync_message(options, "lockout clear detected"))
 	{
 		PRINT_FAILED();
 		return -1;
 	}
-	if(sync_message(options->master, "remote enabled"))
+	if(sync_message(options, "remote enabled"))
 	{
 		PRINT_FAILED();
 		return -1;
@@ -798,7 +823,7 @@ static int slave_remote_and_lockout_test(int board, const struct program_options
 		PRINT_FAILED();
 		++failed;
 	}
-	if(sync_message(options->master, "remote detected"))
+	if(sync_message(options, "remote detected"))
 	{
 		PRINT_FAILED();
 		return -1;
@@ -889,7 +914,7 @@ int main( int argc, char *argv[] )
 	{
 		if(options.master)
 		{
-			if(sync_message(options.master, "found slave board"))
+			if(sync_message(&options, "found slave board"))
 				return -1;
 			retval = find_board(&board, &options);
 			if( retval < 0 ) return retval;
@@ -909,7 +934,7 @@ int main( int argc, char *argv[] )
 		{
 			retval = find_board(&board, &options);
 			if( retval < 0 ) return retval;
-			if(sync_message(options.master, "found slave board"))
+			if(sync_message(&options, "found slave board"))
 				return -1;
 			retval = slave_read_write_test(board, &options);
 			if( retval < 0 ) return retval;

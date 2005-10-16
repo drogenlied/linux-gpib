@@ -73,7 +73,7 @@ int cb7210_go_to_standby(gpib_board_t *board);
 void cb7210_request_system_control( gpib_board_t *board, int request_control );
 void cb7210_interface_clear(gpib_board_t *board, int assert);
 void cb7210_remote_enable(gpib_board_t *board, int enable);
-void cb7210_enable_eos(gpib_board_t *board, uint8_t eos_byte,
+int cb7210_enable_eos(gpib_board_t *board, uint8_t eos_byte,
 	int compare_8_bits);
 void cb7210_disable_eos(gpib_board_t *board);
 unsigned int cb7210_update_status( gpib_board_t *board, unsigned int clear_mask );

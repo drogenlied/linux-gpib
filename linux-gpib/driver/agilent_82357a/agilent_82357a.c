@@ -765,18 +765,21 @@ void agilent_82357a_remote_enable(gpib_board_t *board, int enable)
 	}
 	return;// 0;
 }
-//FIXME need to be able to return error
-void agilent_82357a_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits)
+
+int agilent_82357a_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits)
 {
 	agilent_82357a_private_t *a_priv = board->private_data;
 
-	a_priv->eos_char = eos_byte;
-	a_priv->eos_mode = REOS | BIN;
 	if(compare_8_bits == 0)
 	{
-		printk("%s: %s: warning: hardware only supports 8-bit EOS compare", __FILE__, __FUNCTION__);
+		printk("%s: %s: hardware only supports 8-bit EOS compare", __FILE__, __FUNCTION__);
+		return -EOPNOTSUPP;
 	}
+	a_priv->eos_char = eos_byte;
+	a_priv->eos_mode = REOS | BIN;
+	return 0;
 }
+
 void agilent_82357a_disable_eos(gpib_board_t *board)
 {
 	agilent_82357a_private_t *a_priv = board->private_data;
@@ -1352,30 +1355,31 @@ void agilent_82357a_detach(gpib_board_t *board)
 
 gpib_interface_t agilent_82357a_gpib_interface =
 {
-	name: "agilent_82357a",
-	attach: agilent_82357a_attach,
-	detach: agilent_82357a_detach,
-	read: agilent_82357a_read,
-	write: agilent_82357a_write,
-	command: agilent_82357a_command,
-	take_control: agilent_82357a_take_control,
-	go_to_standby: agilent_82357a_go_to_standby,
-	request_system_control: agilent_82357a_request_system_control,
-	interface_clear: agilent_82357a_interface_clear,
-	remote_enable: agilent_82357a_remote_enable,
-	enable_eos: agilent_82357a_enable_eos,
-	disable_eos: agilent_82357a_disable_eos,
-	parallel_poll: agilent_82357a_parallel_poll,
-	parallel_poll_configure: agilent_82357a_parallel_poll_configure,
-	parallel_poll_response: agilent_82357a_parallel_poll_response,
-	line_status: agilent_82357a_line_status,
-	update_status: agilent_82357a_update_status,
-	primary_address: agilent_82357a_primary_address,
-	secondary_address: agilent_82357a_secondary_address,
-	serial_poll_response: agilent_82357a_serial_poll_response,
-	serial_poll_status: agilent_82357a_serial_poll_status,
-	t1_delay: agilent_82357a_t1_delay,
-	return_to_local: agilent_82357a_return_to_local,
+	.name = "agilent_82357a",
+	.attach = agilent_82357a_attach,
+	.detach = agilent_82357a_detach,
+	.read = agilent_82357a_read,
+	.write = agilent_82357a_write,
+	.command = agilent_82357a_command,
+	.take_control = agilent_82357a_take_control,
+	.go_to_standby = agilent_82357a_go_to_standby,
+	.request_system_control = agilent_82357a_request_system_control,
+	.interface_clear = agilent_82357a_interface_clear,
+	.remote_enable = agilent_82357a_remote_enable,
+	.enable_eos = agilent_82357a_enable_eos,
+	.disable_eos = agilent_82357a_disable_eos,
+	.parallel_poll = agilent_82357a_parallel_poll,
+	.parallel_poll_configure = agilent_82357a_parallel_poll_configure,
+	.parallel_poll_response = agilent_82357a_parallel_poll_response,
+	.line_status = agilent_82357a_line_status,
+	.update_status = agilent_82357a_update_status,
+	.primary_address = agilent_82357a_primary_address,
+	.secondary_address = agilent_82357a_secondary_address,
+	.serial_poll_response = agilent_82357a_serial_poll_response,
+	.serial_poll_status = agilent_82357a_serial_poll_status,
+	.t1_delay = agilent_82357a_t1_delay,
+	.return_to_local = agilent_82357a_return_to_local,
+	.no_7_bit_eos = 1
 };
 
 // Table with the USB-devices: just now only testing IDs

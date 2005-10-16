@@ -66,7 +66,7 @@ int ines_go_to_standby(gpib_board_t *board);
 void ines_request_system_control( gpib_board_t *board, int request_control );
 void ines_interface_clear(gpib_board_t *board, int assert);
 void ines_remote_enable(gpib_board_t *board, int enable);
-void ines_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits);
+int ines_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits);
 void ines_disable_eos(gpib_board_t *board);
 unsigned int ines_update_status( gpib_board_t *board, unsigned int clear_mask );
 void ines_primary_address(gpib_board_t *board, unsigned int address);

@@ -42,13 +42,13 @@ int hp82335_go_to_standby( gpib_board_t *board );
 void hp82335_request_system_control( gpib_board_t *board, int request_control );
 void hp82335_interface_clear( gpib_board_t *board, int assert );
 void hp82335_remote_enable( gpib_board_t *board, int enable );
-void hp82335_enable_eos( gpib_board_t *board, uint8_t eos_byte, int
- compare_8_bits );
+int hp82335_enable_eos( gpib_board_t *board, uint8_t eos_byte, int
+	compare_8_bits );
 void hp82335_disable_eos( gpib_board_t *board );
 unsigned int hp82335_update_status( gpib_board_t *board, unsigned int clear_mask );
 void hp82335_primary_address( gpib_board_t *board, unsigned int address );
 void hp82335_secondary_address( gpib_board_t *board, unsigned int address, int
- enable );
+	enable );
 int hp82335_parallel_poll( gpib_board_t *board, uint8_t *result );
 void hp82335_parallel_poll_configure( gpib_board_t *board, uint8_t config );
 void hp82335_parallel_poll_response( gpib_board_t *board, int ist );

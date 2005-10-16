@@ -97,6 +97,7 @@ typedef struct
 	int is_system_controller;
 	unsigned int t1_delay;
 	unsigned ist : 1;
+	unsigned no_7_bit_eos : 1;
 } board_info_ioctl_t;
 
 typedef struct

@@ -60,6 +60,7 @@ int ibsad( gpib_board_t *board, int addr )
  */
 int ibeos( gpib_board_t *board, int eos, int eosflags )
 {
+	int retval;
 	if( eosflags & ~EOS_MASK )
 	{
 		printk( "bad EOS modes\n" );
@@ -68,11 +69,14 @@ int ibeos( gpib_board_t *board, int eos, int eosflags )
 	{
 		if( eosflags & REOS )
 		{
-			board->interface->enable_eos( board, eos, eosflags & BIN );
+			retval = board->interface->enable_eos( board, eos, eosflags & BIN );
 		}else
+		{
 			board->interface->disable_eos( board );
+			retval = 0;
+		}
 	}
-	return 0;
+	return retval;
 }
 
 int ibstatus( gpib_board_t *board )

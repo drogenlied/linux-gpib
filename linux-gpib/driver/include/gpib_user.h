@@ -264,7 +264,9 @@ enum ibask_option
 	IbaHSCableLength = 0x1f,	/* board only */
 	IbaIst = 0x20,	/* board only */
 	IbaRsv = 0x21,	/* board only */
-	IbaBNA = 0x200	/* device only */
+	IbaBNA = 0x200,	/* device only */
+	/* linux-gpib extensions */
+	Iba7BitEOS = 0x1000	/* board only. Returns 1 if board supports 7 bit eos compares*/
 };
 
 enum ibconfig_option

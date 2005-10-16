@@ -77,10 +77,10 @@ void hp_82341_remote_enable( gpib_board_t *board, int enable )
 	hp_82341_private_t *priv = board->private_data;
 	tms9914_remote_enable( board, &priv->tms9914_priv, enable );
 }
-void hp_82341_enable_eos( gpib_board_t *board, uint8_t eos_byte, int compare_8_bits )
+int hp_82341_enable_eos( gpib_board_t *board, uint8_t eos_byte, int compare_8_bits )
 {
 	hp_82341_private_t *priv = board->private_data;
-	tms9914_enable_eos( board, &priv->tms9914_priv, eos_byte, compare_8_bits );
+	return tms9914_enable_eos( board, &priv->tms9914_priv, eos_byte, compare_8_bits );
 }
 void hp_82341_disable_eos( gpib_board_t *board )
 {

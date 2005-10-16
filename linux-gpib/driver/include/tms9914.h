@@ -99,7 +99,7 @@ void tms9914_request_system_control( gpib_board_t *board, tms9914_private_t *pri
 	int request_control );
 void tms9914_interface_clear(gpib_board_t *board, tms9914_private_t *priv, int assert);
 void tms9914_remote_enable(gpib_board_t *board, tms9914_private_t *priv, int enable);
-void tms9914_enable_eos(gpib_board_t *board, tms9914_private_t *priv,
+int tms9914_enable_eos(gpib_board_t *board, tms9914_private_t *priv,
 	uint8_t eos_bytes, int compare_8_bits);
 void tms9914_disable_eos(gpib_board_t *board, tms9914_private_t *priv);
 unsigned int tms9914_update_status( gpib_board_t *board, tms9914_private_t *priv,

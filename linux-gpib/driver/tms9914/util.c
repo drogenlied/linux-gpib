@@ -19,12 +19,13 @@
 #include "board.h"
 #include <linux/delay.h>
 
-void tms9914_enable_eos(gpib_board_t *board, tms9914_private_t *priv, uint8_t eos_byte, int compare_8_bits)
+int tms9914_enable_eos(gpib_board_t *board, tms9914_private_t *priv, uint8_t eos_byte, int compare_8_bits)
 {
 	priv->eos = eos_byte;
 	priv->eos_flags = REOS;
 	if( compare_8_bits )
 		priv->eos_flags |= BIN;
+	return 0;
 }
 
 void tms9914_disable_eos(gpib_board_t *board, tms9914_private_t *priv)

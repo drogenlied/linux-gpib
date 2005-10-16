@@ -104,10 +104,10 @@ void agilent_82350b_remote_enable( gpib_board_t *board, int enable )
 	agilent_82350b_private_t *priv = board->private_data;
 	tms9914_remote_enable( board, &priv->tms9914_priv, enable );
 }
-void agilent_82350b_enable_eos( gpib_board_t *board, uint8_t eos_byte, int compare_8_bits )
+int agilent_82350b_enable_eos( gpib_board_t *board, uint8_t eos_byte, int compare_8_bits )
 {
 	agilent_82350b_private_t *priv = board->private_data;
-	tms9914_enable_eos( board, &priv->tms9914_priv, eos_byte, compare_8_bits );
+	return tms9914_enable_eos( board, &priv->tms9914_priv, eos_byte, compare_8_bits );
 }
 void agilent_82350b_disable_eos( gpib_board_t *board )
 {

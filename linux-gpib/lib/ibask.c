@@ -138,6 +138,21 @@ int query_sad( const ibBoard_t *board, int *sad )
 	return 0;
 }
 
+int query_no_7_bit_eos(const ibBoard_t *board)
+{
+	int retval;
+	board_info_ioctl_t info;
+
+	retval = ioctl(board->fileno, IBBOARD_INFO, &info);
+	if( retval < 0 )
+	{
+		setIberr( EDVR );
+		setIbcnt( errno );
+		return retval;
+	}
+	return info.no_7_bit_eos;
+}
+
 int ibask( int ud, int option, int *value )
 {
 	ibConf_t *conf;
@@ -217,6 +232,7 @@ int ibask( int ud, int option, int *value )
 			/* XXX no support for setting END status on EOI only yet */
 			*value = 1;
 			return exit_library( ud, 0 );
+			break;
 		default:
 			break;
 	}
@@ -230,11 +246,13 @@ int ibask( int ud, int option, int *value )
 				if( retval < 0 ) return exit_library( ud, 1 );
 				*value = retval;
 				return exit_library( ud, 0 );
+				break;
 			case IbaAUTOPOLL:
 				retval = query_autopoll( board );
 				if( retval < 0 ) return exit_library( ud, 1 );
 				*value = retval;
 				return exit_library( ud, 0 );
+				break;
 			case IbaCICPROT:
 				// XXX we don't support pass control protocol yet
 				*value = 0;
@@ -275,31 +293,44 @@ int ibask( int ud, int option, int *value )
 			case IbaEventQueue:
 				*value = board->use_event_queue;
 				return exit_library( ud, 0 );
+				break;
 			case IbaSPollBit:
 				// XXX no support for SPOLL status yet
 				*value = 0;
 				return exit_library( ud, 0 );
+				break;
 			case IbaSendLLO:
 				*value = conf->settings.local_lockout;
 				return exit_library( ud, 0 );
+				break;
 			case IbaPPollTime:
 				*value = usec_to_ppoll_timeout( conf->settings.ppoll_usec_timeout );
 				return exit_library( ud, 0 );
+				break;
 			case IbaHSCableLength:
 				/* HS transfer not supported and may never
 				 * be as it is not part of GPIB standard */
 				*value = 0;
 				return exit_library( ud, 0 );
+				break;
 			case IbaIst:
 				retval = query_ist( board );
 				if( retval < 0 ) return exit_library( ud, 1 );
 				*value = retval;
 				return exit_library( ud, 0 );
+				break;
 			case IbaRsv:
 				retval = query_board_rsv( board );
 				if( retval < 0 ) return exit_library( ud, 1 );
 				*value = retval;
 				return exit_library( ud, 0 );
+				break;
+			case Iba7BitEOS:
+				retval = query_no_7_bit_eos(board);
+				if( retval < 0 ) return exit_library( ud, 1 );
+				*value = !retval;
+				return exit_library( ud, 0 );
+				break;
 			default:
 				break;
 		}

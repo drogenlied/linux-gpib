@@ -55,7 +55,7 @@ int hp_82341_go_to_standby( gpib_board_t *board );
 void hp_82341_request_system_control( gpib_board_t *board, int request_control );
 void hp_82341_interface_clear( gpib_board_t *board, int assert );
 void hp_82341_remote_enable( gpib_board_t *board, int enable );
-void hp_82341_enable_eos( gpib_board_t *board, uint8_t eos_byte, int
+int hp_82341_enable_eos( gpib_board_t *board, uint8_t eos_byte, int
  compare_8_bits );
 void hp_82341_disable_eos( gpib_board_t *board );
 unsigned int hp_82341_update_status( gpib_board_t *board, unsigned int clear_mask );

@@ -31,13 +31,6 @@ int ibeos(int ud, int v)
 	return general_exit_library( ud, 0, 0, 0, 0, 0, 1 );
 }
 
-/*
- *  iblcleos()
- *  sets the eos modes of the unit description (local) or
- *  board description (if none)
- *
- */
-
 int iblcleos( const ibConf_t *conf )
 {
 	int use_eos, compare8;

@@ -92,7 +92,7 @@ struct gpib_interface_struct
 	 * 'compare_8_bits' is nonzero, then all 8 bits are compared
 	 * with the eos bytes.  Otherwise only the 7 least significant
 	 * bits are compared. */
-	void (*enable_eos)(gpib_board_t *board, uint8_t eos, int compare_8_bits);
+	int (*enable_eos)(gpib_board_t *board, uint8_t eos, int compare_8_bits);
 	/* disable END on eos byte (END on EOI only)*/
 	void (*disable_eos)(gpib_board_t *board);
 	/* configure parallel poll */
@@ -130,6 +130,8 @@ struct gpib_interface_struct
 	unsigned int ( *t1_delay )( gpib_board_t *board, unsigned int nano_sec );
 	/* go to local mode */
 	void ( *return_to_local )( gpib_board_t *board );
+	/* board does not support 7 bit eos comparisons */
+	unsigned no_7_bit_eos : 1;
 };
 
 typedef struct

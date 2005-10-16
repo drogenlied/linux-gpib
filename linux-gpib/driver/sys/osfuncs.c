@@ -1200,7 +1200,7 @@ static int board_info_ioctl( const gpib_board_t *board, unsigned long arg)
 		info.autopolling = 0;
 	info.t1_delay = board->t1_nano_sec;
 	info.ist = board->ist;
-	
+	info.no_7_bit_eos = board->interface->no_7_bit_eos;
 	retval = copy_to_user( ( void * ) arg, &info, sizeof( info ) );
 	if( retval )
 		return -EFAULT;

@@ -103,7 +103,7 @@ void nec7210_request_system_control( gpib_board_t *board,
 	nec7210_private_t *priv, int request_control );
 void nec7210_interface_clear(gpib_board_t *board, nec7210_private_t *priv, int assert);
 void nec7210_remote_enable(gpib_board_t *board, nec7210_private_t *priv, int enable);
-void nec7210_enable_eos(gpib_board_t *board, nec7210_private_t *priv,
+int nec7210_enable_eos(gpib_board_t *board, nec7210_private_t *priv,
 	uint8_t eos_bytes, int compare_8_bits);
 void nec7210_disable_eos(gpib_board_t *board, nec7210_private_t *priv);
 unsigned int nec7210_update_status( gpib_board_t *board, nec7210_private_t *priv,

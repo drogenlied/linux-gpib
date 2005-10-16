@@ -66,7 +66,7 @@ int agilent_82350b_go_to_standby( gpib_board_t *board );
 void agilent_82350b_request_system_control( gpib_board_t *board, int request_control );
 void agilent_82350b_interface_clear( gpib_board_t *board, int assert );
 void agilent_82350b_remote_enable( gpib_board_t *board, int enable );
-void agilent_82350b_enable_eos( gpib_board_t *board, uint8_t eos_byte, int
+int agilent_82350b_enable_eos( gpib_board_t *board, uint8_t eos_byte, int
  compare_8_bits );
 void agilent_82350b_disable_eos( gpib_board_t *board );
 unsigned int agilent_82350b_update_status( gpib_board_t *board, unsigned int clear_mask );

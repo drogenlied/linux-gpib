@@ -1083,7 +1083,7 @@ void ni_usb_remote_enable(gpib_board_t *board, int enable)
 	return;// 0;
 }
 
-void ni_usb_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits)
+int ni_usb_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits)
 {
 	ni_usb_private_t *ni_priv = board->private_data;
 
@@ -1093,6 +1093,7 @@ void ni_usb_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits
 		ni_priv->eos_mode |= BIN;
 	else
 		ni_priv->eos_mode &= ~BIN;
+	return 0;
 }
 
 void ni_usb_disable_eos(gpib_board_t *board)
