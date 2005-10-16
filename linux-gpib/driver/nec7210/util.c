@@ -43,7 +43,7 @@ int nec7210_parallel_poll(gpib_board_t *board, nec7210_private_t *priv, uint8_t 
 	clear_bit(COMMAND_READY_BN, &priv->state);
 	// execute parallel poll
 	write_byte(priv, AUX_EPP, AUXMR);
-	// wait for result
+	// wait for result FIXME: support timeouts
 	ret = wait_event_interruptible(board->wait, test_bit(COMMAND_READY_BN, &priv->state));
 	if(ret)
 	{

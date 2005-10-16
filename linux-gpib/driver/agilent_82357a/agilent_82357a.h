@@ -139,13 +139,14 @@ typedef struct
 	unsigned short eos_mode;
 	unsigned short hw_control_bits;
 	unsigned long interrupt_flags;
-	unsigned int bogus_ibsta;
 	struct urb *bulk_urb;
 	struct urb *interrupt_urb;
 	uint8_t interrupt_buffer[0x8];	
 	struct semaphore bulk_transfer_lock;
-	struct semaphore interrupt_transfer_lock;
-	struct semaphore control_transfer_lock;
+	struct semaphore bulk_alloc_lock;
+	struct semaphore interrupt_alloc_lock;
+	struct semaphore control_alloc_lock;
+	unsigned is_cic : 1;
 } agilent_82357a_private_t;
 
 typedef struct
