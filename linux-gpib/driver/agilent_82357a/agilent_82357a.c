@@ -462,7 +462,7 @@ ssize_t agilent_82357a_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 	uint8_t trailing_flags;
 	unsigned long start_jiffies = jiffies;
 	long jiffie_timeout;
-
+	
 	*nbytes = 0;
 	out_data_length = 0x9;
 	out_data = kmalloc(out_data_length, GFP_KERNEL);
@@ -515,21 +515,18 @@ ssize_t agilent_82357a_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 	if(retval == -ETIMEDOUT)
 	{
 		int extra_bytes_read;
+		int extra_bytes_retval;
 		agilent_82357a_abort(a_priv, 1);
-		retval = agilent_82357a_receive_bulk_msg(a_priv, in_data + bytes_read, in_data_length - bytes_read,
+		extra_bytes_retval = agilent_82357a_receive_bulk_msg(a_priv, in_data + bytes_read, in_data_length - bytes_read,
 			&extra_bytes_read, 100);
 		printk("%s: %s: agilent_82357a_receive_bulk_msg timed out, bytes_read=%i, extra_bytes_read=%i\n",
 			__FILE__, __FUNCTION__, bytes_read, extra_bytes_read);
 		bytes_read += extra_bytes_read;
 	}
-	if(retval || bytes_read == 0)
+	if(retval)
 	{
 		printk("%s: %s: agilent_82357a_receive_bulk_msg returned %i, bytes_read=%i\n", __FILE__, __FUNCTION__, retval, bytes_read);
-		kfree(in_data);
 		agilent_82357a_abort(a_priv, 0);
-		up(&a_priv->bulk_transfer_lock);
-		if(retval < 0) return retval;
-		return -EIO;
 	}
 	up(&a_priv->bulk_transfer_lock);
 	if(bytes_read > length + 1)
@@ -546,7 +543,7 @@ ssize_t agilent_82357a_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 	if(trailing_flags & (ATRF_EOI | ATRF_EOS)) *end = 1;
 	else *end = 0;
 	//FIXME check trailing flags for error
-	return 0;
+	return retval;
 }
 
 static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_commands, int send_eoi)
