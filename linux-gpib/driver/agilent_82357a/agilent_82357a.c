@@ -52,7 +52,7 @@ int agilent_82357a_send_bulk_msg(agilent_82357a_private_t *a_priv, void *data, i
 	int retval;
 	unsigned int out_pipe;
 	agilent_82357a_urb_context_t context;
-	struct timer_list timer;
+	struct timer_list *timer = NULL;
 
 	*actual_data_length = 0;
 	retval = down_interruptible(&a_priv->bulk_alloc_lock);
@@ -79,44 +79,55 @@ int agilent_82357a_send_bulk_msg(agilent_82357a_private_t *a_priv, void *data, i
 	context.timed_out = 0;
 	usb_fill_bulk_urb(a_priv->bulk_urb, usb_dev, out_pipe, data, data_length,
 		agilent_82357a_bulk_complete, &context);
-	init_timer(&timer);
-	timer.expires = jiffies + msecs_to_jiffies(timeout_msecs);
-	timer.function = agilent_82357a_timeout_handler;
-	timer.data = (unsigned long) &context;
-	add_timer(&timer);
+	timer = kmalloc(sizeof(struct timer_list), GFP_KERNEL);
+	if(timer == NULL)
+	{
+		up(&a_priv->bulk_alloc_lock);
+		retval = -ENOMEM;
+		goto cleanup;
+	}
+	init_timer(timer);
+	timer->expires = jiffies + msecs_to_jiffies(timeout_msecs);
+	timer->function = agilent_82357a_timeout_handler;
+	timer->data = (unsigned long) &context;
+	add_timer(timer);
 	//printk("%s: submitting urb\n", __FUNCTION__);
 	retval = usb_submit_urb(a_priv->bulk_urb, GFP_KERNEL);
 	if(retval)
 	{
-		usb_free_urb(a_priv->bulk_urb);
-		a_priv->bulk_urb = NULL;
 		printk("%s: failed to submit bulk out urb, retval=%i\n", __FILE__, retval);
 		up(&a_priv->bulk_alloc_lock);
-		return retval;
+		goto cleanup;
 	}
 	up(&a_priv->bulk_alloc_lock);
 	if(down_interruptible(&context.complete))
 	{
 		printk("%s: %s: interrupted\n", __FILE__, __FUNCTION__);
-		usb_kill_urb(a_priv->bulk_urb);
-		down(&a_priv->bulk_alloc_lock);
-		usb_free_urb(a_priv->bulk_urb);
-		a_priv->bulk_urb = NULL;
-		up(&a_priv->bulk_alloc_lock);
-		return -ERESTARTSYS;
+		retval = -ERESTARTSYS;
+		goto cleanup;
 	}
 	if(context.timed_out)
 	{
-		usb_kill_urb(a_priv->bulk_urb);
 		retval = -ETIMEDOUT;
 	}else
+	{
 		retval = a_priv->bulk_urb->status;
-	if(timer_pending(&timer))
-		del_timer_sync(&timer);
-	*actual_data_length = a_priv->bulk_urb->actual_length;
+		*actual_data_length = a_priv->bulk_urb->actual_length;
+	}
+cleanup:
+	if(timer)
+	{		
+		if(timer_pending(timer))
+			del_timer_sync(timer);
+		kfree(timer);
+	}
 	down(&a_priv->bulk_alloc_lock);
-	usb_free_urb(a_priv->bulk_urb);
-	a_priv->bulk_urb = NULL;
+	if(a_priv->bulk_urb)
+	{
+		usb_kill_urb(a_priv->bulk_urb);
+		usb_free_urb(a_priv->bulk_urb);
+		a_priv->bulk_urb = NULL;
+	}
 	up(&a_priv->bulk_alloc_lock);
 	return retval;
 }
@@ -128,7 +139,7 @@ int agilent_82357a_receive_bulk_msg(agilent_82357a_private_t *a_priv, void *data
 	int retval;
 	unsigned int in_pipe;
 	agilent_82357a_urb_context_t context;
-	struct timer_list timer;
+	struct timer_list *timer = NULL;
 
 	*actual_data_length = 0;
 	retval = down_interruptible(&a_priv->bulk_alloc_lock);
@@ -155,49 +166,56 @@ int agilent_82357a_receive_bulk_msg(agilent_82357a_private_t *a_priv, void *data
 	context.timed_out = 0;
 	usb_fill_bulk_urb(a_priv->bulk_urb, usb_dev, in_pipe, data, data_length,
 		agilent_82357a_bulk_complete, &context);
-	init_timer(&timer);
-	timer.expires = jiffies + msecs_to_jiffies(timeout_msecs);
-	timer.function = agilent_82357a_timeout_handler;
-	timer.data = (unsigned long) &context;
-	add_timer(&timer);
+	timer = kmalloc(sizeof(struct timer_list), GFP_KERNEL);
+	if(timer == NULL)
+	{
+		retval = -ENOMEM;
+		up(&a_priv->bulk_alloc_lock);
+		goto cleanup;
+	}
+	init_timer(timer);
+	timer->expires = jiffies + msecs_to_jiffies(timeout_msecs);
+	timer->function = agilent_82357a_timeout_handler;
+	timer->data = (unsigned long) &context;
+	add_timer(timer);
 	//printk("%s: submitting urb\n", __FUNCTION__);
 	retval = usb_submit_urb(a_priv->bulk_urb, GFP_KERNEL);
 	if(retval)
 	{
-		usb_free_urb(a_priv->bulk_urb);
-		a_priv->bulk_urb = NULL;
 		printk("%s: failed to submit bulk out urb, retval=%i\n", __FILE__, retval);
 		up(&a_priv->bulk_alloc_lock);
-		return retval;
+		goto cleanup;
 	}
 	up(&a_priv->bulk_alloc_lock);
 	if(down_interruptible(&context.complete))
 	{
 		printk("%s: %s: interrupted\n", __FILE__, __FUNCTION__);
-		usb_kill_urb(a_priv->bulk_urb);
-		down(&a_priv->bulk_alloc_lock);
-		usb_free_urb(a_priv->bulk_urb);
-		a_priv->bulk_urb = NULL;
-		up(&a_priv->bulk_alloc_lock);
-		return -ERESTARTSYS;
+		retval = -ERESTARTSYS;
+		goto cleanup;
 	}
 	if(context.timed_out)
 	{
-		usb_kill_urb(a_priv->bulk_urb);
-		down(&a_priv->bulk_alloc_lock);
-		usb_free_urb(a_priv->bulk_urb);
-		a_priv->bulk_urb = NULL;
-		up(&a_priv->bulk_alloc_lock);
-		return -ETIMEDOUT;
+		retval = -ETIMEDOUT;
+		goto cleanup;
 	}
 	retval = a_priv->bulk_urb->status;
-	if(timer_pending(&timer))
-		del_timer_sync(&timer);
 	*actual_data_length = a_priv->bulk_urb->actual_length;
-	retval = a_priv->bulk_urb->status;
+cleanup:
+	if(timer)
+	{
+		if(timer_pending(timer))
+		{
+			del_timer_sync(timer);
+		}
+		kfree(timer);
+	}
 	down(&a_priv->bulk_alloc_lock);
-	usb_free_urb(a_priv->bulk_urb);
-	a_priv->bulk_urb = NULL;
+	if(a_priv->bulk_urb)
+	{
+		usb_kill_urb(a_priv->bulk_urb);
+		usb_free_urb(a_priv->bulk_urb);
+		a_priv->bulk_urb = NULL;
+	}
 	up(&a_priv->bulk_alloc_lock);
 	return retval;
 }
@@ -464,6 +482,7 @@ ssize_t agilent_82357a_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 	long jiffie_timeout;
 	
 	*nbytes = 0;
+	*end = 0;
 	out_data_length = 0x9;
 	out_data = kmalloc(out_data_length, GFP_KERNEL);
 	if(out_data == NULL) return -ENOMEM;
@@ -522,11 +541,17 @@ ssize_t agilent_82357a_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 		printk("%s: %s: agilent_82357a_receive_bulk_msg timed out, bytes_read=%i, extra_bytes_read=%i\n",
 			__FILE__, __FUNCTION__, bytes_read, extra_bytes_read);
 		bytes_read += extra_bytes_read;
+		if(extra_bytes_retval)
+		{
+			printk("%s: %s: extra_bytes_retval=%i, bytes_read=%i\n", __FILE__, __FUNCTION__,
+				extra_bytes_retval, bytes_read);
+			agilent_82357a_abort(a_priv, 0);
+		}
 	}
 	if(retval)
 	{
-		printk("%s: %s: agilent_82357a_receive_bulk_msg returned %i, bytes_read=%i\n", __FILE__, __FUNCTION__, retval, bytes_read);
-		agilent_82357a_abort(a_priv, 0);
+		printk("%s: %s: agilent_82357a_receive_bulk_msg returned %i, bytes_read=%i\n", __FILE__, __FUNCTION__,
+			retval, bytes_read);
 	}
 	up(&a_priv->bulk_transfer_lock);
 	if(bytes_read > length + 1)
@@ -534,14 +559,16 @@ ssize_t agilent_82357a_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 		bytes_read = length + 1;
 		printk("%s: %s: bytes_read > length? truncating", __FILE__, __FUNCTION__);
 	}
-	memcpy(buffer, in_data, bytes_read - 1);
 	//printk("%s: %s: received response:\n", __FILE__, __FUNCTION__);
 	//agilent_82357a_dump_raw_block(in_data, in_data_length);
-	trailing_flags = in_data[bytes_read - 1];
+	if(bytes_read >= 1)
+	{
+		memcpy(buffer, in_data, bytes_read - 1);
+		trailing_flags = in_data[bytes_read - 1];
+		*nbytes = bytes_read - 1;
+		if(trailing_flags & (ATRF_EOI | ATRF_EOS)) *end = 1;
+	}
 	kfree(in_data);
-	*nbytes = bytes_read - 1;
-	if(trailing_flags & (ATRF_EOI | ATRF_EOS)) *end = 1;
-	else *end = 0;
 	//FIXME check trailing flags for error
 	return retval;
 }
