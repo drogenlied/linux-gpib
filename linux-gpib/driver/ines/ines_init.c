@@ -388,8 +388,6 @@ void ines_online( ines_private_t *ines_priv, const gpib_board_t *board, int use_
 	write_byte( nec_priv, ICR | 0, AUXMR );
 
 	write_byte( nec_priv, INES_AUX_XMODE, AUXMR );
-	write_byte( nec_priv, INES_AUX_CLR_IN_FIFO, AUXMR );
-	write_byte( nec_priv, INES_AUX_CLR_OUT_FIFO, AUXMR );
 	write_byte( nec_priv, INES_RFD_HLD_IMMEDIATE, AUXMR );
 	set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
 	write_byte( nec_priv, INES_AUXD | 0, AUXMR );
@@ -403,8 +401,6 @@ void ines_online( ines_private_t *ines_priv, const gpib_board_t *board, int use_
 		ines_outb( ines_priv, IFC_ACTIVE_BIT | ATN_ACTIVE_BIT | FIFO_ERROR_BIT | XFER_COUNT_BIT, IMR3 );
 		ines_outb( ines_priv, IN_FIFO_WATERMARK_BIT | IN_FIFO_FULL_BIT | OUT_FIFO_WATERMARK_BIT |
 			OUT_FIFO_EMPTY_BIT, IMR4 );
-		nec7210_set_reg_bits( nec_priv, ADMR, IN_FIFO_ENABLE_BIT | OUT_FIFO_ENABLE_BIT,
-			IN_FIFO_ENABLE_BIT | OUT_FIFO_ENABLE_BIT );
 	}else
 	{
 		nec7210_set_reg_bits( nec_priv, ADMR, IN_FIFO_ENABLE_BIT | OUT_FIFO_ENABLE_BIT, 0 );

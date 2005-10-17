@@ -83,6 +83,10 @@ ssize_t ines_accel_read( gpib_board_t *board, uint8_t *buffer,
 
 	write_byte( nec_priv, INES_RFD_HLD_IMMEDIATE, AUXMR );
 
+	//clear in fifo
+	nec7210_set_reg_bits(nec_priv, ADMR, IN_FIFO_ENABLE_BIT, 0);
+	nec7210_set_reg_bits(nec_priv, ADMR, IN_FIFO_ENABLE_BIT, IN_FIFO_ENABLE_BIT);
+	
 	ines_priv->extend_mode_bits |= LAST_BYTE_HANDLING_BIT;
 	ines_priv->extend_mode_bits &= ~XFER_COUNTER_OUTPUT_BIT & ~XFER_COUNTER_ENABLE_BIT;
 	ines_outb( ines_priv, ines_priv->extend_mode_bits, EXTEND_MODE );

@@ -56,19 +56,24 @@ ssize_t ines_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length, i
 	ines_private_t *ines_priv = board->private_data;
 	nec7210_private_t *nec_priv = &ines_priv->nec7210_priv;
 	unsigned int num_bytes, i;
+	
+
+	//clear out fifo	
+	nec7210_set_reg_bits(nec_priv, ADMR, OUT_FIFO_ENABLE_BIT, 0);
+	nec7210_set_reg_bits(nec_priv, ADMR, OUT_FIFO_ENABLE_BIT, OUT_FIFO_ENABLE_BIT);
 
 	ines_priv->extend_mode_bits |= XFER_COUNTER_OUTPUT_BIT;
 	ines_priv->extend_mode_bits &= ~XFER_COUNTER_ENABLE_BIT;
-	if( send_eoi )
-		ines_priv->extend_mode_bits |= LAST_BYTE_HANDLING_BIT;
-	else
-		ines_priv->extend_mode_bits &= ~LAST_BYTE_HANDLING_BIT;
+	ines_priv->extend_mode_bits &= ~LAST_BYTE_HANDLING_BIT;
 	ines_outb( ines_priv, ines_priv->extend_mode_bits, EXTEND_MODE );
+	
 	ines_set_xfer_counter( ines_priv, length );
+	if(send_eoi)
+		ines_priv->extend_mode_bits |= LAST_BYTE_HANDLING_BIT;
 	ines_priv->extend_mode_bits |= XFER_COUNTER_ENABLE_BIT;
 	ines_outb( ines_priv, ines_priv->extend_mode_bits, EXTEND_MODE );
-
-	while( count < length )
+	
+	while(count < length)
 	{
 		retval = ines_write_wait( board, ines_priv, out_fifo_size );
 		if( retval < 0 )
