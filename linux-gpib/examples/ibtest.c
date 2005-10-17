@@ -279,18 +279,15 @@ int prompt_for_action(void)
 
 int perform_read(int ud)
 {
-	char buffer[ 1024 ];
+	char buffer[1024] = {0};
 
 	printf("trying to read from device...\n");
 
-	if( ibrd(ud, buffer, sizeof(buffer) - 1) & ERR)
-	{
-		return -1;
-	}
-	/* make sure string is null-terminated */
-	buffer[ibcnt] = 0;
+	ibrd(ud, buffer, sizeof(buffer) - 1);
 	printf("received string: '%s'\n"
-		"number of bytes read: %i\n", buffer, ibcnt);
+		"number of bytes read: %li\n", buffer, ThreadIbcntl());
+	if(ThreadIbsta() & ERR)
+		return -1;
 	return 0;
 }
 
