@@ -547,11 +547,11 @@ ssize_t agilent_82357a_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 				extra_bytes_retval, bytes_read);
 			agilent_82357a_abort(a_priv, 0);
 		}
-	}
-	if(retval)
+	}else if(retval)
 	{
 		printk("%s: %s: agilent_82357a_receive_bulk_msg returned %i, bytes_read=%i\n", __FILE__, __FUNCTION__,
 			retval, bytes_read);
+		agilent_82357a_abort(a_priv, 0);
 	}
 	up(&a_priv->bulk_transfer_lock);
 	if(bytes_read > length + 1)
