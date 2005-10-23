@@ -1446,6 +1446,15 @@ volatile int ibsta;
 	the controller-in-charge of this device's GPIB bus.</entry>
 	<entry>device</entry>
 	</row>
+	<row>
+	<entry>Iba7BitEOS</entry>
+	<entry>0x1000</entry>
+	<entry>Nonzero if board supports 7 bit EOS comparisons.
+	See <link LINKEND="reference-function-ibeos">ibeos()</link>,
+	in particular the BIN bit.  This is a Linux-GPIB extension.
+</entry>
+	<entry>board</entry>
+	</row>
 	</tbody>
 	</tgroup>
 	</table>
