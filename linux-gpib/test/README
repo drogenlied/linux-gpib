@@ -4,8 +4,11 @@ bus, exactly one of which is the system controller.  Two instances of
 libgpib_test must be run, one with the --master option and one with
 --slave.  Their stdin and stdout need to be connected to each other (see the
 "runtest" script in this directory) so they can synchronize at various
-points in the tests.
+points in the tests.  The runtest script will pass any command line
+options to both the master and slave invocations of libgpib_test.
 
+Example:
+./runtest --pad 2
 
 libgpib_test options:
 
