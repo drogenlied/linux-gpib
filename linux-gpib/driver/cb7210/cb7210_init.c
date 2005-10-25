@@ -74,7 +74,7 @@ void cb7210_request_system_control( gpib_board_t *board, int request_control )
 	}else
 		priv->hs_mode_bits &= ~HS_SYS_CONTROL;
 
-	outb( priv->hs_mode_bits, nec7210_iobase(priv) + HS_MODE );
+	cb7210_write_byte(priv, priv->hs_mode_bits, HS_MODE);
 	nec7210_request_system_control( board, nec_priv, request_control );
 }
 void cb7210_interface_clear(gpib_board_t *board, int assert)
@@ -143,9 +143,9 @@ void cb7210_return_to_local( gpib_board_t *board )
 	nec7210_return_to_local( board, &priv->nec7210_priv );
 }
 
-gpib_interface_t cb_pci_interface =
+gpib_interface_t cb_pci_unaccel_interface =
 {
-	name: "cbi_pci",
+	name: "cbi_pci_unaccel",
 	attach: cb_pci_attach,
 	detach: cb_pci_detach,
 	read: cb7210_read,
@@ -199,13 +199,69 @@ gpib_interface_t cb_pci_accel_interface =
 	return_to_local: cb7210_return_to_local,
 };
 
+gpib_interface_t cb_pci_interface =
+{
+	name: "cbi_pci",
+	attach: cb_pci_attach,
+	detach: cb_pci_detach,
+	read: cb7210_accel_read,
+	write: cb7210_accel_write,
+	command: cb7210_command,
+	take_control: cb7210_take_control,
+	go_to_standby: cb7210_go_to_standby,
+	request_system_control: cb7210_request_system_control,
+	interface_clear: cb7210_interface_clear,
+	remote_enable: cb7210_remote_enable,
+	enable_eos: cb7210_enable_eos,
+	disable_eos: cb7210_disable_eos,
+	parallel_poll: cb7210_parallel_poll,
+	parallel_poll_configure: cb7210_parallel_poll_configure,
+	parallel_poll_response: cb7210_parallel_poll_response,
+	line_status: cb7210_line_status,
+	update_status: cb7210_update_status,
+	primary_address: cb7210_primary_address,
+	secondary_address: cb7210_secondary_address,
+	serial_poll_response: cb7210_serial_poll_response,
+	serial_poll_status: cb7210_serial_poll_status,
+	t1_delay: cb7210_t1_delay,
+	return_to_local: cb7210_return_to_local,
+};
+
+gpib_interface_t cb_isa_unaccel_interface =
+{
+	name: "cbi_isa_unaccel",
+	attach: cb_isa_attach,
+	detach: cb_isa_detach,
+	read: cb7210_read,
+	write: cb7210_write,
+	command: cb7210_command,
+	take_control: cb7210_take_control,
+	go_to_standby: cb7210_go_to_standby,
+	request_system_control: cb7210_request_system_control,
+	interface_clear: cb7210_interface_clear,
+	remote_enable: cb7210_remote_enable,
+	enable_eos: cb7210_enable_eos,
+	disable_eos: cb7210_disable_eos,
+	parallel_poll: cb7210_parallel_poll,
+	parallel_poll_configure: cb7210_parallel_poll_configure,
+	parallel_poll_response: cb7210_parallel_poll_response,
+	line_status: cb7210_line_status,
+	update_status: cb7210_update_status,
+	primary_address: cb7210_primary_address,
+	secondary_address: cb7210_secondary_address,
+	serial_poll_response: cb7210_serial_poll_response,
+	serial_poll_status: cb7210_serial_poll_status,
+	t1_delay: cb7210_t1_delay,
+	return_to_local: cb7210_return_to_local,
+};
+
 gpib_interface_t cb_isa_interface =
 {
 	name: "cbi_isa",
 	attach: cb_isa_attach,
 	detach: cb_isa_detach,
-	read: cb7210_read,
-	write: cb7210_write,
+	read: cb7210_accel_read,
+	write: cb7210_accel_write,
 	command: cb7210_command,
 	take_control: cb7210_take_control,
 	go_to_standby: cb7210_go_to_standby,
@@ -300,15 +356,15 @@ int cb7210_init( cb7210_private_t *cb_priv, gpib_board_t *board )
 {
 	nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
 
-	outb( HS_RESET7210, nec7210_iobase(cb_priv) + HS_INT_LEVEL );
-	outb( irq_bits( cb_priv->irq ), nec7210_iobase(cb_priv) + HS_INT_LEVEL );
+	cb7210_write_byte(cb_priv, HS_RESET7210, HS_INT_LEVEL);
+	cb7210_write_byte(cb_priv, irq_bits(cb_priv->irq), HS_INT_LEVEL);
 
 	nec7210_board_reset( nec_priv, board );
-	outb( HS_TX_ENABLE | HS_RX_ENABLE | HS_CLR_SRQ_INT |
-		HS_CLR_EOI_EMPTY_INT | HS_CLR_HF_INT, nec7210_iobase(cb_priv) + HS_MODE );
+	cb7210_write_byte(cb_priv, HS_TX_ENABLE | HS_RX_ENABLE | HS_CLR_SRQ_INT |
+		HS_CLR_EOI_EMPTY_INT | HS_CLR_HF_INT, HS_MODE);
 
 	cb_priv->hs_mode_bits = HS_HF_INT_EN;
-	outb( cb_priv->hs_mode_bits, nec7210_iobase(cb_priv) + HS_MODE );
+	cb7210_write_byte(cb_priv, cb_priv->hs_mode_bits, HS_MODE);
 
 	write_byte( nec_priv, AUX_LO_SPEED, AUXMR );
 	/* set clock register for maximum (20 MHz) driving frequency
@@ -316,6 +372,12 @@ int cb7210_init( cb7210_private_t *cb_priv, gpib_board_t *board )
 	 * for clocks faster than 15 MHz (max 20MHz) */
 	write_byte(nec_priv, ICR | 0, AUXMR);
 
+	if(cb_priv->pci_chip == PCI_CHIP_QUANCOM)
+	{
+		/* change interrupt polarity */
+		nec_priv->auxb_bits |= HR_INV;
+		write_byte(nec_priv, nec_priv->auxb_bits, AUXMR);
+	}
 	nec7210_board_online( nec_priv, board );
 
 	/* poll so we can detect assertion of ATN */
@@ -341,16 +403,30 @@ int cb_pci_attach(gpib_board_t *board, gpib_board_config_t config)
 	cb_priv = board->private_data;
 	nec_priv = &cb_priv->nec7210_priv;
 
-	cb_priv->pci_device = gpib_pci_get_device( board, PCI_VENDOR_ID_CBOARDS,
+	cb_priv->pci_device = gpib_pci_get_device(board, PCI_VENDOR_ID_CBOARDS,
 		PCI_DEVICE_ID_CBOARDS_PCI_GPIB, NULL);
+	if(cb_priv->pci_device != NULL)
+		cb_priv->pci_chip = PCI_CHIP_AMCC_S5933;
 	if(cb_priv->pci_device == NULL)
 	{
-		cb_priv->pci_device = gpib_pci_get_device( board, PCI_VENDOR_ID_CBOARDS,
+		cb_priv->pci_device = gpib_pci_get_device(board, PCI_VENDOR_ID_CBOARDS,
 			PCI_DEVICE_ID_CBOARDS_CPCI_GPIB, NULL);
+		if(cb_priv->pci_device != NULL)
+			cb_priv->pci_chip = PCI_CHIP_AMCC_S5933;
 	}
 	if(cb_priv->pci_device == NULL)
 	{
-		printk( "cb7210: no PCI-GPIB or CPCI-GPIB board found\n" );
+		cb_priv->pci_device = gpib_pci_get_device(board, PCI_VENDOR_ID_QUANCOM,
+			PCI_DEVICE_ID_QUANCOM_GPIB, NULL);
+		if(cb_priv->pci_device != NULL)
+		{
+			cb_priv->pci_chip = PCI_CHIP_QUANCOM;
+			nec_priv->offset = 4;
+		}
+	}
+	if(cb_priv->pci_device == NULL)
+	{
+		printk( "cb7210: no supported boards found.\n" );
 		return -1;
 	}
 
@@ -362,11 +438,22 @@ int cb_pci_attach(gpib_board_t *board, gpib_board_config_t config)
 
 	if(pci_request_regions(cb_priv->pci_device, "cb7210"))
 		return -1;
-
-	cb_priv->amcc_iobase = pci_resource_start( cb_priv->pci_device, 0 );
-	nec_priv->iobase = (void*)(pci_resource_start( cb_priv->pci_device, 1 ));
-	cb_priv->fifo_iobase = pci_resource_start( cb_priv->pci_device, 2 );
-
+	switch(cb_priv->pci_chip)
+	{
+	case PCI_CHIP_AMCC_S5933:
+		cb_priv->amcc_iobase = pci_resource_start(cb_priv->pci_device, 0);
+		nec_priv->iobase = (void*)(pci_resource_start(cb_priv->pci_device, 1));
+		cb_priv->fifo_iobase = pci_resource_start(cb_priv->pci_device, 2);
+		break;
+	case PCI_CHIP_QUANCOM:
+		nec_priv->iobase = (void*)(pci_resource_start(cb_priv->pci_device, 0));
+		cb_priv->fifo_iobase = (unsigned long)nec_priv->iobase;
+		break;
+	default:
+		printk("cb7210: bug! unhandled pci_chip=%i\n", cb_priv->pci_chip);
+		return -EIO;
+		break;
+	}
 	isr_flags |= SA_SHIRQ;
 	if(request_irq(cb_priv->pci_device->irq, cb_pci_interrupt, isr_flags, "cb7210", board))
 	{
@@ -375,13 +462,19 @@ int cb_pci_attach(gpib_board_t *board, gpib_board_config_t config)
 	}
 	cb_priv->irq = cb_priv->pci_device->irq;
 
-	// make sure mailbox flags are clear
-	inl(cb_priv->amcc_iobase + INCOMING_MAILBOX_REG(3));
-	// enable interrupts on amccs5933 chip
-	bits = INBOX_FULL_INTR_BIT | INBOX_BYTE_BITS(3) | INBOX_SELECT_BITS(3) |
-		INBOX_INTR_CS_BIT;
-	outl(bits, cb_priv->amcc_iobase + INTCSR_REG );
-
+	switch(cb_priv->pci_chip)
+	{
+	case PCI_CHIP_AMCC_S5933:
+		// make sure mailbox flags are clear
+		inl(cb_priv->amcc_iobase + INCOMING_MAILBOX_REG(3));
+		// enable interrupts on amccs5933 chip
+		bits = INBOX_FULL_INTR_BIT | INBOX_BYTE_BITS(3) | INBOX_SELECT_BITS(3) |
+			INBOX_INTR_CS_BIT;
+		outl(bits, cb_priv->amcc_iobase + INTCSR_REG );
+		break;
+	default:
+		break;
+	}
 	return cb7210_init( cb_priv, board );
 }
 
@@ -474,6 +567,7 @@ static const struct pci_device_id cb7210_pci_table[] =
 {
 	{PCI_VENDOR_ID_CBOARDS, PCI_DEVICE_ID_CBOARDS_PCI_GPIB, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
 	{PCI_VENDOR_ID_CBOARDS, PCI_DEVICE_ID_CBOARDS_CPCI_GPIB, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{PCI_VENDOR_ID_QUANCOM, PCI_DEVICE_ID_QUANCOM_GPIB, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
 	{ 0 }
 };
 MODULE_DEVICE_TABLE(pci, cb7210_pci_table);
@@ -485,11 +579,14 @@ static int cb7210_init_module( void )
 	gpib_register_driver(&cb_pci_interface, &__this_module);
 	gpib_register_driver(&cb_isa_interface, &__this_module);
 	gpib_register_driver(&cb_pci_accel_interface, &__this_module);
+	gpib_register_driver(&cb_pci_unaccel_interface, &__this_module);
 	gpib_register_driver(&cb_isa_accel_interface, &__this_module);
+	gpib_register_driver(&cb_isa_unaccel_interface, &__this_module);
 
 #if defined(GPIB_CONFIG_PCMCIA)
 	gpib_register_driver(&cb_pcmcia_interface, &__this_module);
 	gpib_register_driver(&cb_pcmcia_accel_interface, &__this_module);
+	gpib_register_driver(&cb_pcmcia_unaccel_interface, &__this_module);
 	err += cb_pcmcia_init_module();
 #endif
 	if(err)
@@ -503,10 +600,13 @@ static void cb7210_exit_module( void )
 	gpib_unregister_driver(&cb_pci_interface);
 	gpib_unregister_driver(&cb_isa_interface);
 	gpib_unregister_driver(&cb_pci_accel_interface);
+	gpib_unregister_driver(&cb_pci_unaccel_interface);
 	gpib_unregister_driver(&cb_isa_accel_interface);
+	gpib_unregister_driver(&cb_isa_unaccel_interface);
 #if defined(GPIB_CONFIG_PCMCIA)
 	gpib_unregister_driver(&cb_pcmcia_interface);
 	gpib_unregister_driver(&cb_pcmcia_accel_interface);
+	gpib_unregister_driver(&cb_pcmcia_unaccel_interface);
 	cb_pcmcia_cleanup_module();
 #endif
 }

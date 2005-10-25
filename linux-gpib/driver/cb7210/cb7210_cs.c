@@ -586,13 +586,41 @@ void cb_pcmcia_cleanup_module(void)
 int cb_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config);
 void cb_pcmcia_detach(gpib_board_t *board);
 
+gpib_interface_t cb_pcmcia_unaccel_interface =
+{
+	name: "cbi_pcmcia_unaccel",
+	attach: cb_pcmcia_attach,
+	detach: cb_pcmcia_detach,
+	read: cb7210_read,
+	write: cb7210_write,
+	command: cb7210_command,
+	take_control: cb7210_take_control,
+	go_to_standby: cb7210_go_to_standby,
+	request_system_control: cb7210_request_system_control,
+	interface_clear: cb7210_interface_clear,
+	remote_enable: cb7210_remote_enable,
+	enable_eos: cb7210_enable_eos,
+	disable_eos: cb7210_disable_eos,
+	parallel_poll: cb7210_parallel_poll,
+	parallel_poll_configure: cb7210_parallel_poll_configure,
+	parallel_poll_response: cb7210_parallel_poll_response,
+	line_status: cb7210_line_status,
+	update_status: cb7210_update_status,
+	primary_address: cb7210_primary_address,
+	secondary_address: cb7210_secondary_address,
+	serial_poll_response: cb7210_serial_poll_response,
+	serial_poll_status: cb7210_serial_poll_status,
+	t1_delay: cb7210_t1_delay,
+	return_to_local: cb7210_return_to_local,
+};
+
 gpib_interface_t cb_pcmcia_interface =
 {
 	name: "cbi_pcmcia",
 	attach: cb_pcmcia_attach,
 	detach: cb_pcmcia_detach,
-	read: cb7210_read,
-	write: cb7210_write,
+	read: cb7210_accel_read,
+	write: cb7210_accel_write,
 	command: cb7210_command,
 	take_control: cb7210_take_control,
 	go_to_standby: cb7210_go_to_standby,

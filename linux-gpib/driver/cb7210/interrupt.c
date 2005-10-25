@@ -19,6 +19,7 @@
 #include "cb7210.h"
 #include <asm/bitops.h>
 #include <asm/dma.h>
+#include "quancom_pci.h"
 
 /*
  * GPIB interrupt service routines
@@ -31,16 +32,27 @@ irqreturn_t cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	cb7210_private_t *priv = board->private_data;
 
 	// first task check if this is really our interrupt in a shared irq environment
-	if((inl(priv->amcc_iobase + INTCSR_REG) & (INBOX_INTR_CS_BIT | INTR_ASSERTED_BIT)) == 0)
-		return IRQ_NONE;
-    
-	// read incoming mailbox to clear mailbox full flag
-	inl(priv->amcc_iobase + INCOMING_MAILBOX_REG(3));
-	// clear amccs5933 interrupt
-	bits = INBOX_FULL_INTR_BIT | INBOX_BYTE_BITS(3) | INBOX_SELECT_BITS(3) |
-		INBOX_INTR_CS_BIT;
-	outl(bits, priv->amcc_iobase + INTCSR_REG );
-
+	switch(priv->pci_chip)
+	{
+	case PCI_CHIP_AMCC_S5933:
+		if((inl(priv->amcc_iobase + INTCSR_REG) & (INBOX_INTR_CS_BIT | INTR_ASSERTED_BIT)) == 0)
+			return IRQ_NONE;
+		
+		// read incoming mailbox to clear mailbox full flag
+		inl(priv->amcc_iobase + INCOMING_MAILBOX_REG(3));
+		// clear amccs5933 interrupt
+		bits = INBOX_FULL_INTR_BIT | INBOX_BYTE_BITS(3) | INBOX_SELECT_BITS(3) |
+			INBOX_INTR_CS_BIT;
+		outl(bits, priv->amcc_iobase + INTCSR_REG );
+		break;
+	case PCI_CHIP_QUANCOM:
+		if((inb(nec7210_iobase(priv) + QUANCOM_IRQ_CONTROL_STATUS_REG) & QUANCOM_IRQ_ASSERTED_BIT) == 0)
+			return IRQ_NONE;
+		outb(QUANCOM_IRQ_ENABLE_BIT, nec7210_iobase(priv) + QUANCOM_IRQ_CONTROL_STATUS_REG );
+		break;
+	default:
+		break;
+	}
 	return cb7210_interrupt(irq, arg, registerp);
 }
 
@@ -52,16 +64,13 @@ irqreturn_t cb7210_internal_interrupt( gpib_board_t *board )
 	int clear_bits;
 
 	if((priv->hs_mode_bits & HS_ENABLE_MASK))
-	{	status1 = 0;
-		hs_status = inb(nec7210_iobase(priv) + HS_STATUS );
+	{
+		status1 = 0;
+		hs_status = cb7210_read_byte(priv, HS_STATUS);
 	}else
 	{
-//		if( ( priv->hs_mode_bits & HS_ENABLE_MASK ) )
-//			outb( priv->hs_mode_bits & ~HS_ENABLE_MASK, nec_priv->iobase + HS_MODE );
 		hs_status = 0;
 		status1 = read_byte( nec_priv, ISR1 );
-//		if( ( priv->hs_mode_bits & HS_ENABLE_MASK ) )
-//			outb( priv->hs_mode_bits, nec_priv->iobase + HS_MODE );
 	}
 	status2 = read_byte( nec_priv, ISR2 );
 	nec7210_interrupt_have_status( board, nec_priv, status1, status2 );
@@ -99,9 +108,9 @@ irqreturn_t cb7210_internal_interrupt( gpib_board_t *board )
 
 	if( clear_bits )
 	{
-		outb( priv->hs_mode_bits | clear_bits, nec7210_iobase(priv) + HS_MODE );
-		outb( priv->hs_mode_bits, nec7210_iobase(priv) + HS_MODE );
-		wake_up_interruptible( &board->wait );
+		cb7210_write_byte(priv, priv->hs_mode_bits | clear_bits, HS_MODE);
+		cb7210_write_byte(priv, priv->hs_mode_bits, HS_MODE);
+		wake_up_interruptible(&board->wait);
 	}
 	return IRQ_HANDLED;
 }

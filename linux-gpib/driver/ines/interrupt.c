@@ -24,22 +24,30 @@
  * GPIB interrupt service routines
  */
 
-irqreturn_t ines_interrupt(int irq, void *arg, struct pt_regs *registerp)
+irqreturn_t ines_pci_interrupt(int irq, void *arg, struct pt_regs *registerp)
 {
 	gpib_board_t *board = arg;
+	ines_private_t *priv = board->private_data;
+	nec7210_private_t *nec_priv = &priv->nec7210_priv;
+	
+	if(priv->pci_chip_type == PCI_CHIP_QUANCOM )
+	{
+		if((inb((unsigned long)nec_priv->iobase + QUANCOM_IRQ_CONTROL_STATUS_REG) & QUANCOM_IRQ_ASSERTED_BIT) == 0)
+			return IRQ_NONE;
+		outb(QUANCOM_IRQ_ENABLE_BIT, (unsigned long)(nec_priv->iobase) + QUANCOM_IRQ_CONTROL_STATUS_REG );
+	}
+
+	return ines_interrupt(board);
+}
+
+irqreturn_t ines_interrupt(gpib_board_t *board)
+{
 	ines_private_t *priv = board->private_data;
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 	unsigned int isr3_bits, isr4_bits;
 	unsigned long flags;
 	int wake = 0;
 	
-	if( priv->pci_chip_type == PCI_CHIP_QUANCOM )
-	{
-/*		if((inb(nec_priv->iobase + QUANCOM_IRQ_CONTROL_STATUS_REG) & QUANCOM_IRQ_ASSERTED_BIT) == 0)
-			return IRQ_NONE;*/
-		outb(QUANCOM_IRQ_ENABLE_BIT, (unsigned long)(nec_priv->iobase) + QUANCOM_IRQ_CONTROL_STATUS_REG );
-	}
-
 	spin_lock_irqsave( &board->spinlock, flags );
 
 	nec7210_interrupt( board, nec_priv );

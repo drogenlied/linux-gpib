@@ -33,6 +33,13 @@ enum
 	PCI_DEVICE_ID_CBOARDS_CPCI_GPIB = 0xe,
 };
 
+enum pci_chip
+{
+	PCI_CHIP_NONE = 0,
+	PCI_CHIP_AMCC_S5933,
+	PCI_CHIP_QUANCOM
+};
+
 // struct which defines private_data for cb7210 boards
 typedef struct
 {
@@ -42,16 +49,16 @@ typedef struct
 	unsigned long amcc_iobase;
 	unsigned long fifo_iobase;
 	unsigned int irq;
+	enum pci_chip pci_chip;
 	volatile uint8_t hs_mode_bits;
 	volatile unsigned out_fifo_half_empty : 1;
 	volatile unsigned in_fifo_half_full : 1;
 } cb7210_private_t;
 
 // interfaces
-extern gpib_interface_t cb_pci_interface;
-extern gpib_interface_t cb_isa_interface;
 extern gpib_interface_t cb_pcmcia_interface;
 extern gpib_interface_t cb_pcmcia_accel_interface;
+extern gpib_interface_t cb_pcmcia_unaccel_interface;
 
 // interrupt service routines
 irqreturn_t cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp);
@@ -118,6 +125,15 @@ enum cb7210_page_in
 	BUS_STATUS_PAGE = 1,
 };
 
+enum hs_regs
+{
+	//write registers
+	HS_MODE = 0x8,	/* HS_MODE register */
+	HS_INT_LEVEL = 0x9,	/* HS_INT_LEVEL register */
+	//read registers
+	HS_STATUS = 0x8,	/* HS_STATUS register */
+};
+
 static inline unsigned long nec7210_iobase(const cb7210_private_t *cb_priv)
 {
 	return (unsigned long)(cb_priv->nec7210_priv.iobase);
@@ -128,7 +144,7 @@ static inline int cb7210_page_in_bits( unsigned int page )
 	return 0x50 | (page & 0xf);
 }
 static inline uint8_t cb7210_paged_read_byte( cb7210_private_t *cb_priv,
-	unsigned int register_num, unsigned int page )
+	unsigned int register_num, unsigned int page)
 {
 	nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
 	uint8_t retval;
@@ -141,8 +157,18 @@ static inline uint8_t cb7210_paged_read_byte( cb7210_private_t *cb_priv,
 	spin_unlock_irqrestore( &nec_priv->register_page_lock, flags );
 	return retval;
 }
-static inline void cb7210_paged_write_byte( cb7210_private_t *cb_priv,
-	uint8_t data, unsigned int register_num, unsigned int page )
+// don't use for register_num < 8, since it doesn't lock
+static inline uint8_t cb7210_read_byte(const cb7210_private_t *cb_priv,
+	enum hs_regs register_num)
+{
+	const nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
+	uint8_t retval;
+
+	retval = inb(nec7210_iobase(cb_priv) + register_num * nec_priv->offset);
+	return retval;
+}
+static inline void cb7210_paged_write_byte(cb7210_private_t *cb_priv,
+	uint8_t data, unsigned int register_num, unsigned int page)
 {
 	nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
 	unsigned long flags;
@@ -153,15 +179,13 @@ static inline void cb7210_paged_write_byte( cb7210_private_t *cb_priv,
 	outb(data, nec7210_iobase(cb_priv) + register_num * nec_priv->offset);
 	spin_unlock_irqrestore( &nec_priv->register_page_lock, flags );
 }
-
-enum hs_regs
+// don't use for register_num < 8, since it doesn't lock
+static inline void cb7210_write_byte(const cb7210_private_t *cb_priv,
+	uint8_t data, enum hs_regs register_num)
 {
-	//write registers
-	HS_MODE = 0x8,	/* HS_MODE register */
-	HS_INT_LEVEL = 0x9,	/* HS_INT_LEVEL register */
-	//read registers
-	HS_STATUS = 0x8,	/* HS_STATUS register */
-};
+	const nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
+	outb(data, nec7210_iobase(cb_priv) + register_num * nec_priv->offset);
+}
 
 enum bus_status_bits
 {

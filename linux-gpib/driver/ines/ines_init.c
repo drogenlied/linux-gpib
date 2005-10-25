@@ -20,13 +20,10 @@
 #include "ines.h"
 
 #include <linux/pci.h>
+#include <linux/pci_ids.h>
 #include <asm/io.h>
 #include <linux/module.h>
 #include <linux/init.h>
-
-#ifndef PCI_VENDOR_ID_QUANCOM
-#define PCI_VENDOR_ID_QUANCOM	0x8008
-#endif
 
 MODULE_LICENSE("GPL");
 
@@ -46,7 +43,6 @@ enum ines_pci_device_ids
 {
 	PCI_DEVICE_ID_INES_GPIB_AMCC = 0x8507,
 	PCI_DEVICE_ID_INES_GPIB_QL5030 = 0x11,
-	PCI_DEVICE_ID_QUANCOM_GPIB = 0x3302
 };
 
 enum ines_pci_subdevice_ids
@@ -501,7 +497,7 @@ int ines_common_pci_attach( gpib_board_t *board )
 	}
 #endif	
 	isr_flags |= SA_SHIRQ;
-	if(request_irq(ines_priv->pci_device->irq, ines_interrupt, isr_flags, "pci-gpib", board))
+	if(request_irq(ines_priv->pci_device->irq, ines_pci_interrupt, isr_flags, "pci-gpib", board))
 	{
 		printk("gpib: can't request IRQ %d\n",ines_priv->pci_device->irq);
 		return -1;
@@ -593,7 +589,7 @@ int ines_isa_attach( gpib_board_t *board, gpib_board_config_t config )
 	nec_priv->iobase = board->ibbase;
 	nec_priv->offset = 1;
 	nec7210_board_reset(nec_priv, board);
-	if(request_irq(board->ibirq, ines_interrupt, isr_flags, "ines_gpib", board))
+	if(request_irq(board->ibirq, ines_pci_interrupt, isr_flags, "ines_gpib", board))
 	{
 		printk("ines_gpib: failed to allocate IRQ %d\n", board->ibirq);
 		return -1;

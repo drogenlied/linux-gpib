@@ -17,11 +17,11 @@
 #include "cb7210.h"
 #include <linux/delay.h>
 
-static inline int have_fifo_word( const cb7210_private_t *cb_priv )
+static inline int have_fifo_word(const cb7210_private_t *cb_priv)
 {
-	if( ( ( inb(nec7210_iobase(cb_priv) + HS_STATUS ) ) &
-			( HS_RX_MSB_NOT_EMPTY | HS_RX_LSB_NOT_EMPTY ) ) ==
-			( HS_RX_MSB_NOT_EMPTY | HS_RX_LSB_NOT_EMPTY ) )
+	if(((cb7210_read_byte(cb_priv, HS_STATUS)) &
+			(HS_RX_MSB_NOT_EMPTY | HS_RX_LSB_NOT_EMPTY)) ==
+			(HS_RX_MSB_NOT_EMPTY | HS_RX_LSB_NOT_EMPTY))
 		return 1;
 	else
 		return 0;
@@ -40,23 +40,23 @@ static inline void input_fifo_enable( gpib_board_t *board, int enable )
 		cb_priv->in_fifo_half_full = 0;
 		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAI, 0 );
 
-		outb( HS_RX_ENABLE | HS_TX_ENABLE | HS_CLR_SRQ_INT |
+		cb7210_write_byte(cb_priv, HS_RX_ENABLE | HS_TX_ENABLE | HS_CLR_SRQ_INT |
 			HS_CLR_EOI_EMPTY_INT | HS_CLR_HF_INT | cb_priv->hs_mode_bits,
-			nec7210_iobase(cb_priv) + HS_MODE );
+			HS_MODE);
 
 		cb_priv->hs_mode_bits &= ~HS_ENABLE_MASK;
-		outb( cb_priv->hs_mode_bits, nec7210_iobase(cb_priv) + HS_MODE );
+		cb7210_write_byte(cb_priv, cb_priv->hs_mode_bits, HS_MODE);
 
-		outb( irq_bits( cb_priv->irq ), nec7210_iobase(cb_priv) + HS_INT_LEVEL );
+		cb7210_write_byte(cb_priv, irq_bits( cb_priv->irq ), HS_INT_LEVEL);
 
 		cb_priv->hs_mode_bits |= HS_RX_ENABLE;
-		outb( cb_priv->hs_mode_bits, nec7210_iobase(cb_priv) + HS_MODE );
+		cb7210_write_byte(cb_priv, cb_priv->hs_mode_bits, HS_MODE);
 	}else
 	{
 		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAI, 0 );
 
 		cb_priv->hs_mode_bits &= ~HS_ENABLE_MASK;
-		outb( cb_priv->hs_mode_bits, nec7210_iobase(cb_priv) + HS_MODE );
+		cb7210_write_byte(cb_priv, cb_priv->hs_mode_bits, nec7210_iobase(cb_priv) + HS_MODE);
 
 		clear_bit( READ_READY_BN, &nec_priv->state );
 	}
@@ -92,11 +92,11 @@ static ssize_t fifo_read(gpib_board_t *board, cb7210_private_t *cb_priv, uint8_t
 	{
 		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAI, HR_DMAI );
 
-		if( wait_event_interruptible( board->wait,
-			( cb_priv->in_fifo_half_full && have_fifo_word( cb_priv ) ) ||
-			test_bit( RECEIVED_END_BN, &nec_priv->state ) ||
-			test_bit( DEV_CLEAR_BN, &nec_priv->state ) ||
-			test_bit( TIMO_NUM, &board->status ) ) )
+		if(wait_event_interruptible(board->wait,
+			(cb_priv->in_fifo_half_full && have_fifo_word(cb_priv)) ||
+			test_bit(RECEIVED_END_BN, &nec_priv->state) ||
+			test_bit(DEV_CLEAR_BN, &nec_priv->state) ||
+			test_bit(TIMO_NUM, &board->status)))
 		{
 			printk("cb7210: fifo half full wait interrupted\n");
 			retval = -ERESTARTSYS;
@@ -108,7 +108,7 @@ static ssize_t fifo_read(gpib_board_t *board, cb7210_private_t *cb_priv, uint8_t
 
 		nec7210_set_reg_bits( nec_priv, IMR2, HR_DMAI, 0 );
 
-		while( have_fifo_word( cb_priv ) )
+		while(have_fifo_word(cb_priv))
 		{
 			word = inw(cb_priv->fifo_iobase + DIR );
 			buffer[ (*nbytes)++ ] = word & 0xff;
@@ -117,7 +117,7 @@ static ssize_t fifo_read(gpib_board_t *board, cb7210_private_t *cb_priv, uint8_t
 
 		cb_priv->in_fifo_half_full = 0;
 
-		hs_status = inb(nec7210_iobase(cb_priv) + HS_STATUS );
+		hs_status = cb7210_read_byte(cb_priv, HS_STATUS);
 
 		spin_unlock_irqrestore( &board->spinlock, flags );
 
@@ -139,7 +139,7 @@ static ssize_t fifo_read(gpib_board_t *board, cb7210_private_t *cb_priv, uint8_t
 			break;
 		}
 	}
-	hs_status = inb(nec7210_iobase(cb_priv) + HS_STATUS );
+	hs_status = cb7210_read_byte(cb_priv, HS_STATUS);
 	if( hs_status & HS_RX_LSB_NOT_EMPTY )
 	{
 		word = inw(cb_priv->fifo_iobase + DIR );
