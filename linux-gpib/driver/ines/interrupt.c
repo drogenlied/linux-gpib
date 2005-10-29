@@ -32,9 +32,8 @@ irqreturn_t ines_pci_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	
 	if(priv->pci_chip_type == PCI_CHIP_QUANCOM )
 	{
-		if((inb((unsigned long)nec_priv->iobase + QUANCOM_IRQ_CONTROL_STATUS_REG) & QUANCOM_IRQ_ASSERTED_BIT) == 0)
-			return IRQ_NONE;
-		outb(QUANCOM_IRQ_ENABLE_BIT, (unsigned long)(nec_priv->iobase) + QUANCOM_IRQ_CONTROL_STATUS_REG );
+		if((inb((unsigned long)nec_priv->iobase + QUANCOM_IRQ_CONTROL_STATUS_REG) & QUANCOM_IRQ_ASSERTED_BIT))
+			outb(QUANCOM_IRQ_ENABLE_BIT, (unsigned long)(nec_priv->iobase) + QUANCOM_IRQ_CONTROL_STATUS_REG );
 	}
 
 	return ines_interrupt(board);
