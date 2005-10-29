@@ -144,6 +144,12 @@ unsigned int create_send_setup( const ibBoard_t *board,
 	}
 
 	i = 0;
+	/* controller's talk address */
+	if(query_pad(board, &board_pad) < 0) return 0;
+	cmdString[i++] = MTA(board_pad);
+	if(query_sad(board, &board_sad) < 0) return 0;
+	if(board_sad >= 0 )
+		cmdString[i++] = MSA(board_sad);
 	cmdString[ i++ ] = UNL;
 	for( j = 0; j < numAddresses( addressList ); j++ )
 	{
@@ -156,12 +162,6 @@ unsigned int create_send_setup( const ibBoard_t *board,
 		if( sad >= 0)
 			cmdString[ i++ ] = MSA( sad );
 	}
-	/* controller's talk address */
-	if( query_pad( board, &board_pad ) < 0 ) return 0;
-	cmdString[ i++ ] = MTA( board_pad );
-	if( query_sad( board, &board_sad ) < 0 ) return 0;
-	if( board_sad >= 0 )
-		cmdString[ i++ ] = MSA( board_sad );
 
 	return i;
 }
