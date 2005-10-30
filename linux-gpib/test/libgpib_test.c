@@ -477,12 +477,6 @@ static int master_parallel_poll_test(int board, const struct program_options *op
 		PRINT_FAILED();
 		return -1;
 	}
-	ibcac(board, 1);
-	if(ibsta & ERR)
-	{
-		PRINT_FAILED();
-		return -1;
-	}
 	ibrpp( board, &result );
 	if( ThreadIbsta() & ERR )
 	{
