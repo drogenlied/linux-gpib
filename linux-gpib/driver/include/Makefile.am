@@ -8,7 +8,8 @@
 #   (at your option) any later version.
 
 EXTRA_DIST = amcc5920.h amccs5933.h gpibP.h gpib_ioctl.h gpib_proto.h \
-	gpib_types.h gpib_user.h nec7210.h nec7210_registers.h plx9050.h tms9914.h tnt4882_registers.h \
+	gpib_types.h gpib_user.h nec7210.h nec7210_registers.h plx9050.h \
+	quancom_pci.h tms9914.h tnt4882_registers.h \
 	linux/*.h
 
 headersdir = $(includedir)/gpib
