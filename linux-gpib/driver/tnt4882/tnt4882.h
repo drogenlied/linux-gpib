@@ -44,8 +44,9 @@ typedef struct
 	struct mite_struct *mite;
 	struct pnp_dev *pnp_dev;
 	unsigned int irq;
-	volatile short imr0_bits;
-	volatile short imr3_bits;
+	volatile unsigned short imr0_bits;
+	volatile unsigned short imr3_bits;
+	unsigned short auxg_bits;	// bits written to auxilliary register G
 	void (*io_writeb)(unsigned int value, void *address);
 	void (*io_writew)(unsigned int value, void *address);
 	unsigned int (*io_readb)(void *address);

@@ -188,6 +188,7 @@ enum auxg_bits
 {
  /* no talking when no listeners bit (prevents bus errors when data written at wrong time) */
 	NTNL_BIT = 0x8,
+	RPP2_BIT = 0x4,	/* set/clear local rpp message */
 	CHES_BIT = 0x1, /*clear holdoff on end select bit*/
 };
 

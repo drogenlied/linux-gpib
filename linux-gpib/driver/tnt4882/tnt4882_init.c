@@ -130,8 +130,20 @@ void tnt4882_secondary_address(gpib_board_t *board, unsigned int address, int en
 }
 int tnt4882_parallel_poll(gpib_board_t *board, uint8_t *result)
 {
-	tnt4882_private_t *priv = board->private_data;
-	return nec7210_parallel_poll(board, &priv->nec7210_priv, result);
+	tnt4882_private_t *tnt_priv = board->private_data;
+	if(tnt_priv->nec7210_priv.type != NEC7210)
+	{
+		tnt_priv->auxg_bits |= RPP2_BIT;
+		write_byte(&tnt_priv->nec7210_priv, tnt_priv->auxg_bits, AUXMR);
+		udelay(2);	//FIXME use parallel poll timeout
+		*result = read_byte(&tnt_priv->nec7210_priv, CPTR);
+		tnt_priv->auxg_bits &= ~RPP2_BIT;
+		write_byte(&tnt_priv->nec7210_priv, tnt_priv->auxg_bits, AUXMR);
+		return 0;
+	}else
+	{
+		return nec7210_parallel_poll(board, &tnt_priv->nec7210_priv, result);
+	}
 }
 void tnt4882_parallel_poll_configure(gpib_board_t *board, uint8_t config )
 {
@@ -457,7 +469,8 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 	write_byte( &tnt_priv->nec7210_priv, AUX_HLDI, AUXMR );
 	set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
 
-	write_byte( &tnt_priv->nec7210_priv, AUXRG | NTNL_BIT, AUXMR );
+	tnt_priv->auxg_bits = AUXRG | NTNL_BIT;
+	write_byte( &tnt_priv->nec7210_priv, tnt_priv->auxg_bits, AUXMR );
 
 	nec7210_board_online( nec_priv, board );
 	// enable interface clear interrupt for event queue
