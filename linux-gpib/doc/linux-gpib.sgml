@@ -564,19 +564,19 @@ Default is <option>--sre</option>.</para>
 	<entry>Measurement Computing (Computer Boards)</entry>
 	<entry>CPCI-GPIB</entry>
 	<entry>cb7210.ko</entry>
-	<entry>cbi_pci, cbi_pci_accel</entry>
+	<entry>cbi_pci, cbi_pci_unaccel</entry>
 	</row>
 	<row>
 	<entry>Measurement Computing (Computer Boards)</entry>
 	<entry>ISA-GPIB</entry>
 	<entry>cb7210.ko</entry>
-	<entry>cbi_isa, cbi_isa_accel</entry>
+	<entry>cbi_isa, cbi_isa_unaccel</entry>
 	</row>
 	<row>
 	<entry>Measurement Computing (Computer Boards)</entry>
 	<entry>ISA-GPIB/LC</entry>
 	<entry>cb7210.ko</entry>
-	<entry>cbi_isa</entry>
+	<entry>cbi_isa_unaccel</entry>
 	</row>
 	<row>
 	<entry>Measurement Computing (Computer Boards)</entry>
@@ -588,19 +588,19 @@ Default is <option>--sre</option>.</para>
 	<entry>Measurement Computing (Computer Boards)</entry>
 	<entry>PCI-GPIB/1M</entry>
 	<entry>cb7210.ko</entry>
-	<entry>cbi_pci, cbi_pci_accel</entry>
+	<entry>cbi_pci, cbi_pci_unaccel</entry>
 	</row>
 	<row>
 	<entry>Measurement Computing (Computer Boards)</entry>
 	<entry>PCI-GPIB/300K</entry>
 	<entry>cb7210.ko</entry>
-	<entry>cbi_pci</entry>
+	<entry>cbi_pci_unaccel</entry>
 	</row>
 	<row>
 	<entry>Measurement Computing (Computer Boards)</entry>
 	<entry>PCMCIA-GPIB</entry>
 	<entry>cb7210.ko</entry>
-	<entry>cbi_pcmcia, cbi_pcmcia_accel</entry>
+	<entry>cbi_pcmcia, cbi_pcmcia_unaccel</entry>
 	</row>
 	<row>
 	<entry>National Instruments</entry>
@@ -684,7 +684,8 @@ Default is <option>--sre</option>.</para>
 	<entry>Quancom</entry>
 	<entry>PCIGPIB-1</entry>
 	<entry>ines_gpib.ko</entry>
-	<entry>ines_pci, ines_pci_unaccel</entry>
+	<entry>ines_pci or ines_pci_unaccel (Ines iGPIB 72010 chip),
+	cbi_pci_unaccel (Measurement Computing cb7210 chip)</entry>
 	</row>
 	</tbody>
 	</tgroup>
