@@ -1,7 +1,7 @@
 
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([linux-gpib], [3.2.05])
+AC_INIT([linux-gpib], [3.2.06])
 # libtool version: current:revision:age
 #
 # If the library source code has changed at all since the last update, then
@@ -15,7 +15,7 @@ AC_INIT([linux-gpib], [3.2.05])
 #
 # If any interfaces have been removed since the last public release, then set
 # age to 0.
-GPIB_SO_VERSION=0:3:0
+GPIB_SO_VERSION=1:0:1
 AC_CONFIG_SRCDIR([driver/sys/osfuncs.c])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
