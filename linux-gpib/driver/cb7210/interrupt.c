@@ -46,9 +46,8 @@ irqreturn_t cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp )
 		outl(bits, priv->amcc_iobase + INTCSR_REG );
 		break;
 	case PCI_CHIP_QUANCOM:
-		if((inb(nec7210_iobase(priv) + QUANCOM_IRQ_CONTROL_STATUS_REG) & QUANCOM_IRQ_ASSERTED_BIT) == 0)
-			return IRQ_NONE;
-		outb(QUANCOM_IRQ_ENABLE_BIT, nec7210_iobase(priv) + QUANCOM_IRQ_CONTROL_STATUS_REG );
+		if((inb(nec7210_iobase(priv) + QUANCOM_IRQ_CONTROL_STATUS_REG) & QUANCOM_IRQ_ASSERTED_BIT))
+			outb(QUANCOM_IRQ_ENABLE_BIT, nec7210_iobase(priv) + QUANCOM_IRQ_CONTROL_STATUS_REG );
 		break;
 	default:
 		break;
