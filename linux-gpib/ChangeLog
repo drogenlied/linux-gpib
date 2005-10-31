@@ -1,4 +1,22 @@
-Linux GPIB Package changelog
+Linux GPIB Package Release Notes
+
+3.2.06: Fixed gpib_config failures due to unintialized variable
+causing a memory allocation failure (Bernhard Heibler). Fixed
+TCL binding to ibrsv() (John Bradshaw).  Fixed race that could
+cause accellerated reads to time out for Ines based boards.
+Fixed bogus assertion of EOI with first byte written with
+accellerated writes on Ines based boards.
+Fixed section conflicts seen with some gcc versions during
+compilation.  Added support for NI GPIB-USB-HS adapter.  Fixed
+various bugs in ni_usb_gpib driver.  Fixed PCMCIA and udev
+support under 2.6.13 and later kernels.  Added Iba7BitEOS
+option to ibask(), to query if board supports 7 bit eos
+comparisons (breaks binary compatibility with older releases
+in the interface between library and kernel modules).  Fixed
+crashes on interrupting a read with the agilent_82357a driver.
+Added support for Quancom boards with cb7210 chip.  Fixed
+unreliable parallel polling with tnt4882 in one-chip mode.
+Random bug fixes.
 
 3.2.05: One-line compile fix for ines driver when pcmcia
 support is enabled (Robert Jordens).  Otherwise, identical
