@@ -220,7 +220,7 @@ static int __init gpib_common_init_module( void )
 	}
 	for(i = 0; i < GPIB_MAX_NUM_BOARDS; ++i)
 	{
-		class_device_create(gpib_class, MKDEV(IBMAJOR, i), NULL, "gpib%i", i);
+		CLASS_DEVICE_CREATE(gpib_class, 0, MKDEV(IBMAJOR, i), NULL, "gpib%i", i);
 	}
 	return 0;
 }
