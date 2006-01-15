@@ -92,7 +92,7 @@ illustration.
    1111       15    FC000
    ___________________________
 
-The default address is DC00, or select code 7.
+The default address is DC000, or select code 7.
 
 Switch 5 was defined to allow certain antique HP Vectra PCs to boot DOS off an
 external HPIB disk drive (when the appropriate software was installed). This
