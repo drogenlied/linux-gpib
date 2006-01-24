@@ -507,19 +507,28 @@ int ni_pci_attach(gpib_board_t *board, gpib_board_config_t config)
 
 	for(tnt_priv->mite = mite_devices; tnt_priv->mite; tnt_priv->mite = tnt_priv->mite->next)
 	{
-		if( mite_device_id( tnt_priv->mite ) == PCI_DEVICE_ID_NI_GPIB ||
-			mite_device_id( tnt_priv->mite ) == PCI_DEVICE_ID_NI_GPIB_PLUS ||
-			mite_device_id( tnt_priv->mite ) == PCI_DEVICE_ID_NI_PXIGPIB ||
-			mite_device_id( tnt_priv->mite ) == PCI_DEVICE_ID_NI_PMCGPIB )
+		short found_board;
+
+		if( board->pci_bus >=0 && board->pci_bus !=
+			tnt_priv->mite->pcidev->bus->number )
+			continue;
+		if( board->pci_slot >= 0 && board->pci_slot !=
+			PCI_SLOT( tnt_priv->mite->pcidev->devfn ) )
+			continue;
+		switch(mite_device_id(tnt_priv->mite))
 		{
-			if( board->pci_bus >=0 && board->pci_bus !=
-				tnt_priv->mite->pcidev->bus->number )
-				continue;
-			if( board->pci_slot >= 0 && board->pci_slot !=
-				PCI_SLOT( tnt_priv->mite->pcidev->devfn ) )
-				continue;
+		case PCI_DEVICE_ID_NI_GPIB:
+		case PCI_DEVICE_ID_NI_GPIB_PLUS:
+		case PCI_DEVICE_ID_NI_PXIGPIB:
+		case PCI_DEVICE_ID_NI_PMCGPIB:
+		case PCI_DEVICE_ID_NI_PCIEGPIB:
+			found_board = 1;
+			break;
+		default:
+			found_board = 0;
 			break;
 		}
+		if(found_board) break;
 	}
 	if(tnt_priv->mite == NULL)
 	{
@@ -694,24 +703,25 @@ void ni_isa_detach(gpib_board_t *board)
 			release_region((unsigned long)(nec_priv->iobase), atgpib_iosize);
 		}
 		if(tnt_priv->pnp_dev)
-		{			
+		{
 			pnp_device_detach(tnt_priv->pnp_dev);
 		}
 	}
 	tnt4882_free_private(board);
 }
 
-static const struct pci_device_id tnt4882_pci_table[] = 
+static const struct pci_device_id tnt4882_pci_table[] =
 {
 	{PCI_DEVICE(PCI_VENDOR_ID_NATINST, PCI_DEVICE_ID_NI_GPIB)},
 	{PCI_DEVICE(PCI_VENDOR_ID_NATINST, PCI_DEVICE_ID_NI_GPIB_PLUS)},
 	{PCI_DEVICE(PCI_VENDOR_ID_NATINST, PCI_DEVICE_ID_NI_PXIGPIB)},
 	{PCI_DEVICE(PCI_VENDOR_ID_NATINST, PCI_DEVICE_ID_NI_PMCGPIB)},
+	{PCI_DEVICE(PCI_VENDOR_ID_NATINST, PCI_DEVICE_ID_NI_PCIEGPIB)},
 	{ 0 }
 };
 MODULE_DEVICE_TABLE(pci, tnt4882_pci_table);
 
-static const struct pnp_device_id tnt4882_pnp_table[] __devinitdata = 
+static const struct pnp_device_id tnt4882_pnp_table[] __devinitdata =
 {
 	{.id = "NICC601"},
 	{.id = ""}
