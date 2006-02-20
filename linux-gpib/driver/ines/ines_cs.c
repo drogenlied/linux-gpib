@@ -175,10 +175,10 @@ static dev_link_t *gpib_attach(void)
 	memset(link, 0, sizeof(struct dev_link_t));
 
 	/* The io structure describes IO port mapping */
-	link->io.NumPorts1 =32;
+	link->io.NumPorts1 = 32;
 	link->io.Attributes1 = IO_DATA_PATH_WIDTH_8;
 	link->io.NumPorts2 = 0;
-	link->io.Attributes2 =0;
+	link->io.Attributes2 = 0;
 	link->io.IOAddrLines = 5;
 
 	/* Interrupt setup */
@@ -197,8 +197,6 @@ static dev_link_t *gpib_attach(void)
 	link->conf.Attributes = CONF_ENABLE_IRQ;
 	link->conf.Vcc = 50;
 	link->conf.IntType = INT_MEMORY_AND_IO;
-	link->conf.ConfigIndex = 0x30;
-	link->conf.Present = PRESENT_OPTION;
 
 	/* Allocate space for private device-specific data */
 	local = kmalloc(sizeof(local_info_t), GFP_KERNEL);
@@ -315,7 +313,7 @@ static void gpib_config(dev_link_t *link)
 		if (i != CS_SUCCESS) break;
 		link->conf.ConfigBase = parse.config.base;
 		link->conf.Present = parse.config.rmask[0];
-    } while (0);
+	} while (0);
 	if (i != CS_SUCCESS) {
 		cs_error(link->handle, ParseTuple, i);
 		link->state &= ~DEV_CONFIG_PENDING;
@@ -351,6 +349,7 @@ static void gpib_config(dev_link_t *link)
 					if (i == CS_SUCCESS) {
 					printk( KERN_DEBUG "ines_cs: base=0x%x len=%d registered\n",
 						link->io.BasePort1, link->io.NumPorts1 );
+					link->conf.ConfigIndex = parse.cftable_entry.index;
 					break;
 					}
 				}
@@ -647,6 +646,12 @@ gpib_interface_t ines_pcmcia_interface =
 	return_to_local: ines_return_to_local,
 };
 
+irqreturn_t ines_pcmcia_interrupt(int irq, void *arg, struct pt_regs *registerp)
+{
+	gpib_board_t *board = arg;
+	return ines_interrupt(board);
+}
+
 int ines_common_pcmcia_attach( gpib_board_t *board )
 {
 	ines_private_t *ines_priv;
@@ -669,7 +674,7 @@ int ines_common_pcmcia_attach( gpib_board_t *board )
 
 	nec7210_board_reset( nec_priv, board );
 
-	if(request_irq(dev_list->irq.AssignedIRQ, ines_interrupt, 0, "pcmcia-gpib", board))
+	if(request_irq(dev_list->irq.AssignedIRQ, ines_pcmcia_interrupt, 0, "pcmcia-gpib", board))
 	{
 		printk("gpib: can't request IRQ %d\n", dev_list->irq.AssignedIRQ);
 		return -1;
