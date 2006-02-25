@@ -5,7 +5,7 @@ DATADIR=/usr/share
 FXLOAD=fxload
 FXLOAD_OPTIONS=
 
-PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin
+PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin
 FIRMWARE=
 
 # pre-renumeration device IDs
