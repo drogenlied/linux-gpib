@@ -59,5 +59,13 @@ static inline int USB_BULK_MSG(struct usb_device *usb_dev, unsigned int pipe,
 #define USB_BULK_MSG usb_bulk_msg
 #endif
 
+static inline uint16_t USBID_TO_CPU(uint16_t id)
+{
+	#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,11)
+		return id;
+	#else
+		return le16_to_cpu(id);
+	#endif // LINUX_VERSION_CODE < KERNEL_VERSION(2,6,11)
+};
 #endif
 
