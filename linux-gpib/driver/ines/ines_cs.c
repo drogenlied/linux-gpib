@@ -182,7 +182,7 @@ static dev_link_t *gpib_attach(void)
 	link->io.IOAddrLines = 5;
 
 	/* Interrupt setup */
-	link->irq.Attributes = IRQ_TYPE_EXCLUSIVE | IRQ_FORCED_PULSE;
+	link->irq.Attributes = IRQ_TYPE_EXCLUSIVE;
 	link->irq.IRQInfo1 = IRQ_INFO2_VALID | IRQ_PULSE_ID;
 	if(irq_list[0] == -1)
 		link->irq.IRQInfo2 = irq_mask;
@@ -674,7 +674,7 @@ int ines_common_pcmcia_attach( gpib_board_t *board )
 
 	nec7210_board_reset( nec_priv, board );
 
-	if(request_irq(dev_list->irq.AssignedIRQ, ines_pcmcia_interrupt, 0, "pcmcia-gpib", board))
+	if(request_irq(dev_list->irq.AssignedIRQ, ines_pcmcia_interrupt, SA_SHIRQ, "pcmcia-gpib", board))
 	{
 		printk("gpib: can't request IRQ %d\n", dev_list->irq.AssignedIRQ);
 		return -1;
