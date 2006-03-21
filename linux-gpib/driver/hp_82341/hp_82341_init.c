@@ -442,10 +442,10 @@ int hp_82341_attach(gpib_board_t *board, gpib_board_config_t config)
 	hp_82341_private_t *hp_priv;
 	tms9914_private_t *tms_priv;
 	unsigned long start_addr;
-	board->status = 0;
 	int i;
 	int retval;
 	
+	board->status = 0;
 	if(hp_82341_allocate_private(board))
 		return -ENOMEM;
 	hp_priv = board->private_data;
