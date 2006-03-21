@@ -118,13 +118,14 @@ ssize_t my_ibrd( ibConf_t *conf, uint8_t *buffer, size_t count, size_t *bytes_re
 int ibrd(int ud, void *rd, long cnt)
 {
 	ibConf_t *conf;
-	ssize_t retval, bytes_read;
+	ssize_t retval;
+	size_t bytes_read;
 
 	conf = enter_library( ud );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 
-	retval = my_ibrd( conf, rd, cnt, &bytes_read);
+	retval = my_ibrd(conf, rd, cnt, &bytes_read);
 	setIbcnt(bytes_read);
 	if(retval < 0)
 	{
