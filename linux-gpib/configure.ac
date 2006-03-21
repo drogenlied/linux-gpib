@@ -77,7 +77,7 @@ AC_MSG_RESULT([ok])
 dnl get compile flags for modules from linux kernel source tree
 AC_MSG_CHECKING([Linux kernel compile flags])
 FLAGDIR=$(pwd)/util/linux_flags 
-make --quiet -C ${LINUX_SRCDIR} V=1 SUBDIRS=${FLAGDIR} LINUXDIR=${LINUX_SRCDIR} MODVERDIR=${FLAGDIR} modules 
+env LDFLAGS="" CFLAGS="" make --quiet -C ${LINUX_SRCDIR} V=1 SUBDIRS=${FLAGDIR} LINUXDIR=${LINUX_SRCDIR} MODVERDIR=${FLAGDIR} modules 
 if [[ $? != 0 ]]; then
 	AC_MSG_WARN([Failed to get compile flags from Linux kernel directory.])
 fi
