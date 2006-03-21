@@ -754,8 +754,6 @@ static int master_remote_and_lockout_test(int board, const struct program_option
 
 static int slave_remote_and_lockout_test(int board, const struct program_options *options)
 {
-	int i;
-	static const int timeout = 100;
 	int failed = 0;
 	
 	fprintf( stderr, "%s...", __FUNCTION__ );
