@@ -95,7 +95,7 @@ irqreturn_t nec7210_interrupt_have_status( gpib_board_t *board,
 		if( ( priv->auxa_bits & HR_HANDSHAKE_MASK ) == HR_HLDA )
 			set_bit( RFD_HOLDOFF_BN, &priv->state);
 	}
-
+#if 0
 	// check for dma read transfer complete
 	if(test_bit(DMA_READ_IN_PROGRESS_BN, &priv->state))
 	{
@@ -109,10 +109,11 @@ irqreturn_t nec7210_interrupt_have_status( gpib_board_t *board,
 			enable_dma(priv->dma_channel);
 		release_dma_lock( dma_flags );
 	}
-
+#endif
 	if((status1 & HR_DO))
 	{
 		set_bit(WRITE_READY_BN, &priv->state);
+#if 0
 		if(test_bit(DMA_WRITE_IN_PROGRESS_BN, &priv->state))	// write data, isa dma mode
 		{
 			// check if dma transfer is complete
@@ -130,6 +131,7 @@ irqreturn_t nec7210_interrupt_have_status( gpib_board_t *board,
 			}
 			release_dma_lock( dma_flags );
 		}
+#endif
 	}
 
 	// outgoing command can be sent
