@@ -18,6 +18,7 @@ program needs to be really, but useful for testing library functions.
  *                                                                         *
  ***************************************************************************/
 
+#include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -277,15 +278,23 @@ int prompt_for_action(void)
 	return -1;
 }
 
-int perform_read(int ud)
+int perform_read(int ud, int max_num_bytes)
 {
-	char buffer[1024] = {0};
+	char *buffer;
+	int buffer_size = max_num_bytes + 1;
+	buffer = malloc(buffer_size);
+	if(buffer == NULL) 
+	{
+		fprintf(stderr, "%s: failed to allocate buffer.\n", __FUNCTION__);
+		return -1;
+	}
+	memset(buffer, 0, buffer_size);
+	printf("trying to read %i bytes from device...\n", max_num_bytes);
 
-	printf("trying to read from device...\n");
-
-	ibrd(ud, buffer, sizeof(buffer) - 1);
+	ibrd(ud, buffer, buffer_size - 1);
 	printf("received string: '%s'\n"
 		"number of bytes read: %li\n", buffer, ThreadIbcntl());
+	free(buffer);
 	if(ThreadIbsta() & ERR)
 		return -1;
 	return 0;
@@ -312,6 +321,26 @@ int prompt_for_commands(int ud)
 		return -1;
 	}
 	return 0;
+}
+
+int prompt_for_read(int ud)
+{
+	char *buffer;
+	static const int buffer_size = 1024;
+	int max_num_bytes;
+	static const int default_num_bytes = 1024;
+	char *endptr;
+	
+	buffer = malloc(buffer_size);
+	if(buffer == NULL)
+		return -ENOMEM;
+	printf("enter maximum number of bytes to read [1024]: ");
+	fgets(buffer, buffer_size, stdin);
+	max_num_bytes = strtol(buffer, &endptr, 0);
+	if(endptr == buffer)
+		max_num_bytes = default_num_bytes;
+	free(buffer);
+	return perform_read(ud, max_num_bytes);
 }
 
 int prompt_for_write(int ud)
@@ -514,7 +543,7 @@ int main(int argc, char **argv)
 				get_lines( dev );
 				break;
 			case GPIB_READ:
-				perform_read( dev );
+				prompt_for_read(dev);
 				break;
 			case GPIB_REMOTE_ENABLE:
 				prompt_for_remote_enable( dev );
