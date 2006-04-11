@@ -2206,7 +2206,7 @@ static void ni_usb_driver_disconnect(struct usb_interface *interface)
 
 static struct usb_driver ni_usb_bus_driver =
 {
-	.owner = &__this_module,
+	.owner = THIS_MODULE,
 	.name = "ni_usb_gpib",
 	.probe = ni_usb_driver_probe,
 	.disconnect = ni_usb_driver_disconnect,
@@ -2221,7 +2221,7 @@ static int ni_usb_init_module(void)
 	for(i = 0; i < MAX_NUM_NI_USB_INTERFACES; i++)
 		ni_usb_driver_interfaces[i] = NULL;
 	usb_register(&ni_usb_bus_driver);
-	gpib_register_driver(&ni_usb_gpib_interface, &__this_module);
+	gpib_register_driver(&ni_usb_gpib_interface, THIS_MODULE);
 
 	return 0;
 }

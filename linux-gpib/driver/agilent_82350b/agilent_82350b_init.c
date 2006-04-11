@@ -370,8 +370,8 @@ MODULE_DEVICE_TABLE(pci, agilent_82350b_pci_table);
 
 static int agilent_82350b_init_module( void )
 {
-	gpib_register_driver(&agilent_82350b_unaccel_interface, &__this_module);
-	gpib_register_driver(&agilent_82350b_interface, &__this_module);
+	gpib_register_driver(&agilent_82350b_unaccel_interface, THIS_MODULE);
+	gpib_register_driver(&agilent_82350b_interface, THIS_MODULE);
 	return 0;
 }
 

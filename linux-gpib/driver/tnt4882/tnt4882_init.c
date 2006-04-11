@@ -730,17 +730,17 @@ MODULE_DEVICE_TABLE(pnp, tnt4882_pnp_table);
 
 static int tnt4882_init_module( void )
 {
-	gpib_register_driver(&ni_isa_interface, &__this_module);
-	gpib_register_driver(&ni_isa_accel_interface, &__this_module);
-	gpib_register_driver(&ni_nat4882_isa_interface, &__this_module);
-	gpib_register_driver(&ni_nat4882_isa_accel_interface, &__this_module);
-	gpib_register_driver(&ni_nec_isa_interface, &__this_module);
-	gpib_register_driver(&ni_nec_isa_accel_interface, &__this_module);
-	gpib_register_driver(&ni_pci_interface, &__this_module);
-	gpib_register_driver(&ni_pci_accel_interface, &__this_module);
+	gpib_register_driver(&ni_isa_interface, THIS_MODULE);
+	gpib_register_driver(&ni_isa_accel_interface, THIS_MODULE);
+	gpib_register_driver(&ni_nat4882_isa_interface, THIS_MODULE);
+	gpib_register_driver(&ni_nat4882_isa_accel_interface, THIS_MODULE);
+	gpib_register_driver(&ni_nec_isa_interface, THIS_MODULE);
+	gpib_register_driver(&ni_nec_isa_accel_interface, THIS_MODULE);
+	gpib_register_driver(&ni_pci_interface, THIS_MODULE);
+	gpib_register_driver(&ni_pci_accel_interface, THIS_MODULE);
 #if defined(GPIB_CONFIG_PCMCIA)
-	gpib_register_driver(&ni_pcmcia_interface, &__this_module);
-	gpib_register_driver(&ni_pcmcia_accel_interface, &__this_module);
+	gpib_register_driver(&ni_pcmcia_interface, THIS_MODULE);
+	gpib_register_driver(&ni_pcmcia_accel_interface, THIS_MODULE);
 	if( init_ni_gpib_cs() < 0 )
 		return -1;
 #endif

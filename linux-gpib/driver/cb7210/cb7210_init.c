@@ -576,17 +576,17 @@ static int cb7210_init_module( void )
 {
 	int err = 0;
 
-	gpib_register_driver(&cb_pci_interface, &__this_module);
-	gpib_register_driver(&cb_isa_interface, &__this_module);
-	gpib_register_driver(&cb_pci_accel_interface, &__this_module);
-	gpib_register_driver(&cb_pci_unaccel_interface, &__this_module);
-	gpib_register_driver(&cb_isa_accel_interface, &__this_module);
-	gpib_register_driver(&cb_isa_unaccel_interface, &__this_module);
+	gpib_register_driver(&cb_pci_interface, THIS_MODULE);
+	gpib_register_driver(&cb_isa_interface, THIS_MODULE);
+	gpib_register_driver(&cb_pci_accel_interface, THIS_MODULE);
+	gpib_register_driver(&cb_pci_unaccel_interface, THIS_MODULE);
+	gpib_register_driver(&cb_isa_accel_interface, THIS_MODULE);
+	gpib_register_driver(&cb_isa_unaccel_interface, THIS_MODULE);
 
 #if defined(GPIB_CONFIG_PCMCIA)
-	gpib_register_driver(&cb_pcmcia_interface, &__this_module);
-	gpib_register_driver(&cb_pcmcia_accel_interface, &__this_module);
-	gpib_register_driver(&cb_pcmcia_unaccel_interface, &__this_module);
+	gpib_register_driver(&cb_pcmcia_interface, THIS_MODULE);
+	gpib_register_driver(&cb_pcmcia_accel_interface, THIS_MODULE);
+	gpib_register_driver(&cb_pcmcia_unaccel_interface, THIS_MODULE);
 	err += cb_pcmcia_init_module();
 #endif
 	if(err)

@@ -661,14 +661,14 @@ static int __init ines_init_module( void )
 {
 	int err = 0;
 
-	gpib_register_driver(&ines_pci_interface, &__this_module);
-	gpib_register_driver(&ines_pci_unaccel_interface, &__this_module);
-	gpib_register_driver(&ines_pci_accel_interface, &__this_module);
-	gpib_register_driver(&ines_isa_interface, &__this_module);
+	gpib_register_driver(&ines_pci_interface, THIS_MODULE);
+	gpib_register_driver(&ines_pci_unaccel_interface, THIS_MODULE);
+	gpib_register_driver(&ines_pci_accel_interface, THIS_MODULE);
+	gpib_register_driver(&ines_isa_interface, THIS_MODULE);
 #if defined(GPIB_CONFIG_PCMCIA)
-	gpib_register_driver(&ines_pcmcia_interface, &__this_module);
-	gpib_register_driver(&ines_pcmcia_unaccel_interface, &__this_module);
-	gpib_register_driver(&ines_pcmcia_accel_interface, &__this_module);
+	gpib_register_driver(&ines_pcmcia_interface, THIS_MODULE);
+	gpib_register_driver(&ines_pcmcia_unaccel_interface, THIS_MODULE);
+	gpib_register_driver(&ines_pcmcia_accel_interface, THIS_MODULE);
 	err += ines_pcmcia_init_module();
 #endif
 	if(err)

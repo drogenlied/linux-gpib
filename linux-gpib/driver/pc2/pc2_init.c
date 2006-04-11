@@ -539,10 +539,10 @@ void pc2_2a_detach( gpib_board_t *board )
 
 static int pc2_init_module( void )
 {
-	gpib_register_driver(&pc2_interface, &__this_module);
-	gpib_register_driver(&pc2a_interface, &__this_module);
-	gpib_register_driver(&pc2a_cb7210_interface, &__this_module);
-	gpib_register_driver(&pc2_2a_interface, &__this_module);
+	gpib_register_driver(&pc2_interface, THIS_MODULE);
+	gpib_register_driver(&pc2a_interface, THIS_MODULE);
+	gpib_register_driver(&pc2a_cb7210_interface, THIS_MODULE);
+	gpib_register_driver(&pc2_2a_interface, THIS_MODULE);
 
 	return 0;
 }

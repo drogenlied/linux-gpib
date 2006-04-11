@@ -575,8 +575,8 @@ MODULE_DEVICE_TABLE(pnp, hp_82341_pnp_table);
 
 static int hp_82341_init_module( void )
 {
-	gpib_register_driver(&hp_82341_unaccel_interface, &__this_module);
-	gpib_register_driver(&hp_82341_interface, &__this_module);
+	gpib_register_driver(&hp_82341_unaccel_interface, THIS_MODULE);
+	gpib_register_driver(&hp_82341_interface, THIS_MODULE);
 	return 0;
 }
 

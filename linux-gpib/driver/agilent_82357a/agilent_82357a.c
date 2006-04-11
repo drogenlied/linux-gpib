@@ -1494,7 +1494,7 @@ static void agilent_82357a_driver_disconnect(struct usb_interface *interface)
 
 static struct usb_driver agilent_82357a_bus_driver =
 {
-	.owner = &__this_module,
+	.owner = THIS_MODULE,
 	.name = "agilent_82357a_gpib",
 	.probe = agilent_82357a_driver_probe,
 	.disconnect = agilent_82357a_driver_disconnect,
@@ -1509,7 +1509,7 @@ static int agilent_82357a_init_module(void)
 	for(i = 0; i < MAX_NUM_82357A_INTERFACES; ++i)
 		agilent_82357a_driver_interfaces[i] = NULL;
 	usb_register(&agilent_82357a_bus_driver);
-	gpib_register_driver(&agilent_82357a_gpib_interface, &__this_module);
+	gpib_register_driver(&agilent_82357a_gpib_interface, THIS_MODULE);
 
 	return 0;
 }

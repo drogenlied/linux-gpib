@@ -314,7 +314,7 @@ MODULE_DEVICE_TABLE(pci, cec_pci_table);
 
 int cec_init_module(void)
 {
-	gpib_register_driver(&cec_pci_interface, &__this_module);
+	gpib_register_driver(&cec_pci_interface, THIS_MODULE);
 
 	return 0;
 }
