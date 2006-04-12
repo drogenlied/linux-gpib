@@ -213,9 +213,9 @@ int prompt_for_action(void)
 			"\tw(a)it for an event\n"
 			"\twrite (c)ommand bytes to bus (system controller only)\n"
 			"\tchange remote (e)nable line (system controller only)\n"
-			"\t(g)o to standby (release ATN line)\n"
+			"\t(g)o to standby (release ATN line, system controller only)\n"
 			"\tsend (i)nterface clear (system controller only)\n"
-			"\tta(k)e control (assert ATN line)\n"
+			"\tta(k)e control (assert ATN line, system controller only)\n"
 			"\tget bus (l)ine status (board only)\n"
  			"\t(q)uit\n"
 			"\t(r)ead string\n"
@@ -552,7 +552,7 @@ int prompt_for_take_control(int ud)
 	status = ibcac(ud, synchronous);
 	if(status & ERR)
 		return -1;
-	printf("ATN asserted.");
+	printf("ATN asserted.\n");
 	return 0;
 }
 
@@ -600,6 +600,7 @@ int main(int argc, char **argv)
 				break;
 			case GPIB_TAKE_CONTROL:
 				prompt_for_take_control(dev);
+				break;
 			case GPIB_TIMEOUT:
 				prompt_for_timeout( dev );
 				break;
