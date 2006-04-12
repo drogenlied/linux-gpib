@@ -151,7 +151,8 @@ static ssize_t generic_write( gpib_board_t *board, uint8_t *buffer, size_t lengt
 			schedule();
 	}
 	// wait last byte has been sent
-	retval = write_wait( board, tnt_priv, 1 );
+	if(retval == 0)
+		retval = write_wait(board, tnt_priv, 1);
 
 	tnt_writeb( tnt_priv, STOP, CMDR );
 	udelay(1);
