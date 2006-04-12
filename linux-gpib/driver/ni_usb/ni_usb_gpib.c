@@ -33,10 +33,11 @@ static int ni_usb_set_interrupt_monitor(gpib_board_t *board, unsigned int monito
 
 static DECLARE_MUTEX(ni_usb_hotplug_lock);
 
-//calculates a reasonable timeout in jiffies that can be passed to usb functions
-static inline unsigned long ni_usb_timeout_jiffies(unsigned int usec)
+//calculates a reasonable timeout in that can be passed to usb functions
+static inline unsigned long ni_usb_timeout_msecs(unsigned int usec)
 {
-	return (2 + usec / 900000) * HZ;
+	if(usec == 0) return 0;
+	return 2000 + usec / 900;
 };
 // returns timeout code byte for use in ni-usb-b instructions
 static unsigned short ni_usb_timeout_code(unsigned int usec)
@@ -117,10 +118,13 @@ int ni_usb_nonblocking_send_bulk_msg(ni_usb_private_t *ni_priv, void *data, int 
 	usb_fill_bulk_urb(ni_priv->bulk_urb, usb_dev, out_pipe, data, data_length,
 		ni_usb_bulk_complete, &context);
 	init_timer(&timer);
-	timer.expires = jiffies + msecs_to_jiffies(timeout_msecs);
-	timer.function = ni_usb_timeout_handler;
-	timer.data = (unsigned long) &context;
-	add_timer(&timer);
+	if(timeout_msecs)
+	{
+		timer.expires = jiffies + msecs_to_jiffies(timeout_msecs);
+		timer.function = ni_usb_timeout_handler;
+		timer.data = (unsigned long) &context;
+		add_timer(&timer);
+	}
 	//printk("%s: submitting urb\n", __FUNCTION__);
 	retval = usb_submit_urb(ni_priv->bulk_urb, GFP_KERNEL);
 	if(retval)
@@ -164,14 +168,14 @@ static int ni_usb_send_bulk_msg(ni_usb_private_t *ni_priv, void *data, int data_
 	int retval;
 	int timeout_msecs_remaining = timeout_msecs;
 	retval = ni_usb_nonblocking_send_bulk_msg(ni_priv, data, data_length, actual_data_length, timeout_msecs_remaining);
-	while(retval == -EAGAIN && timeout_msecs_remaining > 0)
+	while(retval == -EAGAIN && (timeout_msecs == 0 || timeout_msecs_remaining > 0))
 	{
 		if(msleep_interruptible(1))
 			return -ERESTARTSYS;
 		retval = ni_usb_nonblocking_send_bulk_msg(ni_priv, data, data_length, actual_data_length, timeout_msecs_remaining);
-		--timeout_msecs_remaining;
+		if(timeout_msecs != 0) --timeout_msecs_remaining;
 	}
-	if(timeout_msecs_remaining <= 0) return -ETIMEDOUT;
+	if(timeout_msecs != 0 && timeout_msecs_remaining <= 0) return -ETIMEDOUT;
 	return retval;
 }
 
@@ -210,10 +214,13 @@ int ni_usb_nonblocking_receive_bulk_msg(ni_usb_private_t *ni_priv, void *data, i
 	usb_fill_bulk_urb(ni_priv->bulk_urb, usb_dev, in_pipe, data, data_length,
 		ni_usb_bulk_complete, &context);
 	init_timer(&timer);
-	timer.expires = jiffies + msecs_to_jiffies(timeout_msecs);
-	timer.function = ni_usb_timeout_handler;
-	timer.data = (unsigned long) &context;
-	add_timer(&timer);
+	if(timeout_msecs)
+	{
+		timer.expires = jiffies + msecs_to_jiffies(timeout_msecs);
+		timer.function = ni_usb_timeout_handler;
+		timer.data = (unsigned long) &context;
+		add_timer(&timer);
+	}
 	//printk("%s: submitting urb\n", __FUNCTION__);
 	retval = usb_submit_urb(ni_priv->bulk_urb, GFP_KERNEL);
 	if(retval)
@@ -257,14 +264,14 @@ static int ni_usb_receive_bulk_msg(ni_usb_private_t *ni_priv, void *data, int da
 	int retval;
 	int timeout_msecs_remaining = timeout_msecs;
 	retval = ni_usb_nonblocking_receive_bulk_msg(ni_priv, data, data_length, actual_data_length, timeout_msecs_remaining);
-	while(retval == -EAGAIN && timeout_msecs_remaining > 0)
+	while(retval == -EAGAIN && (timeout_msecs == 0 || timeout_msecs_remaining > 0))
 	{
 		if(msleep_interruptible(1))
 			return -ERESTARTSYS;
 		retval = ni_usb_nonblocking_receive_bulk_msg(ni_priv, data, data_length, actual_data_length, timeout_msecs_remaining);
-		--timeout_msecs_remaining;
+		if(timeout_msecs != 0) --timeout_msecs_remaining;
 	}
-	if(timeout_msecs_remaining <= 0) return -ETIMEDOUT;
+	if(timeout_msecs && timeout_msecs_remaining <= 0) return -ETIMEDOUT;
 	return retval;
 }
 
@@ -657,7 +664,7 @@ ssize_t ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *en
 	in_data = kmalloc(in_data_length, GFP_KERNEL);
 	if(in_data == NULL) return -ENOMEM;
 	retval = ni_usb_receive_bulk_msg(ni_priv, in_data, in_data_length, &bytes_read,
-		jiffies_to_msecs(ni_usb_timeout_jiffies(board->usec_timeout)));
+		ni_usb_timeout_msecs(board->usec_timeout));
 	if(retval)
 	{
 		printk("%s: %s: ni_usb_receive_bulk_msg returned %i, bytes_read=%i\n", __FILE__, __FUNCTION__, retval, bytes_read);
@@ -743,7 +750,7 @@ static ssize_t ni_usb_write(gpib_board_t *board, uint8_t *buffer, size_t length,
 		out_data[i++] = 0x0;
 	i += ni_usb_bulk_termination(&out_data[i]);
 	retval = ni_usb_send_bulk_msg(ni_priv, out_data, i, &bytes_written,
-		jiffies_to_msecs(ni_usb_timeout_jiffies(board->usec_timeout)));
+		ni_usb_timeout_msecs(board->usec_timeout));
 	kfree(out_data);
 	if(retval || bytes_written != i)
 	{
@@ -754,7 +761,7 @@ static ssize_t ni_usb_write(gpib_board_t *board, uint8_t *buffer, size_t length,
 	in_data = kmalloc(in_data_length, GFP_KERNEL);
 	if(in_data == NULL) return -ENOMEM;
 	retval = ni_usb_receive_bulk_msg(ni_priv, in_data, in_data_length, &bytes_read,
-		jiffies_to_msecs(ni_usb_timeout_jiffies(board->usec_timeout)));
+		ni_usb_timeout_msecs(board->usec_timeout));
 	if(retval || bytes_read != 12)
 	{
 		printk("%s: %s: ni_usb_receive_bulk_msg returned %i, bytes_read=%i\n", __FILE__, __FUNCTION__, retval, bytes_read);
@@ -813,7 +820,7 @@ ssize_t ni_usb_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 		out_data[i++] = 0x0;
 	i += ni_usb_bulk_termination(&out_data[i]);
 	retval = ni_usb_send_bulk_msg(ni_priv, out_data, i, &bytes_written,
-		jiffies_to_msecs(ni_usb_timeout_jiffies(board->usec_timeout)));
+		ni_usb_timeout_msecs(board->usec_timeout));
 	kfree(out_data);
 	if(retval || bytes_written != i)
 	{
@@ -831,7 +838,7 @@ ssize_t ni_usb_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 	in_data = kmalloc(in_data_length, GFP_KERNEL);
 	if(in_data == NULL) return -ENOMEM;
 	retval = ni_usb_receive_bulk_msg(ni_priv, in_data, in_data_length, &bytes_read,
-		jiffies_to_msecs(ni_usb_timeout_jiffies(board->usec_timeout)));
+		ni_usb_timeout_msecs(board->usec_timeout));
 	if(retval || bytes_read != 12)
 	{
 		printk("%s: %s: ni_usb_receive_bulk_msg returned %i, bytes_read=%i\n", __FILE__, __FUNCTION__, retval, bytes_read);
