@@ -541,9 +541,19 @@ int prompt_for_take_control(int ud)
 {
 	int status;
 	int synchronous;
+	char *buffer;
+	static const int buffer_size = 1024;
+	char *endptr;
 
+	buffer = malloc(buffer_size);
+	if(buffer == NULL)
+		return -ENOMEM;
 	printf("Enter '1' to assert ATN synchronously, or '0' for asynchronously [0]: ");
-	scanf("%i", &synchronous);
+	fgets(buffer, buffer_size, stdin);
+	synchronous = strtol(buffer, &endptr, 0);
+	if(endptr == buffer)
+		synchronous = 0;
+	free(buffer);
 	printf("Taking control ");
 	if(synchronous)
 		printf("synchronously...\n");
