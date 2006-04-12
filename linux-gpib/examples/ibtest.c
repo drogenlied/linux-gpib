@@ -41,7 +41,9 @@ enum Action
 	GPIB_TIMEOUT,
 	GPIB_WAIT,
 	GPIB_WRITE,
-	GPIB_LINE_STATUS
+	GPIB_LINE_STATUS,
+	GPIB_TAKE_CONTROL,
+	GPIB_GO_TO_STANDBY
 };
 
 typedef struct
@@ -211,7 +213,9 @@ int prompt_for_action(void)
 			"\tw(a)it for an event\n"
 			"\twrite (c)ommand bytes to bus (system controller only)\n"
 			"\tchange remote (e)nable line (system controller only)\n"
+			"\t(g)o to standby (release ATN line)\n"
 			"\tsend (i)nterface clear (system controller only)\n"
+			"\tta(k)e control (assert ATN line)\n"
 			"\tget bus (l)ine status (board only)\n"
  			"\t(q)uit\n"
 			"\t(r)ead string\n"
@@ -237,6 +241,10 @@ int prompt_for_action(void)
 			case 'e':
 				return GPIB_REMOTE_ENABLE;
 				break;
+			case 'G':
+			case 'g':
+				return GPIB_GO_TO_STANDBY;
+				break;
 			case 'L':
 			case 'l':
 				return GPIB_LINE_STATUS;
@@ -244,6 +252,10 @@ int prompt_for_action(void)
 			case 'I':
 			case 'i':
 				return GPIB_IFC;
+				break;
+			case 'K':
+			case 'k':
+				return GPIB_TAKE_CONTROL;
 				break;
 			case 'q':
 			case 'Q':
@@ -500,6 +512,16 @@ int interface_clear( int ud )
 	return 0;
 }
 
+int go_to_standby(int ud)
+{
+	if(ibgts(ud, 0) & ERR)
+	{
+		return -1;
+	}
+	printf("ATN released.\n" );
+	return 0;
+}
+
 int prompt_for_remote_enable( int ud )
 {
 	int status;
@@ -512,6 +534,25 @@ int prompt_for_remote_enable( int ud )
 	if( status & ERR )
 		return -1;
 
+	return 0;
+}
+
+int prompt_for_take_control(int ud)
+{
+	int status;
+	int synchronous;
+
+	printf("Enter '1' to assert ATN synchronously, or '0' for asynchronously [0]: ");
+	scanf("%i", &synchronous);
+	printf("Taking control ");
+	if(synchronous)
+		printf("synchronously...\n");
+	else
+		printf("asynchronously...\n");
+	status = ibcac(ud, synchronous);
+	if(status & ERR)
+		return -1;
+	printf("ATN asserted.");
 	return 0;
 }
 
@@ -536,8 +577,11 @@ int main(int argc, char **argv)
 			case GPIB_COMMAND:
 				prompt_for_commands(dev);
 				break;
+			case GPIB_GO_TO_STANDBY:
+				go_to_standby(dev);
+				break;
 			case GPIB_IFC:
-				interface_clear( dev );
+				interface_clear(dev);
 				break;
 			case GPIB_LINE_STATUS:
 				get_lines( dev );
@@ -554,6 +598,8 @@ int main(int argc, char **argv)
 			case GPIB_SERIAL_POLL:
 				do_serial_poll( dev );
 				break;
+			case GPIB_TAKE_CONTROL:
+				prompt_for_take_control(dev);
 			case GPIB_TIMEOUT:
 				prompt_for_timeout( dev );
 				break;
