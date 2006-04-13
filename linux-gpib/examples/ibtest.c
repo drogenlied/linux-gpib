@@ -43,7 +43,8 @@ enum Action
 	GPIB_WRITE,
 	GPIB_LINE_STATUS,
 	GPIB_TAKE_CONTROL,
-	GPIB_GO_TO_STANDBY
+	GPIB_GO_TO_STANDBY,
+	GPIB_EOT
 };
 
 typedef struct
@@ -217,6 +218,7 @@ int prompt_for_action(void)
 			"\tsend (i)nterface clear (system controller only)\n"
 			"\tta(k)e control (assert ATN line, system controller only)\n"
 			"\tget bus (l)ine status (board only)\n"
+			"\tchange end (o)f transmission configuration\n"
  			"\t(q)uit\n"
 			"\t(r)ead string\n"
 			"\tperform (s)erial poll (device only)\n"
@@ -256,6 +258,10 @@ int prompt_for_action(void)
 			case 'K':
 			case 'k':
 				return GPIB_TAKE_CONTROL;
+				break;
+			case 'o':
+			case 'O':
+				return GPIB_EOT;
 				break;
 			case 'q':
 			case 'Q':
@@ -566,6 +572,33 @@ int prompt_for_take_control(int ud)
 	return 0;
 }
 
+int prompt_for_eot(int ud)
+{
+	int status;
+	int assert_eoi;
+	char *buffer;
+	static const int buffer_size = 1024;
+	char *endptr;
+
+	buffer = malloc(buffer_size);
+	if(buffer == NULL)
+		return -ENOMEM;
+	printf("Enter '1' to assert EOI with the last byte of writes, or '0' otherwise [1]: ");
+	fgets(buffer, buffer_size, stdin);
+	assert_eoi = strtol(buffer, &endptr, 0);
+	if(endptr == buffer)
+		assert_eoi = 1;
+	free(buffer);
+	status = ibeot(ud, assert_eoi);
+	if(status & ERR)
+		return -1;
+	printf("EOI will ");
+	if(assert_eoi == 0)
+		printf("not ");
+	printf("be asserted with the last byte of writes.\n");
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	int dev;
@@ -586,6 +619,9 @@ int main(int argc, char **argv)
 		{
 			case GPIB_COMMAND:
 				prompt_for_commands(dev);
+				break;
+			case GPIB_EOT:
+				prompt_for_eot(dev);
 				break;
 			case GPIB_GO_TO_STANDBY:
 				go_to_standby(dev);
