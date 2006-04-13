@@ -447,7 +447,12 @@ static int read_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
 		read_ret = ibrd(board, board->buffer, (board->buffer_length < remain) ? board->buffer_length :
 			remain, &end_flag, &nbytes);
 		if(nbytes == 0) break;
-		copy_to_user(userbuf, board->buffer, nbytes);
+		retval = copy_to_user(userbuf, board->buffer, nbytes);
+		if(retval)
+		{
+			retval = -EFAULT;
+			break;
+		}
 		remain -= nbytes;
 		userbuf += nbytes;
 		if(read_ret < 0) break;
@@ -455,7 +460,9 @@ static int read_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
 	read_cmd.count -= remain;
 	read_cmd.end = end_flag;
 
-	retval = copy_to_user((void*) arg, &read_cmd, sizeof(read_cmd));
+
+	if(retval == 0)
+		retval = copy_to_user((void*) arg, &read_cmd, sizeof(read_cmd));
 	desc->io_in_progress = 0;
 	wake_up_interruptible( &board->wait );
 	if(retval) return -EFAULT;
@@ -490,10 +497,12 @@ static int command_ioctl( gpib_file_private_t *file_priv,
 	desc->io_in_progress = 1;
 	while( remain > 0 )
 	{
-		copy_from_user(board->buffer, userbuf, (board->buffer_length < remain) ?
+		retval = copy_from_user(board->buffer, userbuf, (board->buffer_length < remain) ?
 			board->buffer_length : remain );
-		retval = ibcmd(board, board->buffer, (board->buffer_length < remain) ?
-			board->buffer_length : remain );
+		if(retval) retval = -EFAULT;
+		else
+			retval = ibcmd(board, board->buffer, (board->buffer_length < remain) ?
+				board->buffer_length : remain );
 		if(retval < 0)
 		{
 			desc->io_in_progress = 0;
@@ -546,10 +555,12 @@ static int write_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
 	{
 		int send_eoi;
 		send_eoi = remain <= board->buffer_length && write_cmd.end;
-		copy_from_user(board->buffer, userbuf, (board->buffer_length < remain) ?
+		retval = copy_from_user(board->buffer, userbuf, (board->buffer_length < remain) ?
 			board->buffer_length : remain );
-		ret = ibwrt(board, board->buffer, (board->buffer_length < remain) ?
-			board->buffer_length : remain, send_eoi);
+		if(retval) ret = -EFAULT;
+		else
+			ret = ibwrt(board, board->buffer, (board->buffer_length < remain) ?
+				board->buffer_length : remain, send_eoi);
 		if(ret < 0)
 		{
 			desc->io_in_progress = 0;
