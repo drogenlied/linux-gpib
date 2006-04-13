@@ -20,7 +20,7 @@
 
 #include <linux/types.h>
 
-#include "gpib_user.h"
+#include "gpib/gpib_user.h"
 #include "gpib_types.h"
 #include "gpib_proto.h"
 #include "gpib_ioctl.h"
