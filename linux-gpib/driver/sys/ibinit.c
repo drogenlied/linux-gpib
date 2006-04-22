@@ -17,6 +17,7 @@
 
 #include "ibsys.h"
 #include "autopoll.h"
+#include <linux/config.h>
 #include <linux/vmalloc.h>
 #include <linux/smp_lock.h>
 
@@ -96,6 +97,9 @@ int ibonline(gpib_board_t *board, gpib_board_config_t config)
 		printk("gpib: interface attach failed\n");
 		return retval;
 	}
+	/* nios2nommu on 2.6.11 uclinux kernel has weird problems 
+	with autospoll thread causing huge slowdowns */
+#ifndef CONFIG_NIOS2
 	board->autospoll_pid = kernel_thread(autospoll_thread, board, 0);
 	if(board->autospoll_pid < 0)
 	{
@@ -103,6 +107,7 @@ int ibonline(gpib_board_t *board, gpib_board_config_t config)
 		board->interface->detach(board);
 		return board->autospoll_pid;
 	}
+#endif
 	board->online = 1;
 	GPIB_DPRINTK( "gpib: board online\n" );
 
