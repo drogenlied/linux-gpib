@@ -99,12 +99,14 @@ if test "$DEPMOD" == "true" ; then
 	AC_MSG_WARN([unable to find the 'depmod' program.  Is it in your path?])
 fi
 
-AM_PATH_PYTHON()
-PYTHON_MAJOR_VERSION=$(echo $PYTHON_VERSION | cut -d. -f1 )
-PYTHON_MINOR_VERSION=$(echo $PYTHON_VERSION | cut -d. -f2 )
-if (( $PYTHON_MAJOR_VERSION < 2 )); then
-	AC_MSG_WARN([python version less than 2.0, disabling python binding])
-	BIND_PYTHON="no"
+if test "$BIND_PYTHON" == "yes"; then
+	AM_PATH_PYTHON()
+	PYTHON_MAJOR_VERSION=$(echo $PYTHON_VERSION | cut -d. -f1 )
+	PYTHON_MINOR_VERSION=$(echo $PYTHON_VERSION | cut -d. -f2 )
+	if (( $PYTHON_MAJOR_VERSION < 2 )); then
+		AC_MSG_WARN([python version less than 2.0, disabling python binding])
+		BIND_PYTHON="no"
+	fi
 fi
 AC_PATH_PROG([PERL], [perl], [no], [])
 if test "$PERL" == "no"; then
