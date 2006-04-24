@@ -464,8 +464,9 @@ int prompt_for_wait( int ud )
 
 	printf( "Possible wait bits:\n"
 		"\t0x%x timeout\n"
-		"\t0x%x device requesting service\n",
-		TIMO, RQS );
+		"\t0x%x device requesting service\n"
+		"\t0x%x board serial polled\n",
+			TIMO, RQS, SPOLL);
 	printf("Enter wait mask: ");
 	scanf( "%i", &wait_mask );
 
@@ -678,18 +679,22 @@ void fprint_status( FILE* filep, char *msg )
 	fprintf( filep, "%s\n", msg);
 
 	fprintf( filep, "ibsta = 0x%x  < ", ThreadIbsta() );
-	if ( ThreadIbsta() & ERR )  fprintf( filep, "ERR " );
-	if ( ThreadIbsta() & TIMO ) fprintf( filep, "TIMO " );
-	if ( ThreadIbsta() & END )  fprintf( filep, "END " );
-	if ( ThreadIbsta() & SRQI ) fprintf( filep, "SRQI " );
-	if ( ThreadIbsta() & RQS ) fprintf( filep, "RQS " );
-	if ( ThreadIbsta() & CMPL ) fprintf( filep, "CMPL " );
-	if ( ThreadIbsta() & CIC )  fprintf( filep, "CIC " );
-	if ( ThreadIbsta() & REM )  fprintf( filep, "REM " );
-	if ( ThreadIbsta() & LOK )  fprintf( filep, "LOK " );
-	if ( ThreadIbsta() & ATN )  fprintf( filep, "ATN " );
-	if ( ThreadIbsta() & TACS ) fprintf( filep, "TACS " );
-	if ( ThreadIbsta() & LACS ) fprintf( filep, "LACS " );
+	if(ThreadIbsta() & ERR)  fprintf(filep, "ERR ");
+	if(ThreadIbsta() & TIMO) fprintf(filep, "TIMO ");
+	if(ThreadIbsta() & END)  fprintf(filep, "END ");
+	if(ThreadIbsta() & SRQI) fprintf(filep, "SRQI ");
+	if(ThreadIbsta() & RQS) fprintf(filep, "RQS ");
+	if(ThreadIbsta() & SPOLL) fprintf(filep, "SPOLL ");
+	if(ThreadIbsta() & EVENT) fprintf(filep, "EVENT ");
+	if(ThreadIbsta() & CMPL) fprintf(filep, "CMPL ");
+	if(ThreadIbsta() & LOK) fprintf(filep, "LOK ");
+	if(ThreadIbsta() & REM)  fprintf(filep, "REM ");
+	if(ThreadIbsta() & CIC)  fprintf(filep, "CIC ");
+	if(ThreadIbsta() & ATN)  fprintf(filep, "ATN ");
+	if(ThreadIbsta() & TACS) fprintf(filep, "TACS ");
+	if(ThreadIbsta() & LACS) fprintf(filep, "LACS ");
+	if(ThreadIbsta() & DCAS) fprintf(filep, "DCAS ");
+	if(ThreadIbsta() & DTAS) fprintf(filep, "DTAS ");
 	fprintf( filep, ">\n" );
 
 	fprintf( filep,"iberr= %d\n", iberr);
