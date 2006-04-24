@@ -63,9 +63,6 @@ enum ibsta_bits
 	ERR = ( 1 << ERR_NUM )	/* Function call terminated on error */
 };
 
-/* status bits that drivers are responsible for */
-static const int DRIVERBITS = ( SRQI | LOK | REM | CIC | ATN | TACS | LACS | DTAS | DCAS );
-
 static const int device_status_mask = ERR | TIMO | END | CMPL | RQS;
 static const int board_status_mask = ERR | TIMO | END | CMPL | SPOLL |
 	EVENT | LOK | REM | CIC | ATN | TACS | LACS | DTAS | DCAS | SRQI;
