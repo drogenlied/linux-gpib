@@ -106,7 +106,7 @@ int ibwait( int ud, int mask )
 	if( conf == NULL )
 		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
 
-	clear_mask = mask & ( DTAS | DCAS );
+	clear_mask = mask & ( DTAS | DCAS | SPOLL);
 	retval = my_wait( conf, mask, clear_mask, 0, &status );
 	if( retval < 0 )
 		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );

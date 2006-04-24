@@ -250,10 +250,13 @@ int ibconfig( int ud, int option, int value )
 				return exit_library( ud, 0 );
 				break;
 			case IbcSPollBit:
-				// XXX
-				fprintf( stderr, "libgpib: SPOLL bit support not implemented\n");
-				setIberr( ECAP );
-				return exit_library( ud, 1 );
+/*				fprintf( stderr, "libgpib: SPOLL bit support not implemented\n");
+				setIberr( ECAP );*/
+				/* we currently have some support for SPOLL in the nec7210 driver,
+				which is always enabled.  It can only detect the occurance of
+				a serial poll if the board was requesting service when the
+				poll occurred. */
+				return exit_library(ud, 0);
 				break;
 			case IbcSendLLO:
 				// XXX

@@ -72,14 +72,21 @@ void nec7210_parallel_poll_response( gpib_board_t *board, nec7210_private_t *pri
 
 void nec7210_serial_poll_response(gpib_board_t *board, nec7210_private_t *priv, uint8_t status)
 {
-//	write_byte(priv, 0, SPMR);		/* clear current serial poll status */
-	// XXX check pend bit before writing?
-	write_byte(priv, status, SPMR);		/* set new status to v */
+	unsigned long flags;
+
+	spin_lock_irqsave( &board->spinlock, flags );
+	if(status & request_service_bit)
+		priv->srq_pending = 1;
+	else
+		priv->srq_pending = 0;
+	clear_bit(SPOLL_NUM, &board->status);
+	write_byte(priv, status, SPMR);
+	spin_unlock_irqrestore( &board->spinlock, flags );
 }
 
 uint8_t nec7210_serial_poll_status( gpib_board_t *board, nec7210_private_t *priv )
 {
-	return read_byte( priv, SPSR );
+	return read_byte(priv, SPSR);
 }
 
 void nec7210_primary_address(const gpib_board_t *board, nec7210_private_t *priv, unsigned int address)
@@ -111,6 +118,7 @@ void nec7210_secondary_address(const gpib_board_t *board, nec7210_private_t *pri
 unsigned int update_status_nolock( gpib_board_t *board, nec7210_private_t *priv )
 {
 	int address_status_bits;
+	uint8_t spoll_status;
 
 	if(priv == NULL) return 0;
 
@@ -138,7 +146,12 @@ unsigned int update_status_nolock( gpib_board_t *board, nec7210_private_t *priv 
 	{
 		set_bit(ATN_NUM, &board->status);
 	}
-
+	spoll_status = nec7210_serial_poll_status(board, priv);
+	if(priv->srq_pending && (spoll_status & request_service_bit) == 0)
+	{
+		priv->srq_pending = 0;
+		set_bit(SPOLL_NUM, &board->status);
+	}
 //	GPIB_DPRINTK( "status 0x%x, state 0x%x\n", board->status, priv->state );
 
 	/* we rely on the interrupt handler to set the

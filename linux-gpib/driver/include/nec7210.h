@@ -48,6 +48,7 @@ struct nec7210_private_struct
 	uint8_t (*read_byte)(nec7210_private_t *priv, unsigned int register_number);
 	void (*write_byte)(nec7210_private_t *priv, uint8_t byte, unsigned int register_number);
 	enum nec7210_chipset type;
+	unsigned srq_pending : 1;
 };
 
 static inline void init_nec7210_private( nec7210_private_t *priv )
