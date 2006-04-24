@@ -295,8 +295,7 @@ int ibask( int ud, int option, int *value )
 				return exit_library( ud, 0 );
 				break;
 			case IbaSPollBit:
-				// XXX no support for SPOLL status yet
-				*value = 0;
+				*value = 1;
 				return exit_library( ud, 0 );
 				break;
 			case IbaSendLLO:
