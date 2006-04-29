@@ -32,19 +32,20 @@ void fprint_status( FILE* filep, char *msg  );
 enum Action
 {
 	GPIB_COMMAND,
+	GPIB_EOT,
+	GPIB_GO_TO_LOCAL,
+	GPIB_GO_TO_STANDBY,
 	GPIB_IFC,
+	GPIB_LINE_STATUS,
 	GPIB_QUIT,
 	GPIB_READ,
 	GPIB_REMOTE_ENABLE,
 	GPIB_REQUEST_SERVICE,
 	GPIB_SERIAL_POLL,
+	GPIB_TAKE_CONTROL,
 	GPIB_TIMEOUT,
 	GPIB_WAIT,
-	GPIB_WRITE,
-	GPIB_LINE_STATUS,
-	GPIB_TAKE_CONTROL,
-	GPIB_GO_TO_STANDBY,
-	GPIB_EOT
+	GPIB_WRITE
 };
 
 typedef struct
@@ -218,6 +219,7 @@ int prompt_for_action(void)
 			"\tsend (i)nterface clear (system controller only)\n"
 			"\tta(k)e control (assert ATN line, system controller only)\n"
 			"\tget bus (l)ine status (board only)\n"
+			"\tgo to local (m)ode\n"
 			"\tchange end (o)f transmission configuration\n"
  			"\t(q)uit\n"
 			"\t(r)ead string\n"
@@ -258,6 +260,10 @@ int prompt_for_action(void)
 			case 'K':
 			case 'k':
 				return GPIB_TAKE_CONTROL;
+				break;
+			case 'm':
+			case 'M':
+				return GPIB_GO_TO_LOCAL;
 				break;
 			case 'o':
 			case 'O':
@@ -519,6 +525,16 @@ int interface_clear( int ud )
 	return 0;
 }
 
+int go_to_local(int ud)
+{
+	if(ibloc(ud) & ERR)
+	{
+		return -1;
+	}
+	printf("In local mode.\n" );
+	return 0;
+}
+
 int go_to_standby(int ud)
 {
 	if(ibgts(ud, 0) & ERR)
@@ -623,6 +639,9 @@ int main(int argc, char **argv)
 				break;
 			case GPIB_EOT:
 				prompt_for_eot(dev);
+				break;
+			case GPIB_GO_TO_LOCAL:
+				go_to_local(dev);
 				break;
 			case GPIB_GO_TO_STANDBY:
 				go_to_standby(dev);
