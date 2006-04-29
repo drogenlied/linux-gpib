@@ -27,8 +27,7 @@ int ibloc(int ud)
 	unsigned int i;
 	ssize_t count;
 	int retval;
-
-	conf = enter_library( ud );
+	conf = general_enter_library(ud, 1, 0);
 	if( conf == NULL )
 		return exit_library( ud, 1 );
 
@@ -46,6 +45,11 @@ int ibloc(int ud)
 		}
 	}else
 	{
+		retval = conf_lock_board(conf);
+		if( retval < 0 )
+		{
+			return general_exit_library(ud, 1, 0, 0, 0, 0, 1);
+		}
 		i = send_setup_string( conf, cmd );
 		if( i < 0 )
 		{
