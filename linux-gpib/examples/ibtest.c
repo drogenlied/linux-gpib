@@ -32,6 +32,7 @@ void fprint_status( FILE* filep, char *msg  );
 enum Action
 {
 	GPIB_COMMAND,
+	GPIB_DEVICE_CLEAR,
 	GPIB_EOT,
 	GPIB_GO_TO_LOCAL,
 	GPIB_GO_TO_STANDBY,
@@ -214,6 +215,7 @@ int prompt_for_action(void)
 		printf("You can:\n"
 			"\tw(a)it for an event\n"
 			"\twrite (c)ommand bytes to bus (system controller only)\n"
+			"\tsend (d)evice clear (device only)\n"
 			"\tchange remote (e)nable line (system controller only)\n"
 			"\t(g)o to standby (release ATN line, system controller only)\n"
 			"\tsend (i)nterface clear (system controller only)\n"
@@ -240,6 +242,10 @@ int prompt_for_action(void)
 			case 'C':
 			case 'c':
 				return GPIB_COMMAND;
+				break;
+			case 'd':
+			case 'D':
+				return GPIB_DEVICE_CLEAR;
 				break;
 			case 'E':
 			case 'e':
@@ -514,6 +520,16 @@ int get_lines( int ud )
 	return 0;
 }
 
+int device_clear(int ud)
+{
+	if(ibclr(ud) & ERR)
+	{
+		return -1;
+	}
+	printf("Device clear sent.\n" );
+	return 0;
+}
+
 int interface_clear( int ud )
 {
 
@@ -531,7 +547,7 @@ int go_to_local(int ud)
 	{
 		return -1;
 	}
-	printf("In local mode.\n" );
+	printf("Go to local sent.\n" );
 	return 0;
 }
 
@@ -636,6 +652,9 @@ int main(int argc, char **argv)
 		{
 			case GPIB_COMMAND:
 				prompt_for_commands(dev);
+				break;
+			case GPIB_DEVICE_CLEAR:
+				device_clear(dev);
 				break;
 			case GPIB_EOT:
 				prompt_for_eot(dev);
