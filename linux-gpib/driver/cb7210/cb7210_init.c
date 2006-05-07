@@ -140,7 +140,10 @@ uint8_t cb7210_serial_poll_status( gpib_board_t *board )
 void cb7210_return_to_local( gpib_board_t *board )
 {
 	cb7210_private_t *priv = board->private_data;
-	nec7210_return_to_local( board, &priv->nec7210_priv );
+	nec7210_private_t *nec_priv = &priv->nec7210_priv;
+	write_byte(nec_priv, AUX_RTL2, AUXMR);
+	udelay(1);
+	write_byte(nec_priv, AUX_RTL, AUXMR);
 }
 
 gpib_interface_t cb_pci_unaccel_interface =

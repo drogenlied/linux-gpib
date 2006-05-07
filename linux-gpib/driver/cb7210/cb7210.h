@@ -265,6 +265,12 @@ static inline unsigned int irq_bits( unsigned int irq )
 
 enum cb7210_aux_cmds
 {
+/* AUX_RTL2 is an undocumented aux command which causes cb7210 to assert 
+	(and keep asserted) local rtl message.  This is used in conjunction 
+	with the (stupid) cb7210 implementation
+	of the normal nec7210 AUX_RTL aux command, which
+	causes the rtl message to toggle between on and off. */
+	AUX_RTL2 = 0xd,
 	AUX_LO_SPEED = 0x40,
 	AUX_HI_SPEED = 0x41,
 };
