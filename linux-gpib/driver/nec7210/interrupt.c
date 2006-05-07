@@ -55,7 +55,8 @@ irqreturn_t nec7210_interrupt_have_status( gpib_board_t *board,
 	nec7210_private_t *priv, int status1, int status2 )
 {
 	unsigned long dma_flags;
-
+	int retval = IRQ_NONE;
+	
 	// record service request in status
 	if(status2 & HR_SRQI)
 	{
@@ -112,7 +113,8 @@ irqreturn_t nec7210_interrupt_have_status( gpib_board_t *board,
 #endif
 	if((status1 & HR_DO))
 	{
-		set_bit(WRITE_READY_BN, &priv->state);
+		if(test_bit(DMA_WRITE_IN_PROGRESS_BN, &priv->state) == 0)
+			set_bit(WRITE_READY_BN, &priv->state);
 #if 0
 		if(test_bit(DMA_WRITE_IN_PROGRESS_BN, &priv->state))	// write data, isa dma mode
 		{
@@ -153,7 +155,7 @@ irqreturn_t nec7210_interrupt_have_status( gpib_board_t *board,
 	if(status1 & HR_ERR)
 	{
 		set_bit( BUS_ERROR_BN, &priv->state );
-		GPIB_DPRINTK( "gpib: bus error\n" );
+		printk("nec7210: bus error\n");
 	}
 
 	if( status1 & HR_DEC )
@@ -181,8 +183,9 @@ irqreturn_t nec7210_interrupt_have_status( gpib_board_t *board,
 			board->minor, status1, priv->reg_bits[ IMR1 ], status2, priv->reg_bits[ IMR2 ] );
 		update_status_nolock(board, priv);
 		wake_up_interruptible(&board->wait); /* wake up sleeping process */
+		retval = IRQ_HANDLED;
 	}
-	return IRQ_HANDLED;
+	return retval;
 }
 
 EXPORT_SYMBOL(nec7210_interrupt);
