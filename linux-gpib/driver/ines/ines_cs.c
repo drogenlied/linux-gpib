@@ -33,7 +33,6 @@
 #include <asm/io.h>
 #include <asm/system.h>
 
-#include <pcmcia/version.h>
 #include <pcmcia/cs_types.h>
 #include <pcmcia/cs.h>
 #include <pcmcia/cistpl.h>
@@ -525,12 +524,22 @@ static int gpib_event(event_t event, int priority,
     return 0;
 } /* gpib_event */
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
+static struct pcmcia_device_id ines_pcmcia_ids[] =
+{
+	PCMCIA_DEVICE_MANF_CARD(0x01b4, 0x4730),
+	PCMCIA_DEVICE_NULL
+};
+MODULE_DEVICE_TABLE(pcmcia, ines_pcmcia_ids);
+#endif
+
 static struct pcmcia_driver ines_gpib_cs_driver =
 {
 	.attach = &gpib_attach,
 	.detach = &gpib_detach,
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
 	.event = &gpib_event,
+	.id_table = ines_pcmcia_ids,
 #endif
 	.owner = THIS_MODULE,
 	.drv = {
