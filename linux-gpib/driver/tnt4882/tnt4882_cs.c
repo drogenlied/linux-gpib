@@ -788,6 +788,13 @@ int ni_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config)
 	nec_priv->offset = atgpib_reg_offset;
 
 	GPIB_DPRINTK( "ioport1 window attributes: 0x%x\n", dev_list->io.Attributes1 );
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
+	if(request_region(dev_list->io.BasePort1, pcmcia_gpib_iosize, "tnt4882") == 0)
+	{
+		printk("gpib: ioports starting at 0x%x are already in use\n", dev_list->io.BasePort1);
+		return -EIO;
+	}
+#endif	
 	nec_priv->iobase = (void*)(unsigned long)dev_list->io.BasePort1;
 
 	// get irq
@@ -817,7 +824,10 @@ void ni_pcmcia_detach(gpib_board_t *board)
 		}
 		if(nec_priv->iobase)
 		{
-			tnt4882_board_reset( tnt_priv, board );
+			tnt4882_board_reset(tnt_priv, board);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
+			release_region((unsigned long)nec_priv->iobase, pcmcia_gpib_iosize);
+#endif		
 		}
 	}
 	tnt4882_free_private(board);

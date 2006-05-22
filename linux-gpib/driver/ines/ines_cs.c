@@ -679,6 +679,13 @@ int ines_common_pcmcia_attach( gpib_board_t *board )
 	ines_priv = board->private_data;
 	nec_priv = &ines_priv->nec7210_priv;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
+	if(request_region(dev_list->io.BasePort1, ines_pcmcia_iosize, "ines_gpib") == 0)
+	{
+		printk("ines_gpib: ioports at 0x%x already in use\n", dev_list->io.BasePort1);
+		return -1;
+	}
+#endif	
 	nec_priv->iobase = (void*)(unsigned long)dev_list->io.BasePort1;
 
 	nec7210_board_reset( nec_priv, board );
@@ -723,10 +730,22 @@ int ines_pcmcia_accel_attach( gpib_board_t *board , gpib_board_config_t config)
 
 void ines_pcmcia_detach(gpib_board_t *board)
 {
-	ines_private_t *priv = board->private_data;
+	ines_private_t *ines_priv = board->private_data;
+	nec7210_private_t *nec_priv;
 
-	if(priv && priv->irq)
-		free_irq(priv->irq, board);
+	if(ines_priv)
+	{
+		nec_priv = &ines_priv->nec7210_priv;
+		if(ines_priv->irq)
+			free_irq(ines_priv->irq, board);
+		if(nec_priv->iobase)
+		{
+			nec7210_board_reset(nec_priv, board);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
+			release_region((unsigned long)(nec_priv->iobase), ines_pcmcia_iosize);
+#endif		
+		}
+	}
 	ines_free_private(board);
 }
 

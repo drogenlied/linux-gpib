@@ -112,6 +112,7 @@ static const int atgpib_reg_offset = 2;
 
 // number of ioports used
 static const int atgpib_iosize = 32;
+static const int pcmcia_gpib_iosize = 32;
 
 /* paged io */
 static inline unsigned int tnt_paged_readb( tnt4882_private_t *priv, unsigned long offset )

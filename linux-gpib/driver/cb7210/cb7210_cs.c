@@ -698,6 +698,13 @@ int cb_pcmcia_attach( gpib_board_t *board, gpib_board_config_t config )
 	cb_priv = board->private_data;
 	nec_priv = &cb_priv->nec7210_priv;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
+	if(request_region(dev_list->io.BasePort1, cb7210_iosize, "cb7210") == 0)
+	{
+		printk("gpib: ioports starting at 0x%x are already in use\n", dev_list->io.BasePort1);
+		return -EIO;
+	}
+#endif	
 	nec_priv->iobase = (void*)(unsigned long)dev_list->io.BasePort1;
 	cb_priv->fifo_iobase = dev_list->io.BasePort1;
 
@@ -714,13 +721,22 @@ int cb_pcmcia_attach( gpib_board_t *board, gpib_board_config_t config )
 
 void cb_pcmcia_detach(gpib_board_t *board)
 {
-	cb7210_private_t *priv = board->private_data;
+	cb7210_private_t *cb_priv = board->private_data;
+	nec7210_private_t *nec_priv;
 
-	if(priv)
+	if(cb_priv)
 	{
+		nec_priv = &cb_priv->nec7210_priv;
 		gpib_free_pseudo_irq(board);
-		if(priv->irq)
-			free_irq(priv->irq, board);
+		if(cb_priv->irq)
+			free_irq(cb_priv->irq, board);
+		if(nec_priv->iobase)
+		{
+			nec7210_board_reset(nec_priv, board);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
+			release_region(nec7210_iobase(cb_priv), cb7210_iosize);
+#endif		
+		}
 	}
 	cb7210_generic_detach(board);
 }

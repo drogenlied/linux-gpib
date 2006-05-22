@@ -228,5 +228,6 @@ enum ines_auxd_bits
 };
 
 static const int ines_isa_iosize = 0x20;
+static const int ines_pcmcia_iosize = 0x20;
 
 #endif	// _INES_GPIB_H
