@@ -9,7 +9,7 @@
 
 EXTRA_DIST = gpib.scm
 
-lib_LTLIBRARIES = libgpib_guile.la
+lib_LTLIBRARIES = libgpib-guile.la
 
 noinst_HEADERS = gpib.h
 
