@@ -1501,7 +1501,9 @@ static void agilent_82357a_driver_disconnect(struct usb_interface *interface)
 
 static struct usb_driver agilent_82357a_bus_driver =
 {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
 	.owner = THIS_MODULE,
+#endif	
 	.name = "agilent_82357a_gpib",
 	.probe = agilent_82357a_driver_probe,
 	.disconnect = agilent_82357a_driver_disconnect,

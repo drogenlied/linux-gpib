@@ -95,7 +95,6 @@ static int ni_gpib_event(event_t event, int priority,
    needed to manage one actual PCMCIA card.
 */
 
-static dev_link_t *ni_gpib_attach(void);
 static void ni_gpib_detach(dev_link_t *);
 
 /*
@@ -174,7 +173,11 @@ typedef struct local_info_t {
     
 ======================================================================*/
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
 static dev_link_t *ni_gpib_attach(void)
+#else
+static int ni_gpib_probe(struct pcmcia_device *dev)
+#endif
 {
     local_info_t *local;
     dev_link_t *link;
@@ -185,8 +188,13 @@ static dev_link_t *ni_gpib_attach(void)
 
     /* Allocate space for private device-specific data */
     local = kmalloc(sizeof(local_info_t), GFP_KERNEL);
-    if (!local) return NULL;
-    memset(local, 0, sizeof(local_info_t));
+    if (!local)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
+		return NULL;
+#else
+		return -ENOMEM;
+#endif    
+	memset(local, 0, sizeof(local_info_t));
     link = &local->link; link->priv = local;
     
     /* Initialize the dev_link_t structure */
@@ -226,14 +234,20 @@ static dev_link_t *ni_gpib_attach(void)
 #endif    
 	client_reg.Version = 0x0210;
     client_reg.event_callback_args.client_data = link;
-    ret = pcmcia_register_client(&link->handle, &client_reg);
-    if (ret != CS_SUCCESS) {
-	cs_error(link->handle, RegisterClient, ret);
-	ni_gpib_detach(link);
-	return NULL;
-    }
-
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
+	ret = pcmcia_register_client(&link->handle, &client_reg);
+	if (ret != CS_SUCCESS)
+	{
+		cs_error(link->handle, RegisterClient, ret);
+		ni_gpib_detach(link);
+		return NULL;
+	}
     return link;
+#else
+	link->handle = dev;
+	dev->instance = link;
+	return 0;
+#endif
 } /* ni_gpib_attach */
 
 /*======================================================================
@@ -244,6 +258,11 @@ static dev_link_t *ni_gpib_attach(void)
     when the device is released.
 
 ======================================================================*/
+static void ni_gpib_remove(struct pcmcia_device *dev)
+{
+	dev_link_t *link = dev_to_instance(dev);
+	ni_gpib_detach(link);
+}
 
 static void ni_gpib_detach(dev_link_t *link)
 {
@@ -268,14 +287,15 @@ static void ni_gpib_detach(dev_link_t *link)
 	printk(KERN_DEBUG "ni_gpib_cs: detach postponed, '%s' "
 	       "still locked\n", link->dev->dev_name);
 #endif
-	link->state |= DEV_STALE_LINK;
-	return;
+		link->state |= DEV_STALE_LINK;
+		return;
     }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
     /* Break the link with Card Services */
     if (link->handle)
 	pcmcia_deregister_client(link->handle);
-    
+#endif    
     /* Unlink device structure, and free it */
     *linkp = link->next;
     /* This points to the parent local_info_t struct */
@@ -672,10 +692,17 @@ MODULE_DEVICE_TABLE(pcmcia, ni_pcmcia_ids);
 
 static struct pcmcia_driver ni_gpib_cs_driver =
 {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
 	.attach = &ni_gpib_attach,
 	.detach = &ni_gpib_detach,
+#else
+	.probe = &ni_gpib_probe,
+	.remove = &ni_gpib_remove,
+#endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
 	.event = &ni_gpib_event,
+#endif	
 	.id_table = ni_pcmcia_ids,
 #endif	
 	.owner = THIS_MODULE,

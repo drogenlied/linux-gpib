@@ -2213,7 +2213,9 @@ static void ni_usb_driver_disconnect(struct usb_interface *interface)
 
 static struct usb_driver ni_usb_bus_driver =
 {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
 	.owner = THIS_MODULE,
+#endif	
 	.name = "ni_usb_gpib",
 	.probe = ni_usb_driver_probe,
 	.disconnect = ni_usb_driver_disconnect,

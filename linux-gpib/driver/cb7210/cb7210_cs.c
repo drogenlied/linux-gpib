@@ -115,7 +115,6 @@ static int gpib_event(event_t event, int priority,
    needed to manage one actual PCMCIA card.
 */
 
-static dev_link_t *gpib_attach(void);
 static void gpib_detach(dev_link_t *);
 
 /*
@@ -180,7 +179,11 @@ typedef struct local_info_t {
 
 ======================================================================*/
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
 static dev_link_t *gpib_attach(void)
+#else
+static int gpib_probe(struct pcmcia_device *dev)
+#endif
 {
 	client_reg_t client_reg;
 	dev_link_t *link;
@@ -241,14 +244,19 @@ static dev_link_t *gpib_attach(void)
 #endif	
 	client_reg.Version = 0x0210;
 	client_reg.event_callback_args.client_data = link;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
 	ret = pcmcia_register_client(&link->handle, &client_reg);
 	if (ret != 0) {
 		cs_error(link->handle, RegisterClient, ret);
 		gpib_detach(link);
 		return NULL;
 	}
-
 	return link;
+#else
+	link->handle = dev;
+	dev->instance = link;
+	return 0;
+#endif
 } /* gpib_attach */
 
 /*======================================================================
@@ -260,9 +268,15 @@ static dev_link_t *gpib_attach(void)
 
 ======================================================================*/
 
+static void gpib_remove(struct pcmcia_device *dev)
+{
+	dev_link_t *link = dev_to_instance(dev);
+	gpib_detach(link);
+}
+
 static void gpib_detach(dev_link_t *link)
 {
-    dev_link_t **linkp;
+	dev_link_t **linkp;
 
 #ifdef PCMCIA_DEBUG
     if (pc_debug)
@@ -292,9 +306,10 @@ static void gpib_detach(dev_link_t *link)
 	}
 
     /* Break the link with Card Services */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
 	if (link->handle)
 		pcmcia_deregister_client(link->handle);
-
+#endif
 	/* Unlink device structure, free pieces */
 	*linkp = link->next;
 	if (link->priv) 
@@ -561,10 +576,17 @@ MODULE_DEVICE_TABLE(pcmcia, cb_pcmcia_ids);
 
 static struct pcmcia_driver cb_gpib_cs_driver =
 {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
 	.attach = &gpib_attach,
 	.detach = &gpib_detach,
+#else
+	.probe = &gpib_probe,
+	.remove = &gpib_remove,
+#endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
 	.event = &gpib_event,
+#endif	
 	.id_table = cb_pcmcia_ids,
 #endif
 	.owner = THIS_MODULE,
