@@ -268,11 +268,13 @@ static int gpib_probe(struct pcmcia_device *dev)
 
 ======================================================================*/
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,16)
 static void gpib_remove(struct pcmcia_device *dev)
 {
 	dev_link_t *link = dev_to_instance(dev);
 	gpib_detach(link);
 }
+#endif
 
 static void gpib_detach(dev_link_t *link)
 {
