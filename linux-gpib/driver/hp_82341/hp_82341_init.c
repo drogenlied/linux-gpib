@@ -32,20 +32,20 @@ int hp_82341_attach(gpib_board_t *board, gpib_board_config_t config);
 void hp_82341_detach( gpib_board_t *board );
 
 // wrappers for interface functions
-ssize_t hp_82341_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes)
+int hp_82341_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end, size_t *bytes_read)
 {
 	hp_82341_private_t *priv = board->private_data;
-	return tms9914_read( board, &priv->tms9914_priv, buffer, length, end, nbytes);
+	return tms9914_read( board, &priv->tms9914_priv, buffer, length, end, bytes_read);
 }
-ssize_t hp_82341_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi )
+int hp_82341_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written)
 {
 	hp_82341_private_t *priv = board->private_data;
-	return tms9914_write( board, &priv->tms9914_priv, buffer, length, send_eoi );
+	return tms9914_write(board, &priv->tms9914_priv, buffer, length, send_eoi, bytes_written);
 }
 ssize_t hp_82341_command( gpib_board_t *board, uint8_t *buffer, size_t length )
 {
 	hp_82341_private_t *priv = board->private_data;
-	return tms9914_command( board, &priv->tms9914_priv, buffer, length );
+	return tms9914_command( board, &priv->tms9914_priv, buffer, length);
 }
 int hp_82341_take_control( gpib_board_t *board, int synchronous )
 {

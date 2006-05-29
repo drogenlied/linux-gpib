@@ -38,8 +38,8 @@ extern gpib_interface_t cec_pci_interface;
 extern gpib_interface_t cec_pcmcia_interface;
 
 // interface functions
-ssize_t cec_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int*nbytes);
-ssize_t cec_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi);
+int cec_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, size_t *bytes_read);
+int cec_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written);
 ssize_t cec_command(gpib_board_t *board, uint8_t *buffer, size_t length);
 int cec_take_control(gpib_board_t *board, int synchronous);
 int cec_go_to_standby(gpib_board_t *board);

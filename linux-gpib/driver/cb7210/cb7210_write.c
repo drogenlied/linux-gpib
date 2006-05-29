@@ -63,7 +63,7 @@ static inline void output_fifo_enable( gpib_board_t *board, int enable )
 	spin_unlock_irqrestore( &board->spinlock, flags );
 }
 
-ssize_t fifo_write( gpib_board_t *board, uint8_t *buffer, size_t length )
+int fifo_write( gpib_board_t *board, uint8_t *buffer, size_t length, size_t *bytes_written)
 {
 	size_t count = 0;
 	ssize_t retval = 0;
@@ -72,12 +72,13 @@ ssize_t fifo_write( gpib_board_t *board, uint8_t *buffer, size_t length )
 	unsigned int num_bytes, i;
 	unsigned long flags;
 
+	*bytes_written = 0;
 	if(cb_priv->fifo_iobase == 0)
 	{
 		printk("cb7210: fifo iobase is zero!\n");
 		return -EIO;
 	}
-	if( length == 0 ) return 0;
+	if(length == 0) return 0;
 
 	clear_bit( DEV_CLEAR_BN, &nec_priv->state );
 	clear_bit( BUS_ERROR_BN, &nec_priv->state );
@@ -150,19 +151,19 @@ ssize_t fifo_write( gpib_board_t *board, uint8_t *buffer, size_t length )
 
 	output_fifo_enable( board, 0 );
 
-	if( retval < 0 )
-		return retval;
-
-	return count;
+	*bytes_written = count;
+	return retval;
 }
 
-ssize_t cb7210_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi )
+int cb7210_accel_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written)
 {
 	cb7210_private_t *cb_priv = board->private_data;
 	nec7210_private_t *nec_priv = &cb_priv->nec7210_priv;
 	unsigned long fast_chunk_size, leftover;
-	long retval;
-
+	int retval;
+	size_t num_bytes;
+	
+	*bytes_written = 0;
 	if( length > cb7210_fifo_width )
 		fast_chunk_size = length - 1;
 	else
@@ -170,14 +171,14 @@ ssize_t cb7210_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length,
 	fast_chunk_size -= fast_chunk_size % cb7210_fifo_width;
 	leftover = length - fast_chunk_size;
 
-	retval = fifo_write( board, buffer, fast_chunk_size );
+	retval = fifo_write(board, buffer, fast_chunk_size, &num_bytes);
+	*bytes_written += num_bytes;
 	if( retval < 0 ) return retval;
 	if( retval < fast_chunk_size ) return -EIO;
 	
-	retval = nec7210_write( board, nec_priv, buffer + fast_chunk_size, leftover, send_eoi );
-	if( retval < 0 ) return retval;
-
-	return length;
+	retval = nec7210_write( board, nec_priv, buffer + fast_chunk_size, leftover, send_eoi, &num_bytes);
+	*bytes_written += num_bytes;
+	return retval;
 }
 
 

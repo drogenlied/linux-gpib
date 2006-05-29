@@ -47,8 +47,10 @@ typedef struct
 extern gpib_interface_t hp_82341_interface;
 
 // interface functions
-ssize_t hp_82341_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes);
-ssize_t hp_82341_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi );
+int hp_82341_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, size_t *bytes_read);
+int hp_82341_accel_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written);
+int hp_82341_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end, size_t *bytes_read);
+int hp_82341_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written);
 ssize_t hp_82341_command( gpib_board_t *board, uint8_t *buffer, size_t length );
 int hp_82341_take_control( gpib_board_t *board, int synchronous );
 int hp_82341_go_to_standby( gpib_board_t *board );
@@ -233,8 +235,6 @@ enum hp_82341d_pnp_pio_bits
 	HP_82341D_NOT_PROG_BIT = 0x8,	// clear to reinitialize xilinx
 };
 
-ssize_t hp_82341_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes);
-ssize_t hp_82341_accel_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi);
 unsigned short read_and_clear_event_status(gpib_board_t *board);
 int read_transfer_counter(hp_82341_private_t *hp_priv);
 void set_transfer_counter(hp_82341_private_t *hp_priv, int count);

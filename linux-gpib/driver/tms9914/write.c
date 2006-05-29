@@ -40,7 +40,7 @@ static int pio_write_wait( gpib_board_t *board, tms9914_private_t *priv )
 	return 0;
 }
 
-static ssize_t pio_write(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buffer, size_t length)
+static int pio_write(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buffer, size_t length, size_t *bytes_written)
 {
 	size_t count = 0;
 	ssize_t retval = 0;
@@ -63,11 +63,12 @@ static ssize_t pio_write(gpib_board_t *board, tms9914_private_t *priv, uint8_t *
 }
 
 
-ssize_t tms9914_write(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buffer, size_t length, int send_eoi)
+int tms9914_write(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buffer, size_t length,
+	int send_eoi, size_t *bytes_written)
 {
-	size_t count = 0;
 	ssize_t retval = 0;
 
+	*bytes_written = 0;
 	if(length == 0) return 0;
 
 	clear_bit( BUS_ERROR_BN, &priv->state );
@@ -80,25 +81,23 @@ ssize_t tms9914_write(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buf
 
 	if(length > 0)
 	{
+		size_t num_bytes;
 		// PIO transfer
-		retval = pio_write(board, priv, buffer, length);
+		retval = pio_write(board, priv, buffer, length, &num_bytes);
+		*bytes_written += num_bytes;
 		if(retval < 0)
 			return retval;
-		else count += retval;
 	}
 	if(send_eoi)
 	{
+		size_t num_bytes;
 		/*send EOI */
 		write_byte(priv, AUX_SEOI, AUXCR);
 
-		retval = pio_write(board, priv, &buffer[count], 1);
-		if(retval < 0)
-			return retval;
-		else
-			count++;
+		retval = pio_write(board, priv, &buffer[*bytes_written], 1, &num_bytes);
+		*bytes_written += num_bytes;
 	}
-
-	return count ? count : -1;
+	return retval;
 }
 
 EXPORT_SYMBOL(tms9914_write);

@@ -66,14 +66,14 @@ irqreturn_t cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp);
 irqreturn_t cb7210_internal_interrupt( gpib_board_t *board );
 
 // interface functions
-ssize_t cb7210_read( gpib_board_t *board, uint8_t *buffer, size_t length,
-	int *end, int *nbytes);
-ssize_t cb7210_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
-	int *end, int *nbytes);
-ssize_t cb7210_write( gpib_board_t *board, uint8_t *buffer, size_t length,
-	int send_eoi );
-ssize_t cb7210_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length,
-	int send_eoi );
+int cb7210_read( gpib_board_t *board, uint8_t *buffer, size_t length,
+	int *end, size_t *bytes_read);
+int cb7210_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
+	int *end, size_t *bytes_read);
+int cb7210_write( gpib_board_t *board, uint8_t *buffer, size_t length,
+	int send_eoi, size_t *bytes_written);
+int cb7210_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length,
+	int send_eoi, size_t *bytes_written);
 ssize_t cb7210_command(gpib_board_t *board, uint8_t *buffer, size_t length);
 int cb7210_take_control(gpib_board_t *board, int synchronous);
 int cb7210_go_to_standby(gpib_board_t *board);

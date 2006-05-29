@@ -67,8 +67,8 @@ static ssize_t pio_read( gpib_board_t *board, ines_private_t *ines_priv, uint8_t
 	return retval;
 }
 
-ssize_t ines_accel_read( gpib_board_t *board, uint8_t *buffer,
-	size_t length, int *end, int *nbytes)
+int ines_accel_read( gpib_board_t *board, uint8_t *buffer,
+	size_t length, int *end, size_t *bytes_read)
 {
 	ssize_t retval = 0;
 	ines_private_t *ines_priv = board->private_data;
@@ -76,7 +76,7 @@ ssize_t ines_accel_read( gpib_board_t *board, uint8_t *buffer,
 	int counter_setting;
 
 	*end = 0;
-	*nbytes = 0;
+	*bytes_read = 0;
 	if(length == 0) return 0;
 
 	clear_bit( DEV_CLEAR_BN, &nec_priv->state );
@@ -104,7 +104,7 @@ ssize_t ines_accel_read( gpib_board_t *board, uint8_t *buffer,
 		write_byte( nec_priv, AUX_FH, AUXMR );
 	}
 
-	retval = pio_read(board, ines_priv, buffer, length, nbytes);
+	retval = pio_read(board, ines_priv, buffer, length, bytes_read);
 	ines_priv->extend_mode_bits &= ~XFER_COUNTER_ENABLE_BIT;
 	ines_outb( ines_priv, ines_priv->extend_mode_bits, EXTEND_MODE );
 	if( retval < 0 )

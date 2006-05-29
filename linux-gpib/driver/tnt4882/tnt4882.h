@@ -63,14 +63,14 @@ extern gpib_interface_t ni_pcmcia_interface;
 extern gpib_interface_t ni_pcmcia_accel_interface;
 
 // interface functions
-ssize_t tnt4882_read(gpib_board_t *board, uint8_t *buffer, size_t length,
-	int *end, int *nbytes);
-ssize_t tnt4882_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length,
-	int *end, int *nbytes);
-ssize_t tnt4882_write(gpib_board_t *board, uint8_t *buffer, size_t length,
-	int send_eoi);
-ssize_t tnt4882_accel_write(gpib_board_t *board, uint8_t *buffer, size_t length,
-	int send_eoi);
+int tnt4882_read(gpib_board_t *board, uint8_t *buffer, size_t length,
+	int *end, size_t *bytes_read);
+int tnt4882_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length,
+	int *end, size_t *bytes_read);
+int tnt4882_write(gpib_board_t *board, uint8_t *buffer, size_t length,
+	int send_eoi, size_t *bytes_written);
+int tnt4882_accel_write(gpib_board_t *board, uint8_t *buffer, size_t length,
+	int send_eoi, size_t *bytes_written);
 ssize_t tnt4882_command(gpib_board_t *board, uint8_t *buffer, size_t length);
 ssize_t tnt4882_command_unaccel(gpib_board_t *board, uint8_t *buffer, size_t length);
 int tnt4882_take_control(gpib_board_t *board, int synchronous);

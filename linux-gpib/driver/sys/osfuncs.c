@@ -525,18 +525,18 @@ static int command_ioctl( gpib_file_private_t *file_priv,
 	return 0;
 }
 
-static int write_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
+static int write_ioctl(gpib_file_private_t *file_priv, gpib_board_t *board,
 	unsigned long arg)
 {
 	read_write_ioctl_t write_cmd;
 	uint8_t *userbuf;
 	unsigned long remain;
-	int retval;
-	ssize_t ret;
+	int retval = 0;
+	int fault;
 	gpib_descriptor_t *desc;
 
-	retval = copy_from_user(&write_cmd, (void*) arg, sizeof(write_cmd));
-	if (retval)
+	fault = copy_from_user(&write_cmd, (void*) arg, sizeof(write_cmd));
+	if(fault)
 		return -EFAULT;
 
 	desc = handle_to_descriptor( file_priv, write_cmd.handle );
@@ -551,35 +551,37 @@ static int write_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
 	/* Write buffer loads till we empty the user supplied buffer */
 	userbuf = write_cmd.buffer;
 	remain = write_cmd.count;
-	while( remain > 0 )
+	while(remain > 0)
 	{
 		int send_eoi;
+		size_t bytes_written = 0;
+		
 		send_eoi = remain <= board->buffer_length && write_cmd.end;
-		retval = copy_from_user(board->buffer, userbuf, (board->buffer_length < remain) ?
+		fault = copy_from_user(board->buffer, userbuf, (board->buffer_length < remain) ?
 			board->buffer_length : remain );
-		if(retval) ret = -EFAULT;
-		else
-			ret = ibwrt(board, board->buffer, (board->buffer_length < remain) ?
-				board->buffer_length : remain, send_eoi);
-		if(ret < 0)
+		if(fault)
 		{
-			desc->io_in_progress = 0;
-			wake_up_interruptible( &board->wait );
-			return ret;
+			retval = -EFAULT;
+			break;
 		}
-		if( ret == 0 ) break;
-		remain -= ret;
-		userbuf += ret;
+		retval = ibwrt(board, board->buffer, (board->buffer_length < remain) ?
+			board->buffer_length : remain, send_eoi, &bytes_written);
+		remain -= bytes_written;
+		userbuf += bytes_written;
+		if(retval < 0)
+		{
+			break;
+		}
 	}
 
 	write_cmd.count -= remain;
 
-	retval = copy_to_user((void*) arg, &write_cmd, sizeof(write_cmd));
+	fault = copy_to_user((void*) arg, &write_cmd, sizeof(write_cmd));
 	desc->io_in_progress = 0;
 	wake_up_interruptible( &board->wait );
-	if(retval) return -EFAULT;
+	if(fault) return -EFAULT;
 
-	return 0;
+	return retval;
 }
 
 static int status_bytes_ioctl( gpib_board_t *board, unsigned long arg )

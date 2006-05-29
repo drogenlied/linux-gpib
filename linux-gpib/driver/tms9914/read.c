@@ -90,33 +90,33 @@ static inline uint8_t tms9914_read_data_in(gpib_board_t *board, tms9914_private_
 	return data;
 }
 
-static ssize_t pio_read(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buffer, size_t length, int *end, int *nbytes)
+static int pio_read(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buffer, size_t length, int *end, size_t *bytes_read)
 {
 	ssize_t retval = 0;
 
-	*nbytes = 0;
+	*bytes_read = 0;
 	*end = 0;
-	while(*nbytes < length && *end == 0)
+	while(*bytes_read < length && *end == 0)
 	{
 		tms9914_release_holdoff(priv);
 		retval = wait_for_read_byte(board, priv);
 		if(retval < 0) return retval;;
-		buffer[ (*nbytes)++ ] = tms9914_read_data_in(board, priv, end);
+		buffer[(*bytes_read)++] = tms9914_read_data_in(board, priv, end);
 
-		if(check_for_eos(priv, buffer[*nbytes - 1]))
+		if(check_for_eos(priv, buffer[*bytes_read - 1]))
 			*end = 1;
 	}
 
 	return retval;
 }
 
-ssize_t tms9914_read(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buffer, size_t length, int *end, int *nbytes)
+int tms9914_read(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buffer, size_t length, int *end, size_t *bytes_read)
 {
 	ssize_t retval = 0;
-	int bytes_read;
+	size_t num_bytes;
 	
 	*end = 0;
-	*nbytes = 0;
+	*bytes_read = 0;
 	if(length == 0) return 0;
 
 	clear_bit( DEV_CLEAR_BN, &priv->state );
@@ -129,20 +129,20 @@ ssize_t tms9914_read(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buff
 		else
 			tms9914_set_holdoff_mode(priv, TMS9914_HOLDOFF_EOI);
 		// PIO transfer
-		retval = pio_read(board, priv, buffer, length - 1, end, &bytes_read);
-		*nbytes += bytes_read;
+		retval = pio_read(board, priv, buffer, length - 1, end, &num_bytes);
+		*bytes_read += num_bytes;
 		if(retval < 0)
 			return retval;
-		buffer += bytes_read;
-		length -= bytes_read;
+		buffer += num_bytes;
+		length -= num_bytes;
 	}
 	// read last bytes if we havn't received an END yet
 	if(*end == 0)
 	{
 		// make sure we holdoff after last byte read
 		tms9914_set_holdoff_mode(priv, TMS9914_HOLDOFF_ALL);
-		retval = pio_read(board, priv, buffer, length, end, &bytes_read);
-		*nbytes += bytes_read;
+		retval = pio_read(board, priv, buffer, length, end, &num_bytes);
+		*bytes_read += num_bytes;
 		if(retval < 0)
 			return retval;
 	}

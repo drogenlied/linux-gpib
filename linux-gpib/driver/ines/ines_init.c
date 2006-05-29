@@ -115,14 +115,14 @@ static const int num_pci_chips = sizeof(pci_ids) / sizeof(pci_ids[0]);
 
 
 // wrappers for interface functions
-ssize_t ines_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes)
+int ines_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, size_t *bytes_read)
 {
 	ines_private_t *priv = board->private_data;
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 	ssize_t retval;
 	int dummy;
 
-	retval = nec7210_read(board, &priv->nec7210_priv, buffer, length, end, nbytes);
+	retval = nec7210_read(board, &priv->nec7210_priv, buffer, length, end, bytes_read);
 	if( retval < 0 )
 	{
 		write_byte( nec_priv, INES_RFD_HLD_IMMEDIATE, AUXMR );
@@ -131,10 +131,10 @@ ssize_t ines_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end,
 	}
 	return retval;
 }
-ssize_t ines_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi)
+int ines_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written)
 {
 	ines_private_t *priv = board->private_data;
-	return nec7210_write(board, &priv->nec7210_priv, buffer, length, send_eoi);
+	return nec7210_write(board, &priv->nec7210_priv, buffer, length, send_eoi, bytes_written);
 }
 ssize_t ines_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 {

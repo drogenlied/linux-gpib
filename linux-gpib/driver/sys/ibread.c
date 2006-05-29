@@ -32,7 +32,7 @@
  *          calling ibcmd.
  */
 
-ssize_t ibrd(gpib_board_t *board, uint8_t *buf, size_t length, int *end_flag, int *nbytes)
+int ibrd(gpib_board_t *board, uint8_t *buf, size_t length, int *end_flag, size_t *nbytes)
 {
 	ssize_t ret = 0;
 	int retval;

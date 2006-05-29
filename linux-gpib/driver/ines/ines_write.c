@@ -49,16 +49,16 @@ static int ines_write_wait( gpib_board_t *board, ines_private_t *ines_priv,
 	return 0;
 }
 
-ssize_t ines_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi )
+int ines_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written)
 {
 	size_t count = 0;
 	ssize_t retval = 0;
 	ines_private_t *ines_priv = board->private_data;
 	nec7210_private_t *nec_priv = &ines_priv->nec7210_priv;
 	unsigned int num_bytes, i;
-	
 
-	//clear out fifo	
+	*bytes_written = 0;
+	//clear out fifo
 	nec7210_set_reg_bits(nec_priv, ADMR, OUT_FIFO_ENABLE_BIT, 0);
 	nec7210_set_reg_bits(nec_priv, ADMR, OUT_FIFO_ENABLE_BIT, OUT_FIFO_ENABLE_BIT);
 
@@ -91,16 +91,16 @@ ssize_t ines_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length, i
 	{
 		ines_priv->extend_mode_bits &= ~XFER_COUNTER_ENABLE_BIT;
 		ines_outb( ines_priv, ines_priv->extend_mode_bits, EXTEND_MODE );
+		*bytes_written = length - num_out_fifo_bytes(ines_priv);
 		return retval;
 	}
 	// wait last byte has been sent
 	retval = ines_write_wait( board, ines_priv, 1 );
 	ines_priv->extend_mode_bits &= ~XFER_COUNTER_ENABLE_BIT;
 	ines_outb( ines_priv, ines_priv->extend_mode_bits, EXTEND_MODE );
-	if( retval < 0 )
-		return retval;
-
-	return length;
+	*bytes_written = length - num_out_fifo_bytes(ines_priv);
+	
+	return retval;
 }
 
 

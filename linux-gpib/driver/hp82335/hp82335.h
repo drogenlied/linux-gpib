@@ -34,8 +34,8 @@ typedef struct
 extern gpib_interface_t hp82335_interface;
 
 // interface functions
-ssize_t hp82335_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes);
-ssize_t hp82335_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi );
+int hp82335_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end, size_t *bytes_read);
+int hp82335_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written);
 ssize_t hp82335_command( gpib_board_t *board, uint8_t *buffer, size_t length );
 int hp82335_take_control( gpib_board_t *board, int synchronous );
 int hp82335_go_to_standby( gpib_board_t *board );

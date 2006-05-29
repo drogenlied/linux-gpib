@@ -39,6 +39,17 @@ static int fifo_xfer_done( tnt4882_private_t *tnt_priv )
 
 	return retval;
 }
+	
+static unsigned tnt_transfer_count(tnt4882_private_t *tnt_priv)
+{
+	unsigned count = 0;
+	count |= tnt_readb(tnt_priv, CNT0) & 0xff;
+	count |= (tnt_readb(tnt_priv, CNT1) << 8) & 0xff00;
+	count |= (tnt_readb(tnt_priv, CNT2) << 16) & 0xff0000;
+	count |= (tnt_readb(tnt_priv, CNT3) << 24) & 0xff000000;
+	// return two's complement
+	return -count;
+};
 
 static int write_wait( gpib_board_t *board, tnt4882_private_t *tnt_priv,
 	int wait_for_done )
@@ -73,8 +84,8 @@ static int write_wait( gpib_board_t *board, tnt4882_private_t *tnt_priv,
 	return 0;
 }
 
-static ssize_t generic_write( gpib_board_t *board, uint8_t *buffer, size_t length,
-	int send_eoi, int send_commands )
+static int generic_write( gpib_board_t *board, uint8_t *buffer, size_t length,
+	int send_eoi, int send_commands, size_t *bytes_written)
 {
 	size_t count = 0;
 	ssize_t retval = 0;
@@ -84,6 +95,7 @@ static ssize_t generic_write( gpib_board_t *board, uint8_t *buffer, size_t lengt
 	int32_t hw_count;
 	unsigned long flags;
 
+	*bytes_written = 0;
 	// FIXME: really, DEV_CLEAR_BN should happen elsewhere to prevent race
 	clear_bit(DEV_CLEAR_BN, &nec_priv->state);	
 	imr1_bits = nec_priv->reg_bits[ IMR1 ];
@@ -164,22 +176,22 @@ static ssize_t generic_write( gpib_board_t *board, uint8_t *buffer, size_t lengt
 	/* force handling of any interrupts that happened
 	 * while they were masked (this appears to be needed)*/
 	tnt4882_interrupt(0, board, NULL);
-
-	if( retval < 0 )
-		return retval;
-	/* XXX need to read counters to see how many bytes were written for
-	 * cases when transfer is aborted */
-	return length;
+	*bytes_written = length - tnt_transfer_count(tnt_priv);
+	return retval;
 }
 
-ssize_t tnt4882_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi )
+int tnt4882_accel_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written)
 {
-	return generic_write( board, buffer, length, send_eoi, 0 );
+	return generic_write( board, buffer, length, send_eoi, 0, bytes_written);
 }
 
-ssize_t tnt4882_command( gpib_board_t *board, uint8_t *buffer, size_t length )
+ssize_t tnt4882_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 {
-	return generic_write( board, buffer, length, 0, 1 );
+	int retval;
+	size_t bytes_written;
+	retval = generic_write( board, buffer, length, 0, 1, &bytes_written);
+	if(retval < 0) return retval;
+	return bytes_written;
 }
 
 

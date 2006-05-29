@@ -475,7 +475,7 @@ static int agilent_82357a_abort(agilent_82357a_private_t *a_priv, int flush)
 }
 
 // interface functions
-ssize_t agilent_82357a_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes)
+int agilent_82357a_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, size_t *nbytes)
 {
 	int retval;
 	agilent_82357a_private_t *a_priv = board->private_data;
@@ -580,18 +580,19 @@ ssize_t agilent_82357a_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 	return retval;
 }
 
-static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_commands, int send_eoi)
+static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer, size_t length,
+	int send_commands, int send_eoi, size_t *bytes_written)
 {
 	int retval;
 	agilent_82357a_private_t *a_priv = board->private_data;
 	uint8_t *out_data;
 	uint8_t status_data[0x8];
 	int out_data_length;
-	int bytes_written;
+	int raw_bytes_written;
 	int i = 0, j;
-	unsigned int bytes_completed;
 	int msec_timeout;
 
+	*bytes_written = 0;
 	out_data_length = length + 0x8;
 	out_data = kmalloc(out_data_length, GFP_KERNEL);
 	if(out_data == NULL) return -ENOMEM;
@@ -619,12 +620,12 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 		kfree(out_data);
 		return retval;
 	}
-	retval = agilent_82357a_send_bulk_msg(a_priv, out_data, i, &bytes_written, msec_timeout);
+	retval = agilent_82357a_send_bulk_msg(a_priv, out_data, i, &raw_bytes_written, msec_timeout);
 	kfree(out_data);
-	if(retval || bytes_written != i)
+	if(retval || raw_bytes_written != i)
 	{
 		agilent_82357a_abort(a_priv, 0);
-		printk("%s: agilent_82357a_send_bulk_msg returned %i, bytes_written=%i, i=%i\n", __FILE__, retval, bytes_written, i);
+		printk("%s: agilent_82357a_send_bulk_msg returned %i, raw_bytes_written=%i, i=%i\n", __FILE__, retval, raw_bytes_written, i);
 		up(&a_priv->bulk_transfer_lock);
 		if(retval < 0) return retval;
 		return -EIO;
@@ -652,22 +653,26 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 		printk("%s: %s: agilent_82357a_receive_control_msg() returned %i\n", __FILE__, __FUNCTION__, retval);
 		return -EIO;
 	}
-	bytes_completed = status_data[2];
-	bytes_completed |= status_data[3] << 8;
-	bytes_completed |= status_data[4] << 16;
-	bytes_completed |= status_data[5] << 24;
+	*bytes_written = status_data[2];
+	*bytes_written |= status_data[3] << 8;
+	*bytes_written |= status_data[4] << 16;
+	*bytes_written |= status_data[5] << 24;
 	//printk("%s: write completed, bytes_completed=%i\n", __FUNCTION__, bytes_completed);
-	return bytes_completed;
+	return 0;
 }
 
-static ssize_t agilent_82357a_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi)
+static int agilent_82357a_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written)
 {
-	return agilent_82357a_generic_write(board, buffer, length, 0, send_eoi);
+	return agilent_82357a_generic_write(board, buffer, length, 0, send_eoi, bytes_written);
 }
 
 ssize_t agilent_82357a_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 {
-	return agilent_82357a_generic_write(board, buffer, length, 1, 0);
+	size_t bytes_written;
+	int retval;
+	retval = agilent_82357a_generic_write(board, buffer, length, 1, 0, &bytes_written);
+	if(retval < 0) return retval;
+	return bytes_written;
 }
 
 int agilent_82357a_take_control(gpib_board_t *board, int synchronous)

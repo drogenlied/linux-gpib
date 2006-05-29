@@ -57,13 +57,13 @@ struct gpib_interface_struct
 	 * return indicates error.
          * nbytes returns number of bytes read
 	 */
-	ssize_t (*read)(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes);
+	ssize_t (*read)(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, size_t *bytes_read);
 	/* write() should write 'length' bytes from buffer to the bus.
 	 * If the boolean value send_eoi is nonzero, then EOI should
 	 * be sent along with the last byte.  Returns number of bytes
 	 * written or negative value on error.
 	 */
-	ssize_t (*write)(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi);
+	ssize_t (*write)(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written);
 	/* command() writes the command bytes in 'buffer' to the bus
 	 * Returns number of bytes written or negative value on error.
 	 */

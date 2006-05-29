@@ -29,10 +29,9 @@
  *          well as the interface board itself must be
  *          addressed by calling ibcmd.
  */
-ssize_t ibwrt(gpib_board_t *board, uint8_t *buf, size_t cnt, int send_eoi)
+int ibwrt(gpib_board_t *board, uint8_t *buf, size_t cnt, int send_eoi, size_t *bytes_written)
 {
-	size_t bytes_sent = 0;
-	ssize_t ret = 0;
+	int ret = 0;
 	int retval;
 
 	if( cnt == 0 )
@@ -47,23 +46,13 @@ ssize_t ibwrt(gpib_board_t *board, uint8_t *buf, size_t cnt, int send_eoi)
 		if( retval < 0 ) return retval;
 	}
 	osStartTimer( board, board->usec_timeout );
-	ret = board->interface->write(board, buf, cnt, send_eoi);
-	if(ret < 0)
-	{
-/*		printk("gpib write error\n");*/
-	}else
-	{
-		buf += ret;
-		bytes_sent += ret;
-	}
+	ret = board->interface->write(board, buf, cnt, send_eoi, bytes_written);
 
 	if( io_timed_out( board ) )
 		ret = -ETIMEDOUT;
 
 	osRemoveTimer(board);
 
-	if(ret < 0) return ret;
-
-	return bytes_sent;
+	return ret;
 }
 

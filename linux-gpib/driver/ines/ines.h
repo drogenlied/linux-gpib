@@ -57,10 +57,10 @@ extern gpib_interface_t ines_pcmcia_accel_interface;
 extern gpib_interface_t ines_pcmcia_unaccel_interface;
  
 // interface functions
-ssize_t ines_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes);
-ssize_t ines_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi);
-ssize_t ines_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes);
-ssize_t ines_accel_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi);
+int ines_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, size_t *bytes_read);
+int ines_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written);
+int ines_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, size_t *bytes_read);
+int ines_accel_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written);
 ssize_t ines_command(gpib_board_t *board, uint8_t *buffer, size_t length);
 int ines_take_control(gpib_board_t *board, int synchronous);
 int ines_go_to_standby(gpib_board_t *board);

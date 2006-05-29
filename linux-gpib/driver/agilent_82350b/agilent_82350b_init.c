@@ -53,15 +53,15 @@ void set_transfer_counter(agilent_82350b_private_t *a_priv, int count)
 }
 
 // wrappers for interface functions
-ssize_t agilent_82350b_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes)
+int agilent_82350b_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end, size_t *bytes_read)
 {
 	agilent_82350b_private_t *priv = board->private_data;
-	return tms9914_read( board, &priv->tms9914_priv, buffer, length, end, nbytes);
+	return tms9914_read( board, &priv->tms9914_priv, buffer, length, end, bytes_read);
 }
-ssize_t agilent_82350b_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi )
+int agilent_82350b_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written)
 {
 	agilent_82350b_private_t *priv = board->private_data;
-	return tms9914_write( board, &priv->tms9914_priv, buffer, length, send_eoi );
+	return tms9914_write( board, &priv->tms9914_priv, buffer, length, send_eoi, bytes_written);
 }
 ssize_t agilent_82350b_command( gpib_board_t *board, uint8_t *buffer, size_t length )
 {

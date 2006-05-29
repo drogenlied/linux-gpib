@@ -39,14 +39,14 @@ void ni_isa_detach(gpib_board_t *board);
 void ni_pci_detach(gpib_board_t *board);
 
 // wrappers for interface functions
-ssize_t tnt4882_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes)
+int tnt4882_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, size_t *bytes_read)
 {
 	tnt4882_private_t *priv = board->private_data;
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
-	ssize_t retval;
+	int retval;
 	int dummy;
 
-	retval = nec7210_read(board, &priv->nec7210_priv, buffer, length, end, nbytes);
+	retval = nec7210_read(board, &priv->nec7210_priv, buffer, length, end, bytes_read);
 
 	if( retval < 0 )
 	{	// force immediate holdoff
@@ -56,10 +56,10 @@ ssize_t tnt4882_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *e
 	}
 	return retval;
 }
-ssize_t tnt4882_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi)
+int tnt4882_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written)
 {
 	tnt4882_private_t *priv = board->private_data;
-	return nec7210_write(board, &priv->nec7210_priv, buffer, length, send_eoi);
+	return nec7210_write(board, &priv->nec7210_priv, buffer, length, send_eoi, bytes_written);
 }
 ssize_t tnt4882_command_unaccel(gpib_board_t *board, uint8_t *buffer, size_t length)
 {

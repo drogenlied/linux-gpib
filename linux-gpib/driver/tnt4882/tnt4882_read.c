@@ -92,7 +92,7 @@ static void tnt4882_release_holdoff(gpib_board_t *board, tnt4882_private_t *tnt_
 	}
 }
 
-ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end,int *nbytes)
+int tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end, size_t *bytes_read)
 {
 	size_t count = 0;
 	ssize_t retval = 0;
@@ -102,6 +102,7 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 	int32_t hw_count;
 	unsigned long flags;
 
+	*bytes_read = 0;
 	// FIXME: really, DEV_CLEAR_BN should happen elsewhere to prevent race
 	clear_bit(DEV_CLEAR_BN, &nec_priv->state);	
 	imr1_bits = nec_priv->reg_bits[ IMR1 ];
@@ -230,7 +231,7 @@ ssize_t tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length,
 		write_byte( nec_priv, AUX_HLDI, AUXMR );
 		set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
 	}
-	*nbytes = count;
+	*bytes_read = count;
 
 	return retval;
 }

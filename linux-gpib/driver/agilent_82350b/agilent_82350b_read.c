@@ -17,7 +17,7 @@
 
 #include "agilent_82350b.h"
 
-ssize_t agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes)
+int agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end, size_t *bytes_read)
 {
 	agilent_82350b_private_t *a_priv = board->private_data;
 	tms9914_private_t *tms_priv = &a_priv->tms9914_priv;
@@ -27,21 +27,21 @@ ssize_t agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t 
 	//hardware doesn't support checking for end-of-string character when using fifo
 	if(tms_priv->eos_flags & REOS) 
 	{
-		return tms9914_read( board, tms_priv, buffer, length, end, nbytes);
+		return tms9914_read( board, tms_priv, buffer, length, end, bytes_read);
 	}
 	clear_bit( DEV_CLEAR_BN, &tms_priv->state );
 	read_and_clear_event_status(board);
 	*end = 0;
-	*nbytes = 0;
+	*bytes_read = 0;
 	if(length == 0) return 0;
 	//disable fifo for the moment
 	writeb(DIRECTION_GPIB_TO_HOST, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG);
 	// handle corner case of board not in holdoff and one byte might slip in early
 	if(tms_priv->holdoff_active == 0 && length > 1)
 	{
-		int bytes_read;
-		retval = tms9914_read(board, tms_priv, buffer, 1, end, &bytes_read);
-		*nbytes += bytes_read;
+		int num_bytes;
+		retval = tms9914_read(board, tms_priv, buffer, 1, end, &num_bytes);
+		*bytes_read += num_bytes;
 		if(retval < 0)
 			printk("tms9914_read failed retval=%i\n", retval);
 		if(retval < 0 || *end)
@@ -100,7 +100,7 @@ ssize_t agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t 
 			break;
 		}
 	}
-	*nbytes += i;
+	*bytes_read += i;
 	buffer += i;
 	length -= i;
 	writeb(DIRECTION_GPIB_TO_HOST, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG);
@@ -108,10 +108,10 @@ ssize_t agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t 
 	// read last bytes if we havn't received an END yet
 	if(*end == 0)
 	{
-		int bytes_read;
+		int num_bytes;
 		// try to make sure we holdoff after last byte read
-		retval = tms9914_read(board, tms_priv, buffer, length, end, &bytes_read);
-		*nbytes += bytes_read;
+		retval = tms9914_read(board, tms_priv, buffer, length, end, &num_bytes);
+		*bytes_read += num_bytes;
 		if(retval < 0)
 			return retval;
 	}

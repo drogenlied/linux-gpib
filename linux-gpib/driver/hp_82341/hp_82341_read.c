@@ -17,7 +17,7 @@
 
 #include "hp_82341.h"
 
-ssize_t hp_82341_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes)
+int hp_82341_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, size_t *bytes_read)
 {
 	hp_82341_private_t *hp_priv = board->private_data;
 	tms9914_private_t *tms_priv = &hp_priv->tms9914_priv;
@@ -28,12 +28,12 @@ ssize_t hp_82341_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 	//hardware doesn't support checking for end-of-string character when using fifo
 	if(tms_priv->eos_flags & REOS) 
 	{
-		return tms9914_read( board, tms_priv, buffer, length, end, nbytes);
+		return tms9914_read( board, tms_priv, buffer, length, end, bytes_read);
 	}
 	clear_bit( DEV_CLEAR_BN, &tms_priv->state );
 	read_and_clear_event_status(board);
 	*end = 0;
-	*nbytes = 0;
+	*bytes_read = 0;
 	if(length == 0) return 0;
 	//disable fifo for the moment
 	outb(DIRECTION_GPIB_TO_HOST_BIT, hp_priv->iobase[3] + BUFFER_CONTROL_REG);
@@ -44,9 +44,9 @@ ssize_t hp_82341_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 	// read avoids these problems.
 	if(/*tms_priv->holdoff_active == 0 && */length > 1)
 	{
-		int bytes_read;
-		retval = tms9914_read(board, tms_priv, buffer, 1, end, &bytes_read);
-		*nbytes += bytes_read;
+		int num_bytes;
+		retval = tms9914_read(board, tms_priv, buffer, 1, end, &num_bytes);
+		*bytes_read += num_bytes;
 		if(retval < 0)
 			printk("tms9914_read failed retval=%i\n", retval);
 		if(retval < 0 || *end)
@@ -118,17 +118,17 @@ ssize_t hp_82341_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 			break;
 		}
 	}
-	*nbytes += i;
+	*bytes_read += i;
 	buffer += i;
 	length -= i;
 	if(retval < 0) return retval;
 	// read last byte if we havn't received an END yet
 	if(*end == 0)
 	{
-		int bytes_read;
+		int num_bytes;
 		// try to make sure we holdoff after last byte read
-		retval = tms9914_read(board, tms_priv, buffer, length, end, &bytes_read);
-		*nbytes += bytes_read;
+		retval = tms9914_read(board, tms_priv, buffer, length, end, &num_bytes);
+		*bytes_read += num_bytes;
 		if(retval < 0)
 			return retval;
 	}

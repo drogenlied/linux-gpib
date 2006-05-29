@@ -20,15 +20,15 @@
 #include <asm/dma.h>
 #include <linux/spinlock.h>
 
-static ssize_t pio_read( gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer,
-	size_t length, int *end, int *nbytes)
+static int pio_read( gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer,
+	size_t length, int *end, size_t *bytes_read)
 {
 	ssize_t retval = 0;
 
-	*nbytes = 0;	
+	*bytes_read = 0;	
 	*end = 0;
 
-	while( *nbytes < length )
+	while( *bytes_read < length )
 	{
 		if(wait_event_interruptible(board->wait,
 			test_bit(READ_READY_BN, &priv->state) ||
@@ -41,7 +41,7 @@ static ssize_t pio_read( gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 		}
 		if( test_bit(READ_READY_BN, &priv->state) )
 		{
-			buffer[ (*nbytes)++ ] = nec7210_read_data_in( board, priv, end );
+			buffer[ (*bytes_read)++ ] = nec7210_read_data_in( board, priv, end );
 			if( *end )
 				break;
 		}
@@ -58,7 +58,7 @@ static ssize_t pio_read( gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 			break;
 		}
 
-		if(*nbytes < length)
+		if(*bytes_read < length)
 			nec7210_release_rfd_holdoff( board, priv );
 
 		if(need_resched())
@@ -146,13 +146,13 @@ static ssize_t dma_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *b
 	return length - remain;
 }
 #endif
-ssize_t nec7210_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer,
-	size_t length, int *end, int *nbytes)
+int nec7210_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer,
+	size_t length, int *end, size_t *bytes_read)
 {
 	ssize_t retval = 0;
 	
 	*end = 0;
-	*nbytes = 0;
+	*bytes_read = 0;
 	
 	if( length == 0 ) return 0;
 
@@ -161,7 +161,7 @@ ssize_t nec7210_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buff
 	nec7210_set_handshake_mode( board, priv, HR_HLDA );
 	nec7210_release_rfd_holdoff( board, priv );
 
-	retval = pio_read(board, priv, buffer, length, end, nbytes);
+	retval = pio_read(board, priv, buffer, length, end, bytes_read);
 	
 	return retval;
 }

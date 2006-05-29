@@ -53,15 +53,17 @@ static int pio_write_wait(gpib_board_t *board, nec7210_private_t *priv,
 	return 0;
 }
 
-static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer, size_t length)
+static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv,
+	uint8_t *buffer, size_t length, size_t *bytes_written)
 {
-	size_t count = 0, last_count = 0;
+	size_t last_count = 0;
 	ssize_t retval = 0;
 	unsigned long flags;
 	const int max_bus_errors = (length > 1000) ? length : 1000;
 	int bus_error_count = 0;
+	*bytes_written = 0;
 	clear_bit(BUS_ERROR_BN, &priv->state);
-	while(count < length)
+	while(*bytes_written < length)
 	{
 		if(need_resched())
 			schedule();
@@ -70,8 +72,8 @@ static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 		if(retval == -EIO)
 		{
 			/* resend last byte on bus error */
-			count = last_count;
-			GPIB_DPRINTK("resending %c\n", buffer[count]);
+			*bytes_written = last_count;
+			GPIB_DPRINTK("resending %c\n", buffer[*bytes_written]);
 			/* we can get unrecoverable bus errors,
 			* so give up after a while */
 			bus_error_count++;
@@ -82,14 +84,12 @@ static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 		spin_lock_irqsave(&board->spinlock, flags);
 		clear_bit(BUS_ERROR_BN, &priv->state);
 		clear_bit(WRITE_READY_BN, &priv->state);
-		last_count = count;
-		write_byte(priv, buffer[count++], CDOR);
+		last_count = *bytes_written;
+		write_byte(priv, buffer[*bytes_written++], CDOR);
 		spin_unlock_irqrestore(&board->spinlock, flags);
 	}
 	retval = pio_write_wait(board, priv, 1, 1, priv->type == NEC7210);
-	if( retval < 0 ) return retval;
-
-	return length;
+	return retval;
 }
 #if 0
 static ssize_t __dma_write(gpib_board_t *board, nec7210_private_t *priv, dma_addr_t address, size_t length)
@@ -169,11 +169,12 @@ static ssize_t dma_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 	return length - remain;
 }
 #endif
-ssize_t nec7210_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer, size_t length, int send_eoi)
+int nec7210_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer, size_t length,
+	int send_eoi, size_t *bytes_written)
 {
-	size_t count = 0;
 	ssize_t retval = 0;
 
+	*bytes_written = 0;
 	clear_bit( DEV_CLEAR_BN, &priv->state ); //XXX
 
 	if(send_eoi)
@@ -195,29 +196,30 @@ ssize_t nec7210_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buf
 #endif
 		}else
 		{	// PIO transfer
-			retval = pio_write(board, priv, buffer, length);
+			size_t num_bytes;
+			retval = pio_write(board, priv, buffer, length, &num_bytes);
+			*bytes_written += num_bytes;
 			if(retval < 0)
-		{
+			{
 				return retval;
-		}
-			else count += retval;
+			}
 		}
 	}
 	if(send_eoi)
 	{
+		size_t num_bytes;
 		/*send EOI */
 		write_byte(priv, AUX_SEOI, AUXMR);
 
-		retval = pio_write(board, priv, &buffer[count], 1);
+		retval = pio_write(board, priv, &buffer[*bytes_written], 1, &num_bytes);
+		*bytes_written += num_bytes;
 		if(retval < 0)
 		{
 			return retval;
 		}
-		else
-			count++;
 	}
 
-	return count ? count : -1;
+	return retval;
 }
 
 EXPORT_SYMBOL(nec7210_write);
