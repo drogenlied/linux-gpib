@@ -134,7 +134,7 @@ static void* do_aio( void *varg )
 		retval = my_ibrd( conf, conf->async.buffer, conf->async.buffer_length, &count);
 		break;
 	case GPIB_AIO_WRITE:
-		count = retval = my_ibwrt( conf, conf->async.buffer, conf->async.buffer_length );
+		retval = my_ibwrt(conf, conf->async.buffer, conf->async.buffer_length, &count);
 		break;
 	default:
 		retval = -1;
