@@ -42,18 +42,18 @@ static int pio_write_wait( gpib_board_t *board, tms9914_private_t *priv )
 
 static int pio_write(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buffer, size_t length, size_t *bytes_written)
 {
-	size_t count = 0;
 	ssize_t retval = 0;
 	unsigned long flags;
 
-	while(count < length)
+	*bytes_written = 0;
+	while(*bytes_written < length)
 	{
 		retval = pio_write_wait( board, priv );
 		if( retval < 0 ) break;
 
 		spin_lock_irqsave(&board->spinlock, flags);
 		clear_bit( WRITE_READY_BN, &priv->state );
-		write_byte( priv, buffer[count++], CDOR );
+		write_byte( priv, buffer[(*bytes_written)++], CDOR );
 		spin_unlock_irqrestore(&board->spinlock, flags);
 	}
 	retval = pio_write_wait( board, priv );
