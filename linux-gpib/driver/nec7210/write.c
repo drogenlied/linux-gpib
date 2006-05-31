@@ -53,7 +53,7 @@ static int pio_write_wait(gpib_board_t *board, nec7210_private_t *priv,
 	return 0;
 }
 
-static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv,
+static int pio_write(gpib_board_t *board, nec7210_private_t *priv,
 	uint8_t *buffer, size_t length, size_t *bytes_written)
 {
 	size_t last_count = 0;
@@ -85,7 +85,7 @@ static ssize_t pio_write(gpib_board_t *board, nec7210_private_t *priv,
 		clear_bit(BUS_ERROR_BN, &priv->state);
 		clear_bit(WRITE_READY_BN, &priv->state);
 		last_count = *bytes_written;
-		write_byte(priv, buffer[*bytes_written++], CDOR);
+		write_byte(priv, buffer[(*bytes_written)++], CDOR);
 		spin_unlock_irqrestore(&board->spinlock, flags);
 	}
 	retval = pio_write_wait(board, priv, 1, 1, priv->type == NEC7210);
@@ -172,7 +172,7 @@ static ssize_t dma_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *
 int nec7210_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer, size_t length,
 	int send_eoi, size_t *bytes_written)
 {
-	ssize_t retval = 0;
+	int retval = 0;
 
 	*bytes_written = 0;
 	clear_bit( DEV_CLEAR_BN, &priv->state ); //XXX
