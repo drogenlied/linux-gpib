@@ -318,7 +318,7 @@ static int eastwood_dma_write(gpib_board_t *board,
 //	printk("%s: waiting for write.\n", __FUNCTION__);
 	// suspend until message is sent
 	if(wait_event_interruptible(board->wait, 
-	   (((readl(e_priv->write_transfer_counter) - initial_count) & write_transfer_counter_mask) == length 
+	   ((readl(e_priv->write_transfer_counter) & write_transfer_counter_mask) == length 
 			   /*&& test_bit(WRITE_READY_BN, &nec_priv->state) */) ||
 		test_bit(BUS_ERROR_BN, &nec_priv->state) || 
 		test_bit(DEV_CLEAR_BN, &nec_priv->state) ||
@@ -814,7 +814,7 @@ static int eastwood_init_module( void )
 {
 	gpib_register_driver(&eastwood_unaccel_interface, THIS_MODULE);
 	gpib_register_driver(&eastwood_interface, THIS_MODULE);
-	printk("eastwood_gpib: driver version 2006-05-29-2039\n");
+	printk("eastwood_gpib: driver version 2006-05-30-2109\n");
 	return 0;
 }
 
