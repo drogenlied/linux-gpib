@@ -22,6 +22,8 @@
 #include <linux/delay.h>
 #include "nec7210.h"
 
+#define AVALON_DMA_FIFO_SIZE (8)
+
 typedef struct
 {
 	nec7210_private_t nec7210_priv;
@@ -112,6 +114,7 @@ enum cb7210_aux_cmds
 	of the normal nec7210 AUX_RTL aux command, which
 	causes the rtl message to toggle between on and off. */
 	AUX_RTL2 = 0xd,
+	AUX_NBAF = 0xe,	// new byte available false (also clears seoi)
 	AUX_LO_SPEED = 0x40,
 	AUX_HI_SPEED = 0x41,
 };

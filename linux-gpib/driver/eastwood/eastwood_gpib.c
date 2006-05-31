@@ -52,15 +52,15 @@ void eastwood_locking_write_byte(nec7210_private_t *nec_priv, uint8_t byte, unsi
 }
 
 // wrappers for interface functions
-ssize_t eastwood_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, int *nbytes)
+int eastwood_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, size_t *bytes_read)
 {
 	eastwood_private_t *priv = board->private_data;
-	return nec7210_read(board, &priv->nec7210_priv, buffer, length, end, nbytes);
+	return nec7210_read(board, &priv->nec7210_priv, buffer, length, end, bytes_read);
 }
-ssize_t eastwood_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi)
+int eastwood_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written)
 {
 	eastwood_private_t *priv = board->private_data;
-	return nec7210_write(board, &priv->nec7210_priv, buffer, length, send_eoi);
+	return nec7210_write(board, &priv->nec7210_priv, buffer, length, send_eoi, bytes_written);
 }
 ssize_t eastwood_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 {
@@ -212,22 +212,28 @@ int clear_dma_fifo(gpib_board_t *board)
 {
 	eastwood_private_t *e_priv = board->private_data;
 	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
-	static const int fifo_size = 8;
 	int retval;
 	char *fifo_read_buffer = NULL;
 	char *fifo_write_buffer = NULL;
 	unsigned long flags;
+	dma_addr_t read_bus_address;
+	dma_addr_t write_bus_address;
+	static const int bogus_transfer_length = AVALON_DMA_FIFO_SIZE;
 	if(e_priv->fifo_dirty == 0) return 0;
 // 	printk("%s: enter\n", __FUNCTION__);
-	if(e_priv->dma_buffer_size < 2 * fifo_size) BUG(); 
+	if(e_priv->dma_buffer_size < 2 * bogus_transfer_length) BUG(); 
 	fifo_read_buffer = e_priv->dma_buffer;
-	fifo_write_buffer = e_priv->dma_buffer + fifo_size;
+	fifo_write_buffer = e_priv->dma_buffer + bogus_transfer_length;
+	read_bus_address = dma_map_single(NULL, fifo_read_buffer,
+		bogus_transfer_length, DMA_TO_DEVICE);
+	write_bus_address = dma_map_single(NULL, fifo_write_buffer,
+		bogus_transfer_length, DMA_FROM_DEVICE);
 	disable_dma(e_priv->dma_channel);
-	set_dma_count(e_priv->dma_channel, fifo_size);
+	set_dma_count(e_priv->dma_channel, bogus_transfer_length);
 	nios2_set_dma_rcon(e_priv->dma_channel, 0);
 	nios2_set_dma_wcon(e_priv->dma_channel, 0);
-	nios2_set_dma_raddr(e_priv->dma_channel, (dma_addr_t)fifo_read_buffer);
-	nios2_set_dma_waddr(e_priv->dma_channel, (dma_addr_t)fifo_write_buffer);
+	nios2_set_dma_raddr(e_priv->dma_channel, read_bus_address);
+	nios2_set_dma_waddr(e_priv->dma_channel, write_bus_address);
 	spin_lock_irqsave(&board->spinlock, flags);
 	enable_dma(e_priv->dma_channel);
 	set_bit(DMA_WRITE_IN_PROGRESS_BN, &nec_priv->state);
@@ -244,6 +250,8 @@ int clear_dma_fifo(gpib_board_t *board)
 		retval = -EINTR;
 	}else
 		e_priv->fifo_dirty = 0;
+	dma_unmap_single(NULL, read_bus_address, bogus_transfer_length, DMA_TO_DEVICE);
+	dma_unmap_single(NULL, write_bus_address, bogus_transfer_length, DMA_FROM_DEVICE);
 // 	printk("%s: exit, retval=%i\n", __FUNCTION__, retval);
 	return retval;
 }
@@ -271,26 +279,26 @@ static int wait_for_idle(gpib_board_t *board, short wake_on_listener_idle,
 	return retval;
 }
 
-static ssize_t eastwood_dma_write(gpib_board_t *board, 
-	dma_addr_t address, size_t length)
+static int eastwood_dma_write(gpib_board_t *board, 
+	uint8_t *buffer, size_t length, size_t *bytes_written)
 {
 	eastwood_private_t *e_priv = board->private_data;
 	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
 	unsigned long flags;
-	unsigned count, initial_count;
 	int retval = 0;
-
+	dma_addr_t address;
+	*bytes_written = 0;
 // 	printk("%s: enter\n", __FUNCTION__);
 	if(length > e_priv->dma_buffer_size)
 		BUG();
-
 	clear_dma_fifo(board);
-	// write-clear counter (hardware currently broken and it doesn't clear)
+	// write-clear counter
 	writel(0x0, e_priv->write_transfer_counter);
-	initial_count = readl(e_priv->write_transfer_counter);
-// 	printk("initial count=%i\n", initial_count);
 	retval = wait_for_idle(board, 1, 0);
 	if(retval < 0) return retval;
+	memcpy(e_priv->dma_buffer, buffer, length);
+	address = dma_map_single(NULL, buffer,
+		 length, DMA_TO_DEVICE);
 	/* program dma controller */
 	disable_dma(e_priv->dma_channel);
 	eastwood_config_dma(board, 1);
@@ -321,22 +329,26 @@ static ssize_t eastwood_dma_write(gpib_board_t *board,
 	}
 	if(test_bit(TIMO_NUM, &board->status))
 		retval = -ETIMEDOUT;
-	if( test_and_clear_bit(DEV_CLEAR_BN, &nec_priv->state))
+	if(test_and_clear_bit(DEV_CLEAR_BN, &nec_priv->state))
 		retval = -EINTR;
-	if( test_and_clear_bit(BUS_ERROR_BN, &nec_priv->state))
+	if(test_and_clear_bit(BUS_ERROR_BN, &nec_priv->state))
 		retval = -EIO;
-
 	// disable board's dma
 	nec7210_set_reg_bits(nec_priv, IMR2, HR_DMAO, 0);
 
 	disable_dma(e_priv->dma_channel);
-	count = (readl(e_priv->write_transfer_counter) - initial_count) & write_transfer_counter_mask;
-/*	printk("length=%i, count=%i, residue=%i, retval=%i\n",length, count, 
-		get_dma_residue(e_priv->dma_channel), retval);*/
-	return retval ? retval : count;
+	if(retval)
+		write_byte(nec_priv, AUX_NBAF, AUXMR);	
+	*bytes_written = readl(e_priv->write_transfer_counter) & write_transfer_counter_mask;
+	if(*bytes_written > length) BUG();
+	/*	printk("length=%i, *bytes_written=%i, residue=%i, retval=%i\n",
+		length, *bytes_written, get_dma_residue(e_priv->dma_channel), retval);*/
+	dma_unmap_single(NULL, address, length, DMA_TO_DEVICE);
+	return retval;
 }
 
-static ssize_t eastwood_accel_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi)
+static int eastwood_accel_write(gpib_board_t *board, 
+	uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written)
 {
 	eastwood_private_t *e_priv = board->private_data;
 	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
@@ -344,6 +356,7 @@ static ssize_t eastwood_accel_write(gpib_board_t *board, uint8_t *buffer, size_t
 	size_t transfer_size;
 	ssize_t retval = 0;
 	size_t dma_remainder = remainder;
+	*bytes_written = 0;
 	if(length < 1) return 0;
 	clear_bit(DEV_CLEAR_BN, &nec_priv->state); // XXX FIXME
 	if(send_eoi) --dma_remainder;
@@ -351,35 +364,36 @@ static ssize_t eastwood_accel_write(gpib_board_t *board, uint8_t *buffer, size_t
 	
 	while(dma_remainder > 0)
 	{
-		dma_addr_t bus_address;
+		size_t num_bytes;
 		transfer_size = (e_priv->dma_buffer_size < dma_remainder) ? 
 			e_priv->dma_buffer_size : dma_remainder;
-		memcpy(e_priv->dma_buffer, buffer, transfer_size);
-		bus_address = dma_map_single(NULL, e_priv->dma_buffer,
-			transfer_size, DMA_TO_DEVICE);
-		retval = eastwood_dma_write(board, bus_address, transfer_size);
-		dma_unmap_single(NULL, bus_address, transfer_size, DMA_TO_DEVICE);
+		retval = eastwood_dma_write(board, buffer, transfer_size, &num_bytes);
+		*bytes_written += num_bytes;
 		if(retval < 0) break;
-		dma_remainder -= retval;
-		remainder -= retval;
-		buffer += retval;
+		dma_remainder -= num_bytes;
+		remainder -= num_bytes;
+		buffer += num_bytes;
 		if(need_resched()) schedule();
 	}
 	if(retval < 0) return retval;
 	//handle sending of last byte with eoi
-	if(remainder > 0)
+	if(send_eoi)
 	{
-// 		printk("%s: handling last byte\n", __FUNCTION__);
-		retval = eastwood_write(board, buffer, remainder, send_eoi);
+		size_t num_bytes;
+		// 		printk("%s: handling last byte\n", __FUNCTION__);
+		if(remainder != 1) BUG();
+		write_byte(nec_priv, AUX_SEOI, AUXMR);
+		retval = eastwood_dma_write(board, buffer, remainder, &num_bytes);
+		*bytes_written += num_bytes;
 		if(retval < 0) return retval;
-		remainder -= retval;
+		remainder -= num_bytes;
 	}
 // 	printk("%s: bytes send=%i\n", __FUNCTION__, (int)(length - remainder));
-	return length - remainder;
+	return 0;
 }
 
-static int eastwood_dma_read(gpib_board_t *board, dma_addr_t bus_address,
-	size_t length, int *end, int *nbytes)
+static int eastwood_dma_read(gpib_board_t *board, uint8_t *buffer,
+	size_t length, int *end, size_t *bytes_read)
 {
 	eastwood_private_t *e_priv = board->private_data;
 	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
@@ -387,10 +401,11 @@ static int eastwood_dma_read(gpib_board_t *board, dma_addr_t bus_address,
 	unsigned long flags;
 	int residue;
 	int wait_retval;
-// 	printk("%s: enter, bus_address=0x%x, length=%i\n", __FUNCTION__, (unsigned)bus_address,
+	dma_addr_t bus_address;
+	// 	printk("%s: enter, bus_address=0x%x, length=%i\n", __FUNCTION__, (unsigned)bus_address,
 // 		   (int)length);
 
-	*nbytes = 0;
+	*bytes_read = 0;
 	*end = 0;
 	if(length == 0)
 		return 0;
@@ -398,6 +413,8 @@ static int eastwood_dma_read(gpib_board_t *board, dma_addr_t bus_address,
 	clear_dma_fifo(board);
 	retval = wait_for_idle(board, 0, 1);
 	if(retval < 0) return retval;
+	bus_address = dma_map_single(NULL, e_priv->dma_buffer,
+		length, DMA_FROM_DEVICE);
 	spin_lock_irqsave(&board->spinlock, flags);
 	/* program dma controller */
 	disable_dma(e_priv->dma_channel);
@@ -441,15 +458,17 @@ static int eastwood_dma_read(gpib_board_t *board, dma_addr_t bus_address,
 	disable_dma(e_priv->dma_channel);
 	residue = get_dma_residue(e_priv->dma_channel);
 	if(residue < 0) BUG();
-	*nbytes += length - residue;
-// 	printk("\tnbytes=%i, residue=%i, end=%i, retval=%i, wait_retval=%i\n", 
-// 		   *nbytes, residue, *end, retval, wait_retval);
+	*bytes_read += length - residue;
+	dma_unmap_single(NULL, bus_address, length, DMA_FROM_DEVICE);
+	memcpy(buffer, e_priv->dma_buffer, *bytes_read);
+// 	printk("\tbytes_read=%i, residue=%i, end=%i, retval=%i, wait_retval=%i\n", 
+// 		   *bytes_read, residue, *end, retval, wait_retval);
 
 	return retval;
 }
 
 static ssize_t eastwood_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length,
-	int *end, int *nbytes)
+	int *end, size_t *bytes_read)
 {
 	eastwood_private_t *e_priv = board->private_data;
 	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
@@ -457,13 +476,12 @@ static ssize_t eastwood_accel_read(gpib_board_t *board, uint8_t *buffer, size_t 
 	size_t transfer_size;
 	int retval = 0;
 	int dma_nbytes;
-	dma_addr_t bus_address;
 /*	printk("%s: enter, buffer=0x%p, length=%i\n", __FUNCTION__,
 		   buffer, (int)length);
 	printk("\t dma_buffer=0x%p\n", e_priv->dma_buffer);*/
 	clear_bit(DEV_CLEAR_BN, &nec_priv->state); // XXX FIXME
 	*end = 0;
-	*nbytes = 0;
+	*bytes_read = 0;
 	nec7210_set_handshake_mode(board, nec_priv, HR_HLDE);
 	write_byte(nec_priv, AUX_FH, AUXMR );
 //	nec7210_release_rfd_holdoff(board, nec_priv);
@@ -471,14 +489,10 @@ static ssize_t eastwood_accel_read(gpib_board_t *board, uint8_t *buffer, size_t 
 	while(remain > 1)
 	{
 		transfer_size = (e_priv->dma_buffer_size < remain - 1) ? e_priv->dma_buffer_size : remain - 1;
-		bus_address = dma_map_single(NULL, e_priv->dma_buffer,
-			transfer_size, DMA_FROM_DEVICE);
-		retval = eastwood_dma_read(board, bus_address, transfer_size, end, &dma_nbytes);
-		dma_unmap_single(NULL, bus_address, transfer_size, DMA_FROM_DEVICE);
-		memcpy(buffer, e_priv->dma_buffer, dma_nbytes);
+		retval = eastwood_dma_read(board, buffer, transfer_size, end, &dma_nbytes);
 		remain -= dma_nbytes;
 		buffer += dma_nbytes;
-		*nbytes += dma_nbytes;
+		*bytes_read += dma_nbytes;
 		if(*end) 
 		{
 			break;
@@ -494,12 +508,8 @@ static ssize_t eastwood_accel_read(gpib_board_t *board, uint8_t *buffer, size_t 
 	{
 // 		printk("%s: reading last byte\n", __FUNCTION__);
 		nec7210_set_handshake_mode(board, nec_priv, HR_HLDA);
-		bus_address = dma_map_single(NULL, e_priv->dma_buffer,
-			1, DMA_FROM_DEVICE);
-		retval = eastwood_dma_read(board, bus_address, 1, end, &dma_nbytes);
-		dma_unmap_single(NULL, bus_address, 1, DMA_FROM_DEVICE);
-		memcpy(buffer, e_priv->dma_buffer, dma_nbytes);
-		*nbytes += dma_nbytes;
+		retval = eastwood_dma_read(board, buffer, 1, end, &dma_nbytes);
+		*bytes_read += dma_nbytes;
 	}
 // 	printk("%s: exit, retval=%i\n", __FUNCTION__, (int)retval);
 	return retval;
@@ -804,6 +814,7 @@ static int eastwood_init_module( void )
 {
 	gpib_register_driver(&eastwood_unaccel_interface, THIS_MODULE);
 	gpib_register_driver(&eastwood_interface, THIS_MODULE);
+	printk("eastwood_gpib: driver version 2006-05-29-2039\n");
 	return 0;
 }
 
