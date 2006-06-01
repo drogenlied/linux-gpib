@@ -1,7 +1,7 @@
 
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([linux-gpib], [3.2.06])
+AC_INIT([linux-gpib], [3.2.07])
 # libtool version: current:revision:age
 #
 # If the library source code has changed at all since the last update, then
@@ -15,7 +15,7 @@ AC_INIT([linux-gpib], [3.2.06])
 #
 # If any interfaces have been removed since the last public release, then set
 # age to 0.
-GPIB_SO_VERSION=1:0:1
+GPIB_SO_VERSION=1:1:1
 AC_CONFIG_SRCDIR([driver/sys/osfuncs.c])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
@@ -76,8 +76,8 @@ fi
 AC_MSG_RESULT([ok])
 dnl get compile flags for modules from linux kernel source tree
 AC_MSG_CHECKING([Linux kernel compile flags])
-FLAGDIR=$(pwd)/util/linux_flags 
-env LDFLAGS="" CFLAGS="" make --quiet -C ${LINUX_SRCDIR} V=1 SUBDIRS=${FLAGDIR} LINUXDIR=${LINUX_SRCDIR} MODVERDIR=${FLAGDIR} modules 
+FLAGDIR=$(pwd)/util/linux_flags
+env LDFLAGS="" CFLAGS="" make --quiet -C ${LINUX_SRCDIR} V=1 SUBDIRS=${FLAGDIR} LINUXDIR=${LINUX_SRCDIR} MODVERDIR=${FLAGDIR} modules
 if [[ $? != 0 ]]; then
 	AC_MSG_WARN([Failed to get compile flags from Linux kernel directory.])
 fi
