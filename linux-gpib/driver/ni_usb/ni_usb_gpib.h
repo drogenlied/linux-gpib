@@ -148,6 +148,14 @@ static inline int ni_usb_bulk_termination(uint8_t *buffer)
 	return i;
 }
 
+enum ni_usb_unknown3_register
+{
+	SERIAL_NUMBER_4_REG = 0x8,
+	SERIAL_NUMBER_3_REG = 0x9,
+	SERIAL_NUMBER_2_REG = 0xa,
+	SERIAL_NUMBER_1_REG = 0xb,
+};
+
 static inline int ni_usb_bulk_register_write_header(uint8_t *buffer, int num_writes)
 {
 	int i = 0;

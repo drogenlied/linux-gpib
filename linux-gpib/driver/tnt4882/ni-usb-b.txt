@@ -173,7 +173,7 @@ tnt4882 registers: CNT1, CNT2, ADR1, AUXMR, etc.
 
 08 N pair1 pair2 ... pairN = register level read
 pair = device address
-readback = 34 value1 value2 ... valueN 35 N (pad with zeros) 
+readback = 34 value1 value2 value3 34 value4 ... 35 (N: 1 to 3, number of valid values from last 4 byte 34 block) (pad with zeros)
 
 09 N 00 triplet1 triplet2 ... tripletN (pad to 32 bit boundary) = register level write.
 triplet = device address value

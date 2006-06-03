@@ -355,45 +355,38 @@ static void ni_usb_dump_raw_block(const uint8_t *raw_data, int length)
 	printk("\n");
 }
 
-// this should work when reading from the tnt4882, but the format is different when reading
-// from mystery device #3
 int ni_usb_parse_register_read_block(const uint8_t *raw_data, unsigned int *results, int num_results)
 {
 	int i = 0;
 	int j;
 	int unexpected = 0;
-
-	if(raw_data[i++] != NIUSB_REGISTER_READ_DATA_START_ID)
+	static const int results_per_chunk = 3;
+	for(j = 0; j < num_results;)
 	{
-		printk("%s: %s: parse error: wrong start id\n", __FILE__, __FUNCTION__);
-		unexpected = 1;
-	}
-	for(j = 0; j < num_results; j++)
-	{
-		results[j] = raw_data[i++];
+		int k;
+		if(raw_data[i++] != NIUSB_REGISTER_READ_DATA_START_ID)
+		{
+			printk("%s: %s: parse error: wrong start id\n", __FILE__, __FUNCTION__);
+			unexpected = 1;
+		}
+		for(k = 0; k < results_per_chunk && j < num_results; ++k)
+		{
+			results[j++] = raw_data[i++];
+		}
 	}
 	while(i % 4)
 	{
-#if 0
-// I sometimes get 0x10 for raw_data[3], I don't know what (if anything) it means
-		if(raw_data[i++] != 0)
-		{
-			printk("%s: %s: unexpected data: raw_data[%i]=0x%x, expected 0\n",
-				__FILE__, __FUNCTION__, i - 1, (int)raw_data[i - 1]);
-			unexpected = 1;
-		}
-#else
 		i++;
-#endif
 	}
 	if(raw_data[i++] != NIUSB_REGISTER_READ_DATA_END_ID)
 	{
 		printk("%s: %s: parse error: wrong end id\n", __FILE__, __FUNCTION__);
 		unexpected = 1;
 	}
-	if(raw_data[i++] != num_results)
+	if(raw_data[i++] % results_per_chunk != num_results % results_per_chunk)
 	{
-		printk("%s: %s: parse error: wrong N\n", __FILE__, __FUNCTION__);
+		printk("%s: %s: parse error: wrong count=%i for NIUSB_REGISTER_READ_DATA_END\n",
+			__FILE__, __FUNCTION__, (int)raw_data[i - 1]);
 		unexpected = 1;
 	}
 	while(i % 4)
@@ -1513,11 +1506,6 @@ static int ni_usb_init(gpib_board_t *board)
 	unsigned int ibsta;
 	static const int writes_length = 24;
 
-/*
-on startup,
-windows driver writes: 08 04 03 08 03 09 03 0a 03 0b 00 00 04 00 00 00
-then reads back: 34 01 0a c3 34 e2 0a c3 35 01 00 00 04 00 00 00
-*/
 	writes = kmalloc(sizeof(struct ni_usb_register) * writes_length, GFP_KERNEL);
 	if(writes == NULL)
 	{
@@ -1742,25 +1730,26 @@ static void ni_usb_cleanup_urbs(ni_usb_private_t *ni_priv)
 	}
 };
 
-static int ni_usb_b_startup_check(ni_usb_private_t *ni_priv)
+static int ni_usb_b_read_serial_number(ni_usb_private_t *ni_priv)
 {
-/*
-on startup,
-windows driver writes: 08 04 03 08 03 09 03 0a 03 0b 00 00 04 00 00 00
-then reads back: 34 01 0a c3 34 e2 0a c3 35 01 00 00 04 00 00 00
-
-It looks like a register read from subdevice 3, but the data read back
-doesn't make sense to me.
-*/
 	int retval;
-	uint8_t out_data[] = {0x8, 0x4, 0x3, 0x8, 0x3, 0x9, 0x3, 0xa, 0x3, 0xb, 0x0, 0x0, 0x4, 0x0, 0x0, 0x0};
-	uint8_t expected_in_data[] = {0x34, 0x1, 0xa, 0xc3, 0x34, 0xe2, 0xa, 0xc3, 0x35, 0x1, 0x0, 0x0, 0x4, 0x0, 0x0, 0x0};
-	uint8_t in_data[0x10];
+	uint8_t out_data[0x20];
+	uint8_t in_data[0x20];
 	int bytes_written = 0, bytes_read = 0;
 	int i = 0;
-	int unexpected = 0;
-
+	static const int num_reads = 4;
+	unsigned results[4];
+	int j;
+	unsigned serial_number;
 // 	printk("%s: %s\n", __FILE__, __FUNCTION__);
+	i += ni_usb_bulk_register_read_header(&out_data[i], num_reads);
+	i += ni_usb_bulk_register_read(&out_data[i], NIUSB_SUBDEV_UNKNOWN3, SERIAL_NUMBER_1_REG);
+	i += ni_usb_bulk_register_read(&out_data[i], NIUSB_SUBDEV_UNKNOWN3, SERIAL_NUMBER_2_REG);
+	i += ni_usb_bulk_register_read(&out_data[i], NIUSB_SUBDEV_UNKNOWN3, SERIAL_NUMBER_3_REG);
+	i += ni_usb_bulk_register_read(&out_data[i], NIUSB_SUBDEV_UNKNOWN3, SERIAL_NUMBER_4_REG);
+	while(i % 4)
+		out_data[i++] = 0x0;
+	i += ni_usb_bulk_termination(&out_data[i]);
 	retval = ni_usb_send_bulk_msg(ni_priv, out_data, sizeof(out_data), &bytes_written, 1000);
 	if(retval)
 	{
@@ -1775,18 +1764,14 @@ doesn't make sense to me.
 		ni_usb_dump_raw_block(in_data, bytes_read);
 		return retval;
 	}
-	if(bytes_read != sizeof(expected_in_data))
-		unexpected = 1;
-	for(i = 0; unexpected == 0 && i < sizeof(expected_in_data); ++i)
+	if(sizeof(results) / sizeof(results[0]) < num_reads) BUG();
+	ni_usb_parse_register_read_block(in_data, results, num_reads);
+	serial_number = 0;
+	for(j = 0; j < num_reads; ++j)
 	{
-		if(in_data[i] != expected_in_data[i])
-			unexpected = 1;
+		serial_number |= (results[j] & 0xff) << (8 * j);
 	}
-	if(unexpected)
-	{
-		printk("%s: %s: unexpected response.\n", __FILE__, __FUNCTION__);
-		ni_usb_dump_raw_block(in_data, bytes_read);
-	}
+	printk("%s: board serial number is 0x%x\n", __FUNCTION__, serial_number);
 	return 0;
 }
 
@@ -1990,7 +1975,7 @@ int ni_usb_attach(gpib_board_t *board, gpib_board_config_t config)
 		ni_priv->bulk_out_endpoint = NIUSB_B_BULK_OUT_ENDPOINT;
 		ni_priv->bulk_in_endpoint = NIUSB_B_BULK_IN_ENDPOINT;
 		ni_priv->interrupt_in_endpoint = NIUSB_B_INTERRUPT_IN_ENDPOINT;
-		ni_usb_b_startup_check(ni_priv);
+		ni_usb_b_read_serial_number(ni_priv);
 	}else if(product_id == USB_DEVICE_ID_NI_USB_HS)
 	{
 		ni_priv->bulk_out_endpoint = NIUSB_HS_BULK_OUT_ENDPOINT;
