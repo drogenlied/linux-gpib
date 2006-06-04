@@ -459,8 +459,15 @@ static int read_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
 	}
 	read_cmd.count -= remain;
 	read_cmd.end = end_flag;
-
-
+	/* suppress errors (for example due to timeout or interruption by device clear)
+	if all bytes got sent.  This prevents races that can occur in the various drivers
+	if a device receives a device clear immediately after a transfer completes and
+	the driver code wasn't careful enough to handle that case.
+	*/
+	if(remain == 0)
+	{
+		retval = 0;
+	}
 	if(retval == 0)
 		retval = copy_to_user((void*) arg, &read_cmd, sizeof(read_cmd));
 	desc->io_in_progress = 0;
@@ -573,9 +580,16 @@ static int write_ioctl(gpib_file_private_t *file_priv, gpib_board_t *board,
 			break;
 		}
 	}
-
 	write_cmd.count -= remain;
-
+	/* suppress errors (for example due to timeout or interruption by device clear)
+	if all bytes got sent.  This prevents races that can occur in the various drivers
+	if a device receives a device clear immediately after a transfer completes and
+	the driver code wasn't careful enough to handle that case.
+	*/
+	if(remain == 0)
+	{
+		retval = 0;
+	}
 	fault = copy_to_user((void*) arg, &write_cmd, sizeof(write_cmd));
 	desc->io_in_progress = 0;
 	wake_up_interruptible( &board->wait );
