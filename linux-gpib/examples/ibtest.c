@@ -18,6 +18,7 @@ program needs to be really, but useful for testing library functions.
  *                                                                         *
  ***************************************************************************/
 
+#include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -313,6 +314,8 @@ int perform_read(int ud, int max_num_bytes)
 	char *buffer;
 	int buffer_size = max_num_bytes + 1;
 	buffer = malloc(buffer_size);
+	int is_string;
+	int i;
 	if(buffer == NULL) 
 	{
 		fprintf(stderr, "%s: failed to allocate buffer.\n", __FUNCTION__);
@@ -322,9 +325,29 @@ int perform_read(int ud, int max_num_bytes)
 	printf("trying to read %i bytes from device...\n", max_num_bytes);
 
 	ibrd(ud, buffer, buffer_size - 1);
-	printf("received string: '%s'\n"
-		"number of bytes read: %li\n", buffer, ThreadIbcntl());
+	is_string = 1;
+	for(i = 0; i < ThreadIbcntl(); ++i)
+	{
+		if(isascii(buffer[i]) == 0) 
+		{
+			is_string = 0;
+			break;
+		}
+	}
+	if(is_string)
+	{
+		printf("received string: '%s'\n", buffer);
+	}else
+	{
+		printf("received binary data (hex): ");
+		for(i = 0; i < ThreadIbcntl(); ++i)
+		{
+			printf("%2x ", (unsigned)buffer[i]);
+		}
+		printf("\n");
+	}
 	free(buffer);
+	printf("Number of bytes read: %li\n", ThreadIbcntl());
 	if(ThreadIbsta() & ERR)
 		return -1;
 	return 0;
