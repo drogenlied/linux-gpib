@@ -464,7 +464,7 @@ static int read_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
 	if a device receives a device clear immediately after a transfer completes and
 	the driver code wasn't careful enough to handle that case.
 	*/
-	if(remain == 0)
+	if(remain == 0 || end_flag)
 	{
 		retval = 0;
 	}
