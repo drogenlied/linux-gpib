@@ -1,5 +1,18 @@
 Linux GPIB Package Release Notes
 
+3.2.07: Added pci vendor ids removed from kernel 2.6.14 and
+later.  Added fix for changes to class_device_create() in
+kernel 2.6.15.  Added device id for NI pci-express gpib board.
+Fixed byte-order problem on big-endian machines when checking
+usb product id on 2.6.11 and newer kernels.  Made some 
+enhancements to ibtest.  Fixed some bogus timeouts with a
+timeout of TNONE and usb adapters.  Added some support for
+SPOLL bit in ibsta.  Added various fixes for using pcmcia drivers
+with pcmciautils and kernels 2.6.13 and later.  Fixed name
+of library for guile binding to libgpib-guile.  Added support
+for proper reporting of the number of data bytes written
+on writes that only partially complete.
+
 3.2.06: Fixed gpib_config failures due to unintialized variable
 causing a memory allocation failure (Bernhard Heibler). Fixed
 TCL binding to ibrsv() (John Bradshaw).  Fixed race that could
