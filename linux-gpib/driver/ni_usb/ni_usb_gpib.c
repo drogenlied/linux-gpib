@@ -2209,7 +2209,7 @@ static struct usb_driver ni_usb_bus_driver =
 	.id_table = ni_usb_driver_device_table,
 };
 
-static int ni_usb_init_module(void)
+static int __init ni_usb_init_module(void)
 {
 	int i;
 
@@ -2222,7 +2222,7 @@ static int ni_usb_init_module(void)
 	return 0;
 }
 
-static void ni_usb_exit_module(void)
+static void __exit ni_usb_exit_module(void)
 {
 	info("ni_usb_gpib driver unloading");
 //	printk("%s: enter\n", __FUNCTION__);

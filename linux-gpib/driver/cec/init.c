@@ -312,7 +312,7 @@ static const struct pci_device_id cec_pci_table[] =
 };
 MODULE_DEVICE_TABLE(pci, cec_pci_table);
 
-int cec_init_module(void)
+int __init cec_init_module(void)
 {
 	gpib_register_driver(&cec_pci_interface, THIS_MODULE);
 

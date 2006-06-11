@@ -1515,7 +1515,7 @@ static struct usb_driver agilent_82357a_bus_driver =
 	.id_table = agilent_82357a_driver_device_table,
 };
 
-static int agilent_82357a_init_module(void)
+static int __init agilent_82357a_init_module(void)
 {
 	int i;
 
@@ -1528,7 +1528,7 @@ static int agilent_82357a_init_module(void)
 	return 0;
 }
 
-static void agilent_82357a_exit_module(void)
+static void __exit agilent_82357a_exit_module(void)
 {
 	info("agilent_82357a_gpib driver unloading");
 //	printk("%s: enter\n", __FUNCTION__);

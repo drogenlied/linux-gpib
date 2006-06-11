@@ -103,12 +103,12 @@ void tms9914_iomem_write_byte(tms9914_private_t *priv, uint8_t data, unsigned in
 		udelay(1);
 }
 
-static int tms9914_init_module(void)
+static int __init tms9914_init_module(void)
 {
 	return 0;
 }
 
-static void tms9914_exit_module(void)
+static void __exit tms9914_exit_module(void)
 {
 }
 

@@ -728,7 +728,7 @@ static const struct pnp_device_id tnt4882_pnp_table[] __devinitdata =
 };
 MODULE_DEVICE_TABLE(pnp, tnt4882_pnp_table);
 
-static int tnt4882_init_module( void )
+static int __init tnt4882_init_module( void )
 {
 	gpib_register_driver(&ni_isa_interface, THIS_MODULE);
 	gpib_register_driver(&ni_isa_accel_interface, THIS_MODULE);
@@ -751,7 +751,7 @@ static int tnt4882_init_module( void )
 	return 0;
 }
 
-static void tnt4882_exit_module( void )
+static void __exit tnt4882_exit_module( void )
 {
 	gpib_unregister_driver(&ni_isa_interface);
 	gpib_unregister_driver(&ni_isa_accel_interface);

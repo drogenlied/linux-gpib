@@ -810,7 +810,7 @@ void eastwood_detach(gpib_board_t *board)
 	eastwood_generic_detach(board);
 }
 
-static int eastwood_init_module( void )
+static int __init eastwood_init_module( void )
 {
 	gpib_register_driver(&eastwood_unaccel_interface, THIS_MODULE);
 	gpib_register_driver(&eastwood_interface, THIS_MODULE);
@@ -818,7 +818,7 @@ static int eastwood_init_module( void )
 	return 0;
 }
 
-static void eastwood_exit_module( void )
+static void __exit eastwood_exit_module( void )
 {
 	gpib_unregister_driver(&eastwood_unaccel_interface);
 	gpib_unregister_driver(&eastwood_interface);

@@ -301,13 +301,13 @@ void hp82335_detach(gpib_board_t *board)
 }
 
 
-static int hp82335_init_module( void )
+static int __init hp82335_init_module( void )
 {
 	gpib_register_driver(&hp82335_interface, THIS_MODULE);
 	return 0;
 }
 
-static void hp82335_exit_module( void )
+static void __exit hp82335_exit_module( void )
 {
 	gpib_unregister_driver(&hp82335_interface);
 }

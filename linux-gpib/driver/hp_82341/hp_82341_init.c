@@ -573,14 +573,14 @@ static const struct pnp_device_id hp_82341_pnp_table[] =
 };
 MODULE_DEVICE_TABLE(pnp, hp_82341_pnp_table);
 
-static int hp_82341_init_module( void )
+static int __init hp_82341_init_module( void )
 {
 	gpib_register_driver(&hp_82341_unaccel_interface, THIS_MODULE);
 	gpib_register_driver(&hp_82341_interface, THIS_MODULE);
 	return 0;
 }
 
-static void hp_82341_exit_module( void )
+static void __exit hp_82341_exit_module( void )
 {
 	gpib_unregister_driver(&hp_82341_interface);
 	gpib_unregister_driver(&hp_82341_unaccel_interface);

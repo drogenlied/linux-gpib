@@ -282,7 +282,7 @@ void ni_pci_detach(gpib_board_t *board)
 }
 
 
-static int tnt4882_tms_init_module(void)
+static int __init tnt4882_tms_init_module(void)
 {
 	EXPORT_NO_SYMBOLS;
 
@@ -294,7 +294,7 @@ static int tnt4882_tms_init_module(void)
 	return 0;
 }
 
-static void tnt4882_tms_exit_module(void)
+static void __exit tnt4882_tms_exit_module(void)
 {
 	gpib_unregister_driver(&ni_pci_interface);
 

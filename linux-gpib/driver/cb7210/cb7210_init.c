@@ -575,7 +575,7 @@ static const struct pci_device_id cb7210_pci_table[] =
 };
 MODULE_DEVICE_TABLE(pci, cb7210_pci_table);
 
-static int cb7210_init_module( void )
+static int __init cb7210_init_module( void )
 {
 	int err = 0;
 
@@ -598,7 +598,7 @@ static int cb7210_init_module( void )
 	return 0;
 }
 
-static void cb7210_exit_module( void )
+static void __exit cb7210_exit_module( void )
 {
 	gpib_unregister_driver(&cb_pci_interface);
 	gpib_unregister_driver(&cb_isa_interface);

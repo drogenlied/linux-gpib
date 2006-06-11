@@ -150,12 +150,12 @@ void nec7210_locking_iomem_write_byte(nec7210_private_t *priv, uint8_t data, uns
 	spin_unlock_irqrestore( &priv->register_page_lock, flags );
 }
 
-static int nec7210_init_module( void )
+static int __init nec7210_init_module( void )
 {
 	return 0;
 }
 
-static void nec7210_exit_module( void )
+static void __exit nec7210_exit_module( void )
 {
 }
 

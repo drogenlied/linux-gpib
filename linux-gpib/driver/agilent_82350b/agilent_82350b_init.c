@@ -368,14 +368,14 @@ static const struct pci_device_id agilent_82350b_pci_table[] =
 };
 MODULE_DEVICE_TABLE(pci, agilent_82350b_pci_table);
 
-static int agilent_82350b_init_module( void )
+static int __init agilent_82350b_init_module( void )
 {
 	gpib_register_driver(&agilent_82350b_unaccel_interface, THIS_MODULE);
 	gpib_register_driver(&agilent_82350b_interface, THIS_MODULE);
 	return 0;
 }
 
-static void agilent_82350b_exit_module( void )
+static void __exit agilent_82350b_exit_module( void )
 {
 	gpib_unregister_driver(&agilent_82350b_interface);
 	gpib_unregister_driver(&agilent_82350b_unaccel_interface);

@@ -537,7 +537,7 @@ void pc2_2a_detach( gpib_board_t *board )
 	pc2a_common_detach( board, pc2_2a_iosize );
 }
 
-static int pc2_init_module( void )
+static int __init pc2_init_module( void )
 {
 	gpib_register_driver(&pc2_interface, THIS_MODULE);
 	gpib_register_driver(&pc2a_interface, THIS_MODULE);
@@ -547,7 +547,7 @@ static int pc2_init_module( void )
 	return 0;
 }
 
-static void pc2_exit_module( void )
+static void __exit pc2_exit_module( void )
 {
 	gpib_unregister_driver(&pc2_interface);
 	gpib_unregister_driver(&pc2a_interface);

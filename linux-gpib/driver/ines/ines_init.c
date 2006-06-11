@@ -677,7 +677,7 @@ static int __init ines_init_module( void )
 	return 0;
 }
 
-static void ines_exit_module( void )
+static void __exit ines_exit_module( void )
 {
 	gpib_unregister_driver(&ines_pci_interface);
 	gpib_unregister_driver(&ines_pci_unaccel_interface);
