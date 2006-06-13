@@ -445,17 +445,21 @@ static int eastwood_dma_read(gpib_board_t *board, uint8_t *buffer,
 		printk("eastwood: dma read wait interrupted\n");
 		retval = -EINTR;
 	}
+	// stop the dma transfer
+	nec7210_set_reg_bits(nec_priv, IMR2, HR_DMAI, 0);
+	disable_dma(e_priv->dma_channel);
+	/* run the interrupt handler to make sure the RECEIVED_END bit
+	 * is in sync with the transfer count */
+	spin_lock_irqsave(&board->spinlock, flags);
+	eastwood_gpib_internal_interrupt(board);
+	spin_unlock_irqrestore(&board->spinlock, flags);
 	if(test_bit(TIMO_NUM, &board->status))
 		retval = -ETIMEDOUT;
 	if(test_bit(DEV_CLEAR_BN, &nec_priv->state))
 		retval = -EINTR;
 	if(test_and_clear_bit(RECEIVED_END_BN, &nec_priv->state)) 
 		*end = 1;
-	// disable nec7210 dma
-	nec7210_set_reg_bits(nec_priv, IMR2, HR_DMAI, 0);
-
 	// record how many bytes we transferred
-	disable_dma(e_priv->dma_channel);
 	residue = get_dma_residue(e_priv->dma_channel);
 	if(residue < 0) BUG();
 	*bytes_read += length - residue;
