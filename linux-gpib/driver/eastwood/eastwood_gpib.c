@@ -30,6 +30,7 @@ MODULE_LICENSE("GPL");
 int eastwood_attach(gpib_board_t *board, gpib_board_config_t config);
 void eastwood_detach(gpib_board_t *board);
 void eastwood_config_dma(gpib_board_t *board, int output);
+irqreturn_t eastwood_gpib_internal_interrupt(gpib_board_t *board);
 
 uint8_t eastwood_locking_read_byte(nec7210_private_t *nec_priv, unsigned int register_number)
 {
