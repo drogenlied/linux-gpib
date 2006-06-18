@@ -30,7 +30,6 @@ MODULE_LICENSE("GPL");
 int eastwood_attach(gpib_board_t *board, gpib_board_config_t config);
 void eastwood_detach(gpib_board_t *board);
 void eastwood_config_dma(gpib_board_t *board, int output);
-irqreturn_t eastwood_gpib_internal_interrupt(gpib_board_t *board);
 
 uint8_t eastwood_locking_read_byte(nec7210_private_t *nec_priv, unsigned int register_number)
 {
@@ -50,24 +49,6 @@ void eastwood_locking_write_byte(nec7210_private_t *nec_priv, uint8_t byte, unsi
 	spin_lock_irqsave(&nec_priv->register_page_lock, flags);
 	eastwood_write_byte_nolock(nec_priv, byte, register_number);
 	spin_unlock_irqrestore(&nec_priv->register_page_lock, flags);
-}
-
-void eastwood_enable_dma(eastwood_private_t *e_priv)
-{
-	unsigned long flags;
-	spin_lock_irqsave(&e_priv->dma_enable_lock, flags);
-	enable_dma(e_priv->dma_channel);
-	e_priv->dma_enabled = 1;
-	spin_unlock_irqrestore(&e_priv->dma_enable_lock, flags);
-}
-
-void eastwood_disable_dma(eastwood_private_t *e_priv)
-{
-	unsigned long flags;
-	spin_lock_irqsave(&e_priv->dma_enable_lock, flags);
-	disable_dma(e_priv->dma_channel);
-	e_priv->dma_enabled = 0;
-	spin_unlock_irqrestore(&e_priv->dma_enable_lock, flags);
 }
 
 // wrappers for interface functions
@@ -247,21 +228,21 @@ int clear_dma_fifo(gpib_board_t *board)
 		bogus_transfer_length, DMA_TO_DEVICE);
 	write_bus_address = dma_map_single(NULL, fifo_write_buffer,
 		bogus_transfer_length, DMA_FROM_DEVICE);
-	eastwood_disable_dma(e_priv);
+	disable_dma(e_priv->dma_channel);
 	set_dma_count(e_priv->dma_channel, bogus_transfer_length);
 	nios2_set_dma_rcon(e_priv->dma_channel, 0);
 	nios2_set_dma_wcon(e_priv->dma_channel, 0);
 	nios2_set_dma_raddr(e_priv->dma_channel, read_bus_address);
 	nios2_set_dma_waddr(e_priv->dma_channel, write_bus_address);
 	spin_lock_irqsave(&board->spinlock, flags);
-	eastwood_enable_dma(e_priv);
+	enable_dma(e_priv->dma_channel);
 	set_bit(DMA_WRITE_IN_PROGRESS_BN, &nec_priv->state);
 	spin_unlock_irqrestore(&board->spinlock, flags);
 
 	retval = wait_event_interruptible(board->wait, 
 		get_dma_residue(e_priv->dma_channel) == 0 &&
 		test_bit(DMA_WRITE_IN_PROGRESS_BN, &nec_priv->state) == 0);
-	eastwood_disable_dma(e_priv);
+	disable_dma(e_priv->dma_channel);
 	if(retval)
 	{
 		printk("%s: interrupted by signal, residue=%i.\n", 
@@ -319,7 +300,7 @@ static int eastwood_dma_write(gpib_board_t *board,
 	address = dma_map_single(NULL, buffer,
 		 length, DMA_TO_DEVICE);
 	/* program dma controller */
-	eastwood_disable_dma(e_priv);
+	disable_dma(e_priv->dma_channel);
 	eastwood_config_dma(board, 1);
 	set_dma_count(e_priv->dma_channel, length);
 	nios2_set_dma_raddr(e_priv->dma_channel, address);
@@ -328,7 +309,7 @@ static int eastwood_dma_write(gpib_board_t *board,
 	nec7210_set_reg_bits(nec_priv, IMR1, HR_DOIE, 0);
 	nec7210_set_reg_bits(nec_priv, IMR2, HR_DMAO, HR_DMAO);
 	e_priv->fifo_dirty = 1;
-	eastwood_enable_dma(e_priv);
+	enable_dma(e_priv->dma_channel);
 	clear_bit(WRITE_READY_BN, &nec_priv->state);
 	set_bit(DMA_WRITE_IN_PROGRESS_BN, &nec_priv->state);
 // 	printk("%s: in spin lock\n", __FUNCTION__);
@@ -355,7 +336,7 @@ static int eastwood_dma_write(gpib_board_t *board,
 	// disable board's dma
 	nec7210_set_reg_bits(nec_priv, IMR2, HR_DMAO, 0);
 
-	eastwood_disable_dma(e_priv);
+	disable_dma(e_priv->dma_channel);
 	if(retval)
 		write_byte(nec_priv, AUX_NBAF, AUXMR);	
 	*bytes_written = readl(e_priv->write_transfer_counter) & write_transfer_counter_mask;
@@ -436,7 +417,7 @@ static int eastwood_dma_read(gpib_board_t *board, uint8_t *buffer,
 		length, DMA_FROM_DEVICE);
 	spin_lock_irqsave(&board->spinlock, flags);
 	/* program dma controller */
-	eastwood_disable_dma(e_priv);
+	disable_dma(e_priv->dma_channel);
 	eastwood_config_dma(board, 0);
 	set_dma_count(e_priv->dma_channel, length);
 // 	printk("set dma%i count to %i\n", e_priv->dma_channel, (int)length);
@@ -446,7 +427,7 @@ static int eastwood_dma_read(gpib_board_t *board, uint8_t *buffer,
 	nec7210_set_reg_bits(nec_priv, IMR1, HR_DIIE, 0);
 	nec7210_set_reg_bits(nec_priv, IMR2, HR_DMAI, HR_DMAI);
 	e_priv->fifo_dirty = 1;
-	eastwood_enable_dma(e_priv);
+	enable_dma(e_priv->dma_channel);
 
 	set_bit(DMA_READ_IN_PROGRESS_BN, &nec_priv->state);
 	clear_bit(READ_READY_BN, &nec_priv->state);
@@ -475,7 +456,7 @@ static int eastwood_dma_read(gpib_board_t *board, uint8_t *buffer,
 	/* delay a little just to make sure any bytes in dma controller's fifo get
 	 written to memory before we disable it */
 	udelay(1);
-	eastwood_disable_dma(e_priv);
+	disable_dma(e_priv->dma_channel);
 	/* deal with race if and END byte arrives just as we disable
 	 * dma */
 	if(*end == 0 && get_dma_residue(e_priv->dma_channel))
@@ -491,11 +472,11 @@ static int eastwood_dma_read(gpib_board_t *board, uint8_t *buffer,
 		{
 			*end = 1;
 			nec7210_set_reg_bits(nec_priv, IMR2, HR_DMAI, 1);
-			eastwood_enable_dma(e_priv);
+			enable_dma(e_priv->dma_channel);
 			/* 10 usec should be long enough to transfer a byte if it is there */
 			udelay(10);
 			nec7210_set_reg_bits(nec_priv, IMR2, HR_DMAI, 0);
-			eastwood_disable_dma(e_priv);
+			disable_dma(e_priv->dma_channel);
 		}
 	}
 	// record how many bytes we transferred
@@ -656,6 +637,7 @@ irqreturn_t eastwood_gpib_internal_interrupt(gpib_board_t *board)
 	status1 = read_byte( nec_priv, ISR1 );
 	status2 = read_byte( nec_priv, ISR2 );
 	retval = nec7210_interrupt_have_status(board, nec_priv, status1, status2);
+	
 /*	if((status1 & nec_priv->reg_bits[IMR1]) ||
 		(status2 & (nec_priv->reg_bits[IMR2] & IMR2_ENABLE_INTR_MASK)))
 	{
@@ -687,10 +669,8 @@ int eastwood_allocate_private(gpib_board_t *board)
 	priv = board->private_data;
 	memset( priv, 0, sizeof(eastwood_private_t));
 	init_nec7210_private(&priv->nec7210_priv);
-	priv->nec7210_priv.private = priv;
 	priv->dma_channel = -1;
 	priv->dma_buffer_size = 0x7ff;
-	spin_lock_init(&priv->dma_enable_lock);
 #if 0	
 	priv->dma_buffer = (void*)na_ocmem_s1;
 // printk("eastwood: using ocmem dma buffer at 0x%p\n", priv->dma_buffer);
@@ -751,7 +731,6 @@ int eastwood_dma_handler(void *arg, int status)
 		clear_bit(DMA_READ_IN_PROGRESS_BN, &nec_priv->state);
 		nec7210_set_reg_bits(nec_priv, IMR1, HR_DOIE | HR_DIIE, HR_DOIE | HR_DIIE);
 		e_priv->fifo_dirty = 0;
-		eastwood_disable_dma(e_priv);
 		wake_up_interruptible(&board->wait);
 	}
 	eastwood_gpib_internal_interrupt(board);
@@ -793,7 +772,7 @@ int eastwood_init(eastwood_private_t *e_priv, gpib_board_t *board )
 	nec7210_board_online( nec_priv, board );
 
 	/* poll so we can detect ATN changes */
-#if 1
+#if 1	
 	if(gpib_request_pseudo_irq(board, eastwood_gpib_interrupt))
 	{
 		printk("eastwood_gpib: failed to allocate pseudo_irq\n");
@@ -893,7 +872,7 @@ static int __init eastwood_init_module( void )
 	gpib_register_driver(&eastwood_unaccel_interface, THIS_MODULE);
 	gpib_register_driver(&eastwood_hybrid_interface, THIS_MODULE);
 	gpib_register_driver(&eastwood_interface, THIS_MODULE);
-	printk("eastwood_gpib: driver version 2006-06-18-1427\n");
+	printk("eastwood_gpib: driver version 2006-06-18-1845\n");
 	return 0;
 }
 

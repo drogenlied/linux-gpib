@@ -18,10 +18,8 @@
 #ifndef _EASTWOOD_GPIB_H
 #define _EASTWOOD_GPIB_H
 
-#include <asm/dma.h>
 #include <asm/io.h>
 #include <linux/delay.h>
-#include <linux/spinlock.h>
 #include "nec7210.h"
 
 #define AVALON_DMA_FIFO_SIZE (8)
@@ -35,10 +33,9 @@ typedef struct
 	int dma_buffer_size;
 	void *dma_port;
 	void *write_transfer_counter;
-	spinlock_t dma_enable_lock;
-	unsigned dma_enabled : 1;
 	unsigned fifo_dirty : 1;
 } eastwood_private_t;
+
 
 // cb7210 specific registers and bits
 enum cb7210_regs
@@ -59,23 +56,8 @@ static inline uint8_t eastwood_read_byte_nolock(nec7210_private_t *nec_priv,
 	int register_num)
 {
 	uint8_t retval;
-	unsigned long flags;
-	eastwood_private_t *e_priv = nec_priv->private;
-	
-	spin_lock_irqsave(&e_priv->dma_enable_lock, flags);
-	/* we disable dma before reading from a cb7210 register to avoid a 
-	 * hardware bug that can cause data corruption when registers are
-	* read at the same time the dma controller attempts to read data */
-	if(e_priv->dma_enabled)
-	{
-		disable_dma(e_priv->dma_channel);
-	}
+
 	retval = readl(nec_priv->iobase + register_num * nec_priv->offset);
-	if(e_priv->dma_enabled)
-	{
-		enable_dma(e_priv->dma_channel);
-	}
-	spin_unlock_irqrestore(&e_priv->dma_enable_lock, flags);
 	return retval;
 }
 // don't use without locking nec_priv->register_page_lock
