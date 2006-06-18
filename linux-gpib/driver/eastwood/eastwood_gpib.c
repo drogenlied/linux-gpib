@@ -445,20 +445,40 @@ static int eastwood_dma_read(gpib_board_t *board, uint8_t *buffer,
 		printk("eastwood: dma read wait interrupted\n");
 		retval = -EINTR;
 	}
-	// stop the dma transfer
-	nec7210_set_reg_bits(nec_priv, IMR2, HR_DMAI, 0);
-	disable_dma(e_priv->dma_channel);
-	/* run the interrupt handler to make sure the RECEIVED_END bit
-	 * is in sync with the transfer count */
-	spin_lock_irqsave(&board->spinlock, flags);
-	eastwood_gpib_internal_interrupt(board);
-	spin_unlock_irqrestore(&board->spinlock, flags);
 	if(test_bit(TIMO_NUM, &board->status))
 		retval = -ETIMEDOUT;
 	if(test_bit(DEV_CLEAR_BN, &nec_priv->state))
 		retval = -EINTR;
 	if(test_and_clear_bit(RECEIVED_END_BN, &nec_priv->state)) 
 		*end = 1;
+	// stop the dma transfer
+	nec7210_set_reg_bits(nec_priv, IMR2, HR_DMAI, 0);
+	/* delay a little just to make sure any bytes in dma controller's fifo get
+	 written to memory before we disable it */
+	udelay(1);
+	disable_dma(e_priv->dma_channel);
+	/* deal with race if and END byte arrives just as we disable
+	 * dma */
+	if(*end == 0)
+	{
+		/* run the interrupt handler to make sure the RECEIVED_END bit
+		* is updated */
+		spin_lock_irqsave(&board->spinlock, flags);
+		eastwood_gpib_internal_interrupt(board);
+		spin_unlock_irqrestore(&board->spinlock, flags);
+		/* if end is true now, re-enable dma to be sure we got the
+		 * last byte that caused END to be true */
+		if(test_and_clear_bit(RECEIVED_END_BN, &nec_priv->state)) 
+		{
+			*end = 1;
+			nec7210_set_reg_bits(nec_priv, IMR2, HR_DMAI, 1);
+			enable_dma(e_priv->dma_channel);
+			/* 10 usec should be long enough to transfer a byte if it is there */
+			udelay(10);
+			nec7210_set_reg_bits(nec_priv, IMR2, HR_DMAI, 0);
+			disable_dma(e_priv->dma_channel);
+		}
+	}
 	// record how many bytes we transferred
 	residue = get_dma_residue(e_priv->dma_channel);
 	if(residue < 0) BUG();
@@ -526,6 +546,39 @@ gpib_interface_t eastwood_unaccel_interface =
 	detach: eastwood_detach,
 	read: eastwood_read,
 	write: eastwood_write,
+	command: eastwood_command,
+	take_control: eastwood_take_control,
+	go_to_standby: eastwood_go_to_standby,
+	request_system_control: eastwood_request_system_control,
+	interface_clear: eastwood_interface_clear,
+	remote_enable: eastwood_remote_enable,
+	enable_eos: eastwood_enable_eos,
+	disable_eos: eastwood_disable_eos,
+	parallel_poll: eastwood_parallel_poll,
+	parallel_poll_configure: eastwood_parallel_poll_configure,
+	parallel_poll_response: eastwood_parallel_poll_response,
+	line_status: eastwood_line_status,
+	update_status: eastwood_update_status,
+	primary_address: eastwood_primary_address,
+	secondary_address: eastwood_secondary_address,
+	serial_poll_response: eastwood_serial_poll_response,
+	serial_poll_status: eastwood_serial_poll_status,
+	t1_delay: eastwood_t1_delay,
+	return_to_local: eastwood_return_to_local,
+};
+
+/* eastwood_hybrid uses dma for writes but not for reads.  Added
+ to deal with occasional corruption of bytes seen when doing dma
+ reads.  From looking at the cb7210 vhdl, I believe the corruption
+ is due to a hardware bug triggered by the cpu reading a cb7210
+ register just as the dma controller is also doing a read. */
+gpib_interface_t eastwood_unaccel_interface =
+{
+	name: "eastwood_hybrid",
+	attach: eastwood_attach,
+	detach: eastwood_detach,
+	read: eastwood_read,
+	write: eastwood_accel_write,
 	command: eastwood_command,
 	take_control: eastwood_take_control,
 	go_to_standby: eastwood_go_to_standby,
