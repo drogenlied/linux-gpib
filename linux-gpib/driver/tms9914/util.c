@@ -130,11 +130,11 @@ unsigned int tms9914_update_status( gpib_board_t *board, tms9914_private_t *priv
 	return retval;
 }
 
-static update_talker_state(tms9914_private_t *priv, unsigned address_status_bits)
+static void update_talker_state(tms9914_private_t *priv, unsigned address_status_bits)
 {
 	if(address_status_bits & HR_TA)
 	{
-		if(address_status & HR_ATN)
+		if(address_status_bits & HR_ATN)
 		{
 			priv->talker_state = talker_addressed;
 		}else
@@ -149,11 +149,11 @@ static update_talker_state(tms9914_private_t *priv, unsigned address_status_bits
 	}
 }
 
-static update_listener_state(tms9914_private_t *priv, unsigned address_status_bits)
+static void update_listener_state(tms9914_private_t *priv, unsigned address_status_bits)
 {
 	if(address_status_bits & HR_LA)
 	{
-		if(address_status & HR_ATN)
+		if(address_status_bits & HR_ATN)
 		{
 			priv->listener_state = listener_addressed;
 		}else
