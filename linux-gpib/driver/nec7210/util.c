@@ -115,6 +115,46 @@ void nec7210_secondary_address(const gpib_board_t *board, nec7210_private_t *pri
 	write_byte( priv, priv->reg_bits[ ADMR ], ADMR );
 }
 
+static void update_talker_state(nec7210_private_t *priv, unsigned address_status_bits)
+{
+	if((address_status_bits & HR_TA))
+	{
+		if((address_status_bits & HR_NATN))
+		{
+			if(address_status_bits & HR_SPMS)
+			{
+				priv->talker_state = serial_poll_active;
+			}else
+			{
+				priv->talker_state = talker_active;
+			}
+		}else
+		{
+			priv->talker_state = talker_addressed;
+		}
+	}else
+	{
+		priv->talker_state = talker_idle;
+	}
+}
+
+static void update_listener_state(nec7210_private_t *priv, unsigned address_status_bits)
+{
+	if(address_status_bits & HR_LA)
+	{
+		if((address_status_bits & HR_NATN))
+		{
+			priv->listener_state = listener_active;
+		}else
+		{
+			priv->listener_state = listener_addressed;
+		}
+	}else
+	{
+		priv->listener_state = listener_idle;
+	}
+}
+
 unsigned int update_status_nolock( gpib_board_t *board, nec7210_private_t *priv )
 {
 	int address_status_bits;
@@ -123,18 +163,19 @@ unsigned int update_status_nolock( gpib_board_t *board, nec7210_private_t *priv 
 	if(priv == NULL) return 0;
 
 	address_status_bits = read_byte(priv, ADSR);
-
 	if(address_status_bits & HR_CIC)
 		set_bit(CIC_NUM, &board->status);
 	else
 		clear_bit(CIC_NUM, &board->status);
 	// check for talker/listener addressed
-	if(address_status_bits & HR_TA)
+	update_talker_state(priv, address_status_bits);
+	if(priv->talker_state == talker_active)
 	{
 		set_bit(TACS_NUM, &board->status);
 	}else
 		clear_bit(TACS_NUM, &board->status);
-	if(address_status_bits & HR_LA)
+	update_listener_state(priv, address_status_bits);
+	if(priv->listener_state == listener_active)
 	{
 		set_bit(LACS_NUM, &board->status);
 	}else

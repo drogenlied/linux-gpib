@@ -18,6 +18,7 @@
 #ifndef _NEC7210_H
 #define _NEC7210_H
 
+#include "gpib_state_machines.h"
 #include <linux/types.h>
 #include <linux/spinlock.h>
 #include <linux/string.h>
@@ -48,6 +49,8 @@ struct nec7210_private_struct
 	uint8_t (*read_byte)(nec7210_private_t *priv, unsigned int register_number);
 	void (*write_byte)(nec7210_private_t *priv, uint8_t byte, unsigned int register_number);
 	enum nec7210_chipset type;
+	enum talker_function_state talker_state;
+	enum listener_function_state listener_state;
 	void *private;
 	unsigned srq_pending : 1;
 };

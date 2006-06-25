@@ -63,6 +63,7 @@ irqreturn_t tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t
 	{
 		priv->spoll_status &= ~request_service_bit;
 		write_byte(priv, priv->spoll_status, SPMR);
+		//FIXME: set SPOLL status bit
 	}
 
 	// record service request in status
@@ -103,6 +104,7 @@ irqreturn_t tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t
 					write_byte(priv, AUX_VAL, AUXCR);
 				}else
 				{
+					printk("tms9914: bad parallel poll configure byte, command pass thru 0x%x\n", command_byte);
 					write_byte(priv, AUX_INVAL, AUXCR);
 				}
 				break;

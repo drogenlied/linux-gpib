@@ -20,7 +20,8 @@
 
 #include <linux/types.h>
 #include <linux/interrupt.h>
-#include <gpib_types.h>
+#include "gpib_state_machines.h"
+#include "gpib_types.h"
 
 enum tms9914_holdoff_mode
 {
@@ -47,6 +48,8 @@ struct tms9914_private_struct
 	uint8_t spoll_status;
 	enum tms9914_holdoff_mode holdoff_mode;
 	unsigned int ppoll_line;
+	enum talker_function_state talker_state;
+	enum listener_function_state listener_state;
 	unsigned ppoll_sense : 1;
 	unsigned ppoll_enable : 1;
 	unsigned ppoll_configure_state : 1;

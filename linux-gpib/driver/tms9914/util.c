@@ -130,6 +130,42 @@ unsigned int tms9914_update_status( gpib_board_t *board, tms9914_private_t *priv
 	return retval;
 }
 
+static update_talker_state(tms9914_private_t *priv, unsigned address_status_bits)
+{
+	if(address_status_bits & HR_TA)
+	{
+		if(address_status & HR_ATN)
+		{
+			priv->talker_state = talker_addressed;
+		}else
+		{
+			/* this could also be serial_poll_active, but the tms9914 provides no
+			 * way to distinguish, so we'll assume talker_active */
+			priv->talker_state = talker_active;
+		}
+	}else
+	{
+		priv->talker_state = talker_idle;
+	}
+}
+
+static update_listener_state(tms9914_private_t *priv, unsigned address_status_bits)
+{
+	if(address_status_bits & HR_LA)
+	{
+		if(address_status & HR_ATN)
+		{
+			priv->listener_state = listener_addressed;
+		}else
+		{
+			priv->listener_state = listener_active;
+		}
+	}else
+	{
+		priv->listener_state = listener_idle;
+	}
+}
+
 unsigned int update_status_nolock( gpib_board_t *board, tms9914_private_t *priv )
 {
 	int address_status;
@@ -155,12 +191,14 @@ unsigned int update_status_nolock( gpib_board_t *board, tms9914_private_t *priv 
 		clear_bit( ATN_NUM, &board->status );
 	}
 	// check for talker/listener addressed
-	if(address_status & HR_TA)
+	update_talker_state(priv, address_status);
+	if(priv->talker_state == talker_active)
 	{
 		set_bit( TACS_NUM, &board->status );
 	}else
 		clear_bit( TACS_NUM, &board->status );
-	if(address_status & HR_LA)
+	update_listener_state(priv, address_status);
+	if(priv->listener_state == listener_active)
 	{
 		set_bit(LACS_NUM, &board->status);
 	}else
