@@ -51,9 +51,6 @@
 static int irq_list[4] = { -1 };
 MODULE_PARM(irq_list, "1-4i");
 
-/* Release IO ports after configuration? */
-INT_MODULE_PARM(free_ports, 0);
-
 /* The old way: bit map of interrupts to choose from */
 INT_MODULE_PARM(irq_mask, 0xffff);
 
@@ -525,18 +522,6 @@ static void ni_gpib_config(dev_link_t *link)
 		last_fn = RequestConfiguration;
 		goto cs_failed;
 	}
-
-    /*
-      We can release the IO port allocations here, if some other
-      driver for the card is going to loaded, and will expect the
-      ports to be available.
-    */
-    if (free_ports) {
-	if (link->io.BasePort1)
-	    release_region(link->io.BasePort1, link->io.NumPorts1);
-	if (link->io.BasePort2)
-	    release_region(link->io.BasePort2, link->io.NumPorts2);
-    }
 
     /*
       At this point, the dev_node_t structure(s) need to be
