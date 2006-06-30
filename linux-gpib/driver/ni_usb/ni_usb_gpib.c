@@ -129,6 +129,8 @@ int ni_usb_nonblocking_send_bulk_msg(ni_usb_private_t *ni_priv, void *data, int 
 	retval = usb_submit_urb(ni_priv->bulk_urb, GFP_KERNEL);
 	if(retval)
 	{
+		if(timer_pending(&timer))
+			del_timer_sync(&timer);
 		usb_free_urb(ni_priv->bulk_urb);
 		ni_priv->bulk_urb = NULL;
 		printk("%s: failed to submit bulk out urb, retval=%i\n", __FILE__, retval);
@@ -139,6 +141,8 @@ int ni_usb_nonblocking_send_bulk_msg(ni_usb_private_t *ni_priv, void *data, int 
 	if(down_interruptible(&context.complete))
 	{
 		printk("%s: %s: interrupted\n", __FILE__, __FUNCTION__);
+		if(timer_pending(&timer))
+			del_timer_sync(&timer);
 		usb_kill_urb(ni_priv->bulk_urb);
 		down(&ni_priv->bulk_transfer_lock);
 		usb_free_urb(ni_priv->bulk_urb);
@@ -225,6 +229,8 @@ int ni_usb_nonblocking_receive_bulk_msg(ni_usb_private_t *ni_priv, void *data, i
 	retval = usb_submit_urb(ni_priv->bulk_urb, GFP_KERNEL);
 	if(retval)
 	{
+		if(timer_pending(&timer))
+			del_timer_sync(&timer);
 		usb_free_urb(ni_priv->bulk_urb);
 		ni_priv->bulk_urb = NULL;
 		printk("%s: failed to submit bulk out urb, retval=%i\n", __FILE__, retval);
@@ -235,6 +241,8 @@ int ni_usb_nonblocking_receive_bulk_msg(ni_usb_private_t *ni_priv, void *data, i
 	if(down_interruptible(&context.complete))
 	{
 		printk("%s: %s: interrupted\n", __FILE__, __FUNCTION__);
+		if(timer_pending(&timer))
+			del_timer_sync(&timer);
 		usb_kill_urb(ni_priv->bulk_urb);
 		down(&ni_priv->bulk_transfer_lock);
 		usb_free_urb(ni_priv->bulk_urb);
@@ -2202,7 +2210,7 @@ static struct usb_driver ni_usb_bus_driver =
 {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
 	.owner = THIS_MODULE,
-#endif	
+#endif
 	.name = "ni_usb_gpib",
 	.probe = ni_usb_driver_probe,
 	.disconnect = ni_usb_driver_disconnect,
