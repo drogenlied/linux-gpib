@@ -145,7 +145,10 @@ static void* do_aio( void *varg )
 	pthread_mutex_lock( &conf->async.lock );
 	if(retval < 0)
 	{
-		conf->async.ibcntl = ThreadIbcntl();
+		if(ThreadIberr() != EDVR)
+			conf->async.ibcntl = count;
+		else
+			conf->async.ibcntl = ThreadIbcntl();
 		conf->async.iberr = ThreadIberr();
 		conf->async.ibsta = CMPL | ERR;
 	}else

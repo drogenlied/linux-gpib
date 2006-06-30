@@ -87,7 +87,8 @@ ssize_t read_data(ibConf_t *conf, uint8_t *buffer, size_t count, size_t *bytes_r
 				setIberr(EABO);
 				break;
 			default:
-				setIberr( EDVR );
+				setIberr(EDVR);
+				setIbcntl(errno);
 				break;
 		}
 	}
@@ -101,6 +102,7 @@ ssize_t read_data(ibConf_t *conf, uint8_t *buffer, size_t count, size_t *bytes_r
 
 ssize_t my_ibrd( ibConf_t *conf, uint8_t *buffer, size_t count, size_t *bytes_read)
 {
+	*bytes_read = 0;
 	// set eos mode
 	iblcleos( conf );
 
@@ -127,10 +129,14 @@ int ibrd(int ud, void *rd, long cnt)
 		return exit_library( ud, 1 );
 
 	retval = my_ibrd(conf, rd, cnt, &bytes_read);
-	setIbcnt(bytes_read);
 	if(retval < 0)
 	{
+		if(ThreadIberr() != EDVR)
+			setIbcnt(bytes_read);
 		return exit_library( ud, 1 );
+	}else
+	{
+		setIbcnt(bytes_read);
 	}
 
 	return general_exit_library( ud, 0, 0, 0, DCAS, 0, 0 );
@@ -230,7 +236,7 @@ int InternalRcvRespMsg( ibConf_t *conf, void *buffer, long count, int terminatio
 
 	if( conf->is_interface == 0 )
 	{
-		setIberr( EDVR );
+		setIberr(EARG);
 		return -1;
 	}
 
