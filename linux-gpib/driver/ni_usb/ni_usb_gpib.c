@@ -777,24 +777,25 @@ static int ni_usb_write(gpib_board_t *board, uint8_t *buffer, size_t length, int
 	switch(status.error_code)
 	{
 	case NIUSB_NO_ERROR:
+		retval = 0;
 		break;
 	case NIUSB_ADDRESSING_ERROR:
-		return -EIO;
+		retval = -EIO;
 		break;
 	case NIUSB_NO_LISTENER_ERROR:
-		return -EIO;
+		retval = -EIO;
 		break;
 	case NIUSB_TIMEOUT_ERROR:
-		return -ETIMEDOUT;
+		retval = -ETIMEDOUT;
 		break;
 	default:
 		printk("%s: %s: unknown error code=%i\n", __FILE__, __FUNCTION__, status.error_code);
-		return -EIO;
+		retval = -EIO;
 		break;
 	}
 	ni_usb_soft_update_status(board, status.ibsta, 0);
 	*bytes_written = length - status.count;
-	return 0;
+	return retval;
 }
 ssize_t ni_usb_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 {
