@@ -161,7 +161,7 @@ int ibclose(struct inode *inode, struct file *filep)
 		cleanup_open_devices( priv, board );
 		if( priv->holding_mutex )
 			up( &board->mutex );
-		
+
 		if(priv->got_module && board->use_count)
 		{
 			module_put(board->provider_module);
@@ -466,7 +466,7 @@ static int read_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
 	*/
 	if(remain == 0 || end_flag)
 	{
-		retval = 0;
+		read_ret = 0;
 	}
 	if(retval == 0)
 		retval = copy_to_user((void*) arg, &read_cmd, sizeof(read_cmd));
@@ -562,7 +562,7 @@ static int write_ioctl(gpib_file_private_t *file_priv, gpib_board_t *board,
 	{
 		int send_eoi;
 		size_t bytes_written = 0;
-		
+
 		send_eoi = remain <= board->buffer_length && write_cmd.end;
 		fault = copy_from_user(board->buffer, userbuf, (board->buffer_length < remain) ?
 			board->buffer_length : remain );
@@ -857,10 +857,10 @@ static int online_ioctl( gpib_board_t *board, unsigned long arg )
 	online_ioctl_t online_cmd;
 	gpib_board_config_t config;
 	int retval;
-	
+
 	if(!capable(CAP_SYS_ADMIN))
 		return -EPERM;
-		
+
 	retval = copy_from_user( &online_cmd, ( void * ) arg, sizeof( online_cmd ) );
 	if(retval)
 		return -EFAULT;
