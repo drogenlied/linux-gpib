@@ -37,7 +37,7 @@ static DECLARE_MUTEX(ni_usb_hotplug_lock);
 static inline unsigned long ni_usb_timeout_msecs(unsigned int usec)
 {
 	if(usec == 0) return 0;
-	return 2000 + usec / 900;
+	return 2000 + usec / 500;
 };
 // returns timeout code byte for use in ni-usb-b instructions
 static unsigned short ni_usb_timeout_code(unsigned int usec)
