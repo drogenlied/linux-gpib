@@ -59,7 +59,9 @@ static unsigned short ni_usb_timeout_code(unsigned int usec)
 	else if( usec <= 30000000 ) return 0xfe;
 	else if( usec <= 100000000 ) return 0xff;
 	else if( usec <= 300000000 ) return 0x01;
-	else if( usec <= 1000000000 ) return 0x02;	//NI driver actually uses 0xff for timeout T1000s, which must be a bug in their code
+	/* NI driver actually uses 0xff for timeout T1000s, which is a bug in their code.
+	 * I've verified on a usb-b that a code of 0x2 is correct for a 1000 sec timeout */
+	else if( usec <= 1000000000 ) return 0x02;
 	else
 	{
 		printk("%s: bug? usec is greater than 1e9\n", __FILE__);
