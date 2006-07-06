@@ -1811,24 +1811,28 @@ static int ni_usb_hs_wait_for_ready(ni_usb_private_t *ni_priv)
 			__FILE__, __FUNCTION__, j, (int)buffer[j], unknown_request);
 		unexpected = 1;
 	}
+//serial number byte 0
 	if(buffer[++j] != 0x53)
 	{
 		printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
 			__FILE__, __FUNCTION__, j, (int)buffer[j], 0x53);
 		unexpected = 1;
 	}
+//serial number byte 1
 	if(buffer[++j] != 0x1)
 	{
 		printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
 			__FILE__, __FUNCTION__, j, (int)buffer[j], 0x1);
 		unexpected = 1;
 	}
+//serial number byte 2
 	if(buffer[++j] != 0x14)
 	{
 		printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
 			__FILE__, __FUNCTION__, j, (int)buffer[j], 0x14);
 		unexpected = 1;
 	}
+//serial number byte 3
 	if(buffer[++j] != 0x1)
 	{
 		printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
