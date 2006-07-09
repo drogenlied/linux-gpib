@@ -88,7 +88,7 @@ ssize_t read_data(ibConf_t *conf, uint8_t *buffer, size_t count, size_t *bytes_r
 				break;
 			default:
 				setIberr(EDVR);
-				setIbcntl(errno);
+				setIbcnt(errno);
 				break;
 		}
 	}
