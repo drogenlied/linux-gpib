@@ -36,7 +36,7 @@ int ibrd(gpib_board_t *board, uint8_t *buf, size_t length, int *end_flag, size_t
 {
 	ssize_t ret = 0;
 	int retval;
-	int bytes_read;
+	size_t bytes_read;
 
 	*nbytes = 0;
 	*end_flag = 0;	
