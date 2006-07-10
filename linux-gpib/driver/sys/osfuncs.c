@@ -423,7 +423,7 @@ static int read_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
 	int retval;
 	ssize_t read_ret = 0;
 	gpib_descriptor_t *desc;
-	int nbytes;
+	size_t nbytes;
 
 	retval = copy_from_user(&read_cmd, (void*) arg, sizeof(read_cmd));
 	if (retval)
