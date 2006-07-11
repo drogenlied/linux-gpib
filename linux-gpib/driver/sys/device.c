@@ -53,9 +53,9 @@ static int read_serial_poll_byte( gpib_board_t *board, unsigned int pad,
 {
 	uint8_t cmd_string[8];
 	int end_flag;
-	ssize_t ret;
+	int ret;
 	int i;
-	int nbytes;
+	size_t nbytes;
 
 	GPIB_DPRINTK( "entering read_serial_poll_byte(), pad=%i sad=%i\n", pad, sad );
 

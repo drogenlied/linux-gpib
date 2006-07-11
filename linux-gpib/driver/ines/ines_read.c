@@ -23,7 +23,7 @@ static inline unsigned short num_in_fifo_bytes( ines_private_t *ines_priv )
 	return ines_inb( ines_priv, IN_FIFO_COUNT );
 }
 
-static ssize_t pio_read( gpib_board_t *board, ines_private_t *ines_priv, uint8_t *buffer, size_t length, int *nbytes)
+static ssize_t pio_read( gpib_board_t *board, ines_private_t *ines_priv, uint8_t *buffer, size_t length, size_t *nbytes)
 {
 	ssize_t retval = 0;
 	unsigned int num_fifo_bytes, i;

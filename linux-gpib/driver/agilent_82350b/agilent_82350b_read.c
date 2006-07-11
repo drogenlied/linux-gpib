@@ -39,7 +39,7 @@ int agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t leng
 	// handle corner case of board not in holdoff and one byte might slip in early
 	if(tms_priv->holdoff_active == 0 && length > 1)
 	{
-		int num_bytes;
+		size_t num_bytes;
 		retval = tms9914_read(board, tms_priv, buffer, 1, end, &num_bytes);
 		*bytes_read += num_bytes;
 		if(retval < 0)
@@ -108,7 +108,7 @@ int agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t leng
 	// read last bytes if we havn't received an END yet
 	if(*end == 0)
 	{
-		int num_bytes;
+		size_t num_bytes;
 		// try to make sure we holdoff after last byte read
 		retval = tms9914_read(board, tms_priv, buffer, length, end, &num_bytes);
 		*bytes_read += num_bytes;
