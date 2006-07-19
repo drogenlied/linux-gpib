@@ -238,5 +238,19 @@ int mite_bytes_transferred(struct mite_struct *mite, int chan);
 #define MITE_AMHOST_A32D64_BLOCK	0x08
 #define MITE_AMHOST_A24_BLOCK	0x3b
 
+enum mite_registers
+{
+	MITE_IODWBSR = 0xc0, //IO Device Window Base Size Register
+	MITE_CSIGR = 0x460,     //chip signature
+	MITE_IODWBSR_1 = 0xc4, // IO Device Window Base Size Register 1 (used by 6602 boards)
+	MITE_IODWCR_1 = 0xf4
+};
+
+enum MITE_IODWBSR_bits
+{
+	WENAB = 0x80,   // window enable
+	WENAB_6602 = 0x8c // window enable for 6602 boards
+};
+
 #endif
 

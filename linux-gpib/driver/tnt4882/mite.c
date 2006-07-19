@@ -64,7 +64,7 @@
 
 
 struct mite_struct *mite_devices = NULL;
-	
+
 #define TOP_OF_PAGE(x) ((x)|(~(PAGE_MASK)))
 
 void mite_init(void)
@@ -92,49 +92,41 @@ void mite_init(void)
 
 int mite_setup(struct mite_struct *mite)
 {
-	unsigned long			start, length;
-	u32				addr;
+	unsigned long length;
+	u32 addr;
 
-	if(pci_enable_device(mite->pcidev)){
-		printk("error enabling mite\n");
+	if(pci_enable_device(mite->pcidev))
+	{
+		printk("mite: error enabling mite.\n");
 		return -EIO;
 	}
 	pci_set_master(mite->pcidev);
-	addr = pci_resource_start(mite->pcidev, 0);
-	mite->mite_phys_addr=addr;
-	start = mite->mite_phys_addr;
-	length = pci_resource_len(mite->pcidev, 0);
-	// check and request io memory region
-	if(check_mem_region(start, length)){
-
-		printk("io memory region already in use\n");
+	if(pci_request_regions(mite->pcidev, "mite"))
+	{
+		printk("mite: failed to request mite io regions.\n");
 		return -EIO;
+	};
+	addr = pci_resource_start(mite->pcidev, 0);
+	mite->mite_phys_addr = addr;
+	mite->mite_io_addr = ioremap(addr, PCI_MITE_SIZE);
+	if(!mite->mite_io_addr)
+	{
+		printk("mite: failed to remap mite io memory address.\n");
+		return -ENOMEM;
 	}
-	request_mem_region(start, length, "mite");
-	mite->mite_io_addr = ioremap(start, length);
-	printk("MITE:0x%08lx mapped to %p ",mite->mite_phys_addr,mite->mite_io_addr);
-
+	printk("mite: 0x%08lx mapped to %p\n", mite->mite_phys_addr, mite->mite_io_addr);
 	addr = pci_resource_start(mite->pcidev, 1);
 	mite->daq_phys_addr=addr;
-	start = mite->daq_phys_addr;
-	length = pci_resource_len(mite->pcidev, 1);
-	// check and request io memory region
-	if(check_mem_region(start, length)){
-
-		printk("io memory region already in use\n");
-		return -EIO;
+	length = PCI_DAQ_SIZE;
+	mite->daq_io_addr = ioremap(mite->daq_phys_addr, length);
+	if(!mite->daq_io_addr)
+	{
+		printk("mite: failed to remap daq io memory address.\n");
+		return -ENOMEM;
 	}
-	request_mem_region(start, length, "mite (gpib)");
-	mite->daq_io_addr = ioremap(start, length);
-	printk("DAQ:0x%08lx mapped to %p\n", mite->daq_phys_addr,
-		mite->daq_io_addr);
-
-	/* XXX don't know what the 0xc0 and 0x80 mean */
-	/* It must be here for the driver to work though */
-	writel(mite->daq_phys_addr | 0x80 , mite->mite_io_addr + 0xc0 );
-
+	printk("mite: daq: 0x%08lx mapped to %p\n", mite->daq_phys_addr, mite->daq_io_addr);
+	writel(mite->daq_phys_addr | WENAB , mite->mite_io_addr + MITE_IODWBSR);
 	mite->used = 1;
-
 	return 0;
 }
 
@@ -151,27 +143,23 @@ void mite_cleanup(void)
 
 void mite_unsetup(struct mite_struct *mite)
 {
-	unsigned long start, length;
-
 	if(!mite)return;
-
-	if(mite->mite_io_addr){
+	if(mite->mite_io_addr)
+	{
 		iounmap(mite->mite_io_addr);
-		mite->mite_io_addr=NULL;
-		// release io memory region
-		start = mite->mite_phys_addr & PCI_BASE_ADDRESS_MEM_MASK;
-		length = pci_resource_len(mite->pcidev, 0);
-		release_mem_region(start, length);
+		mite->mite_io_addr = NULL;
 	}
-	if(mite->daq_io_addr){
+	if(mite->daq_io_addr)
+	{
 		iounmap(mite->daq_io_addr);
-		mite->daq_io_addr=NULL;
-		// release io memory region
-		start = mite->daq_phys_addr & PCI_BASE_ADDRESS_MEM_MASK;
-		length = pci_resource_len(mite->pcidev, 1);
-		release_mem_region(start, length);
+		mite->daq_io_addr = NULL;
 	}
-
+	if(mite->mite_phys_addr)
+	{
+		pci_release_regions(mite->pcidev);
+		pci_disable_device(mite->pcidev);
+		mite->mite_phys_addr = 0;
+	}
 	mite->used = 0;
 }
 
@@ -193,7 +181,7 @@ void mite_list_devices(void)
 int mite_bytes_transferred(struct mite_struct *mite, int chan)
 {
 	int dar, fcr;
-	
+
 	dar = readl(mite->mite_io_addr+MITE_DAR+CHAN_OFFSET(chan));
 	fcr = readl(mite->mite_io_addr+MITE_FCR+CHAN_OFFSET(chan)) & 0x000000FF;
 	return dar-fcr;
@@ -226,7 +214,7 @@ void mite_dump_regs(struct mite_struct *mite)
 	unsigned long temp=0;
 
 	printk("mite address is  =0x%p\n", mite->mite_io_addr);
-		
+
 	addr = mite->mite_io_addr + MITE_CHOR + CHAN_OFFSET(0);
 	printk("mite status[CHOR]at 0x%p =0x%08lx\n", addr, temp=readl(addr));
 	//mite_decode(mite_CHOR_strings,temp);
@@ -238,7 +226,7 @@ void mite_dump_regs(struct mite_struct *mite)
 	addr = mite->mite_io_addr + MITE_MCR + CHAN_OFFSET(0);
 	printk("mite status[MCR] at 0x%p =0x%08lx\n", addr, temp=readl(addr));
 	//mite_decode(mite_MCR_strings,temp);
-	
+
 	addr = mite->mite_io_addr + MITE_MAR + CHAN_OFFSET(0);
 	printk("mite status[MAR] at 0x%p =0x%08x\n", addr, readl(addr));
 	addr = mite->mite_io_addr + MITE_DCR + CHAN_OFFSET(0);

@@ -483,6 +483,8 @@ int ni_pci_attach(gpib_board_t *board, gpib_board_config_t config)
 	tnt4882_private_t *tnt_priv;
 	nec7210_private_t *nec_priv;
 	int isr_flags = SA_SHIRQ;
+	int retval;
+	struct mite_struct *mite;
 
 	board->status = 0;
 
@@ -505,17 +507,18 @@ int ni_pci_attach(gpib_board_t *board, gpib_board_config_t config)
 		return -1;
 	}
 
-	for(tnt_priv->mite = mite_devices; tnt_priv->mite; tnt_priv->mite = tnt_priv->mite->next)
+	for(mite = mite_devices; mite; mite = mite->next)
 	{
+		if(mite->used) continue;
 		short found_board;
 
 		if( board->pci_bus >=0 && board->pci_bus !=
-			tnt_priv->mite->pcidev->bus->number )
+			mite->pcidev->bus->number )
 			continue;
 		if( board->pci_slot >= 0 && board->pci_slot !=
-			PCI_SLOT( tnt_priv->mite->pcidev->devfn ) )
+			PCI_SLOT(mite->pcidev->devfn))
 			continue;
-		switch(mite_device_id(tnt_priv->mite))
+		switch(mite_device_id(mite))
 		{
 		case PCI_DEVICE_ID_NI_GPIB:
 		case PCI_DEVICE_ID_NI_GPIB_PLUS:
@@ -530,16 +533,17 @@ int ni_pci_attach(gpib_board_t *board, gpib_board_config_t config)
 		}
 		if(found_board) break;
 	}
-	if(tnt_priv->mite == NULL)
+	if(mite == NULL)
 	{
 		printk("no NI PCI-GPIB boards found\n");
 		return -1;
 	}
-
-	if(mite_setup(tnt_priv->mite) < 0)
+	tnt_priv->mite = mite;
+	retval = mite_setup(tnt_priv->mite);
+	if(retval < 0)
 	{
-		printk("error setting up mite");
-		return -1;
+		printk("tnt4882: error setting up mite.\n");
+		return retval;
 	}
 
 	nec_priv->iobase = tnt_priv->mite->daq_io_addr;
@@ -576,7 +580,9 @@ void ni_pci_detach(gpib_board_t *board)
 			free_irq(tnt_priv->irq, board);
 		}
 		if(tnt_priv->mite)
+		{
 			mite_unsetup(tnt_priv->mite);
+		}
 	}
 	tnt4882_free_private(board);
 }
