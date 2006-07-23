@@ -295,7 +295,7 @@ int InternalSendDataBytes( ibConf_t *conf, const void *buffer,
 	
 	if( conf->is_interface == 0 )
 	{
-		setIberr( EDVR );
+		setIberr(EARG);
 		return -1;
 	}
 
@@ -364,13 +364,13 @@ int InternalSendList( ibConf_t *conf, const Addr4882_t addressList[],
 	if( addressListIsValid( addressList ) == 0 ||
 		numAddresses( addressList ) == 0 )
 	{
-		setIberr( EARG );
+		setIberr(EARG);
 		return -1;
 	}
 
 	if( conf->is_interface == 0 )
 	{
-		setIberr( EDVR );
+		setIberr(EARG);
 		return -1;
 	}
 
