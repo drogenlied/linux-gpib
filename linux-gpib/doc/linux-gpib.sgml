@@ -5305,7 +5305,7 @@ addressList[ 4 ] = NOADDR;
 	Return value
 	</title>
 	<para>
-	The value of <link LINKEND="reference-globals-ibsta">iberr</link>
+	The value of <link LINKEND="reference-globals-iberr">iberr</link>
 	corresponding to the last 'traditional' or 'multidevice' function
 	called by the current thread is returned.
 	</para>
