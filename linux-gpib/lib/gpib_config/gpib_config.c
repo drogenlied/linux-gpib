@@ -241,6 +241,17 @@ static int configure_board( int fileno, const parsed_options_t *options )
 	online_ioctl_t online_cmd;
 	int retval;
 
+	online_cmd.online = 0;
+	online_cmd.init_data = 0;
+	online_cmd.init_data_length = 0;
+	retval = ioctl( fileno, IBONL, &online_cmd );
+	if( retval < 0 )
+	{
+		fprintf( stderr, "failed to bring board offline\n" );
+		return retval;
+	}
+	if( options->offline != 0 )
+		return 0;
 	strncpy( boardtype.name, options->board_type, sizeof( boardtype.name ) );
 	retval = ioctl( fileno, CFCBOARDTYPE, &boardtype );
 	if( retval < 0 )
@@ -290,18 +301,6 @@ static int configure_board( int fileno, const parsed_options_t *options )
 		fprintf(stderr, "failed to configure pci bus\n");
 		return retval;
 	}
-	online_cmd.online = 0;
-	online_cmd.init_data = 0;
-	online_cmd.init_data_length = 0;
-	retval = ioctl( fileno, IBONL, &online_cmd );
-	if( retval < 0 )
-	{
-		fprintf( stderr, "failed to bring board offline\n" );
-		return retval;
-	}
-	if( options->offline != 0 )
-		return 0;
-
 	online_cmd.online = 1;
 	online_cmd.init_data = options->init_data;
 	online_cmd.init_data_length = options->init_data_length;
