@@ -1794,53 +1794,38 @@ static int ni_usb_hs_wait_for_ready(ni_usb_private_t *ni_priv)
 	static const int msec_sleep_duration = 100;
 	int i;
 	static const int poll_ready_request = 0x40;
-	static const int unknown_request = 0x41;
+	static const int serial_number_request = 0x41;
 	int j;
 	int unexpected = 0;
-	retval = ni_usb_receive_control_msg(ni_priv, unknown_request, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+	unsigned serial_number;
+	retval = ni_usb_receive_control_msg(ni_priv, serial_number_request, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 		0x0, 0x0, buffer, sizeof(buffer), 1000);
 	if(retval < 0)
 	{
-		printk("%s: usb_control_msg request 0x%x returned %i\n", __FILE__, unknown_request, retval);
+		printk("%s: usb_control_msg request 0x%x returned %i\n", __FILE__, serial_number_request, retval);
 		return retval;
 	}
 	j = 0;
-	if(buffer[j] != unknown_request)
+	if(buffer[j] != serial_number_request)
 	{
 		printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
-			__FILE__, __FUNCTION__, j, (int)buffer[j], unknown_request);
-		unexpected = 1;
-	}
-//serial number byte 0
-	if(buffer[++j] != 0x53)
-	{
-		printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
-			__FILE__, __FUNCTION__, j, (int)buffer[j], 0x53);
-		unexpected = 1;
-	}
-//serial number byte 1
-	if(buffer[++j] != 0x1)
-	{
-		printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
-			__FILE__, __FUNCTION__, j, (int)buffer[j], 0x1);
-		unexpected = 1;
-	}
-//serial number byte 2
-	if(buffer[++j] != 0x14)
-	{
-		printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
-			__FILE__, __FUNCTION__, j, (int)buffer[j], 0x14);
-		unexpected = 1;
-	}
-//serial number byte 3
-	if(buffer[++j] != 0x1)
-	{
-		printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
-			__FILE__, __FUNCTION__, j, (int)buffer[j], 0x1);
+			__FILE__, __FUNCTION__, j, (int)buffer[j], serial_number_request);
 		unexpected = 1;
 	}
 	if(unexpected)
 		ni_usb_dump_raw_block(buffer, retval);
+	if(retval != 5)
+	{
+		printk("%s: %s: received unexpected number of bytes = %i, expected 5\n",
+			__FILE__, __FUNCTION__, retval);
+		ni_usb_dump_raw_block(buffer, retval);
+	}
+	serial_number = 0;
+	serial_number |= buffer[++j];
+	serial_number |= (buffer[++j] << 8);
+	serial_number |= (buffer[++j] << 16);
+	serial_number |= (buffer[++j] << 24);
+	printk("%s: board serial number is 0x%x\n", __FUNCTION__, serial_number);
 	for(i = 0; i < timeout; ++i)
 	{
 		int ready = 0;
