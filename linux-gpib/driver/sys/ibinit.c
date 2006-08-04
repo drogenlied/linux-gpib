@@ -86,7 +86,7 @@ int ibonline(gpib_board_t *board, gpib_board_config_t config)
 	int retval;
 
 	if( board->online ) return -EBUSY;
-
+	if(board->interface == NULL) return -ENODEV;
 	retval = gpib_allocate_board( board );
 	if( retval < 0 ) return retval;
 
@@ -97,7 +97,7 @@ int ibonline(gpib_board_t *board, gpib_board_config_t config)
 		printk("gpib: interface attach failed\n");
 		return retval;
 	}
-	/* nios2nommu on 2.6.11 uclinux kernel has weird problems 
+	/* nios2nommu on 2.6.11 uclinux kernel has weird problems
 	with autospoll thread causing huge slowdowns */
 #ifndef CONFIG_NIOS2
 	board->autospoll_pid = kernel_thread(autospoll_thread, board, 0);
@@ -123,7 +123,7 @@ int iboffline( gpib_board_t *board )
 	{
 		return 0;
 	}
-
+	if(board->interface == NULL) return -ENODEV;
 	if(down_trylock(&board->autospoll_completion))
 	{
 		retval = kill_proc(board->autospoll_pid, SIGKILL, 1);

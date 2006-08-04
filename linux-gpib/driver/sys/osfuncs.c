@@ -200,6 +200,9 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 		case CFCBOARDTYPE:
 			return board_type_ioctl(file_priv, board, arg);
 			break;
+		case IBONL:
+			return online_ioctl( board, arg );
+			break;
 		default:
 			break;
 	}
@@ -237,9 +240,6 @@ int ibioctl(struct inode *inode, struct file *filep, unsigned int cmd, unsigned 
 			break;
 		case IBMUTEX:
 			return mutex_ioctl( board, file_priv, arg );
-			break;
-		case IBONL:
-			return online_ioctl( board, arg );
 			break;
 		case IBPAD:
 			return pad_ioctl( board, file_priv, arg );
@@ -362,6 +362,11 @@ static int board_type_ioctl(gpib_file_private_t *file_priv, gpib_board_t *board,
 
 	if(!capable(CAP_SYS_ADMIN))
 		return -EPERM;
+	if(board->online)
+	{
+		printk("gpib: can't change board type while board is online.\n");
+		return -EBUSY;
+	}
 
 	retval = copy_from_user(&cmd, (void*)arg, sizeof(board_type_ioctl_t));
 	if(retval)
