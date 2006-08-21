@@ -36,7 +36,7 @@ libgpib_la_LDFLAGS = -version-info @GPIB_SO_VERSION@ -Wl,--version-script=$(srcd
 ibConfLex.c: $(srcdir)/ibConfLex.l $(srcdir)/ibConfYacc.h
 	$(LEX) -Pgpib_yy -o$@ $<
 
-ibConfYacc.c + ibConfYacc.h: $(srcdir)/ibConfYacc.y
+ibConfYacc.c ibConfYacc.h: $(srcdir)/ibConfYacc.y
 	$(YACC) -d -p gpib_yy -o ibConfYacc.c ibConfYacc.y
 
 
