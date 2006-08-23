@@ -132,7 +132,7 @@ int gpib_yyparse( void *parse_arg );
 void gpib_yyrestart( FILE* );
 int parse_gpib_conf( const char *filename, ibConf_t *configs,
 	unsigned int configs_length, ibBoard_t *boards, unsigned int boards_length );
-#define YY_DECL int gpib_yylex(YYSTYPE *gpib_lvalp)
+#define YY_DECL int gpib_yylex(YYSTYPE *gpib_lvalp, YYLTYPE *gpib_llocp)
 
 /* support for async io (ibrda() ibwrta(), etc.) */
 enum gpib_aio_varieties

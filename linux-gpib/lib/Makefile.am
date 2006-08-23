@@ -15,8 +15,8 @@ noinst_HEADERS = ibConf.h ib_internal.h
 headersdir = $(includedir)/gpib
 headers_HEADERS = ib.h
 
-BUILT_SOURCES = ibConfLex.c ibConfYacc.c ibConfYacc.h
-MAINTAINERCLEANFILES = ibConfLex.c ibConfYacc.c ibConfYacc.h
+BUILT_SOURCES = ibConfLex.c ibConfLex.h ibConfYacc.c ibConfYacc.h
+MAINTAINERCLEANFILES = ibConfLex.c ibConfLex.h ibConfYacc.c ibConfYacc.h
 
 EXTRA_DIST = ibConfLex.l ibConfYacc.y gpib_version_script
 
@@ -33,10 +33,10 @@ libgpib_la_SOURCES = \
 libgpib_la_CFLAGS = $(LIBGPIB_CFLAGS) -DDEFAULT_CONFIG_FILE=\"/etc/gpib.conf\"
 libgpib_la_LDFLAGS = -version-info @GPIB_SO_VERSION@ -Wl,--version-script=$(srcdir)/gpib_version_script -lpthread
 
-$(srcdir)/ibConfLex.c: $(srcdir)/ibConfLex.l
-	$(LEX) -Pgpib_yy -o$@ $<
+$(srcdir)/ibConfLex.c $(srcdir)/ibconfLex.h: $(srcdir)/ibConfLex.l
+	$(LEX) $<
 
 $(srcdir)/ibConfYacc.c $(srcdir)/ibConfYacc.h: $(srcdir)/ibConfYacc.y
-	$(YACC) -d -p gpib_yy -o $(srcdir)/ibConfYacc.c $(srcdir)/ibConfYacc.y
+	$(YACC) -d -p gpib_yy -o $(srcdir)/ibConfYacc.c $<
 
 

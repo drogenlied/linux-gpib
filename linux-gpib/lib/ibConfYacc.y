@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "ibConfYacc.h"
+#include "ibConfLex.h"
 
 #define YYERROR_VERBOSE
 

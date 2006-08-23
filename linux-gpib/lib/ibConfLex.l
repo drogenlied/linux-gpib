@@ -1,6 +1,8 @@
 %option noyywrap
 %option nounput
 %option yylineno
+%option outfile="ibConfLex.c" header-file="ibConfLex.h"
+%option prefix="gpib_yy"
 
 %{
 
