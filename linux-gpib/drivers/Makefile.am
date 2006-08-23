@@ -7,31 +7,28 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
-GPIB_MODULE_SUBDIR := gpib 
-GPIB_ABS_MODULE_SUBDIR :=@abs_srcdir@/$(GPIB_MODULE_SUBDIR)/
-GPIB_MODULES :=cb7210/cb7210.ko cec/cec_gpib.ko hp82335/hp82335.ko hp_82341/hp_82341.ko \
-	ines/ines_gpib.ko pc2/pc2_gpib.ko tnt4882/tnt4882.ko \
-	ni_usb/ni_usb_gpib.ko agilent_82350b/agilent_82350b.ko agilent_82357a/agilent_82357a.ko \
-	nec7210/nec7210.ko tms9914/tms9914.ko sys/gpib_common.ko
+GPIB_MODULE_SUBDIR := gpib
+GPIB_ABS_MODULE_SUBDIR :=@abs_srcdir@/$(GPIB_MODULE_SUBDIR)
 
 EXTRA_DIST = $(GPIB_MODULE_SUBDIR)
 SUBDIRS = gpib/include
 
 -include $(top_srcdir)/util/linux_flags/flags
 
-all-local: 
+all-local:
 	$(MAKE) -C $(LINUX_SRCDIR) V=1 modules\
-		CC="$(LINUX_CC) -I@abs_top_srcdir@ -I@abs_top_srcdir@/driver/include -I@abs_top_srcdir@/include" \
+		CC="$(LINUX_CC) -I@abs_top_srcdir@ -I@abs_top_srcdir@/drivers/gpib/include -I@abs_top_srcdir@/include" \
 		SUBDIRS="$(GPIB_ABS_MODULE_SUBDIR)"
 
 clean-local:
-	find $(srcdir) \( -name '*.[oas]' -o -name '*.ko' -o -name core -o -name '.*.cmd' \) -type f \
-		-exec $(RM) {} \;
+	$(MAKE) -C $(LINUX_SRCDIR) V=1 clean\
+		CC="$(LINUX_CC) -I@abs_top_srcdir@ -I@abs_top_srcdir@/drivers/gpib/include -I@abs_top_srcdir@/include" \
+		SUBDIRS="$(GPIB_ABS_MODULE_SUBDIR)"
 
 install-data-hook: device-file-check /etc/gpib.conf
-	for module in $(GPIB_MODULES) ; do \
-		$(INSTALL_DATA) -D $$module $(LINUX_MODLIB)/gpib/$$(basename $$module) ; \
-	done
+	$(MAKE) -C $(LINUX_SRCDIR) V=1 modules_install\
+		CC="$(LINUX_CC) -I@abs_top_srcdir@ -I@abs_top_srcdir@/driver/include -I@abs_top_srcdir@/include" \
+		SUBDIRS="$(GPIB_ABS_MODULE_SUBDIR)" INSTALL_MOD_DIR="gpib"
 	$(DEPMOD) -ae
 
 /dev/gpib0:
