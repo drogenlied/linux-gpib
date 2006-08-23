@@ -135,7 +135,7 @@ char cval;
 		| error
 			{
 				fprintf(stderr, "input error on line %i of %s\n", gpib_yyget_lineno(priv(parse_arg)->yyscanner), DEFAULT_CONFIG_FILE);
-				YYERROR;
+				YYABORT;
 			}
 		;
 
