@@ -26,7 +26,7 @@ extern "C" {
 #include "gpib_user.h"
 
 typedef uint16_t Addr4882_t;
-static const Addr4882_t NOADDR = -1;
+static const Addr4882_t NOADDR = (Addr4882_t)-1;
 
 /* tells RcvRespMsg() to stop on EOI */
 static const int STOPend = 0x100;
