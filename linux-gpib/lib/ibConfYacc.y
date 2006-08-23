@@ -84,7 +84,7 @@ int parse_gpib_conf( const char *filename, ibConf_t *configs, unsigned int confi
 	}
 	gpib_yylex_init(&priv.yyscanner);
 	gpib_yyrestart(infile, priv.yyscanner);
-	if( gpib_yyparse( &priv ) < 0 )
+	if(gpib_yyparse(&priv))
 	{
 		fprintf(stderr, "libgpib: failed to parse configuration file\n");
 //XXX setIberr()
