@@ -1,10 +1,27 @@
 Linux GPIB Package Release Notes
 
+3.2.08: Fixed various bugs on 64 bit arches that crept into
+version 3.2.07 (with help from Michael Ritzert).  Added "__init" and
+"__exit" annotations to all of the module initialization and exit functions
+which were missing them (Sam Bishop).  Fixed kbuild problems with 2.6.17
+and some 2.6.16 kernels which can't cope  with multiple SUBDIRS. Made
+flex-generated analyzer for config file reentrant.  Kernel modules are
+installed to a slightly different location now.  Fixed possible kernel
+crash when gpib_config attempts to take a board
+offline after minor numbers for two online boards have been
+rearranged in gpib.conf.  Fixed problems in tnt4882 driver
+with improper deallocation of io resources after attempting to configure
+a single pci-gpib board on multiple device files.  Made the ni_usb
+driver print out the serial number for usb-gpib-hs boards instead
+of dumping "unexpected bytes".  Fixed kernel panic after a
+read or write using ni_usb driver is interrupted by a signal.
+Fixed some cases where TACS or LACS were set erroneously in ibsta.
+
 3.2.07: Added pci vendor ids removed from kernel 2.6.14 and
 later.  Added fix for changes to class_device_create() in
 kernel 2.6.15.  Added device id for NI pci-express gpib board.
 Fixed byte-order problem on big-endian machines when checking
-usb product id on 2.6.11 and newer kernels.  Made some 
+usb product id on 2.6.11 and newer kernels.  Made some
 enhancements to ibtest.  Fixed some bogus timeouts with a
 timeout of TNONE and usb adapters.  Added some support for
 SPOLL bit in ibsta.  Added various fixes for using pcmcia drivers
@@ -35,27 +52,27 @@ Random bug fixes.
 support is enabled (Robert Jordens).  Otherwise, identical
 to 3.2.04.
 
-3.2.04:  Fixed parallel poll timeout bug, fixed 
+3.2.04:  Fixed parallel poll timeout bug, fixed
 slave_write_from_file.c example program, and
 fixed bug in ibrdf() (Christopher Lang).  Fixed interrupt
 polarity on Quancom board (Simon Zeller).  Added python
 binding for ibtmo() (Sandro shannemann@gmail.com).
-Added support for fifo on ISA boards 
+Added support for fifo on ISA boards
 using Ines igpib chips.  Added support for
-Agilent/HP 82341C/D boards (requires download of gpib_firmware 
+Agilent/HP 82341C/D boards (requires download of gpib_firmware
 tarball).  Fixed USB timeouts on kernels 2.6.12 and later.
 Fixed some problems with data holdoffs on TI 9914 based boards,
-which could cause the loss of the first byte on reads in 
+which could cause the loss of the first byte on reads in
 certain circumstances.  Fixed problems with parallel and
 serial polling on TI 9914 based boards when acting as devices.
 This release includes changes to the ioctl driver interface
 to support firmware uploads, thus drivers from 3.2.04 will not work
 with gpib_config from earlier releases (and vice-versa).
 
-3.2.03: Fixed compilation problems against 2.6.10 and later kernels, 
-due to removal of urb->timeout from kernel.  Added module device 
-tables for pci and isapnp boards, so they can be autoloaded by hotplug 
-daemon.  Added support for hardware fifos on Agilent 82350b.  Fixed 
+3.2.03: Fixed compilation problems against 2.6.10 and later kernels,
+due to removal of urb->timeout from kernel.  Added module device
+tables for pci and isapnp boards, so they can be autoloaded by hotplug
+daemon.  Added support for hardware fifos on Agilent 82350b.  Fixed
 clearing of various ibsta status bits in the ni_usb_gpib driver,
 and improved its error handling.
 Fixed possibility of losing first byte of reads in certain cases
@@ -70,13 +87,13 @@ for udev.  Fixed problems that occurred when path to Linux
 directory contained underscores.  Etc.
 
 3.2.01: New driver for NI USB-B.  Fixed support for Measurement Computing
-PCI-GPIB/1M (Marco Prevedelli).  Fixed inability to read/write after 
-receiving device clear when using tnt4882 fifos.  Fixed bogus rejection 
+PCI-GPIB/1M (Marco Prevedelli).  Fixed inability to read/write after
+receiving device clear when using tnt4882 fifos.  Fixed bogus rejection
 of address 30 (Bryan Thomas).  Added PCI device ids for NI PXI-GPIB
 and PMC-GPIB (Uwe Strempel).  Fixed allocation of ioports for ISA
-Measurement Computing boards.  Fixed behaviour of DevClearList when passed 
-an empty addressList.  Interrupted reads now return the data that was 
-received before the interruption, for example by a timeout (based on patch 
+Measurement Computing boards.  Fixed behaviour of DevClearList when passed
+an empty addressList.  Interrupted reads now return the data that was
+received before the interruption, for example by a timeout (based on patch
 from Steve Holland).  Fixed interrupt polarity for Quancom board.
 
 3.2.00: Port to 2.6.xx Linux kernels.
