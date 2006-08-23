@@ -130,7 +130,7 @@ char cval;
 		| interface input
 		| error
 			{
-				fprintf(stderr, "input error on line %i of %s\n", @1.first_line, DEFAULT_CONFIG_FILE);
+				fprintf(stderr, "input error on line %i of %s\n", gpib_yylineno, DEFAULT_CONFIG_FILE);
 				YYABORT;
 			}
 		;

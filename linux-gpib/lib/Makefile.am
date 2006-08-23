@@ -33,10 +33,10 @@ libgpib_la_SOURCES = \
 libgpib_la_CFLAGS = $(LIBGPIB_CFLAGS) -DDEFAULT_CONFIG_FILE=\"/etc/gpib.conf\"
 libgpib_la_LDFLAGS = -version-info @GPIB_SO_VERSION@ -Wl,--version-script=$(srcdir)/gpib_version_script -lpthread
 
-ibConfLex.c: $(srcdir)/ibConfLex.l $(srcdir)/ibConfYacc.h
+$(srcdir)/ibConfLex.c: $(srcdir)/ibConfLex.l
 	$(LEX) -Pgpib_yy -o$@ $<
 
-ibConfYacc.c ibConfYacc.h: $(srcdir)/ibConfYacc.y
-	$(YACC) -d -p gpib_yy -o ibConfYacc.c ibConfYacc.y
+$(srcdir)/ibConfYacc.c $(srcdir)/ibConfYacc.h: $(srcdir)/ibConfYacc.y
+	$(YACC) -d -p gpib_yy -o $(srcdir)/ibConfYacc.c $(srcdir)/ibConfYacc.y
 
 

@@ -7,7 +7,7 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
-SUBDIRS = include lib examples test driver doc language usb
+SUBDIRS = include lib examples test drivers doc language usb
 
 EXTRA_DIST = etc util m4 README.HAMEG README.hp82335 bootstrap
 

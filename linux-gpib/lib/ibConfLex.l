@@ -1,5 +1,6 @@
 %option noyywrap
 %option nounput
+%option yylineno
 
 %{
 
@@ -15,10 +16,9 @@
 %%
 
 %{
-	gpib_llocp->first_line = 1;
 %}
 
-<COMMENT,STRING,INITIAL>\n {gpib_llocp->first_line++;}
+<COMMENT,STRING,INITIAL>\n
 
 "/*" { BEGIN(COMMENT); }
 <COMMENT>[^*\n]*

@@ -10,23 +10,23 @@
 BUILT_SOURCES = gpib gpib_ioctl.h gpib_types.h gpib_user.h ib.h ibConf.h ibP.h
 
 gpib:
-	ln -s . gpib
+	ln -sf . gpib
 
 gpib_ioctl.h:
-	ln -s $(top_srcdir)/driver/include/gpib_ioctl.h
+	ln -sf $(top_srcdir)/drivers/gpib/include/gpib_ioctl.h
 
 gpib_types.h:
-	ln -s $(top_srcdir)/driver/include/gpib_types.h
+	ln -sf $(top_srcdir)/drivers/gpib/include/gpib_types.h
 
 gpib_user.h:
-	ln -s $(top_srcdir)/driver/include/gpib_user.h
+	ln -sf $(top_srcdir)/drivers/gpib/include/gpib_user.h
 
 ib.h:
-	ln -s $(top_srcdir)/lib/ib.h
+	ln -sf $(top_srcdir)/lib/ib.h
 
 ibConf.h:
-	ln -s $(top_srcdir)/lib/ibConf.h
+	ln -sf $(top_srcdir)/lib/ibConf.h
 
 ibP.h:
-	ln -s $(top_srcdir)/lib/ibP.h
+	ln -sf $(top_srcdir)/lib/ibP.h
 

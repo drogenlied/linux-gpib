@@ -7,22 +7,22 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
-GPIB_MODULE_SUBDIRS :=agilent_82350b agilent_82357a cb7210 cec hp82335 hp_82341 ines nec7210 pc2 sys tms9914 tnt4882 ni_usb 
-GPIB_ABS_MODULE_SUBDIRS :=$(patsubst %, @abs_srcdir@/%/, $(GPIB_MODULE_SUBDIRS))
+GPIB_MODULE_SUBDIR := gpib 
+GPIB_ABS_MODULE_SUBDIR :=@abs_srcdir@/$(GPIB_MODULE_SUBDIR)/
 GPIB_MODULES :=cb7210/cb7210.ko cec/cec_gpib.ko hp82335/hp82335.ko hp_82341/hp_82341.ko \
 	ines/ines_gpib.ko pc2/pc2_gpib.ko tnt4882/tnt4882.ko \
 	ni_usb/ni_usb_gpib.ko agilent_82350b/agilent_82350b.ko agilent_82357a/agilent_82357a.ko \
 	nec7210/nec7210.ko tms9914/tms9914.ko sys/gpib_common.ko
 
-EXTRA_DIST = $(GPIB_MODULE_SUBDIRS) tnt4882-tms
-SUBDIRS = include
+EXTRA_DIST = $(GPIB_MODULE_SUBDIR)
+SUBDIRS = gpib/include
 
 -include $(top_srcdir)/util/linux_flags/flags
 
 all-local: 
 	$(MAKE) -C $(LINUX_SRCDIR) V=1 modules\
 		CC="$(LINUX_CC) -I@abs_top_srcdir@ -I@abs_top_srcdir@/driver/include -I@abs_top_srcdir@/include" \
-		SUBDIRS="$(GPIB_ABS_MODULE_SUBDIRS)"
+		SUBDIRS="$(GPIB_ABS_MODULE_SUBDIR)"
 
 clean-local:
 	find $(srcdir) \( -name '*.[oas]' -o -name '*.ko' -o -name core -o -name '.*.cmd' \) -type f \

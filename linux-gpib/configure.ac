@@ -16,7 +16,7 @@ AC_INIT([linux-gpib], [3.2.07])
 # If any interfaces have been removed since the last public release, then set
 # age to 0.
 GPIB_SO_VERSION=1:1:1
-AC_CONFIG_SRCDIR([driver/sys/osfuncs.c])
+AC_CONFIG_SRCDIR([drivers/gpib/sys/osfuncs.c])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 
@@ -188,8 +188,8 @@ AC_OUTPUT([\
 	lib/gpib_config/Makefile \
 	examples/Makefile \
 	test/Makefile \
-	driver/Makefile \
-	driver/include/Makefile \
+	drivers/Makefile \
+	drivers/gpib/include/Makefile \
 	doc/Makefile \
 	include/Makefile \
 	language/Makefile \
