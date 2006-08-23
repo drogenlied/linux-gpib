@@ -13,10 +13,15 @@ EXTRA_DIST = etc util m4 README.HAMEG README.hp82335 bootstrap
 
 ACLOCAL_AMFLAGS = -I m4
 
+distclean-local:
+	$(RM) $(srcdir)/util/linux_flags/fake.*
+	$(RM) $(srcdir)/util/linux_flags/.*.cmd
+	$(RM) -r $(srcdir)/util/linux_flags/.tmp_versions
+
 dist-hook:
-	-find $(distdir) -name CVS -exec $(RM) -r {} \;
-	-find $(distdir) -name \.svn -exec $(RM) -r {} \;
-	-find $(distdir) \( -name '*~' -o -name '.#*' -o -name '*.mod.c' -o -name '.depend' \) -exec $(RM) {} \;
-	$(RM) $(distdir)/util/linux_flags/fake.* 
+	-find $(distdir) -depth -name '.svn' -type d -exec $(RM) -r \{\} \;
+	-find $(distdir) \( -name '*~' -o -name '.#*' \) -exec $(RM) \{\} \;
+	$(RM) $(distdir)/util/linux_flags/fake.*
 	$(RM) $(distdir)/util/linux_flags/.*.cmd
+	$(RM) -r $(distdir)/util/linux_flags/.tmp_versions
 

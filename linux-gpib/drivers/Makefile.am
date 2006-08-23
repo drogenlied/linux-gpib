@@ -61,5 +61,7 @@ device-file-check: /dev/gpib0
 
 #make sure compiled files, etc don't make it into distribution tarballs
 dist-hook:
-	find $(distdir) \( -name '*.[oas]' -o -name '*.ko' -o -name core -o -name '.*.cmd' \) -type f \
+	-find $(distdir) \( -name '*.[oas]' -o -name '*.ko' -o -name core -o -name '.*.cmd' -o -name '*.mod.c' \) -type f \
 		-exec $(RM) {} \;
+	-find $(distdir) -depth -name '.tmp_versions' -type d -exec $(RM) -r \{\} \;
+
