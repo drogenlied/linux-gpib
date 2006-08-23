@@ -3,6 +3,7 @@
 %option yylineno
 %option outfile="ibConfLex.c" header-file="ibConfLex.h"
 %option prefix="gpib_yy"
+%option reentrant
 
 %{
 
@@ -29,9 +30,9 @@
 
 \" { BEGIN(STRING); }
 <STRING>[^\"]*\" {
-	if( strlen( gpib_yytext ) > 0 )
-		gpib_yytext[ strlen( gpib_yytext ) - 1 ] = 0;
-	gpib_lvalp->sval = gpib_yytext;
+	if(strlen(gpib_yyget_text(yyscanner)) > 0)
+		gpib_yyget_text(yyscanner)[strlen(gpib_yyget_text(yyscanner)) - 1] = 0;
+	gpib_lvalp->sval = gpib_yyget_text(yyscanner);
 	BEGIN(INITIAL);
 	return ( T_STRING );
 }
@@ -117,24 +118,24 @@ T300s         { gpib_lvalp->ival=T300s; return(T_NUMBER);}
 T1000s        { gpib_lvalp->ival=T1000s; return(T_NUMBER);}
 
 0[xX][0-9a-fA-F]+ {
-	gpib_lvalp->ival = strtol( gpib_yytext, NULL, 0 );
+	gpib_lvalp->ival = strtol(gpib_yyget_text(yyscanner), NULL, 0);
 	return( T_NUMBER );
 }
 
 (00)?[0-9]+ {
-	gpib_lvalp->ival = strtol( gpib_yytext, NULL, 0 );
+	gpib_lvalp->ival = strtol(gpib_yyget_text(yyscanner), NULL, 0 );
 	return( T_NUMBER );
 }
 
 [ \t]
 
 [a-zA-Z0-9_\-]+ {
-	gpib_lvalp->sval = gpib_yytext;
+	gpib_lvalp->sval = gpib_yyget_text(yyscanner);
 	/* printf("bare string <%s> should be enclosed in double-quotes\n", gpib_yytext); */
 	return (T_STRING);
 }
 
-. { return( gpib_yytext[0] ); }
+. { return( gpib_yyget_text(yyscanner)[0] ); }
 
 %%
 

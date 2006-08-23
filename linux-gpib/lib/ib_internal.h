@@ -128,11 +128,10 @@ static __inline__ ibBoard_t* interfaceBoard( const ibConf_t *conf )
 }
 
 #include <stdio.h>
-int gpib_yyparse( void *parse_arg );
-void gpib_yyrestart( FILE* );
+int gpib_yyparse(void *parse_arg);
 int parse_gpib_conf( const char *filename, ibConf_t *configs,
 	unsigned int configs_length, ibBoard_t *boards, unsigned int boards_length );
-#define YY_DECL int gpib_yylex(YYSTYPE *gpib_lvalp, YYLTYPE *gpib_llocp)
+#define YY_DECL int gpib_yylex(YYSTYPE *gpib_lvalp, YYLTYPE *gpib_llocp, yyscan_t yyscanner)
 
 /* support for async io (ibrda() ibwrta(), etc.) */
 enum gpib_aio_varieties

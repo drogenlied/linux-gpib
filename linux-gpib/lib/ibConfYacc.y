@@ -13,9 +13,11 @@
 YY_DECL;
 
 #define YYPARSE_PARAM parse_arg
+#define YYLEX_PARAM priv(YYPARSE_PARAM)->yyscanner
 
 typedef struct
 {
+	yyscan_t yyscanner;
 	ibConf_t *configs;
 	unsigned int configs_length;
 	unsigned int config_index;
@@ -42,6 +44,7 @@ static inline ibBoard_t* current_board( gpib_yyparse_private_t *parse_arg )
 
 void init_gpib_yyparse_private( gpib_yyparse_private_t *priv )
 {
+	priv->yyscanner = 0;
 	priv->configs = NULL;
 	priv->configs_length = 0;
 	priv->config_index = 0;
@@ -66,8 +69,6 @@ int parse_gpib_conf( const char *filename, ibConf_t *configs, unsigned int confi
 		return -1;
 	}
 
-	gpib_yyrestart(infile);
-
 	init_gpib_yyparse_private( &priv );
 	priv.configs = configs;
 	priv.configs_length = configs_length;
@@ -81,13 +82,15 @@ int parse_gpib_conf( const char *filename, ibConf_t *configs, unsigned int confi
 	{
 		init_ibboard( &priv.boards[ i ] );
 	}
-
+	gpib_yylex_init(&priv.yyscanner);
+	gpib_yyrestart(infile, priv.yyscanner);
 	if( gpib_yyparse( &priv ) < 0 )
 	{
 		fprintf(stderr, "libgpib: failed to parse configuration file\n");
 //XXX setIberr()
 		retval = -1 ;
 	}
+	gpib_yylex_destroy(priv.yyscanner);
 	fclose(infile);
 
 	if( retval == 0 )
@@ -131,8 +134,8 @@ char cval;
 		| interface input
 		| error
 			{
-				fprintf(stderr, "input error on line %i of %s\n", gpib_yylineno, DEFAULT_CONFIG_FILE);
-				YYABORT;
+				fprintf(stderr, "input error on line %i of %s\n", gpib_yyget_lineno(priv(parse_arg)->yyscanner), DEFAULT_CONFIG_FILE);
+				YYERROR;
 			}
 		;
 
@@ -142,7 +145,7 @@ char cval;
 				if( ++( priv(parse_arg)->config_index ) >= priv(parse_arg)->configs_length )
 				{
 					fprintf(stderr, " too many devices in config file\n");
-					YYABORT;
+					YYERROR;
 				}
 			}
 		;
@@ -153,7 +156,7 @@ char cval;
 				if(priv(parse_arg)->board_index < priv(parse_arg)->boards_length )
 					snprintf(current_board(parse_arg)->device, sizeof(current_board( parse_arg )->device), "/dev/gpib%i", priv(parse_arg)->board_index);
 				else
-					YYABORT;
+					YYERROR;
 			}
 		;
 
@@ -162,7 +165,7 @@ char cval;
 		| error
 			{
 				fprintf(stderr, "parameter error on line %i of %s\n", @1.first_line, DEFAULT_CONFIG_FILE);
-				YYABORT;
+				YYERROR;
 			}
 		;
 
@@ -202,7 +205,7 @@ char cval;
 				if( ++( priv(parse_arg)->config_index ) >= priv(parse_arg)->configs_length )
 				{
 					fprintf(stderr, "too many devices in config file\n");
-					YYABORT;
+					YYERROR;
 				}
 			}
 		;
@@ -212,7 +215,7 @@ char cval;
 		| error
  			{
  				fprintf(stderr, "option error on line %i of config file\n", @1.first_line );
-				YYABORT;
+				YYERROR;
 			}
 		;
 
