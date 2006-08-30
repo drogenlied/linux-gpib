@@ -509,9 +509,9 @@ int ni_pci_attach(gpib_board_t *board, gpib_board_config_t config)
 
 	for(mite = mite_devices; mite; mite = mite->next)
 	{
-		if(mite->used) continue;
 		short found_board;
 
+		if(mite->used) continue;
 		if( board->pci_bus >=0 && board->pci_bus !=
 			mite->pcidev->bus->number )
 			continue;
