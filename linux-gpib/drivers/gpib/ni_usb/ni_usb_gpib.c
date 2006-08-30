@@ -118,7 +118,7 @@ int ni_usb_nonblocking_send_bulk_msg(ni_usb_private_t *ni_priv, void *data, int 
 	init_MUTEX_LOCKED(&context.complete);
 	context.timed_out = 0;
 	usb_fill_bulk_urb(ni_priv->bulk_urb, usb_dev, out_pipe, data, data_length,
-		ni_usb_bulk_complete, &context);
+		&ni_usb_bulk_complete, &context);
 	init_timer(&timer);
 	if(timeout_msecs)
 	{
@@ -218,7 +218,7 @@ int ni_usb_nonblocking_receive_bulk_msg(ni_usb_private_t *ni_priv, void *data, i
 	init_MUTEX_LOCKED(&context.complete);
 	context.timed_out = 0;
 	usb_fill_bulk_urb(ni_priv->bulk_urb, usb_dev, in_pipe, data, data_length,
-		ni_usb_bulk_complete, &context);
+		&ni_usb_bulk_complete, &context);
 	init_timer(&timer);
 	if(timeout_msecs)
 	{
@@ -1718,7 +1718,7 @@ static int ni_usb_setup_urbs(gpib_board_t *board)
 	usb_dev = interface_to_usbdev(ni_priv->bus_interface);
 	int_pipe = usb_rcvintpipe(usb_dev, ni_priv->interrupt_in_endpoint);
 	usb_fill_int_urb(ni_priv->interrupt_urb, usb_dev, int_pipe, ni_priv->interrupt_buffer,
-		sizeof(ni_priv->interrupt_buffer), ni_usb_interrupt_complete, board, 1);
+		sizeof(ni_priv->interrupt_buffer), &ni_usb_interrupt_complete, board, 1);
 	retval = usb_submit_urb(ni_priv->interrupt_urb, GFP_KERNEL);
 	up(&ni_priv->interrupt_transfer_lock);
 	if(retval)

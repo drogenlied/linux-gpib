@@ -78,7 +78,7 @@ int agilent_82357a_send_bulk_msg(agilent_82357a_private_t *a_priv, void *data, i
 	init_MUTEX_LOCKED(&context.complete);
 	context.timed_out = 0;
 	usb_fill_bulk_urb(a_priv->bulk_urb, usb_dev, out_pipe, data, data_length,
-		agilent_82357a_bulk_complete, &context);
+		&agilent_82357a_bulk_complete, &context);
 	if(timeout_msecs)
 	{
 		timer = kmalloc(sizeof(struct timer_list), GFP_KERNEL);
@@ -168,7 +168,7 @@ int agilent_82357a_receive_bulk_msg(agilent_82357a_private_t *a_priv, void *data
 	init_MUTEX_LOCKED(&context.complete);
 	context.timed_out = 0;
 	usb_fill_bulk_urb(a_priv->bulk_urb, usb_dev, in_pipe, data, data_length,
-		agilent_82357a_bulk_complete, &context);
+		&agilent_82357a_bulk_complete, &context);
 	if(timeout_msecs)
 	{
 		timer = kmalloc(sizeof(struct timer_list), GFP_KERNEL);
@@ -1081,7 +1081,7 @@ static int agilent_82357a_setup_urbs(gpib_board_t *board)
 	usb_dev = interface_to_usbdev(a_priv->bus_interface);
 	int_pipe = usb_rcvintpipe(usb_dev, AGILENT_82357A_INTERRUPT_IN_ENDPOINT);
 	usb_fill_int_urb(a_priv->interrupt_urb, usb_dev, int_pipe, a_priv->interrupt_buffer,
-		sizeof(a_priv->interrupt_buffer), agilent_82357a_interrupt_complete, board, 1);
+		sizeof(a_priv->interrupt_buffer), &agilent_82357a_interrupt_complete, board, 1);
 	retval = usb_submit_urb(a_priv->interrupt_urb, GFP_KERNEL);
 	if(retval)
 	{
@@ -1508,7 +1508,7 @@ static struct usb_driver agilent_82357a_bus_driver =
 {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
 	.owner = THIS_MODULE,
-#endif	
+#endif
 	.name = "agilent_82357a_gpib",
 	.probe = agilent_82357a_driver_probe,
 	.disconnect = agilent_82357a_driver_disconnect,
