@@ -471,6 +471,12 @@ Default is <option>--sre</option>.</para>
 	<entry>agilent_82357a</entry>
 	</row>
 	<row>
+	<entry>Agilent</entry>
+	<entry><link LINKEND="agilent-82357a">82357B</link></entry>
+	<entry>agilent_82357a.ko</entry>
+	<entry>agilent_82357a</entry>
+	</row>
+	<row>
 	<entry>Capital Equipment Corporation</entry>
 	<entry>PC-488</entry>
 	<entry>pc2_gpib.ko</entry>
@@ -733,10 +739,10 @@ device you are talking to).
 </para>
 </section>
 <section ID="agilent-82357a">
-<title>Agilent 82357A</title>
+<title>Agilent 82357A/B</title>
 <para>
-The Agilent 82357A requires a firmware upload (before gpib_config is
-run) to become functional
+The Agilent 82357A and 82357B require a firmware upload
+(before gpib_config is run) to become functional
 after being plugged in.  The linux-gpib tarball contains hotplug scripts
 for automatically running the fxload program to upload the firmware (and
 to run gpib_config after the firmware is uploaded).
@@ -746,22 +752,22 @@ tarball available from the
 <ulink URL="http://linux-gpib.sourceforge.net/">Linux-GPIB home page</ulink>.
 </para>
 <para>
-The 82357A has a few limitations due to its firmware code:
+The 82357A/B have a few limitation due to their firmware code:
 <itemizedlist>
 <listitem>
 <para>
-It cannot be run as a device, it must be the system controller.
+They cannot be run as a device, but must be the system controller.
 </para>
 </listitem>
 <listitem>
 <para>
-It cannot be assigned a secondary address.
+They cannot be assigned a secondary address.
 </para>
 </listitem>
 <listitem>
 <para>
-It cannot do 7 bit compares when looking for an end-of-string character (it always
-compares all 8 bits).
+They cannot do 7 bit compares when looking for an end-of-string character (they always
+compare all 8 bits).
 </para>
 </listitem>
 </itemizedList>

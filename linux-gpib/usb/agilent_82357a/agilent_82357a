@@ -20,6 +20,16 @@ case $PRODUCT in
 	FIRMWARE=$DATADIR/usb/agilent_82357a/82357a_fw.hex
 	;;
 
+# 82357b with firmware already loaded
+957/718/*)
+	gpib_config $GPIB_CONFIG_OPTIONS
+	;;
+
+# 82357b without firmware
+957/518/*)
+	FIRMWARE=$DATADIR/usb/agilent_82357a/measat_releaseX1.8.hex
+	;;
+
 esac
 
 

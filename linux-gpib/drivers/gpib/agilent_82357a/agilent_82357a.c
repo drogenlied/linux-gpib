@@ -17,6 +17,8 @@
  *                                                                         *
  ***************************************************************************/
 
+#define _GNU_SOURCE
+
 #include <linux/module.h>
 #include "agilent_82357a.h"
 #include "gpibP.h"
@@ -74,7 +76,7 @@ int agilent_82357a_send_bulk_msg(agilent_82357a_private_t *a_priv, void *data, i
 		return -ENOMEM;
 	}
 	usb_dev = interface_to_usbdev(a_priv->bus_interface);
-	out_pipe = usb_sndbulkpipe(usb_dev, AGILENT_82357A_BULK_OUT_ENDPOINT);
+	out_pipe = usb_sndbulkpipe(usb_dev, a_priv->bulk_out_endpoint);
 	init_MUTEX_LOCKED(&context.complete);
 	context.timed_out = 0;
 	usb_fill_bulk_urb(a_priv->bulk_urb, usb_dev, out_pipe, data, data_length,
@@ -164,7 +166,7 @@ int agilent_82357a_receive_bulk_msg(agilent_82357a_private_t *a_priv, void *data
 		return -ENOMEM;
 	}
 	usb_dev = interface_to_usbdev(a_priv->bus_interface);
-	in_pipe = usb_rcvbulkpipe(usb_dev, AGILENT_82357A_BULK_IN_ENDPOINT);
+	in_pipe = usb_rcvbulkpipe(usb_dev, AGILENT_82357_BULK_IN_ENDPOINT);
 	init_MUTEX_LOCKED(&context.complete);
 	context.timed_out = 0;
 	usb_fill_bulk_urb(a_priv->bulk_urb, usb_dev, in_pipe, data, data_length,
@@ -241,7 +243,7 @@ int agilent_82357a_receive_control_msg(agilent_82357a_private_t *a_priv, __u8 re
 		return -ENODEV;
 	}
 	usb_dev = interface_to_usbdev(a_priv->bus_interface);
-	in_pipe = usb_rcvctrlpipe(usb_dev, AGILENT_82357A_CONTROL_ENDPOINT);
+	in_pipe = usb_rcvctrlpipe(usb_dev, AGILENT_82357_CONTROL_ENDPOINT);
 	retval = USB_CONTROL_MSG(usb_dev, in_pipe, request, requesttype, value, index, data, size, timeout_msecs);
 	up(&a_priv->control_alloc_lock);
 	return retval;
@@ -1079,7 +1081,7 @@ static int agilent_82357a_setup_urbs(gpib_board_t *board)
 		return -ENOMEM;
 	}
 	usb_dev = interface_to_usbdev(a_priv->bus_interface);
-	int_pipe = usb_rcvintpipe(usb_dev, AGILENT_82357A_INTERRUPT_IN_ENDPOINT);
+	int_pipe = usb_rcvintpipe(usb_dev, a_priv->interrupt_in_endpoint);
 	usb_fill_int_urb(a_priv->interrupt_urb, usb_dev, int_pipe, a_priv->interrupt_buffer,
 		sizeof(a_priv->interrupt_buffer), &agilent_82357a_interrupt_complete, board, 1);
 	retval = usb_submit_urb(a_priv->interrupt_urb, GFP_KERNEL);
@@ -1288,8 +1290,24 @@ int agilent_82357a_attach(gpib_board_t *board, gpib_board_config_t config)
 	if(i == MAX_NUM_82357A_INTERFACES)
 	{
 		up(&agilent_82357a_hotplug_lock);
-		printk("No NI usb-b gpib adapters found, have you loaded its firmware?\n");
+		printk("No Agilent 82357 gpib adapters found, have you loaded its firmware?\n");
 		return -ENODEV;
+	}
+	unsigned product_id = USBID_TO_CPU(interface_to_usbdev(a_priv->bus_interface)->descriptor.idProduct);
+	switch(product_id)
+	{
+	case USB_DEVICE_ID_AGILENT_82357A:
+		a_priv->bulk_out_endpoint = AGILENT_82357A_BULK_OUT_ENDPOINT;
+		a_priv->interrupt_in_endpoint = AGILENT_82357A_INTERRUPT_IN_ENDPOINT;
+		break;
+	case USB_DEVICE_ID_AGILENT_82357B:
+		a_priv->bulk_out_endpoint = AGILENT_82357B_BULK_OUT_ENDPOINT;
+		a_priv->interrupt_in_endpoint = AGILENT_82357B_INTERRUPT_IN_ENDPOINT;
+		break;
+	default:
+		printk("bug, unhandled product_id in switch?\n");
+		return -EIO;
+		break;
 	}
 #if 0
 	retval = agilent_82357a_reset_usb_configuration(board);
@@ -1417,6 +1435,7 @@ gpib_interface_t agilent_82357a_gpib_interface =
 static struct usb_device_id agilent_82357a_driver_device_table [] =
 {
 	{USB_DEVICE(USB_VENDOR_ID_AGILENT, USB_DEVICE_ID_AGILENT_82357A)},
+	{USB_DEVICE(USB_VENDOR_ID_AGILENT, USB_DEVICE_ID_AGILENT_82357B)},
 	{} /* Terminating entry */
 };
 MODULE_DEVICE_TABLE(usb, agilent_82357a_driver_device_table);

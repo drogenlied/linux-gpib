@@ -32,15 +32,19 @@ enum usb_vendor_ids
 enum usb_device_ids
 {
 	USB_DEVICE_ID_AGILENT_82357A = 0x0107,
-	USB_DEVICE_ID_AGILENT_82357A_PREINIT = 0x0007	// device id before firmware is loaded
+	USB_DEVICE_ID_AGILENT_82357A_PREINIT = 0x0007,	// device id before firmware is loaded
+	USB_DEVICE_ID_AGILENT_82357B = 0x0718,	// device id before firmware is loaded
+	USB_DEVICE_ID_AGILENT_82357B_PREINIT = 0x0518,	// device id before firmware is loaded
 };
 
 enum endpoint_addresses
 {
-	AGILENT_82357A_CONTROL_ENDPOINT = 0x0,
-	AGILENT_82357A_BULK_IN_ENDPOINT = 0x2,
+	AGILENT_82357_CONTROL_ENDPOINT = 0x0,
+	AGILENT_82357_BULK_IN_ENDPOINT = 0x2,
 	AGILENT_82357A_BULK_OUT_ENDPOINT = 0x4,
 	AGILENT_82357A_INTERRUPT_IN_ENDPOINT = 0x6,
+	AGILENT_82357B_BULK_OUT_ENDPOINT = 0x6,
+	AGILENT_82357B_INTERRUPT_IN_ENDPOINT = 0x8,
 };
 
 enum bulk_commands
@@ -146,6 +150,8 @@ typedef struct
 	struct semaphore bulk_alloc_lock;
 	struct semaphore interrupt_alloc_lock;
 	struct semaphore control_alloc_lock;
+	unsigned bulk_out_endpoint;
+	unsigned interrupt_in_endpoint;
 	unsigned is_cic : 1;
 } agilent_82357a_private_t;
 
