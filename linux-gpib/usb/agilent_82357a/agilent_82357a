@@ -28,6 +28,7 @@ case $PRODUCT in
 # 82357b without firmware
 957/518/*)
 	FIRMWARE=$DATADIR/usb/agilent_82357a/measat_releaseX1.8.hex
+	FXLOAD_OPTIONS="-t fx2"
 	;;
 
 esac
