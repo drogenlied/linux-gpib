@@ -737,18 +737,19 @@ void agilent_82357a_request_system_control(gpib_board_t *board, int request_cont
 	int retval;
 	int i = 0;
 
-//	writes[i].address = AUXCR;
+	/* 82357B needs bit to be set in 9914 AUXCR register */
+	writes[i].address = AUXCR;
 	if(request_control)
 	{
-//		writes[i].value = AUX_RQC;
+		writes[i].value = AUX_RQC;
 		a_priv->hw_control_bits |= SYSTEM_CONTROLLER;
 	}else
 	{
-//		writes[i].value = AUX_RLC;
+		writes[i].value = AUX_RLC;
 		a_priv->is_cic = 0;
 		a_priv->hw_control_bits &= ~SYSTEM_CONTROLLER;
 	}
-//	++i;
+	++i;
 	writes[i].address = HW_CONTROL;
 	writes[i].value = a_priv->hw_control_bits;
 	++i;
