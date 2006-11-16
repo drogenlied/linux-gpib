@@ -24,7 +24,6 @@
 #include "plx9050.h"
 #include "amcc5920.h"
 #include "quancom_pci.h"
-#include <linux/config.h>
 #include <linux/interrupt.h>
 
 enum ines_pci_chip

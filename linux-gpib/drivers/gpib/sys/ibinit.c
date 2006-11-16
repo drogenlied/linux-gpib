@@ -17,7 +17,6 @@
 
 #include "ibsys.h"
 #include "autopoll.h"
-#include <linux/config.h>
 #include <linux/vmalloc.h>
 #include <linux/smp_lock.h>
 

@@ -22,7 +22,6 @@
 #include "nec7210.h"
 #include "gpibP.h"
 #include "plx9050.h"
-#include <linux/config.h>
 
 typedef struct
 {
