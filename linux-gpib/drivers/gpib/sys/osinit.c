@@ -18,7 +18,6 @@
 
 
 #include "ibsys.h"
-#include <linux/version.h>
 #include <linux/module.h>
 #include <linux/wait.h>
 #include <linux/list.h>
@@ -204,7 +203,7 @@ static struct class *gpib_class;
 static int __init gpib_common_init_module( void )
 {
 	int i;
-	printk("Linux-GPIB %s Driver -- Kernel Release %s\n", VERSION, UTS_RELEASE);
+	printk("Linux-GPIB %s Driver\n", VERSION);
 	init_board_array(board_array, GPIB_MAX_NUM_BOARDS);
 	if(register_chrdev(IBMAJOR, "gpib", &ib_fops))
 	{
