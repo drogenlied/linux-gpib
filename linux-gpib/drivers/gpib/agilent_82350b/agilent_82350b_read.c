@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "agilent_82350b.h"
+#include <linux/sched.h>
 #include <linux/wait.h>
 
 int agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end, size_t *bytes_read)

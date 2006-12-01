@@ -16,7 +16,8 @@
  ***************************************************************************/
 
 #include "agilent_82350b.h"
-
+#include <linux/sched.h>
+#include <linux/wait.h>
 
 int agilent_82350b_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written)
 {
