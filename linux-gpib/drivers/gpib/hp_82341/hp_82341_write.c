@@ -17,6 +17,7 @@
 
 #include "hp_82341.h"
 #include <linux/delay.h>
+#include <linux/sched.h>
 
 int restart_write_fifo(gpib_board_t *board, hp_82341_private_t *hp_priv)
 {	

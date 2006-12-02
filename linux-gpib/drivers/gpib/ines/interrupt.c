@@ -19,6 +19,7 @@
 #include "ines.h"
 #include <asm/bitops.h>
 #include <asm/dma.h>
+#include <linux/sched.h>
 
 /*
  * GPIB interrupt service routines

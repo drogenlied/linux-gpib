@@ -17,6 +17,7 @@
  ***************************************************************************/
 
 #include "agilent_82350b.h"
+#include <linux/sched.h>
 
 unsigned short read_and_clear_event_status(gpib_board_t *board)
 {

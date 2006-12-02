@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "hp_82341.h"
+#include <linux/sched.h>
 
 int hp_82341_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, size_t *bytes_read)
 {

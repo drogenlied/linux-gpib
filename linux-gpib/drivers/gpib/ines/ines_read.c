@@ -15,6 +15,7 @@
  *                                                                         *
  ***************************************************************************/
 #include "ines.h"
+#include <linux/sched.h>
 
 static const int in_fifo_size = 0xff;
 
