@@ -689,7 +689,7 @@ Default is <option>--sre</option>.</para>
 	<row>
 	<entry>Quancom</entry>
 	<entry>PCIGPIB-1</entry>
-	<entry>ines_gpib.ko</entry>
+	<entry>ines_gpib.ko (Ines iGPIB 72010 chip) or cb7210.ko (Measurement Computing cb7210 chip)</entry>
 	<entry>ines_pci or ines_pci_unaccel (Ines iGPIB 72010 chip),
 	cbi_pci_unaccel (Measurement Computing cb7210 chip)</entry>
 	</row>
