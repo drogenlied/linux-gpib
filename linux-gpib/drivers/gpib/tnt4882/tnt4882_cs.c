@@ -24,6 +24,7 @@
 
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/moduleparam.h>
 #include <linux/init.h>
 #include <linux/sched.h>
 #include <linux/ptrace.h>
@@ -41,362 +42,197 @@
 #include <pcmcia/cisreg.h>
 #include <pcmcia/ds.h>
 
-/*====================================================================*/
-
-/* Module parameters */
-
-#define INT_MODULE_PARM(n, v) static int n = v; MODULE_PARM(n, "i")
-
-/* Newer, simpler way of listing specific interrupts */
-static int irq_list[4] = { -1 };
-MODULE_PARM(irq_list, "1-4i");
-
-/* The old way: bit map of interrupts to choose from */
-INT_MODULE_PARM(irq_mask, 0xffff);
-
 /*
-   All the PCMCIA modules use PCMCIA_DEBUG to control debugging.  If
-   you do not define PCMCIA_DEBUG at all, all the debug code will be
-   left out.  If you compile with PCMCIA_DEBUG=0, the debug code will
-   be present but disabled -- but it can then be enabled for specific
-   modules at load time with a 'pc_debug=#' option to insmod.
+All the PCMCIA modules use PCMCIA_DEBUG to control debugging.  If
+you do not define PCMCIA_DEBUG at all, all the debug code will be
+left out.  If you compile with PCMCIA_DEBUG=0, the debug code will
+be present but disabled -- but it can then be enabled for specific
+modules at load time with a 'pc_debug=#' option to insmod.
 */
+#define PCMCIA_DEBUG 1
 #ifdef PCMCIA_DEBUG
-INT_MODULE_PARM(pc_debug, PCMCIA_DEBUG);
+static int pc_debug = PCMCIA_DEBUG;
+module_param(pc_debug, int, 0);
 #define DEBUG(n, args...) if (pc_debug>(n)) printk(KERN_DEBUG args)
-static char *version =
-"tnt4882_cs.c (Frank Mori Hess)";
+static char *version ="tnt4882_cs.c (Frank Mori Hess)";
 #else
 #define DEBUG(n, args...)
 #endif
 
 /*====================================================================*/
 
-/*
-   The event() function is this driver's Card Services event handler.
-   It will be called by Card Services when an appropriate card status
-   event is received.  The config() and release() entry points are
-   used to configure or release a socket, in response to card
-   insertion and ejection events.  They are invoked from the dummy
-   event handler. 
-*/
-
-static void ni_gpib_config(dev_link_t *link);
-static void ni_gpib_release(u_long arg);
-static int ni_gpib_event(event_t event, int priority,
-		       event_callback_args_t *args);
+static void ni_gpib_config(struct pcmcia_device  *link);
+static void ni_gpib_release(struct pcmcia_device *link);
+int ni_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config);
+void ni_pcmcia_detach(gpib_board_t *board);
 
 /*
-   The attach() and detach() entry points are used to create and destroy
-   "instances" of the driver, where each instance represents everything
-   needed to manage one actual PCMCIA card.
-*/
-
-static void ni_gpib_detach(dev_link_t *);
-
-/*
-   You'll also need to prototype all the functions that will actually
-   be used to talk to your device.  See 'memory_cs' for a good example
-   of a fully self-sufficient driver; the other drivers rely more or
-   less on other parts of the kernel.
-*/
-
-/*
-   The dev_info variable is the "key" that is used to match up this
-   device driver with appropriate cards, through the card configuration
-   database.
+The dev_info variable is the "key" that is used to match up this
+device driver with appropriate cards, through the card configuration
+database.
 */
 
 static dev_info_t dev_info = "ni_gpib_cs";
 
 /*
-   A linked list of "instances" of the dummy device.  Each actual
-   PCMCIA card corresponds to one device instance, and is described
-   by one dev_link_t structure (defined in ds.h).
+A linked list of "instances" of the dummy device.  Each actual
+PCMCIA card corresponds to one device instance, and is described
+by one dev_link_t structure (defined in ds.h).
 
-   You may not want to use a linked list for this -- for example, the
-   memory card driver uses an array of dev_link_t pointers, where minor
-   device numbers are used to derive the corresponding array index.
+You may not want to use a linked list for this -- for example, the
+memory card driver uses an array of dev_link_t pointers, where minor
+device numbers are used to derive the corresponding array index.
+
+I think this dev_list is obsolete but the pointer is needed to keep
+the module instance for the ni_pcmcia_attach function.
 */
 
-static dev_link_t *dev_list = NULL;
+static struct pcmcia_device   *curr_dev = NULL;
 
-/*
-   A dev_link_t structure has fields for most things that are needed
-   to keep track of a socket, but there will usually be some device
-   specific information that also needs to be kept track of.  The
-   'priv' pointer in a dev_link_t structure can be used to point to
-   a device-specific private data structure, like this.
-
-   To simplify the data structure handling, we actually include the
-   dev_link_t structure in the device's private data structure.
-
-   A driver needs to provide a dev_node_t structure for each device
-   on a card.  In some cases, there is only one device per card (for
-   example, ethernet cards, modems).  In other cases, there may be
-   many actual or logical devices (SCSI adapters, memory cards with
-   multiple partitions).  The dev_node_t structures need to be kept
-   in a linked list starting at the 'dev' field of a dev_link_t
-   structure.  We allocate them in the card's private data structure,
-   because they generally shouldn't be allocated dynamically.
-
-   In this case, we also provide a flag to indicate if a device is
-   "stopped" due to a power management event, or card ejection.  The
-   device IO routines can use a flag like this to throttle IO to a
-   card that is not ready to accept it.
-
-   The bus_operations pointer is used on platforms for which we need
-   to use special socket-specific versions of normal IO primitives
-   (inb, outb, readb, writeb, etc) for card IO.
-*/
-   
 typedef struct local_info_t {
-    dev_link_t		link;
-    dev_node_t		node;
-    int			stop;
-    struct bus_operations *bus;
+	struct pcmcia_device	*p_dev;
+	gpib_board_t		*dev;
+	dev_node_t		node;
+	int			stop;
+	struct bus_operations	*bus;
 } local_info_t;
 
 
 /*======================================================================
 
-    ni_gpib_attach() creates an "instance" of the driver, allocating
-    local data structures for one device.  The device is registered
-    with Card Services.
+ni_gpib_probe() creates an "instance" of the driver, allocating
+local data structures for one device.  The device is registered
+with Card Services.
 
-    The dev_link structure is initialized, but we don't actually
-    configure the card at this point -- we wait until we receive a
-    card insertion event.
-    
 ======================================================================*/
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
-static dev_link_t *ni_gpib_attach(void)
-#else
-static int ni_gpib_probe(struct pcmcia_device *dev)
-#endif
+static int ni_gpib_probe(struct pcmcia_device *link)
 {
-    local_info_t *local;
-    dev_link_t *link;
-    client_reg_t client_reg;
-    int ret, i;
-    
-    DEBUG(0, "ni_gpib_attach()\n");
+	local_info_t *info;
+	//struct gpib_board_t *dev;
+	int i;
 
-    /* Allocate space for private device-specific data */
-    local = kmalloc(sizeof(local_info_t), GFP_KERNEL);
-    if (!local)
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
-		return NULL;
-#else
-		return -ENOMEM;
-#endif    
-	memset(local, 0, sizeof(local_info_t));
-    link = &local->link; link->priv = local;
-    
-    /* Initialize the dev_link_t structure */
-    /* Interrupt setup */
-    link->irq.Attributes = IRQ_TYPE_EXCLUSIVE;
-    link->irq.IRQInfo1 = IRQ_INFO2_VALID|IRQ_LEVEL_ID;
-    if (irq_list[0] == -1)
-	link->irq.IRQInfo2 = irq_mask;
-    else
-	for (i = 0; i < 4; i++)
-	    link->irq.IRQInfo2 |= 1 << irq_list[i];
-	printk(KERN_DEBUG "tnt4882: irq_mask=0x%x\n", link->irq.IRQInfo2 );
-    link->irq.Handler = NULL;
-    
-    /*
-      General socket configuration defaults can go here.  In this
-      client, we assume very little, and rely on the CIS for almost
-      everything.  In most clients, many details (i.e., number, sizes,
-      and attributes of IO windows) are fixed by the nature of the
-      device, and can be hard-wired here.
-    */
-    link->conf.Attributes = 0;
-    link->conf.Vcc = 50;
-    link->conf.IntType = INT_MEMORY_AND_IO;
+	DEBUG(0, "ni_gpib_probe(0x%p)\n", link);
 
-    /* Register with Card Services */
-    link->next = dev_list;
-    dev_list = link;
-    client_reg.dev_info = &dev_info;
-    client_reg.Attributes = INFO_IO_CLIENT | INFO_CARD_SHARE;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,13)    
-	client_reg.EventMask =
-		CS_EVENT_CARD_INSERTION | CS_EVENT_CARD_REMOVAL |
-		CS_EVENT_RESET_PHYSICAL | CS_EVENT_CARD_RESET |
-		CS_EVENT_PM_SUSPEND | CS_EVENT_PM_RESUME;
-	client_reg.event_handler = &ni_gpib_event;
-#endif    
-	client_reg.Version = 0x0210;
-    client_reg.event_callback_args.client_data = link;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
-	ret = pcmcia_register_client(&link->handle, &client_reg);
-	if (ret != CS_SUCCESS)
-	{
-		cs_error(link->handle, RegisterClient, ret);
-		ni_gpib_detach(link);
-		return NULL;
-	}
-    return link;
-#else
-	link->handle = dev;
-	dev->instance = link;
+	/* Allocate space for private device-specific data */
+	info = kmalloc(sizeof(*info), GFP_KERNEL);
+	if (!info) return -ENOMEM;
+	memset(info, 0, sizeof(*info));
+
+	info->p_dev = link;
+	link->priv = info;
+
+	/* Initialize the dev_link_t structure */
+	/* Interrupt setup */
+	link->irq.Attributes = IRQ_TYPE_EXCLUSIVE;
+	link->irq.IRQInfo1 = IRQ_INFO2_VALID|IRQ_LEVEL_ID;
+	link->irq.Handler = NULL;
+
+	/*
+	General socket configuration defaults can go here.  In this
+	client, we assume very little, and rely on the CIS for almost
+	everything.  In most clients, many details (i.e., number, sizes,
+	and attributes of IO windows) are fixed by the nature of the
+	device, and can be hard-wired here.
+	*/
+	link->conf.Attributes = 0;
+	link->conf.IntType = INT_MEMORY_AND_IO;
+
+	/* Register with Card Services */
+	curr_dev = link;
+	ni_gpib_config(link);
 	return 0;
-#endif
 } /* ni_gpib_attach */
 
 /*======================================================================
 
-    This deletes a driver "instance".  The device is de-registered
-    with Card Services.  If it has been released, all local data
-    structures are freed.  Otherwise, the structures will be freed
-    when the device is released.
+	This deletes a driver "instance".  The device is de-registered
+	with Card Services.  If it has been released, all local data
+	structures are freed.  Otherwise, the structures will be freed
+	when the device is released.
 
 ======================================================================*/
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,16)
-static void ni_gpib_remove(struct pcmcia_device *dev)
+
+static void ni_gpib_remove(struct pcmcia_device *link)
 {
-	dev_link_t *link = dev_to_instance(dev);
-	ni_gpib_detach(link);
+	local_info_t *info = link->priv;
+	//struct gpib_board_t *dev = info->dev;
+
+	DEBUG(0, "ni_gpib_remove(0x%p)\n", link);
+
+	if (link->dev_node) {
+		printk("dev_node still registered ???");
+		//unregister_netdev(dev);
+	}
+	ni_pcmcia_detach(info->dev);
+	ni_gpib_release(link);
+
+	//free_netdev(dev);
+	kfree(info);
 }
-#endif
-static void ni_gpib_detach(dev_link_t *link)
-{
-    dev_link_t **linkp;
-
-    DEBUG(0, "ni_gpib_detach(0x%p)\n", link);
-    
-    /* Locate device structure */
-    for (linkp = &dev_list; *linkp; linkp = &(*linkp)->next)
-	if (*linkp == link) break;
-    if (*linkp == NULL)
-	return;
-
-    /*
-       If the device is currently configured and active, we won't
-       actually delete it yet.  Instead, it is marked so that when
-       the release() function is called, that will trigger a proper
-       detach().
-    */
-    if (link->state & DEV_CONFIG) {
-#ifdef PCMCIA_DEBUG
-	printk(KERN_DEBUG "ni_gpib_cs: detach postponed, '%s' "
-	       "still locked\n", link->dev->dev_name);
-#endif
-		link->state |= DEV_STALE_LINK;
-		return;
-    }
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
-    /* Break the link with Card Services */
-    if (link->handle)
-	pcmcia_deregister_client(link->handle);
-#endif    
-    /* Unlink device structure, and free it */
-    *linkp = link->next;
-    /* This points to the parent local_info_t struct */
-    kfree(link->priv);
-    
-} /* ni_gpib_detach */
 
 /*======================================================================
 
-    ni_gpib_config() is scheduled to run after a CARD_INSERTION event
-    is received, to configure the PCMCIA socket, and to make the
-    device available to the system.
+	ni_gpib_config() is scheduled to run after a CARD_INSERTION event
+	is received, to configure the PCMCIA socket, and to make the
+	device available to the system.
 
 ======================================================================*/
 
-static void ni_gpib_config(dev_link_t *link)
+#define CS_CHECK(fn, ret) \
+do { last_fn = (fn); if ((last_ret = (ret)) != 0) goto cs_failed; } while (0)
+
+static void ni_gpib_config(struct pcmcia_device *link)
 {
-    local_info_t *dev = link->priv;
-    tuple_t tuple;
-    cisparse_t parse;
-    int last_fn, last_ret;
-    u_char buf[64];
-    config_info_t conf;
-    win_req_t req;
-    memreq_t map;
-    cistpl_cftable_entry_t dflt = { 0 };
+	//local_info_t *info = link->priv;
+	//gpib_board_t *dev = info->dev;
+	tuple_t tuple;
+	cisparse_t parse;
+	int last_fn, last_ret;
+	u_char buf[64];
+	config_info_t conf;
+	win_req_t req;
+	memreq_t map;
+	cistpl_cftable_entry_t dflt = { 0 };
+	DEBUG(0, "ni_gpib_config(0x%p)\n", link);
 
-    DEBUG(0, "ni_gpib_config(0x%p)\n", link);
+	/*
+	This reads the card's CONFIG tuple to find its configuration
+	registers.
+	*/
+	tuple.DesiredTuple = CISTPL_CONFIG;
+	tuple.Attributes = 0;
+	tuple.TupleData = buf;
+	tuple.TupleDataMax = sizeof(buf);
+	tuple.TupleOffset = 0;
+	CS_CHECK(GetFirstTuple, pcmcia_get_first_tuple(link, &tuple));
+	CS_CHECK(GetTupleData, pcmcia_get_tuple_data(link, &tuple));
+	CS_CHECK(ParseTuple, pcmcia_parse_tuple(link, &tuple, &parse));
+	link->conf.ConfigBase = parse.config.base;
+	link->conf.Present = parse.config.rmask[0];
 
-    /*
-       This reads the card's CONFIG tuple to find its configuration
-       registers.
-    */
-    tuple.DesiredTuple = CISTPL_CONFIG;
-    tuple.Attributes = 0;
-    tuple.TupleData = buf;
-    tuple.TupleDataMax = sizeof(buf);
-    tuple.TupleOffset = 0;
-	last_ret = pcmcia_get_first_tuple(link->handle, &tuple);
-	if(last_ret != CS_SUCCESS) 
-	{
-		last_fn = GetFirstTuple;
-		goto cs_failed;
-	}
-	last_ret = pcmcia_get_tuple_data(link->handle, &tuple);
-	if(last_ret != CS_SUCCESS) 
-	{
-		last_fn = GetTupleData;
-		goto cs_failed;
-	}
-	last_ret = pcmcia_parse_tuple(link->handle, &tuple, &parse);
-	if(last_ret != CS_SUCCESS) 
-	{
-		last_fn = ParseTuple;
-		goto cs_failed;
-	}
-    link->conf.ConfigBase = parse.config.base;
-    link->conf.Present = parse.config.rmask[0];
+	/* Configure card */
+	CS_CHECK( GetConfigurationInfo, pcmcia_get_configuration_info(link, &conf) );
 
-    /* Configure card */
-    link->state |= DEV_CONFIG;
+	/*
+	In this loop, we scan the CIS for configuration table entries,
+	each of which describes a valid card configuration, including
+	voltage, IO window, memory window, and interrupt settings.
 
-    /* Look up the current Vcc */
-	last_ret = pcmcia_get_configuration_info(link->handle, &conf);
-	if(last_ret != CS_SUCCESS) 
-	{
-		last_fn = GetConfigurationInfo;
-		goto cs_failed;
-	}
-    link->conf.Vcc = conf.Vcc;
-
-    /*
-      In this loop, we scan the CIS for configuration table entries,
-      each of which describes a valid card configuration, including
-      voltage, IO window, memory window, and interrupt settings.
-
-      We make no assumptions about the card to be configured: we use
-      just the information available in the CIS.  In an ideal world,
-      this would work for any PCMCIA card, but it requires a complete
-      and accurate CIS.  In practice, a driver usually "knows" most of
-      these things without consulting the CIS, and most client drivers
-      will only use the CIS to fill in implementation-defined details.
-    */
-    tuple.DesiredTuple = CISTPL_CFTABLE_ENTRY;
-	last_ret = pcmcia_get_first_tuple(link->handle, &tuple);
-	if(last_ret != CS_SUCCESS) 
-	{
-		last_fn = GetFirstTuple;
-		goto cs_failed;
-	}
-    while (1) 
+	We make no assumptions about the card to be configured: we use
+	just the information available in the CIS.  In an ideal world,
+	this would work for any PCMCIA card, but it requires a complete
+	and accurate CIS.  In practice, a driver usually "knows" most of
+	these things without consulting the CIS, and most client drivers
+	will only use the CIS to fill in implementation-defined details.
+	*/
+	tuple.DesiredTuple = CISTPL_CFTABLE_ENTRY;
+	CS_CHECK(GetFirstTuple, pcmcia_get_first_tuple(link, &tuple));
+	while (1) 
 	{
 		cistpl_cftable_entry_t *cfg = &(parse.cftable_entry);
-		last_ret = pcmcia_get_tuple_data(link->handle, &tuple);
-		if(last_ret != CS_SUCCESS) 
-		{
-			goto next_entry;
-		}
-		last_ret = pcmcia_parse_tuple(link->handle, &tuple, &parse);
-		if(last_ret != CS_SUCCESS) 
-		{
-			goto next_entry;
-		}
+		CS_CHECK(GetTupleData, pcmcia_get_tuple_data(link, &tuple));
+		CS_CHECK(ParseTuple, pcmcia_parse_tuple(link, &tuple, &parse));
 		if (cfg->flags & CISTPL_CFTABLE_DEFAULT) dflt = *cfg;
 		if (cfg->index == 0) goto next_entry;
 		link->conf.ConfigIndex = cfg->index;
@@ -408,25 +244,6 @@ static void ni_gpib_config(dev_link_t *link)
 			link->conf.Status = CCSR_AUDIO_ENA;
 		}
 
-		/* Use power settings for Vcc and Vpp if present */
-		/*  Note that the CIS values need to be rescaled */
-		if (cfg->vcc.present & (1<<CISTPL_POWER_VNOM)) 
-		{
-			if (conf.Vcc != cfg->vcc.param[CISTPL_POWER_VNOM]/10000)
-				goto next_entry;
-		}else if (dflt.vcc.present & (1<<CISTPL_POWER_VNOM)) 
-		{
-			if (conf.Vcc != dflt.vcc.param[CISTPL_POWER_VNOM]/10000)
-				goto next_entry;
-		}
-
-		if (cfg->vpp1.present & (1<<CISTPL_POWER_VNOM))
-			link->conf.Vpp1 = link->conf.Vpp2 =
-				cfg->vpp1.param[CISTPL_POWER_VNOM]/10000;
-		else if (dflt.vpp1.present & (1<<CISTPL_POWER_VNOM))
-			link->conf.Vpp1 = link->conf.Vpp2 =
-				dflt.vpp1.param[CISTPL_POWER_VNOM]/10000;
-	
 		/* Do we need to allocate an interrupt? */
 		if (cfg->irq.IRQInfo1 || dflt.irq.IRQInfo1)
 			link->conf.Attributes |= CONF_ENABLE_IRQ;
@@ -451,7 +268,7 @@ static void ni_gpib_config(dev_link_t *link)
 				link->io.NumPorts2 = io->win[1].len;
 			}
 			/* This reserves IO space but doesn't actually enable it */
-			last_ret = pcmcia_request_io(link->handle, &link->io);
+			last_ret = pcmcia_request_io(link, &link->io);
 			if(last_ret != CS_SUCCESS) 
 			{
 				goto next_entry;
@@ -479,243 +296,118 @@ static void ni_gpib_config(dev_link_t *link)
 			if (req.Size < 0x1000)
 			req.Size = 0x1000;
 			req.AccessSpeed = 0;
-			link->win = (window_handle_t)link->handle;
-			if(pcmcia_request_window(&link->handle, &req, &link->win) != CS_SUCCESS) goto next_entry;
+			link->win = (window_handle_t)link;
+			if(pcmcia_request_window(&link, &req, &link->win) != CS_SUCCESS)
+				goto next_entry;
 			map.Page = 0; map.CardOffset = mem->win[0].card_addr;
-			if(pcmcia_map_mem_page(link->win, &map) != CS_SUCCESS) goto next_entry;
+			if(pcmcia_map_mem_page(link->win, &map) != CS_SUCCESS)
+				goto next_entry;
 		}
 		/* If we got this far, we're cool! */
 		break;
 	
 		next_entry:
-		if (link->io.NumPorts1)
-			pcmcia_release_io(link->handle, &link->io);
-		last_ret = pcmcia_get_next_tuple(link->handle, &tuple);
-		if(last_ret != CS_SUCCESS) 
-		{
-			last_fn = GetNextTuple;
-			goto cs_failed;
-		}
+		CS_CHECK( GetNextTuple, pcmcia_get_next_tuple(link, &tuple));
 	}
 
-    /*
-       Allocate an interrupt line.  Note that this does not assign a
-       handler to the interrupt, unless the 'Handler' member of the
-       irq structure is initialized.
-    */
-    if (link->conf.Attributes & CONF_ENABLE_IRQ)
-	last_ret = pcmcia_request_irq(link->handle, &link->irq);
-	if(last_ret != CS_SUCCESS) 
-	{
-		last_fn = RequestIRQ;
-		goto cs_failed;
-	}
+	/*
+	Allocate an interrupt line.  Note that this does not assign a
+	handler to the interrupt, unless the 'Handler' member of the
+	irq structure is initialized.
+	*/
+	if (link->conf.Attributes & CONF_ENABLE_IRQ)
+		CS_CHECK( RequestIRQ, pcmcia_request_irq(link, &link->irq) );
 
-    /*
-       This actually configures the PCMCIA socket -- setting up
-       the I/O windows and the interrupt mapping, and putting the
-       card and host interface into "Memory and IO" mode.
-    */
-	last_ret = pcmcia_request_configuration(link->handle, &link->conf);
-	if(last_ret != CS_SUCCESS) 
-	{
-		last_fn = RequestConfiguration;
-		goto cs_failed;
-	}
+	/*
+	This actually configures the PCMCIA socket -- setting up
+	the I/O windows and the interrupt mapping, and putting the
+	card and host interface into "Memory and IO" mode.
+	*/
+	CS_CHECK( RequestConfiguration, pcmcia_request_configuration(link, &link->conf) );
 
-    /*
-      At this point, the dev_node_t structure(s) need to be
-      initialized and arranged in a linked list at link->dev.
-    */
-    sprintf(dev->node.dev_name, "ni_pcmcia_gpib");
-    dev->node.major = dev->node.minor = 0;
-    link->dev = &dev->node;
+	/*
+	At this point, the dev_node_t structure(s) need to be
+	initialized and arranged in a linked list at link->dev.
+	*/
+	return;
 
-    /* Finally, report what we've done */
-    printk(KERN_INFO "%s: index 0x%02x: Vcc %d.%d",
-	   dev->node.dev_name, link->conf.ConfigIndex,
-	   link->conf.Vcc/10, link->conf.Vcc%10);
-    if (link->conf.Vpp1)
-	printk(", Vpp %d.%d", link->conf.Vpp1/10, link->conf.Vpp1%10);
-    if (link->conf.Attributes & CONF_ENABLE_IRQ)
-	printk(", irq %d", link->irq.AssignedIRQ);
-    if (link->io.NumPorts1)
-	printk(", io 0x%04x-0x%04x", link->io.BasePort1,
-	       link->io.BasePort1+link->io.NumPorts1-1);
-    if (link->io.NumPorts2)
-	printk(" & 0x%04x-0x%04x", link->io.BasePort2,
-	       link->io.BasePort2+link->io.NumPorts2-1);
-    if (link->win)
-	printk(", mem 0x%06lx-0x%06lx", req.Base,
-	       req.Base+req.Size-1);
-    printk("\n");
-
-    link->state &= ~DEV_CONFIG_PENDING;
-    return;
-
-cs_failed:
-    cs_error(link->handle, last_fn, last_ret);
-    ni_gpib_release((u_long)link);
-
+	cs_failed:
+	cs_error(link, last_fn, last_ret);
+	ni_gpib_release(link);
 } /* ni_gpib_config */
 
 /*======================================================================
 
-    After a card is removed, ni_gpib_release() will unregister the
-    device, and release the PCMCIA configuration.  If the device is
-    still open, this will be postponed until it is closed.
+After a card is removed, ni_gpib_release() will unregister the
+device, and release the PCMCIA configuration.  If the device is
+still open, this will be postponed until it is closed.
 
 ======================================================================*/
 
-static void ni_gpib_release(u_long arg)
+static void ni_gpib_release(struct pcmcia_device *link)
 {
-    dev_link_t *link = (dev_link_t *)arg;
-
-    DEBUG(0, "ni_gpib_release(0x%p)\n", link);
-
-    /*
-       If the device is currently in use, we won't release until it
-       is actually closed, because until then, we can't be sure that
-       no one will try to access the device or its data structures.
-    */
-    if (link->open) {
-	DEBUG(1, "ni_gpib_cs: release postponed, '%s' still open\n",
-	      link->dev->dev_name);
-	link->state |= DEV_STALE_CONFIG;
-	return;
-    }
-
-    /* Unlink the device chain */
-    link->dev = NULL;
-
-    /*
-      In a normal driver, additional code may be needed to release
-      other kernel data structures associated with this device.
-    */
-
-    /* Don't bother checking to see if these succeed or not */
-    if (link->win)
-	pcmcia_release_window(link->win);
-    pcmcia_release_configuration(link->handle);
-    if (link->io.NumPorts1)
-	pcmcia_release_io(link->handle, &link->io);
-    if (link->irq.AssignedIRQ)
-	pcmcia_release_irq(link->handle, &link->irq);
-    link->state &= ~DEV_CONFIG;
-
-    if (link->state & DEV_STALE_LINK)
-	ni_gpib_detach(link);
-
+	DEBUG(0, "ni_gpib_release(0x%p)\n", link);
+	pcmcia_disable_device (link);
 } /* ni_gpib_release */
 
-/*======================================================================
-
-    The card status event handler.  Mostly, this schedules other
-    stuff to run after an event is received.
-
-    When a CARD_REMOVAL event is received, we immediately set a
-    private flag to block future accesses to this device.  All the
-    functions that actually access the device should check this flag
-    to make sure the card is still present.
-
-======================================================================*/
-
-static int ni_gpib_event(event_t event, int priority,
-	event_callback_args_t *args)
+static int ni_gpib_suspend(struct pcmcia_device *link)
 {
-	dev_link_t *link = args->client_data;
-	local_info_t *dev = link->priv;
-	
-	DEBUG(1, "ni_gpib_event(0x%06x)\n", event);
-	
-	switch (event) {
-	case CS_EVENT_CARD_REMOVAL:
-		link->state &= ~DEV_PRESENT;
-		if (link->state & DEV_CONFIG) {
-			((local_info_t *)link->priv)->stop = 1;
-			ni_gpib_release((u_long)link);
-		}
-		break;
-	case CS_EVENT_CARD_INSERTION:
-		link->state |= DEV_PRESENT | DEV_CONFIG_PENDING;
-//		dev->bus = args->bus;
-		ni_gpib_config(link);
-		break;
-	case CS_EVENT_PM_SUSPEND:
-		link->state |= DEV_SUSPEND;
-		/* Fall through... */
-	case CS_EVENT_RESET_PHYSICAL:
-		/* Mark the device as stopped, to block IO until later */
-		dev->stop = 1;
-		if (link->state & DEV_CONFIG)
-			pcmcia_release_configuration(link->handle);
-		break;
-	case CS_EVENT_PM_RESUME:
-		link->state &= ~DEV_SUSPEND;
-		/* Fall through... */
-	case CS_EVENT_CARD_RESET:
-		if (link->state & DEV_CONFIG)
-			pcmcia_request_configuration(link->handle, &link->conf);
-		dev->stop = 0;
-		/*
-		In a normal driver, additional code may go here to restore
-		the device state and restart IO. 
-		*/
-		break;
-	}
+	//local_info_t *info = link->priv;
+	//struct gpib_board_t *dev = info->dev;
+	DEBUG(0, "ni_gpib_suspend(0x%p)\n", link);
+
+	if (link->open)
+		printk("Device still open ???\n");
+		//netif_device_detach(dev);
+
 	return 0;
-} /* ni_gpib_event */
+}
+
+static int ni_gpib_resume(struct pcmcia_device *link)
+{
+	//local_info_t *info = link->priv;
+	//struct gpib_board_t *dev = info->dev;
+	DEBUG(0, "ni_gpib_resume(0x%p)\n", link);
+
+	/*if (link->open) {
+		ni_gpib_probe(dev);	/ really?
+		printk("Gpib resumed ???\n");
+		//netif_device_attach(dev);
+	}*/
+	ni_gpib_config(link);
+	return 0;
+}
 
 /*====================================================================*/
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
 static struct pcmcia_device_id ni_pcmcia_ids[] =
 {
 	PCMCIA_DEVICE_MANF_CARD(0x010b, 0x4882),
 	PCMCIA_DEVICE_NULL
 };
+
 MODULE_DEVICE_TABLE(pcmcia, ni_pcmcia_ids);
-#endif
 
 static struct pcmcia_driver ni_gpib_cs_driver =
 {
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
-	.attach = &ni_gpib_attach,
-	.detach = &ni_gpib_detach,
-#else
-	.probe = &ni_gpib_probe,
-	.remove = &ni_gpib_remove,
-#endif
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
-	.event = &ni_gpib_event,
-#endif	
-	.id_table = ni_pcmcia_ids,
-#endif	
-	.owner = THIS_MODULE,
-	.drv = {
-		.name = "ni_gpib_cs",
-	},
+	.owner		= THIS_MODULE,
+	.drv = { .name = "ni_gpib_cs", },
+	.id_table	= ni_pcmcia_ids,
+	.probe		= ni_gpib_probe,
+	.remove		= ni_gpib_remove,
+	.suspend	= ni_gpib_suspend,
+	.resume		= ni_gpib_resume,
 };
 
 int __init init_ni_gpib_cs(void)
 {
-	pcmcia_register_driver(&ni_gpib_cs_driver);
-	return 0;
+	return pcmcia_register_driver(&ni_gpib_cs_driver);
 }
 
 void __exit exit_ni_gpib_cs(void)
 {
 	DEBUG(0, "ni_gpib_cs: unloading\n");
 	pcmcia_unregister_driver(&ni_gpib_cs_driver);
-	while (dev_list != NULL) {
-		if (dev_list->state & DEV_CONFIG)
-			ni_gpib_release((u_long)dev_list);
-		ni_gpib_detach(dev_list);
-	}
 }
-
-int ni_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config);
-void ni_pcmcia_detach(gpib_board_t *board);
 
 gpib_interface_t ni_pcmcia_interface =
 {
@@ -775,11 +467,14 @@ gpib_interface_t ni_pcmcia_accel_interface =
 
 int ni_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config)
 {
+	local_info_t *info = curr_dev->priv;
 	tnt4882_private_t *tnt_priv;
 	nec7210_private_t *nec_priv;
 	int isr_flags = SA_SHIRQ;
+	info->dev=board;
+	DEBUG(0, "ni_pcmcia_attach(0x%p)\n", board);
 
-	if( dev_list == NULL )
+	if( curr_dev == NULL )
 	{
 		printk( "gpib: no NI PCMCIA board found\n" );
 		return -1;
@@ -800,23 +495,22 @@ int ni_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config)
 	nec_priv->write_byte = nec7210_locking_ioport_write_byte;
 	nec_priv->offset = atgpib_reg_offset;
 
-	GPIB_DPRINTK( "ioport1 window attributes: 0x%x\n", dev_list->io.Attributes1 );
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
-	if(request_region(dev_list->io.BasePort1, pcmcia_gpib_iosize, "tnt4882") == 0)
+	DEBUG(0, "ioport1 window attributes: 0x%x\n", curr_dev->io.Attributes1 );
+	if(request_region(curr_dev->io.BasePort1, pcmcia_gpib_iosize, "tnt4882") == 0)
 	{
-		printk("gpib: ioports starting at 0x%x are already in use\n", dev_list->io.BasePort1);
+		printk("gpib: ioports starting at 0x%x are already in use\n", curr_dev->io.BasePort1);
 		return -EIO;
 	}
-#endif	
-	nec_priv->iobase = (void*)(unsigned long)dev_list->io.BasePort1;
+
+	nec_priv->iobase = (void*)(unsigned long)curr_dev->io.BasePort1;
 
 	// get irq
-	if( request_irq( dev_list->irq.AssignedIRQ, tnt4882_interrupt, isr_flags, "tnt4882", board))
+	if( request_irq( curr_dev->irq.AssignedIRQ, tnt4882_interrupt, isr_flags, "tnt4882", board))
 	{
-		printk("gpib: can't request IRQ %d\n", dev_list->irq.AssignedIRQ);
+		printk("gpib: can't request IRQ %d\n", curr_dev->irq.AssignedIRQ);
 		return -1;
 	}
-	tnt_priv->irq = dev_list->irq.AssignedIRQ;
+	tnt_priv->irq = curr_dev->irq.AssignedIRQ;
 
 	tnt4882_init( tnt_priv, board );
 
@@ -827,6 +521,7 @@ void ni_pcmcia_detach(gpib_board_t *board)
 {
 	tnt4882_private_t *tnt_priv = board->private_data;
 	nec7210_private_t *nec_priv;
+	DEBUG(0, "ni_pcmcia_detach(0x%p)\n", board);
 
 	if(tnt_priv)
 	{
@@ -838,9 +533,7 @@ void ni_pcmcia_detach(gpib_board_t *board)
 		if(nec_priv->iobase)
 		{
 			tnt4882_board_reset(tnt_priv, board);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
 			release_region((unsigned long)nec_priv->iobase, pcmcia_gpib_iosize);
-#endif		
 		}
 	}
 	tnt4882_free_private(board);
