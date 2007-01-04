@@ -39,18 +39,12 @@
 #include <pcmcia/ds.h>
 #include <pcmcia/cisreg.h>
 
-
-static int pc_debug = 1;
-
-/* Parameters that can be set with 'insmod' */
-
-/* Newer, simpler way of listing specific interrupts */
-static int irq_list[4] = { -1 };
-MODULE_PARM(irq_list, "1-4i");
-
-/* The old way: bit map of interrupts to choose from */
-static int irq_mask = 0xffff;
-MODULE_PARM(irq_mask, "i");
+#ifdef PCMCIA_DEBUG
+static int pc_debug = PCMCIA_DEBUG;
+#define DEBUG(n, args...) if (pc_debug>(n)) printk(KERN_DEBUG args)
+#else
+#define DEBUG(n, args...)
+#endif
 
 static int first_tuple(client_handle_t handle, tuple_t *tuple,
 	cisparse_t *parse)
@@ -82,27 +76,23 @@ static int next_tuple(client_handle_t handle, tuple_t *tuple,
    handler.
 */
 
-static void gpib_config(dev_link_t *link);
-static void gpib_release(u_long arg);
-static int gpib_event(event_t event, int priority,
-			  event_callback_args_t *args);
+static void ines_gpib_config( struct pcmcia_device  *link );
+static void ines_gpib_release( struct pcmcia_device  *link );
+int ines_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config);
+int ines_pcmcia_accel_attach(gpib_board_t *board, gpib_board_config_t config);
+void ines_pcmcia_detach(gpib_board_t *board);
+
 
 /*
    The attach() and detach() entry points are used to create and destroy
    "instances" of the driver, where each instance represents everything
    needed to manage one actual PCMCIA card.
-*/
 
-static void gpib_detach(dev_link_t *);
-
-/*
    You'll also need to prototype all the functions that will actually
    be used to talk to your device.  See 'pcmem_cs' for a good example
    of a fully self-sufficient driver; the other drivers rely more or
    less on other parts of the kernel.
-*/
 
-/*
    The dev_info variable is the "key" that is used to match up this
    device driver with appropriate cards, through the card configuration
    database.
@@ -120,7 +110,7 @@ static dev_info_t dev_info = "ines_gpib_cs";
    device numbers are used to derive the corresponding array index.
 */
 
-static dev_link_t *dev_list = NULL;
+static struct pcmcia_device *curr_dev = NULL;
 
 /*
    A dev_link_t structure has fields for most things that are needed
@@ -140,9 +130,11 @@ static dev_link_t *dev_list = NULL;
 */
 
 typedef struct local_info_t {
-    dev_node_t	node;
-    u_short manfid;
-    u_short cardid;
+	struct pcmcia_device	*p_dev;
+	gpib_board_t		*dev;
+	dev_node_t	node;
+	u_short manfid;
+	u_short cardid;
 } local_info_t;
 
 
@@ -157,24 +149,21 @@ typedef struct local_info_t {
 
 */
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
-static dev_link_t *gpib_attach(void)
-#else
-static int gpib_probe(struct pcmcia_device *dev)
-#endif
+static int ines_gpib_probe( struct pcmcia_device *link )
 {
-	client_reg_t client_reg;
-	dev_link_t *link;
-	local_info_t *local;
-	int ret;
-	int i;
+	local_info_t *info;
 
-	if (pc_debug)
-		printk(KERN_DEBUG "gpib_attach()\n");
+//	int ret, i;
 
-	/* Initialize the dev_link_t structure */
-	link = kmalloc(sizeof(struct dev_link_t), GFP_KERNEL);
-	memset(link, 0, sizeof(struct dev_link_t));
+	DEBUG(0, "ines_gpib_probe(0x%p)\n", link);
+
+	/* Allocate space for private device-specific data */
+	info = kmalloc(sizeof(*info), GFP_KERNEL);
+	if (!info) return -ENOMEM;
+	memset(info, 0, sizeof(*info));
+
+	info->p_dev = link;
+	link->priv = info;
 
 	/* The io structure describes IO port mapping */
 	link->io.NumPorts1 = 32;
@@ -186,52 +175,17 @@ static int gpib_probe(struct pcmcia_device *dev)
 	/* Interrupt setup */
 	link->irq.Attributes = IRQ_TYPE_EXCLUSIVE;
 	link->irq.IRQInfo1 = IRQ_INFO2_VALID | IRQ_PULSE_ID;
-	if(irq_list[0] == -1)
-		link->irq.IRQInfo2 = irq_mask;
-	else
-		for(i = 0; i < 4; i++)
-			link->irq.IRQInfo2 |= 1 << irq_list[i];
-	printk(KERN_DEBUG "ines_cs: irq_mask=0x%x\n",
-		link->irq.IRQInfo2);
 	link->irq.Handler = NULL;
 
 	/* General socket configuration */
 	link->conf.Attributes = CONF_ENABLE_IRQ;
-	link->conf.Vcc = 50;
 	link->conf.IntType = INT_MEMORY_AND_IO;
 
-	/* Allocate space for private device-specific data */
-	local = kmalloc(sizeof(local_info_t), GFP_KERNEL);
-	memset(local, 0, sizeof(local_info_t));
-	link->priv = local;
 
 	/* Register with Card Services */
-	link->next = dev_list;
-	dev_list = link;
-	client_reg.dev_info = &dev_info;
-	client_reg.Attributes = INFO_IO_CLIENT | INFO_CARD_SHARE;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,13)    
-	client_reg.EventMask =
-		CS_EVENT_CARD_INSERTION | CS_EVENT_CARD_REMOVAL |
-		CS_EVENT_RESET_PHYSICAL | CS_EVENT_CARD_RESET |
-		CS_EVENT_PM_SUSPEND | CS_EVENT_PM_RESUME;
-	client_reg.event_handler = &gpib_event;
-#endif	
-	client_reg.Version = 0x0210;
-	client_reg.event_callback_args.client_data = link;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
-	ret = pcmcia_register_client(&link->handle, &client_reg);
-	if (ret != CS_SUCCESS) {
-		cs_error(link->handle, RegisterClient, ret);
-		gpib_detach(link);
-		return NULL;
-	}
-	return link;
-#else
-	link->handle = dev;
-	dev->instance = link;
+	curr_dev = link;
+	ines_gpib_config(link);
 	return 0;
-#endif
 } /* gpib_attach */
 
 /*
@@ -242,59 +196,31 @@ static int gpib_probe(struct pcmcia_device *dev)
     when the device is released.
 
 */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,16)
-static void gpib_remove(struct pcmcia_device *dev)
+static void ines_gpib_remove( struct pcmcia_device *link )
 {
-	dev_link_t *link = dev_to_instance(dev);
-	gpib_detach(link);
+	local_info_t *info = link->priv;
+	//struct gpib_board_t *dev = info->dev;
+
+	DEBUG(0, "ines_gpib_remove(0x%p)\n", link);
+
+	if (link->dev_node) {
+		printk("dev_node still registered ???");
+		//unregister_netdev(dev);
+	}
+	ines_pcmcia_detach(info->dev);
+	ines_gpib_release(link);
+
+	//free_netdev(dev);
+	kfree(info);
 }
-#endif
-static void gpib_detach(dev_link_t *link)
-{
-	dev_link_t **linkp;
-
-	if (pc_debug)
-		printk(KERN_DEBUG "gpib_detach(0x%p)\n", link);
-
-	/* Locate device structure */
-	for (linkp = &dev_list; *linkp; linkp = &(*linkp)->next)
-	if (*linkp == link) break;
-	if (*linkp == NULL) return;
-
-	/*
-		If the device is currently configured and active, we won't
-		actually delete it yet.  Instead, it is marked so that when
-		the release() function is called, that will trigger a proper
-		detach().
-	*/
-	if (link->state & DEV_CONFIG) {
-		printk(KERN_DEBUG "ines_cs: detach postponed, '%s' "
-			"still locked\n", link->dev->dev_name);
-		link->state |= DEV_STALE_LINK;
-		return;
-	}
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
-    /* Break the link with Card Services */
-	if (link->handle)
-		pcmcia_deregister_client(link->handle);
-#endif
-	/* Unlink device structure, free pieces */
-	*linkp = link->next;
-	if (link->priv) {
-		kfree(link->priv);
-	}
-
-} /* gpib_detach */
 
 /*
-
     gpib_config() is scheduled to run after a CARD_INSERTION event
     is received, to configure the PCMCIA socket, and to make the
     ethernet device available to the system.
 
 */
-static void gpib_config(dev_link_t *link)
+static void ines_gpib_config( struct pcmcia_device *link )
 {
 	tuple_t tuple;
 	cisparse_t parse;
@@ -306,9 +232,7 @@ static void gpib_config(dev_link_t *link)
 	void *virt;
 
 	dev = link->priv;
-
-	if (pc_debug)
-		printk(KERN_DEBUG "gpib_config(0x%p)\n", link);
+	DEBUG(0, "ines_gpib_config(0x%p)\n", link);
 
 	/*
 		This reads the card's CONFIG tuple to find its configuration
@@ -316,33 +240,31 @@ static void gpib_config(dev_link_t *link)
 	*/
 	do {
 		tuple.DesiredTuple = CISTPL_CONFIG;
-		i = pcmcia_get_first_tuple(link->handle, &tuple);
+		i = pcmcia_get_first_tuple(link, &tuple);
 		if (i != CS_SUCCESS) break;
 		tuple.TupleData = buf;
 		tuple.TupleDataMax = 64;
 		tuple.TupleOffset = 0;
-		i = pcmcia_get_tuple_data(link->handle, &tuple);
+		i = pcmcia_get_tuple_data(link, &tuple);
 		if (i != CS_SUCCESS) break;
-		i = pcmcia_parse_tuple(link->handle, &tuple, &parse);
+		i = pcmcia_parse_tuple(link, &tuple, &parse);
 		if (i != CS_SUCCESS) break;
 		link->conf.ConfigBase = parse.config.base;
 		link->conf.Present = parse.config.rmask[0];
 	} while (0);
 	if (i != CS_SUCCESS) {
-		cs_error(link->handle, ParseTuple, i);
-		link->state &= ~DEV_CONFIG_PENDING;
+		cs_error(link, ParseTuple, i);
 		return;
 	}
 
 	/* Configure card */
-	link->state |= DEV_CONFIG;
 	do {
 		/*
 		 * try to get manufacturer and card  ID
 		 */
 		tuple.DesiredTuple = CISTPL_MANFID;
 		tuple.Attributes = TUPLE_RETURN_COMMON;
-		if( first_tuple(link->handle,&tuple,&parse) == CS_SUCCESS ) {
+		if( first_tuple(link,&tuple,&parse) == CS_SUCCESS ) {
 			dev->manfid = parse.manfid.manf;
 			dev->cardid = parse.manfid.card;
 			printk(KERN_DEBUG "ines_cs: manufacturer: 0x%x card: 0x%x\n",
@@ -352,14 +274,14 @@ static void gpib_config(dev_link_t *link)
 
 		tuple.DesiredTuple = CISTPL_CFTABLE_ENTRY;
 		tuple.Attributes = 0;
-		if( first_tuple(link->handle,&tuple,&parse) == CS_SUCCESS ) {
+		if( first_tuple(link,&tuple,&parse) == CS_SUCCESS ) {
 			while(1) {
 				if( parse.cftable_entry.io.nwin > 0) {
 					link->io.BasePort1 = parse.cftable_entry.io.win[0].base;
 					link->io.NumPorts1 = 32;
 					link->io.BasePort2 = 0;
 					link->io.NumPorts2 = 0;
-					i = pcmcia_request_io(link->handle, &link->io);
+					i = pcmcia_request_io(link, &link->io);
 					if (i == CS_SUCCESS) {
 					printk( KERN_DEBUG "ines_cs: base=0x%x len=%d registered\n",
 						link->io.BasePort1, link->io.NumPorts1 );
@@ -367,11 +289,11 @@ static void gpib_config(dev_link_t *link)
 					break;
 					}
 				}
-				if ( next_tuple(link->handle,&tuple,&parse) != CS_SUCCESS ) break;
+				if ( next_tuple(link,&tuple,&parse) != CS_SUCCESS ) break;
 			}
 
 			if (i != CS_SUCCESS) {
-				cs_error(link->handle, RequestIO, i);
+				cs_error(link, RequestIO, i);
 			}
 		} else {
 			printk("ines_cs: can't get card information\n");
@@ -386,16 +308,16 @@ static void gpib_config(dev_link_t *link)
 		req.Base=0;
 		req.Size=0x1000;
 		req.AccessSpeed=250;
-		i= pcmcia_request_window(&link->handle, &req, &link->win);
+		i= pcmcia_request_window(&link, &req, &link->win);
 		if (i != CS_SUCCESS) {
-			cs_error(link->handle, RequestWindow, i);
+			cs_error(link, RequestWindow, i);
 			break;
 		}
 		mem.CardOffset=0;
 		mem.Page=0;
 		i= pcmcia_map_mem_page(link->win, &mem);
 		if (i != CS_SUCCESS) {
-			cs_error(link->handle, MapMemPage, i);
+			cs_error(link, MapMemPage, i);
 			break;
 		}
 		virt = ioremap( req.Base, req.Size );
@@ -409,9 +331,9 @@ static void gpib_config(dev_link_t *link)
 	*/
 	if (link->conf.Attributes & CONF_ENABLE_IRQ)
 	{
-		i = pcmcia_request_irq(link->handle, &link->irq);
+		i = pcmcia_request_irq(link, &link->irq);
 		if (i != CS_SUCCESS) {
-			cs_error(link->handle, RequestIRQ, i);
+			cs_error(link, RequestIRQ, i);
 		}
 		printk(KERN_DEBUG "ines_cs: IRQ_Line=%d\n",link->irq.AssignedIRQ);
 	}
@@ -420,26 +342,18 @@ static void gpib_config(dev_link_t *link)
 	This actually configures the PCMCIA socket -- setting up
 	the I/O windows and the interrupt mapping.
 	*/
-	i = pcmcia_request_configuration(link->handle, &link->conf);
+	i = pcmcia_request_configuration(link, &link->conf);
 	if (i != CS_SUCCESS) {
-		cs_error(link->handle, RequestConfiguration, i);
+		cs_error(link, RequestConfiguration, i);
 	}
 
-	/* At this point, the dev_node_t structure(s) should be
-	initialized and arranged in a linked list at link->dev. */
-	sprintf(dev->node.dev_name, "ines_cs");
-	dev->node.major = 0;
-	dev->node.minor = 0;
-	link->dev = &dev->node;
-
-	link->state &= ~DEV_CONFIG_PENDING;
 	/* If any step failed, release any partially configured state */
 	if (i != CS_SUCCESS) {
-		gpib_release((u_long)link);
+		ines_gpib_release(link);
 		return;
 	}
 
-	printk(KERN_DEBUG "gpib device loaded\n");
+	printk(KERN_DEBUG "ines gpib device loaded\n");
 } /* gpib_config */
 
 /*
@@ -450,125 +364,64 @@ static void gpib_config(dev_link_t *link)
 
 */
 
-static void gpib_release(u_long arg)
+static void ines_gpib_release( struct pcmcia_device *link )
 {
-    dev_link_t *link = (dev_link_t *)arg;
-
-    if (pc_debug)
-	printk(KERN_DEBUG "gpib_release(0x%p)\n", link);
-
-    /*
-       If the device is currently in use, we won't release until it
-       is actually closed.
-    */
-    if (link->open) {
-	if (pc_debug)
-	    printk(KERN_DEBUG "ines_cs: release postponed, '%s' "
-		   "still open\n", link->dev->dev_name);
-       link->state |= DEV_STALE_CONFIG;
-	return;
-    }
-
-    /* Unlink the device chain */
-    link->dev = NULL;
-    
+	DEBUG(0, "ines_gpib_release(0x%p)\n", link);
     /* Don't bother checking to see if these succeed or not */
     pcmcia_release_window(link->win);
-    pcmcia_release_configuration(link->handle);
-    pcmcia_release_io(link->handle, &link->io);
-    pcmcia_release_irq(link->handle, &link->irq);
-    link->state &= ~DEV_CONFIG;
-    
-    if (link->state & DEV_STALE_LINK)
-	gpib_detach(link);
-    
+    pcmcia_release_configuration(link);
+    pcmcia_release_io(link, &link->io);
+    pcmcia_release_irq(link, &link->irq);
+
+	pcmcia_disable_device (link);
 } /* gpib_release */
 
-/*
-
-    The card status event handler.  Mostly, this schedules other
-    stuff to run after an event is received.  A CARD_REMOVAL event
-    also sets some flags to discourage the net drivers from trying
-    to talk to the card any more.
-
-    When a CARD_REMOVAL event is received, we immediately set a flag
-    to block future accesses to this device.  All the functions that
-    actually access the device should check this flag to make sure
-    the card is still present.
-
-*/
-
-static int gpib_event(event_t event, int priority,
-			  event_callback_args_t *args)
+static int ines_gpib_suspend(struct pcmcia_device *link)
 {
-    dev_link_t *link = args->client_data;
+	//local_info_t *info = link->priv;
+	//struct gpib_board_t *dev = info->dev;
+	DEBUG(0, "ines_gpib_suspend(0x%p)\n", link);
 
-    if (pc_debug)
-	printk(KERN_DEBUG "gpib_event()\n");
+	if (link->open)
+		printk("Device still open ???\n");
+		//netif_device_detach(dev);
 
-    switch (event) {
-    case CS_EVENT_REGISTRATION_COMPLETE:
-	if (pc_debug)
-	    printk(KERN_DEBUG "ines_cs: registration complete\n");
-	break;
-    case CS_EVENT_CARD_REMOVAL:
-	link->state &= ~DEV_PRESENT;
-	if (link->state & DEV_CONFIG) {
-		gpib_release((u_long)link);
-	}
-	break;
-    case CS_EVENT_CARD_INSERTION:
-	link->state |= DEV_PRESENT | DEV_CONFIG_PENDING;
-	gpib_config(link);
-	break;
-    case CS_EVENT_PM_SUSPEND:
-	link->state |= DEV_SUSPEND;
-	/* Fall through... */
-    case CS_EVENT_RESET_PHYSICAL:
-	if (link->state & DEV_CONFIG)
-	    pcmcia_release_configuration(link->handle);
-	break;
-    case CS_EVENT_PM_RESUME:
-	link->state &= ~DEV_SUSPEND;
-	/* Fall through... */
-    case CS_EVENT_CARD_RESET:
-	if (link->state & DEV_CONFIG)
-	    pcmcia_request_configuration(link->handle, &link->conf);
-	break;
-    }
-    return 0;
-} /* gpib_event */
+	return 0;
+}
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
+static int ines_gpib_resume(struct pcmcia_device *link)
+{
+	//local_info_t *info = link->priv;
+	//struct gpib_board_t *dev = info->dev;
+	DEBUG(0, "ines_gpib_resume(0x%p)\n", link);
+
+	/*if (link->open) {
+		ni_gpib_probe(dev);	/ really?
+		printk("Gpib resumed ???\n");
+		//netif_device_attach(dev);
+	}*/
+	ines_gpib_config(link);
+	return 0;
+}
+
+
 static struct pcmcia_device_id ines_pcmcia_ids[] =
 {
 	PCMCIA_DEVICE_MANF_CARD(0x01b4, 0x4730),
 	PCMCIA_DEVICE_NULL
 };
 MODULE_DEVICE_TABLE(pcmcia, ines_pcmcia_ids);
-#endif
 
 static struct pcmcia_driver ines_gpib_cs_driver =
 {
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
-	.attach = &gpib_attach,
-	.detach = &gpib_detach,
-#else
-	.probe = &gpib_probe,
-	.remove = &gpib_remove,
-#endif
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
-	.event = &gpib_event,
-#endif
-	.id_table = ines_pcmcia_ids,
-#endif
-	.owner = THIS_MODULE,
-	.drv = {
-		.name = "ines_gpib_cs",
-	},
+	.owner		= THIS_MODULE,
+	.drv = { .name = "ines_gpib_cs", },
+	.id_table	= ines_pcmcia_ids,
+	.probe		= ines_gpib_probe,
+	.remove		= ines_gpib_remove,
+	.suspend	= ines_gpib_suspend,
+	.resume		= ines_gpib_resume,
 };
-
 
 int ines_pcmcia_init_module(void)
 {
@@ -578,20 +431,9 @@ int ines_pcmcia_init_module(void)
 
 void ines_pcmcia_cleanup_module(void)
 {
-	if (pc_debug)
-		printk(KERN_DEBUG "ines_cs: unloading\n");
+	DEBUG(0, "ines_cs: unloading\n");
 	pcmcia_unregister_driver(&ines_gpib_cs_driver);
-	while (dev_list != NULL) 
-	{
-		if (dev_list->state & DEV_CONFIG)
-		    gpib_release((u_long)dev_list);
-		gpib_detach(dev_list);
-    }
 }
-
-int ines_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config);
-int ines_pcmcia_accel_attach(gpib_board_t *board, gpib_board_config_t config);
-void ines_pcmcia_detach(gpib_board_t *board);
 
 gpib_interface_t ines_pcmcia_unaccel_interface =
 {
@@ -689,7 +531,7 @@ int ines_common_pcmcia_attach( gpib_board_t *board )
 	nec7210_private_t *nec_priv;
 	int retval;
 
-	if(dev_list == NULL)
+	if(curr_dev == NULL)
 	{
 		printk("no ines pcmcia cards found\n");
 		return -1;
@@ -701,23 +543,22 @@ int ines_common_pcmcia_attach( gpib_board_t *board )
 	ines_priv = board->private_data;
 	nec_priv = &ines_priv->nec7210_priv;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
-	if(request_region(dev_list->io.BasePort1, ines_pcmcia_iosize, "ines_gpib") == 0)
+	if(request_region(curr_dev->io.BasePort1, ines_pcmcia_iosize, "ines_gpib") == 0)
 	{
-		printk("ines_gpib: ioports at 0x%x already in use\n", dev_list->io.BasePort1);
+		printk("ines_gpib: ioports at 0x%x already in use\n", curr_dev->io.BasePort1);
 		return -1;
 	}
-#endif	
-	nec_priv->iobase = (void*)(unsigned long)dev_list->io.BasePort1;
+
+	nec_priv->iobase = (void*)(unsigned long)curr_dev->io.BasePort1;
 
 	nec7210_board_reset( nec_priv, board );
 
-	if(request_irq(dev_list->irq.AssignedIRQ, ines_pcmcia_interrupt, SA_SHIRQ, "pcmcia-gpib", board))
+	if(request_irq(curr_dev->irq.AssignedIRQ, ines_pcmcia_interrupt, SA_SHIRQ, "pcmcia-gpib", board))
 	{
-		printk("gpib: can't request IRQ %d\n", dev_list->irq.AssignedIRQ);
+		printk("gpib: can't request IRQ %d\n", curr_dev->irq.AssignedIRQ);
 		return -1;
 	}
-	ines_priv->irq = dev_list->irq.AssignedIRQ;
+	ines_priv->irq = curr_dev->irq.AssignedIRQ;
 
 	return 0;
 }
@@ -763,9 +604,7 @@ void ines_pcmcia_detach(gpib_board_t *board)
 		if(nec_priv->iobase)
 		{
 			nec7210_board_reset(nec_priv, board);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
 			release_region((unsigned long)(nec_priv->iobase), ines_pcmcia_iosize);
-#endif		
 		}
 	}
 	ines_free_private(board);
