@@ -367,11 +367,8 @@ static void ines_gpib_config( struct pcmcia_device *link )
 static void ines_gpib_release( struct pcmcia_device *link )
 {
 	DEBUG(0, "ines_gpib_release(0x%p)\n", link);
-    /* Don't bother checking to see if these succeed or not */
-    pcmcia_release_window(link->win);
-    pcmcia_release_configuration(link);
-    pcmcia_release_io(link, &link->io);
-    pcmcia_release_irq(link, &link->irq);
+	/* Don't bother checking to see if these succeed or not */
+	pcmcia_release_window(link->win);
 
 	pcmcia_disable_device (link);
 } /* gpib_release */
