@@ -1264,6 +1264,7 @@ int agilent_82357a_attach(gpib_board_t *board, gpib_board_config_t config)
 {
 	int retval;
 	int i;
+	unsigned product_id;
 	agilent_82357a_private_t *a_priv;
 
 	if(down_interruptible(&agilent_82357a_hotplug_lock))
@@ -1294,7 +1295,7 @@ int agilent_82357a_attach(gpib_board_t *board, gpib_board_config_t config)
 		printk("No Agilent 82357 gpib adapters found, have you loaded its firmware?\n");
 		return -ENODEV;
 	}
-	unsigned product_id = USBID_TO_CPU(interface_to_usbdev(a_priv->bus_interface)->descriptor.idProduct);
+	product_id = USBID_TO_CPU(interface_to_usbdev(a_priv->bus_interface)->descriptor.idProduct);
 	switch(product_id)
 	{
 	case USB_DEVICE_ID_AGILENT_82357A:
