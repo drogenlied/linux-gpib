@@ -23,7 +23,6 @@
 #include "gpibP.h"
 #include "amccs5933.h"
 
-#include <linux/config.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 
