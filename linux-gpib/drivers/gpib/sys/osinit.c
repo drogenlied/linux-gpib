@@ -45,8 +45,8 @@ struct file_operations ib_fops =
 	fsync: NULL,
 	fasync: NULL,
 	lock: NULL,
-	readv: NULL,
-	writev: NULL,
+//	readv: NULL,
+//	writev: NULL,
 	sendpage: NULL,
 	get_unmapped_area: NULL,
 };
