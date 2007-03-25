@@ -36,7 +36,7 @@ struct pci_dev* gpib_pci_get_device( const gpib_board_t *board, unsigned int ven
 unsigned int num_gpib_events( const gpib_event_queue_t *queue );
 int push_gpib_event( gpib_board_t *board, short event_type );
 int pop_gpib_event( gpib_event_queue_t *queue, short *event_type );
-int gpib_request_pseudo_irq(gpib_board_t *board, irqreturn_t (*handler)(int, void *, struct pt_regs *));
+int gpib_request_pseudo_irq(gpib_board_t *board, irqreturn_t (*handler)(int, void * PT_REGS_ARG));
 void gpib_free_pseudo_irq(gpib_board_t *board);
 
 extern gpib_board_t board_array[GPIB_MAX_NUM_BOARDS];

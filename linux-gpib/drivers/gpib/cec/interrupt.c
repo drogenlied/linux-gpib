@@ -24,7 +24,7 @@
  * GPIB interrupt service routines
  */
 
-irqreturn_t cec_interrupt(int irq, void *arg, struct pt_regs *registerp)
+irqreturn_t cec_interrupt(int irq, void *arg PT_REGS_ARG)
 {
 	gpib_board_t *board = arg;
 	cec_private_t *priv = board->private_data;

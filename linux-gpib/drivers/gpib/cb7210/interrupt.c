@@ -21,11 +21,13 @@
 #include <asm/dma.h>
 #include "quancom_pci.h"
 
+irqreturn_t cb7210_locked_internal_interrupt(gpib_board_t *board);
+
 /*
  * GPIB interrupt service routines
  */
 
-irqreturn_t cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp )
+irqreturn_t cb_pci_interrupt(int irq, void *arg PT_REGS_ARG)
 {
 	int bits;
 	gpib_board_t *board = arg;
@@ -52,7 +54,7 @@ irqreturn_t cb_pci_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	default:
 		break;
 	}
-	return cb7210_interrupt(irq, arg, registerp);
+	return cb7210_locked_internal_interrupt(arg);
 }
 
 irqreturn_t cb7210_internal_interrupt( gpib_board_t *board )
@@ -113,9 +115,9 @@ irqreturn_t cb7210_internal_interrupt( gpib_board_t *board )
 	}
 	return IRQ_HANDLED;
 }
-irqreturn_t cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
+
+irqreturn_t cb7210_locked_internal_interrupt(gpib_board_t *board)
 {
-	gpib_board_t *board = arg;
 	unsigned long flags;
 	irqreturn_t retval;
 	
@@ -123,4 +125,9 @@ irqreturn_t cb7210_interrupt(int irq, void *arg, struct pt_regs *registerp )
 	retval = cb7210_internal_interrupt(board);
 	spin_unlock_irqrestore(&board->spinlock, flags);
 	return retval;
+}
+
+irqreturn_t cb7210_interrupt(int irq, void *arg PT_REGS_ARG)
+{
+	return cb7210_internal_interrupt(arg);
 }

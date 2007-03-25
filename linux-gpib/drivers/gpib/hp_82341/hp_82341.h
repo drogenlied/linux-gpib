@@ -71,7 +71,7 @@ void hp_82341_serial_poll_response( gpib_board_t *board, uint8_t status );
 void hp_82341_return_to_local( gpib_board_t *board );
 
 // interrupt service routines
-irqreturn_t hp_82341_interrupt(int irq, void *arg, struct pt_regs *registerp);
+irqreturn_t hp_82341_interrupt(int irq, void *arg PT_REGS_ARG);
 
 // utility functions
 int hp_82341_allocate_private(gpib_board_t *board);

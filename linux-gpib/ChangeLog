@@ -2,6 +2,7 @@ Linux GPIB Package Release Notes
 
 3.2.09: Ported pcmcia support to 2.6.17 and later kernel api
 (Gudjon I. Gudjonsson).
+Fixed compilation on 2.6.19 aand 2.6.20 kernels.
 Added support for Agilent 82357B.  Fixed compile errors
 on sparc 64.
 

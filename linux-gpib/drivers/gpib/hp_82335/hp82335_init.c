@@ -319,7 +319,7 @@ module_exit( hp82335_exit_module );
  * GPIB interrupt service routines
  */
 
-irqreturn_t hp82335_interrupt(int irq, void *arg, struct pt_regs *registerp)
+irqreturn_t hp82335_interrupt(int irq, void *arg PT_REGS_ARG)
 {
 	int status1, status2;
 	gpib_board_t *board = arg;

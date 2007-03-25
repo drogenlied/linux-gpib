@@ -516,7 +516,7 @@ gpib_interface_t ines_pcmcia_interface =
 	return_to_local: ines_return_to_local,
 };
 
-irqreturn_t ines_pcmcia_interrupt(int irq, void *arg, struct pt_regs *registerp)
+irqreturn_t ines_pcmcia_interrupt(int irq, void *arg PT_REGS_ARG)
 {
 	gpib_board_t *board = arg;
 	return ines_interrupt(board);

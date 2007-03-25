@@ -175,7 +175,7 @@ static int generic_write( gpib_board_t *board, uint8_t *buffer, size_t length,
 	tnt_writeb(tnt_priv, tnt_priv->imr0_bits, IMR0);
 	/* force handling of any interrupts that happened
 	 * while they were masked (this appears to be needed)*/
-	tnt4882_interrupt(0, board, NULL);
+	tnt4882_internal_interrupt(board);
 	*bytes_written = length - tnt_transfer_count(tnt_priv);
 	return retval;
 }

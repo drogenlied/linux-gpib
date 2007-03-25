@@ -604,7 +604,7 @@ unsigned short read_and_clear_event_status(gpib_board_t *board)
 	return status;
 }
 
-irqreturn_t hp_82341_interrupt(int irq, void *arg, struct pt_regs *registerp)
+irqreturn_t hp_82341_interrupt(int irq, void *arg PT_REGS_ARG)
 {
 	int status1, status2;
 	gpib_board_t *board = arg;

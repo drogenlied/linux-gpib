@@ -57,7 +57,7 @@ void cec_serial_poll_response( gpib_board_t *board, uint8_t status );
 void cec_return_to_local( gpib_board_t *board );
 
 // interrupt service routines
-irqreturn_t cec_interrupt(int irq, void *arg, struct pt_regs *registerp);
+irqreturn_t cec_interrupt(int irq, void *arg PT_REGS_ARG);
 
 // utility functions
 void cec_free_private(gpib_board_t *board);

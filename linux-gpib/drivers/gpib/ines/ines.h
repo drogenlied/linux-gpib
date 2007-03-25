@@ -81,7 +81,7 @@ unsigned int ines_t1_delay( gpib_board_t *board, unsigned int nano_sec );
 void ines_return_to_local( gpib_board_t *board );
 
 // interrupt service routines
-irqreturn_t ines_pci_interrupt(int irq, void *arg, struct pt_regs *registerp);
+irqreturn_t ines_pci_interrupt(int irq, void *arg PT_REGS_ARG);
 irqreturn_t ines_interrupt(gpib_board_t *board);
 
 // utility functions

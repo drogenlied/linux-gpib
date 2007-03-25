@@ -24,7 +24,7 @@
  * GPIB interrupt service routines
  */
 
-irqreturn_t pc2_interrupt(int irq, void *arg, struct pt_regs *registerp)
+irqreturn_t pc2_interrupt(int irq, void *arg PT_REGS_ARG)
 {
 	gpib_board_t *board = arg;
 	pc2_private_t *priv = board->private_data;
@@ -37,7 +37,7 @@ irqreturn_t pc2_interrupt(int irq, void *arg, struct pt_regs *registerp)
 	return retval;
 }
 
-irqreturn_t pc2a_interrupt(int irq, void *arg, struct pt_regs *registerp)
+irqreturn_t pc2a_interrupt(int irq, void *arg PT_REGS_ARG)
 {
 	gpib_board_t *board = arg;
 	pc2_private_t *priv = board->private_data;

@@ -31,7 +31,7 @@ unsigned short read_and_clear_event_status(gpib_board_t *board)
 	return status;
 }
 
-irqreturn_t agilent_82350b_interrupt(int irq, void *arg, struct pt_regs *registerp)
+irqreturn_t agilent_82350b_interrupt(int irq, void *arg PT_REGS_ARG)
 {
 	int tms9914_status1, tms9914_status2;
 	int event_status;

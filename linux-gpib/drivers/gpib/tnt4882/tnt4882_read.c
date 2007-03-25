@@ -219,7 +219,7 @@ int tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length, int
 	/* force handling of any pending interrupts (seems to be needed
 	 * to keep interrupts from getting hosed, plus for syncing
 	 * with RECEIVED_END below) */
-	tnt4882_interrupt(0, board, NULL);
+	tnt4882_internal_interrupt(board);
 	/* RECEIVED_END should be in sync now */
 	if( test_and_clear_bit( RECEIVED_END_BN, &nec_priv->state ) )
 	{

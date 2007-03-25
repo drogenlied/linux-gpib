@@ -154,7 +154,7 @@ static inline void init_event_queue( gpib_event_queue_t *queue )
 struct gpib_pseudo_irq
 {
 	struct timer_list timer;
-	irqreturn_t (*handler)(int, void *, struct pt_regs *);
+	irqreturn_t (*handler)(int, void * PT_REGS_ARG);
 	volatile short active;
 };
 

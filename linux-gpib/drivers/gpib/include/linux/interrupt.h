@@ -31,8 +31,10 @@ typedef void irqreturn_t;
 /* if interrupt handler prototype has pt_regs* parameter */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 19)
 #define PT_REGS_ARG , struct pt_regs *regs
+#define HAVE_PT_REGS
 #else
 #define PT_REGS_ARG
+#undef HAVE_PT_REGS
 #endif
 
 #include_next <linux/interrupt.h>

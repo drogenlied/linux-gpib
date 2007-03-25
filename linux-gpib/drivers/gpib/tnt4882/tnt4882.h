@@ -99,7 +99,8 @@ int __init init_ni_gpib_cs(void);
 void __exit exit_ni_gpib_cs(void);
 
 // interrupt service routines
-irqreturn_t tnt4882_interrupt(int irq, void *arg, struct pt_regs *registerp);
+irqreturn_t tnt4882_internal_interrupt(gpib_board_t *board);
+irqreturn_t tnt4882_interrupt(int irq, void *arg PT_REGS_ARG);
 
 // utility functions
 int tnt4882_allocate_private(gpib_board_t *board);
