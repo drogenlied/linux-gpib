@@ -15,7 +15,7 @@ AC_INIT([linux-gpib], [3.2.09])
 #
 # If any interfaces have been removed since the last public release, then set
 # age to 0.
-GPIB_SO_VERSION=1:2:1
+GPIB_SO_VERSION=1:3:1
 AC_CONFIG_SRCDIR([drivers/gpib/sys/osfuncs.c])
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
