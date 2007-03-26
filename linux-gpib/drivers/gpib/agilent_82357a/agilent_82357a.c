@@ -30,7 +30,7 @@ MODULE_LICENSE("GPL");
 static struct usb_interface *agilent_82357a_driver_interfaces[MAX_NUM_82357A_INTERFACES];
 static DECLARE_MUTEX(agilent_82357a_hotplug_lock);
 
-static void agilent_82357a_bulk_complete(struct urb *urb, struct pt_regs *regs)
+static void agilent_82357a_bulk_complete(struct urb *urb PT_REGS_ARG)
 {
 	agilent_82357a_urb_context_t *context = urb->context;
 
@@ -1026,7 +1026,7 @@ unsigned int agilent_82357a_t1_delay( gpib_board_t *board, unsigned int nanosec 
 	return nanosec;
 }
 
-void agilent_82357a_interrupt_complete(struct urb *urb, struct pt_regs *regs)
+void agilent_82357a_interrupt_complete(struct urb *urb PT_REGS_ARG)
 {
 	gpib_board_t *board = urb->context;
 	agilent_82357a_private_t *a_priv = board->private_data;

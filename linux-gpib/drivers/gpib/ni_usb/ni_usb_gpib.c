@@ -69,7 +69,7 @@ static unsigned short ni_usb_timeout_code(unsigned int usec)
 	}
 };
 
-static void ni_usb_bulk_complete(struct urb *urb, struct pt_regs *regs)
+static void ni_usb_bulk_complete(struct urb *urb PT_REGS_ARG)
 {
 	ni_usb_urb_context_t *context = urb->context;
 
@@ -1634,7 +1634,7 @@ static int ni_usb_init(gpib_board_t *board)
 	return 0;
 }
 
-void ni_usb_interrupt_complete(struct urb *urb, struct pt_regs *regs)
+void ni_usb_interrupt_complete(struct urb *urb PT_REGS_ARG)
 {
 	gpib_board_t *board = urb->context;
 	ni_usb_private_t *ni_priv = board->private_data;
