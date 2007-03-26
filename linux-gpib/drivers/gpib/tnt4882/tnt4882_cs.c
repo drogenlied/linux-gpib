@@ -54,7 +54,6 @@ modules at load time with a 'pc_debug=#' option to insmod.
 static int pc_debug = PCMCIA_DEBUG;
 module_param(pc_debug, int, 0);
 #define DEBUG(n, args...) if (pc_debug>(n)) printk(KERN_DEBUG args)
-static char *version ="tnt4882_cs.c (Frank Mori Hess)";
 #else
 #define DEBUG(n, args...)
 #endif
@@ -65,14 +64,6 @@ static void ni_gpib_config(struct pcmcia_device  *link);
 static void ni_gpib_release(struct pcmcia_device *link);
 int ni_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config);
 void ni_pcmcia_detach(gpib_board_t *board);
-
-/*
-The dev_info variable is the "key" that is used to match up this
-device driver with appropriate cards, through the card configuration
-database.
-*/
-
-static dev_info_t dev_info = "ni_gpib_cs";
 
 /*
 A linked list of "instances" of the dummy device.  Each actual
@@ -110,7 +101,6 @@ static int ni_gpib_probe(struct pcmcia_device *link)
 {
 	local_info_t *info;
 	//struct gpib_board_t *dev;
-	int i;
 
 	DEBUG(0, "ni_gpib_probe(0x%p)\n", link);
 

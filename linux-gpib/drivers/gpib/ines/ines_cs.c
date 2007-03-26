@@ -82,24 +82,6 @@ int ines_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config);
 int ines_pcmcia_accel_attach(gpib_board_t *board, gpib_board_config_t config);
 void ines_pcmcia_detach(gpib_board_t *board);
 
-
-/*
-   The attach() and detach() entry points are used to create and destroy
-   "instances" of the driver, where each instance represents everything
-   needed to manage one actual PCMCIA card.
-
-   You'll also need to prototype all the functions that will actually
-   be used to talk to your device.  See 'pcmem_cs' for a good example
-   of a fully self-sufficient driver; the other drivers rely more or
-   less on other parts of the kernel.
-
-   The dev_info variable is the "key" that is used to match up this
-   device driver with appropriate cards, through the card configuration
-   database.
-*/
-
-static dev_info_t dev_info = "ines_gpib_cs";
-
 /*
    A linked list of "instances" of the gpib device.  Each actual
    PCMCIA card corresponds to one device instance, and is described
