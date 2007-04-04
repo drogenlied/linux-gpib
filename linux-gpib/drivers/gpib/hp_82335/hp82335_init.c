@@ -212,6 +212,7 @@ int hp82335_attach( gpib_board_t *board, gpib_board_config_t config )
 {
 	hp82335_private_t *hp_priv;
 	tms9914_private_t *tms_priv;
+	int retval;
 
 	board->status = 0;
 
@@ -243,24 +244,24 @@ int hp82335_attach( gpib_board_t *board, gpib_board_config_t config )
 			break;
 		default:
 			printk( "hp82335: invalid base io address 0x%p\n", board->ibbase );
-			return -1;
+			return -EINVAL;
 			break;
 	}
 	if(request_mem_region((unsigned long)(board->ibbase), hp82335_iomem_size, "hp82335" ) == NULL )
 	{
 		printk( "hp82335: failed to allocate io memory region 0x%p-0x%p\n",
 			board->ibbase, board->ibbase + hp82335_iomem_size - 1 );
-		return -1;
+		return -EBUSY;
 	}
 	hp_priv->raw_iobase = (unsigned long)(board->ibbase);
 	tms_priv->iobase = ioremap((unsigned long)(board->ibbase), hp82335_iomem_size);
 	printk("hp82335: base address 0x%lx remapped to 0x%p\n", hp_priv->raw_iobase,
 		tms_priv->iobase);
 
-	if(request_irq( board->ibirq, hp82335_interrupt, 0, "hp82335", board))
+	if((retval = request_irq( board->ibirq, hp82335_interrupt, 0, "hp82335", board)))
 	{
 		printk( "hp82335: can't request IRQ %d\n", board->ibirq );
-		return -1;
+		return retval;
 	}
 	hp_priv->irq = board->ibirq;
 	printk( "hp82335: IRQ %d\n", board->ibirq );
@@ -326,7 +327,7 @@ irqreturn_t hp82335_interrupt(int irq, void *arg PT_REGS_ARG)
 	hp82335_private_t *priv = board->private_data;
 	unsigned long flags;
 	irqreturn_t retval;
-	
+
 	spin_lock_irqsave( &board->spinlock, flags );
 	status1 = read_byte( &priv->tms9914_priv, ISR0);
 	status2 = read_byte( &priv->tms9914_priv, ISR1);
