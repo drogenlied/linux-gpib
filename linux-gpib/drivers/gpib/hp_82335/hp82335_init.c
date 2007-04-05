@@ -189,7 +189,7 @@ void hp82335_free_private( gpib_board_t *board )
 
 static inline unsigned int tms9914_to_hp82335_offset( unsigned int register_num )
 {
-	return 0x3ff8 + register_num;
+	return 0x1ff8 + register_num;
 }
 
 uint8_t hp82335_read_byte( tms9914_private_t *priv, unsigned int register_num )
@@ -213,6 +213,7 @@ int hp82335_attach( gpib_board_t *board, gpib_board_config_t config )
 	hp82335_private_t *hp_priv;
 	tms9914_private_t *tms_priv;
 	int retval;
+	const unsigned long upper_iomem_base = (unsigned long)board->ibbase + hp82335_rom_size;
 
 	board->status = 0;
 
@@ -247,15 +248,15 @@ int hp82335_attach( gpib_board_t *board, gpib_board_config_t config )
 			return -EINVAL;
 			break;
 	}
-	if(request_mem_region((unsigned long)(board->ibbase), hp82335_iomem_size, "hp82335" ) == NULL )
+	if(request_mem_region(upper_iomem_base, hp82335_upper_iomem_size, "hp82335" ) == NULL )
 	{
-		printk( "hp82335: failed to allocate io memory region 0x%p-0x%p\n",
-			board->ibbase, board->ibbase + hp82335_iomem_size - 1 );
+		printk( "hp82335: failed to allocate io memory region 0x%lx-0x%lx\n",
+			upper_iomem_base, upper_iomem_base + hp82335_upper_iomem_size - 1 );
 		return -EBUSY;
 	}
-	hp_priv->raw_iobase = (unsigned long)(board->ibbase);
-	tms_priv->iobase = ioremap((unsigned long)(board->ibbase), hp82335_iomem_size);
-	printk("hp82335: base address 0x%lx remapped to 0x%p\n", hp_priv->raw_iobase,
+	hp_priv->raw_iobase = upper_iomem_base;
+	tms_priv->iobase = ioremap(upper_iomem_base, hp82335_upper_iomem_size);
+	printk("hp82335: upper half of 82335 iomem region 0x%lx remapped to 0x%p\n", hp_priv->raw_iobase,
 		tms_priv->iobase);
 
 	if((retval = request_irq( board->ibirq, hp82335_interrupt, 0, "hp82335", board)))
@@ -296,7 +297,7 @@ void hp82335_detach(gpib_board_t *board)
 			iounmap( ( void * ) tms_priv->iobase );
 		}
 		if( hp_priv->raw_iobase )
-			release_mem_region(hp_priv->raw_iobase, hp82335_iomem_size);
+			release_mem_region(hp_priv->raw_iobase, hp82335_upper_iomem_size);
 	}
 	hp82335_free_private( board );
 }
