@@ -50,7 +50,7 @@ enum ines_pci_subdevice_ids
 	PCI_SUBDEVICE_ID_INES_GPIB = 0x1072
 };
 
-static struct pci_device_id ines_pci_table[] = 
+static struct pci_device_id ines_pci_table[] =
 {
 	{PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050, PCI_VENDOR_ID_PLX, PCI_SUBDEVICE_ID_INES_GPIB, 0, 0, 0},
 	{PCI_VENDOR_ID_AMCC, PCI_DEVICE_ID_INES_GPIB_AMCC, PCI_VENDOR_ID_AMCC, PCI_SUBDEVICE_ID_INES_GPIB, 0, 0, 0},
@@ -419,6 +419,8 @@ int ines_common_pci_attach( gpib_board_t *board )
 	unsigned int i;
 	struct pci_dev *pdev;
 
+	memset(&found_id, 0, sizeof(found_id));
+
 	retval = ines_generic_attach(board);
 	if(retval) return retval;
 
@@ -495,7 +497,7 @@ int ines_common_pci_attach( gpib_board_t *board )
 		nec_priv->auxb_bits |= HR_INV;
 		ines_outb(ines_priv, nec_priv->auxb_bits, AUXMR);
 	}
-#endif	
+#endif
 	isr_flags |= SA_SHIRQ;
 	if(request_irq(ines_priv->pci_device->irq, ines_pci_interrupt, isr_flags, "pci-gpib", board))
 	{
@@ -580,7 +582,7 @@ int ines_isa_attach( gpib_board_t *board, gpib_board_config_t config )
 	ines_priv = board->private_data;
 	nec_priv = &ines_priv->nec7210_priv;
 
-	
+
 	if(request_region((unsigned long)(board->ibbase), ines_isa_iosize, "ines_gpib") == 0)
 	{
 		printk("ines_gpib: ioports at 0x%p already in use\n", board->ibbase);
