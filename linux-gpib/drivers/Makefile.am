@@ -16,7 +16,7 @@ SUBDIRS = gpib/include
 -include $(top_srcdir)/util/linux_flags/flags
 
 all-local:
-	$(MAKE) -C $(LINUX_SRCDIR) V=1 modules\
+	-$(MAKE) -C $(LINUX_SRCDIR) V=1 modules\
 		CC="$(LINUX_CC) -I@abs_top_srcdir@ -I@abs_top_srcdir@/drivers/gpib/include -I@abs_top_srcdir@/include" \
 		SUBDIRS="$(GPIB_ABS_MODULE_SUBDIR)"
 
