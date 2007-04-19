@@ -15,6 +15,8 @@ SUBDIRS = gpib/include
 
 -include $(top_srcdir)/util/linux_flags/flags
 
+#ignore errors from kernel's make modules in all-local, to avoid failure of make install
+#on nfs filesystem with root_squash
 all-local:
 	-$(MAKE) -C $(LINUX_SRCDIR) V=1 modules\
 		CC="$(LINUX_CC) -I@abs_top_srcdir@ -I@abs_top_srcdir@/drivers/gpib/include -I@abs_top_srcdir@/include" \
