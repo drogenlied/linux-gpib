@@ -14,7 +14,7 @@ lib_LTLIBRARIES = libgpib_tcl.la
 libgpib_tcl_la_SOURCES = ibCmds.c
 
 TCL_CONFIG = $(TCL_BIN_DIR)/tclConfig.sh
-TCL_LIB_SPEC = $(shell $(SHELL) -c '. $(TCL_CONFIG); eval echo $${TCL_LIB_SPEC};')
+TCL_LIB_SPEC = `$(SHELL) -c '. $(TCL_CONFIG); eval echo $${TCL_LIB_SPEC};'`
 
 #fix tcl directory for version independence
 libgpib_tcl_la_CFLAGS = $(LIBGPIB_CFLAGS) -I$(TCL_INC_DIR)

@@ -15,8 +15,8 @@ lib_LTLIBRARIES = gpib_php.la
 
 gpib_php_la_SOURCES = gpib.c
 
-EXTENSIONDIR = $(shell $(PHP_CONFIG) --extension-dir)
-PHP_INCLUDES = $(shell $(PHP_CONFIG) --includes)
+EXTENSIONDIR = `$(PHP_CONFIG) --extension-dir`
+PHP_INCLUDES = `$(PHP_CONFIG) --includes`
 
 gpib_php_la_CPPFLAGS = $(PHP_INCLUDES) -DUSE_LINUX_GPIB -DCOMPILE_DL=1
 gpib_php_la_CFLAGS = $(LIBGPIB_CFLAGS)

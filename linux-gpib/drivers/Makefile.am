@@ -7,8 +7,8 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
-GPIB_MODULE_SUBDIR := gpib
-GPIB_ABS_MODULE_SUBDIR :=@abs_srcdir@/$(GPIB_MODULE_SUBDIR)
+GPIB_MODULE_SUBDIR = gpib
+GPIB_ABS_MODULE_SUBDIR = @abs_srcdir@/$(GPIB_MODULE_SUBDIR)
 
 EXTRA_DIST = $(GPIB_MODULE_SUBDIR)
 SUBDIRS = gpib/include
@@ -35,7 +35,7 @@ install-data-hook: device-file-check /etc/gpib.conf
 
 /dev/gpib0:
 	groupadd gpib || echo "group gpib exists"
-	for i in $(shell seq 0 15); \
+	for i in `seq 0 15`; \
 	do \
 		mknod -m u=rw,g=rw,o= /dev/gpib$${i} c $(IBMAJOR) $${i} || exit 1; \
 		chown root:gpib /dev/gpib$${i}; \
