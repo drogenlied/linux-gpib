@@ -88,7 +88,7 @@ int my_wait( ibConf_t *conf, int wait_mask, int clear_mask, int set_mask, int *s
 	}
 	fixup_status_bits( conf, &cmd.ibsta );
 	if( conf->end ) //XXX
-		*status |= END;
+		cmd.ibsta |= END;
 	setIbsta( cmd.ibsta );
 	*status = cmd.ibsta;
 	return 0;
