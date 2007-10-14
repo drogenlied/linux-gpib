@@ -447,7 +447,7 @@ int pc2a_common_attach(gpib_board_t *board, unsigned int num_registers, enum nec
 	{
 		request_region(pc2a_clear_intr_iobase + board->ibirq, 1, "pc2a");
 		pc2_priv->clear_intr_addr = pc2a_clear_intr_iobase + board->ibirq;
-		if(request_irq(board->ibirq, pc2a_interrupt, SA_SHIRQ, "pc2a", board))
+		if(request_irq(board->ibirq, pc2a_interrupt, 0, "pc2a", board))
 		{
 			printk("gpib: can't request IRQ %d\n", board->ibirq);
 			return -1;

@@ -39,5 +39,9 @@ typedef void irqreturn_t;
 
 #include_next <linux/interrupt.h>
 
+#ifndef IRQF_SHARED
+#define IRQF_SHARED SA_SHIRQ
+#endif
+
 #endif
 

@@ -457,7 +457,7 @@ int cb_pci_attach(gpib_board_t *board, gpib_board_config_t config)
 		return -EIO;
 		break;
 	}
-	isr_flags |= SA_SHIRQ;
+	isr_flags |= IRQF_SHARED;
 	if(request_irq(cb_priv->pci_device->irq, cb_pci_interrupt, isr_flags, "cb7210", board))
 	{
 		printk( "cb7210: can't request IRQ %d\n",cb_priv->pci_device->irq );

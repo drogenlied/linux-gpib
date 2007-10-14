@@ -258,7 +258,7 @@ int cec_pci_attach(gpib_board_t *board, gpib_board_config_t config)
 	nec_priv->iobase = (void*)(pci_resource_start(cec_priv->pci_device, 3));
 	printk(" nec7210 base address 0x%p\n", nec_priv->iobase);
 
-	isr_flags |= SA_SHIRQ;
+	isr_flags |= IRQF_SHARED;
 	if(request_irq(cec_priv->pci_device->irq, cec_interrupt, isr_flags, "pci-gpib", board))
 	{
 		printk("gpib: can't request IRQ %d\n",cec_priv->pci_device->irq);

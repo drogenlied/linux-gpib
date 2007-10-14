@@ -482,7 +482,7 @@ int ni_pci_attach(gpib_board_t *board, gpib_board_config_t config)
 {
 	tnt4882_private_t *tnt_priv;
 	nec7210_private_t *nec_priv;
-	int isr_flags = SA_SHIRQ;
+	int isr_flags = IRQF_SHARED;
 	int retval;
 	struct mite_struct *mite;
 

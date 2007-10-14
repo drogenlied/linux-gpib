@@ -498,7 +498,7 @@ int ines_common_pci_attach( gpib_board_t *board )
 		ines_outb(ines_priv, nec_priv->auxb_bits, AUXMR);
 	}
 #endif
-	isr_flags |= SA_SHIRQ;
+	isr_flags |= IRQF_SHARED;
 	if(request_irq(ines_priv->pci_device->irq, ines_pci_interrupt, isr_flags, "pci-gpib", board))
 	{
 		printk("gpib: can't request IRQ %d\n",ines_priv->pci_device->irq);

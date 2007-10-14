@@ -286,7 +286,7 @@ int agilent_82350b_generic_attach(gpib_board_t *board, int use_fifos)
 		pci_resource_len(a_priv->pci_device, MISC_REGION));
 	printk("%s: misc base address remapped to 0x%p\n", __FUNCTION__, a_priv->misc_base );
 
-	if(request_irq(a_priv->pci_device->irq, agilent_82350b_interrupt, SA_SHIRQ, "agilent_82350b", board))
+	if(request_irq(a_priv->pci_device->irq, agilent_82350b_interrupt, IRQF_SHARED, "agilent_82350b", board))
 	{
 		printk("gpib: can't request IRQ %d\n", a_priv->pci_device->irq);
 		return -EIO;
