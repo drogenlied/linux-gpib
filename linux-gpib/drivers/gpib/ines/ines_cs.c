@@ -532,7 +532,7 @@ int ines_common_pcmcia_attach( gpib_board_t *board )
 
 	nec7210_board_reset( nec_priv, board );
 
-	if(request_irq(curr_dev->irq.AssignedIRQ, ines_pcmcia_interrupt, SA_SHIRQ, "pcmcia-gpib", board))
+	if(request_irq(curr_dev->irq.AssignedIRQ, ines_pcmcia_interrupt, IRQF_SHARED, "pcmcia-gpib", board))
 	{
 		printk("gpib: can't request IRQ %d\n", curr_dev->irq.AssignedIRQ);
 		return -1;

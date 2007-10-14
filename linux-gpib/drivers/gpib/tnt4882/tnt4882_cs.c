@@ -460,7 +460,7 @@ int ni_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config)
 	local_info_t *info = curr_dev->priv;
 	tnt4882_private_t *tnt_priv;
 	nec7210_private_t *nec_priv;
-	int isr_flags = SA_SHIRQ;
+	int isr_flags = IRQF_SHARED;
 	info->dev=board;
 	DEBUG(0, "ni_pcmcia_attach(0x%p)\n", board);
 

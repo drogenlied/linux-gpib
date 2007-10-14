@@ -518,7 +518,7 @@ int cb_pcmcia_attach( gpib_board_t *board, gpib_board_config_t config )
 	nec_priv->iobase = (void*)(unsigned long)curr_dev->io.BasePort1;
 	cb_priv->fifo_iobase = curr_dev->io.BasePort1;
 
-	if(request_irq(curr_dev->irq.AssignedIRQ, cb7210_interrupt, SA_SHIRQ,
+	if(request_irq(curr_dev->irq.AssignedIRQ, cb7210_interrupt, IRQF_SHARED,
 		"cb7210", board))
 	{
 		printk("cb7210: failed to request IRQ %d\n", curr_dev->irq.AssignedIRQ);
