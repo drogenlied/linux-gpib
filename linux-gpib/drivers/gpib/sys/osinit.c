@@ -227,20 +227,12 @@ static int __init gpib_common_init_module( void )
 static void __exit gpib_common_exit_module( void )
 {
 	int i;
-	int retval;
 	for(i = 0; i < GPIB_MAX_NUM_BOARDS; ++i)
 	{
 		class_device_destroy(gpib_class, MKDEV(IBMAJOR, i));
 	}
 	class_destroy(gpib_class);
-	retval = unregister_chrdev(IBMAJOR, "gpib");
-	if(retval)
-	{
-		printk("gpib: unregister_chrdev() returned error %i\n", retval);
-	}else
-	{
-		printk("gpib: succesfully removed \n");
-	}
+	unregister_chrdev(IBMAJOR, "gpib");
 }
 
 module_init( gpib_common_init_module );
