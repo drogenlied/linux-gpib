@@ -243,10 +243,10 @@ void init_descriptor_settings( descriptor_settings_t *settings )
 void init_ibconf( ibConf_t *conf )
 {
 	conf->handle = -1;
-	conf->name[0] = 0;
+	memset(conf->name, 0, sizeof(conf->name));
 	init_descriptor_settings( &conf->defaults );
 	init_descriptor_settings( &conf->settings );
-	conf->init_string[0] = 0;
+	memset(conf->init_string, 0, sizeof(conf->init_string));
 	conf->flags = 0;
 	init_async_op( &conf->async );
 	conf->end = 0;
@@ -568,7 +568,7 @@ int addressIsValid( Addr4882_t address )
 		setIberr( EARG );
 		return 0;
 	}
-	
+
 	return 1;
 }
 
