@@ -91,8 +91,8 @@ o) cd to your linux-gpib directory and run the './configure' script.
 	better, using 'chmod' (or edit devfsd.conf if you are using devfs).
 	If you are using udev, you can set the permissions on the gpib device
 	files by adding a line like:
-	KERNEL="gpib[0-9]*",    MODE="0660", GROUP="gpib"
-	to your udev rules (/etc/udev/permissions.rules on Debian Sarge).
+	KERNEL=="gpib[0-9]*",    MODE="0660", GROUP="gpib"
+	to your udev rules (/etc/udev/permissions.rules on Debian Etch).
 
 C) Configuring the GPIB-Library
 -------------------------------
