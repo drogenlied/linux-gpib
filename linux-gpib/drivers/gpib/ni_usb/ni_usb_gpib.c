@@ -797,7 +797,8 @@ static int ni_usb_write(gpib_board_t *board, uint8_t *buffer, size_t length, int
 	*bytes_written = length - status.count;
 	return retval;
 }
-ssize_t ni_usb_command(gpib_board_t *board, uint8_t *buffer, size_t length)
+
+ssize_t ni_usb_command_chunk(gpib_board_t *board, uint8_t *buffer, size_t length)
 {
 	int retval;
 	ni_usb_private_t *ni_priv = board->private_data;
@@ -805,16 +806,16 @@ ssize_t ni_usb_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 	int out_data_length, in_data_length;
 	int bytes_written = 0, bytes_read = 0;
 	int i = 0, j;
-	int complement_count;
+	unsigned complement_count;
 	struct ni_usb_status_block status;
-	static const int max_command_length = 0xff;
+	// usb-b gives error 4 if you try to send more than 16 command bytes at once
+	static const int max_command_length = 0x10;
 
 	if(length > max_command_length) length = max_command_length;
 	out_data_length = length + 0x10;
 	out_data = kmalloc(out_data_length, GFP_KERNEL);
 	if(out_data == NULL) return -ENOMEM;
 	out_data[i++] = 0x0c;
-	complement_count = length;
 	complement_count = length - 1;
 	complement_count = ~complement_count;
 	out_data[i++] = complement_count;
@@ -860,6 +861,10 @@ ssize_t ni_usb_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 	case NIUSB_NO_BUS_ERROR:
 		return -EIO;
 		break;
+	case NIUSB_EOSMODE_ERROR:
+		printk("%s: %s: got eosmode error.  Driver bug?\n", __FILE__, __FUNCTION__);
+		return -EIO;
+		break;
 	default:
 		printk("%s: %s: unknown error code=%i\n", __FILE__, __FUNCTION__, status.error_code);
 		return -EIO;
@@ -867,6 +872,20 @@ ssize_t ni_usb_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 	}
 	ni_usb_soft_update_status(board, status.ibsta, 0);
 	return length - status.count;
+}
+
+ssize_t ni_usb_command(gpib_board_t *board, uint8_t *buffer, size_t length)
+{
+	unsigned count = 0;
+	int retval;
+
+	while(count < length)
+	{
+		retval = ni_usb_command_chunk(board, buffer + count, length - count);
+		if(retval < 0) return retval;
+		count += retval;
+	}
+	return count;
 }
 
 int ni_usb_take_control(gpib_board_t *board, int synchronous)
