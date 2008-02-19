@@ -121,6 +121,8 @@ enum ni_usb_error_codes
 	// NIUSB_ADDRESSING_ERROR occurs when you do a board read/write as CIC but are not in LACS/TACS
 	NIUSB_ADDRESSING_ERROR = 3,
 	// NIUSB_EOSMODE_ERROR occurs on reads if any eos mode or char bits are set when REOS is not set.
+	/* Have also seen error 4 if you try to send more than 16 command bytes at once on
+	a usb-b. */
 	NIUSB_EOSMODE_ERROR = 4,
 	// NIUSB_NO_BUS_ERROR occurs when you try to write a command byte but there are no devices connected to the gpib bus
 	NIUSB_NO_BUS_ERROR = 5,
