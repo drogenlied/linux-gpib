@@ -3773,7 +3773,7 @@ volatile int ibsta;
 The "Multidevice" API functions provide similar functionality to the "Traditional" API functions.
 However, some of the "multidevice" functions can be
 to be performed on multiple devices simultaneously.  For example,
-<link LINKEND="reference-function-sendlist">SendList()</link> 
+<link LINKEND="reference-function-sendlist">SendList()</link>
 can be used to write a message to multiple devices.  Such functions take an array of Addr4882_t
 as an argument.  The end of the array is specified by setting the last element to the
 constant NOADDR.
@@ -3991,7 +3991,10 @@ constant NOADDR.
 	<para>
 	FindLstn() will check the primary addresses in the <parameter>padList</parameter>
 	array for devices.  The GPIB addresses of all devices found will be stored in the
-	<parameter>resultList</parameter> array.  The <parameter>maxNumResults</parameter>
+	<parameter>resultList</parameter> array, and
+	<link LINKEND="reference-globals-ibcnt">ibcnt</link>
+	will be set to the number
+	of devices found.  The <parameter>maxNumResults</parameter> parameter
 	limits the maximum number of results that will be returned, and is usually
 	set to the number of elements in the <parameter>resultList</parameter> array.
 	If more than <parameter>maxNumResults</parameter> devices are found, an
