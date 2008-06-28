@@ -15,6 +15,8 @@
  *                                                                         *
  ***************************************************************************/
 
+#include <assert.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <pthread.h>
 #include <stdlib.h>
@@ -69,7 +71,8 @@ ssize_t read_data(ibConf_t *conf, uint8_t *buffer, size_t count, size_t *bytes_r
 
 	board = interfaceBoard( conf );
 
-	read_cmd.buffer = buffer;
+	assert(sizeof(buffer) <= sizeof(read_cmd.buffer_ptr));
+	read_cmd.buffer_ptr = (uintptr_t)buffer;
 	read_cmd.count = count;
 	read_cmd.handle = conf->handle;
 	read_cmd.end = 0;

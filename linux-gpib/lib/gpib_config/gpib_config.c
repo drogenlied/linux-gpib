@@ -16,6 +16,8 @@
  ***************************************************************************/
 #define _GNU_SOURCE
 
+#include <assert.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -28,7 +30,7 @@ typedef struct
 	unsigned int minor;
 	char *board_type;
 	int irq;
-	long iobase;
+	uint64_t iobase;
 	int dma;
 	int pci_bus;
 	int pci_slot;
@@ -242,7 +244,7 @@ static int configure_board( int fileno, const parsed_options_t *options )
 	int retval;
 
 	online_cmd.online = 0;
-	online_cmd.init_data = 0;
+	online_cmd.init_data_ptr = 0;
 	online_cmd.init_data_length = 0;
 	retval = ioctl( fileno, IBONL, &online_cmd );
 	if( retval < 0 )
@@ -302,7 +304,8 @@ static int configure_board( int fileno, const parsed_options_t *options )
 		return retval;
 	}
 	online_cmd.online = 1;
-	online_cmd.init_data = options->init_data;
+	assert(sizeof(options->init_data) <= sizeof(online_cmd.init_data_ptr));
+	online_cmd.init_data_ptr = (uintptr_t)options->init_data;
 	online_cmd.init_data_length = options->init_data_length;
 	retval = ioctl( fileno, IBONL, &online_cmd );
 	if( retval < 0 )

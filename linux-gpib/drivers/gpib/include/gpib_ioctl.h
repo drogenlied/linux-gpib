@@ -20,6 +20,8 @@
 #define _GPIB_IOCTL_H
 
 #include <asm/ioctl.h>
+#include <linux/types.h>
+
 #define GPIB_CODE 160
 
 typedef struct
@@ -31,8 +33,8 @@ typedef struct
 typedef struct
 {
 	int handle;
-	uint8_t *buffer;
-	unsigned long count;
+	uint64_t buffer_ptr;
+	unsigned count;
 	int end;
 } read_write_ioctl_t;
 
@@ -71,13 +73,13 @@ typedef struct
 	int ibsta;
 	int pad;
 	int sad;
-	unsigned long usec_timeout;
+	unsigned usec_timeout;
 } wait_ioctl_t;
 
 typedef struct
 {
 	int online;
-	void *init_data;
+	uint64_t init_data_ptr;
 	int init_data_length;
 } online_ioctl_t;
 
@@ -152,7 +154,7 @@ enum gpib_ioctl
 	IBRSP = _IOWR( GPIB_CODE, 18, serial_poll_ioctl_t ),
 	IBEOS = _IOW( GPIB_CODE, 19, eos_ioctl_t ),
 	IBRSV = _IOW( GPIB_CODE, 20, uint8_t ),
-	CFCBASE = _IOW( GPIB_CODE, 21, unsigned long ),
+	CFCBASE = _IOW( GPIB_CODE, 21, uint64_t ),
 	CFCIRQ = _IOW( GPIB_CODE, 22, unsigned int ),
 	CFCDMA = _IOW( GPIB_CODE, 23, unsigned int ),
 	CFCBOARDTYPE = _IOW( GPIB_CODE, 24, board_type_ioctl_t ),

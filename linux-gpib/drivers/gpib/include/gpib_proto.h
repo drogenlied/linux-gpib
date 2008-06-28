@@ -6,7 +6,7 @@
 
 int ibopen( struct inode *inode, struct file *filep );
 int ibclose( struct inode *inode, struct file *file );
-int ibioctl( struct inode *inode, struct file *filep, unsigned int cmd, unsigned long arg );
+long ibioctl(struct file *filep, unsigned int cmd, unsigned long arg );
 int osInit( void );
 void osReset( void );
 void watchdog_timeout( unsigned long arg );

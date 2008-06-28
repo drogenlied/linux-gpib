@@ -15,7 +15,9 @@
  *                                                                         *
  ***************************************************************************/
 
+#include <assert.h>
 #include "ib_internal.h"
+#include <stdint.h>
 #include <sys/ioctl.h>
 #include <stdlib.h>
 #include <pthread.h>
@@ -50,7 +52,8 @@ int send_data(ibConf_t *conf, const void *buffer, size_t count, int send_eoi, si
 
 	set_timeout( board, conf->settings.usec_timeout );
 
-	write_cmd.buffer = (void*) buffer;
+	assert(sizeof(buffer) <= sizeof(write_cmd.buffer_ptr));
+	write_cmd.buffer_ptr = (uintptr_t)buffer;
 	write_cmd.count = count;
 	write_cmd.end = send_eoi;
 	write_cmd.handle = conf->handle;

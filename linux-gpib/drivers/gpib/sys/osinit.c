@@ -37,11 +37,12 @@ struct file_operations ib_fops =
 	write: NULL,
 	readdir: NULL,
 	poll: NULL,
-	ioctl: ibioctl,
+	unlocked_ioctl: &ibioctl,
+	compat_ioctl: &ibioctl,
 	mmap: NULL,
-	open: ibopen,
+	open: &ibopen,
 	flush: NULL,
-	release: ibclose,
+	release: &ibclose,
 	fsync: NULL,
 	fasync: NULL,
 	lock: NULL,
@@ -123,6 +124,7 @@ void init_gpib_board( gpib_board_t *board )
 	init_MUTEX(&board->mutex);
 	board->locking_pid = 0;
 	init_MUTEX(&board->autopoll_mutex);
+	mutex_init(&board->ioctl_mutex);
 	spin_lock_init(&board->spinlock);
 	init_timer(&board->timer);
 	board->ibbase = 0;

@@ -16,6 +16,8 @@
  ***************************************************************************/
 
 #include "ib_internal.h"
+#include <assert.h>
+#include <stdint.h>
 #include <sys/ioctl.h>
 #include <pthread.h>
 #include <stdlib.h>
@@ -98,7 +100,8 @@ ssize_t my_ibcmd( ibConf_t *conf, const uint8_t *buffer, size_t count)
 		return -1;
 	}
 
-	cmd.buffer = (void*)buffer;
+	assert(sizeof(buffer) <= sizeof(cmd.buffer_ptr));
+	cmd.buffer_ptr = (uintptr_t)buffer;
 	cmd.count = count;
 	cmd.handle = conf->handle;
 	cmd.end = 0;
