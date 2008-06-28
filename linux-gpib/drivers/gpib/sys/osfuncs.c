@@ -1142,10 +1142,6 @@ static int autospoll_ioctl(gpib_board_t *board, unsigned long arg)
 	if(retval)
 		return -EFAULT;
 
-	if(down_interruptible(&board->autopoll_mutex))
-	{
-		return -ERESTARTSYS;
-	}
 /*FIXME: should keep track of whether autospolling is on or off
  * by descriptor.  That would also allow automatic decrement
  * of autospollers when descriptors are closed. */
@@ -1163,7 +1159,6 @@ static int autospoll_ioctl(gpib_board_t *board, unsigned long arg)
 			retval = 0;
 		}
 	}
-	up( &board->autopoll_mutex );
 	return retval;
 }
 

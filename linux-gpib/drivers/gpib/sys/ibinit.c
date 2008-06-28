@@ -46,17 +46,10 @@ static int autospoll_thread(void *board_void)
 			break;
 		}
 		GPIB_DPRINTK("autospoll wait satisfied\n" );
-		if(down_interruptible(&board->autopoll_mutex))
-		{
-			retval = -ERESTARTSYS;
-			break;
-		}
-		GPIB_DPRINTK("autospoll lock obtained\n" );
 		/* make sure we are still good after we have
 		 * lock */
 		if(board->autospollers <= 0 || board->master == 0)
 		{
-			up(&board->autopoll_mutex);
 			continue;
 		}
 
@@ -72,7 +65,6 @@ static int autospoll_thread(void *board_void)
 			board->stuck_srq = 1;	// XXX could be better
 			set_bit(SRQI_NUM, &board->status);
 		}
-		up(&board->autopoll_mutex);
 	}
 	printk("gpib%i: exiting autospoll thread\n", board->minor);
 	up(&board->autospoll_completion);

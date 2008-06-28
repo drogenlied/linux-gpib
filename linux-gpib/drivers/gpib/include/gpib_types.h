@@ -199,9 +199,6 @@ struct gpib_board_struct
 	struct semaphore mutex;
 	/* pid of last process to lock the board mutex */
 	pid_t locking_pid;
-	/* Lock that prevents more than one process from actively autopolling
-	 * (we only need one autopoller) */
-	struct semaphore autopoll_mutex;
 	/* Spin lock for dealing with races with the interrupt handler */
 	spinlock_t spinlock;
 	/* Watchdog timer to enable timeouts */

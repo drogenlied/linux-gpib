@@ -123,7 +123,6 @@ void init_gpib_board( gpib_board_t *board )
 	init_waitqueue_head(&board->wait);
 	init_MUTEX(&board->mutex);
 	board->locking_pid = 0;
-	init_MUTEX(&board->autopoll_mutex);
 	spin_lock_init(&board->spinlock);
 	init_timer(&board->timer);
 	board->ibbase = 0;
