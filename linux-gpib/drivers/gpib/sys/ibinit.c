@@ -32,7 +32,6 @@ static int autospoll_thread(void *board_void)
 	/* set our name for identification purposes */
 	daemonize("gpib%d_autospoll", board->minor);
 	allow_signal(SIGKILL);
-	unlock_kernel();
 
 	GPIB_DPRINTK("entering autospoll thread\n" );
 
@@ -77,6 +76,7 @@ static int autospoll_thread(void *board_void)
 	}
 	printk("gpib%i: exiting autospoll thread\n", board->minor);
 	up(&board->autospoll_completion);
+	unlock_kernel();
 	return retval;
 }
 

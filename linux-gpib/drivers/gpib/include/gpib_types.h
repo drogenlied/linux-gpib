@@ -25,7 +25,6 @@
  * This really should be in a different header file.
  */
 #include "gpib/gpib_user.h"
-#include <linux/mutex.h>
 #include <linux/wait.h>
 #include <linux/timer.h>
 #include <linux/interrupt.h>
@@ -203,8 +202,6 @@ struct gpib_board_struct
 	/* Lock that prevents more than one process from actively autopolling
 	 * (we only need one autopoller) */
 	struct semaphore autopoll_mutex;
-	/* Lock to deal with no longer relying on BKL */
-	struct mutex ioctl_mutex;
 	/* Spin lock for dealing with races with the interrupt handler */
 	spinlock_t spinlock;
 	/* Watchdog timer to enable timeouts */

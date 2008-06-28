@@ -190,7 +190,7 @@ long ibioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 	}
 	board = &board_array[ minor ];
 
-	if(mutex_lock_interruptible(&board->ioctl_mutex)) return -ERESTARTSYS;
+	lock_kernel();
 	
 	GPIB_DPRINTK( "pid %i, minor %i, ioctl %d, interface=%s, use=%d, onl=%d\n",
 		current->pid, minor, cmd & 0xff,
@@ -394,7 +394,7 @@ long ibioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 	}
 	
 done:
-	mutex_unlock(&board->ioctl_mutex);
+	unlock_kernel();
 	return retval;
 }
 
@@ -1178,10 +1178,7 @@ static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 
 	if( lock_mutex )
 	{
-		/* temporarily unlock ioctl_mutex so we don't violate locking order with board->mutex */
-		mutex_unlock(&board->ioctl_mutex);
 		retval = down_interruptible(&board->mutex);
-		mutex_lock(&board->ioctl_mutex);
 		if(retval)
 		{
 			printk("gpib: ioctl interrupted while waiting on lock\n");

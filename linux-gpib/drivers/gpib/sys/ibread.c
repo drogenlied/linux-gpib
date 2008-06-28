@@ -66,7 +66,9 @@ int ibrd(gpib_board_t *board, uint8_t *buf, size_t length, int *end_flag, size_t
 		buf += bytes_read;
 		*nbytes += bytes_read;
 		if(need_resched())
+		{
 			schedule();
+		}
 	}while(ret == 0 && *nbytes > 0 && *nbytes < length && *end_flag == 0);
 
 	osRemoveTimer(board);
