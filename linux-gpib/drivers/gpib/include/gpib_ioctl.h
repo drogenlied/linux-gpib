@@ -24,9 +24,6 @@
 
 #define GPIB_CODE 160
 
-// make sure alignments are the same for amd64 in 32 bit mode
-#pragma pack(push, 1)
-
 typedef struct
 {
 	char name[100];
@@ -39,6 +36,7 @@ typedef struct
 	unsigned count;
 	int end;
 	int handle;
+	int padding;	// padding so struct size doesn't change between 32/64 bit compilation
 } read_write_ioctl_t;
 
 typedef struct
@@ -129,8 +127,6 @@ typedef struct
 	unsigned int handle;
 	int sad;
 } sad_ioctl_t;
-
-#pragma pack(pop)
 
 typedef short event_ioctl_t;
 typedef int rsc_ioctl_t;
