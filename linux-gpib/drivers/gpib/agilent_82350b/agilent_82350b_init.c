@@ -42,7 +42,7 @@ int read_transfer_counter(agilent_82350b_private_t *a_priv)
 	value = ~(value - 1) & 0x7fff;
 	return value;
 }
-	
+
 void set_transfer_counter(agilent_82350b_private_t *a_priv, int count)
 {
 	int complement = -count;
@@ -81,17 +81,17 @@ int agilent_82350b_go_to_standby( gpib_board_t *board )
 void agilent_82350b_request_system_control( gpib_board_t *board, int request_control )
 {
 	agilent_82350b_private_t *a_priv = board->private_data;
-	
+
 	if(request_control)
 	{
 		a_priv->card_mode_bits |= CM_SYSTEM_CONTROLLER_BIT;
-		writeb(IC_SYSTEM_CONTROLLER_BIT, a_priv->gpib_base + INTERNAL_CONFIG_REG); 
+		writeb(IC_SYSTEM_CONTROLLER_BIT, a_priv->gpib_base + INTERNAL_CONFIG_REG);
 	}else
 	{
 		a_priv->card_mode_bits &= ~CM_SYSTEM_CONTROLLER_BIT;
-		writeb(0, a_priv->gpib_base + INTERNAL_CONFIG_REG); 
+		writeb(0, a_priv->gpib_base + INTERNAL_CONFIG_REG);
 	}
-	writeb(a_priv->card_mode_bits, a_priv->gpib_base + CARD_MODE_REG); 
+	writeb(a_priv->card_mode_bits, a_priv->gpib_base + CARD_MODE_REG);
 	tms9914_request_system_control(board, &a_priv->tms9914_priv, request_control);
 }
 void agilent_82350b_interface_clear( gpib_board_t *board, int assert )
@@ -164,7 +164,7 @@ unsigned int agilent_82350b_t1_delay( gpib_board_t *board, unsigned int nanosec 
 	agilent_82350b_private_t *a_priv = board->private_data;
 	static const int nanosec_per_clock = 30;
 	unsigned value;
-	
+
 	tms9914_t1_delay(board, &a_priv->tms9914_priv, nanosec);
 
 	value = (nanosec + nanosec_per_clock - 1) / nanosec_per_clock;
@@ -273,6 +273,11 @@ int agilent_82350b_generic_attach(gpib_board_t *board, int use_fifos)
 		printk("gpib: no 82350B board found\n");
 		return -ENODEV;
 	}
+	if(pci_enable_device(a_priv->pci_device))
+	{
+		printk("error enabling pci device\n");
+		return -EIO;
+	}
 	if(pci_request_regions(a_priv->pci_device, "agilent_82350b"))
 		return -EIO;
 	a_priv->gpib_base = ioremap(pci_resource_start(a_priv->pci_device, GPIB_REGION),
@@ -293,29 +298,24 @@ int agilent_82350b_generic_attach(gpib_board_t *board, int use_fifos)
 	}
 	a_priv->irq = a_priv->pci_device->irq;
 	printk( "agilent_82350b: IRQ %d\n", a_priv->irq );
-	if(pci_enable_device(a_priv->pci_device))
-	{
-		printk("error enabling pci device\n");
-		return -EIO;
-	}
-	
-	writeb(0, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG); 
+
+	writeb(0, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG);
 	a_priv->card_mode_bits = ENABLE_PCI_IRQ_BIT;
-	writeb(a_priv->card_mode_bits, a_priv->gpib_base + CARD_MODE_REG); 
+	writeb(a_priv->card_mode_bits, a_priv->gpib_base + CARD_MODE_REG);
 	if(use_fifos)
 	{
 		writeb(ENABLE_BUFFER_END_EVENTS_BIT | ENABLE_TERM_COUNT_EVENTS_BIT,
 			a_priv->gpib_base + EVENT_ENABLE_REG);
-		writeb(ENABLE_TERM_COUNT_INTERRUPT_BIT | ENABLE_BUFFER_END_INTERRUPT_BIT | ENABLE_TMS9914_INTERRUPTS_BIT, 
-			a_priv->gpib_base + INTERRUPT_ENABLE_REG); 
+		writeb(ENABLE_TERM_COUNT_INTERRUPT_BIT | ENABLE_BUFFER_END_INTERRUPT_BIT | ENABLE_TMS9914_INTERRUPTS_BIT,
+			a_priv->gpib_base + INTERRUPT_ENABLE_REG);
 		//write-clear event status bits
-		writeb(BUFFER_END_STATUS_BIT | TERM_COUNT_STATUS_BIT, 
+		writeb(BUFFER_END_STATUS_BIT | TERM_COUNT_STATUS_BIT,
 			a_priv->gpib_base + EVENT_STATUS_REG);
 	}else
 	{
 		writeb(0, a_priv->gpib_base + EVENT_ENABLE_REG);
-		writeb(ENABLE_TMS9914_INTERRUPTS_BIT, 
-			a_priv->gpib_base + INTERRUPT_ENABLE_REG); 
+		writeb(ENABLE_TMS9914_INTERRUPTS_BIT,
+			a_priv->gpib_base + INTERRUPT_ENABLE_REG);
 	}
 	board->t1_nano_sec = agilent_82350b_t1_delay(board, 2000);
 	tms9914_board_reset(tms_priv);
@@ -334,7 +334,7 @@ int agilent_82350b_accel_attach(gpib_board_t *board, gpib_board_config_t config)
 {
 	return agilent_82350b_generic_attach(board, 1);
 }
-	
+
 void agilent_82350b_detach(gpib_board_t *board)
 {
 	agilent_82350b_private_t *a_priv = board->private_data;
@@ -361,7 +361,7 @@ void agilent_82350b_detach(gpib_board_t *board)
 	agilent_82350b_free_private( board );
 }
 
-static const struct pci_device_id agilent_82350b_pci_table[] = 
+static const struct pci_device_id agilent_82350b_pci_table[] =
 {
 	{ PCI_VENDOR_ID_AGILENT, PCI_DEVICE_ID_82350B, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
 	{ 0 }
