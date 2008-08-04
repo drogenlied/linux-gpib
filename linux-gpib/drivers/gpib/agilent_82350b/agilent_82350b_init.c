@@ -16,6 +16,7 @@
  ***************************************************************************/
 
 #include "agilent_82350b.h"
+#include <linux/delay.h>
 #include <linux/ioport.h>
 #include <linux/sched.h>
 #include <linux/module.h>
@@ -32,6 +33,8 @@ int agilent_82350b_unaccel_attach(gpib_board_t *board, gpib_board_config_t confi
 int agilent_82350b_accel_attach(gpib_board_t *board, gpib_board_config_t config);
 
 void agilent_82350b_detach( gpib_board_t *board );
+
+static const char *driver_name = "agilent_82350b";
 
 int read_transfer_counter(agilent_82350b_private_t *a_priv)
 {
@@ -85,11 +88,13 @@ void agilent_82350b_request_system_control( gpib_board_t *board, int request_con
 	if(request_control)
 	{
 		a_priv->card_mode_bits |= CM_SYSTEM_CONTROLLER_BIT;
-		writeb(IC_SYSTEM_CONTROLLER_BIT, a_priv->gpib_base + INTERNAL_CONFIG_REG);
+		if(a_priv->pci_device->device != PCI_DEVICE_ID_82350A)
+			writeb(IC_SYSTEM_CONTROLLER_BIT, a_priv->gpib_base + INTERNAL_CONFIG_REG);
 	}else
 	{
 		a_priv->card_mode_bits &= ~CM_SYSTEM_CONTROLLER_BIT;
-		writeb(0, a_priv->gpib_base + INTERNAL_CONFIG_REG);
+		if(a_priv->pci_device->device != PCI_DEVICE_ID_82350A)
+			writeb(0, a_priv->gpib_base + INTERNAL_CONFIG_REG);
 	}
 	writeb(a_priv->card_mode_bits, a_priv->gpib_base + CARD_MODE_REG);
 	tms9914_request_system_control(board, &a_priv->tms9914_priv, request_control);
@@ -250,11 +255,102 @@ void agilent_82350b_free_private( gpib_board_t *board )
 	}
 }
 
-int agilent_82350b_generic_attach(gpib_board_t *board, int use_fifos)
+int init_82350a_hardware(gpib_board_t *board, const gpib_board_config_t *config)
+{
+	agilent_82350b_private_t *a_priv = board->private_data;
+	static const unsigned firmware_length = 5302;
+	unsigned borg_status;
+	static const unsigned timeout = 1000;
+	int i, j;
+	const char *firmware_data = config->init_data;
+	static const unsigned plx_cntrl_magic_bits = WAITO_NOT_USER0_SELECT_BIT |
+		USER0_OUTPUT_BIT |
+		LLOCK_NOT_USER1_SELECT_BIT |
+		USER1_OUTPUT_BIT |
+		USER2_OUTPUT_BIT |
+		USER3_OUTPUT_BIT |
+		PCI_READ_MODE_BIT |
+		//FIXME: magic bits not defined by 9050 manual
+		0xc40000;
+	// load borg data
+	borg_status = readb(a_priv->borg_base);
+	if((borg_status & BORG_DONE_BIT)) return 0;
+	// need to programme borg
+	if(config->init_data == NULL ||  config->init_data_length != firmware_length)
+	{
+		printk("%s: the 82350a requires a firmware after powering on.\n", driver_name);
+		return -EIO;
+	}
+	printk("%s: Loading firmware... ", driver_name);
+
+	// tickle the borg
+	writel(plx_cntrl_magic_bits | USER3_DATA_BIT, a_priv->plx_base + PLX_CNTRL_REG);
+	msleep(1);
+	writel(plx_cntrl_magic_bits, a_priv->plx_base + PLX_CNTRL_REG);
+	msleep(1);
+	writel(plx_cntrl_magic_bits | USER3_DATA_BIT, a_priv->plx_base + PLX_CNTRL_REG);
+	msleep(1);
+
+	for(i = 0; i < config->init_data_length; ++i)
+	{
+		writeb(firmware_data[i], a_priv->gpib_base + CONFIG_DATA_REG);
+		for(j = 0; j < timeout && (readb(a_priv->borg_base) & BORG_READY_BIT) == 0; ++j)
+		{
+			if(need_resched()) schedule();
+			udelay(10);
+		}
+		if(j == timeout)
+		{
+			printk("%s: timed out loading firmware.\n", driver_name);
+			return -ETIMEDOUT;
+		}
+	}
+	for(j = 0; j < timeout && (readb(a_priv->borg_base) & BORG_DONE_BIT) == 0; ++j)
+	{
+		if(need_resched()) schedule();
+		udelay(10);
+	}
+	if(j == timeout)
+	{
+		printk("%s: timed out waiting for firmware load to complete.\n", driver_name);
+		return -ETIMEDOUT;
+	}
+	printk("done.\n");
+	return 0;
+}
+
+int test_sram(gpib_board_t *board)
+{
+	agilent_82350b_private_t *a_priv = board->private_data;
+	unsigned i;
+	const unsigned sram_length = pci_resource_len(a_priv->pci_device, SRAM_82350A_REGION);
+	// test SRAM
+	const unsigned byte_mask = 0xff;
+	for(i = 0; i < sram_length; ++i)
+	{
+		writeb(i & byte_mask, a_priv->sram_base + i);
+		if(need_resched()) schedule();
+	}
+	for(i = 0; i < sram_length; ++i)
+	{
+		unsigned read_value = readb(a_priv->sram_base + i);
+		if((i & byte_mask) != read_value)
+		{
+			printk("%s: SRAM test failed at %d wanted %d got %d\n",
+				driver_name, i, (i & byte_mask), read_value);
+			return -EIO;
+		}
+		if(need_resched()) schedule();
+	}
+	return 0;
+}
+
+int agilent_82350b_generic_attach(gpib_board_t *board, const gpib_board_config_t *config, int use_fifos)
 {
 	agilent_82350b_private_t *a_priv;
 	tms9914_private_t *tms_priv;
-
+	int retval;
+	
 	board->status = 0;
 
 	if(agilent_82350b_allocate_private(board))
@@ -270,7 +366,12 @@ int agilent_82350b_generic_attach(gpib_board_t *board, int use_fifos)
 		PCI_DEVICE_ID_82350B, NULL);
 	if(a_priv->pci_device == NULL)
 	{
-		printk("gpib: no 82350B board found\n");
+		a_priv->pci_device = gpib_pci_get_subsys(board, PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050,
+			PCI_VENDOR_ID_HP,  PCI_DEVICE_ID_82350A, a_priv->pci_device);
+	}
+	if(a_priv->pci_device == NULL)
+	{
+		printk("agilent_82350b: no 82350 board found\n");
 		return -ENODEV;
 	}
 	if(pci_enable_device(a_priv->pci_device))
@@ -278,20 +379,47 @@ int agilent_82350b_generic_attach(gpib_board_t *board, int use_fifos)
 		printk("error enabling pci device\n");
 		return -EIO;
 	}
-	if(pci_request_regions(a_priv->pci_device, "agilent_82350b"))
+	if(pci_request_regions(a_priv->pci_device, driver_name))
 		return -EIO;
-	a_priv->gpib_base = ioremap(pci_resource_start(a_priv->pci_device, GPIB_REGION),
-		pci_resource_len(a_priv->pci_device, GPIB_REGION));
-	printk("%s: gpib base address remapped to 0x%p\n", __FUNCTION__, a_priv->gpib_base );
-	tms_priv->iobase = a_priv->gpib_base + TMS9914_BASE_REG;
-	a_priv->sram_base = ioremap(pci_resource_start(a_priv->pci_device, SRAM_REGION),
-		pci_resource_len(a_priv->pci_device, SRAM_REGION));
-	printk("%s: sram base address remapped to 0x%p\n", __FUNCTION__, a_priv->sram_base );
-	a_priv->misc_base = ioremap(pci_resource_start(a_priv->pci_device, MISC_REGION),
-		pci_resource_len(a_priv->pci_device, MISC_REGION));
-	printk("%s: misc base address remapped to 0x%p\n", __FUNCTION__, a_priv->misc_base );
-
-	if(request_irq(a_priv->pci_device->irq, agilent_82350b_interrupt, IRQF_SHARED, "agilent_82350b", board))
+	switch(a_priv->pci_device->device)
+	{
+	case PCI_DEVICE_ID_82350A:
+		a_priv->plx_base = ioremap(pci_resource_start(a_priv->pci_device, PLX_MEM_REGION),
+			pci_resource_len(a_priv->pci_device, PLX_MEM_REGION));
+		printk("%s: plx base address remapped to 0x%p\n", __FUNCTION__, a_priv->plx_base );
+		a_priv->gpib_base = ioremap(pci_resource_start(a_priv->pci_device, GPIB_82350A_REGION),
+			pci_resource_len(a_priv->pci_device, GPIB_82350A_REGION));
+		printk("%s: gpib base address remapped to 0x%p\n", __FUNCTION__, a_priv->gpib_base );
+		tms_priv->iobase = a_priv->gpib_base + TMS9914_BASE_REG;
+		a_priv->sram_base = ioremap(pci_resource_start(a_priv->pci_device, SRAM_82350A_REGION),
+			pci_resource_len(a_priv->pci_device, SRAM_82350A_REGION));
+		printk("%s: sram base address remapped to 0x%p\n", __FUNCTION__, a_priv->sram_base );
+		a_priv->borg_base = ioremap(pci_resource_start(a_priv->pci_device, BORG_82350A_REGION),
+			pci_resource_len(a_priv->pci_device, BORG_82350A_REGION));
+		printk("%s: borg base address remapped to 0x%p\n", __FUNCTION__, a_priv->borg_base );
+		retval = init_82350a_hardware(board, config);
+		if(retval < 0) return retval;
+		break;
+	case PCI_DEVICE_ID_82350B:
+		a_priv->gpib_base = ioremap(pci_resource_start(a_priv->pci_device, GPIB_REGION),
+			pci_resource_len(a_priv->pci_device, GPIB_REGION));
+		printk("%s: gpib base address remapped to 0x%p\n", __FUNCTION__, a_priv->gpib_base );
+		tms_priv->iobase = a_priv->gpib_base + TMS9914_BASE_REG;
+		a_priv->sram_base = ioremap(pci_resource_start(a_priv->pci_device, SRAM_REGION),
+			pci_resource_len(a_priv->pci_device, SRAM_REGION));
+		printk("%s: sram base address remapped to 0x%p\n", __FUNCTION__, a_priv->sram_base );
+		a_priv->misc_base = ioremap(pci_resource_start(a_priv->pci_device, MISC_REGION),
+			pci_resource_len(a_priv->pci_device, MISC_REGION));
+		printk("%s: misc base address remapped to 0x%p\n", __FUNCTION__, a_priv->misc_base );
+		break;
+	default:
+		BUG();
+	}
+	
+	retval = test_sram(board);
+	if(retval < 0) return retval;
+	
+	if(request_irq(a_priv->pci_device->irq, agilent_82350b_interrupt, IRQF_SHARED, driver_name, board))
 	{
 		printk("gpib: can't request IRQ %d\n", a_priv->pci_device->irq);
 		return -EIO;
@@ -302,6 +430,10 @@ int agilent_82350b_generic_attach(gpib_board_t *board, int use_fifos)
 	writeb(0, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG);
 	a_priv->card_mode_bits = ENABLE_PCI_IRQ_BIT;
 	writeb(a_priv->card_mode_bits, a_priv->gpib_base + CARD_MODE_REG);
+	// enable PCI interrupts for 82350a
+	writel(LINTR1_EN_BIT | LINTR2_POLARITY_BIT | PCI_INTR_EN_BIT,
+		a_priv->plx_base + PLX_INTCSR_REG);
+
 	if(use_fifos)
 	{
 		writeb(ENABLE_BUFFER_END_EVENTS_BIT | ENABLE_TERM_COUNT_EVENTS_BIT,
@@ -327,12 +459,12 @@ int agilent_82350b_generic_attach(gpib_board_t *board, int use_fifos)
 
 int agilent_82350b_unaccel_attach(gpib_board_t *board, gpib_board_config_t config)
 {
-	return agilent_82350b_generic_attach(board, 0);
+	return agilent_82350b_generic_attach(board, &config, 0);
 }
 
 int agilent_82350b_accel_attach(gpib_board_t *board, gpib_board_config_t config)
 {
-	return agilent_82350b_generic_attach(board, 1);
+	return agilent_82350b_generic_attach(board, &config, 1);
 }
 
 void agilent_82350b_detach(gpib_board_t *board)
@@ -342,6 +474,9 @@ void agilent_82350b_detach(gpib_board_t *board)
 
 	if(a_priv)
 	{
+		if (a_priv->plx_base) // disable interrupts
+			writel(0, a_priv->plx_base + PLX_INTCSR_REG);
+
 		tms_priv = &a_priv->tms9914_priv;
 		if(a_priv->irq)
 		{
@@ -350,9 +485,11 @@ void agilent_82350b_detach(gpib_board_t *board)
 		if(a_priv->gpib_base)
 		{
 			tms9914_board_reset(tms_priv);
-			iounmap((void *)a_priv->misc_base);
-			iounmap((void *)a_priv->sram_base);
-			iounmap((void *)a_priv->gpib_base);
+			if(a_priv->misc_base) iounmap((void *)a_priv->misc_base);
+			if(a_priv->borg_base) iounmap((void *)a_priv->borg_base);
+			if(a_priv->sram_base) iounmap((void *)a_priv->sram_base);
+			if(a_priv->gpib_base) iounmap((void *)a_priv->gpib_base);
+			if(a_priv->plx_base) iounmap((void *)a_priv->plx_base);
 			pci_release_regions(a_priv->pci_device);
 		}
 		if(a_priv->pci_device)
@@ -363,6 +500,7 @@ void agilent_82350b_detach(gpib_board_t *board)
 
 static const struct pci_device_id agilent_82350b_pci_table[] =
 {
+	{ PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050, PCI_VENDOR_ID_HP,  PCI_DEVICE_ID_82350A, 0, 0, 0 },
 	{ PCI_VENDOR_ID_AGILENT, PCI_DEVICE_ID_82350B, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
 	{ 0 }
 };

@@ -255,6 +255,25 @@ struct pci_dev* gpib_pci_get_device( const gpib_board_t *board, unsigned int ven
 	return NULL;
 }
 
+struct pci_dev* gpib_pci_get_subsys( const gpib_board_t *board, unsigned int vendor_id,
+	unsigned int device_id, unsigned ss_vendor, unsigned ss_device,
+	struct pci_dev *from)
+{
+	struct pci_dev *pci_device = from;
+
+	while((pci_device = pci_get_subsys( vendor_id, device_id, ss_vendor, ss_device, pci_device)))
+	{
+		if(board->pci_bus >=0 && board->pci_bus != pci_device->bus->number)
+			continue;
+		if(board->pci_slot >= 0 && board->pci_slot !=
+			PCI_SLOT( pci_device->devfn))
+			continue;
+		return pci_device;
+	}
+	return NULL;
+}
+
 EXPORT_SYMBOL( gpib_register_driver );
 EXPORT_SYMBOL( gpib_unregister_driver );
 EXPORT_SYMBOL( gpib_pci_get_device );
+EXPORT_SYMBOL(gpib_pci_get_subsys);

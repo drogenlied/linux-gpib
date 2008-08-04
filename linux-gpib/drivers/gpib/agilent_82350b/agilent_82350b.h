@@ -18,8 +18,9 @@
 #ifndef _AGILENT_82350B_H
 #define _AGILENT_82350B_H
 
-#include "tms9914.h"
 #include "gpibP.h"
+#include "plx9050.h"
+#include "tms9914.h"
 
 
 enum pci_vendor_ids
@@ -29,10 +30,20 @@ enum pci_vendor_ids
 
 enum pci_device_ids
 {
-	PCI_DEVICE_ID_82350B = 0x0b01,
+	PCI_DEVICE_ID_82350A = 0x10b0,
+	PCI_DEVICE_ID_82350B = 0x0b01
 };
 
-enum pci_regions
+enum pci_regions_82350a
+{
+	PLX_MEM_REGION  = 0,
+	PLX_IO_REGION   = 1,
+	GPIB_82350A_REGION = 2,
+	SRAM_82350A_REGION = 3,
+	BORG_82350A_REGION = 4
+};
+
+enum pci_regions_82350b
 {
 	GPIB_REGION = 0,
 	SRAM_REGION = 1,
@@ -44,9 +55,11 @@ typedef struct
 {
 	tms9914_private_t tms9914_priv;
 	struct pci_dev *pci_device;
+	void *plx_base;	//82350a only
 	void *gpib_base;
 	void *sram_base;
 	void *misc_base;
+	void *borg_base;
 	int irq;
 	unsigned short card_mode_bits;
 	unsigned short event_status_bits;
@@ -93,6 +106,7 @@ void set_transfer_counter(agilent_82350b_private_t *a_priv, int count);
 enum agilent_82350b_gpib_registers
 {
 	CARD_MODE_REG = 0x1,
+	CONFIG_DATA_REG = 0x2, // 82350A specific
 	INTERRUPT_ENABLE_REG = 0x3,
 	EVENT_STATUS_REG = 0x4,
 	EVENT_ENABLE_REG = 0x5,
@@ -115,7 +129,6 @@ enum agilent_82350b_gpib_registers
 	CDOR_READ_REG = 0x1e,
 	SRAM_ACCESS_CONTROL_REG = 0x1f,
 };
-
 enum card_mode_bits
 {
 	ACTIVE_CONTROLLER_BIT = 0x2,	// read-only
@@ -160,6 +173,13 @@ enum sram_access_control_bits
 {
 	DIRECTION_GPIB_TO_HOST = 0x20,	// transfer direction
 	ENABLE_TI_TO_SRAM = 0x40,	// enable fifo
+	ENABLE_FAST_TALKER = 0x80	// added for 82350A (not used)
+};
+
+enum borg_bits
+{
+	BORG_READY_BIT = 0x40,
+	BORG_DONE_BIT = 0x80
 };
 
 static const int agilent_82350b_fifo_size = 0x1000;
