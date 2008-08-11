@@ -263,15 +263,16 @@ int init_82350a_hardware(gpib_board_t *board, const gpib_board_config_t *config)
 	static const unsigned timeout = 1000;
 	int i, j;
 	const char *firmware_data = config->init_data;
-	static const unsigned plx_cntrl_magic_bits = WAITO_NOT_USER0_SELECT_BIT |
+	const unsigned plx_cntrl_static_bits = WAITO_NOT_USER0_SELECT_BIT |
 		USER0_OUTPUT_BIT |
 		LLOCK_NOT_USER1_SELECT_BIT |
 		USER1_OUTPUT_BIT |
 		USER2_OUTPUT_BIT |
 		USER3_OUTPUT_BIT |
 		PCI_READ_MODE_BIT |
-		//FIXME: magic bits not defined by 9050 manual
-		0xc40000;
+		PCI_WRITE_MODE_BIT |
+		PCI_RETRY_DELAY_BITS(64) |
+		DIRECT_SLAVE_LOCK_ENABLE_BIT;
 	// load borg data
 	borg_status = readb(a_priv->borg_base);
 	if((borg_status & BORG_DONE_BIT)) return 0;
@@ -284,16 +285,15 @@ int init_82350a_hardware(gpib_board_t *board, const gpib_board_config_t *config)
 	printk("%s: Loading firmware... ", driver_name);
 
 	// tickle the borg
-	writel(plx_cntrl_magic_bits | USER3_DATA_BIT, a_priv->plx_base + PLX_CNTRL_REG);
+	writel(plx_cntrl_static_bits | USER3_DATA_BIT, a_priv->plx_base + PLX_CNTRL_REG);
 	msleep(1);
-	writel(plx_cntrl_magic_bits, a_priv->plx_base + PLX_CNTRL_REG);
+	writel(plx_cntrl_static_bits, a_priv->plx_base + PLX_CNTRL_REG);
 	msleep(1);
-	writel(plx_cntrl_magic_bits | USER3_DATA_BIT, a_priv->plx_base + PLX_CNTRL_REG);
+	writel(plx_cntrl_static_bits | USER3_DATA_BIT, a_priv->plx_base + PLX_CNTRL_REG);
 	msleep(1);
 
 	for(i = 0; i < config->init_data_length; ++i)
 	{
-		writeb(firmware_data[i], a_priv->gpib_base + CONFIG_DATA_REG);
 		for(j = 0; j < timeout && (readb(a_priv->borg_base) & BORG_READY_BIT) == 0; ++j)
 		{
 			if(need_resched()) schedule();
@@ -304,6 +304,7 @@ int init_82350a_hardware(gpib_board_t *board, const gpib_board_config_t *config)
 			printk("%s: timed out loading firmware.\n", driver_name);
 			return -ETIMEDOUT;
 		}
+		writeb(firmware_data[i], a_priv->gpib_base + CONFIG_DATA_REG);
 	}
 	for(j = 0; j < timeout && (readb(a_priv->borg_base) & BORG_DONE_BIT) == 0; ++j)
 	{
@@ -350,7 +351,7 @@ int agilent_82350b_generic_attach(gpib_board_t *board, const gpib_board_config_t
 	agilent_82350b_private_t *a_priv;
 	tms9914_private_t *tms_priv;
 	int retval;
-	
+
 	board->status = 0;
 
 	if(agilent_82350b_allocate_private(board))
@@ -415,10 +416,10 @@ int agilent_82350b_generic_attach(gpib_board_t *board, const gpib_board_config_t
 	default:
 		BUG();
 	}
-	
+
 	retval = test_sram(board);
 	if(retval < 0) return retval;
-	
+
 	if(request_irq(a_priv->pci_device->irq, agilent_82350b_interrupt, IRQF_SHARED, driver_name, board))
 	{
 		printk("gpib: can't request IRQ %d\n", a_priv->pci_device->irq);
