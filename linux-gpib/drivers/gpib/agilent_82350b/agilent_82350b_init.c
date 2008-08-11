@@ -263,16 +263,16 @@ int init_82350a_hardware(gpib_board_t *board, const gpib_board_config_t *config)
 	static const unsigned timeout = 1000;
 	int i, j;
 	const char *firmware_data = config->init_data;
-	const unsigned plx_cntrl_static_bits = WAITO_NOT_USER0_SELECT_BIT |
-		USER0_OUTPUT_BIT |
-		LLOCK_NOT_USER1_SELECT_BIT |
-		USER1_OUTPUT_BIT |
-		USER2_OUTPUT_BIT |
-		USER3_OUTPUT_BIT |
-		PCI_READ_MODE_BIT |
-		PCI_WRITE_MODE_BIT |
-		PCI_RETRY_DELAY_BITS(64) |
-		DIRECT_SLAVE_LOCK_ENABLE_BIT;
+	const unsigned plx_cntrl_static_bits = PLX9050_WAITO_NOT_USER0_SELECT_BIT |
+		PLX9050_USER0_OUTPUT_BIT |
+		PLX9050_LLOCK_NOT_USER1_SELECT_BIT |
+		PLX9050_USER1_OUTPUT_BIT |
+		PLX9050_USER2_OUTPUT_BIT |
+		PLX9050_USER3_OUTPUT_BIT |
+		PLX9050_PCI_READ_MODE_BIT |
+		PLX9050_PCI_WRITE_MODE_BIT |
+		PLX9050_PCI_RETRY_DELAY_BITS(64) |
+		PLX9050_DIRECT_SLAVE_LOCK_ENABLE_BIT;
 	// load borg data
 	borg_status = readb(a_priv->borg_base);
 	if((borg_status & BORG_DONE_BIT)) return 0;
@@ -285,11 +285,11 @@ int init_82350a_hardware(gpib_board_t *board, const gpib_board_config_t *config)
 	printk("%s: Loading firmware... ", driver_name);
 
 	// tickle the borg
-	writel(plx_cntrl_static_bits | USER3_DATA_BIT, a_priv->plx_base + PLX_CNTRL_REG);
+	writel(plx_cntrl_static_bits | PLX9050_USER3_DATA_BIT, a_priv->plx_base + PLX9050_CNTRL_REG);
 	msleep(1);
-	writel(plx_cntrl_static_bits, a_priv->plx_base + PLX_CNTRL_REG);
+	writel(plx_cntrl_static_bits, a_priv->plx_base + PLX9050_CNTRL_REG);
 	msleep(1);
-	writel(plx_cntrl_static_bits | USER3_DATA_BIT, a_priv->plx_base + PLX_CNTRL_REG);
+	writel(plx_cntrl_static_bits | PLX9050_USER3_DATA_BIT, a_priv->plx_base + PLX9050_CNTRL_REG);
 	msleep(1);
 
 	for(i = 0; i < config->init_data_length; ++i)
@@ -432,8 +432,8 @@ int agilent_82350b_generic_attach(gpib_board_t *board, const gpib_board_config_t
 	a_priv->card_mode_bits = ENABLE_PCI_IRQ_BIT;
 	writeb(a_priv->card_mode_bits, a_priv->gpib_base + CARD_MODE_REG);
 	// enable PCI interrupts for 82350a
-	writel(LINTR1_EN_BIT | LINTR2_POLARITY_BIT | PCI_INTR_EN_BIT,
-		a_priv->plx_base + PLX_INTCSR_REG);
+	writel(PLX9050_LINTR1_EN_BIT | PLX9050_LINTR2_POLARITY_BIT | PLX9050_PCI_INTR_EN_BIT,
+		a_priv->plx_base + PLX9050_INTCSR_REG);
 
 	if(use_fifos)
 	{
@@ -476,7 +476,7 @@ void agilent_82350b_detach(gpib_board_t *board)
 	if(a_priv)
 	{
 		if (a_priv->plx_base) // disable interrupts
-			writel(0, a_priv->plx_base + PLX_INTCSR_REG);
+			writel(0, a_priv->plx_base + PLX9050_INTCSR_REG);
 
 		tms_priv = &a_priv->tms9914_priv;
 		if(a_priv->irq)

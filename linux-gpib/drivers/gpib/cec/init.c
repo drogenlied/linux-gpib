@@ -273,8 +273,8 @@ int cec_pci_attach(gpib_board_t *board, gpib_board_config_t config)
 	cec_init( cec_priv, board );
 
 	// enable interrupts on plx chip
-	outl(LINTR1_EN_BIT | LINTR1_POLARITY_BIT | PCI_INTR_EN_BIT,
-		cec_priv->plx_iobase + PLX_INTCSR_REG);
+	outl(PLX9050_LINTR1_EN_BIT | PLX9050_LINTR1_POLARITY_BIT | PLX9050_PCI_INTR_EN_BIT,
+		cec_priv->plx_iobase + PLX9050_INTCSR_REG);
 
 	return 0;
 }
@@ -291,7 +291,7 @@ void cec_pci_detach(gpib_board_t *board)
 		if(cec_priv->irq)
 		{
 			// disable plx9050 interrupts
-			outl(0, cec_priv->plx_iobase + PLX_INTCSR_REG );
+			outl(0, cec_priv->plx_iobase + PLX9050_INTCSR_REG );
 			free_irq(cec_priv->irq, board);
 		}
 		if(nec_priv->iobase)
@@ -305,7 +305,7 @@ void cec_pci_detach(gpib_board_t *board)
 	cec_free_private(board);
 }
 
-static const struct pci_device_id cec_pci_table[] = 
+static const struct pci_device_id cec_pci_table[] =
 {
 	{CEC_VENDOR_ID, CEC_DEV_ID, PCI_ANY_ID, CEC_SUBID, 0, 0, 0 },
 	{0}

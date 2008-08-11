@@ -510,8 +510,8 @@ int ines_common_pci_attach( gpib_board_t *board )
 	switch(ines_priv->pci_chip_type)
 	{
 		case PCI_CHIP_PLX9050:
-			outl(LINTR1_EN_BIT | LINTR1_POLARITY_BIT | PCI_INTR_EN_BIT,
-				ines_priv->plx_iobase + PLX_INTCSR_REG);
+			outl(PLX9050_LINTR1_EN_BIT | PLX9050_LINTR1_POLARITY_BIT | PLX9050_PCI_INTR_EN_BIT,
+				ines_priv->plx_iobase + PLX9050_INTCSR_REG);
 			break;
 		case PCI_CHIP_AMCC5920:
 			{
@@ -616,7 +616,7 @@ void ines_pci_detach(gpib_board_t *board)
 			{
 			case PCI_CHIP_AMCC5920:
 				if( ines_priv->plx_iobase )
-					outl( 0, ines_priv->plx_iobase + PLX_INTCSR_REG );
+					outl( 0, ines_priv->plx_iobase + PLX9050_INTCSR_REG );
 				break;
 			case PCI_CHIP_QUANCOM:
 				if( nec_priv->iobase )
