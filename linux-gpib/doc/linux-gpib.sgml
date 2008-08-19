@@ -735,10 +735,10 @@ device you are talking to).
 <section ID="agilent-82350b">
 <title>Agilent 82350A/B</title>
 <para>
-The Agilent 82350A/B do not support detection of an end-of-string character
-in hardware, only automatically detecting assertion of the EOI
+The Agilent 82350A and 82350B do not support detection of an end-of-string character
+during reads in hardware, they can only detect assertion of the EOI
 line.  Thus if you use the REOS
-flag for a read, the board's fifos will
+flag for a read, the boards' fifos will
 not be used for the transfer.  This will greatly reduce the maximum transfer
 rate for your board (which may or may not be noticeable depending on the
 device you are talking to).
