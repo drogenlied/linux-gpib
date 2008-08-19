@@ -30,8 +30,12 @@ enum pci_vendor_ids
 
 enum pci_device_ids
 {
-	PCI_DEVICE_ID_82350A = 0x10b0,
 	PCI_DEVICE_ID_82350B = 0x0b01
+};
+	
+enum pci_subdevice_ids
+{
+	PCI_SUBDEVICE_ID_82350A = 0x10b0,
 };
 
 enum pci_regions_82350a
@@ -50,6 +54,12 @@ enum pci_regions_82350b
 	MISC_REGION = 2,
 };
 
+enum board_model
+{
+	MODEL_82350A,
+	MODEL_82350B
+};
+
 // struct which defines private_data for board
 typedef struct
 {
@@ -63,6 +73,7 @@ typedef struct
 	int irq;
 	unsigned short card_mode_bits;
 	unsigned short event_status_bits;
+	enum board_model model;
 } agilent_82350b_private_t;
 
 // interfaces
