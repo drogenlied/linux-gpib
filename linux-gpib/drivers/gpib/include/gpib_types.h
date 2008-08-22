@@ -239,7 +239,7 @@ struct gpib_board_struct
 	/* pid of autospoll kernel thread */
 	long autospoll_pid;
 	/* used to wait for autospoll thread to finish before exiting module */
-	struct semaphore autospoll_completion;
+	struct completion autospoll_completion;
 	/* queue for recording received trigger/clear/ifc events */
 	gpib_event_queue_t event_queue;
 	/* minor number for this board's device file */

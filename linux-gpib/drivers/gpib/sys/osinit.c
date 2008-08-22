@@ -140,7 +140,7 @@ void init_gpib_board( gpib_board_t *board )
 	board->online = 0;
 	board->autospollers = 0;
 	board->autospoll_pid = 0;
-	init_MUTEX_LOCKED(&board->autospoll_completion);
+	init_completion(&board->autospoll_completion);
 	init_event_queue(&board->event_queue);
 	board->minor = -1;
 	init_gpib_pseudo_irq(&board->pseudo_irq);

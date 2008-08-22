@@ -67,7 +67,8 @@ static int autospoll_thread(void *board_void)
 		}
 	}
 	printk("gpib%i: exiting autospoll thread\n", board->minor);
-	up(&board->autospoll_completion);
+	board->autospoll_pid = 0;
+	complete_all(&board->autospoll_completion);
 	unlock_kernel();
 	return retval;
 }
@@ -115,13 +116,13 @@ int iboffline( gpib_board_t *board )
 		return 0;
 	}
 	if(board->interface == NULL) return -ENODEV;
-	if(down_trylock(&board->autospoll_completion))
+	if(board->autospoll_pid > 0)
 	{
 		retval = kill_proc(board->autospoll_pid, SIGKILL, 1);
 		if(retval)
 			printk("gpib: kill_proc returned %i\n", retval);
 		/* wait for autospoll thread to finish */
-		down(&board->autospoll_completion);
+		wait_for_completion(&board->autospoll_completion);
 	}
 	board->interface->detach( board );
 	gpib_deallocate_board( board );
