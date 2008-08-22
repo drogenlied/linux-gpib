@@ -182,7 +182,7 @@ long ibioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 	gpib_board_t *board;
 	gpib_file_private_t *file_priv = filep->private_data;
 	long retval = -ENOTTY;
-	
+
 	if( minor >= GPIB_MAX_NUM_BOARDS )
 	{
 		printk("gpib: invalid minor number of device file\n");
@@ -191,7 +191,7 @@ long ibioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 	board = &board_array[ minor ];
 
 	lock_kernel();
-	
+
 	GPIB_DPRINTK( "pid %i, minor %i, ioctl %d, interface=%s, use=%d, onl=%d\n",
 		current->pid, minor, cmd & 0xff,
 		board->interface ? board->interface->name : "",
@@ -392,7 +392,7 @@ long ibioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 			goto done;
 			break;
 	}
-	
+
 done:
 	unlock_kernel();
 	return retval;
@@ -483,7 +483,7 @@ static int read_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
 
 	BUG_ON(sizeof(userbuf) > sizeof(read_cmd.buffer_ptr));
 	userbuf = (uint8_t*)(unsigned long)read_cmd.buffer_ptr;
-	
+
 	/* Check write access to buffer */
 	if(!access_ok(VERIFY_WRITE, userbuf, read_cmd.count))
 		return -EFAULT;
@@ -545,7 +545,7 @@ static int command_ioctl( gpib_file_private_t *file_priv,
 	if( desc == NULL ) return -EINVAL;
 
 	userbuf = (uint8_t*)(unsigned long)cmd.buffer_ptr;
-	
+
 	/* Check read access to buffer */
 	if(!access_ok(VERIFY_READ, userbuf, cmd.count))
 		return -EFAULT;
@@ -602,7 +602,7 @@ static int write_ioctl(gpib_file_private_t *file_priv, gpib_board_t *board,
 	if( desc == NULL ) return -EINVAL;
 
 	userbuf = (uint8_t*)(unsigned long)write_cmd.buffer_ptr;
-	
+
 	/* Check read access to buffer */
 	if(!access_ok(VERIFY_READ, userbuf, write_cmd.count))
 		return -EFAULT;
@@ -913,7 +913,7 @@ static int online_ioctl( gpib_board_t *board, unsigned long arg )
 	void *init_data = NULL;
 
 	config.init_data = NULL;
-	
+
 	if(!capable(CAP_SYS_ADMIN))
 		return -EPERM;
 

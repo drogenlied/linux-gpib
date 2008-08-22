@@ -25,10 +25,10 @@
  * This really should be in a different header file.
  */
 #include "gpib/gpib_user.h"
+#include <linux/mutex.h>
 #include <linux/wait.h>
 #include <linux/timer.h>
 #include <linux/interrupt.h>
-#include <asm/semaphore.h>
 
 typedef struct gpib_interface_struct gpib_interface_t;
 typedef struct gpib_board_struct gpib_board_t;
@@ -196,7 +196,7 @@ struct gpib_board_struct
 	 */
 	wait_queue_head_t wait;
 	/* Lock that only allows one process to access this board at a time */
-	struct semaphore mutex;
+	struct mutex mutex;
 	/* pid of last process to lock the board mutex */
 	pid_t locking_pid;
 	/* Spin lock for dealing with races with the interrupt handler */
@@ -300,7 +300,7 @@ typedef struct
 	volatile short holding_mutex;
 	gpib_descriptor_t *descriptors[ GPIB_MAX_NUM_DESCRIPTORS ];
 	/* locked while descriptors are being allocated/deallocated */
-	struct semaphore descriptors_mutex;
+	struct mutex descriptors_mutex;
 	unsigned got_module : 1;
 } gpib_file_private_t;
 
