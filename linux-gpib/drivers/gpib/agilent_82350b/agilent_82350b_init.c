@@ -437,10 +437,14 @@ int agilent_82350b_generic_attach(gpib_board_t *board, const gpib_board_config_t
 	writeb(0, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG);
 	a_priv->card_mode_bits = ENABLE_PCI_IRQ_BIT;
 	writeb(a_priv->card_mode_bits, a_priv->gpib_base + CARD_MODE_REG);
-	// enable PCI interrupts for 82350a
-	writel(PLX9050_LINTR1_EN_BIT | PLX9050_LINTR2_POLARITY_BIT | PLX9050_PCI_INTR_EN_BIT,
-		a_priv->plx_base + PLX9050_INTCSR_REG);
 
+	if(a_priv->model == MODEL_82350A)
+	{
+		// enable PCI interrupts for 82350a
+		writel(PLX9050_LINTR1_EN_BIT | PLX9050_LINTR2_POLARITY_BIT | PLX9050_PCI_INTR_EN_BIT,
+			a_priv->plx_base + PLX9050_INTCSR_REG);
+	}
+	
 	if(use_fifos)
 	{
 		writeb(ENABLE_BUFFER_END_EVENTS_BIT | ENABLE_TERM_COUNT_EVENTS_BIT,
