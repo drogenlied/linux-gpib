@@ -229,7 +229,7 @@ static void __exit gpib_common_exit_module( void )
 	int i;
 	for(i = 0; i < GPIB_MAX_NUM_BOARDS; ++i)
 	{
-		class_device_destroy(gpib_class, MKDEV(IBMAJOR, i));
+		device_destroy(gpib_class, MKDEV(IBMAJOR, i));
 	}
 	class_destroy(gpib_class);
 	unregister_chrdev(IBMAJOR, "gpib");
