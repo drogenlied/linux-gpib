@@ -86,7 +86,7 @@ static int init_gpib_file_private( gpib_file_private_t *priv )
 	}
 	init_gpib_descriptor( priv->descriptors[ 0 ] );
 	priv->descriptors[ 0 ]->is_board = 1;
-	init_MUTEX(&priv->descriptors_mutex);
+	mutex_init(&priv->descriptors_mutex);
 	return 0;
 }
 
@@ -160,7 +160,7 @@ int ibclose(struct inode *inode, struct file *filep)
 	{
 		cleanup_open_devices( priv, board );
 		if( priv->holding_mutex )
-			up( &board->mutex );
+			mutex_unlock( &board->mutex );
 
 		if(priv->got_module && board->use_count)
 		{
@@ -783,7 +783,7 @@ static int open_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned lon
 	if (retval)
 		return -EFAULT;
 
-	if(down_interruptible(&file_priv->descriptors_mutex))
+	if(mutex_lock_interruptible(&file_priv->descriptors_mutex))
 	{
 		return -ERESTARTSYS;
 	}
@@ -794,7 +794,7 @@ static int open_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned lon
 	file_priv->descriptors[ i ] = kmalloc( sizeof( gpib_descriptor_t ), GFP_KERNEL );
 	if( file_priv->descriptors[ i ] == NULL )
 	{
-		up(&file_priv->descriptors_mutex);
+		mutex_unlock(&file_priv->descriptors_mutex);
 		return -ENOMEM;
 	}
 	init_gpib_descriptor( file_priv->descriptors[ i ] );
@@ -802,7 +802,7 @@ static int open_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned lon
 	file_priv->descriptors[ i ]->pad = open_dev_cmd.pad;
 	file_priv->descriptors[ i ]->sad = open_dev_cmd.sad;
 	file_priv->descriptors[ i ]->is_board = open_dev_cmd.is_board;
-	up(&file_priv->descriptors_mutex);
+	mutex_unlock(&file_priv->descriptors_mutex);
 
 	retval = increment_open_device_count( &board->device_list, open_dev_cmd.pad, open_dev_cmd.sad );
 	if( retval < 0 )
@@ -1173,16 +1173,11 @@ static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 
 	if( lock_mutex )
 	{
-		retval = down_interruptible(&board->mutex);
+		retval = mutex_lock_interruptible(&board->mutex);
 		if(retval)
 		{
 			printk("gpib: ioctl interrupted while waiting on lock\n");
 			return -ERESTARTSYS;
-		}
-		if( atomic_read( &board->mutex.count ) > 0 )
-		{
-			printk( "gpib: bug! board->mutex.count %i after lock!\n",
-				atomic_read( &board->mutex.count ) );
 		}
 		board->locking_pid = current->pid;
 		file_priv->holding_mutex = 1;
@@ -1197,12 +1192,7 @@ static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 		}
 		file_priv->holding_mutex = 0;
 		board->locking_pid = 0;
-		if( atomic_read( &board->mutex.count ) > 0 )
-		{
-			printk( "gpib: bug! board->mutex.count %i before releasing lock!\n",
-				atomic_read( &board->mutex.count ) );
-		}
-		up( &board->mutex );
+		mutex_unlock( &board->mutex );
 		GPIB_DPRINTK("unlocked board %i mutex\n", board->minor);
 	}
 

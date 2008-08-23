@@ -121,7 +121,7 @@ void init_gpib_board( gpib_board_t *board )
 	board->buffer_length = 0;
 	board->status = 0;
 	init_waitqueue_head(&board->wait);
-	init_MUTEX(&board->mutex);
+	mutex_init(&board->mutex);
 	board->locking_pid = 0;
 	spin_lock_init(&board->spinlock);
 	init_timer(&board->timer);
