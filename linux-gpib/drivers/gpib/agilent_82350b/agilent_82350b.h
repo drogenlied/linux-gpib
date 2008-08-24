@@ -195,4 +195,9 @@ enum borg_bits
 
 static const int agilent_82350b_fifo_size = 0x1000;
 
+static inline int agilent_82350b_fifo_is_halted(agilent_82350b_private_t *a_priv)
+{
+	return readb(a_priv->gpib_base + STREAM_STATUS_REG) & HALTED_STATUS_BIT;
+}
+
 #endif	// _AGILENT_82350B_H
