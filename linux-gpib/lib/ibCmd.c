@@ -83,7 +83,7 @@ int ibcmda( int ud, const void *cmd_buffer, long cnt )
 	if( retval < 0 )
 		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
 
-	return general_exit_library( ud, 0, 0, 0, CMPL, 0, 1 );
+	return general_exit_library( ud, 0, 0, 0, 0, 0, 1 );
 }
 
 ssize_t my_ibcmd( ibConf_t *conf, const uint8_t *buffer, size_t count)

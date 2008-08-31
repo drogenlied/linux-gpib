@@ -112,23 +112,13 @@ int ibwait( int ud, int mask )
 		return general_exit_library(ud, 1, 0, 0, 0, 0, 1);
 
 //XXX
-	if(conf->async.in_progress)
+	if(conf->async.in_progress && (status & CMPL))
 	{
-		int joined = 0;
-		if(mask & CMPL)
-		{
-			if( gpib_aio_join( &conf->async ) )
-				error++;
-			joined = 1;
-		}
+		if( gpib_aio_join( &conf->async ) )
+			error++;
 		pthread_mutex_lock( &conf->async.lock );
 		if( conf->async.ibsta & CMPL )
 		{
-			if(joined == 0)
-			{
-				if(gpib_aio_join( &conf->async))
-					error++;
-			}
 			conf->async.in_progress = 0;
 			setIbcnt( conf->async.ibcntl );
 			setIberr( conf->async.iberr );

@@ -33,6 +33,7 @@ void init_async_op( struct async_operation *async )
 {
 	pthread_mutex_init( &async->lock, NULL );
 	pthread_mutex_init( &async->join_lock, NULL );
+	pthread_cond_init(&async->condition, NULL);
 	async->buffer = NULL;
 	async->buffer_length = 0;
 	async->iberr = 0;
@@ -45,8 +46,10 @@ void init_async_op( struct async_operation *async )
 static void cleanup_aio( void *varg )
 {
 	struct gpib_aio_arg arg = *((struct gpib_aio_arg*) varg);
-
-	general_exit_library( arg.ud, 0, 1, 0, 0, CMPL, 0 );
+	ibBoard_t *board = interfaceBoard(arg.conf);
+	ibstatus( arg.conf, 0, 0, CMPL);
+	int retval = unlock_board_mutex(board);
+	assert(retval == 0);
 }
 
 int gpib_aio_launch( int ud, ibConf_t *conf, int gpib_aio_type,
@@ -86,7 +89,8 @@ int gpib_aio_launch( int ud, ibConf_t *conf, int gpib_aio_type,
 	retval = pthread_create( &conf->async.thread,
 		&attributes, do_aio, arg );
 	pthread_attr_destroy( &attributes );
-	conf->async.in_progress = retval == 0;
+	conf->async.in_progress = (retval == 0);
+	pthread_cond_wait(&conf->async.condition, &conf->async.lock);
 	pthread_mutex_unlock( &conf->async.lock );
 	if( retval )
 	{
@@ -104,22 +108,23 @@ static void* do_aio( void *varg )
 	size_t count;
 	struct gpib_aio_arg arg;
 	ibConf_t *conf;
+	ibBoard_t *board;
 	int retval;
 
 	arg = *((struct gpib_aio_arg*) varg);
 	free( varg ); varg = NULL;
 
-	conf = general_enter_library( arg.ud, 0, 1 );
-	if( conf != arg.conf )
+	conf = arg.conf;
+	board = interfaceBoard(conf);
+	retval = lock_board_mutex(board);
+	if(retval == 0)
 	{
-		conf = arg.conf;
-		pthread_mutex_lock( &conf->async.lock );
-		conf->async.ibcntl = 0;
-		conf->async.iberr = ThreadIberr();
-		conf->async.ibsta = CMPL | ERR;
-		pthread_mutex_unlock( &conf->async.lock );
-		return NULL;
+		ibstatus(conf, 0, CMPL, 0);
 	}
+	pthread_mutex_lock(&conf->async.lock);
+	pthread_cond_broadcast(&conf->async.condition);
+	pthread_mutex_unlock(&conf->async.lock);
+	if( retval < 0 ) return NULL;
 
 	pthread_cleanup_push( cleanup_aio, &arg );
 	pthread_setcanceltype( PTHREAD_CANCEL_ASYNCHRONOUS, NULL );

@@ -191,7 +191,7 @@ int ibwrta( int ud, const void *buffer, long cnt )
 	if( retval < 0 )
 		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
 
-	return general_exit_library( ud, 0, 0, 0, CMPL, 0, 1 );
+	return general_exit_library( ud, 0, 0, 0, 0, 0, 1 );
 }
 
 int my_ibwrtf( ibConf_t *conf, const char *file_path, size_t *bytes_written)

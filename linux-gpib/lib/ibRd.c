@@ -159,7 +159,7 @@ int ibrda( int ud, void *buffer, long cnt )
 	if( retval < 0 )
 		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
 
-	return general_exit_library( ud, 0, 0, 0, CMPL, 0, 1 );
+	return general_exit_library( ud, 0, 0, 0, 0, 0, 1 );
 }
 
 int ibrdf(int ud, const char *file_path )
