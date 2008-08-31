@@ -101,29 +101,41 @@ int ibwait( int ud, int mask )
 	int status;
 	int clear_mask;
 	int error = 0;
-
+	
 	conf = general_enter_library( ud, 1, 0 );
 	if( conf == NULL )
-		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
+		return general_exit_library(ud, 1, 0, 0, 0, 0, 1);
 
 	clear_mask = mask & ( DTAS | DCAS | SPOLL);
 	retval = my_wait( conf, mask, clear_mask, 0, &status );
 	if( retval < 0 )
-		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
+		return general_exit_library(ud, 1, 0, 0, 0, 0, 1);
 
 //XXX
 	if(conf->async.in_progress)
 	{
-		if( gpib_aio_join( &conf->async ) )
-			error++;
+		int joined = 0;
+		if(mask & CMPL)
+		{
+			if( gpib_aio_join( &conf->async ) )
+				error++;
+			joined = 1;
+		}
 		pthread_mutex_lock( &conf->async.lock );
 		if( conf->async.ibsta & CMPL )
-			conf->async.in_progress = 0;
-		setIbcnt( conf->async.ibcntl );
-		setIberr( conf->async.iberr );
-		if( conf->async.ibsta & ERR )
 		{
-			error++;
+			if(joined == 0)
+			{
+				if(gpib_aio_join( &conf->async))
+					error++;
+			}
+			conf->async.in_progress = 0;
+			setIbcnt( conf->async.ibcntl );
+			setIberr( conf->async.iberr );
+			if( conf->async.ibsta & ERR )
+			{
+				error++;
+			}
 		}
 		pthread_mutex_unlock( &conf->async.lock );
 		if(error && (ThreadIbsta() & ERR) == 0)
@@ -133,7 +145,7 @@ int ibwait( int ud, int mask )
 		}
 	}
 
-	general_exit_library( ud, error, 0, 1, 0, 0, 1 );
+	general_exit_library( ud, error, 0, 1, 0, 0, 1);
 
 	return status;
 }
