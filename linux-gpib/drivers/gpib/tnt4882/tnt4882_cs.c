@@ -372,6 +372,7 @@ static int ni_gpib_resume(struct pcmcia_device *link)
 static struct pcmcia_device_id ni_pcmcia_ids[] =
 {
 	PCMCIA_DEVICE_MANF_CARD(0x010b, 0x4882),
+	PCMCIA_DEVICE_MANF_CARD(0x010b, 0x0c71), // NI PCMCIA-GPIB+
 	PCMCIA_DEVICE_NULL
 };
 
