@@ -12,10 +12,10 @@ class Gpib:
 		returns a board or device object, from a name in the config file
 	Gpib(board_index)
 		returns a board object, with the given board number
-	Gpib(board_index, pad[, sad[, timeout[, send_eoi[, eos_flags[, eos_char]]]]])
+	Gpib(board_index, pad[, sad[, timeout[, send_eoi[, eos_mode]]]])
 		returns a device object, like ibdev()'''
 	
-	def __init__(self, name = 'gpib0', pad = None, sad = 0, timeout = 13, send_eoi = 1, eos_flags = 0, eos_char = '\x0a'):
+	def __init__(self, name = 'gpib0', pad = None, sad = 0, timeout = 13, send_eoi = 1, eos_mode = 0):
 		self._own = False
 		if isinstance(name, basestring):
 			self.id = gpib.find(name)
@@ -23,7 +23,7 @@ class Gpib:
 		elif pad is None:
 			self.id = name
 		else:
-			self.id = gpib.dev(name, pad, sad, timeout, send_eoi, eos_flags, eos_char)
+			self.id = gpib.dev(name, pad, sad, timeout, send_eoi, eos_mode)
 			self._own = True
 	
 	# automatically close descriptor when instance is deleted

@@ -99,7 +99,7 @@ static PyObject* gpib_find(PyObject *self, PyObject *args)
 
 static char gpib_dev__doc__[] =
 	"dev -- get a device handle]\n"
-	"dev(boardid, pad, [sad, timeout, eot, eos_char, eos_flags])";
+	"dev(boardid, pad, [sad, timeout, eot, eos_mode])";
 
 static PyObject* gpib_dev(PyObject *self, PyObject *args)
 {
@@ -109,12 +109,11 @@ static PyObject* gpib_dev(PyObject *self, PyObject *args)
 	int sad = 0;
 	int tmo = 14;
 	int eot = 1;
-	int eos_char = 0xa;
-	int eos_flags = 0;
+	int eos_mode = 0;
 
-	if (!PyArg_ParseTuple(args, "ii|iiiic", &board, &pad, &sad, &tmo, &eot, &eos_flags, &eos_char))
+	if (!PyArg_ParseTuple(args, "ii|iiii", &board, &pad, &sad, &tmo, &eot, &eos_mode))
 		return NULL;
-	ud = ibdev(board, pad, sad, tmo, eot, eos_char | eos_flags);
+	ud = ibdev(board, pad, sad, tmo, eot, eos_mode);
     if (ud < 0) {
 		_SetGpibError("ibdev");
 		return NULL;
