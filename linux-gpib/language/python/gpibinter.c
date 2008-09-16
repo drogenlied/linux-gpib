@@ -462,23 +462,23 @@ static struct PyMethodDef gpib_methods[] = {
 };
 
 
-/* Initialization function for the module (*must* be called init_gpib) */
+/* Initialization function for the module (*must* be called initgpib) */
 
 static char gpib_module_documentation[] = 
 	"";
 
-void init_gpib(void)
+void initgpib(void)
 {
 	PyObject *m, *d;
 
 	/* Create the module and add the functions */
-	m = Py_InitModule4("_gpib", gpib_methods, gpib_module_documentation,
+	m = Py_InitModule4("gpib", gpib_methods, gpib_module_documentation,
 		(PyObject*)NULL, PYTHON_API_VERSION);
 
 	/* Add some symbolic constants to the module */
 	d = PyModule_GetDict(m);
 
-	GpibError = PyErr_NewException("_gpib.GpibError", NULL, NULL);
+	GpibError = PyErr_NewException("gpib.GpibError", NULL, NULL);
 	PyDict_SetItemString(d, "GpibError", GpibError);
 
 	/* XXXX Add constants here */
@@ -503,6 +503,6 @@ void init_gpib(void)
 	
 	/* Check for errors */
 	if (PyErr_Occurred())
-		Py_FatalError("can't initialize module _gpib");
+		Py_FatalError("can't initialize module gpib");
 }
 
