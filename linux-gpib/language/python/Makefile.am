@@ -15,7 +15,7 @@ build: gpibinter.c
 	-{ $(PYTHON) setup.py build && touch build; } || { $(RM) -r build; exit 1; }
 
 install-data-local:
-	-$(PYTHON) setup.py install
+	-$(PYTHON) setup.py install --prefix=$(DESTDIR)$(prefix)
 
 clean-local:
 	-$(RM) -r build
