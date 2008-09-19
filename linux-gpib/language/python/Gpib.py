@@ -35,15 +35,15 @@ class Gpib:
 		return "%s(%d)" % (self.__class__.__name__, self.id)
 
 
-	def cmd(self,str):
-		gpib.cmd(self.id, str)
+	def command(self,str):
+		gpib.command(self.id, str)
 	
 	def config(self,option,value):
 		self.res = gpib.config(self.id,option,value)
 		return self.res
 	
-	def ifc(self):
-		gpib.ifc(self.id)
+	def interface_clear(self):
+		gpib.interface_clear(self.id)
 	
 	def write(self,str):
 		gpib.write(self.id, str)
@@ -69,15 +69,15 @@ class Gpib:
 	def wait(self,mask):
 		gpib.wait(self.id,mask)
 	
-	def rsp(self):
-		self.spb = gpib.rsp(self.id)
+	def serial_poll(self):
+		self.spb = gpib.serial_poll(self.id)
 		return self.spb
 
 	def trigger(self):
-		gpib.trg(self.id)
+		gpib.trigger(self.id)
 
-	def ren(self,val):
-		gpib.ren(self.id,val)
+	def remote_enable(self,val):
+		gpib.remote_enable(self.id,val)
 
 	def ibsta(self):
 		self.res = gpib.ibsta()
@@ -87,5 +87,5 @@ class Gpib:
 		self.res = gpib.ibcnt()
 		return self.res
 
-	def tmo(self,value):
-		return gpib.tmo(self.id,value)
+	def timeout(self,value):
+		return gpib.timeout(self.id,value)
