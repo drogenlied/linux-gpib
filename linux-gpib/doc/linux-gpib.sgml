@@ -615,6 +615,12 @@ Default is <option>--sre</option>.</para>
 	<entry>cbi_pcmcia, cbi_pcmcia_unaccel</entry>
 	</row>
 	<row>
+	<entry>Measurement Computing (Computer Boards)</entry>
+	<entry>USB-488</entry>
+	<entry>ni_usb_gpib.ko</entry>
+	<entry>ni_usb_b</entry>
+	</row>
+	<row>
 	<entry>National Instruments</entry>
 	<entry>AT-GPIB (with NAT4882 chip)</entry>
 	<entry>tnt4882.ko</entry>

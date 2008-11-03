@@ -32,7 +32,8 @@ enum
 {
 	USB_DEVICE_ID_NI_USB_B = 0x702a,
 	USB_DEVICE_ID_NI_USB_B_PREINIT = 0x702b,	// device id before firmware is loaded
-	USB_DEVICE_ID_NI_USB_HS = 0x709b
+	USB_DEVICE_ID_NI_USB_HS = 0x709b,
+	USB_DEVICE_ID_MC_USB_488 = 0x725d
 };
 
 enum ni_usb_device
