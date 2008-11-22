@@ -1908,7 +1908,7 @@ static int ni_usb_hs_wait_for_ready(ni_usb_private_t *ni_priv)
 		if(buffer[++j] != 0x0)
 		{
 			ready = 1;
-			if(buffer[j] != 0x3 || buffer[j] != 0x5) // MC usb-488 sends 0x5 here
+			if(buffer[j] != 0x3 && buffer[j] != 0x5) // MC usb-488 sends 0x5 here
 			{
 				printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x3 or 0x5\n",
 					__FILE__, __FUNCTION__, j, (int)buffer[j]);
