@@ -27,6 +27,7 @@
 #include "gpib/gpib_user.h"
 #include <linux/mutex.h>
 #include <linux/wait.h>
+#include <linux/sched.h>
 #include <linux/timer.h>
 #include <linux/interrupt.h>
 
@@ -236,10 +237,8 @@ struct gpib_board_struct
 	unsigned int online;
 	/* number of processes trying to autopoll */
 	int autospollers;
-	/* pid of autospoll kernel thread */
-	long autospoll_pid;
-	/* used to wait for autospoll thread to finish before exiting module */
-	struct completion autospoll_completion;
+	/* autospoll kernel thread */
+	struct task_struct *autospoll_task;
 	/* queue for recording received trigger/clear/ifc events */
 	gpib_event_queue_t event_queue;
 	/* minor number for this board's device file */

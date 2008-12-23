@@ -17,6 +17,7 @@
 
 #include "ibsys.h"
 #include "autopoll.h"
+#include <linux/kthread.h>
 #include <linux/vmalloc.h>
 #include <linux/smp_lock.h>
 
@@ -38,14 +39,16 @@ static int autospoll_thread(void *board_void)
 	while(1)
 	{
 		if(wait_event_interruptible(board->wait,
-			board->master && board->autospollers > 0 &&
+			kthread_should_stop() ||
+			(board->master && board->autospollers > 0 &&
 			board->stuck_srq == 0 &&
-			test_and_clear_bit(SRQI_NUM, &board->status)))
+			test_and_clear_bit(SRQI_NUM, &board->status))))
 		{
 			retval = -ERESTARTSYS;
 			break;
 		}
 		GPIB_DPRINTK("autospoll wait satisfied\n" );
+		if(kthread_should_stop()) break;
 		/* make sure we are still good after we have
 		 * lock */
 		if(board->autospollers <= 0 || board->master == 0)
@@ -67,8 +70,7 @@ static int autospoll_thread(void *board_void)
 		}
 	}
 	printk("gpib%i: exiting autospoll thread\n", board->minor);
-	board->autospoll_pid = 0;
-	complete_all(&board->autospoll_completion);
+	board->autospoll_task = NULL;
 	unlock_kernel();
 	return retval;
 }
@@ -92,12 +94,12 @@ int ibonline(gpib_board_t *board, gpib_board_config_t config)
 	/* nios2nommu on 2.6.11 uclinux kernel has weird problems
 	with autospoll thread causing huge slowdowns */
 #ifndef CONFIG_NIOS2
-	board->autospoll_pid = kernel_thread(autospoll_thread, board, 0);
-	if(board->autospoll_pid < 0)
+	board->autospoll_task = kthread_run(&autospoll_thread, board, 0);
+	if(IS_ERR(board->autospoll_task))
 	{
 		printk("gpib: failed to create autospoll thread\n");
 		board->interface->detach(board);
-		return board->autospoll_pid;
+		return PTR_ERR(board->autospoll_task);
 	}
 #endif
 	board->online = 1;
@@ -116,13 +118,11 @@ int iboffline( gpib_board_t *board )
 		return 0;
 	}
 	if(board->interface == NULL) return -ENODEV;
-	if(board->autospoll_pid > 0)
+	if(board->autospoll_task != NULL)
 	{
-		retval = kill_proc(board->autospoll_pid, SIGKILL, 1);
+		retval = kthread_stop(board->autospoll_task);
 		if(retval)
-			printk("gpib: kill_proc returned %i\n", retval);
-		/* wait for autospoll thread to finish */
-		wait_for_completion(&board->autospoll_completion);
+			printk("gpib: kthread_stop returned %i\n", retval);
 	}
 	board->interface->detach( board );
 	gpib_deallocate_board( board );
