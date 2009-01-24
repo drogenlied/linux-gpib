@@ -94,7 +94,7 @@ int ibonline(gpib_board_t *board, gpib_board_config_t config)
 	/* nios2nommu on 2.6.11 uclinux kernel has weird problems
 	with autospoll thread causing huge slowdowns */
 #ifndef CONFIG_NIOS2
-	board->autospoll_task = kthread_run(&autospoll_thread, board, 0);
+	board->autospoll_task = kthread_run(&autospoll_thread, board, "gpib%d_autospoll_kthread", board->minor);
 	if(IS_ERR(board->autospoll_task))
 	{
 		printk("gpib: failed to create autospoll thread\n");
