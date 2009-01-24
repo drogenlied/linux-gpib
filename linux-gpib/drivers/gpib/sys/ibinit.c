@@ -118,7 +118,7 @@ int iboffline( gpib_board_t *board )
 		return 0;
 	}
 	if(board->interface == NULL) return -ENODEV;
-	if(board->autospoll_task != NULL)
+	if(board->autospoll_task != NULL && !IS_ERR(board->autospoll_task))
 	{
 		retval = kthread_stop(board->autospoll_task);
 		if(retval)
