@@ -28,6 +28,7 @@
 #include <linux/vmalloc.h>
 
 MODULE_LICENSE("GPL");
+MODULE_ALIAS_CHARDEV_MAJOR(IBMAJOR);
 
 struct file_operations ib_fops =
 {
