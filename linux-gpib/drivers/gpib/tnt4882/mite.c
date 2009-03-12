@@ -84,7 +84,7 @@ void mite_init(void)
 		memset(mite,0,sizeof(*mite));
 
 		mite->pcidev=pcidev;
-
+		pci_dev_get(mite->pcidev);
 		mite->next=mite_devices;
 		mite_devices=mite;
 	}
