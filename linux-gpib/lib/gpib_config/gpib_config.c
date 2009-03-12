@@ -260,7 +260,7 @@ static int parse_options( int argc, char *argv[], parsed_options_t *settings )
 		settings->minor = minor( file_stats.st_rdev );
 	}else
 	{
-		if(asprintf(&settings->device_file , "/dev/gpib%i\n", settings->minor) < 0)
+		if(asprintf(&settings->device_file , "/dev/gpib%i", settings->minor) < 0)
 		{
 			return -ENOMEM;
 		}
