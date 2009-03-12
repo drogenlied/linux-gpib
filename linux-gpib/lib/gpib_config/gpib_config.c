@@ -17,16 +17,21 @@
 #define _GNU_SOURCE
 
 #include <assert.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <getopt.h>
 #include "ib_internal.h"
 
+
 typedef struct
 {
 	char *config_file;
+	char *device_file;
 	unsigned int minor;
 	char *board_type;
 	int irq;
@@ -49,6 +54,9 @@ static void help( void )
 	printf("gpib_config [options] - configures a GPIB interface board\n");
 	printf("\t-t, --board-type BOARD_TYPE\n"
 		"\t\tSet board type to BOARD_TYPE.\n");
+	printf("\t-c, --device-file FILEPATH\n"
+		"\t\tSpecify character device file path for the board.\n"
+		"\t\tThis can be used as an alternative to the --minor option.\n");
 	printf("\t-d, --dma NUM\n"
 		"\t\tSpecify isa dma channel NUM for boards without plug-and-play cabability.\n");
 	printf("\t-b, --iobase NUM\n"
@@ -64,7 +72,8 @@ static void help( void )
 	printf("\t-h, --help\n"
 		"\t\tPrint this help and exit.\n");
 	printf("\t-m, --minor NUM\n"
-		"\t\tConfigure gpib device file with minor number NUM (default 0).\n");
+		"\t\tConfigure gpib device file with minor number NUM (default 0).\n"
+		"\t\tAlternatively, the device file may be specified with the --device-file option.\n");
 	printf("\t--[no-]ifc\n"
 		"\t\tPerform (or not) interface clear after bringing board online.  Default is --ifc.\n");
 	printf("\t--[no-]sre\n"
@@ -130,7 +139,7 @@ static int load_init_data(parsed_options_t *settings, const char *file_path)
 	fclose(init_file);
 	return retval;
 }
-static void parse_options( int argc, char *argv[], parsed_options_t *settings )
+static int parse_options( int argc, char *argv[], parsed_options_t *settings )
 {
 	int c, index;
 	int retval;
@@ -138,6 +147,7 @@ static void parse_options( int argc, char *argv[], parsed_options_t *settings )
 	struct option options[] =
 	{
 		{ "iobase", required_argument, NULL, 'b' },
+		{ "device-file", required_argument, NULL, 'c' },
 		{ "dma", required_argument, NULL, 'd' },
 		{ "file", required_argument, NULL, 'f' },
 		{ "help", no_argument, NULL, 'h' },
@@ -159,9 +169,7 @@ static void parse_options( int argc, char *argv[], parsed_options_t *settings )
 		{ 0 },
 	};
 
-	settings->config_file = NULL;
-	settings->minor = 0;
-	settings->board_type = NULL;
+	memset(settings, 0, sizeof(parsed_options_t));
 	settings->irq = -1;
 	settings->iobase = -1;
 	settings->dma = -1;
@@ -171,10 +179,7 @@ static void parse_options( int argc, char *argv[], parsed_options_t *settings )
 	settings->sad = -1;
 	settings->assert_ifc = 1;
 	settings->assert_remote_enable = 1;
-	settings->offline = 0;
 	settings->is_system_controller = -1;
-	settings->init_data = NULL;
-	settings->init_data_length = 0;
 
 	while( 1 )
 	{
@@ -187,10 +192,15 @@ static void parse_options( int argc, char *argv[], parsed_options_t *settings )
 		case 'b':
 			settings->iobase = strtol( optarg, NULL, 0 );
 			break;
+		case 'c' :
+			free(settings->config_file);
+			settings->device_file = strdup( optarg );
+			break;
 		case 'd':
 			settings->dma = strtol( optarg, NULL, 0 );
 			break;
 		case 'f':
+			free(settings->config_file);
 			settings->config_file = strdup( optarg );
 			break;
 		case 'h':
@@ -200,7 +210,7 @@ static void parse_options( int argc, char *argv[], parsed_options_t *settings )
 		case 'I':
 			retval = load_init_data(settings, optarg);
 			if(retval < 0)
-				exit(retval);
+				return retval;
 			break;
 		case 'i':
 			settings->irq = strtol( optarg, NULL, 0 );
@@ -222,6 +232,7 @@ static void parse_options( int argc, char *argv[], parsed_options_t *settings )
 			settings->sad -= sad_offset;
 			break;
 		case 't':
+			free(settings->board_type);
 			settings->board_type = strdup( optarg );
 			break;
 		case 'u':
@@ -232,6 +243,29 @@ static void parse_options( int argc, char *argv[], parsed_options_t *settings )
 			exit(1);
 		}
 	}
+	if(settings->device_file)
+	{
+		struct stat file_stats;
+		if( stat( settings->device_file, &file_stats ) < 0 )
+		{
+			fprintf(stderr, "Failed to get file information on file \"%s\".\n", settings->device_file);
+			perror(__FUNCTION__);
+			return -errno;
+		}
+		if(S_ISCHR(file_stats.st_mode) == 0)
+		{
+			fprintf(stderr, "The device file \"%s\" is not a character device.\n", settings->device_file);
+			return -EINVAL;
+		}
+		settings->minor = minor( file_stats.st_rdev );
+	}else
+	{
+		if(asprintf(&settings->device_file , "/dev/gpib%i\n", settings->minor) < 0)
+		{
+			return -ENOMEM;
+		}
+	}
+	return 0;
 }
 
 static int configure_board( int fileno, const parsed_options_t *options )
@@ -349,14 +383,19 @@ int main( int argc, char *argv[] )
 {
 	ibConf_t configs[ FIND_CONFIGS_LENGTH ];
 	ibBoard_t boards[ GPIB_MAX_NUM_BOARDS ];
-	char *filename, *envptr, *devicefile;
+	char *filename, *envptr;
 	int retval;
 	parsed_options_t options;
 	ibBoard_t *board;
 	ibConf_t *conf = NULL;
 	int i;
 
-	parse_options( argc, argv, &options );
+	retval = parse_options( argc, argv, &options );
+	if(retval < 0)
+	{
+		fprintf( stderr, "failed to parse command line options." );
+		return retval;
+	};
 
 	envptr = getenv( "IB_CONFIG" );
 	if( options.config_file ) filename = options.config_file;
@@ -387,13 +426,6 @@ int main( int argc, char *argv[] )
 
 	board = &boards[ options.minor ];
 
-	asprintf( &devicefile, "/dev/gpib%i", options.minor );
-	if( devicefile == NULL )
-	{
-		fprintf(stderr, "asprintf() failed\n");
-		perror( __FUNCTION__ );
-		return -1;
-	}
 	if( options.board_type == NULL )
 	{
 		options.board_type = strdup( board->board_type );
@@ -426,10 +458,10 @@ int main( int argc, char *argv[] )
 	}
 	if( options.is_system_controller < 0 )
 		options.is_system_controller = board->is_system_controller;
-	board->fileno = open( devicefile, O_RDWR );
+	board->fileno = open( options.device_file, O_RDWR );
 	if( board->fileno < 0 )
 	{
-		fprintf( stderr, "failed to open device file '%s'\n", devicefile );
+		fprintf( stderr, "failed to open device file '%s'\n", options.device_file );
 		perror( __FUNCTION__ );
 		return board->fileno;
 	}
@@ -442,8 +474,8 @@ int main( int argc, char *argv[] )
 	}
 	close( board->fileno );
 	board->fileno = -1;
-	free( devicefile );
-	free(options.init_data);
+	free( options.init_data );
+	free( options.device_file );
 	free( options.config_file );
 	free( options.board_type );
 
