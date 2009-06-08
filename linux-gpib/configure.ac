@@ -138,7 +138,10 @@ AM_CHECK_PYTHON_HEADERS([],[BIND_PYTHON=no;AC_MSG_NOTICE([python headers not fou
 AC_CHECK_HEADER([libguile.h],[],[BIND_GUILE="no";AC_MSG_NOTICE([libguile headers not found, disabling guile binding])])
 
 if test "$BIND_TCL" != "no"; then
-AC_CHECK_HEADER([$TCL_INC_DIR/tcl.h],[],[BIND_TCL="no";AC_MSG_NOTICE([TCL headers not found, disabling TCL binding])])
+SAVE_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $TCL_INCLUDE_SPEC"
+AC_CHECK_HEADER([tcl.h],[],[BIND_TCL="no";AC_MSG_NOTICE([TCL headers not found, disabling TCL binding])])
+CPPFLAGS=$SAVE_CPPFLAGS
 fi
 
 if test "$PHP_CONFIG" != "no"; then
