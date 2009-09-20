@@ -1,3 +1,17 @@
+2009-09-20 01:40  fmhess
+
+	* [r1539] configure.ac: Bumped version.
+
+2009-09-20 01:39  fmhess
+
+	* [r1538] m4/tcl.m4: Added fixed version of tcl.m4 from Debian
+	  Lenny, which doesn't
+	  exit when tcl is not found.
+
+2009-09-16 19:15  fmhess
+
+	* [r1536] ChangeLog: Updated ChangeLog with "svn2cl -i"
+
 2009-09-16 19:07  fmhess
 
 	* [r1535] Makefile.am: Clean up a few files from distribution
