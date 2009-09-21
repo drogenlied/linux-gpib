@@ -154,7 +154,8 @@ static void ni_gpib_remove(struct pcmcia_device *link)
 		printk("dev_node still registered ???");
 		//unregister_netdev(dev);
 	}
-	ni_pcmcia_detach(info->dev);
+	if(info->dev)
+		ni_pcmcia_detach(info->dev);
 	ni_gpib_release(link);
 
 	//free_netdev(dev);

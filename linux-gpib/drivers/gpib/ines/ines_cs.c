@@ -189,7 +189,8 @@ static void ines_gpib_remove( struct pcmcia_device *link )
 		printk("dev_node still registered ???");
 		//unregister_netdev(dev);
 	}
-	ines_pcmcia_detach(info->dev);
+	if(info->dev)
+		ines_pcmcia_detach(info->dev);
 	ines_gpib_release(link);
 
 	//free_netdev(dev);
