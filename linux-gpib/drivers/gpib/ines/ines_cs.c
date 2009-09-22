@@ -155,7 +155,7 @@ static int ines_gpib_probe( struct pcmcia_device *link )
 	link->io.IOAddrLines = 5;
 
 	/* Interrupt setup */
-	link->irq.Attributes = IRQ_TYPE_EXCLUSIVE;
+	link->irq.Attributes = IRQ_TYPE_DYNAMIC_SHARING;
 	link->irq.IRQInfo1 = IRQ_INFO2_VALID | IRQ_PULSE_ID;
 	link->irq.Handler = NULL;
 

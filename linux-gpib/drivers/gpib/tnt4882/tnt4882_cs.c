@@ -114,7 +114,7 @@ static int ni_gpib_probe(struct pcmcia_device *link)
 
 	/* Initialize the dev_link_t structure */
 	/* Interrupt setup */
-	link->irq.Attributes = IRQ_TYPE_EXCLUSIVE;
+	link->irq.Attributes = IRQ_TYPE_DYNAMIC_SHARING;
 	link->irq.IRQInfo1 = IRQ_INFO2_VALID|IRQ_LEVEL_ID;
 	link->irq.Handler = NULL;
 

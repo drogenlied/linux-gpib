@@ -168,7 +168,7 @@ static int cb_gpib_probe( struct pcmcia_device *link )
 	link->io.IOAddrLines = 10;
 
 	/* Interrupt setup */
-	link->irq.Attributes = IRQ_TYPE_EXCLUSIVE;
+	link->irq.Attributes = IRQ_TYPE_DYNAMIC_SHARING;
 	link->irq.IRQInfo1 = IRQ_INFO2_VALID|IRQ_LEVEL_ID;
 	link->irq.Handler = NULL;
 	link->irq.Instance = NULL;
