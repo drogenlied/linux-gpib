@@ -1,3 +1,34 @@
+2009-09-23 13:31  fmhess
+
+	* [r1545] drivers/gpib/sys/ibinit.c: We don't need daemonize any
+	  more.
+
+2009-09-22 20:14  fmhess
+
+	* [r1544] drivers/gpib/cb7210/cb7210_cs.c,
+	  drivers/gpib/ines/ines_cs.c, drivers/gpib/tnt4882/tnt4882_cs.c:
+	  Change pcmcia drivers from IRQ_TYPE_EXCLUSIVE to
+	  IRQ_TYPE_DYNAMIC_SHARING
+
+2009-09-22 16:07  fmhess
+
+	* [r1543] lib/ibConfYacc.y: Fix some infinite loops that could
+	  occur on parsing a gpib.conf with syntax errors.
+	  Emit warnings for old gpib.conf files that don't put an "="
+	  before boolean
+	  values.
+
+2009-09-21 20:43  fmhess
+
+	* [r1542] drivers/gpib/cb7210/cb7210_cs.c,
+	  drivers/gpib/ines/ines_cs.c, drivers/gpib/tnt4882/tnt4882_cs.c:
+	  Fix null dereference on removal of pcmcia board that was
+	  never configured with gpib_config.
+
+2009-09-20 02:36  fmhess
+
+	* [r1540] ChangeLog: Updated ChangeLog with "svn2cl -i"
+
 2009-09-20 01:40  fmhess
 
 	* [r1539] configure.ac: Bumped version.
