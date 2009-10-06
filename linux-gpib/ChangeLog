@@ -1,3 +1,20 @@
+2009-10-06 17:56  fmhess
+
+	* [r1549] ChangeLog: Updated ChangeLog for 3.2.14 with "svn2cl -i"
+
+2009-10-06 17:52  fmhess
+
+	* [r1548] configure.ac: bumped library age too.
+
+2009-10-06 17:49  fmhess
+
+	* [r1547] configure.ac: Bumped version.
+
+2009-10-06 15:53  fmhess
+
+	* [r1546] drivers/gpib/tnt4882/mite.c: Fix problem with ioremapping
+	  wrong size of io memory.
+
 2009-09-23 13:31  fmhess
 
 	* [r1545] drivers/gpib/sys/ibinit.c: We don't need daemonize any
