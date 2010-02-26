@@ -525,6 +525,7 @@ int ni_pci_attach(gpib_board_t *board, gpib_board_config_t config)
 		case PCI_DEVICE_ID_NI_PXIGPIB:
 		case PCI_DEVICE_ID_NI_PMCGPIB:
 		case PCI_DEVICE_ID_NI_PCIEGPIB:
+		case PCI_DEVICE_ID_NI_PCIE2GPIB:
 			found_board = 1;
 			break;
 		default:
@@ -723,6 +724,7 @@ static const struct pci_device_id tnt4882_pci_table[] =
 	{PCI_DEVICE(PCI_VENDOR_ID_NATINST, PCI_DEVICE_ID_NI_PXIGPIB)},
 	{PCI_DEVICE(PCI_VENDOR_ID_NATINST, PCI_DEVICE_ID_NI_PMCGPIB)},
 	{PCI_DEVICE(PCI_VENDOR_ID_NATINST, PCI_DEVICE_ID_NI_PCIEGPIB)},
+	{PCI_DEVICE(PCI_VENDOR_ID_NATINST, PCI_DEVICE_ID_NI_PCIE2GPIB)},
 	{ 0 }
 };
 MODULE_DEVICE_TABLE(pci, tnt4882_pci_table);
