@@ -19,6 +19,7 @@
 
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/semaphore.h>
 #include "ni_usb_gpib.h"
 #include "gpibP.h"
 #include "nec7210.h"
