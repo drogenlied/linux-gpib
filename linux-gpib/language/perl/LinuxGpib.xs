@@ -117,9 +117,8 @@ CODE:
 	if( buf == NULL )
 		croak( "malloc() returned NULL in ibrd()\n" );
 
-	for(i = 0; i <= cnt; i++) { buf[i] = 0; }
 	RETVAL = ibrd(ud, buf, cnt);
-	sv_setpvn(rd, buf, cnt + 1);
+	sv_setpvn(rd, buf, ThreadIbcntl());
 	free( buf );
 OUTPUT:
 	RETVAL
