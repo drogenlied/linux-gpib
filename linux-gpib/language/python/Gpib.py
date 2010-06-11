@@ -14,7 +14,7 @@ class Gpib:
 		returns a board object, with the given board number
 	Gpib(board_index, pad[, sad[, timeout[, send_eoi[, eos_mode]]]])
 		returns a device object, like ibdev()'''
-	
+
 	def __init__(self, name = 'gpib0', pad = None, sad = 0, timeout = 13, send_eoi = 1, eos_mode = 0):
 		self._own = False
 		if isinstance(name, basestring):
@@ -25,32 +25,32 @@ class Gpib:
 		else:
 			self.id = gpib.dev(name, pad, sad, timeout, send_eoi, eos_mode)
 			self._own = True
-	
+
 	# automatically close descriptor when instance is deleted
 	def __del__(self):
 		if self._own:
 			gpib.close(self.id)
-			
+
 	def __repr__(self):
 		return "%s(%d)" % (self.__class__.__name__, self.id)
 
 
 	def command(self,str):
 		gpib.command(self.id, str)
-	
+
 	def config(self,option,value):
 		self.res = gpib.config(self.id,option,value)
 		return self.res
-	
+
 	def interface_clear(self):
 		gpib.interface_clear(self.id)
-	
+
 	def write(self,str):
 		gpib.write(self.id, str)
 
 	def write_async(self,str):
 		gpib.write_async(self.id, str)
-	
+
 	def read(self,len=512):
 		self.res = gpib.read(self.id,len)
 		return self.res
@@ -65,10 +65,10 @@ class Gpib:
 
 	def clear(self):
 		gpib.clear(self.id)
-		
+
 	def wait(self,mask):
 		gpib.wait(self.id,mask)
-	
+
 	def serial_poll(self):
 		self.spb = gpib.serial_poll(self.id)
 		return self.spb
@@ -78,6 +78,10 @@ class Gpib:
 
 	def remote_enable(self,val):
 		gpib.remote_enable(self.id,val)
+
+	def ibloc(self):
+		self.res = gpib.ibloc(self.id)
+		return self.res
 
 	def ibsta(self):
 		self.res = gpib.ibsta()

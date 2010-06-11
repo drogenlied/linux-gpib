@@ -55,7 +55,7 @@ void _SetGpibError(const char *funcname)
 
 	if (code == EDVR || code == EFSO) {
 		sverrno = ThreadIbcntl();
-		snprintf(errstr, 4096, "%s() error: %s (errno: %d)", 
+		snprintf(errstr, 4096, "%s() error: %s (errno: %d)",
 			 funcname, strerror(sverrno), sverrno);
 	} else {
 		int i;
@@ -64,10 +64,10 @@ void _SetGpibError(const char *funcname)
 				break;
 		}
 		if (entry.meaning != NULL)
-			snprintf(errstr, 4096, "%s() failed: %s", 
+			snprintf(errstr, 4096, "%s() failed: %s",
 				 funcname, entry.meaning);
 		else
-			snprintf(errstr, 4096, 
+			snprintf(errstr, 4096,
 				 "%s() failed: unknown reason (iberr: %d).", funcname, code);
 	}
 	PyErr_SetString(GpibError, errstr);
@@ -150,7 +150,7 @@ static char gpib_config__doc__[] =
 	"config -- change configuration (board or device)\n"
 	"config(handle, option, setting)\n\n"
 	"option should be one one of the symbolic constants gpib.IbcXXXX";
- 
+
 static PyObject* gpib_config(PyObject *self, PyObject *args)
 {
 	int device;
@@ -339,6 +339,28 @@ static PyObject* gpib_clear(PyObject *self, PyObject *args)
 }
 
 
+static char gpib_ibloc__doc__[] =
+	"ibloc -- push device to local mode (device)\n"
+	"ibloc(handle)";
+
+static PyObject* gpib_ibloc(PyObject *self, PyObject *args)
+{
+	int device;
+	int sta;
+
+	if (!PyArg_ParseTuple(args, "i:ibloc", &device))
+		return NULL;
+
+	sta = ibloc(device);
+	if( sta & ERR){
+		_SetGpibError("ibloc");
+		return NULL;
+	}
+
+	return PyInt_FromLong(sta);
+}
+
+
 static char gpib_interface_clear__doc__[] =
 	"interface_clear -- perform interface clear (board)\n"
 	"interface_clear(handle)";
@@ -441,7 +463,7 @@ static PyObject* gpib_serial_poll(PyObject *self, PyObject *args)
 		_SetGpibError("serial_poll");
 		return NULL;
 	}
-	
+
 	return Py_BuildValue("c", spr);
 }
 
@@ -506,13 +528,14 @@ static struct PyMethodDef gpib_methods[] = {
 	{"trigger",		gpib_trigger,		METH_VARARGS,	gpib_trigger__doc__},
 	{"ibsta",		gpib_ibsta,		METH_NOARGS,	gpib_ibsta__doc__},
 	{"ibcnt",		gpib_ibcnt,		METH_NOARGS,	gpib_ibcnt__doc__},
+	{"ibloc", gpib_ibloc, METH_VARARGS, gpib_ibloc__doc__},
 	{NULL,		NULL}		/* sentinel */
 };
 
 
 /* Initialization function for the module (*must* be called initgpib) */
 
-static char gpib_module_documentation[] = 
+static char gpib_module_documentation[] =
 	"This module is a thin wrapper around the Linux GPIB C library.\n"
 	"Documentation for the C library is available at:\n"
 	"    http://linux-gpib.sourceforge.net\n\n"
@@ -551,7 +574,7 @@ void initgpib(void)
 	PyModule_AddIntConstant(m, "T100s", T100s);
 	PyModule_AddIntConstant(m, "T300s", T300s);
 	PyModule_AddIntConstant(m, "T1000s", T1000s);
-	
+
 	/* ibconfig() option values */
 	PyModule_AddIntConstant(m, "IbcPAD", IbcPAD);
 	PyModule_AddIntConstant(m, "IbcSAD", IbcSAD);
