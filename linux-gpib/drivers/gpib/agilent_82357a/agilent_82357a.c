@@ -22,6 +22,7 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/semaphore.h>
+#include <linux/slab.h>
 #include "agilent_82357a.h"
 #include "gpibP.h"
 #include "tms9914.h"
