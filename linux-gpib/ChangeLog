@@ -1,3 +1,46 @@
+2010-08-23 17:32  fmhess
+
+	* [r1557] configure.ac: Bumped version.
+
+2010-08-23 16:19  fmhess
+
+	* [r1556] drivers/gpib/agilent_82357a/agilent_82357a.c,
+	  drivers/gpib/ni_usb/ni_usb_gpib.c: Added some missing includes to
+	  fix compile errors against kernel 2.6.35.3.
+
+2010-06-11 13:25  fmhess
+
+	* [r1555] language/python/Gpib.py, language/python/gpibinter.c:
+	  ibloc() binding for Python, from Paul Knowles
+	  <paul.knowles@unifr.ch>.
+
+2010-03-30 13:08  fmhess
+
+	* [r1554] language/perl/LinuxGpib.xs: Set length of string where
+	  ibrd() stores its result correctly.
+
+2010-03-23 15:23  fmhess
+
+	* [r1553] drivers/gpib/agilent_82357a/agilent_82357a.c,
+	  drivers/gpib/ni_usb/ni_usb_gpib.c: Include linux/semaphore.h
+	  instead of relying on linux/usb.h to pull
+	  it in.
+
+2010-03-23 13:46  fmhess
+
+	* [r1552] drivers/gpib/Makefile: Only compile usb drivers if kernel
+	  support for usb is enabled.
+
+2010-02-26 14:05  fmhess
+
+	* [r1551] drivers/gpib/tnt4882/tnt4882.h,
+	  drivers/gpib/tnt4882/tnt4882_init.c: Added device id for new NI
+	  pcie board, from Carsten Rieck.
+
+2009-10-06 17:57  fmhess
+
+	* [r1550] ChangeLog: Missed a couple 3.2.14 changes.
+
 2009-10-06 17:56  fmhess
 
 	* [r1549] ChangeLog: Updated ChangeLog for 3.2.14 with "svn2cl -i"
