@@ -58,28 +58,6 @@ static int pc_debug = PCMCIA_DEBUG;
 #define DEBUG(n, args...)
 #endif
 
-/*====================================================================*/
-
-static int first_tuple(struct pcmcia_device * handle, tuple_t *tuple, cisparse_t *parse)
-{
-    int i;
-    i = pcmcia_get_first_tuple(handle, tuple);
-    if (i != 0) return i;
-    i = pcmcia_get_tuple_data(handle, tuple);
-    if (i != 0) return i;
-    return PCMCIA_PARSE_TUPLE(tuple, parse);
-}
-static int next_tuple(struct pcmcia_device * handle, tuple_t *tuple, cisparse_t *parse)
-{
-    int i;
-    i = pcmcia_get_next_tuple(handle, tuple);
-    if (i != 0) return i;
-    i = pcmcia_get_tuple_data(handle, tuple);
-    if (i != 0) return i;
-    return PCMCIA_PARSE_TUPLE(tuple, parse);
-}
-
-/*====================================================================*/
 
 /*
    The event() function is this driver's Card Services event handler.
@@ -90,7 +68,7 @@ static int next_tuple(struct pcmcia_device * handle, tuple_t *tuple, cisparse_t 
    handler.
 */
 
-static void cb_gpib_config( struct pcmcia_device  *link );
+static int cb_gpib_config( struct pcmcia_device  *link );
 static void cb_gpib_release( struct pcmcia_device  *link );
 int cb_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config);
 void cb_pcmcia_detach(gpib_board_t *board);
@@ -127,9 +105,6 @@ static  struct pcmcia_device  *curr_dev = NULL;
 typedef struct local_info_t {
 	struct pcmcia_device	*p_dev;
 	gpib_board_t		*dev;
-	dev_node_t	node;
-	u_short manfid;
-	u_short cardid;
 } local_info_t;
 
 /*====================================================================
@@ -167,12 +142,6 @@ static int cb_gpib_probe( struct pcmcia_device *link )
 	link->io.Attributes2 = IO_DATA_PATH_WIDTH_16;
 	link->io.IOAddrLines = 10;
 
-	/* Interrupt setup */
-	link->irq.Attributes = IRQ_TYPE_DYNAMIC_SHARING;
-	link->irq.IRQInfo1 = IRQ_INFO2_VALID|IRQ_LEVEL_ID;
-	link->irq.Handler = NULL;
-	link->irq.Instance = NULL;
-
 	/* General socket configuration */
 	link->conf.Attributes = CONF_ENABLE_IRQ;
 	link->conf.IntType = INT_MEMORY_AND_IO;
@@ -181,8 +150,7 @@ static int cb_gpib_probe( struct pcmcia_device *link )
 
 	/* Register with Card Services */
 	curr_dev = link;
-	cb_gpib_config(link);
-	return 0;
+	return cb_gpib_config(link);
 } /* gpib_attach */
 
 /*======================================================================
@@ -201,16 +169,39 @@ static void cb_gpib_remove( struct pcmcia_device *link )
 
 	DEBUG(0, "cb_gpib_remove(0x%p)\n", link);
 
-	if (link->dev_node) {
-		printk("dev_node still registered ???");
-		//unregister_netdev(dev);
-	}
 	if(info->dev)
 		cb_pcmcia_detach(info->dev);
 	cb_gpib_release(link);
 
 	//free_netdev(dev);
 	kfree(info);
+}
+
+static int cb_gpib_config_iteration
+(
+	struct pcmcia_device *link,
+	cistpl_cftable_entry_t *cfg,
+	cistpl_cftable_entry_t *dflt,
+	unsigned vcc,
+	void *priv_data
+)
+{
+	if (cfg->index == 0)
+		return -ENODEV;
+
+	/* IO window settings */
+	if ((cfg->io.nwin > 0) || (dflt->io.nwin > 0)) {
+		cistpl_io_t *io = (cfg->io.nwin) ? &cfg->io : &dflt->io;
+		link->io.BasePort1 = io->win[0].base;
+		link->io.NumPorts1 = io->win[0].len;
+		if (io->nwin > 1) {
+			link->io.BasePort2 = io->win[1].base;
+			link->io.NumPorts2 = io->win[1].len;
+		}
+		/* This reserves IO space but doesn't actually enable it */
+		return pcmcia_request_io(link, &link->io);
+	}
+	return 0;
 }
 
 /*======================================================================
@@ -221,115 +212,51 @@ static void cb_gpib_remove( struct pcmcia_device *link )
 
 ======================================================================*/
 /*@*/
-static void cb_gpib_config( struct pcmcia_device  *link )
+static int cb_gpib_config( struct pcmcia_device  *link )
 {
 	struct pcmcia_device * handle;
-	tuple_t tuple;
-	cisparse_t parse;
 	local_info_t *dev;
-	int i;
-	u_char buf[64];
+	int retval;
 
 	handle = link;
 	dev = link->priv;
 	DEBUG(0, "cb_gpib_config(0x%p)\n", link);
 
-	/*
-		This reads the card's CONFIG tuple to find its configuration
-		registers.
-	*/
-	do {
-		tuple.DesiredTuple = CISTPL_CONFIG;
-		i = pcmcia_get_first_tuple(handle, &tuple);
-		if (i != 0) break;
-		tuple.TupleData = buf;
-		tuple.TupleDataMax = 64;
-		tuple.TupleOffset = 0;
-		i = pcmcia_get_tuple_data(handle, &tuple);
-		if (i != 0) break;
-		i = PCMCIA_PARSE_TUPLE(&tuple, &parse);
-		if (i != 0) break;
-		link->conf.ConfigBase = parse.config.base;
-	} while (0);
-	if (i != 0) {
-		cs_error(link, ParseTuple, i);
-		return;
+	retval = pcmcia_loop_config(link, &cb_gpib_config_iteration, NULL);
+	if(retval)
+	{
+		dev_warn(&link->dev, "no configuration found\n");
+		cb_gpib_release(link);
+		return -ENODEV;
 	}
 
-	do {
-	/*
-	 * try to get manufacturer and card  ID
-	 */
+	DEBUG(0, "gpib_cs: manufacturer: 0x%x card: 0x%x\n", link->manf_id, link->card_id);
 
-		tuple.DesiredTuple = CISTPL_MANFID;
-		tuple.Attributes   = TUPLE_RETURN_COMMON;
-		if( first_tuple(handle,&tuple,&parse) == 0 ) {
-			dev->manfid = parse.manfid.manf;
-			dev->cardid = parse.manfid.card;
-			DEBUG(0,"gpib_cs: manufacturer: 0x%x card: 0x%x\n", dev->manfid,dev->cardid);
-		}
-		/* try to get board information from CIS */
 
-		tuple.DesiredTuple = CISTPL_CFTABLE_ENTRY;
-		tuple.Attributes = 0;
-		if( first_tuple(handle,&tuple,&parse) == 0 ) {
-		while(1) {
-			if( parse.cftable_entry.io.nwin > 0) {
-				link->io.BasePort1 = parse.cftable_entry.io.win[0].base;
-				link->io.NumPorts1 = parse.cftable_entry.io.win[0].len;
-				link->io.BasePort2 = 0;
-				link->io.NumPorts2 = 0;
-				link->conf.ConfigIndex = parse.cftable_entry.index;
-				i = pcmcia_request_io(link, &link->io);
-				if (i == 0) {
-					DEBUG(0, "gpib_cs: base=0x%x len=%d registered\n",
-						parse.cftable_entry.io.win[0].base,
-						parse.cftable_entry.io.win[0].len
-					);
-					break;
-				}
-			}
-			if ( next_tuple(handle,&tuple,&parse) != 0 ) break;
-
-		}
-
-		if (i != 0) {
-			cs_error(link, RequestIO, i);
-		}
-		} else {
-			printk("gpib_cs: can't get card information\n");
-		}
-
-	/*
-	   Now allocate an interrupt line.  Note that this does not
-	   actually assign a handler to the interrupt.
-	*/
-	i = pcmcia_request_irq(link, &link->irq);
-	if (i != 0) {
-	    cs_error(link, RequestIRQ, i);
-	    break;
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35)
+	retval = pcmcia_request_irq(link, &link->irq);
+	if (retval != 0) {
+		dev_warn(&link->dev, "pcmcia_request_irq failed\n");
+		cb_gpib_release(link);
+		return -ENODEV;
 	}
-        printk(KERN_DEBUG "gpib_cs: IRQ_Line=%d\n",link->irq.AssignedIRQ);
-
+	printk(KERN_DEBUG "gpib_cs: IRQ_Line=%d\n", link->irq.AssignedIRQ);
+#endif
 
 	/*
 	   This actually configures the PCMCIA socket -- setting up
 	   the I/O windows and the interrupt mapping.
 	*/
-	i = pcmcia_request_configuration(link, &link->conf);
-	if (i != 0) {
-	    cs_error(link, RequestConfiguration, i);
-	    break;
+	retval = pcmcia_request_configuration(link, &link->conf);
+	if(retval != 0)
+	{
+		dev_warn(&link->dev, "pcmcia_request_configuration failed\n");
+		cb_gpib_release(link);
+	    return -ENODEV;
 	}
-    } while (0);
 
-    /* If any step failed, release any partially configured state */
-    if (i != 0) {
-	cb_gpib_release( link );
-	return;
-    }
-
-    printk(KERN_DEBUG "gpib device loaded\n");
+	printk(KERN_DEBUG "gpib device loaded\n");
+	return 0;
 } /* gpib_config */
 
 /*======================================================================
@@ -344,8 +271,7 @@ static void cb_gpib_release( struct pcmcia_device *link )
 {
 	DEBUG(0, "cb_gpib_release(0x%p)\n", link);
 	/* Don't bother checking to see if these succeed or not */
-	pcmcia_release_window(link->win);
-
+	compat_pcmcia_release_window(link, link->win);
 	pcmcia_disable_device (link);
 } /* gpib_release */
 
@@ -373,8 +299,7 @@ static int cb_gpib_resume(struct pcmcia_device *link)
 		printk("Gpib resumed ???\n");
 		//netif_device_attach(dev);
 	}*/
-	cb_gpib_config(link);
-	return 0;
+	return cb_gpib_config(link);
 }
 
 /*====================================================================*/
@@ -498,6 +423,7 @@ int cb_pcmcia_attach( gpib_board_t *board, gpib_board_config_t config )
 	cb7210_private_t *cb_priv;
 	nec7210_private_t *nec_priv;
 	int retval;
+	int irq_number;
 
 	if(curr_dev == NULL)
 	{
@@ -519,13 +445,14 @@ int cb_pcmcia_attach( gpib_board_t *board, gpib_board_config_t config )
 	nec_priv->iobase = (void*)(unsigned long)curr_dev->io.BasePort1;
 	cb_priv->fifo_iobase = curr_dev->io.BasePort1;
 
-	if(request_irq(curr_dev->irq.AssignedIRQ, cb7210_interrupt, IRQF_SHARED,
+	irq_number = compat_pcmcia_get_irq_line(curr_dev);
+	if(request_irq(irq_number, cb7210_interrupt, IRQF_SHARED,
 		"cb7210", board))
 	{
-		printk("cb7210: failed to request IRQ %d\n", curr_dev->irq.AssignedIRQ);
+		printk("cb7210: failed to request IRQ %d\n", irq_number);
 		return -1;
 	}
-	cb_priv->irq = curr_dev->irq.AssignedIRQ;
+	cb_priv->irq = irq_number;
 
 	return cb7210_init( cb_priv, board );
 }

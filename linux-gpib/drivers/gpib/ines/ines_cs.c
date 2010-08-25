@@ -46,26 +46,6 @@ static int pc_debug = PCMCIA_DEBUG;
 #define DEBUG(n, args...)
 #endif
 
-static int first_tuple(struct pcmcia_device * handle, tuple_t *tuple,
-	cisparse_t *parse)
-{
-	int i;
-	i = pcmcia_get_first_tuple(handle, tuple);
-	if (i != 0) return i;
-	i = pcmcia_get_tuple_data(handle, tuple);
-	if (i != 0) return i;
-	return PCMCIA_PARSE_TUPLE(tuple, parse);
-}
-static int next_tuple(struct pcmcia_device * handle, tuple_t *tuple,
-	cisparse_t *parse)
-{
-	int i;
-	i = pcmcia_get_next_tuple(handle, tuple);
-	if (i != 0) return i;
-	i = pcmcia_get_tuple_data(handle, tuple);
-	if (i != 0) return i;
-	return PCMCIA_PARSE_TUPLE(tuple, parse);
-}
 
 /*
    The event() function is this driver's Card Services event handler.
@@ -76,7 +56,7 @@ static int next_tuple(struct pcmcia_device * handle, tuple_t *tuple,
    handler.
 */
 
-static void ines_gpib_config( struct pcmcia_device  *link );
+static int ines_gpib_config( struct pcmcia_device  *link );
 static void ines_gpib_release( struct pcmcia_device  *link );
 int ines_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config);
 int ines_pcmcia_accel_attach(gpib_board_t *board, gpib_board_config_t config);
@@ -114,7 +94,6 @@ static struct pcmcia_device *curr_dev = NULL;
 typedef struct local_info_t {
 	struct pcmcia_device	*p_dev;
 	gpib_board_t		*dev;
-	dev_node_t	node;
 	u_short manfid;
 	u_short cardid;
 } local_info_t;
@@ -154,11 +133,6 @@ static int ines_gpib_probe( struct pcmcia_device *link )
 	link->io.Attributes2 = 0;
 	link->io.IOAddrLines = 5;
 
-	/* Interrupt setup */
-	link->irq.Attributes = IRQ_TYPE_DYNAMIC_SHARING;
-	link->irq.IRQInfo1 = IRQ_INFO2_VALID | IRQ_PULSE_ID;
-	link->irq.Handler = NULL;
-
 	/* General socket configuration */
 	link->conf.Attributes = CONF_ENABLE_IRQ;
 	link->conf.IntType = INT_MEMORY_AND_IO;
@@ -166,8 +140,7 @@ static int ines_gpib_probe( struct pcmcia_device *link )
 
 	/* Register with Card Services */
 	curr_dev = link;
-	ines_gpib_config(link);
-	return 0;
+	return ines_gpib_config(link);
 } /* gpib_attach */
 
 /*
@@ -185,10 +158,6 @@ static void ines_gpib_remove( struct pcmcia_device *link )
 
 	DEBUG(0, "ines_gpib_remove(0x%p)\n", link);
 
-	if (link->dev_node) {
-		printk("dev_node still registered ???");
-		//unregister_netdev(dev);
-	}
 	if(info->dev)
 		ines_pcmcia_detach(info->dev);
 	ines_gpib_release(link);
@@ -197,19 +166,41 @@ static void ines_gpib_remove( struct pcmcia_device *link )
 	kfree(info);
 }
 
+static int ines_gpib_config_iteration
+(
+	struct pcmcia_device *link,
+	cistpl_cftable_entry_t *cfg,
+	cistpl_cftable_entry_t *dflt,
+	unsigned vcc,
+	void *priv_data
+)
+{
+	if (cfg->index == 0)
+		return -ENODEV;
+
+	/* IO window settings */
+	if ((cfg->io.nwin > 0) || (dflt->io.nwin > 0)) {
+		cistpl_io_t *io = (cfg->io.nwin) ? &cfg->io : &dflt->io;
+		link->io.BasePort1 = io->win[0].base;
+		link->io.NumPorts1 = io->win[0].len;
+		link->io.BasePort2 = 0;
+		link->io.NumPorts2 = 0;
+		/* This reserves IO space but doesn't actually enable it */
+		return pcmcia_request_io(link, &link->io);
+	}
+	return 0;
+}
+
 /*
     gpib_config() is scheduled to run after a CARD_INSERTION event
     is received, to configure the PCMCIA socket, and to make the
     ethernet device available to the system.
 
 */
-static void ines_gpib_config( struct pcmcia_device *link )
+static int ines_gpib_config( struct pcmcia_device *link )
 {
-	tuple_t tuple;
-	cisparse_t parse;
 	local_info_t *dev;
-	int i;
-	u_char buf[64];
+	int retval;
 	win_req_t req;
 	memreq_t mem;
 	void *virt;
@@ -217,126 +208,65 @@ static void ines_gpib_config( struct pcmcia_device *link )
 	dev = link->priv;
 	DEBUG(0, "ines_gpib_config(0x%p)\n", link);
 
-	/*
-		This reads the card's CONFIG tuple to find its configuration
-		registers.
-	*/
-	do {
-		tuple.DesiredTuple = CISTPL_CONFIG;
-		i = pcmcia_get_first_tuple(link, &tuple);
-		if (i != 0) break;
-		tuple.TupleData = buf;
-		tuple.TupleDataMax = 64;
-		tuple.TupleOffset = 0;
-		i = pcmcia_get_tuple_data(link, &tuple);
-		if (i != 0) break;
-		i = PCMCIA_PARSE_TUPLE(&tuple, &parse);
-		if (i != 0) break;
-		link->conf.ConfigBase = parse.config.base;
-		link->conf.Present = parse.config.rmask[0];
-	} while (0);
-	if (i != 0) {
-		cs_error(link, ParseTuple, i);
-		return;
-	}
-
-	/* Configure card */
-	do {
-		/*
-		 * try to get manufacturer and card  ID
-		 */
-		tuple.DesiredTuple = CISTPL_MANFID;
-		tuple.Attributes = TUPLE_RETURN_COMMON;
-		if( first_tuple(link,&tuple,&parse) == 0 ) {
-			dev->manfid = parse.manfid.manf;
-			dev->cardid = parse.manfid.card;
-			printk(KERN_DEBUG "ines_cs: manufacturer: 0x%x card: 0x%x\n",
-			dev->manfid, dev->cardid);
-		}
-		/* try to get board information from CIS */
-
-		tuple.DesiredTuple = CISTPL_CFTABLE_ENTRY;
-		tuple.Attributes = 0;
-		if( first_tuple(link,&tuple,&parse) == 0 ) {
-			while(1) {
-				if( parse.cftable_entry.io.nwin > 0) {
-					link->io.BasePort1 = parse.cftable_entry.io.win[0].base;
-					link->io.NumPorts1 = 32;
-					link->io.BasePort2 = 0;
-					link->io.NumPorts2 = 0;
-					i = pcmcia_request_io(link, &link->io);
-					if (i == 0) {
-					printk( KERN_DEBUG "ines_cs: base=0x%x len=%d registered\n",
-						link->io.BasePort1, link->io.NumPorts1 );
-					link->conf.ConfigIndex = parse.cftable_entry.index;
-					break;
-					}
-				}
-				if ( next_tuple(link,&tuple,&parse) != 0 ) break;
-			}
-
-			if (i != 0) {
-				cs_error(link, RequestIO, i);
-			}
-		} else {
-			printk("ines_cs: can't get card information\n");
-		}
-
-		link->conf.Status = CCSR_IOIS8;
-
-		/*  for the ines card we have to setup the configuration registers in
-			attribute memory here
-		*/
-		req.Attributes=WIN_MEMORY_TYPE_AM | WIN_DATA_WIDTH_8 | WIN_ENABLE;
-		req.Base=0;
-		req.Size=0x1000;
-		req.AccessSpeed=250;
-		i= pcmcia_request_window(&link, &req, &link->win);
-		if (i != 0) {
-			cs_error(link, RequestWindow, i);
-			break;
-		}
-		mem.CardOffset=0;
-		mem.Page=0;
-		i= pcmcia_map_mem_page(link->win, &mem);
-		if (i != 0) {
-			cs_error(link, MapMemPage, i);
-			break;
-		}
-		virt = ioremap( req.Base, req.Size );
-		writeb( ( link->io.BasePort1 >> 2 ) & 0xff, virt + 0xf0 ); // IOWindow base
-		iounmap( ( void* ) virt );
-
-	} while (0);
-
-	/*
-	Now allocate an interrupt line.
-	*/
-	if (link->conf.Attributes & CONF_ENABLE_IRQ)
+	retval = pcmcia_loop_config(link, &ines_gpib_config_iteration, NULL);
+	if(retval)
 	{
-		i = pcmcia_request_irq(link, &link->irq);
-		if (i != 0) {
-			cs_error(link, RequestIRQ, i);
-		}
-		printk(KERN_DEBUG "ines_cs: IRQ_Line=%d\n",link->irq.AssignedIRQ);
+		dev_warn(&link->dev, "no configuration found\n");
+		ines_gpib_release(link);
+		return -ENODEV;
 	}
+
+	printk(KERN_DEBUG "ines_cs: manufacturer: 0x%x card: 0x%x\n",
+		link->manf_id, link->card_id);
+
+	link->conf.Status = CCSR_IOIS8;
+
+	/*  for the ines card we have to setup the configuration registers in
+		attribute memory here
+	*/
+	req.Attributes=WIN_MEMORY_TYPE_AM | WIN_DATA_WIDTH_8 | WIN_ENABLE;
+	req.Base=0;
+	req.Size=0x1000;
+	req.AccessSpeed=250;
+	retval = compat_pcmcia_request_window(link, &req, &link->win);
+	if (retval) {
+		dev_warn(&link->dev, "pcmcia_request_window failed\n");
+		ines_gpib_release(link);
+		return -ENODEV;
+	}
+	mem.CardOffset=0;
+	mem.Page=0;
+	retval = compat_pcmcia_map_mem_page(link, link->win, &mem);
+	if (retval) {
+		dev_warn(&link->dev, "pcmcia_map_mem_page failed\n");
+		ines_gpib_release(link);
+		return -ENODEV;
+	}
+	virt = ioremap( req.Base, req.Size );
+	writeb( ( link->io.BasePort1 >> 2 ) & 0xff, virt + 0xf0 ); // IOWindow base
+	iounmap( ( void* ) virt );
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35)
+	retval = pcmcia_request_irq(link, &link->irq);
+	if (retval != 0) {
+		dev_warn(&link->dev, "pcmcia_request_irq failed\n");
+		ines_gpib_release(link);
+		return -ENODEV;
+	}
+	printk(KERN_DEBUG "gpib_cs: IRQ_Line=%d\n", link->irq.AssignedIRQ);
+#endif
 
 	/*
 	This actually configures the PCMCIA socket -- setting up
 	the I/O windows and the interrupt mapping.
 	*/
-	i = pcmcia_request_configuration(link, &link->conf);
-	if (i != 0) {
-		cs_error(link, RequestConfiguration, i);
-	}
-
-	/* If any step failed, release any partially configured state */
-	if (i != 0) {
+	retval = pcmcia_request_configuration(link, &link->conf);
+	if (retval) {
 		ines_gpib_release(link);
-		return;
+		return -ENODEV;
 	}
-
 	printk(KERN_DEBUG "ines gpib device loaded\n");
+	return 0;
 } /* gpib_config */
 
 /*
@@ -351,8 +281,7 @@ static void ines_gpib_release( struct pcmcia_device *link )
 {
 	DEBUG(0, "ines_gpib_release(0x%p)\n", link);
 	/* Don't bother checking to see if these succeed or not */
-	pcmcia_release_window(link->win);
-
+	compat_pcmcia_release_window(link, link->win);
 	pcmcia_disable_device (link);
 } /* gpib_release */
 
@@ -380,8 +309,7 @@ static int ines_gpib_resume(struct pcmcia_device *link)
 		printk("Gpib resumed ???\n");
 		//netif_device_attach(dev);
 	}*/
-	ines_gpib_config(link);
-	return 0;
+	return ines_gpib_config(link);
 }
 
 
@@ -510,6 +438,7 @@ int ines_common_pcmcia_attach( gpib_board_t *board )
 	ines_private_t *ines_priv;
 	nec7210_private_t *nec_priv;
 	int retval;
+	int irq_number;
 
 	if(curr_dev == NULL)
 	{
@@ -533,12 +462,13 @@ int ines_common_pcmcia_attach( gpib_board_t *board )
 
 	nec7210_board_reset( nec_priv, board );
 
-	if(request_irq(curr_dev->irq.AssignedIRQ, ines_pcmcia_interrupt, IRQF_SHARED, "pcmcia-gpib", board))
+	irq_number = compat_pcmcia_get_irq_line(curr_dev);
+	if(request_irq(irq_number, ines_pcmcia_interrupt, IRQF_SHARED, "pcmcia-gpib", board))
 	{
-		printk("gpib: can't request IRQ %d\n", curr_dev->irq.AssignedIRQ);
+		printk("gpib: can't request IRQ %d\n", irq_number);
 		return -1;
 	}
-	ines_priv->irq = curr_dev->irq.AssignedIRQ;
+	ines_priv->irq = irq_number;
 
 	return 0;
 }

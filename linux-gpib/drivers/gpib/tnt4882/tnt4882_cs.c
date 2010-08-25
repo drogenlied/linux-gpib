@@ -60,7 +60,7 @@ module_param(pc_debug, int, 0);
 
 /*====================================================================*/
 
-static void ni_gpib_config(struct pcmcia_device  *link);
+static int ni_gpib_config(struct pcmcia_device  *link);
 static void ni_gpib_release(struct pcmcia_device *link);
 int ni_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config);
 void ni_pcmcia_detach(gpib_board_t *board);
@@ -83,7 +83,6 @@ static struct pcmcia_device   *curr_dev = NULL;
 typedef struct local_info_t {
 	struct pcmcia_device	*p_dev;
 	gpib_board_t		*dev;
-	dev_node_t		node;
 	int			stop;
 	struct bus_operations	*bus;
 } local_info_t;
@@ -112,12 +111,6 @@ static int ni_gpib_probe(struct pcmcia_device *link)
 	info->p_dev = link;
 	link->priv = info;
 
-	/* Initialize the dev_link_t structure */
-	/* Interrupt setup */
-	link->irq.Attributes = IRQ_TYPE_DYNAMIC_SHARING;
-	link->irq.IRQInfo1 = IRQ_INFO2_VALID|IRQ_LEVEL_ID;
-	link->irq.Handler = NULL;
-
 	/*
 	General socket configuration defaults can go here.  In this
 	client, we assume very little, and rely on the CIS for almost
@@ -130,8 +123,7 @@ static int ni_gpib_probe(struct pcmcia_device *link)
 
 	/* Register with Card Services */
 	curr_dev = link;
-	ni_gpib_config(link);
-	return 0;
+	return ni_gpib_config(link);
 } /* ni_gpib_attach */
 
 /*======================================================================
@@ -150,16 +142,75 @@ static void ni_gpib_remove(struct pcmcia_device *link)
 
 	DEBUG(0, "ni_gpib_remove(0x%p)\n", link);
 
-	if (link->dev_node) {
-		printk("dev_node still registered ???");
-		//unregister_netdev(dev);
-	}
 	if(info->dev)
 		ni_pcmcia_detach(info->dev);
 	ni_gpib_release(link);
 
 	//free_netdev(dev);
 	kfree(info);
+}
+
+static int ni_gpib_config_iteration
+(
+	struct pcmcia_device *link,
+	cistpl_cftable_entry_t *cfg,
+	cistpl_cftable_entry_t *dflt,
+	unsigned vcc,
+	void *priv_data
+)
+{
+	win_req_t req;
+	memreq_t map;
+
+	if (cfg->index == 0)
+		return -ENODEV;
+
+	link->conf.Attributes |= CONF_ENABLE_IRQ;
+
+	if ((cfg->io.nwin > 0) || (dflt->io.nwin > 0))
+	{
+		cistpl_io_t *io = (cfg->io.nwin) ? &cfg->io : &dflt->io;
+		link->io.Attributes1 = IO_DATA_PATH_WIDTH_AUTO;
+		if (!(io->flags & CISTPL_IO_8BIT))
+			link->io.Attributes1 = IO_DATA_PATH_WIDTH_16;
+		if (!(io->flags & CISTPL_IO_16BIT))
+			link->io.Attributes1 = IO_DATA_PATH_WIDTH_8;
+		link->io.IOAddrLines = io->flags & CISTPL_IO_LINES_MASK;
+		link->io.BasePort1 = io->win[0].base;
+		link->io.NumPorts1 = io->win[0].len;
+		if (io->nwin > 1)
+		{
+			link->io.Attributes2 = link->io.Attributes1;
+			link->io.BasePort2 = io->win[1].base;
+			link->io.NumPorts2 = io->win[1].len;
+		}
+
+		/* This reserves IO space but doesn't actually enable it */
+		if(pcmcia_request_io(link, &link->io) != 0)
+		{
+			return -ENODEV;
+		}
+	}
+
+	/* Now set up a common memory window, if needed. */
+	if ((cfg->mem.nwin > 0) || (dflt->mem.nwin > 0)) {
+		cistpl_mem_t *mem =
+		(cfg->mem.nwin) ? &cfg->mem : &dflt->mem;
+		req.Attributes = WIN_DATA_WIDTH_16 | WIN_MEMORY_TYPE_CM;
+		req.Attributes |= WIN_ENABLE;
+		req.Base = mem->win[0].host_addr;
+		req.Size = mem->win[0].len;
+		if (req.Size < 0x1000)
+		req.Size = 0x1000;
+		req.AccessSpeed = 0;
+		link->win = (window_handle_t)link;
+		if(compat_pcmcia_request_window(link, &req, &link->win) != 0)
+			return -ENODEV;
+		map.Page = 0; map.CardOffset = mem->win[0].card_addr;
+		if(compat_pcmcia_map_mem_page(link, link->win, &map) != 0)
+			return -ENODEV;
+	}
+	return 0;
 }
 
 /*======================================================================
@@ -170,159 +221,38 @@ static void ni_gpib_remove(struct pcmcia_device *link)
 
 ======================================================================*/
 
-#define CS_CHECK(fn, ret) \
-do { last_fn = (fn); if ((last_ret = (ret)) != 0) goto cs_failed; } while (0)
-
-static void ni_gpib_config(struct pcmcia_device *link)
+static int ni_gpib_config(struct pcmcia_device *link)
 {
 	//local_info_t *info = link->priv;
 	//gpib_board_t *dev = info->dev;
-	tuple_t tuple;
-	cisparse_t parse;
-	int last_fn, last_ret;
-	u_char buf[64];
-	win_req_t req;
-	memreq_t map;
-	cistpl_cftable_entry_t dflt = { 0 };
+	int last_ret;
+
 	DEBUG(0, "ni_gpib_config(0x%p)\n", link);
 
-	/*
-	This reads the card's CONFIG tuple to find its configuration
-	registers.
-	*/
-	tuple.DesiredTuple = CISTPL_CONFIG;
-	tuple.Attributes = 0;
-	tuple.TupleData = buf;
-	tuple.TupleDataMax = sizeof(buf);
-	tuple.TupleOffset = 0;
-	CS_CHECK(GetFirstTuple, pcmcia_get_first_tuple(link, &tuple));
-	CS_CHECK(GetTupleData, pcmcia_get_tuple_data(link, &tuple));
-	CS_CHECK(ParseTuple, PCMCIA_PARSE_TUPLE(&tuple, &parse));
-	link->conf.ConfigBase = parse.config.base;
-	link->conf.Present = parse.config.rmask[0];
-
-	/* Configure card */
-
-  /*
-	In this loop, we scan the CIS for configuration table entries,
-	each of which describes a valid card configuration, including
-	voltage, IO window, memory window, and interrupt settings.
-
-	We make no assumptions about the card to be configured: we use
-	just the information available in the CIS.  In an ideal world,
-	this would work for any PCMCIA card, but it requires a complete
-	and accurate CIS.  In practice, a driver usually "knows" most of
-	these things without consulting the CIS, and most client drivers
-	will only use the CIS to fill in implementation-defined details.
-	*/
-	tuple.DesiredTuple = CISTPL_CFTABLE_ENTRY;
-	CS_CHECK(GetFirstTuple, pcmcia_get_first_tuple(link, &tuple));
-	while (1)
+	last_ret = pcmcia_loop_config(link, &ni_gpib_config_iteration, NULL);
+	if(last_ret)
 	{
-		cistpl_cftable_entry_t *cfg = &(parse.cftable_entry);
-		CS_CHECK(GetTupleData, pcmcia_get_tuple_data(link, &tuple));
-		CS_CHECK(ParseTuple, PCMCIA_PARSE_TUPLE(&tuple, &parse));
-		if (cfg->flags & CISTPL_CFTABLE_DEFAULT) dflt = *cfg;
-		if (cfg->index == 0) goto next_entry;
-		link->conf.ConfigIndex = cfg->index;
-
-		/* Does this card need audio output? */
-		if (cfg->flags & CISTPL_CFTABLE_AUDIO)
-		{
-			link->conf.Attributes |= CONF_ENABLE_SPKR;
-			link->conf.Status = CCSR_AUDIO_ENA;
-		}
-
-		/* Do we need to allocate an interrupt? */
-		if (cfg->irq.IRQInfo1 || dflt.irq.IRQInfo1)
-			link->conf.Attributes |= CONF_ENABLE_IRQ;
-
-		/* IO window settings */
-		link->io.NumPorts1 = link->io.NumPorts2 = 0;
-		if ((cfg->io.nwin > 0) || (dflt.io.nwin > 0))
-		{
-			cistpl_io_t *io = (cfg->io.nwin) ? &cfg->io : &dflt.io;
-			link->io.Attributes1 = IO_DATA_PATH_WIDTH_AUTO;
-			if (!(io->flags & CISTPL_IO_8BIT))
-				link->io.Attributes1 = IO_DATA_PATH_WIDTH_16;
-			if (!(io->flags & CISTPL_IO_16BIT))
-				link->io.Attributes1 = IO_DATA_PATH_WIDTH_8;
-			link->io.IOAddrLines = io->flags & CISTPL_IO_LINES_MASK;
-			link->io.BasePort1 = io->win[0].base;
-			link->io.NumPorts1 = io->win[0].len;
-			if (io->nwin > 1)
-			{
-				link->io.Attributes2 = link->io.Attributes1;
-				link->io.BasePort2 = io->win[1].base;
-				link->io.NumPorts2 = io->win[1].len;
-			}
-			/* This reserves IO space but doesn't actually enable it */
-			last_ret = pcmcia_request_io(link, &link->io);
-			if(last_ret != 0)
-			{
-				goto next_entry;
-			}
-		}
-
-		/*
-		Now set up a common memory window, if needed.  There is room
-		in the dev_link_t structure for one memory window handle,
-		but if the base addresses need to be saved, or if multiple
-		windows are needed, the info should go in the private data
-		structure for this device.
-
-		Note that the memory window base is a physical address, and
-		needs to be mapped to virtual space with ioremap() before it
-		is used.
-		*/
-		if ((cfg->mem.nwin > 0) || (dflt.mem.nwin > 0)) {
-			cistpl_mem_t *mem =
-			(cfg->mem.nwin) ? &cfg->mem : &dflt.mem;
-			req.Attributes = WIN_DATA_WIDTH_16|WIN_MEMORY_TYPE_CM;
-			req.Attributes |= WIN_ENABLE;
-			req.Base = mem->win[0].host_addr;
-			req.Size = mem->win[0].len;
-			if (req.Size < 0x1000)
-			req.Size = 0x1000;
-			req.AccessSpeed = 0;
-			link->win = (window_handle_t)link;
-			if(pcmcia_request_window(&link, &req, &link->win) != 0)
-				goto next_entry;
-			map.Page = 0; map.CardOffset = mem->win[0].card_addr;
-			if(pcmcia_map_mem_page(link->win, &map) != 0)
-				goto next_entry;
-		}
-		/* If we got this far, we're cool! */
-		break;
-
-		next_entry:
-		CS_CHECK( GetNextTuple, pcmcia_get_next_tuple(link, &tuple));
+		dev_warn(&link->dev, "no configuration found\n");
+		ni_gpib_release(link);
+		return last_ret;
 	}
 
-	/*
-	Allocate an interrupt line.  Note that this does not assign a
-	handler to the interrupt, unless the 'Handler' member of the
-	irq structure is initialized.
-	*/
-	if (link->conf.Attributes & CONF_ENABLE_IRQ)
-		CS_CHECK( RequestIRQ, pcmcia_request_irq(link, &link->irq) );
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35)
+	last_ret = pcmcia_request_irq(link, &link->irq);
+	if (last_ret != 0) {
+		dev_warn(&link->dev, "pcmcia_request_irq failed\n");
+		ni_gpib_release(link);
+		return -ENODEV;
+	}
+	printk(KERN_DEBUG "gpib_cs: IRQ_Line=%d\n", link->irq.AssignedIRQ);
+#endif
 
-	/*
-	This actually configures the PCMCIA socket -- setting up
-	the I/O windows and the interrupt mapping, and putting the
-	card and host interface into "Memory and IO" mode.
-	*/
-	CS_CHECK( RequestConfiguration, pcmcia_request_configuration(link, &link->conf) );
-
-	/*
-	At this point, the dev_node_t structure(s) need to be
-	initialized and arranged in a linked list at link->dev.
-	*/
-	return;
-
-	cs_failed:
-	cs_error(link, last_fn, last_ret);
-	ni_gpib_release(link);
+	last_ret = pcmcia_request_configuration(link, &link->conf);
+	if (last_ret) {
+		ni_gpib_release(link);
+		return last_ret;
+	}
+	return 0;
 } /* ni_gpib_config */
 
 /*======================================================================
@@ -363,8 +293,7 @@ static int ni_gpib_resume(struct pcmcia_device *link)
 		printk("Gpib resumed ???\n");
 		//netif_device_attach(dev);
 	}*/
-	ni_gpib_config(link);
-	return 0;
+	return ni_gpib_config(link);
 }
 
 /*====================================================================*/
@@ -461,6 +390,7 @@ int ni_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config)
 	tnt4882_private_t *tnt_priv;
 	nec7210_private_t *nec_priv;
 	int isr_flags = IRQF_SHARED;
+	int irq_number;
 
 	DEBUG(0, "ni_pcmcia_attach(0x%p)\n", board);
 
@@ -498,12 +428,13 @@ int ni_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config)
 	nec_priv->iobase = (void*)(unsigned long)curr_dev->io.BasePort1;
 
 	// get irq
-	if( request_irq( curr_dev->irq.AssignedIRQ, tnt4882_interrupt, isr_flags, "tnt4882", board))
+	irq_number = compat_pcmcia_get_irq_line( curr_dev );
+	if( request_irq( irq_number, tnt4882_interrupt, isr_flags, "tnt4882", board))
 	{
-		printk("gpib: can't request IRQ %d\n", curr_dev->irq.AssignedIRQ);
+		printk("gpib: can't request IRQ %d\n", irq_number);
 		return -1;
 	}
-	tnt_priv->irq = curr_dev->irq.AssignedIRQ;
+	tnt_priv->irq = irq_number;
 
 	tnt4882_init( tnt_priv, board );
 
