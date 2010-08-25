@@ -1,3 +1,16 @@
+2010-08-25 17:58  fmhess
+
+	* [r1559] drivers/gpib/cb7210/cb7210_cs.c,
+	  drivers/gpib/include/pcmcia/ds.h, drivers/gpib/ines/ines_cs.c,
+	  drivers/gpib/tnt4882/tnt4882_cs.c: Fixed compilation errors
+	  against recent kernels when pcmcia support is enabled.
+	  Verified compilation (but not operation) against Linux kernels
+	  2.6.31.14, 2.6.33.1, and 2.6.35.3.
+
+2010-08-23 17:37  fmhess
+
+	* [r1558] ChangeLog: Updated ChangeLog for 3.2.15 with "svn2cl -i"
+
 2010-08-23 17:32  fmhess
 
 	* [r1557] configure.ac: Bumped version.
