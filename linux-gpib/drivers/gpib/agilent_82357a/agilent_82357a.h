@@ -19,6 +19,8 @@
 #ifndef _AGILENT_82357_H
 #define _AGILENT_82357_H
 
+#include <linux/mutex.h>
+#include <linux/semaphore.h>
 #include <linux/usb.h>
 #include <linux/timer.h>
 #include "gpibP.h"
@@ -84,7 +86,7 @@ enum agilent_82357a_write_flags
 	AWF_ATN = 0x10,
 	AWF_SEPARATE_HEADER = 0x80
 };
-                        
+
 enum agilent_82357a_interrupt_flag_bit_numbers
 {
 	AIF_SRQ_BN = 0,
@@ -145,11 +147,11 @@ typedef struct
 	unsigned long interrupt_flags;
 	struct urb *bulk_urb;
 	struct urb *interrupt_urb;
-	uint8_t interrupt_buffer[0x8];	
-	struct semaphore bulk_transfer_lock;
-	struct semaphore bulk_alloc_lock;
-	struct semaphore interrupt_alloc_lock;
-	struct semaphore control_alloc_lock;
+	uint8_t interrupt_buffer[0x8];
+	struct mutex bulk_transfer_lock;
+	struct mutex bulk_alloc_lock;
+	struct mutex interrupt_alloc_lock;
+	struct mutex control_alloc_lock;
 	unsigned bulk_out_endpoint;
 	unsigned interrupt_in_endpoint;
 	unsigned is_cic : 1;

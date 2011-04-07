@@ -19,6 +19,8 @@
 #ifndef _NI_USB_GPIB_H
 #define _NI_USB_GPIB_H
 
+#include <linux/mutex.h>
+#include <linux/semaphore.h>
 #include <linux/usb.h>
 #include <linux/timer.h>
 #include "gpibP.h"
@@ -73,9 +75,9 @@ typedef struct
 	struct urb *bulk_urb;
 	struct urb *interrupt_urb;
 	uint8_t interrupt_buffer[0x11];
-	struct semaphore bulk_transfer_lock;
-	struct semaphore control_transfer_lock;
-	struct semaphore interrupt_transfer_lock;
+	struct mutex bulk_transfer_lock;
+	struct mutex control_transfer_lock;
+	struct mutex interrupt_transfer_lock;
 } ni_usb_private_t;
 
 typedef struct
