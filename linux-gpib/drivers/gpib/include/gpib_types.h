@@ -25,6 +25,7 @@
  * This really should be in a different header file.
  */
 #include "gpib/gpib_user.h"
+#include <asm/atomic.h>
 #include <linux/mutex.h>
 #include <linux/wait.h>
 #include <linux/sched.h>
@@ -156,14 +157,14 @@ struct gpib_pseudo_irq
 {
 	struct timer_list timer;
 	irqreturn_t (*handler)(int, void * PT_REGS_ARG);
-	volatile short active;
+	atomic_t active;
 };
 
 static inline void init_gpib_pseudo_irq( struct gpib_pseudo_irq *pseudo_irq)
 {
 	pseudo_irq->handler = NULL;
 	init_timer(&pseudo_irq->timer);
-	pseudo_irq->active = 0;
+	atomic_set(&pseudo_irq->active, 0);
 }
 
 /* list so we can make a linked list of drivers */
@@ -196,10 +197,16 @@ struct gpib_board_struct
 	 * watchdog timer times out.
 	 */
 	wait_queue_head_t wait;
-	/* Lock that only allows one process to access this board at a time */
-	struct mutex mutex;
+	/* Lock that only allows one process to access this board at a time.
+	   Has to be first in any locking order, since it can be locked over
+	   multiple ioctls. */
+	struct mutex user_mutex;
+	/* Mutex which compensates for removal of "big kernel lock" from kernel.
+	   Should not be held for extended waits. */
+	struct mutex big_gpib_mutex;
 	/* pid of last process to lock the board mutex */
 	pid_t locking_pid;
+	spinlock_t locking_pid_spinlock;
 	/* Spin lock for dealing with races with the interrupt handler */
 	spinlock_t spinlock;
 	/* Watchdog timer to enable timeouts */
@@ -245,10 +252,10 @@ struct gpib_board_struct
 	int minor;
 	/* struct to deal with polling mode*/
 	struct gpib_pseudo_irq pseudo_irq;
+	/* error dong autopoll */
+	atomic_t stuck_srq;
 	/* Flag that indicates whether board is system controller of the bus */
 	unsigned master : 1;
-	/* error dong autopoll */
-	unsigned stuck_srq : 1;
 	/* individual status bit */
 	unsigned ist : 1;
 };
@@ -290,13 +297,13 @@ typedef struct
 {
 	unsigned int pad;	/* primary gpib address */
 	int sad;	/* secondary gpib address (negative means disabled) */
-	volatile short io_in_progress;
+	atomic_t io_in_progress;
 	unsigned is_board : 1;
 } gpib_descriptor_t;
 
 typedef struct
 {
-	volatile short holding_mutex;
+	atomic_t holding_mutex;
 	gpib_descriptor_t *descriptors[ GPIB_MAX_NUM_DESCRIPTORS ];
 	/* locked while descriptors are being allocated/deallocated */
 	struct mutex descriptors_mutex;

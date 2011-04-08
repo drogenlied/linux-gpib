@@ -54,13 +54,13 @@ void pseudo_irq_handler(unsigned long arg)
 	gpib_board_t *board = (gpib_board_t*) arg;
 	if(board->pseudo_irq.handler)
 		board->pseudo_irq.handler(0, board
-#ifdef HAVE_PT_REGS		
+#ifdef HAVE_PT_REGS
 		, NULL
 #endif
 		);
 	else
 		printk("gpib: bug! pseudo_irq.handler is NULL\n");
-	if(board->pseudo_irq.active)
+	if(atomic_read(&board->pseudo_irq.active))
 		mod_timer(&board->pseudo_irq.timer, jiffies + pseudo_irq_period());
 }
 
@@ -76,7 +76,7 @@ int gpib_request_pseudo_irq(gpib_board_t *board, irqreturn_t (*handler)(int, voi
 	board->pseudo_irq.timer.expires = jiffies + pseudo_irq_period();
 	board->pseudo_irq.timer.function = pseudo_irq_handler;
 	board->pseudo_irq.timer.data = (unsigned long) board;
-	board->pseudo_irq.active = 1;
+	atomic_set(&board->pseudo_irq.active, 1);
 	add_timer(&board->pseudo_irq.timer);
 
 	return 0;
@@ -84,7 +84,7 @@ int gpib_request_pseudo_irq(gpib_board_t *board, irqreturn_t (*handler)(int, voi
 
 void gpib_free_pseudo_irq(gpib_board_t *board)
 {
-	board->pseudo_irq.active = 0;
+	atomic_set(&board->pseudo_irq.active, 0);
 	del_timer_sync(&board->pseudo_irq.timer);
 	board->pseudo_irq.handler = NULL;
 }

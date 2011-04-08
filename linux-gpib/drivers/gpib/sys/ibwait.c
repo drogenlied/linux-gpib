@@ -41,7 +41,15 @@ static int wait_satisfied( struct wait_info *winfo, gpib_status_queue_t *status_
 	gpib_board_t *board = winfo->board;
 	int temp_status;
 
+	if(mutex_lock_interruptible( &board->big_gpib_mutex ))
+	{
+		return -ERESTARTSYS;
+	}
+
 	temp_status = general_ibstatus( board, status_queue, 0, 0, desc );
+
+	mutex_unlock(&board->big_gpib_mutex);
+
 	if( winfo->timed_out )
 		temp_status |= TIMO;
 	else
@@ -109,6 +117,8 @@ int ibwait( gpib_board_t *board, int wait_mask, int clear_mask, int set_mask,
 		return 0;
 	}
 
+	mutex_unlock( &board->big_gpib_mutex );
+
 	init_wait_info( &winfo );
 	winfo.board = board;
 	winfo.usec_timeout = usec_timeout;
@@ -122,10 +132,17 @@ int ibwait( gpib_board_t *board, int wait_mask, int clear_mask, int set_mask,
 	}
 	removeWaitTimer( &winfo );
 
+	if(retval) return retval;
+	if(mutex_lock_interruptible( &board->big_gpib_mutex ))
+	{
+		return -ERESTARTSYS;
+	}
+
 	/* make sure we only clear status bits that we are reporting */
 	if( *status & clear_mask || set_mask )
 		general_ibstatus( board, status_queue, *status & clear_mask, set_mask, 0 );
 
-	return retval;
-}
+	mutex_unlock( &board->big_gpib_mutex );
 
+	return 0;
+}

@@ -127,17 +127,24 @@ int autopoll_all_devices( gpib_board_t *board )
 	int retval;
 
 	GPIB_DPRINTK( "entered autopoll_all_devices()\n" );
-	if( mutex_lock_interruptible( &board->mutex ) )
+	if( mutex_lock_interruptible( &board->user_mutex ) )
 	{
 		return -ERESTARTSYS;
 	}
+	if(mutex_lock_interruptible(&board->big_gpib_mutex))
+	{
+		mutex_unlock( &board->user_mutex );
+		return -ERESTARTSYS;
+	}
+
 
 	GPIB_DPRINTK( "autopoll has board lock\n" );
 
 	retval = serial_poll_all( board, serial_timeout );
 	if( retval < 0 )
 	{
-		mutex_unlock( &board->mutex );
+		mutex_unlock(&board->big_gpib_mutex);
+		mutex_unlock( &board->user_mutex );
 		return retval;
 	}
 
@@ -145,7 +152,8 @@ int autopoll_all_devices( gpib_board_t *board )
 	/* need to wake wait queue in case someone is
 	* waiting on RQS */
 	wake_up_interruptible( &board->wait );
-	mutex_unlock( &board->mutex );
+	mutex_unlock(&board->big_gpib_mutex);
+	mutex_unlock( &board->user_mutex );
 
 	return retval;
 }

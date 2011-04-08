@@ -129,22 +129,23 @@ static int serial_poll_single( gpib_board_t *board, unsigned int pad, int sad,
 
 int serial_poll_all( gpib_board_t *board, unsigned int usec_timeout )
 {
-	int retval;
+	int retval = 0;
 	struct list_head *cur;
-	const struct list_head *head = &board->device_list;
+	const struct list_head *head = NULL;
 	gpib_status_queue_t *device;
 	uint8_t result;
-	unsigned int num_bytes;
+	unsigned int num_bytes = 0;
 
 	GPIB_DPRINTK( "entering serial_poll_all()\n" );
 
-	if( head->next == head ) return 0;
-
+	head = &board->device_list;
+	if( head->next == head )
+	{
+		return 0;
+	}
 
 	retval = setup_serial_poll( board, usec_timeout );
 	if( retval < 0 ) return retval;
-
-	num_bytes = 0;
 
 	for( cur = head->next; cur != head; cur = cur->next )
 	{

@@ -19,40 +19,45 @@
 #include "autopoll.h"
 #include <linux/kthread.h>
 #include <linux/vmalloc.h>
-#include <linux/smp_lock.h>
+
+static int autospoll_wait_should_wake_up(gpib_board_t *board)
+{
+	int retval;
+
+	mutex_lock(&board->big_gpib_mutex);
+
+	retval = board->master && board->autospollers > 0 &&
+		atomic_read(&board->stuck_srq) &&
+		test_and_clear_bit(SRQI_NUM, &board->status);
+
+	mutex_unlock(&board->big_gpib_mutex);
+	return retval;
+}
 
 static int autospoll_thread(void *board_void)
 {
 	gpib_board_t *board = board_void;
 	int retval = 0;
 
-	lock_kernel();
-	/* This thread doesn't need any user-level access,
-	 * so get rid of all our resources..
-	 */
-	allow_signal(SIGKILL);
-
 	GPIB_DPRINTK("entering autospoll thread\n" );
 
 	while(1)
 	{
-		if(wait_event_interruptible(board->wait,
+		wait_event_interruptible(board->wait,
 			kthread_should_stop() ||
-			(board->master && board->autospollers > 0 &&
-			board->stuck_srq == 0 &&
-			test_and_clear_bit(SRQI_NUM, &board->status))))
-		{
-			retval = -ERESTARTSYS;
-			break;
-		}
+			autospoll_wait_should_wake_up(board));
 		GPIB_DPRINTK("autospoll wait satisfied\n" );
 		if(kthread_should_stop()) break;
+
+		mutex_lock(&board->big_gpib_mutex);
 		/* make sure we are still good after we have
 		 * lock */
 		if(board->autospollers <= 0 || board->master == 0)
 		{
+			mutex_unlock(&board->big_gpib_mutex);
 			continue;
 		}
+		mutex_unlock(&board->big_gpib_mutex);
 
 		if(try_module_get(board->provider_module))
 		{
@@ -63,13 +68,11 @@ static int autospoll_thread(void *board_void)
 		if(retval <= 0)
 		{
 			printk("gpib%i: %s: struck SRQ\n", board->minor, __FUNCTION__);
-			board->stuck_srq = 1;	// XXX could be better
+			atomic_set(&board->stuck_srq, 1);	// XXX could be better
 			set_bit(SRQI_NUM, &board->status);
 		}
 	}
 	printk("gpib%i: exiting autospoll thread\n", board->minor);
-	board->autospoll_task = NULL;
-	unlock_kernel();
 	return retval;
 }
 
@@ -93,11 +96,12 @@ int ibonline(gpib_board_t *board, gpib_board_config_t config)
 	with autospoll thread causing huge slowdowns */
 #ifndef CONFIG_NIOS2
 	board->autospoll_task = kthread_run(&autospoll_thread, board, "gpib%d_autospoll_kthread", board->minor);
-	if(IS_ERR(board->autospoll_task))
+	retval = IS_ERR(board->autospoll_task);
+	if(retval)
 	{
 		printk("gpib: failed to create autospoll thread\n");
 		board->interface->detach(board);
-		return PTR_ERR(board->autospoll_task);
+		return retval;
 	}
 #endif
 	board->online = 1;
@@ -116,12 +120,15 @@ int iboffline( gpib_board_t *board )
 		return 0;
 	}
 	if(board->interface == NULL) return -ENODEV;
+
 	if(board->autospoll_task != NULL && !IS_ERR(board->autospoll_task))
 	{
 		retval = kthread_stop(board->autospoll_task);
 		if(retval)
 			printk("gpib: kthread_stop returned %i\n", retval);
+		board->autospoll_task = NULL;
 	}
+
 	board->interface->detach( board );
 	gpib_deallocate_board( board );
 	board->online = 0;

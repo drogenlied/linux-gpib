@@ -62,7 +62,7 @@ void init_gpib_descriptor( gpib_descriptor_t *desc )
 	desc->pad = 0;
 	desc->sad = -1;
 	desc->is_board = 0;
-	desc->io_in_progress = 0;
+	atomic_set(&desc->io_in_progress, 0);
 }
 
 void gpib_register_driver(gpib_interface_t *interface, struct module *provider_module)
@@ -122,8 +122,10 @@ void init_gpib_board( gpib_board_t *board )
 	board->buffer_length = 0;
 	board->status = 0;
 	init_waitqueue_head(&board->wait);
-	mutex_init(&board->mutex);
+	mutex_init(&board->user_mutex);
+	mutex_init(&board->big_gpib_mutex);
 	board->locking_pid = 0;
+	spin_lock_init(&board->locking_pid_spinlock);
 	spin_lock_init(&board->spinlock);
 	init_timer(&board->timer);
 	board->ibbase = 0;
@@ -145,7 +147,7 @@ void init_gpib_board( gpib_board_t *board )
 	board->minor = -1;
 	init_gpib_pseudo_irq(&board->pseudo_irq);
 	board->master = 1;
-	board->stuck_srq = 0;
+	atomic_set(&board->stuck_srq, 0);
 }
 
 int gpib_allocate_board( gpib_board_t *board )

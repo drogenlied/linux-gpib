@@ -20,7 +20,6 @@
 
 #include <linux/fcntl.h>
 #include <linux/kmod.h>
-#include <linux/smp_lock.h>
 #include <linux/vmalloc.h>
 
 static int board_type_ioctl(gpib_file_private_t *file_priv, gpib_board_t *board, unsigned long arg);
@@ -124,7 +123,7 @@ int ibopen(struct inode *inode, struct file *filep)
 		retval = request_module( module_string );
 		if( retval )
 		{
-			printk( "gpib: (debug) request module returned %i\n", retval );
+			GPIB_DPRINTK( "gpib: request module returned %i\n", retval );
 		}
 	}
 	if(board->interface)
@@ -160,8 +159,8 @@ int ibclose(struct inode *inode, struct file *filep)
 	if( priv )
 	{
 		cleanup_open_devices( priv, board );
-		if( priv->holding_mutex )
-			mutex_unlock( &board->mutex );
+		if( atomic_read(&priv->holding_mutex) )
+			mutex_unlock( &board->user_mutex );
 
 		if(priv->got_module && board->use_count)
 		{
@@ -191,7 +190,10 @@ long ibioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 	}
 	board = &board_array[ minor ];
 
-	lock_kernel();
+	if(mutex_lock_interruptible(&board->big_gpib_mutex))
+	{
+		return -ERESTARTSYS;
+	}
 
 	GPIB_DPRINTK( "pid %i, minor %i, ioctl %d, interface=%s, use=%d, onl=%d\n",
 		current->pid, minor, cmd & 0xff,
@@ -252,8 +254,10 @@ long ibioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 			goto done;
 			break;
 		case IBMUTEX:
-			retval = mutex_ioctl( board, file_priv, arg );
-			goto done;
+			/* Need to unlock board->big_gpib_mutex before potentially locking board->user_mutex
+			   to maintain consistent locking order */
+			mutex_unlock(&board->big_gpib_mutex);
+			return mutex_ioctl( board, file_priv, arg );
 			break;
 		case IBPAD:
 			retval = pad_ioctl( board, file_priv, arg );
@@ -314,13 +318,16 @@ long ibioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 			break;
 	}
 
+	spin_lock(&board->locking_pid_spinlock);
 	if( current->pid != board->locking_pid )
 	{
+		spin_unlock(&board->locking_pid_spinlock);
 		printk( "gpib: need to hold board lock to perform ioctl %i\n",
 			cmd & 0xff );
 		retval = -EPERM;
 		goto done;
 	}
+	spin_unlock(&board->locking_pid_spinlock);
 
 	switch( cmd )
 	{
@@ -333,8 +340,10 @@ long ibioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 			goto done;
 			break;
 		case IBCMD:
-			retval = command_ioctl( file_priv, board, arg );
-			goto done;
+			/* IO ioctls can take a long time, we need to unlock board->big_gpib_mutex
+				before we call them. */
+			mutex_unlock(&board->big_gpib_mutex);
+			return command_ioctl( file_priv, board, arg );
 			break;
 		case IBEOS:
 			retval = eos_ioctl( board, arg );
@@ -353,8 +362,10 @@ long ibioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 			goto done;
 			break;
 		case IBRD:
-			retval = read_ioctl( file_priv, board, arg );
-			goto done;
+			/* IO ioctls can take a long time, we need to unlock board->big_gpib_mutex
+				before we call them. */
+			mutex_unlock(&board->big_gpib_mutex);
+			return read_ioctl( file_priv, board, arg );
 			break;
 		case IBRPP:
 			retval = parallel_poll_ioctl( board, arg );
@@ -385,8 +396,10 @@ long ibioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 			goto done;
 			break;
 		case IBWRT:
-			retval = write_ioctl( file_priv, board, arg );
-			goto done;
+			/* IO ioctls can take a long time, we need to unlock board->big_gpib_mutex
+				before we call them. */
+			mutex_unlock(&board->big_gpib_mutex);
+			return write_ioctl( file_priv, board, arg );
 			break;
 		default:
 			retval = -ENOTTY;
@@ -395,7 +408,7 @@ long ibioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 	}
 
 done:
-	unlock_kernel();
+	mutex_unlock(&board->big_gpib_mutex);
 	return retval;
 }
 
@@ -489,7 +502,7 @@ static int read_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
 	if(!access_ok(VERIFY_WRITE, userbuf, read_cmd.count))
 		return -EFAULT;
 
-	desc->io_in_progress = 1;
+	atomic_set(&desc->io_in_progress, 1);
 
 	/* Read buffer loads till we fill the user supplied buffer */
 	remain = read_cmd.count;
@@ -522,7 +535,7 @@ static int read_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
 	}
 	if(retval == 0)
 		retval = copy_to_user((void*) arg, &read_cmd, sizeof(read_cmd));
-	desc->io_in_progress = 0;
+	atomic_set(&desc->io_in_progress, 0);
 	wake_up_interruptible( &board->wait );
 	if(retval) return -EFAULT;
 
@@ -554,7 +567,7 @@ static int command_ioctl( gpib_file_private_t *file_priv,
 	/* Write buffer loads till we empty the user supplied buffer */
 	remain = cmd.count;
 
-	desc->io_in_progress = 1;
+	atomic_set(&desc->io_in_progress, 1);
 	while( remain > 0 )
 	{
 		retval = copy_from_user(board->buffer, userbuf, (board->buffer_length < remain) ?
@@ -565,7 +578,7 @@ static int command_ioctl( gpib_file_private_t *file_priv,
 				board->buffer_length : remain );
 		if(retval < 0)
 		{
-			desc->io_in_progress = 0;
+			atomic_set(&desc->io_in_progress, 0);
 			wake_up_interruptible( &board->wait );
 			return retval;
 			break;
@@ -578,7 +591,7 @@ static int command_ioctl( gpib_file_private_t *file_priv,
 	cmd.count -= remain;
 
 	retval = copy_to_user((void*) arg, &cmd, sizeof(cmd));
-	desc->io_in_progress = 0;
+	atomic_set(&desc->io_in_progress, 0);
 	wake_up_interruptible( &board->wait );
 	if( retval ) return -EFAULT;
 
@@ -608,7 +621,7 @@ static int write_ioctl(gpib_file_private_t *file_priv, gpib_board_t *board,
 	if(!access_ok(VERIFY_READ, userbuf, write_cmd.count))
 		return -EFAULT;
 
-	desc->io_in_progress = 1;
+	atomic_set(&desc->io_in_progress, 1);
 
 	/* Write buffer loads till we empty the user supplied buffer */
 	remain = write_cmd.count;
@@ -645,7 +658,7 @@ static int write_ioctl(gpib_file_private_t *file_priv, gpib_board_t *board,
 		retval = 0;
 	}
 	fault = copy_to_user((void*) arg, &write_cmd, sizeof(write_cmd));
-	desc->io_in_progress = 0;
+	atomic_set(&desc->io_in_progress, 0);
 	wake_up_interruptible( &board->wait );
 	if(fault) return -EFAULT;
 
@@ -811,7 +824,7 @@ static int open_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned lon
 
 	/* clear stuck srq state, since we may be able to find service request on
 	 * the new device */
-	board->stuck_srq = 0;
+	atomic_set(&board->stuck_srq, 0);
 
 	open_dev_cmd.handle = i;
 	retval = copy_to_user( ( void* ) arg, &open_dev_cmd, sizeof( open_dev_cmd ) );
@@ -1174,26 +1187,35 @@ static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 
 	if( lock_mutex )
 	{
-		retval = mutex_lock_interruptible(&board->mutex);
+		retval = mutex_lock_interruptible(&board->user_mutex);
 		if(retval)
 		{
 			printk("gpib: ioctl interrupted while waiting on lock\n");
 			return -ERESTARTSYS;
 		}
+
+		spin_lock(&board->locking_pid_spinlock);
 		board->locking_pid = current->pid;
-		file_priv->holding_mutex = 1;
+		spin_unlock(&board->locking_pid_spinlock);
+
+		atomic_set(&file_priv->holding_mutex, 1);
 		GPIB_DPRINTK("locked board %d mutex\n", board->minor);
 	}else
 	{
+		spin_lock(&board->locking_pid_spinlock);
 		if( current->pid != board->locking_pid )
 		{
 			printk( "gpib: bug! pid %i tried to release mutex held by pid %i\n",
 				current->pid, board->locking_pid );
+			spin_unlock(&board->locking_pid_spinlock);
 			return -EPERM;
 		}
-		file_priv->holding_mutex = 0;
 		board->locking_pid = 0;
-		mutex_unlock( &board->mutex );
+		spin_unlock(&board->locking_pid_spinlock);
+
+		atomic_set(&file_priv->holding_mutex, 0);
+
+		mutex_unlock( &board->user_mutex );
 		GPIB_DPRINTK("unlocked board %i mutex\n", board->minor);
 	}
 
