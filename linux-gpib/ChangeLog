@@ -1,3 +1,17 @@
+2011-04-07 14:53  fmhess
+
+	* [r1562] drivers/gpib/agilent_82357a/agilent_82357a.c,
+	  drivers/gpib/agilent_82357a/agilent_82357a.h,
+	  drivers/gpib/ni_usb/ni_usb_gpib.c,
+	  drivers/gpib/ni_usb/ni_usb_gpib.h: Convert mutex usage in drivers
+	  from old linux/semaphore.h based stuff
+	  to linux/mutex.h.
+
+2010-08-25 18:00  fmhess
+
+	* [r1560] ChangeLog: More updates of ChangeLog for 3.2.15 with
+	  "svn2cl -i"
+
 2010-08-25 17:58  fmhess
 
 	* [r1559] drivers/gpib/cb7210/cb7210_cs.c,
