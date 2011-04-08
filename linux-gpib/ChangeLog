@@ -1,3 +1,20 @@
+2011-04-08 21:02  fmhess
+
+	* [r1565] ChangeLog: Updated ChangeLog with "svn2cl -i".
+
+2011-04-08 21:01  fmhess
+
+	* [r1564] configure.ac: Bumped version.
+
+2011-04-08 20:34  fmhess
+
+	* [r1563] drivers/gpib/include/gpib_types.h,
+	  drivers/gpib/sys/autopoll.c, drivers/gpib/sys/device.c,
+	  drivers/gpib/sys/ibinit.c, drivers/gpib/sys/ibutil.c,
+	  drivers/gpib/sys/ibwait.c, drivers/gpib/sys/osfuncs.c,
+	  drivers/gpib/sys/osinit.c, drivers/gpib/sys/osutil.c: Cope with
+	  loss of "big kernel lock" in 2.6.39 kernel.
+
 2011-04-07 14:53  fmhess
 
 	* [r1562] drivers/gpib/agilent_82357a/agilent_82357a.c,
