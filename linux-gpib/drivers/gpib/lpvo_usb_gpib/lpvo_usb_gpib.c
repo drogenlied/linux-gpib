@@ -321,6 +321,7 @@ int usb_gpib_attach(gpib_board_t *board, gpib_board_config_t config) {
 	int base = (long int) board->ibbase;
 	struct file *f;
 	struct ktermios old_termios;
+	struct tty_ldisc *ld;
 
 	printk (KERN_ALERT "%s:%s configuring %s#%d as ttyUSB%d\n", HERE,
 		board->interface->name, board->minor, base);
@@ -349,6 +350,7 @@ int usb_gpib_attach(gpib_board_t *board, gpib_board_config_t config) {
 
 	tty = (struct tty_struct *)f->private_data;
 
+	mutex_lock(&tty->termios_mutex);
 	old_termios = * tty->termios;
 	tty->termios->c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP
 				| INLCR | IGNCR | ICRNL | IXON);
@@ -360,7 +362,18 @@ int usb_gpib_attach(gpib_board_t *board, gpib_board_config_t config) {
 	tty->termios->c_cc[VTIME] = 0;
 	tty->termios->c_cc[VMIN] = 1;
 
-	tty->ops->set_termios (tty, &old_termios);
+	if (tty->ops->set_termios)
+		(*tty->ops->set_termios)(tty, &old_termios);
+	else
+		tty_termios_copy_hw(tty->termios, &old_termios);
+
+	ld = tty_ldisc_ref(tty);
+	if (ld != NULL) {
+		if (ld->ops->set_termios)
+			(ld->ops->set_termios)(tty, &old_termios);
+		tty_ldisc_deref(ld);
+	}
+	mutex_unlock(&tty->termios_mutex);
 
 	SHOW_STATUS (board);
 
