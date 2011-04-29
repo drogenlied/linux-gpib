@@ -6,6 +6,7 @@ obj-y += cec/
 obj-y += hp_82335/
 obj-y += hp_82341/
 obj-y += ines/
+obj-$(CONFIG_USB) += lpvo_usb_gpib/
 obj-y += nec7210/
 obj-$(CONFIG_USB) += ni_usb/
 obj-y += pc2/
