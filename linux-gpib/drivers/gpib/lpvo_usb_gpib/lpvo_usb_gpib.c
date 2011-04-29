@@ -1,5 +1,5 @@
 /***************************************************************************
-*                            lpvo_usb_gpib/lpvo_usb_gpib.c                          *
+*                     lpvo_usb_gpib/lpvo_usb_gpib.c                       *
 *                           -------------------                           *
 *  This code has been developed at the Department of Physics (University  *
 *  of Florence, Italy) to support in linux-gpib the open usb-gpib adapter *
@@ -183,11 +183,13 @@ int write_loop (struct file *f, char * msg, int leng) {
 
 	do {
 		val = f->f_op->write (f, msg+nchar, leng-nchar, &f->f_pos);
-		if (val < 0) {
+		if (val < 1) {
+			printk (KERN_ALERT "%s:%s - write error: %d %d/%d\n",
+				HERE, val, nchar, leng);
 			return -EIO;
 		}
 		printk (KERN_ALERT "%s:%s - write error\n", HERE);
-		nchar +=val;
+		nchar += val;
 	} while (nchar < leng);
 	return leng;
 }
@@ -399,14 +401,14 @@ int usb_gpib_attach(gpib_board_t *board, gpib_board_config_t config) {
 	if (retval != ACK) return -EIO;
 
 	SHOW_STATUS(board);
-	TTY_LOG ("Module '%s' has been succesfully configured\n", "lpvo_usb_gpib");
+	TTY_LOG ("Module '%s' has been succesfully configured\n", NAME);
 	return 0;
 }
 
 /**
 * usb_gpib_detach() - deactivate the usb-gpib converter board
 *
-* @board:    the gpib_board_struct data area for this gpib interface
+* @board:    the gpib_board data area for this gpib interface
 *
 */
 
@@ -440,7 +442,7 @@ void usb_gpib_detach(gpib_board_t *board) {
 	}
 
 	DIA_LOG ("done %p\n", board);
-	TTY_LOG ("Module '%s' has been removed\n", "lpvo_usb_gpib");
+	TTY_LOG ("Module '%s' has been removed\n", NAME);
 }
 
 
@@ -913,7 +915,7 @@ unsigned int usb_gpib_t1_delay( gpib_board_t *board, unsigned int nano_sec ) {
 
 gpib_interface_t usb_gpib_interface =
 {
-	name: "lpvo_usb_gpib",
+	name: NAME,
 	attach: usb_gpib_attach,
 	detach: usb_gpib_detach,
 	read: usb_gpib_read,
