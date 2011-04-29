@@ -183,7 +183,7 @@ int write_loop (struct file *f, char * msg, int leng) {
 
 	do {
 		val = f->f_op->write (f, msg+nchar, leng-nchar, &f->f_pos);
-		if (val == -1) {
+		if (val < 0) {
 			return -EIO;
 		}
 		printk (KERN_ALERT "%s:%s - write error\n", HERE);
