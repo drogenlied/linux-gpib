@@ -1,23 +1,25 @@
 /***************************************************************************
-*                     lpvo_usb_gpib/lpvo_usb_gpib.c                       *
-*                           -------------------                           *
-*  This code has been developed at the Department of Physics (University  *
-*  of Florence, Italy) to support in linux-gpib the open usb-gpib adapter *
-*  implemented at the University of Ljubljana (lpvo.fe.uni-lj.si/gpib)    *
-*                                                                         *
-*  begin                : April 2011                                      *
-*  copyright            : (C) 2011 Marcello Carla'                        *
-*  email                : carla@fi.infn.it                                *
-***************************************************************************/
+ *                      lpvo_usb_gpib/lpvo_usb_gpib.c                      *
+ *                           -------------------                           *
+ *  This code has been developed at the Department of Physics (University  *
+ *  of Florence, Italy) to support in linux-gpib the open usb-gpib adapter *
+ *  implemented at the University of Ljubljana (lpvo.fe.uni-lj.si/gpib)    *
+ *                                                                         *
+ *  begin                : April 2011                                      *
+ *  copyright            : (C) 2011 Marcello Carla'                        *
+ *  email                : carla@fi.infn.it                                *
+ ***************************************************************************/
 
 /***************************************************************************
-*                                                                         *
-*   This program is free software; you can redistribute it and/or modify  *
-*   it under the terms of the GNU General Public License as published by  *
-*   the Free Software Foundation; either version 2 of the License, or     *
-*   (at your option) any later version.                                   *
-*                                                                         *
-***************************************************************************/
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
+
+
 
 /* base module includes */
 
@@ -53,6 +55,14 @@ MODULE_LICENSE("GPL");
 #define USB_GPIB_STATUS  "\nIBS\n"
 #define USB_GPIB_READ    "\nIB?\n"
 #define USB_GPIB_READ_1  "\nIBB\n"
+#define USB_GPIB_EOI     "\nIBe0\n"
+#define USB_GPIB_FTMO    "\nIBf0\n"    /* disable first byte timeout */
+#define USB_GPIB_tTMOz   "\nIBt0\n"    /* disable byte timeout */
+
+/* incomplete commands */
+
+#define USB_GPIB_tTMO    "\nIBt"      /* set byte timeout */
+#define USB_GPIB_TTMO    "\nIBT"      /* set total timeout */
 
 #define USB_GPIB_DEBUG_ON    "\nIBDE\xAA\n"
 #define USB_GPIB_SET_LISTEN  "\nIBDT0\n"
@@ -94,19 +104,20 @@ typedef struct {                /* private data to the device */
 	uint8_t eos;            /* eos character */
 	short eos_flags;        /* eos mode */
 	struct timespec before  ;  /* time value for timings */
-
+        int timeout;            /* current value for timeout */
+        int single;             /* 0/1 => total / single byte timeout */
 } usb_gpib_private_t;
 
 /*
-*    ***  The following code is for diagnostics and debug  ***
-*/
+ *    ***  The following code is for diagnostics and debug  ***
+ */
 
 /*
-* DIA_LOG - if ENABLE_DIA_LOG is set to 1  *** a lot of ***  diagnostic
-*           messages are generated to syslog, describing whatever is
-*           going on.
-*
-*/
+ * DIA_LOG - if ENABLE_DIA_LOG is set to 1  *** a lot of ***  diagnostic
+ *           messages are generated to syslog, describing whatever is
+ *           going on.
+ *
+ */
 
 #define ENABLE_DIA_LOG 1
 
@@ -135,14 +146,14 @@ typedef struct {                /* private data to the device */
 		DIA_LOG("# - list %d\n", board->ist);			\
 	}
 /*
-	n = 0;
-	list_for_each (l, &board->device_list) n++;
-	TTY_LOG ("%s:%s - devices in list %d\n", a, b, n);
+  n = 0;
+  list_for_each (l, &board->device_list) n++;
+  TTY_LOG ("%s:%s - devices in list %d\n", a, b, n);
 */
 
 /*
-* TTY_LOG - write a message to the current work terminal (if any)
-*/
+ * TTY_LOG - write a message to the current work terminal (if any)
+ */
 
 #define TTY_LOG(format,...) {						\
 		char buf[80];						\
@@ -156,9 +167,9 @@ typedef struct {                /* private data to the device */
 	}
 
 /*
-*   usec_diff : take difference in MICROsec between two 'timespec'
-*               (unix time in sec and NANOsec)
-*/
+ *   usec_diff : take difference in MICROsec between two 'timespec'
+ *               (unix time in sec and NANOsec)
+ */
 
 inline int usec_diff (struct timespec * a, struct timespec * b) {
 	return ((a->tv_sec - b->tv_sec)*1000000 +
@@ -166,17 +177,17 @@ inline int usec_diff (struct timespec * a, struct timespec * b) {
 }
 
 /*
-*   ***  these routines are specific to the usb-gpib adapter  ***
-*/
+ *   ***  these routines are specific to the usb-gpib adapter  ***
+ */
 
 /**
-* write_loop() - Send a byte sequence to the adapter
-*
-* @f:        the 'file' structure for the port
-* @msg:      the byte sequence.
-* @leng      the byte sequence length.
-*
-*/
+ * write_loop() - Send a byte sequence to the adapter
+ *
+ * @f:        the 'file' structure for the port
+ * @msg:      the byte sequence.
+ * @leng:     the byte sequence length.
+ *
+ */
 
 int write_loop (struct file *f, char * msg, int leng) {
 	int nchar = 0, val;
@@ -184,25 +195,24 @@ int write_loop (struct file *f, char * msg, int leng) {
 	do {
 		val = f->f_op->write (f, msg+nchar, leng-nchar, &f->f_pos);
 		if (val < 1) {
-			printk (KERN_ALERT "%s:%s - write error: %d %d/%d\n",
-				HERE, val, nchar, leng);
+                        printk (KERN_ALERT "%s:%s - write error: %d %d/%d\n",
+                                HERE, val, nchar, leng);
 			return -EIO;
 		}
-		printk (KERN_ALERT "%s:%s - write error\n", HERE);
-		nchar += val;
+                nchar +=val;
 	} while (nchar < leng);
 	return leng;
 }
 
 /**
-* send_command() - Send a byte sequence and return a single byte reply.
-*
-* @board:    the gpib_board_struct data area for this gpib interface
-* @msg:      the byte sequence.
-* @leng      the byte sequence length; can be given as zero and is
-*            computed automatically, but if 'msg' contains a zero byte,
-*            it has to be given explicitly.
-*/
+ * send_command() - Send a byte sequence and return a single byte reply.
+ *
+ * @board:    the gpib_board_struct data area for this gpib interface
+ * @msg:      the byte sequence.
+ * @leng      the byte sequence length; can be given as zero and is
+ *            computed automatically, but if 'msg' contains a zero byte,
+ *            it has to be given explicitly.
+ */
 
 int send_command (gpib_board_t *board, char * msg, int leng) {
 
@@ -290,30 +300,86 @@ static int one_char(gpib_board_t *board, struct char_buf * b) {
 	DIA_LOG ("read %d bytes in %d usec\n",
 		b->nchar, usec_diff(&after, &before));
 
-	if (b->nchar) {
+	if (b->nchar > 0) {
 		DIA_LOG ("-> %x\n", b->inbuf[b->last - b->nchar]);
 		return b->inbuf[b->last - b->nchar--];
-	}
-	printk (KERN_ALERT "%s:%s - read returned with 0\n", HERE);
-	return -EIO;
+	} else if (b->nchar == 0) {
+		printk (KERN_ALERT "%s:%s - read returned EOF\n", HERE);
+                return -EIO;
+	} else {
+		printk (KERN_ALERT "%s:%s - read error %d\n", HERE, b->nchar);
+		TTY_LOG ("\n *** %s *** Read Error - %s\n", NAME,
+			 "Reset the adapter with 'gpib_config'\n");
+                return -EIO;
+        }
+}
+
+/**
+ * set_timeout() - set single byte / total timeouts on the adapter
+ *
+ * @board:    the gpib_board_struct data area for this gpib interface
+ * @single:   0: use total timeout - 1: use single byte timeout
+ *
+ *         For sake of speed, the operation is performed only if it
+ *         modifies the current (saved) value. Minimum allowed timeout
+ *         is 30 ms (T30ms -> 8); timeout disable (TNONE -> 0) currently
+ *         not supported.
+ */
+
+void set_timeout (gpib_board_t *board, int single) {
+
+        int n, val;
+	char command[strlen(USB_GPIB_TTMO)+7];
+        usb_gpib_private_t * data = board->private_data;
+
+        if (data->timeout == board->usec_timeout && data->single == single)
+                return;
+
+	n = (board->usec_timeout + 32767) / 32768;
+	if (n < 2) n = 2;
+
+	DIA_LOG ("Set timeout to %d us -> %d %s\n", board->usec_timeout, n,
+                 single == 0 ? "total" : "single byte");
+
+        if (single) {
+                if (n > 255) n = 255;
+                sprintf (command, "%s%d\n", USB_GPIB_tTMO, n);
+                val = send_command (board, command, 0);
+        } else {
+                val = send_command (board, USB_GPIB_tTMOz, 0);
+                if (val == ACK) {
+                        if (n > 65535) n = 65535;
+                        sprintf (command, "%s%d\n", USB_GPIB_TTMO, n);
+                        printk (KERN_ALERT "%s:%s - setting timeout: <%s>\n",
+                        HERE, command);
+                        val = send_command (board, command, 0);
+                }
+        }
+        if (val != ACK)
+		printk (KERN_ALERT "%s:%s - error in timeout set: <%s>\n",
+                        HERE, command);
+        else {
+                data->timeout = board->usec_timeout;
+                data->single = single;
+        }
 }
 
 /*
-*    now the standard interface functions - attach and detach
-*/
+ *    now the standard interface functions - attach and detach
+ */
 
 /**
-* usb_gpib_attach() - activate the usb-gpib converter board
-*
-* @board:    the gpib_board_struct data area for this gpib interface
-* @config:   firmware data, if any (from gpib_config -I <file>)
-*
-* The channel name is ttyUSBn, with n=0 by default. Other values for n
-* passed with gpib_config -b <n>.
-*
-* In this routine I trust that when an error code is returned
-* detach() will be called. Always.
-*/
+ * usb_gpib_attach() - activate the usb-gpib converter board
+ *
+ * @board:    the gpib_board_struct data area for this gpib interface
+ * @config:   firmware data, if any (from gpib_config -I <file>)
+ *
+ * The channel name is ttyUSBn, with n=0 by default. Other values for n
+ * passed with gpib_config -b <n>.
+ *
+ * In this routine I trust that when an error code is returned
+ * detach() will be called. Always.
+ */
 
 int usb_gpib_attach(gpib_board_t *board, gpib_board_config_t config) {
 
@@ -400,17 +466,21 @@ int usb_gpib_attach(gpib_board_t *board, gpib_board_config_t config) {
 	retval = set_control_line (board, IB_BUS_REN, 0);
 	if (retval != ACK) return -EIO;
 
+        retval = send_command (board, USB_GPIB_FTMO, 0);
+	DIA_LOG ("USB_GPIB_FTMO returns %x\n", retval);
+	if (retval != ACK) return -EIO;
+
 	SHOW_STATUS(board);
 	TTY_LOG ("Module '%s' has been succesfully configured\n", NAME);
 	return 0;
 }
 
 /**
-* usb_gpib_detach() - deactivate the usb-gpib converter board
-*
-* @board:    the gpib_board data area for this gpib interface
-*
-*/
+ * usb_gpib_detach() - deactivate the usb-gpib converter board
+ *
+ * @board:    the gpib_board data area for this gpib interface
+ *
+ */
 
 void usb_gpib_detach(gpib_board_t *board) {
 
@@ -447,8 +517,8 @@ void usb_gpib_detach(gpib_board_t *board) {
 
 
 /*
-*   Other functions follow in alphabetical order
-*/
+ *   Other functions follow in alphabetical order
+ */
 
 /* command */
 
@@ -461,6 +531,8 @@ ssize_t usb_gpib_command(gpib_board_t *board,
 
 	DIA_LOG ("enter %p\n", board);
 
+        set_timeout (board, 1);
+
 	for ( i=0 ; i<length ; i++ ) {
 		command[3] = buffer[i];
 		retval = send_command (board, command, 5);
@@ -470,7 +542,14 @@ ssize_t usb_gpib_command(gpib_board_t *board,
 	return i;
 }
 
-/* disable_eos*/
+/**
+ * disable_eos() - Disable END on eos byte (END on EOI only)
+ *
+ * @board:    the gpib_board data area for this gpib interface
+ *
+ *   With the lpvo adapter eos can only be handled via software.
+ *   Cannot do nothing here, but remember for future use.
+ */
 
 void usb_gpib_disable_eos(gpib_board_t *board) {
 
@@ -479,7 +558,14 @@ void usb_gpib_disable_eos(gpib_board_t *board) {
 		((usb_gpib_private_t *)board->private_data)->eos_flags);
 }
 
-/* enable_eos */
+/**
+ * enable_eos() - Enable END for reads when eos byte is received.
+ *
+ * @board:    the gpib_board data area for this gpib interface
+ * @eos_byte: the 'eos' byte
+ * @compare_8_bits: if zero ignore eigthth bit when comparing
+ *
+ */
 
 int usb_gpib_enable_eos(gpib_board_t *board,
 			uint8_t eos_byte,
@@ -494,7 +580,11 @@ int usb_gpib_enable_eos(gpib_board_t *board,
 	return 0;
 }
 
-/* go_to_standby */
+/**
+ * go_to_standby() - De-assert ATN
+ *
+ * @board:    the gpib_board data area for this gpib interface
+ */
 
 int usb_gpib_go_to_standby(gpib_board_t *board) {
 
@@ -506,7 +596,16 @@ int usb_gpib_go_to_standby(gpib_board_t *board) {
 	return -EIO;
 }
 
-/* interface_clear */
+/**
+ * interface_clear() - Assert or de-assert IFC
+ *
+ * @board:    the gpib_board data area for this gpib interface
+ * assert:    1: assert IFC;  0: de-assert IFC
+ *
+ *    Currently on the assert request we issue the lpvo IBZ
+ *    command that cycles IFC low for 100 usec, then we ignore
+ *    the de-assert request.
+ */
 
 void usb_gpib_interface_clear(gpib_board_t *board, int assert) {
 
@@ -523,20 +622,24 @@ void usb_gpib_interface_clear(gpib_board_t *board, int assert) {
 	return;
 }
 
-/* line_status */
+/**
+ * line_status() - Read the status of the bus lines.
+ *
+ *  @board:    the gpib_board data area for this gpib interface
+ *
+ *    We can read all lines.
+ */
 
 int usb_gpib_line_status (const gpib_board_t *board ) {
 
 	int buffer;
-	int line_status = ValidALL;
-
-	DIA_LOG ("enter with %x\n", line_status);
+	int line_status = ValidALL;   /* all lines will be read */
 
 	buffer = send_command ((gpib_board_t *)board, USB_GPIB_STATUS, 0);
 
 	if (buffer == -EIO) {
-		printk (KERN_ALERT "%s:%s - status update failed\n", HERE);
-		return line_status;
+		printk (KERN_ALERT "%s:%s - line status read failed\n", HERE);
+		return NULL;
 	}
 
 	if((buffer & 0x01) == 0) line_status |= BusREN;
@@ -606,6 +709,8 @@ static int usb_gpib_read (gpib_board_t *board,
 
 	*bytes_read = 0;      /* by default, things go wrong */
 	*end = 0;
+
+	set_timeout (board, 0);
 
 	/* single byte read and eos read termination need special handling */
 
@@ -825,6 +930,8 @@ static int usb_gpib_write(gpib_board_t *board,
 
 	DIA_LOG ("enter %p\n", board);
 
+	set_timeout (board, 0);
+
 	msg = kmalloc(length+8, GFP_KERNEL);
 	if (!msg) return -ENOMEM;
 
@@ -845,8 +952,8 @@ static int usb_gpib_write(gpib_board_t *board,
 }
 
 /*
-*  ***  following functions not implemented yet  ***
-*/
+ *  ***  following functions not implemented yet  ***
+ */
 
 /* parallel_poll configure */
 
@@ -910,8 +1017,8 @@ unsigned int usb_gpib_t1_delay( gpib_board_t *board, unsigned int nano_sec ) {
 }
 
 /*
-*   ***  module dispatch table and init/exit functions  ***
-*/
+ *   ***  module dispatch table and init/exit functions  ***
+ */
 
 gpib_interface_t usb_gpib_interface =
 {
@@ -949,8 +1056,7 @@ static int __init usb_gpib_init_module( void ) {
 	return 0;
 }
 
-static void __exit usb_gpib_exit_module( void )
-{
+static void __exit usb_gpib_exit_module( void ) {
 	gpib_unregister_driver(&usb_gpib_interface);
 }
 
