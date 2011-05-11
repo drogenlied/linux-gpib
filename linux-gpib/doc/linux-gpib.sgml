@@ -699,6 +699,12 @@ Default is <option>--sre</option>.</para>
 	<entry>ni_pcmcia, ni_pcmcia_accel</entry>
 	</row>
 	<row>
+	<entry>self-made (see <link LINKEND="lpvo-usb-gpib-notes">note</link>)</entry>
+	<entry><ulink URL="http://lpvo.fe.uni-lj.si/gpib">http://lpvo.fe.uni-lj.si/gpib</ulink></entry>
+	<entry>lpvo_usb_gpib.ko</entry>
+	<entry>lpvo_usb_gpib</entry>
+	</row>
+	<row>
 	<entry>Quancom</entry>
 	<entry>PCIGPIB-1</entry>
 	<entry>ines_gpib.ko (Ines iGPIB 72010 chip) or cb7210.ko (Measurement Computing cb7210 chip)</entry>
@@ -792,6 +798,25 @@ compare all 8 bits).
 </para>
 </listitem>
 </itemizedList>
+</para>
+</section>
+<section ID="lpvo-usb-gpib-notes">
+<title>Self-made usb-gpib adapter</title>
+<para>
+This usb-gpib adapter can be assembled following the project
+from the Laboratory of Photovoltaics and Optoelectronics at the Faculty of Electrical Engineering,
+University of Ljubljana.  It is available
+at
+<ulink URL="http://lpvo.fe.uni-lj.si/gpib">http://lpvo.fe.uni-lj.si/gpib</ulink>
+. The adapter allows the
+control of GPIB devices with some limitations: it can only be
+the system controller; multicontroller and device operations
+are not supported (by now).
+The linux-gpib driver 'lpvo_usb_gpib' is currently under
+development. It offers basic capabilities like ibrd(),
+ibwrt(), WaitSRQ() and something else. Requests for not
+available features are flagged by a diagnostic message
+to syslog.
 </para>
 </section>
 <section ID="ni-usb-b">
