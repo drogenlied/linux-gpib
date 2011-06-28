@@ -303,6 +303,7 @@ long ibioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 			break;
 		case IBWAIT:
 			retval = wait_ioctl( file_priv, board, arg );
+			if(retval == -ERESTARTSYS) return retval;
 			goto done;
 			break;
 		case IBLINES:

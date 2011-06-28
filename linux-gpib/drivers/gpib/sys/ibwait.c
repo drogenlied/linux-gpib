@@ -142,7 +142,5 @@ int ibwait( gpib_board_t *board, int wait_mask, int clear_mask, int set_mask,
 	if( *status & clear_mask || set_mask )
 		general_ibstatus( board, status_queue, *status & clear_mask, set_mask, 0 );
 
-	mutex_unlock( &board->big_gpib_mutex );
-
 	return 0;
 }
