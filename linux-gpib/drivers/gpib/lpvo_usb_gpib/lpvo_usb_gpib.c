@@ -73,6 +73,11 @@ MODULE_LICENSE("GPL");
 #define USB_GPIB_READ_DATA   "\nIBD?M\n"
 #define USB_GPIB_READ_BUS    "\nIBD??\n"
 
+/* command sequences */
+
+#define USB_GPIB_UNTALK "\nIBC_\n"
+#define USB_GPIB_UNLISTEN "\nIBC?\n"
+
 /* special characters used by the adapter */
 
 #define DLE '\020'
@@ -105,7 +110,6 @@ typedef struct {                /* private data to the device */
 	short eos_flags;        /* eos mode */
 	struct timespec before  ;  /* time value for timings */
         int timeout;            /* current value for timeout */
-        int single;             /* 0/1 => total / single byte timeout */
 } usb_gpib_private_t;
 
 /*
@@ -318,7 +322,6 @@ static int one_char(gpib_board_t *board, struct char_buf * b) {
  * set_timeout() - set single byte / total timeouts on the adapter
  *
  * @board:    the gpib_board_struct data area for this gpib interface
- * @single:   0: use total timeout - 1: use single byte timeout
  *
  *         For sake of speed, the operation is performed only if it
  *         modifies the current (saved) value. Minimum allowed timeout
@@ -326,41 +329,35 @@ static int one_char(gpib_board_t *board, struct char_buf * b) {
  *         not supported.
  */
 
-void set_timeout (gpib_board_t *board, int single) {
+void set_timeout (gpib_board_t *board) {
 
         int n, val;
 	char command[strlen(USB_GPIB_TTMO)+7];
         usb_gpib_private_t * data = board->private_data;
 
-        if (data->timeout == board->usec_timeout && data->single == single)
-                return;
+        if (data->timeout == board->usec_timeout) return;
 
 	n = (board->usec_timeout + 32767) / 32768;
 	if (n < 2) n = 2;
 
-	DIA_LOG ("Set timeout to %d us -> %d %s\n", board->usec_timeout, n,
-                 single == 0 ? "total" : "single byte");
+	DIA_LOG ("Set timeout to %d us -> %d\n", board->usec_timeout, n);
 
-        if (single) {
-                if (n > 255) n = 255;
-                sprintf (command, "%s%d\n", USB_GPIB_tTMO, n);
-                val = send_command (board, command, 0);
-        } else {
-                val = send_command (board, USB_GPIB_tTMOz, 0);
-                if (val == ACK) {
+        sprintf (command, "%s%d\n", USB_GPIB_tTMO, n > 255 ? 255 : n);
+        val = send_command (board, command, 0);
+
+        if (val == ACK) {
                         if (n > 65535) n = 65535;
                         sprintf (command, "%s%d\n", USB_GPIB_TTMO, n);
                         printk (KERN_ALERT "%s:%s - setting timeout: <%s>\n",
                         HERE, command);
                         val = send_command (board, command, 0);
-                }
         }
+
         if (val != ACK)
 		printk (KERN_ALERT "%s:%s - error in timeout set: <%s>\n",
                         HERE, command);
         else {
                 data->timeout = board->usec_timeout;
-                data->single = single;
         }
 }
 
@@ -531,7 +528,7 @@ ssize_t usb_gpib_command(gpib_board_t *board,
 
 	DIA_LOG ("enter %p\n", board);
 
-        set_timeout (board, 1);
+        set_timeout (board);
 
 	for ( i=0 ; i<length ; i++ ) {
 		command[3] = buffer[i];
@@ -639,7 +636,7 @@ int usb_gpib_line_status (const gpib_board_t *board ) {
 
 	if (buffer == -EIO) {
 		printk (KERN_ALERT "%s:%s - line status read failed\n", HERE);
-		return NULL;
+		return 0;
 	}
 
 	if((buffer & 0x01) == 0) line_status |= BusREN;
@@ -710,7 +707,7 @@ static int usb_gpib_read (gpib_board_t *board,
 	*bytes_read = 0;      /* by default, things go wrong */
 	*end = 0;
 
-	set_timeout (board, 0);
+	set_timeout (board);
 
 	/* single byte read and eos read termination need special handling */
 
@@ -854,6 +851,14 @@ read_return:
 
 	DIA_LOG("done with byte/status: %d %x\n", (int) *bytes_read, retval);
 
+
+        if (retval == 0) {
+                if (send_command(board, USB_GPIB_UNTALK,
+                                 sizeof(USB_GPIB_UNTALK) == 0x06)) return 0;
+                return  -EIO;
+        }
+
+
 	return retval;
 }
 
@@ -930,7 +935,7 @@ static int usb_gpib_write(gpib_board_t *board,
 
 	DIA_LOG ("enter %p\n", board);
 
-	set_timeout (board, 0);
+	set_timeout (board);
 
 	msg = kmalloc(length+8, GFP_KERNEL);
 	if (!msg) return -ENOMEM;
@@ -942,11 +947,14 @@ static int usb_gpib_write(gpib_board_t *board,
 	retval = send_command (board, msg, length+8);
 	kfree (msg);
 
-	DIA_LOG ("%x\n", retval);
+	DIA_LOG ("<%.*s> -> %x\n", (int) length, buffer, retval);
 
 	if (retval != ACK) return -EIO;
 
 	*bytes_written = length;
+
+        if (send_command(board, USB_GPIB_UNLISTEN, sizeof(USB_GPIB_UNLISTEN))
+            != 0x06) return  -EIO;
 
 	return length;
 }
