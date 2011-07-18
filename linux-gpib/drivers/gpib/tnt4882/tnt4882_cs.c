@@ -36,8 +36,6 @@
 #include <asm/io.h>
 #include <asm/system.h>
 
-#include <pcmcia/cs_types.h>
-#include <pcmcia/cs.h>
 #include <pcmcia/cistpl.h>
 #include <pcmcia/cisreg.h>
 #include <pcmcia/ds.h>
@@ -118,8 +116,7 @@ static int ni_gpib_probe(struct pcmcia_device *link)
 	and attributes of IO windows) are fixed by the nature of the
 	device, and can be hard-wired here.
 	*/
-	link->conf.Attributes = 0;
-	link->conf.IntType = INT_MEMORY_AND_IO;
+	link->config_flags = CONF_ENABLE_IRQ | CONF_AUTO_SET_IO | CONF_AUTO_SET_IOMEM;
 
 	/* Register with Card Services */
 	curr_dev = link;
@@ -153,63 +150,17 @@ static void ni_gpib_remove(struct pcmcia_device *link)
 static int ni_gpib_config_iteration
 (
 	struct pcmcia_device *link,
-	cistpl_cftable_entry_t *cfg,
-	cistpl_cftable_entry_t *dflt,
-	unsigned vcc,
 	void *priv_data
 )
 {
-	win_req_t req;
-	memreq_t map;
+	int retval;
 
-	if (cfg->index == 0)
-		return -ENODEV;
-
-	link->conf.Attributes |= CONF_ENABLE_IRQ;
-
-	if ((cfg->io.nwin > 0) || (dflt->io.nwin > 0))
+	retval = pcmcia_request_io(link);
+	if(retval != 0)
 	{
-		cistpl_io_t *io = (cfg->io.nwin) ? &cfg->io : &dflt->io;
-		link->io.Attributes1 = IO_DATA_PATH_WIDTH_AUTO;
-		if (!(io->flags & CISTPL_IO_8BIT))
-			link->io.Attributes1 = IO_DATA_PATH_WIDTH_16;
-		if (!(io->flags & CISTPL_IO_16BIT))
-			link->io.Attributes1 = IO_DATA_PATH_WIDTH_8;
-		link->io.IOAddrLines = io->flags & CISTPL_IO_LINES_MASK;
-		link->io.BasePort1 = io->win[0].base;
-		link->io.NumPorts1 = io->win[0].len;
-		if (io->nwin > 1)
-		{
-			link->io.Attributes2 = link->io.Attributes1;
-			link->io.BasePort2 = io->win[1].base;
-			link->io.NumPorts2 = io->win[1].len;
-		}
-
-		/* This reserves IO space but doesn't actually enable it */
-		if(pcmcia_request_io(link, &link->io) != 0)
-		{
-			return -ENODEV;
-		}
+		return retval;
 	}
 
-	/* Now set up a common memory window, if needed. */
-	if ((cfg->mem.nwin > 0) || (dflt->mem.nwin > 0)) {
-		cistpl_mem_t *mem =
-		(cfg->mem.nwin) ? &cfg->mem : &dflt->mem;
-		req.Attributes = WIN_DATA_WIDTH_16 | WIN_MEMORY_TYPE_CM;
-		req.Attributes |= WIN_ENABLE;
-		req.Base = mem->win[0].host_addr;
-		req.Size = mem->win[0].len;
-		if (req.Size < 0x1000)
-		req.Size = 0x1000;
-		req.AccessSpeed = 0;
-		link->win = (window_handle_t)link;
-		if(compat_pcmcia_request_window(link, &req, &link->win) != 0)
-			return -ENODEV;
-		map.Page = 0; map.CardOffset = mem->win[0].card_addr;
-		if(compat_pcmcia_map_mem_page(link, link->win, &map) != 0)
-			return -ENODEV;
-	}
 	return 0;
 }
 
@@ -247,7 +198,7 @@ static int ni_gpib_config(struct pcmcia_device *link)
 	printk(KERN_DEBUG "gpib_cs: IRQ_Line=%d\n", link->irq.AssignedIRQ);
 #endif
 
-	last_ret = pcmcia_request_configuration(link, &link->conf);
+	last_ret = pcmcia_enable_device(link);
 	if (last_ret) {
 		ni_gpib_release(link);
 		return last_ret;
@@ -390,7 +341,6 @@ int ni_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config)
 	tnt4882_private_t *tnt_priv;
 	nec7210_private_t *nec_priv;
 	int isr_flags = IRQF_SHARED;
-	int irq_number;
 
 	DEBUG(0, "ni_pcmcia_attach(0x%p)\n", board);
 
@@ -418,23 +368,22 @@ int ni_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config)
 	nec_priv->write_byte = nec7210_locking_ioport_write_byte;
 	nec_priv->offset = atgpib_reg_offset;
 
-	DEBUG(0, "ioport1 window attributes: 0x%x\n", curr_dev->io.Attributes1 );
-	if(request_region(curr_dev->io.BasePort1, pcmcia_gpib_iosize, "tnt4882") == 0)
+	DEBUG(0, "ioport1 window attributes: 0x%lx\n", curr_dev->resource[0]->flags );
+	if(request_region(curr_dev->resource[0]->start, resource_size(curr_dev->resource[0]), "tnt4882") == 0)
 	{
-		printk("gpib: ioports starting at 0x%x are already in use\n", curr_dev->io.BasePort1);
+		printk("gpib: ioports starting at 0x%lx are already in use\n", (unsigned long)curr_dev->resource[0]->start);
 		return -EIO;
 	}
 
-	nec_priv->iobase = (void*)(unsigned long)curr_dev->io.BasePort1;
+	nec_priv->iobase = (void*)(unsigned long)curr_dev->resource[0]->start;
 
 	// get irq
-	irq_number = compat_pcmcia_get_irq_line( curr_dev );
-	if( request_irq( irq_number, tnt4882_interrupt, isr_flags, "tnt4882", board))
+	if( request_irq( curr_dev->irq, tnt4882_interrupt, isr_flags, "tnt4882", board))
 	{
-		printk("gpib: can't request IRQ %d\n", irq_number);
+		printk("gpib: can't request IRQ %d\n", curr_dev->irq);
 		return -1;
 	}
-	tnt_priv->irq = irq_number;
+	tnt_priv->irq = curr_dev->irq;
 
 	tnt4882_init( tnt_priv, board );
 

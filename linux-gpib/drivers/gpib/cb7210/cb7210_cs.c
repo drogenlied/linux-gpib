@@ -36,8 +36,6 @@
 #include <asm/io.h>
 #include <asm/system.h>
 
-#include <pcmcia/cs_types.h>
-#include <pcmcia/cs.h>
 #include <pcmcia/cistpl.h>
 #include <pcmcia/ds.h>
 
@@ -136,17 +134,18 @@ static int cb_gpib_probe( struct pcmcia_device *link )
 	link->priv = info;
 
 	/* The io structure describes IO port mapping */
-	link->io.NumPorts1 = 16;
-	link->io.Attributes1 = IO_DATA_PATH_WIDTH_AUTO;
-	link->io.NumPorts2 = 16;
-	link->io.Attributes2 = IO_DATA_PATH_WIDTH_16;
-	link->io.IOAddrLines = 10;
+	link->resource[0]->end = 16;
+	link->resource[0]->flags &= ~IO_DATA_PATH_WIDTH;
+	link->resource[0]->flags |= IO_DATA_PATH_WIDTH_AUTO;
+	link->resource[1]->end = 16;
+	link->resource[1]->flags &= ~IO_DATA_PATH_WIDTH;
+	link->resource[1]->flags |= IO_DATA_PATH_WIDTH_16;
+	link->io_lines = 10;
 
 	/* General socket configuration */
-	link->conf.Attributes = CONF_ENABLE_IRQ;
-	link->conf.IntType = INT_MEMORY_AND_IO;
-	link->conf.ConfigIndex = 1;
-	link->conf.Present = PRESENT_OPTION;
+	link->config_flags = CONF_ENABLE_IRQ | CONF_AUTO_SET_IO;
+	link->config_index = 1;
+	link->config_regs = PRESENT_OPTION;
 
 	/* Register with Card Services */
 	curr_dev = link;
@@ -180,28 +179,10 @@ static void cb_gpib_remove( struct pcmcia_device *link )
 static int cb_gpib_config_iteration
 (
 	struct pcmcia_device *link,
-	cistpl_cftable_entry_t *cfg,
-	cistpl_cftable_entry_t *dflt,
-	unsigned vcc,
 	void *priv_data
 )
 {
-	if (cfg->index == 0)
-		return -ENODEV;
-
-	/* IO window settings */
-	if ((cfg->io.nwin > 0) || (dflt->io.nwin > 0)) {
-		cistpl_io_t *io = (cfg->io.nwin) ? &cfg->io : &dflt->io;
-		link->io.BasePort1 = io->win[0].base;
-		link->io.NumPorts1 = io->win[0].len;
-		if (io->nwin > 1) {
-			link->io.BasePort2 = io->win[1].base;
-			link->io.NumPorts2 = io->win[1].len;
-		}
-		/* This reserves IO space but doesn't actually enable it */
-		return pcmcia_request_io(link, &link->io);
-	}
-	return 0;
+	return pcmcia_request_io(link);
 }
 
 /*======================================================================
@@ -247,10 +228,10 @@ static int cb_gpib_config( struct pcmcia_device  *link )
 	   This actually configures the PCMCIA socket -- setting up
 	   the I/O windows and the interrupt mapping.
 	*/
-	retval = pcmcia_request_configuration(link, &link->conf);
+	retval = pcmcia_enable_device(link);
 	if(retval != 0)
 	{
-		dev_warn(&link->dev, "pcmcia_request_configuration failed\n");
+		dev_warn(&link->dev, "pcmcia_enable_device failed\n");
 		cb_gpib_release(link);
 	    return -ENODEV;
 	}
@@ -270,8 +251,6 @@ static int cb_gpib_config( struct pcmcia_device  *link )
 static void cb_gpib_release( struct pcmcia_device *link )
 {
 	DEBUG(0, "cb_gpib_release(0x%p)\n", link);
-	/* Don't bother checking to see if these succeed or not */
-	compat_pcmcia_release_window(link, link->win);
 	pcmcia_disable_device (link);
 } /* gpib_release */
 
@@ -423,7 +402,6 @@ int cb_pcmcia_attach( gpib_board_t *board, gpib_board_config_t config )
 	cb7210_private_t *cb_priv;
 	nec7210_private_t *nec_priv;
 	int retval;
-	int irq_number;
 
 	if(curr_dev == NULL)
 	{
@@ -437,22 +415,21 @@ int cb_pcmcia_attach( gpib_board_t *board, gpib_board_config_t config )
 	cb_priv = board->private_data;
 	nec_priv = &cb_priv->nec7210_priv;
 
-	if(request_region(curr_dev->io.BasePort1, cb7210_iosize, "cb7210") == 0)
+	if(request_region(curr_dev->resource[0]->start, resource_size(curr_dev->resource[0]), "cb7210") == 0)
 	{
-		printk("gpib: ioports starting at 0x%x are already in use\n", curr_dev->io.BasePort1);
+		printk("gpib: ioports starting at 0x%lx are already in use\n", (unsigned long)curr_dev->resource[0]->start);
 		return -EIO;
 	}
-	nec_priv->iobase = (void*)(unsigned long)curr_dev->io.BasePort1;
-	cb_priv->fifo_iobase = curr_dev->io.BasePort1;
+	nec_priv->iobase = (void*)(unsigned long)curr_dev->resource[0]->start;
+	cb_priv->fifo_iobase = curr_dev->resource[0]->start;
 
-	irq_number = compat_pcmcia_get_irq_line(curr_dev);
-	if(request_irq(irq_number, cb7210_interrupt, IRQF_SHARED,
+	if(request_irq(curr_dev->irq, cb7210_interrupt, IRQF_SHARED,
 		"cb7210", board))
 	{
-		printk("cb7210: failed to request IRQ %d\n", irq_number);
+		printk("cb7210: failed to request IRQ %d\n", curr_dev->irq);
 		return -1;
 	}
-	cb_priv->irq = irq_number;
+	cb_priv->irq = curr_dev->irq;
 
 	return cb7210_init( cb_priv, board );
 }

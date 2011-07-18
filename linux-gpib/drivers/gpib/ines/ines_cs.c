@@ -33,8 +33,6 @@
 #include <asm/io.h>
 #include <asm/system.h>
 
-#include <pcmcia/cs_types.h>
-#include <pcmcia/cs.h>
 #include <pcmcia/cistpl.h>
 #include <pcmcia/ds.h>
 #include <pcmcia/cisreg.h>
@@ -127,16 +125,13 @@ static int ines_gpib_probe( struct pcmcia_device *link )
 	link->priv = info;
 
 	/* The io structure describes IO port mapping */
-	link->io.NumPorts1 = 32;
-	link->io.Attributes1 = IO_DATA_PATH_WIDTH_8;
-	link->io.NumPorts2 = 0;
-	link->io.Attributes2 = 0;
-	link->io.IOAddrLines = 5;
+	link->resource[0]->end = 32;
+	link->resource[0]->flags &= ~IO_DATA_PATH_WIDTH;
+	link->resource[0]->flags |= IO_DATA_PATH_WIDTH_8;
+	link->io_lines = 5;
 
 	/* General socket configuration */
-	link->conf.Attributes = CONF_ENABLE_IRQ;
-	link->conf.IntType = INT_MEMORY_AND_IO;
-
+	link->config_flags = CONF_ENABLE_IRQ | CONF_AUTO_SET_IO;
 
 	/* Register with Card Services */
 	curr_dev = link;
@@ -169,26 +164,10 @@ static void ines_gpib_remove( struct pcmcia_device *link )
 static int ines_gpib_config_iteration
 (
 	struct pcmcia_device *link,
-	cistpl_cftable_entry_t *cfg,
-	cistpl_cftable_entry_t *dflt,
-	unsigned vcc,
 	void *priv_data
 )
 {
-	if (cfg->index == 0)
-		return -ENODEV;
-
-	/* IO window settings */
-	if ((cfg->io.nwin > 0) || (dflt->io.nwin > 0)) {
-		cistpl_io_t *io = (cfg->io.nwin) ? &cfg->io : &dflt->io;
-		link->io.BasePort1 = io->win[0].base;
-		link->io.NumPorts1 = io->win[0].len;
-		link->io.BasePort2 = 0;
-		link->io.NumPorts2 = 0;
-		/* This reserves IO space but doesn't actually enable it */
-		return pcmcia_request_io(link, &link->io);
-	}
-	return 0;
+	return pcmcia_request_io(link);
 }
 
 /*
@@ -201,8 +180,6 @@ static int ines_gpib_config( struct pcmcia_device *link )
 {
 	local_info_t *dev;
 	int retval;
-	win_req_t req;
-	memreq_t mem;
 	void *virt;
 
 	dev = link->priv;
@@ -219,31 +196,25 @@ static int ines_gpib_config( struct pcmcia_device *link )
 	printk(KERN_DEBUG "ines_cs: manufacturer: 0x%x card: 0x%x\n",
 		link->manf_id, link->card_id);
 
-	link->conf.Status = CCSR_IOIS8;
-
 	/*  for the ines card we have to setup the configuration registers in
 		attribute memory here
 	*/
-	req.Attributes=WIN_MEMORY_TYPE_AM | WIN_DATA_WIDTH_8 | WIN_ENABLE;
-	req.Base=0;
-	req.Size=0x1000;
-	req.AccessSpeed=250;
-	retval = compat_pcmcia_request_window(link, &req, &link->win);
+	link->resource[2]->flags |= WIN_MEMORY_TYPE_AM | WIN_DATA_WIDTH_8 | WIN_ENABLE;
+	link->resource[2]->end = 0x1000;
+	retval = pcmcia_request_window(link, link->resource[2], 250);
 	if (retval) {
 		dev_warn(&link->dev, "pcmcia_request_window failed\n");
 		ines_gpib_release(link);
 		return -ENODEV;
 	}
-	mem.CardOffset=0;
-	mem.Page=0;
-	retval = compat_pcmcia_map_mem_page(link, link->win, &mem);
+	retval = pcmcia_map_mem_page(link, link->resource[2], 0);
 	if (retval) {
 		dev_warn(&link->dev, "pcmcia_map_mem_page failed\n");
 		ines_gpib_release(link);
 		return -ENODEV;
 	}
-	virt = ioremap( req.Base, req.Size );
-	writeb( ( link->io.BasePort1 >> 2 ) & 0xff, virt + 0xf0 ); // IOWindow base
+	virt = ioremap( link->resource[2]->start, resource_size(link->resource[2]) );
+	writeb( ( link->resource[2]->start >> 2 ) & 0xff, virt + 0xf0 ); // IOWindow base
 	iounmap( ( void* ) virt );
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,35)
@@ -260,7 +231,7 @@ static int ines_gpib_config( struct pcmcia_device *link )
 	This actually configures the PCMCIA socket -- setting up
 	the I/O windows and the interrupt mapping.
 	*/
-	retval = pcmcia_request_configuration(link, &link->conf);
+	retval = pcmcia_enable_device(link);
 	if (retval) {
 		ines_gpib_release(link);
 		return -ENODEV;
@@ -280,8 +251,6 @@ static int ines_gpib_config( struct pcmcia_device *link )
 static void ines_gpib_release( struct pcmcia_device *link )
 {
 	DEBUG(0, "ines_gpib_release(0x%p)\n", link);
-	/* Don't bother checking to see if these succeed or not */
-	compat_pcmcia_release_window(link, link->win);
 	pcmcia_disable_device (link);
 } /* gpib_release */
 
@@ -438,7 +407,6 @@ int ines_common_pcmcia_attach( gpib_board_t *board )
 	ines_private_t *ines_priv;
 	nec7210_private_t *nec_priv;
 	int retval;
-	int irq_number;
 
 	if(curr_dev == NULL)
 	{
@@ -452,23 +420,22 @@ int ines_common_pcmcia_attach( gpib_board_t *board )
 	ines_priv = board->private_data;
 	nec_priv = &ines_priv->nec7210_priv;
 
-	if(request_region(curr_dev->io.BasePort1, ines_pcmcia_iosize, "ines_gpib") == 0)
+	if(request_region(curr_dev->resource[0]->start, resource_size(curr_dev->resource[0]), "ines_gpib") == 0)
 	{
-		printk("ines_gpib: ioports at 0x%x already in use\n", curr_dev->io.BasePort1);
+		printk("ines_gpib: ioports at 0x%x already in use\n", curr_dev->resource[0]->start);
 		return -1;
 	}
 
-	nec_priv->iobase = (void*)(unsigned long)curr_dev->io.BasePort1;
+	nec_priv->iobase = (void*)(unsigned long)curr_dev->resource[0]->start;
 
 	nec7210_board_reset( nec_priv, board );
 
-	irq_number = compat_pcmcia_get_irq_line(curr_dev);
-	if(request_irq(irq_number, ines_pcmcia_interrupt, IRQF_SHARED, "pcmcia-gpib", board))
+	if(request_irq(curr_dev->irq, ines_pcmcia_interrupt, IRQF_SHARED, "pcmcia-gpib", board))
 	{
-		printk("gpib: can't request IRQ %d\n", irq_number);
+		printk("gpib: can't request IRQ %d\n", curr_dev->irq);
 		return -1;
 	}
-	ines_priv->irq = irq_number;
+	ines_priv->irq = curr_dev->irq;
 
 	return 0;
 }
