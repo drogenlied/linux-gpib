@@ -116,7 +116,7 @@ static int ni_gpib_probe(struct pcmcia_device *link)
 	and attributes of IO windows) are fixed by the nature of the
 	device, and can be hard-wired here.
 	*/
-	link->config_flags = CONF_ENABLE_IRQ | CONF_AUTO_SET_IO | CONF_AUTO_SET_IOMEM;
+	link->config_flags = CONF_ENABLE_IRQ | CONF_AUTO_SET_IO;
 
 	/* Register with Card Services */
 	curr_dev = link;
