@@ -90,7 +90,10 @@ static PyObject* gpib_find(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "s:find", &name))
 		return NULL;
 
+	Py_BEGIN_ALLOW_THREADS
 	ud = ibfind(name);
+	Py_END_ALLOW_THREADS
+
 	if(ud < 0){
 		_SetGpibError("find");
 		return NULL;
@@ -114,7 +117,11 @@ static PyObject* gpib_dev(PyObject *self, PyObject *args)
 
 	if (!PyArg_ParseTuple(args, "ii|iiii:dev", &board, &pad, &sad, &tmo, &eot, &eos_mode))
 		return NULL;
+
+	Py_BEGIN_ALLOW_THREADS
 	ud = ibdev(board, pad, sad, tmo, eot, eos_mode);
+	Py_END_ALLOW_THREADS
+
 	if (ud < 0) {
 		_SetGpibError("dev");
 		return NULL;
@@ -161,7 +168,10 @@ static PyObject* gpib_config(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "iii:config", &device, &option, &setting))
 		return NULL;
 
+	Py_BEGIN_ALLOW_THREADS
 	sta = ibconfig(device, option, setting);
+	Py_END_ALLOW_THREADS
+
 	if(sta & ERR) {
 		_SetGpibError("config");
 		return NULL;
@@ -199,6 +209,7 @@ static PyObject* gpib_read(PyObject *self, PyObject *args)
 {
 	int device;
 	int len;
+	int sta;
 	PyObject *retval;
 
 	if (!PyArg_ParseTuple(args, "ii:read", &device,&len))
@@ -216,7 +227,11 @@ static PyObject* gpib_read(PyObject *self, PyObject *args)
 		return NULL;
 	}
 
-	if( ibrd(device, PyString_AS_STRING(retval), len) & ERR )
+	Py_BEGIN_ALLOW_THREADS
+	sta = ibrd(device, PyString_AS_STRING(retval), len);
+	Py_END_ALLOW_THREADS
+
+	if( sta & ERR )
 	{
 		_SetGpibError("read");
 		Py_DECREF(retval);
@@ -240,7 +255,11 @@ static PyObject* gpib_write(PyObject *self, PyObject *args)
 
 	if (!PyArg_ParseTuple(args, "is#:write",&device, &command, &command_len))
 		return NULL;
+
+	Py_BEGIN_ALLOW_THREADS
 	sta = ibwrt(device, command, command_len);
+	Py_END_ALLOW_THREADS
+
 	if( sta & ERR ){
 		_SetGpibError("write");
 		return NULL;
@@ -262,7 +281,11 @@ static PyObject* gpib_write_async(PyObject *self, PyObject *args)
 
 	if (!PyArg_ParseTuple(args, "is#:write_async", &device, &command, &command_len))
 		return NULL;
+
+	Py_BEGIN_ALLOW_THREADS
 	sta = ibwrta(device, command, command_len);
+	Py_END_ALLOW_THREADS
+
 	if( sta & ERR ){
 		_SetGpibError("write_async");
 		return NULL;
@@ -285,7 +308,11 @@ static PyObject* gpib_command(PyObject *self, PyObject *args)
 
 	if (!PyArg_ParseTuple(args, "is#:command", &device, &command, &command_len))
 		return NULL;
+
+	Py_BEGIN_ALLOW_THREADS
 	sta = ibcmd(device, command, command_len);
+	Py_END_ALLOW_THREADS
+
 	if ( sta  & ERR ) {
 		_SetGpibError("cmd");
 		return NULL;
@@ -307,7 +334,10 @@ static PyObject* gpib_remote_enable(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "ii:remote_enable", &device,&val))
 		return NULL;
 
+	Py_BEGIN_ALLOW_THREADS
 	sta = ibsre(device,val);
+	Py_END_ALLOW_THREADS
+
 	if( sta & ERR){
 		_SetGpibError("remote_enable");
 		return NULL;
@@ -329,7 +359,10 @@ static PyObject* gpib_clear(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "i:clear", &device))
 		return NULL;
 
+	Py_BEGIN_ALLOW_THREADS
 	sta = ibclr(device);
+	Py_END_ALLOW_THREADS
+
 	if( sta & ERR){
 		_SetGpibError("clear");
 		return NULL;
@@ -351,7 +384,10 @@ static PyObject* gpib_ibloc(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "i:ibloc", &device))
 		return NULL;
 
+	Py_BEGIN_ALLOW_THREADS
 	sta = ibloc(device);
+	Py_END_ALLOW_THREADS
+
 	if( sta & ERR){
 		_SetGpibError("ibloc");
 		return NULL;
@@ -373,7 +409,10 @@ static PyObject* gpib_interface_clear(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "i:interface_clear", &device))
 		return NULL;
 
+	Py_BEGIN_ALLOW_THREADS
 	sta = ibsic(device);
+	Py_END_ALLOW_THREADS
+
 	if ( sta & ERR){
 		_SetGpibError("interface_clear");
 		return NULL;
@@ -395,7 +434,10 @@ static PyObject* gpib_close(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "i:close", &device))
 		return NULL;
 
+	Py_BEGIN_ALLOW_THREADS
 	sta = ibonl(device, 0);
+	Py_END_ALLOW_THREADS
+
 	if( sta & ERR ){
 		_SetGpibError("close");
 		return NULL;
@@ -417,7 +459,10 @@ static PyObject* gpib_wait(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "ii:wait", &device, &mask))
 		return NULL;
 
+	Py_BEGIN_ALLOW_THREADS
 	sta = ibwait(device, mask);
+	Py_END_ALLOW_THREADS
+
 	if(sta & ERR) {
 		_SetGpibError("wait");
 		return NULL;
@@ -439,7 +484,10 @@ static PyObject* gpib_timeout(PyObject *self, PyObject *args)
 
 	if (!PyArg_ParseTuple(args, "ii:timeout", &device,&value))
 		return NULL;
+	Py_BEGIN_ALLOW_THREADS
 	sta = ibtmo(device, value);
+	Py_END_ALLOW_THREADS
+
 	if( sta & ERR){
 		_SetGpibError("tmo");
 		return NULL;
@@ -453,13 +501,18 @@ static char gpib_serial_poll__doc__[] =
 
 static PyObject* gpib_serial_poll(PyObject *self, PyObject *args)
 {
-	int device;
 	char spr;
+	int device;
+	int sta;
 
 	if (!PyArg_ParseTuple(args, "i:serial_poll", &device))
 		return NULL;
 
-	if( ibrsp(device, &spr) & ERR){
+	Py_BEGIN_ALLOW_THREADS
+	sta = ibrsp(device, &spr);
+	Py_END_ALLOW_THREADS
+
+	if( sta & ERR ){
 		_SetGpibError("serial_poll");
 		return NULL;
 	}
@@ -479,7 +532,10 @@ static PyObject* gpib_trigger(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "i:trigger", &device))
 		return NULL;
 
+	Py_BEGIN_ALLOW_THREADS
 	sta = ibtrg(device);
+	Py_END_ALLOW_THREADS
+
 	if( sta & ERR){
 		_SetGpibError("trg");
 		return NULL;
