@@ -568,6 +568,12 @@ Default is <option>--sre</option>.</para>
 	</row>
 	<row>
 	<entry>Keithley</entry>
+	<entry>KUSB-488A</entry>
+	<entry>ni_usb_gpib.ko</entry>
+	<entry>ni_usb_b</entry>
+	</row>
+	<row>
+	<entry>Keithley</entry>
 	<entry>MBC-488</entry>
 	<entry>pc2_gpib.ko</entry>
 	<entry>pcII</entry>
