@@ -2000,7 +2000,7 @@ int ni_usb_attach(gpib_board_t *board, gpib_board_config_t config)
 		ni_priv->bulk_in_endpoint = NIUSB_B_BULK_IN_ENDPOINT;
 		ni_priv->interrupt_in_endpoint = NIUSB_B_INTERRUPT_IN_ENDPOINT;
 		ni_usb_b_read_serial_number(ni_priv);
-	}else if(product_id == USB_DEVICE_ID_NI_USB_HS || product_id == USB_DEVICE_ID_MC_USB_488)
+	}else if(product_id == USB_DEVICE_ID_NI_USB_HS || product_id == USB_DEVICE_ID_MC_USB_488 || product_id == USB_DEVICE_ID_KUSB_488A)
 	{
 		ni_priv->bulk_out_endpoint = NIUSB_HS_BULK_OUT_ENDPOINT;
 		ni_priv->bulk_in_endpoint = NIUSB_HS_BULK_IN_ENDPOINT;
@@ -2135,6 +2135,7 @@ static struct usb_device_id ni_usb_driver_device_table [] =
 {
 	{USB_DEVICE(USB_VENDOR_ID_NI, USB_DEVICE_ID_NI_USB_B)},
 	{USB_DEVICE(USB_VENDOR_ID_NI, USB_DEVICE_ID_NI_USB_HS)},
+	{USB_DEVICE(USB_VENDOR_ID_NI, USB_DEVICE_ID_KUSB_488A)},
 	{USB_DEVICE(USB_VENDOR_ID_NI, USB_DEVICE_ID_MC_USB_488)},
 	{} /* Terminating entry */
 };
