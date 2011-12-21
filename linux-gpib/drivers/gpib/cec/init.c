@@ -21,6 +21,7 @@
 #include <linux/pci.h>
 #include <asm/io.h>
 #include <linux/module.h>
+#include <linux/slab.h>
 
 MODULE_LICENSE("GPL");
 

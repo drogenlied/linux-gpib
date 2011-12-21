@@ -24,6 +24,7 @@
 #include <asm/io.h>
 #include <linux/module.h>
 #include <linux/init.h>
+#include <linux/slab.h>
 
 MODULE_LICENSE("GPL");
 
