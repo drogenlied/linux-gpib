@@ -6,7 +6,7 @@ SRQ = (1<<12)
 TIMO = (1<<14)
 
 
-class Gpib:
+class Gpib(object):
 	'''Three ways to create a Gpib object:
 	Gpib("name")
 		returns a board or device object, from a name in the config file
