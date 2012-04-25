@@ -391,7 +391,7 @@ int agilent_82357a_read_registers(agilent_82357a_private_t *a_priv, struct agile
 	}else
 	{
 		retval = mutex_trylock(&a_priv->bulk_transfer_lock);
-		if(retval)
+		if(retval == 0)
 		{
 			kfree(out_data);
 			return -EAGAIN;
