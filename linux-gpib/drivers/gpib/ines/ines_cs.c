@@ -31,7 +31,6 @@
 #include <linux/version.h>
 #include <linux/module.h>
 #include <asm/io.h>
-#include <asm/system.h>
 
 #include <pcmcia/cistpl.h>
 #include <pcmcia/ds.h>
