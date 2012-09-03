@@ -16,7 +16,6 @@
 #include <asm/irq.h>
 #include <asm/dma.h>
 #include <asm/uaccess.h>
-#include <asm/system.h>
 
 extern int gpib_allocate_board( gpib_board_t *board );
 extern void gpib_deallocate_board( gpib_board_t *board );
