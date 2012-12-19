@@ -1,3 +1,7 @@
+2012-12-19 21:02  dpenkler
+
+	* [r1593] configure.ac: Bumped version to 3.2.17
+
 2011-04-08 21:02  fmhess
 
 	* [r1565] ChangeLog: Updated ChangeLog with "svn2cl -i".
