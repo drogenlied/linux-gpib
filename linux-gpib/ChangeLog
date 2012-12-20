@@ -2,6 +2,25 @@
 
 	* [r1593] configure.ac: Bumped version to 3.2.17
 
+2012-09-04 01:51:27 fmhess
+
+	* [r1592] Removed more includes of kernel's obsolete asm/system.h
+
+2012-09-04 01:42:18 fmhess
+
+	* [r1591] Removed an include that breaks compilation on 3.5.3 kernel.
+	          Checked that it still compiles against a 2.6.32 kernel.
+
+2012-09-04 01:41:18 fmhess
+
+	* [r1590] Removed a garbage character at the end of an include line.
+
+
+2012-04-25 06:29:13 fmhess
+
+	* [r1589] Fix check of return value from mutex_trylock.
+
+
 2011-04-08 21:02  fmhess
 
 	* [r1565] ChangeLog: Updated ChangeLog with "svn2cl -i".
