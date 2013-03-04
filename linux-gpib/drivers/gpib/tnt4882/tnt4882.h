@@ -37,6 +37,7 @@ enum
 	PCI_DEVICE_ID_NI_PMCGPIB = 0xc831,
 	PCI_DEVICE_ID_NI_PCIEGPIB = 0x70cf,
 	PCI_DEVICE_ID_NI_PCIE2GPIB = 0x710e
+	PCI_DEVICE_ID_CEC_NI_GPIB = 0x7258,
 };
 
 // struct which defines private_data for tnt4882 devices
