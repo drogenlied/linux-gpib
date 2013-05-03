@@ -1,4 +1,13 @@
 
+2013-05-03 09:40  dpenkler
+
+	* [r1600] ChangeLog, configure.ac,
+	  drivers/gpib/lpvo_usb_gpib/lpvo_usb_gpib.c,
+	  drivers/gpib/pc2/pc2_init.c, drivers/gpib/tnt4882/tnt4882_init.c:
+	  Fixes for kernel version >= 3.7\nktermios in
+	  lpvo_usb_gpib.c\include <asm-generic>/dma.h in pc2_init.c for
+	  request_dma() free_dma()
+
 2013-04-19 03:08  fmhess
 
 	* [r1599] drivers/gpib/tnt4882/tnt4882.h: Fixed compile error.
