@@ -731,7 +731,7 @@ static const struct pci_device_id tnt4882_pci_table[] =
 };
 MODULE_DEVICE_TABLE(pci, tnt4882_pci_table);
 
-static const struct pnp_device_id tnt4882_pnp_table[] __devinitdata =
+static const struct pnp_device_id tnt4882_pnp_table[] =
 {
 	{.id = "NICC601"},
 	{.id = ""}

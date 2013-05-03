@@ -22,7 +22,7 @@
 #include <linux/sched.h>
 #include <linux/module.h>
 #include <linux/slab.h>
-#include <asm/dma.h>
+#include <asm-generic/dma.h>
 #include <linux/pci.h>
 #include <linux/string.h>
 #include <linux/init.h>

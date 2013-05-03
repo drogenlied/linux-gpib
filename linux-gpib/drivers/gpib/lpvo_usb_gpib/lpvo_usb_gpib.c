@@ -416,6 +416,8 @@ int usb_gpib_attach(gpib_board_t *board, gpib_board_config_t config) {
 	tty = (struct tty_struct *)f->private_data;
 
 	mutex_lock(&tty->termios_mutex);
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3,7,0)
 	old_termios = * tty->termios;
 	tty->termios->c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP
 				| INLCR | IGNCR | ICRNL | IXON);
@@ -431,6 +433,23 @@ int usb_gpib_attach(gpib_board_t *board, gpib_board_config_t config) {
 		(*tty->ops->set_termios)(tty, &old_termios);
 	else
 		tty_termios_copy_hw(tty->termios, &old_termios);
+#else
+	old_termios = tty->termios;
+	tty->termios.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP
+				| INLCR | IGNCR | ICRNL | IXON);
+	tty->termios.c_oflag &= ~OPOST;
+	tty->termios.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+	tty->termios.c_cflag &= ~(CSIZE | PARENB);
+	tty->termios.c_cflag |= CS8;
+
+	tty->termios.c_cc[VTIME] = 0;
+	tty->termios.c_cc[VMIN] = 1;
+
+	if (tty->ops->set_termios)
+		(*tty->ops->set_termios)(tty, &old_termios);
+	else
+		tty_termios_copy_hw(&tty->termios, &old_termios);
+#endif
 
 	ld = tty_ldisc_ref(tty);
 	if (ld != NULL) {
