@@ -279,7 +279,7 @@ int init_82350a_hardware(gpib_board_t *board, const gpib_board_config_t *config)
 	// need to programme borg
 	if(config->init_data == NULL ||  config->init_data_length != firmware_length)
 	{
-		printk("%s: the 82350a requires a firmware after powering on.\n", driver_name);
+		printk("%s: the 82350A board requires firmware after powering on.\n", driver_name);
 		return -EIO;
 	}
 	printk("%s: Loading firmware... ", driver_name);
@@ -316,7 +316,7 @@ int init_82350a_hardware(gpib_board_t *board, const gpib_board_config_t *config)
 		printk("%s: timed out waiting for firmware load to complete.\n", driver_name);
 		return -ETIMEDOUT;
 	}
-	printk("done.\n");
+	printk("%s: ...done.\n",driver_name);
 	return 0;
 }
 
@@ -366,24 +366,38 @@ int agilent_82350b_generic_attach(gpib_board_t *board, const gpib_board_config_t
 	a_priv->pci_device = gpib_pci_get_device(board, PCI_VENDOR_ID_AGILENT,
 		PCI_DEVICE_ID_82350B, NULL);
 	if(a_priv->pci_device)
-	{
-		a_priv->model = MODEL_82350B;
+	{       
+		a_priv->model = MODEL_82350B;	
+		printk("%s: Agilent 82350B board found\n",driver_name);
+
 	}else
 	{
-		a_priv->pci_device = gpib_pci_get_subsys(board, PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050,
-			PCI_VENDOR_ID_HP,  PCI_SUBDEVICE_ID_82350A, a_priv->pci_device);
-		if(a_priv->pci_device)
+	         a_priv->pci_device = gpib_pci_get_device(board, PCI_VENDOR_ID_AGILENT,
+							  PCI_DEVICE_ID_82351A, NULL);
+	        if(a_priv->pci_device)
 		{
-			a_priv->model = MODEL_82350A;
+		       a_priv->model = MODEL_82351A;	
+		       printk("%s: Agilent 82351B board found\n",driver_name);
+
 		}else
-		{
-			printk("agilent_82350b: no 82350 board found\n");
-			return -ENODEV;
+	        {
+		        a_priv->pci_device = gpib_pci_get_subsys(board, PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050,
+								 PCI_VENDOR_ID_HP,  PCI_SUBDEVICE_ID_82350A,
+								 a_priv->pci_device);
+			if(a_priv->pci_device)
+			{
+			         a_priv->model = MODEL_82350A;
+				 printk("%s: HP/Agilent 82350A board found\n",driver_name);
+			}else
+			{
+			         printk("%s: no 82350/82351 board found\n",driver_name);
+				 return -ENODEV;
+			}
 		}
 	}
 	if(pci_enable_device(a_priv->pci_device))
 	{
-		printk("error enabling pci device\n");
+	  printk("%s: error enabling pci device\n",driver_name);
 		return -EIO;
 	}
 	if(pci_request_regions(a_priv->pci_device, driver_name))
@@ -393,31 +407,32 @@ int agilent_82350b_generic_attach(gpib_board_t *board, const gpib_board_config_t
 	case MODEL_82350A:
 		a_priv->plx_base = ioremap(pci_resource_start(a_priv->pci_device, PLX_MEM_REGION),
 			pci_resource_len(a_priv->pci_device, PLX_MEM_REGION));
-		printk("%s: plx base address remapped to 0x%p\n", __FUNCTION__, a_priv->plx_base );
+		printk("%s: plx base address remapped to 0x%p\n", driver_name, a_priv->plx_base );
 		a_priv->gpib_base = ioremap(pci_resource_start(a_priv->pci_device, GPIB_82350A_REGION),
 			pci_resource_len(a_priv->pci_device, GPIB_82350A_REGION));
-		printk("%s: gpib base address remapped to 0x%p\n", __FUNCTION__, a_priv->gpib_base );
+		printk("%s: gpib base address remapped to 0x%p\n", driver_name, a_priv->gpib_base );
 		tms_priv->iobase = a_priv->gpib_base + TMS9914_BASE_REG;
 		a_priv->sram_base = ioremap(pci_resource_start(a_priv->pci_device, SRAM_82350A_REGION),
 			pci_resource_len(a_priv->pci_device, SRAM_82350A_REGION));
-		printk("%s: sram base address remapped to 0x%p\n", __FUNCTION__, a_priv->sram_base );
+		printk("%s: sram base address remapped to 0x%p\n", driver_name, a_priv->sram_base );
 		a_priv->borg_base = ioremap(pci_resource_start(a_priv->pci_device, BORG_82350A_REGION),
 			pci_resource_len(a_priv->pci_device, BORG_82350A_REGION));
-		printk("%s: borg base address remapped to 0x%p\n", __FUNCTION__, a_priv->borg_base );
+		printk("%s: borg base address remapped to 0x%p\n", driver_name, a_priv->borg_base );
 		retval = init_82350a_hardware(board, config);
 		if(retval < 0) return retval;
 		break;
 	case MODEL_82350B:
+        case MODEL_82351A:
 		a_priv->gpib_base = ioremap(pci_resource_start(a_priv->pci_device, GPIB_REGION),
 			pci_resource_len(a_priv->pci_device, GPIB_REGION));
-		printk("%s: gpib base address remapped to 0x%p\n", __FUNCTION__, a_priv->gpib_base );
+		printk("%s: gpib base address remapped to 0x%p\n", driver_name, a_priv->gpib_base );
 		tms_priv->iobase = a_priv->gpib_base + TMS9914_BASE_REG;
 		a_priv->sram_base = ioremap(pci_resource_start(a_priv->pci_device, SRAM_REGION),
 			pci_resource_len(a_priv->pci_device, SRAM_REGION));
-		printk("%s: sram base address remapped to 0x%p\n", __FUNCTION__, a_priv->sram_base );
+		printk("%s: sram base address remapped to 0x%p\n", driver_name, a_priv->sram_base );
 		a_priv->misc_base = ioremap(pci_resource_start(a_priv->pci_device, MISC_REGION),
 			pci_resource_len(a_priv->pci_device, MISC_REGION));
-		printk("%s: misc base address remapped to 0x%p\n", __FUNCTION__, a_priv->misc_base );
+		printk("%s: misc base address remapped to 0x%p\n", driver_name, a_priv->misc_base );
 		break;
 	default:
 		BUG();
@@ -428,11 +443,11 @@ int agilent_82350b_generic_attach(gpib_board_t *board, const gpib_board_config_t
 
 	if(request_irq(a_priv->pci_device->irq, agilent_82350b_interrupt, IRQF_SHARED, driver_name, board))
 	{
-		printk("gpib: can't request IRQ %d\n", a_priv->pci_device->irq);
+	        printk("%s: can't request IRQ %d\n", driver_name, a_priv->pci_device->irq);
 		return -EIO;
 	}
 	a_priv->irq = a_priv->pci_device->irq;
-	printk( "agilent_82350b: IRQ %d\n", a_priv->irq );
+	printk( "%s: IRQ %d\n", driver_name,a_priv->irq );
 
 	writeb(0, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG);
 	a_priv->card_mode_bits = ENABLE_PCI_IRQ_BIT;
@@ -511,8 +526,9 @@ void agilent_82350b_detach(gpib_board_t *board)
 
 static const struct pci_device_id agilent_82350b_pci_table[] =
 {
-	{ PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050, PCI_VENDOR_ID_HP,  PCI_SUBDEVICE_ID_82350A, 0, 0, 0 },
+	{ PCI_VENDOR_ID_PLX,     PCI_DEVICE_ID_PLX_9050, PCI_VENDOR_ID_HP,  PCI_SUBDEVICE_ID_82350A, 0, 0, 0 },
 	{ PCI_VENDOR_ID_AGILENT, PCI_DEVICE_ID_82350B, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
+	{ PCI_VENDOR_ID_AGILENT, PCI_DEVICE_ID_82351A, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0 },
 	{ 0 }
 };
 MODULE_DEVICE_TABLE(pci, agilent_82350b_pci_table);

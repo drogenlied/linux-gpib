@@ -1,3 +1,14 @@
+2013-07-25 19:54  dpenkler
+
+	* [r1603] New board
+	  Adding support for Agilent 82351A PCIe card to 82350b driver
+	  agilent_82350b_init.c Cleaned up initialisation printk's
+	  ib_internal.h YYPARSE_PARAM declaration fix for fussy gcc 4.8.0
+
+2013-05-03 10:14  dpenkler
+
+	* [r1602] ChangeLog: Removed more Changelog duplicates
+
 2013-05-03 09:59  dpenkler
 
 	* [r1601] ChangeLog: Removed Changelog duplicates. Bumped version

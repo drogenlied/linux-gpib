@@ -128,7 +128,8 @@ static __inline__ ibBoard_t* interfaceBoard( const ibConf_t *conf )
 }
 
 #include <stdio.h>
-int gpib_yyparse(void *parse_arg);
+#define YYPARSE_PARAM parse_arg
+int gpib_yyparse(void *YYPARSE_PARAM);
 int parse_gpib_conf( const char *filename, ibConf_t *configs,
 	unsigned int configs_length, ibBoard_t *boards, unsigned int boards_length );
 #define YY_DECL int gpib_yylex(YYSTYPE *gpib_lvalp, YYLTYPE *gpib_llocp, yyscan_t yyscanner)

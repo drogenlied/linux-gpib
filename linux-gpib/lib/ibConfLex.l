@@ -6,7 +6,7 @@
 %option reentrant
 
 %{
-
+#define YYPARSE_PARAM parse_arg
 #include "ibConfYacc.h"
 #include "ib_internal.h"
 #include <string.h>
