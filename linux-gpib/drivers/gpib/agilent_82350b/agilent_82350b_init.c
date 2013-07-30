@@ -34,7 +34,7 @@ int agilent_82350b_accel_attach(gpib_board_t *board, gpib_board_config_t config)
 
 void agilent_82350b_detach( gpib_board_t *board );
 
-static const char *driver_name = "agilent_82350b";
+const char *driver_name = "agilent_82350b";
 
 int read_transfer_counter(agilent_82350b_private_t *a_priv)
 {
@@ -282,7 +282,7 @@ int init_82350a_hardware(gpib_board_t *board, const gpib_board_config_t *config)
 		printk("%s: the 82350A board requires firmware after powering on.\n", driver_name);
 		return -EIO;
 	}
-	printk("%s: Loading firmware... ", driver_name);
+	printk("%s: Loading firmware...\n", driver_name);
 
 	// tickle the borg
 	writel(plx_cntrl_static_bits | PLX9050_USER3_DATA_BIT, a_priv->plx_base + PLX9050_CNTRL_REG);

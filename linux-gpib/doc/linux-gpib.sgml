@@ -469,6 +469,11 @@ Default is <option>--sre</option>.</para>
 	<entry><link LINKEND="agilent-82350b">82350B</link></entry>
 	<entry>agilent_82350b.ko</entry>
 	<entry>agilent_82350b</entry>
+	<row>
+	<entry>Agilent</entry>
+	<entry><link LINKEND="agilent-82350b">82351A</link></entry>
+	<entry>agilent_82350b.ko</entry>
+	<entry>agilent_82350b</entry>
 	</row>
 	<row>
 	<entry>Agilent</entry>
@@ -757,15 +762,14 @@ device you are talking to).
 </para>
 </section>
 <section ID="agilent-82350b">
-<title>Agilent 82350A/B</title>
+<title>Agilent 82350A/B and 82351A</title>
 <para>
-The Agilent 82350A and 82350B do not support detection of an end-of-string character
-during reads in hardware, they can only detect assertion of the EOI
-line.  Thus if you use the REOS
-flag for a read, the boards' fifos will
-not be used for the transfer.  This will greatly reduce the maximum transfer
-rate for your board (which may or may not be noticeable depending on the
-device you are talking to).
+The Agilent 82350A/B and 82351A boards do not support detection of an
+end-of-string character during reads in hardware, they can only detect
+assertion of the EOI line.  Thus if you use the REOS flag for a read,
+the boards' fifos will not be used for the transfer.  This will
+greatly reduce the maximum transfer rate for your board (which may or
+may not be noticeable depending on the device you are talking to).
 </para>
 <para>
 After power-up, the 82350A boards require a firmware upload before they
@@ -774,7 +778,7 @@ can be used.  This can be accomplished using the "--init-data" option of
 firmware data can be found in the gpib_firmware
 tarball available from the
 <ulink URL="http://linux-gpib.sourceforge.net/">Linux-GPIB home page</ulink>.
-The 82350B does not require a firmware upload.
+The 82350B and 82351A do not require a firmware upload.
 </para>
 </section>
 <section ID="agilent-82357a">

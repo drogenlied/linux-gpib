@@ -387,7 +387,7 @@ void pc2_detach(gpib_board_t *board)
 
 int pc2a_common_attach(gpib_board_t *board, unsigned int num_registers, enum nec7210_chipset chipset)
 {
-	unsigned int i, err;
+        unsigned int i, j;
 	pc2_private_t *pc2_priv;
 	nec7210_private_t *nec_priv;
 	int retval;
@@ -423,7 +423,8 @@ int pc2a_common_attach(gpib_board_t *board, unsigned int num_registers, enum nec
 	{
 		printk("pc2_gpib: interrupt disabled, using polling mode (slow)\n");
 	}
-	err = 0;
+#if 0
+	unsigned int err = 0;
 	for(i = 0; i < num_registers; i++)
 	{
 		if(check_region((unsigned long)(board->ibbase) + i * pc2a_reg_offset, 1))
@@ -438,14 +439,27 @@ int pc2a_common_attach(gpib_board_t *board, unsigned int num_registers, enum nec
 		printk("gpib: ioports are already in use");
 		return -1;
 	}
+#endif
 	for(i = 0; i < num_registers; i++)
 	{
-		request_region((unsigned long)(board->ibbase) + i * pc2a_reg_offset, 1, "pc2a");
+	  if (!request_region((unsigned long)(board->ibbase) + i * pc2a_reg_offset, 1, "pc2a"))
+	    {
+	      printk("gpib: ioports are already in use");
+	      for (j = 0; j < i; j++) 
+		{
+		  release_region((unsigned long)(board->ibbase) + j * pc2a_reg_offset, 1);
+		}
+	      return -1;
+	    }
 	}
 	nec_priv->iobase = board->ibbase;
 	if(board->ibirq)
 	{
-		request_region(pc2a_clear_intr_iobase + board->ibirq, 1, "pc2a");
+	  if (!request_region(pc2a_clear_intr_iobase + board->ibirq, 1, "pc2a"))
+		  {
+		    printk("gpib: ioports are already in use");
+		    return -1;
+		  }
 		pc2_priv->clear_intr_addr = pc2a_clear_intr_iobase + board->ibirq;
 		if(request_irq(board->ibirq, pc2a_interrupt, 0, "pc2a", board))
 		{

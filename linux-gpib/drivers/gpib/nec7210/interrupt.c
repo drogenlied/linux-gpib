@@ -54,7 +54,9 @@ irqreturn_t nec7210_interrupt( gpib_board_t *board, nec7210_private_t *priv )
 irqreturn_t nec7210_interrupt_have_status( gpib_board_t *board,
 	nec7210_private_t *priv, int status1, int status2 )
 {
+#if 0
 	unsigned long dma_flags;
+#endif
 	int retval = IRQ_NONE;
 	
 	// record service request in status

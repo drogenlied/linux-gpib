@@ -26,17 +26,17 @@ static int translate_wait_return_value(gpib_board_t *board, int retval)
 
 	if(retval)
 	{
-		printk("%s: write wait interrupted\n", __FILE__);
+		printk("%s: write wait interrupted\n", driver_name);
 		return -ERESTARTSYS;
 	}
 	if(test_bit(TIMO_NUM, &board->status))
 	{
-		printk("%s: minor %i: write timed out\n", __FILE__, board->minor);
+		printk("%s: minor %i: write timed out\n", driver_name, board->minor);
 		return -ETIMEDOUT;
 	}
 	if(test_bit(DEV_CLEAR_BN, &tms_priv->state))
 	{
-		printk("%s: device clear interrupted write\n", __FILE__);
+		printk("%s: device clear interrupted write\n", driver_name);
 		return -EINTR;
 	}
 	return 0;

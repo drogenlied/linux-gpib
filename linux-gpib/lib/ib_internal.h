@@ -39,7 +39,7 @@ void init_async_op( struct async_operation *async );
 int ibBoardOpen( ibBoard_t *board );
 int ibBoardClose( ibBoard_t *board );
 int ibGetNrBoards(void);
-void yyerror(char *s);
+void yyerror(const char *s);
 int iblcleos( const ibConf_t *conf );
 void ibPutMsg (char *format,...);
 void ibPutErrlog(int ud,char *routine);

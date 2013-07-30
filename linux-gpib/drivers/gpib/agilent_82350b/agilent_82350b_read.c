@@ -45,7 +45,7 @@ int agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t leng
 		retval = tms9914_read(board, tms_priv, buffer, 1, end, &num_bytes);
 		*bytes_read += num_bytes;
 		if(retval < 0)
-			printk("tms9914_read failed retval=%i\n", retval);
+		        printk("%s: tms9914_read failed retval=%i\n", driver_name, retval);
 		if(retval < 0 || *end)
 		{
 			return retval;
@@ -76,7 +76,7 @@ int agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t leng
 			test_bit(DEV_CLEAR_BN, &tms_priv->state) ||
 			test_bit(TIMO_NUM, &board->status)))
 		{
-			printk("%s: write wait interrupted\n", __FILE__);
+			printk("%s: write wait interrupted\n", driver_name);
 			retval = -ERESTARTSYS;
 			break;
 		}
@@ -91,13 +91,13 @@ int agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t leng
 		}
 		if(test_bit(TIMO_NUM, &board->status))
 		{
-			printk("%s: minor %i: read timed out\n", __FILE__, board->minor);
+		        printk("%s: minor %i: read timed out\n", driver_name, board->minor);
 			retval = -ETIMEDOUT;
 			break;
 		}
 		if(test_bit(DEV_CLEAR_BN, &tms_priv->state))
 		{
-			printk("%s: device clear interrupted write\n", __FILE__);
+			printk("%s: device clear interrupted write\n", driver_name);
 			retval = -EINTR;
 			break;
 		}

@@ -78,6 +78,9 @@ typedef struct
 	enum board_model model;
 } agilent_82350b_private_t;
 
+// driver name
+extern const char *driver_name;
+
 // interfaces
 extern gpib_interface_t agilent_82350b_interface;
 

@@ -1,3 +1,13 @@
+2013-07-30 10:30  dpenkler
+
+	* [r1604] Update doc for 82351A.
+          agilent_82350b consistent driver name in printks' for easy grepping
+	  Compile warning fixes:
+	  - nec7210/interrupt.c: removed unused variable 
+          - pc2_init.c: removed calls to deprecated check_region
+	  - lib/ibConfYacc.y: yyerror declaration
+	  - lib/ibib_internal.h: yyerror declaration
+
 2013-07-25 19:54  dpenkler
 
 	* [r1603] New board
