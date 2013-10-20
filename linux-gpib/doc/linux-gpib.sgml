@@ -488,6 +488,18 @@ Default is <option>--sre</option>.</para>
 	<entry>agilent_82357a</entry>
 	</row>
 	<row>
+	<entry>Beiming Technologies</entry>
+	<entry><link LINKEND="beiming-F82357">F82357</link></entry>
+	<entry>agilent_82357a.ko</entry>
+	<entry>agilent_82357a</entry>
+	</row>
+	<row>
+	<entry>Beiming Technologies</entry>
+	<entry><link LINKEND="beiming-F82357">S82357</link></entry>
+	<entry>agilent_82357a.ko</entry>
+	<entry>agilent_82357a</entry>
+	</row>
+	<row>
 	<entry>Capital Equipment Corporation</entry>
 	<entry>PC-488</entry>
 	<entry>pc2_gpib.ko</entry>
@@ -811,6 +823,30 @@ They cannot be assigned a secondary address.
 <para>
 They cannot do 7 bit compares when looking for an end-of-string character (they always
 compare all 8 bits).
+</para>
+</listitem>
+</itemizedList>
+</para>
+</section>
+<section ID="beiming-F82357">
+<title>Beiming F/S82357</title>
+<para>
+Linux_gpib support requires a minimum firmware version of 1.10 for
+the F82357 and version 1.20 for the S82357. These devices have
+on-board firmware and do not require a firmware upload before becoming
+functional afer plug-in. The on-board firmware can be re-flashed; contact the
+manufacturer for firmware and re-flash procedure. 
+</para><para>
+Limitations:
+<itemizedlist>
+<listitem>
+<para>
+ These devices can only be used as system controllers.
+</para>
+</listitem>
+<listitem>
+<para>
+They can only do 8-bit end-of-string (EOS) compares.
 </para>
 </listitem>
 </itemizedList>

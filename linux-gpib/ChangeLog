@@ -1,3 +1,9 @@
+2013-10-20 12:20  dpenkler
+
+        * [r1606] sys/osinit.c: removed unused ops for linux 3.11.x
+	  - Updated doc for F/S82357 support
+          - bumped version to 3.1.19
+
 2013-07-30 12:20  dpenkler
 
         * [r1605] Made tag for 3.2.18 release.

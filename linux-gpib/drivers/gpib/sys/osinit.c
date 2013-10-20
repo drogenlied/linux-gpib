@@ -34,23 +34,10 @@ struct file_operations ib_fops =
 {
 	owner: THIS_MODULE,
 	llseek: NULL,
-	read: NULL,
-	write: NULL,
-	readdir: NULL,
-	poll: NULL,
 	unlocked_ioctl: &ibioctl,
 	compat_ioctl: &ibioctl,
-	mmap: NULL,
 	open: &ibopen,
-	flush: NULL,
 	release: &ibclose,
-	fsync: NULL,
-	fasync: NULL,
-	lock: NULL,
-//	readv: NULL,
-//	writev: NULL,
-	sendpage: NULL,
-	get_unmapped_area: NULL,
 };
 
 gpib_board_t board_array[GPIB_MAX_NUM_BOARDS];
