@@ -39,4 +39,6 @@ $(srcdir)/ibConfLex.c $(srcdir)/ibConfLex.h: $(srcdir)/ibConfLex.l
 $(srcdir)/ibConfYacc.c $(srcdir)/ibConfYacc.h: $(srcdir)/ibConfYacc.y
 	$(YACC) -d -p gpib_yy -o $(srcdir)/ibConfYacc.c $<
 
-
+# pkg-config
+pkgconfigdir=$(libdir)/pkgconfig
+pkgconfig_DATA=libgpib.pc

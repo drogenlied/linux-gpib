@@ -414,9 +414,11 @@ int usb_gpib_attach(gpib_board_t *board, gpib_board_config_t config) {
 	f->f_pos = 0;
 
 	tty = (struct tty_struct *)f->private_data;
-
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3,12,0)
 	mutex_lock(&tty->termios_mutex);
-
+#else
+	down_write(&tty->termios_rwsem);
+#endif
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3,7,0)
 	old_termios = * tty->termios;
 	tty->termios->c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP
@@ -457,8 +459,12 @@ int usb_gpib_attach(gpib_board_t *board, gpib_board_config_t config) {
 			(ld->ops->set_termios)(tty, &old_termios);
 		tty_ldisc_deref(ld);
 	}
-	mutex_unlock(&tty->termios_mutex);
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3,12,0)
+	mutex_unlock(&tty->termios_mutex);
+#else
+	up_write(&tty->termios_rwsem);
+#endif
 	SHOW_STATUS (board);
 
 	retval = send_command (board, USB_GPIB_ON, 0);

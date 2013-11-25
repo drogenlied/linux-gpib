@@ -1,3 +1,22 @@
+2013-11-25 19:45 dpenkler
+
+	* [r1609] Minor upgrades
+	  - Support for 3.12 kernel: use rwsem instead of mutex in lpvo_usb_gpib.c
+	  - Added patch for pkgconfig support from rickyrockrat
+	  - Made compilation of pc2 ISA module conditional on
+	    either the use of --enable-isa in .configure
+	    or on CONFIG_ISA=y in the kernel config (new in 3.12 32 bit
+	    kernel)
+
+2013-10-20 16:47  dpenkler
+
+        * [r1608] Made tag for 3.2.19 release.
+
+2013-10-20 16:41 dpenkler
+
+	* [r1607] Document support for F/S82387
+
+
 2013-10-20 12:20  dpenkler
 
         * [r1606] sys/osinit.c: removed unused ops for linux 3.11.x

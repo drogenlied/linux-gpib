@@ -33,6 +33,12 @@ AC_CANONICAL_HOST
 
 AC_ENABLE_SHARED([yes])
 AC_ENABLE_STATIC([no])
+AC_ARG_ENABLE([isa],[  --enable-isa		Enable support for ISA cards in GPIB kernel drivers],
+	[ENABLE_ISA=$enableval],[ENABLE_ISA="no"])
+if test "$ENABLE_ISA" == "yes" ; then
+	AC_DEFINE([GPIB_CONFIG_ISA],[1],[Define to enable ISA support in drivers])
+fi
+AC_SUBST([ENABLE_ISA])
 AC_ARG_ENABLE([pcmcia],[  --enable-pcmcia	Enable support for PCMCIA cards in GPIB kernel drivers],
 	[ENABLE_PCMCIA=$enableval],[ENABLE_PCMCIA="no"])
 if test "$ENABLE_PCMCIA" == "yes" ; then
@@ -189,6 +195,7 @@ echo "TCL binding: $BIND_TCL"
 AC_OUTPUT([\
 	Makefile \
 	lib/Makefile \
+	lib/libgpib.pc \
 	lib/gpib_config/Makefile \
 	examples/Makefile \
 	test/Makefile \

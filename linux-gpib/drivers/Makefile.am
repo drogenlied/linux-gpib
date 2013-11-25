@@ -20,6 +20,7 @@ SUBDIRS = gpib/include
 all-local:
 	-$(MAKE) -C $(LINUX_SRCDIR) V=1 modules\
 		CC="$(LINUX_CC) -I@abs_top_srcdir@ -I@abs_top_srcdir@/drivers/gpib/include -I@abs_top_srcdir@/include" \
+		CONFIG_GPIB_ISA="$(ENABLE_ISA)" \
 		SUBDIRS="$(GPIB_ABS_MODULE_SUBDIR)"
 
 clean-local:
