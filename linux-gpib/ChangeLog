@@ -1,3 +1,12 @@
+2013-11-27 09:20 dpenkler
+
+	* [r1611] Add patch for ARM from Carsten
+	  - Cranked version number to 3.2.20
+
+2013-11-25 21:10 dpenkler
+
+	* [r1610] Add missing file lib/libgpib.pc.in
+
 2013-11-25 19:45 dpenkler
 
 	* [r1609] Minor upgrades

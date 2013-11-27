@@ -37,6 +37,7 @@
 #include <linux/file.h>
 #include <linux/timer.h>
 #include <linux/delay.h>
+#include <asm/uaccess.h>
 
 #include "gpibP.h"
 
