@@ -1,3 +1,12 @@
+2013-12-03 15:50 dpenkler
+
+	* [r1614] Fix in drivers/Makefile.am to avoid depmod install warning
+          - Added required -F $(LINUX_SRCDIR)/System.map argument to depmod -ae
+
+2013-12-03 13:54 dpenkler
+
+	* [r1613] Make tag for 3.2.20 release
+
 2013-12-03 13:30 dpenkler
 
 	* [r1612] Fix configure.ac to remove warning for Tcl when not enabled
