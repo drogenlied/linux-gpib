@@ -1,3 +1,7 @@
+2013-12-03 13:30 dpenkler
+
+	* [r1612] Fix configure.ac to remove warning for Tcl when not enabled
+
 2013-11-27 09:20 dpenkler
 
 	* [r1611] Add patch for ARM from Carsten

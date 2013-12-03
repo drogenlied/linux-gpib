@@ -120,12 +120,14 @@ if test "$PERL" == "no"; then
 	AC_MSG_NOTICE([perl not found, disabling perl binding])
 	BIND_PERL="no"
 fi
-SC_PATH_TCLCONFIG
-if [[ $no_tcl ]]; then
-	AC_MSG_NOTICE([TCL config not found, disabling TCL binding])
-	BIND_TCL="no"
-else
+if test "$BIND_TCL" == "yes"; then
+   SC_PATH_TCLCONFIG   
+   if [[ $no_tcl ]]; then
+        AC_MSG_NOTICE([TCL config not found, disabling TCL binding])
+        BIND_TCL="no"
+   else
 	SC_LOAD_TCLCONFIG
+   fi
 fi
 AC_PATH_PROG([PHP_CONFIG], [php-config], [no],[])
 if test "$PHP_CONFIG" == "no"; then
