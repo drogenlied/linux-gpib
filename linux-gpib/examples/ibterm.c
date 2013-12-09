@@ -20,18 +20,14 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "../config.h"
 #include <stdio.h>
 #include <string.h>
 #include <malloc.h>
 #include <stdlib.h>
 #include <getopt.h>
-#if HAVE_READLINE_READLINE_H && HAVE_READLINE_HISTORY_H && HAVE_LIBREADLINE
-#define READLINE
+#ifdef READLINE
 #include <readline/readline.h>
 #include <readline/history.h>
-#else
-#undef READLINE
 #endif
 #include "gpib/ib.h"
 
@@ -88,7 +84,7 @@ static const char * help_string =
   "    Go back to loop.\n"
   "\nNotes:\n"
   "  To quit the programme enter the EOF character (Ctrl-d) at the prompt.\n"
-  "  For interactivity, timeout should not be greater than 13 i.e. 10 seconds.\n"
+  "  For interactivity, timeout should not be greater than 13 i.e. 10 secs.\n"
   "  The timeout values are documented under the ibtmo() entry of the \n"
   "  section Linux-GPIB Reference: http://linux-gpib.sourceforge.net/doc_html\n"
   "  A device read can always be triggered by hitting <Enter> at the prompt.\n"
@@ -200,7 +196,7 @@ void parse_options(int argc, char ** argv) {
   if (!xeos_mode && eos_char > 127) {
     EMES("Warning eos is 8 bits but compares are set to 7.\n");
   }
-  if (timeout < 1 || timeout > 15)  abend("<timeout> must be between 1 and 15.");
+  if (timeout < 1 || timeout > 15) abend("<timeout> must be between 1 and 15.");
   eos_mode = eos_char;
   if (reos_mode) eos_mode |= REOS;
   if (bin_mode)  eos_mode |= BIN;
@@ -276,16 +272,14 @@ main (int argc, char ** argv) {
 
     if (mAutoRead || !datasent) {   /* read response if any from device */
       if (ibrd(devdesc,devbuf,DEVICE_BUFFER_SIZE) & ERR) {
-	if (ThreadIbsta() & TIMO) continue;  // continue on time out
-	else {
+	if (!(ThreadIbsta() & TIMO)) {
 	  sprintf(errmes,"Failed during read from device at pad %d\n",pad);
 	  showError(errmes);
 	}
+	continue;
       }
       devdatalen = ThreadIbcntl();
-    } else devdatalen = 0;
-
-    if (!devdatalen) continue;
+    } else continue;
 
     /* print response */
     if (!mHex) {

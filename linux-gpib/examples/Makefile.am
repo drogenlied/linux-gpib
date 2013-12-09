@@ -8,8 +8,8 @@ ibtest_CFLAGS = $(LIBGPIB_CFLAGS)
 ibtest_LDADD = $(LIBGPIB_LDFLAGS)
 
 ibterm_SOURCES = ibterm.c
-ibterm_CFLAGS = $(LIBGPIB_CFLAGS)
-ibterm_LDADD = $(LIBGPIB_LDFLAGS) $(LIB_READLINE_FLAGS)
+ibterm_CFLAGS = $(LIBGPIB_CFLAGS) $(LIB_READLINE_CFLAGS)
+ibterm_LDADD = $(LIBGPIB_LDFLAGS) $(LIB_READLINE_LDFLAGS)
 
 master_read_to_file_SOURCES = master_read_to_file.c
 master_read_to_file_CFLAGS = $(LIBGPIB_CFLAGS)

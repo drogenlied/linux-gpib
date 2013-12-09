@@ -140,10 +140,8 @@ dnl Checks for libraries.
 AC_CHECK_LIB([guile],[gh_define],[echo this prevents default actions from occurring > /dev/null],
 	[BIND_GUILE="no";AC_MSG_NOTICE([libguile not found, disabling guile binding])],[])
 
-AC_CHECK_LIB([readline], [main], 
-  	     [AC_SUBST([LIB_READLINE_FLAGS], ["-lreadline -lncurses"])
-	      AC_DEFINE([HAVE_LIBREADLINE],[1],
-	      [Define if readline library present])],
+AC_CHECK_LIB([readline], [readline], 
+  	     [readline_lib=yes;AC_SUBST([LIB_READLINE_LDFLAGS], ["-lreadline -lncurses"])],
 	     [],
 	     [-lncurses])
 		       
@@ -152,7 +150,12 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS(unistd.h sys/param.h sys/time.h time.h sys/mkdev.h sys/sysmacros.h string.h memory.h fcntl.h dirent.h sys/ndir.h ndir.h alloca.h locale.h )
 AM_CHECK_PYTHON_HEADERS([],[BIND_PYTHON=no;AC_MSG_NOTICE([python headers not found, disabling python binding])])
 AC_CHECK_HEADER([libguile.h],[],[BIND_GUILE="no";AC_MSG_NOTICE([libguile headers not found, disabling guile binding])])
-AC_CHECK_HEADERS(readline/readline.h readline/history.h)
+
+AC_CHECK_HEADER(readline/readline.h,[readline_h=yes])
+AC_CHECK_HEADER(readline/history.h,[history_h=yes])
+if test $readline_lib == "yes" -a $readline_h == "yes" -a $history_h == "yes"; then
+   AC_SUBST([LIB_READLINE_CFLAGS], ["-DREADLINE"])
+fi
 
 if test "$BIND_TCL" != "no"; then
 SAVE_CPPFLAGS=$CPPFLAGS
