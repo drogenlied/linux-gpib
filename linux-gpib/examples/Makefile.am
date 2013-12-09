@@ -1,11 +1,15 @@
 
 noinst_PROGRAMS = master_read_to_file master_write_from_file \
 	slave_read_to_file slave_write_from_file
-bin_PROGRAMS = ibtest
+bin_PROGRAMS = ibtest ibterm
 
 ibtest_SOURCES = ibtest.c
 ibtest_CFLAGS = $(LIBGPIB_CFLAGS)
 ibtest_LDADD = $(LIBGPIB_LDFLAGS)
+
+ibterm_SOURCES = ibterm.c
+ibterm_CFLAGS = $(LIBGPIB_CFLAGS)
+ibterm_LDADD = $(LIBGPIB_LDFLAGS) $(LIB_READLINE_FLAGS)
 
 master_read_to_file_SOURCES = master_read_to_file.c
 master_read_to_file_CFLAGS = $(LIBGPIB_CFLAGS)
