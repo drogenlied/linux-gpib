@@ -38,6 +38,7 @@
 
 /* Global variable declarations */
 static char * mPrompt   = PROMPT;        // Prompt string
+static char * mProg;                     // Programme name
 static char * mHist     = (char *)NULL;  // History filename pointer
 static int mAutoRead    = true;          // Automatically read from device
 static int mHex         = false;         // Force hex output flag
@@ -95,9 +96,8 @@ static const char * help_string =
 #endif
   ;
 
-static const char * usage_string = 
-  "\nUsage:\n"
-  "  ibterm -d pad \\\n"
+static const char * usage_options = 
+  " -d pad \\\n"
   "         [-m minor] [-s sad] [-i eoi] [-e eos]"
   " [-r reos] [-b bin] [-x xeos] \\\n"
   "         [-t timeout] [-p prompt]"
@@ -110,14 +110,20 @@ static const char * usage_string =
 
 static void abend(const char * mess) {
   EMES(mess);
-  EMES("ibterm: Aborted\n");
+  EMES(mProg);
+  EMES(": Aborted\n");
   if (devdesc >= 0) ibonl(devdesc,0);
   exit(1);
 }
 
 static void usage(int abort) {
-  EMES(usage_string);
-  if (abort) abend("Try 'ibterm -h' for more information.\n");
+  EMES("\nUsage:\n  ");
+  EMES(mProg);
+  EMES(usage_options);
+  if (abort) {
+    sprintf(errmes,"Try '%s -h' for more information.\n",mProg);
+    abend(errmes);
+  }
   exit(1);
 }
 
@@ -158,6 +164,8 @@ void parse_options(int argc, char ** argv) {
   int bin_mode  = 0;   // Match only 7 bits of eos_char
   int xeos_mode = 0;   // Don't assert EOI when sending eos_char
   int c;
+ 
+  mProg = argv[0];
 
   while ((c = getopt (argc, argv, "d:m:s:i:e:r:b:x:t:f:p:NXh")) != -1)
     switch (c)  {

@@ -1,3 +1,11 @@
+2013-12-09 18:38 dpenkler
+
+	* [r1615] Removed dependency on config.h in ibterm
+
+2013-12-09 15:31 dpenkler
+
+	* [r1615] Added new example programme: ibterm
+
 2013-12-03 15:50 dpenkler
 
 	* [r1614] Fix in drivers/Makefile.am to avoid depmod install warning
