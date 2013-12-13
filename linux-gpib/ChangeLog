@@ -1,6 +1,11 @@
+2013-12-12 15:41 dpenkler
+
+	* [r1617] Use argv[0] for ibterm name.
+ 	 - s/cvs/svn in INSTALL
+
 2013-12-09 18:38 dpenkler
 
-	* [r1615] Removed dependency on config.h in ibterm
+	* [r1616] Removed dependency on config.h in ibterm
 
 2013-12-09 15:31 dpenkler
 

@@ -32,7 +32,7 @@ install-data-hook: device-file-check /etc/gpib.conf
 	$(MAKE) -C $(LINUX_SRCDIR) V=1 modules_install\
 		CC="$(LINUX_CC) -I@abs_top_srcdir@ -I@abs_top_srcdir@/driver/include -I@abs_top_srcdir@/include" \
 		SUBDIRS="$(GPIB_ABS_MODULE_SUBDIR)" INSTALL_MOD_DIR="gpib"
-	$(DEPMOD) -ae -F $(LINUX_SRCDIR)/System.map
+	$(DEPMOD) -a
 
 /dev/gpib0:
 	groupadd gpib || echo "group gpib exists"
