@@ -268,6 +268,24 @@ static int parse_options( int argc, char *argv[], parsed_options_t *settings )
 	return 0;
 }
 
+#define LPVO_USB_GPIB "lpvo_usb_gpib"
+static int configure_lpvo_usb_gpib (const parsed_options_t *options )
+{
+	char command[] = "modprobe "LPVO_USB_GPIB;
+	char linepar[] = "stty raw -echo -iexten -F /dev/ttyUSB0 ";
+	int retval;
+
+	if (system ("modprobe "LPVO_USB_GPIB) < 0) return -1;
+	
+	if (snprintf (linepar + strlen(linepar) - 2, 3, "%d",
+		options->iobase) == 3 || system (linepar) < 0)
+	{
+		fprintf(stderr, "Command %s failed\n", linepar);
+		return -1;
+	}
+	return 0;
+}
+
 static int configure_board( int fileno, const parsed_options_t *options )
 {
 	board_type_ioctl_t boardtype;
@@ -276,6 +294,13 @@ static int configure_board( int fileno, const parsed_options_t *options )
 	sad_ioctl_t sad_cmd;
 	online_ioctl_t online_cmd;
 	int retval;
+
+	if (strcmp(options->board_type, LPVO_USB_GPIB) == 0 &&
+		(retval = configure_lpvo_usb_gpib (options)) < 0)
+	{
+		fprintf( stderr, "failed to load %s module\n", LPVO_USB_GPIB);
+		return retval;
+	}
 
 	online_cmd.online = 0;
 	online_cmd.init_data_ptr = 0;

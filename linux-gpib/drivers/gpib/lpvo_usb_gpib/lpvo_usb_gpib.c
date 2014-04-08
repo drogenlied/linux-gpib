@@ -124,7 +124,7 @@ typedef struct {                /* private data to the device */
  *
  */
 
-#define ENABLE_DIA_LOG 1
+#define ENABLE_DIA_LOG 0
 
 #if ENABLE_DIA_LOG
 #define DIA_LOG(format,...) \
@@ -349,8 +349,6 @@ void set_timeout (gpib_board_t *board) {
         if (val == ACK) {
                         if (n > 65535) n = 65535;
                         sprintf (command, "%s%d\n", USB_GPIB_TTMO, n);
-                        printk (KERN_ALERT "%s:%s - setting timeout: <%s>\n",
-                        HERE, command);
                         val = send_command (board, command, 0);
         }
 
@@ -382,12 +380,10 @@ void set_timeout (gpib_board_t *board) {
 int usb_gpib_attach(gpib_board_t *board, gpib_board_config_t config) {
 
 	int retval;
-	struct tty_struct *tty;
 	char device[]="/dev/ttyUSBxx";
 	int base = (long int) board->ibbase;
 	struct file *f;
-	struct ktermios old_termios;
-	struct tty_ldisc *ld;
+	mm_segment_t oldfs;
 
 	printk (KERN_ALERT "%s:%s configuring %s#%d as ttyUSB%d\n", HERE,
 		board->interface->name, board->minor, base);
@@ -398,8 +394,13 @@ int usb_gpib_attach(gpib_board_t *board, gpib_board_config_t config) {
 	if (base > 99) return -EIO;
 	snprintf (device, sizeof(device), "/dev/ttyUSB%d", base<0 ? 0 : base);
 
+	oldfs = get_fs();
+	set_fs (KERNEL_DS);
+
 	f = filp_open (device, O_RDWR | O_SYNC, 0777);
 	((usb_gpib_private_t *)board->private_data)->f = f;
+	
+	set_fs (oldfs);
 
 	DIA_LOG ("found %p %ld\n", f, IS_ERR(f));
 
@@ -414,58 +415,6 @@ int usb_gpib_attach(gpib_board_t *board, gpib_board_config_t config) {
 
 	f->f_pos = 0;
 
-	tty = (struct tty_struct *)f->private_data;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,12,0)
-	mutex_lock(&tty->termios_mutex);
-#else
-	down_write(&tty->termios_rwsem);
-#endif
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,7,0)
-	old_termios = * tty->termios;
-	tty->termios->c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP
-				| INLCR | IGNCR | ICRNL | IXON);
-	tty->termios->c_oflag &= ~OPOST;
-	tty->termios->c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
-	tty->termios->c_cflag &= ~(CSIZE | PARENB);
-	tty->termios->c_cflag |= CS8;
-
-	tty->termios->c_cc[VTIME] = 0;
-	tty->termios->c_cc[VMIN] = 1;
-
-	if (tty->ops->set_termios)
-		(*tty->ops->set_termios)(tty, &old_termios);
-	else
-		tty_termios_copy_hw(tty->termios, &old_termios);
-#else
-	old_termios = tty->termios;
-	tty->termios.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | ISTRIP
-				| INLCR | IGNCR | ICRNL | IXON);
-	tty->termios.c_oflag &= ~OPOST;
-	tty->termios.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
-	tty->termios.c_cflag &= ~(CSIZE | PARENB);
-	tty->termios.c_cflag |= CS8;
-
-	tty->termios.c_cc[VTIME] = 0;
-	tty->termios.c_cc[VMIN] = 1;
-
-	if (tty->ops->set_termios)
-		(*tty->ops->set_termios)(tty, &old_termios);
-	else
-		tty_termios_copy_hw(&tty->termios, &old_termios);
-#endif
-
-	ld = tty_ldisc_ref(tty);
-	if (ld != NULL) {
-		if (ld->ops->set_termios)
-			(ld->ops->set_termios)(tty, &old_termios);
-		tty_ldisc_deref(ld);
-	}
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,12,0)
-	mutex_unlock(&tty->termios_mutex);
-#else
-	up_write(&tty->termios_rwsem);
-#endif
 	SHOW_STATUS (board);
 
 	retval = send_command (board, USB_GPIB_ON, 0);
@@ -520,12 +469,10 @@ void usb_gpib_detach(gpib_board_t *board) {
 
 			write_loop (f, USB_GPIB_OFF, strlen(USB_GPIB_OFF));
 			msleep(100);
-
 			printk (KERN_NOTICE "%s:%s - GPIB off\n", HERE);
+			filp_close(f, 0);
 
 			set_fs (oldfs);
-
-			filp_close(f, 0);
 
 			printk (KERN_NOTICE "%s:%s - ttyUSB%ld off\n",
 				HERE, (long) board->ibbase);
@@ -535,7 +482,7 @@ void usb_gpib_detach(gpib_board_t *board) {
 	}
 
 	DIA_LOG ("done %p\n", board);
-	TTY_LOG ("Module '%s' has been removed\n", NAME);
+	TTY_LOG ("Module '%s' has been detached\n", NAME);
 }
 
 
@@ -657,6 +604,29 @@ int usb_gpib_line_status (const gpib_board_t *board ) {
 
 	int buffer;
 	int line_status = ValidALL;   /* all lines will be read */
+	struct list_head *p, *q;
+	wait_queue_t * item;
+        unsigned long flags;
+        int sleep=0;
+
+        /* if we are on the wait queue (board->wait), do not hurry
+           reading status line; instead, pause a little */
+
+        spin_lock_irqsave ((spinlock_t *) &(board->wait.lock), flags);
+	q = (struct list_head *) &(board->wait.task_list);
+        list_for_each(p, q) {
+		item = container_of(p, wait_queue_t, task_list);
+                if (item->private == current) {
+                        sleep = 20;
+                        break;
+                }
+                /* pid is: ((struct task_struct *) item->private)->pid); */
+	}
+        spin_unlock_irqrestore ((spinlock_t *) &(board->wait.lock), flags);
+        if (sleep) {
+                DIA_LOG ("we are on the wait queue - sleep %d ms\n", sleep);
+                msleep(sleep);
+        }
 
 	buffer = send_command ((gpib_board_t *)board, USB_GPIB_STATUS, 0);
 
@@ -717,11 +687,11 @@ static int usb_gpib_read (gpib_board_t *board,
 			int *end,
 			size_t *bytes_read) {
 
-#define MAX_READ_EXCESS 256
+#define MAX_READ_EXCESS 16384
 
 	struct char_buf b={NULL,0};
 
-	int retval, i;
+	int retval;
 	mm_segment_t oldfs;
 	char c;
 	struct timespec before, after;
@@ -735,54 +705,46 @@ static int usb_gpib_read (gpib_board_t *board,
 
 	set_timeout (board);
 
-	/* single byte read and eos read termination need special handling */
+	/* single byte read has a special handling */
 
-	if (length == 1 || pd->eos_flags & REOS) {
+	if (length == 1) {
 
 		char inbuf[2]={0,0};
 
-		for ( i=0 ; i<length ; i++ ) {
+		/* read a single character */
 
-			/* read a single character */
+		oldfs = get_fs();
+		set_fs (KERNEL_DS);
 
-			oldfs = get_fs();
-			set_fs (KERNEL_DS);
+		getnstimeofday (&before);
 
-			getnstimeofday (&before);
-
-			if (write_loop (pd->f, USB_GPIB_READ_1,
-					strlen(USB_GPIB_READ_1)) == -EIO) {
-				set_fs (oldfs);
-				return -EIO;
-			}
-
-			retval = pd->f->f_op->read (pd->f, inbuf, 1,
-						&pd->f->f_pos);
-			retval += pd->f->f_op->read (pd->f, inbuf+1, 1,
-						&pd->f->f_pos);
-			getnstimeofday (&after);
-
+		if (write_loop (pd->f, USB_GPIB_READ_1,
+				strlen(USB_GPIB_READ_1)) == -EIO) {
 			set_fs (oldfs);
-
-			DIA_LOG ("single read: %x %x %x in %d\n", retval,
-				inbuf[0], inbuf[1],
-				usec_diff (&after, &before));
-
-			/* good char / last char? */
-
-			if (retval == 2 && inbuf[1] == ACK) {
-				buffer[i] = inbuf[0];
-				*bytes_read = i+1;
-				if (length == 1) return 0;
-				if (inbuf[0] == pd->eos) {
-					*end = 1;
-					return 0;
-				}
-				continue;
-			}
-			if (retval < 2) return -EIO;
-			else return -ETIME;
+			return -EIO;
 		}
+
+		retval = pd->f->f_op->read (pd->f, inbuf, 1,
+					&pd->f->f_pos);
+		retval += pd->f->f_op->read (pd->f, inbuf+1, 1,
+					&pd->f->f_pos);
+		getnstimeofday (&after);
+
+		set_fs (oldfs);
+
+		DIA_LOG ("single read: %x %x %x in %d\n", retval,
+			inbuf[0], inbuf[1],
+			usec_diff (&after, &before));
+
+		/* good char / last char? */
+
+		if (retval == 2 && inbuf[1] == ACK) {
+			buffer[0] = inbuf[0];
+			*bytes_read = 1;
+			return 0;
+		}
+		if (retval < 2) return -EIO;
+		else return -ETIME;
 		return 0;
 	}
 
@@ -824,6 +786,10 @@ static int usb_gpib_read (gpib_board_t *board,
 
 			if (*bytes_read == length) break; /* data overflow */
 			buffer[(*bytes_read)++] = c;
+			if (c == pd->eos) {
+				*end = 1;
+				break;
+			}
 
 		} else {
 
@@ -859,11 +825,14 @@ static int usb_gpib_read (gpib_board_t *board,
 		if (c == DLE) continue;
 		if (c == ETX) {
 			c = one_char(board, &b);
-			printk (KERN_ALERT
-				"%s:%s - data overflow ends with %x at %d\n",
-				HERE, c, read_count);
-			retval = -EOVERFLOW;
-			goto read_return;
+			if (c == ACK) {
+				if (MAX_READ_EXCESS - read_count > 1)
+					printk (KERN_ALERT "%s:%s - %s\n", HERE,
+                                        	"small buffer - maybe some data lost");
+                                retval = 0;
+				goto read_return;
+			}
+			break;
 		}
 	}
 
@@ -875,15 +844,15 @@ read_return:
 	set_fs (oldfs);
 	kfree (b.inbuf);
 
-	DIA_LOG("done with byte/status: %d %x\n", (int) *bytes_read, retval);
+	DIA_LOG("done with byte/status: %d %x %d\n",
+                (int) *bytes_read, retval, *end);
 
-
-        if (retval == 0) {
-                if (send_command(board, USB_GPIB_UNTALK,
-                                 sizeof(USB_GPIB_UNTALK) == 0x06)) return 0;
+        if (retval == 0 || retval == -ETIME) {
+                if (send_command(board,
+                                 USB_GPIB_UNTALK, sizeof(USB_GPIB_UNTALK)
+                                 == 0x06)) return retval;
                 return  -EIO;
         }
-
 
 	return retval;
 }
@@ -1096,3 +1065,4 @@ static void __exit usb_gpib_exit_module( void ) {
 
 module_init( usb_gpib_init_module );
 module_exit( usb_gpib_exit_module );
+

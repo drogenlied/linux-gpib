@@ -1,5 +1,14 @@
 2013-12-12 15:41 dpenkler
 
+	* [r1619] Added patch for lpvo_usb_gpib from Marcello 
+	 - moves setting of ttyusb parameters to user space
+
+2013-12-13 15:41 dpenkler
+
+	* [r1618] Dropped -e argument for depmod
+
+2013-12-12 15:41 dpenkler
+
 	* [r1617] Use argv[0] for ibterm name.
  	 - s/cvs/svn in INSTALL
 
