@@ -9,11 +9,12 @@
 #include "ibConfLex.h"
 
 #define YYERROR_VERBOSE
+static void yyerror(struct YYLTYPE *a, void *b, void *c, const char *s)
+{
+	fprintf(stderr, "%s\n", s);
+}
 
 YY_DECL;
-
-#define YYPARSE_PARAM parse_arg
-#define YYLEX_PARAM priv(YYPARSE_PARAM)->yyscanner
 
 typedef struct
 {
@@ -84,7 +85,7 @@ int parse_gpib_conf( const char *filename, ibConf_t *configs, unsigned int confi
 	}
 	gpib_yylex_init(&priv.yyscanner);
 	gpib_yyrestart(infile, priv.yyscanner);
-	if(gpib_yyparse(&priv))
+	if(gpib_yyparse(&priv, priv.yyscanner))
 	{
 		fprintf(stderr, "libgpib: failed to parse configuration file\n");
 //XXX setIberr()
@@ -112,6 +113,9 @@ static void gpib_conf_warn_missing_equals()
 %}
 
 %pure_parser
+%parse-param {void *parse_arg}
+%parse-param {void* yyscanner}
+%lex-param {void* yyscanner}
 
 %union
 {
@@ -254,13 +258,4 @@ char cval;
 		;
 
 %%
-
-
-
-void yyerror(const char *s)
-{
-	fprintf(stderr, "%s\n", s);
-}
-
-
 

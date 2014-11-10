@@ -39,7 +39,6 @@ void init_async_op( struct async_operation *async );
 int ibBoardOpen( ibBoard_t *board );
 int ibBoardClose( ibBoard_t *board );
 int ibGetNrBoards(void);
-void yyerror(const char *s);
 int iblcleos( const ibConf_t *conf );
 void ibPutMsg (char *format,...);
 void ibPutErrlog(int ud,char *routine);
@@ -128,8 +127,6 @@ static __inline__ ibBoard_t* interfaceBoard( const ibConf_t *conf )
 }
 
 #include <stdio.h>
-#define YYPARSE_PARAM parse_arg
-int gpib_yyparse(void *YYPARSE_PARAM);
 int parse_gpib_conf( const char *filename, ibConf_t *configs,
 	unsigned int configs_length, ibBoard_t *boards, unsigned int boards_length );
 #define YY_DECL int gpib_yylex(YYSTYPE *gpib_lvalp, YYLTYPE *gpib_llocp, yyscan_t yyscanner)
