@@ -870,12 +870,25 @@ is currently under development.
 It offers basic capabilities like ibrd(),
 ibwrt(), WaitSRQ() and others. Requests for unsupported
 features are flagged by a diagnostic message to syslog.
+</para>
+<para>
 The driver assumes by default that the adapter is connected
 to port ttyUSB0.
-It is possible to change the 0 into any value x in the
-range 0-99 with the gpib_config option -b x (or base = x
+It is possible to change the 0 into any value
+<replaceable>n</replaceable> in the
+range 0-99 with the gpib_config option
+-b <replaceable>n</replaceable> (or base = <replaceable>n</replaceable>
 in the configuration file).
+Currently there is no way for the kernel to know that a gpib
+adapter of this kind is available, hence the following commands
+have to be entered manually (as root), before gpib_config
+(<replaceable>n</replaceable> is the port number as before)
 </para>
+<programlisting>
+modprobe lpvo_usb_gpib
+stty raw -echo -iexten -F /dev/ttyUSB<replaceable>n</replaceable>
+gpib_config ...
+<programlisting>
 </section>
 <section ID="ni-usb-b">
 <title>National Instruments GPIB-USB-B</title>
