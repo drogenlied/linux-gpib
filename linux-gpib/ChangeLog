@@ -1,3 +1,7 @@
+2014-12-13 18:30 dpenkler
+
+	* [r1621] Reformat INSTALL and mention ibterm
+
 2014-11-08 18:30 dpenkler
 
 	* [r1620] Reverted gpib_config.c use init script to initialise lpvo_usb_gpib instead
