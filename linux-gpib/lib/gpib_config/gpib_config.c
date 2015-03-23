@@ -183,7 +183,7 @@ static int parse_options( int argc, char *argv[], parsed_options_t *settings )
 
 	while( 1 )
 	{
-		c = getopt_long(argc, argv, "b:d:f:hi:I:l:m:op:s:t:u:", options, &index);
+		c = getopt_long(argc, argv, "b:c:d:f:hi:I:l:m:op:s:t:u:", options, &index);
 		if( c == -1 ) break;
 		switch( c )
 		{
