@@ -21,6 +21,7 @@
 #include <linux/fcntl.h>
 #include <linux/kmod.h>
 #include <linux/vmalloc.h>
+#include <linux/version.h>
 
 static int board_type_ioctl(gpib_file_private_t *file_priv, gpib_board_t *board, unsigned long arg);
 static int read_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
@@ -178,7 +179,11 @@ int ibclose(struct inode *inode, struct file *filep)
 
 long ibioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3,19,0)
 	unsigned int minor = iminor(filep->f_dentry->d_inode);
+#else
+	unsigned int minor = iminor(filep->f_path.dentry->d_inode);
+#endif
 	gpib_board_t *board;
 	gpib_file_private_t *file_priv = filep->private_data;
 	long retval = -ENOTTY;
