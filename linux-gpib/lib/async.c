@@ -27,6 +27,7 @@ struct gpib_aio_arg
 	int ud;
 	ibConf_t *conf;
 	int gpib_aio_type;
+	int condition_flag;
 };
 
 void init_async_op( struct async_operation *async )
@@ -69,7 +70,8 @@ int gpib_aio_launch( int ud, ibConf_t *conf, int gpib_aio_type,
 	arg->ud = ud;
 	arg->conf = conf;
 	arg->gpib_aio_type = gpib_aio_type;
-
+	arg->condition_flag = 0;
+	
 	pthread_mutex_lock( &conf->async.lock );
 	if( conf->async.in_progress )
 	{
@@ -90,11 +92,14 @@ int gpib_aio_launch( int ud, ibConf_t *conf, int gpib_aio_type,
 		&attributes, do_aio, arg );
 	pthread_attr_destroy( &attributes );
 	conf->async.in_progress = (retval == 0);
-	pthread_cond_wait(&conf->async.condition, &conf->async.lock);
+	while(arg->condition_flag == 0)
+	{
+		pthread_cond_wait(&conf->async.condition, &conf->async.lock);
+	}
 	pthread_mutex_unlock( &conf->async.lock );
+	free( arg ); arg = NULL;
 	if( retval )
 	{
-		free( arg ); arg = NULL;
 		setIberr( EDVR );
 		setIbcnt( retval );
 		return -1;
@@ -106,13 +111,13 @@ int gpib_aio_launch( int ud, ibConf_t *conf, int gpib_aio_type,
 static void* do_aio( void *varg )
 {
 	size_t count;
+	struct gpib_aio_arg * const arg_p = (struct gpib_aio_arg*) varg;
 	struct gpib_aio_arg arg;
 	ibConf_t *conf;
 	ibBoard_t *board;
 	int retval;
 
-	arg = *((struct gpib_aio_arg*) varg);
-	free( varg ); varg = NULL;
+	arg = *arg_p;
 
 	conf = arg.conf;
 	board = interfaceBoard(conf);
@@ -122,8 +127,12 @@ static void* do_aio( void *varg )
 		ibstatus(conf, 0, CMPL, 0);
 	}
 	pthread_mutex_lock(&conf->async.lock);
+	arg_p->condition_flag = 1;
 	pthread_cond_broadcast(&conf->async.condition);
 	pthread_mutex_unlock(&conf->async.lock);
+	// don't use arg_p after this point, it may be
+	// deallocated by the thread which launched this one.
+	
 	if( retval < 0 ) return NULL;
 
 	pthread_cleanup_push( cleanup_aio, &arg );
