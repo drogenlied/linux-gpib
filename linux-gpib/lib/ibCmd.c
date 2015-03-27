@@ -102,7 +102,8 @@ ssize_t my_ibcmd( ibConf_t *conf, const uint8_t *buffer, size_t count)
 
 	assert(sizeof(buffer) <= sizeof(cmd.buffer_ptr));
 	cmd.buffer_ptr = (uintptr_t)buffer;
-	cmd.count = count;
+	cmd.requested_transfer_count = count;
+	cmd.completed_transfer_count = 0;
 	cmd.handle = conf->handle;
 	cmd.end = 0;
 	
@@ -125,7 +126,7 @@ ssize_t my_ibcmd( ibConf_t *conf, const uint8_t *buffer, size_t count)
 		return -1;
 	}
 
-	return cmd.count;
+	return cmd.completed_transfer_count;
 }
 
 unsigned int create_send_setup( const ibBoard_t *board,

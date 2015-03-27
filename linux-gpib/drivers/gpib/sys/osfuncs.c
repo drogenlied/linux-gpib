@@ -498,20 +498,25 @@ static int read_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
 	if (retval)
 		return -EFAULT;
 
+	if(read_cmd.completed_transfer_count > read_cmd.requested_transfer_count)
+		return -EINVAL;
+	
 	desc = handle_to_descriptor( file_priv, read_cmd.handle );
 	if( desc == NULL ) return -EINVAL;
 
 	BUG_ON(sizeof(userbuf) > sizeof(read_cmd.buffer_ptr));
 	userbuf = (uint8_t*)(unsigned long)read_cmd.buffer_ptr;
+	userbuf += read_cmd.completed_transfer_count;
+
+	remain = read_cmd.requested_transfer_count - read_cmd.completed_transfer_count;
 
 	/* Check write access to buffer */
-	if(!access_ok(VERIFY_WRITE, userbuf, read_cmd.count))
+	if(!access_ok(VERIFY_WRITE, userbuf, remain))
 		return -EFAULT;
 
 	atomic_set(&desc->io_in_progress, 1);
 
 	/* Read buffer loads till we fill the user supplied buffer */
-	remain = read_cmd.count;
 	while(remain > 0 && end_flag == 0)
 	{
 		nbytes = 0;
@@ -528,7 +533,7 @@ static int read_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
 		userbuf += nbytes;
 		if(read_ret < 0) break;
 	}
-	read_cmd.count -= remain;
+	read_cmd.completed_transfer_count = read_cmd.requested_transfer_count - remain;
 	read_cmd.end = end_flag;
 	/* suppress errors (for example due to timeout or interruption by device clear)
 	if all bytes got sent.  This prevents races that can occur in the various drivers
@@ -555,28 +560,33 @@ static int command_ioctl( gpib_file_private_t *file_priv,
 	uint8_t *userbuf;
 	unsigned long remain;
 	int retval;
+	int fault;
 	gpib_descriptor_t *desc;
 
 	retval = copy_from_user(&cmd, (void*) arg, sizeof(cmd));
 	if( retval )
 		return -EFAULT;
 
+	if(cmd.completed_transfer_count > cmd.requested_transfer_count)
+		return -EINVAL;
+
 	desc = handle_to_descriptor( file_priv, cmd.handle );
 	if( desc == NULL ) return -EINVAL;
 
 	userbuf = (uint8_t*)(unsigned long)cmd.buffer_ptr;
+	userbuf += cmd.completed_transfer_count;
+
+	remain = cmd.requested_transfer_count - cmd.completed_transfer_count;
 
 	/* Check read access to buffer */
-	if(!access_ok(VERIFY_READ, userbuf, cmd.count))
+	if(!access_ok(VERIFY_READ, userbuf, remain))
 		return -EFAULT;
 
 	/* Write buffer loads till we empty the user supplied buffer */
-	remain = cmd.count;
-
 	atomic_set(&desc->io_in_progress, 1);
 	while( remain > 0 )
 	{
-		retval = copy_from_user(board->buffer, userbuf, (board->buffer_length < remain) ?
+		fault = copy_from_user(board->buffer, userbuf, (board->buffer_length < remain) ?
 			board->buffer_length : remain );
 		if(retval) retval = -EFAULT;
 		else
@@ -586,7 +596,6 @@ static int command_ioctl( gpib_file_private_t *file_priv,
 		{
 			atomic_set(&desc->io_in_progress, 0);
 			wake_up_interruptible( &board->wait );
-			return retval;
 			break;
 		}
 		if( retval == 0 ) break;
@@ -594,14 +603,15 @@ static int command_ioctl( gpib_file_private_t *file_priv,
 		userbuf += retval;
 	}
 
-	cmd.count -= remain;
+	cmd.completed_transfer_count = cmd.requested_transfer_count - remain;
 
-	retval = copy_to_user((void*) arg, &cmd, sizeof(cmd));
+	if(fault == 0)
+		fault = copy_to_user((void*) arg, &cmd, sizeof(cmd));
 	atomic_set(&desc->io_in_progress, 0);
 	wake_up_interruptible( &board->wait );
-	if( retval ) return -EFAULT;
+	if( fault ) return -EFAULT;
 
-	return 0;
+	return retval;
 }
 
 static int write_ioctl(gpib_file_private_t *file_priv, gpib_board_t *board,
@@ -618,19 +628,24 @@ static int write_ioctl(gpib_file_private_t *file_priv, gpib_board_t *board,
 	if(fault)
 		return -EFAULT;
 
+	if(write_cmd.completed_transfer_count > write_cmd.requested_transfer_count)
+		return -EINVAL;
+
 	desc = handle_to_descriptor( file_priv, write_cmd.handle );
 	if( desc == NULL ) return -EINVAL;
 
 	userbuf = (uint8_t*)(unsigned long)write_cmd.buffer_ptr;
+	userbuf += write_cmd.completed_transfer_count;
+	
+	remain = write_cmd.requested_transfer_count - write_cmd.completed_transfer_count;
 
 	/* Check read access to buffer */
-	if(!access_ok(VERIFY_READ, userbuf, write_cmd.count))
+	if(!access_ok(VERIFY_READ, userbuf, remain))
 		return -EFAULT;
 
 	atomic_set(&desc->io_in_progress, 1);
 
 	/* Write buffer loads till we empty the user supplied buffer */
-	remain = write_cmd.count;
 	while(remain > 0)
 	{
 		int send_eoi;
@@ -653,7 +668,7 @@ static int write_ioctl(gpib_file_private_t *file_priv, gpib_board_t *board,
 			break;
 		}
 	}
-	write_cmd.count -= remain;
+	write_cmd.completed_transfer_count = write_cmd.requested_transfer_count - remain;
 	/* suppress errors (for example due to timeout or interruption by device clear)
 	if all bytes got sent.  This prevents races that can occur in the various drivers
 	if a device receives a device clear immediately after a transfer completes and
@@ -663,7 +678,8 @@ static int write_ioctl(gpib_file_private_t *file_priv, gpib_board_t *board,
 	{
 		retval = 0;
 	}
-	fault = copy_to_user((void*) arg, &write_cmd, sizeof(write_cmd));
+	if(fault == 0)
+		fault = copy_to_user((void*) arg, &write_cmd, sizeof(write_cmd));
 	atomic_set(&desc->io_in_progress, 0);
 	wake_up_interruptible( &board->wait );
 	if(fault) return -EFAULT;

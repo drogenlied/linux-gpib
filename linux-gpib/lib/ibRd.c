@@ -73,7 +73,8 @@ ssize_t read_data(ibConf_t *conf, uint8_t *buffer, size_t count, size_t *bytes_r
 
 	assert(sizeof(buffer) <= sizeof(read_cmd.buffer_ptr));
 	read_cmd.buffer_ptr = (uintptr_t)buffer;
-	read_cmd.count = count;
+	read_cmd.requested_transfer_count = count;
+	read_cmd.completed_transfer_count = 0;
 	read_cmd.handle = conf->handle;
 	read_cmd.end = 0;
 
@@ -98,7 +99,7 @@ ssize_t read_data(ibConf_t *conf, uint8_t *buffer, size_t count, size_t *bytes_r
 
 	if( read_cmd.end ) conf->end = 1;
 
-	*bytes_read = read_cmd.count;
+	*bytes_read = read_cmd.completed_transfer_count;
 
 	return retval;
 }

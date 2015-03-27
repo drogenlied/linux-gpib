@@ -54,7 +54,8 @@ int send_data(ibConf_t *conf, const void *buffer, size_t count, int send_eoi, si
 
 	assert(sizeof(buffer) <= sizeof(write_cmd.buffer_ptr));
 	write_cmd.buffer_ptr = (uintptr_t)buffer;
-	write_cmd.count = count;
+	write_cmd.requested_transfer_count = count;
+	write_cmd.completed_transfer_count = 0;
 	write_cmd.end = send_eoi;
 	write_cmd.handle = conf->handle;
 	
@@ -74,7 +75,6 @@ int send_data(ibConf_t *conf, const void *buffer, size_t count, int send_eoi, si
 				setIberr( ENOL );
 				break;
 			case EFAULT:
-				write_cmd.count = 0;
 				//fall-through
 			default:
 				setIberr( EDVR );
@@ -82,7 +82,7 @@ int send_data(ibConf_t *conf, const void *buffer, size_t count, int send_eoi, si
 				break;
 		}
 	}
-	*bytes_written = write_cmd.count;
+	*bytes_written = write_cmd.completed_transfer_count;
 	conf->end = send_eoi && (*bytes_written == count);
 	if(retval < 0) return retval;
 	return 0;

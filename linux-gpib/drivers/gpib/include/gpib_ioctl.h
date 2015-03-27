@@ -33,10 +33,10 @@ typedef struct
 typedef struct
 {
 	uint64_t buffer_ptr;
-	unsigned count;
+	unsigned requested_transfer_count;
+	unsigned completed_transfer_count;
 	int end;
 	int handle;
-	int padding;	// padding so struct size doesn't change between 32/64 bit compilation
 } read_write_ioctl_t;
 
 typedef struct
@@ -136,9 +136,9 @@ typedef short autospoll_ioctl_t;
 /* Standard functions. */
 enum gpib_ioctl
 {
-	IBRD = _IOWR( GPIB_CODE, 0, read_write_ioctl_t ),
-	IBWRT = _IOWR( GPIB_CODE, 1, read_write_ioctl_t ),
-	IBCMD = _IOWR( GPIB_CODE, 2, read_write_ioctl_t ),
+	IBRD = _IOWR( GPIB_CODE, 100, read_write_ioctl_t ),
+	IBWRT = _IOWR( GPIB_CODE, 101, read_write_ioctl_t ),
+	IBCMD = _IOWR( GPIB_CODE, 102, read_write_ioctl_t ),
 	IBOPENDEV = _IOWR( GPIB_CODE, 3, open_dev_ioctl_t ),
 	IBCLOSEDEV = _IOW( GPIB_CODE, 4, close_dev_ioctl_t ),
 	IBWAIT = _IOWR( GPIB_CODE, 5, wait_ioctl_t ),
