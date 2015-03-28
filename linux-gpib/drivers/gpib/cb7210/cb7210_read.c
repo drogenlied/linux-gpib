@@ -190,7 +190,6 @@ int cb7210_accel_read( gpib_board_t *board, uint8_t *buffer,
 	}
 	*end = 0;
 
-	nec7210_set_handshake_mode( board, nec_priv, HR_HLDA );
 	nec7210_release_rfd_holdoff( board, nec_priv);
 
 	if( wait_event_interruptible( board->wait,
@@ -206,10 +205,10 @@ int cb7210_accel_read( gpib_board_t *board, uint8_t *buffer,
 	if( test_bit( DEV_CLEAR_BN, &nec_priv->state ) )
 		return -EINTR;
 
+	nec7210_set_handshake_mode( board, nec_priv, HR_HLDE );
 	buffer[ (*bytes_read)++ ] = nec7210_read_data_in( board, nec_priv, end );
 	if( *end ) return 0;
 
-	nec7210_set_handshake_mode( board, nec_priv, HR_HLDE );
 	nec7210_release_rfd_holdoff( board, nec_priv );
 
 	retval = fifo_read(board, cb_priv, &buffer[*bytes_read], length - *bytes_read - 1, end, &num_bytes);

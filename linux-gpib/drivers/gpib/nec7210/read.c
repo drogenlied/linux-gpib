@@ -35,12 +35,21 @@ static int pio_read( gpib_board_t *board, nec7210_private_t *priv, uint8_t *buff
 			test_bit(DEV_CLEAR_BN, &priv->state) ||
 			test_bit(TIMO_NUM, &board->status)))
 		{
-			printk("nec7210: pio read wait interrupted\n");
+			GPIB_DPRINTK("nec7210: pio read wait interrupted\n");
 			retval = -ERESTARTSYS;
 			break;
 		}
 		if( test_bit(READ_READY_BN, &priv->state) )
 		{
+			if(*bytes_read == 0)
+			{
+				/* We set the handshake mode here because we know
+				* no new bytes will arrive (it has already arrived
+				* and is awaiting being read out of the chip) while we are changing
+				* modes.  This ensures we can reliably keep track
+				* of the holdoff state. */
+				nec7210_set_handshake_mode( board, priv, HR_HLDA );
+			}
 			buffer[ (*bytes_read)++ ] = nec7210_read_data_in( board, priv, end );
 			if( *end )
 				break;
@@ -158,7 +167,6 @@ int nec7210_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer,
 
 	clear_bit( DEV_CLEAR_BN, &priv->state ); // XXX wrong
 
-	nec7210_set_handshake_mode( board, priv, HR_HLDA );
 	nec7210_release_rfd_holdoff( board, priv );
 
 	retval = pio_read(board, priv, buffer, length, end, bytes_read);

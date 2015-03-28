@@ -228,10 +228,15 @@ void nec7210_set_handshake_mode( gpib_board_t *board, nec7210_private_t *priv, i
 {
 	unsigned long flags;
 
+	mode &= HR_HANDSHAKE_MASK;
+	
 	spin_lock_irqsave( &board->spinlock, flags );
-	priv->auxa_bits &= ~HR_HANDSHAKE_MASK;
-	priv->auxa_bits |= ( mode & HR_HANDSHAKE_MASK );
-	write_byte( priv, priv->auxa_bits, AUXMR );
+	if((priv->auxa_bits & HR_HANDSHAKE_MASK) != mode)
+	{
+		priv->auxa_bits &= ~HR_HANDSHAKE_MASK;
+		priv->auxa_bits |= mode;
+		write_byte( priv, priv->auxa_bits, AUXMR );
+	}
 	spin_unlock_irqrestore( &board->spinlock, flags );
 }
 
