@@ -670,13 +670,9 @@ static int agilent_82357a_write(gpib_board_t *board, uint8_t *buffer, size_t len
 	return agilent_82357a_generic_write(board, buffer, length, 0, send_eoi, bytes_written);
 }
 
-ssize_t agilent_82357a_command(gpib_board_t *board, uint8_t *buffer, size_t length)
+int agilent_82357a_command(gpib_board_t *board, uint8_t *buffer, size_t length, size_t *bytes_written)
 {
-	size_t bytes_written;
-	int retval;
-	retval = agilent_82357a_generic_write(board, buffer, length, 1, 0, &bytes_written);
-	if(retval < 0) return retval;
-	return bytes_written;
+	return agilent_82357a_generic_write(board, buffer, length, 1, 0, bytes_written);
 }
 
 int agilent_82357a_take_control(gpib_board_t *board, int synchronous)

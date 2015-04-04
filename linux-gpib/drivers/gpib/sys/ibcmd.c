@@ -29,18 +29,19 @@
  *          must be called to initialize the GPIB and enable
  *          the interface to leave the controller idle state.
  */
-ssize_t ibcmd( gpib_board_t *board, uint8_t *buf, size_t length )
+int ibcmd( gpib_board_t *board, uint8_t *buf, size_t length, size_t *bytes_written )
 {
-	size_t	count = 0;
 	ssize_t ret = 0;
-	int status = ibstatus( board );
+	int status;
 
-	if(length == 0) return 0;
+	*bytes_written = 0;
+
+	status = ibstatus( board );
 
 	if((status & CIC) == 0)
 	{
 		printk("gpib: cannot send command when not controller-in-charge\n");
-		return -1;
+		return -EIO;
 	}
 
 	osStartTimer( board, board->usec_timeout );
@@ -48,15 +49,7 @@ ssize_t ibcmd( gpib_board_t *board, uint8_t *buf, size_t length )
 	ret = ibcac( board, 0 );
 	if( ret == 0 )
 	{
-		ret = board->interface->command(board, buf, length - count);
-		if(ret < 0)
-		{
-			printk("gpib: error writing gpib command bytes\n");
-		}else
-		{
-			buf += ret;
-			count += ret;
-		}
+		ret = board->interface->command(board, buf, length, bytes_written);
 	}
 
 	osRemoveTimer(board);
@@ -64,7 +57,7 @@ ssize_t ibcmd( gpib_board_t *board, uint8_t *buf, size_t length )
 	if( io_timed_out( board ) )
 		ret = -ETIMEDOUT;
 
-	return ret ? ret : count;
+	return ret;
 }
 
 

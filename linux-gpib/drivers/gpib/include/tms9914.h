@@ -93,8 +93,8 @@ int tms9914_read(gpib_board_t *board, tms9914_private_t *priv,
 	uint8_t *buffer, size_t length, int *end, size_t *bytes_read);
 int tms9914_write(gpib_board_t *board, tms9914_private_t *priv,
 	uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written);
-ssize_t tms9914_command(gpib_board_t *board, tms9914_private_t *priv,
-	uint8_t *buffer, size_t length);
+int tms9914_command(gpib_board_t *board, tms9914_private_t *priv,
+	uint8_t *buffer, size_t length, size_t *bytes_written);
 int tms9914_take_control(gpib_board_t *board, tms9914_private_t *priv,
 	int syncronous);
 int tms9914_go_to_standby(gpib_board_t *board, tms9914_private_t *priv);

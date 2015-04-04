@@ -185,13 +185,9 @@ int tnt4882_accel_write(gpib_board_t *board, uint8_t *buffer, size_t length, int
 	return generic_write( board, buffer, length, send_eoi, 0, bytes_written);
 }
 
-ssize_t tnt4882_command(gpib_board_t *board, uint8_t *buffer, size_t length)
+int tnt4882_command(gpib_board_t *board, uint8_t *buffer, size_t length, size_t *bytes_written)
 {
-	int retval;
-	size_t bytes_written;
-	retval = generic_write( board, buffer, length, 0, 1, &bytes_written);
-	if(retval < 0) return retval;
-	return bytes_written;
+	return generic_write( board, buffer, length, 0, 1, bytes_written);
 }
 
 

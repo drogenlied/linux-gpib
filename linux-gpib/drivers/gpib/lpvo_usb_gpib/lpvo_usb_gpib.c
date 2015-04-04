@@ -492,9 +492,10 @@ void usb_gpib_detach(gpib_board_t *board) {
 
 /* command */
 
-ssize_t usb_gpib_command(gpib_board_t *board,
+int usb_gpib_command(gpib_board_t *board,
 			uint8_t *buffer,
-			size_t length) {
+		size_t length,
+		size_t *bytes_written) {
 
 	int i, retval;
 	char command[6]="IBc \n";
@@ -508,8 +509,9 @@ ssize_t usb_gpib_command(gpib_board_t *board,
 		retval = send_command (board, command, 5);
 		DIA_LOG ("%d %x %x\n", i, buffer[i], retval);
 		if (retval != 0x06) return -EIO;
+		++(*bytes_written);
 	}
-	return i;
+	return 0;
 }
 
 /**

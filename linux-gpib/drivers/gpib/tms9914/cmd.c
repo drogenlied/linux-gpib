@@ -60,13 +60,14 @@ void check_my_address_state( gpib_board_t *board, tms9914_private_t *priv, int c
 	}
 }
 
-ssize_t tms9914_command(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buffer, size_t length)
+int tms9914_command(gpib_board_t *board, tms9914_private_t *priv, 
+	uint8_t *buffer, size_t length, size_t *bytes_written)
 {
-	size_t count = 0;
-	ssize_t retval = 0;
+	int retval = 0;
 	unsigned long flags;
 
-	while(count < length)
+	*bytes_written = 0;
+	while(*bytes_written < length)
 	{
 		if(wait_event_interruptible(board->wait, test_bit(COMMAND_READY_BN,
 			&priv->state) || test_bit(TIMO_NUM, &board->status)))
@@ -78,12 +79,12 @@ ssize_t tms9914_command(gpib_board_t *board, tms9914_private_t *priv, uint8_t *b
 
 		spin_lock_irqsave(&board->spinlock, flags);
 		clear_bit(COMMAND_READY_BN, &priv->state);
-		write_byte(priv, buffer[count], CDOR);
+		write_byte(priv, buffer[*bytes_written], CDOR);
 		spin_unlock_irqrestore(&board->spinlock, flags);
 
-		check_my_address_state( board, priv, buffer[ count ] );
+		check_my_address_state( board, priv, buffer[ *bytes_written ] );
 
-		count++;
+		++(*bytes_written);
 	}
 	// wait until last command byte is written
 	if(wait_event_interruptible(board->wait, test_bit(COMMAND_READY_BN,
@@ -96,7 +97,7 @@ ssize_t tms9914_command(gpib_board_t *board, tms9914_private_t *priv, uint8_t *b
 		retval = -ETIMEDOUT;
 	}
 
-	return count ? count : retval;
+	return retval;
 }
 
 EXPORT_SYMBOL(tms9914_command);

@@ -560,8 +560,9 @@ static int command_ioctl( gpib_file_private_t *file_priv,
 	uint8_t *userbuf;
 	unsigned long remain;
 	int retval;
-	int fault;
+	int fault = 0;
 	gpib_descriptor_t *desc;
+	size_t bytes_written;
 
 	retval = copy_from_user(&cmd, (void*) arg, sizeof(cmd));
 	if( retval )
@@ -582,27 +583,34 @@ static int command_ioctl( gpib_file_private_t *file_priv,
 	if(!access_ok(VERIFY_READ, userbuf, remain))
 		return -EFAULT;
 
-	/* Write buffer loads till we empty the user supplied buffer */
+	/* Write buffer loads till we empty the user supplied buffer.
+		Call drivers at least once, even if remain is zero, in
+		order to allow them to insure previous commands were
+		completely finished, in the case of a restarted ioctl.  */
 	atomic_set(&desc->io_in_progress, 1);
-	while( remain > 0 )
+	do 
 	{
 		fault = copy_from_user(board->buffer, userbuf, (board->buffer_length < remain) ?
 			board->buffer_length : remain );
-		if(retval) retval = -EFAULT;
-		else
+		if(fault) 
+		{	
+			retval = -EFAULT;
+			bytes_written = 0;
+		}else
+		{
 			retval = ibcmd(board, board->buffer, (board->buffer_length < remain) ?
-				board->buffer_length : remain );
+				board->buffer_length : remain, &bytes_written );
+		}
+		remain -= bytes_written;
+		userbuf += bytes_written;
 		if(retval < 0)
 		{
 			atomic_set(&desc->io_in_progress, 0);
 			wake_up_interruptible( &board->wait );
 			break;
 		}
-		if( retval == 0 ) break;
-		remain -= retval;
-		userbuf += retval;
-	}
-
+	}while( remain > 0 );
+	
 	cmd.completed_transfer_count = cmd.requested_transfer_count - remain;
 
 	if(fault == 0)

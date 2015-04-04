@@ -73,8 +73,8 @@ int tnt4882_write(gpib_board_t *board, uint8_t *buffer, size_t length,
 	int send_eoi, size_t *bytes_written);
 int tnt4882_accel_write(gpib_board_t *board, uint8_t *buffer, size_t length,
 	int send_eoi, size_t *bytes_written);
-ssize_t tnt4882_command(gpib_board_t *board, uint8_t *buffer, size_t length);
-ssize_t tnt4882_command_unaccel(gpib_board_t *board, uint8_t *buffer, size_t length);
+int tnt4882_command(gpib_board_t *board, uint8_t *buffer, size_t length, size_t *bytes_written);
+int tnt4882_command_unaccel(gpib_board_t *board, uint8_t *buffer, size_t length, size_t *bytes_written);
 int tnt4882_take_control(gpib_board_t *board, int synchronous);
 int tnt4882_go_to_standby(gpib_board_t *board);
 void tnt4882_request_system_control( gpib_board_t *board, int request_control );

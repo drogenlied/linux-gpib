@@ -122,6 +122,9 @@ enum ni_usb_bulk_ids
 enum ni_usb_error_codes
 {
 	NIUSB_NO_ERROR = 0,
+	/* NIUSB_ABORTED_ERROR occurs when I/O is interrupted early by doing a NI_USB_STOP_REQUEST
+		on the control endpoint. */
+	NIUSB_ABORTED_ERROR = 1,
 	// NIUSB_ADDRESSING_ERROR occurs when you do a board read/write as CIC but are not in LACS/TACS
 	NIUSB_ADDRESSING_ERROR = 3,
 	// NIUSB_EOSMODE_ERROR occurs on reads if any eos mode or char bits are set when REOS is not set.
@@ -135,7 +138,14 @@ enum ni_usb_error_codes
 	// get NIUSB_TIMEOUT_ERROR on board read/write timeout
 	NIUSB_TIMEOUT_ERROR = 10,
 };
-static const int ni_usb_control_request = 0x21;
+
+enum ni_usb_control_requests
+{
+	NI_USB_STOP_REQUEST = 0x20,
+	NI_USB_WAIT_REQUEST = 0x21,
+	NI_USB_POLL_READY_REQUEST = 0x40,
+	NI_USB_SERIAL_NUMBER_REQUEST = 0x41
+};
 
 static const unsigned int ni_usb_ibsta_monitor_mask = SRQI | LOK | REM | CIC | ATN | TACS | LACS | DTAS | DCAS;
 

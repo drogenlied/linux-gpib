@@ -18,15 +18,15 @@
 
 #include "board.h"
 
-ssize_t nec7210_command(gpib_board_t *board, nec7210_private_t *priv, uint8_t
- *buffer, size_t length)
+int nec7210_command(gpib_board_t *board, nec7210_private_t *priv, uint8_t
+ *buffer, size_t length, size_t *bytes_written)
 {
-	size_t count = 0;
-	ssize_t retval = 0;
+	int retval = 0;
 	unsigned long flags;
 
+	*bytes_written = 0;
 	clear_bit( BUS_ERROR_BN, &priv->state );
-	while(count < length)
+	while(*bytes_written < length)
 	{
 		if(wait_event_interruptible(board->wait, test_bit(COMMAND_READY_BN, &priv->state) ||
 			test_bit( BUS_ERROR_BN, &priv->state ) || test_bit(TIMO_NUM, &board->status)))
@@ -47,10 +47,10 @@ ssize_t nec7210_command(gpib_board_t *board, nec7210_private_t *priv, uint8_t
 
 		spin_lock_irqsave( &board->spinlock, flags );
 		clear_bit( COMMAND_READY_BN, &priv->state );
-		write_byte( priv, buffer[count], CDOR );
+		write_byte( priv, buffer[*bytes_written], CDOR );
 		spin_unlock_irqrestore( &board->spinlock, flags );
 
-		count++;
+		++(*bytes_written);
 
 		if(need_resched())
 			schedule();
@@ -73,7 +73,7 @@ ssize_t nec7210_command(gpib_board_t *board, nec7210_private_t *priv, uint8_t
 		retval = -EIO;
 	}
 
-	return retval ? retval : count;
+	return retval;
 }
 
 EXPORT_SYMBOL(nec7210_command);

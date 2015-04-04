@@ -61,11 +61,12 @@ int tnt4882_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_
 	tnt4882_private_t *priv = board->private_data;
 	return nec7210_write(board, &priv->nec7210_priv, buffer, length, send_eoi, bytes_written);
 }
-ssize_t tnt4882_command_unaccel(gpib_board_t *board, uint8_t *buffer, size_t length)
+int tnt4882_command_unaccel(gpib_board_t *board, uint8_t *buffer, 
+	size_t length, size_t *bytes_written)
 {
 	tnt4882_private_t *priv = board->private_data;
 
-	return nec7210_command(board, &priv->nec7210_priv, buffer, length);
+	return nec7210_command(board, &priv->nec7210_priv, buffer, length, bytes_written);
 }
 int tnt4882_take_control(gpib_board_t *board, int synchronous)
 {

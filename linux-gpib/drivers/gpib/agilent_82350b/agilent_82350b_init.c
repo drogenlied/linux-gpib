@@ -66,10 +66,10 @@ int agilent_82350b_write( gpib_board_t *board, uint8_t *buffer, size_t length, i
 	agilent_82350b_private_t *priv = board->private_data;
 	return tms9914_write( board, &priv->tms9914_priv, buffer, length, send_eoi, bytes_written);
 }
-ssize_t agilent_82350b_command( gpib_board_t *board, uint8_t *buffer, size_t length )
+int agilent_82350b_command( gpib_board_t *board, uint8_t *buffer, size_t length, size_t *bytes_written )
 {
 	agilent_82350b_private_t *priv = board->private_data;
-	return tms9914_command( board, &priv->tms9914_priv, buffer, length );
+	return tms9914_command( board, &priv->tms9914_priv, buffer, length, bytes_written );
 }
 int agilent_82350b_take_control( gpib_board_t *board, int synchronous )
 {

@@ -44,10 +44,10 @@ int cec_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi,
 	cec_private_t *priv = board->private_data;
 	return nec7210_write(board, &priv->nec7210_priv, buffer, length, send_eoi, bytes_written);
 }
-ssize_t cec_command(gpib_board_t *board, uint8_t *buffer, size_t length)
+int cec_command(gpib_board_t *board, uint8_t *buffer, size_t length, size_t *bytes_written)
 {
 	cec_private_t *priv = board->private_data;
-	return nec7210_command(board, &priv->nec7210_priv, buffer, length);
+	return nec7210_command(board, &priv->nec7210_priv, buffer, length, bytes_written);
 }
 int cec_take_control(gpib_board_t *board, int synchronous)
 {

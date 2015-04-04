@@ -91,8 +91,8 @@ int nec7210_read(gpib_board_t *board, nec7210_private_t *priv,
 	uint8_t *buffer, size_t length, int *end, size_t *bytes_read);
 int nec7210_write(gpib_board_t *board, nec7210_private_t *priv,
 	uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written);
-ssize_t nec7210_command(gpib_board_t *board, nec7210_private_t *priv,
-	uint8_t *buffer, size_t length);
+int nec7210_command(gpib_board_t *board, nec7210_private_t *priv,
+	uint8_t *buffer, size_t length, size_t *bytes_written);
 int nec7210_take_control(gpib_board_t *board, nec7210_private_t *priv,
 	int syncronous);
 int nec7210_go_to_standby(gpib_board_t *board, nec7210_private_t *priv);

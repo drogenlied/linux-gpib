@@ -42,10 +42,10 @@ int hp_82341_write( gpib_board_t *board, uint8_t *buffer, size_t length, int sen
 	hp_82341_private_t *priv = board->private_data;
 	return tms9914_write(board, &priv->tms9914_priv, buffer, length, send_eoi, bytes_written);
 }
-ssize_t hp_82341_command( gpib_board_t *board, uint8_t *buffer, size_t length )
+int hp_82341_command( gpib_board_t *board, uint8_t *buffer, size_t length, size_t *bytes_written )
 {
 	hp_82341_private_t *priv = board->private_data;
-	return tms9914_command( board, &priv->tms9914_priv, buffer, length);
+	return tms9914_command( board, &priv->tms9914_priv, buffer, length, bytes_written);
 }
 int hp_82341_take_control( gpib_board_t *board, int synchronous )
 {

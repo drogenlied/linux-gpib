@@ -24,7 +24,9 @@ static int setup_serial_poll( gpib_board_t *board, unsigned int usec_timeout )
 {
 	uint8_t cmd_string[8];
 	int i;
-
+	size_t bytes_written;
+	int ret;
+	
 	GPIB_DPRINTK( "entering setup_serial_poll()\n" );
 
 	ibcac( board, 0 );
@@ -37,7 +39,8 @@ static int setup_serial_poll( gpib_board_t *board, unsigned int usec_timeout )
 	cmd_string[ i++ ] = SPE;	//serial poll enable
 
 	osStartTimer( board, usec_timeout );
-	if( board->interface->command( board, cmd_string, i ) < i )
+	ret = board->interface->command( board, cmd_string, i, &bytes_written);
+	if(ret < 0 || bytes_written < i )
 	{
 		printk("gpib: failed to setup serial poll\n");
 		osRemoveTimer( board );
@@ -68,7 +71,8 @@ static int read_serial_poll_byte( gpib_board_t *board, unsigned int pad,
 		cmd_string[i++] = MSA( sad );
 
 	osStartTimer( board, usec_timeout );
-	if( board->interface->command( board, cmd_string, i ) < i )
+	ret = board->interface->command( board, cmd_string, i, &nbytes );
+	if( ret < 0 || nbytes < i )
 	{
 		printk("gpib: failed to setup serial poll\n");
 		osRemoveTimer( board );
@@ -93,7 +97,9 @@ static int read_serial_poll_byte( gpib_board_t *board, unsigned int pad,
 static int cleanup_serial_poll( gpib_board_t *board, unsigned int usec_timeout )
 {
 	uint8_t cmd_string[8];
-
+	int ret;
+	size_t bytes_written;
+	
 	GPIB_DPRINTK( "entering cleanup_serial_poll()\n" );
 
 	ibcac( board, 0 );
@@ -101,7 +107,8 @@ static int cleanup_serial_poll( gpib_board_t *board, unsigned int usec_timeout )
 	cmd_string[ 0 ] = SPD;	/* disable serial poll bytes */
 	cmd_string[ 1 ] = UNT;
 	osStartTimer( board, usec_timeout );
-	if( board->interface->command( board, cmd_string, 2 ) < 2 )
+	ret = board->interface->command( board, cmd_string, 2, &bytes_written );
+	if( ret < 0 || bytes_written < 2 )
 	{
 		printk( "gpib: failed to disable serial poll\n" );
 		osRemoveTimer( board );

@@ -67,9 +67,9 @@ struct gpib_interface_struct
 	 */
 	int (*write)(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written);
 	/* command() writes the command bytes in 'buffer' to the bus
-	 * Returns number of bytes written or negative value on error.
+	 * Returns zero on success or negative value on error.
 	 */
-	ssize_t (*command)(gpib_board_t *board, uint8_t *buffer, size_t length);
+	int (*command)(gpib_board_t *board, uint8_t *buffer, size_t length, size_t *bytes_written);
 	/* Take control (assert ATN).  If 'asyncronous' is nonzero, take
 	 * control asyncronously (assert ATN immediately without waiting
 	 * for other processes to complete first).  Should not return

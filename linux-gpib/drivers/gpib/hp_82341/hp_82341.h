@@ -51,7 +51,7 @@ int hp_82341_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length, int
 int hp_82341_accel_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written);
 int hp_82341_read( gpib_board_t *board, uint8_t *buffer, size_t length, int *end, size_t *bytes_read);
 int hp_82341_write( gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written);
-ssize_t hp_82341_command( gpib_board_t *board, uint8_t *buffer, size_t length );
+int hp_82341_command( gpib_board_t *board, uint8_t *buffer, size_t length, size_t *bytes_written );
 int hp_82341_take_control( gpib_board_t *board, int synchronous );
 int hp_82341_go_to_standby( gpib_board_t *board );
 void hp_82341_request_system_control( gpib_board_t *board, int request_control );
