@@ -22,6 +22,7 @@ static const unsigned int serial_timeout = 1000000;
 
 unsigned int num_status_bytes( const gpib_status_queue_t *dev )
 {
+	if(dev == NULL) return 0;
 	return dev->num_status_bytes;
 }
 
@@ -108,11 +109,11 @@ gpib_status_queue_t * get_gpib_status_queue( gpib_board_t *board, unsigned int p
 int get_serial_poll_byte( gpib_board_t *board, unsigned int pad, int sad, unsigned int usec_timeout,
 		uint8_t *poll_byte )
 {
+	GPIB_DPRINTK( "entering get_serial_poll_byte()\n" );
+
 	gpib_status_queue_t *device;
 
 	device = get_gpib_status_queue( board, pad, sad );
-	if( device == NULL ) return -EINVAL;
-
 	if( num_status_bytes( device ) )
 	{
 		return pop_status_byte( device, poll_byte );

@@ -178,7 +178,7 @@ int serial_poll_all( gpib_board_t *board, unsigned int usec_timeout )
  * DVRSP
  * This function performs a serial poll of the device with primary
  * address pad and secondary address sad. If the device has no
- * secondary adddress, pass a zero in for this argument.  At the
+ * secondary adddress, pass a negative number in for this argument.  At the
  * end of a successful serial poll the response is returned in result.
  * SPD and UNT are sent at the completion of the poll.
  */
