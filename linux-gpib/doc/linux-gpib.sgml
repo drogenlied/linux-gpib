@@ -602,6 +602,23 @@ Default is <option>--sre</option>.</para>
 	<entry>pcII</entry>
 	</row>
 	<row>
+	<entry>Keysight (Agilent)</entry>
+	<entry><link LINKEND="agilent-82350b">82350B PCI</link></entry>
+	<entry>agilent_82350b.ko</entry>
+	<entry>agilent_82350b</entry>
+	<row>
+	<entry>Keysight (Agilent)</entry>
+	<entry><link LINKEND="agilent-82350b">82351A PCIe</link></entry>
+	<entry>agilent_82350b.ko</entry>
+	<entry>agilent_82350b</entry>
+	</row>
+	<row>
+	<entry>Keysight (Agilent)</entry>
+	<entry><link LINKEND="agilent-82357a">82357B USB</link></entry>
+	<entry>agilent_82357a.ko</entry>
+	<entry>agilent_82357a</entry>
+	</row>
+	<row>
 	<entry>Measurement Computing (Computer Boards)</entry>
 	<entry>CPCI-GPIB</entry>
 	<entry>cb7210.ko</entry>

@@ -1,3 +1,41 @@
+2015-04-13 20:17:57 fmhess
+
+	* [r1631] Fixed board-level serial polls.
+
+2015-04-04 16:53:48 fmhess
+
+	* [r1630] Fixed some issues with restartable signals, added
+        support for ni-usb-hs stop.
+
+2015-03-28 23:24:11 fmhess
+
+	* [r1629] Some tweaks to make tracking of RFD holdoff state
+	more reliable.
+
+2015-03-27 03:02:38 fmhess
+
+	* [r1628] Fixed read/write/cmd ioctls so they properly restart
+	after being interrupted by a signal. Had to make
+	an incompatible change to the library/kernel interface!
+        New lib won't work with old kernel drivers and
+        vice versa (EDVR errors on ibrd, ibwrt, and ibcmd).
+
+2015-03-26 23:37:50 fmhess
+
+	* [r1627] Fixed vulnerability to spurious wakeup.
+
+2015-03-25 08:35:02 dpenkler
+
+	* [r1626] f_path patch for 3.19.x and above kernels
+
+2015-03-23 20:05:36 fmhess
+
+	* [r1625] Fixed short "-c" option for gpib_config.
+
+2014-12-13 14:56:26
+
+	* [r1624] Tag for 3.2.21 release
+
 2014-12-13 18:30 dpenkler
 
 	* [r1623] Make tag for 3.2.21 Release
@@ -96,7 +134,7 @@
 	* [r1604] Update doc for 82351A.
           agilent_82350b consistent driver name in printks' for easy grepping
 	  Compile warning fixes:
-	  - nec7210/interrupt.c: removed unused variable 
+	  - nec7210/interrupt.c: removed unused variable
           - pc2_init.c: removed calls to deprecated check_region
 	  - lib/ibConfYacc.y: yyerror declaration
 	  - lib/ibib_internal.h: yyerror declaration

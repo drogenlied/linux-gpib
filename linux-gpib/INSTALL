@@ -166,12 +166,15 @@ o) USB devices
 	You will also need to install firmware files for your device,
 	a tarball is available from
 	http://linux-gpib.sourceforge.net/firmware/.  Make sure you
-	have the "hotplug" and "fxload" packages installed on your
-	computer.  The hotplug system will automatically upload the
-	firmware to your device and load the driver module when the
-	device is plugged in.  If you have errors, check your system
-	log files (not dmesg) for messages from the hotplug scripts.
-
+	have the "fxload" and either the "hotplug" or "udev" packages
+	installed on your computer.  The hotplug scripts will
+	automatically upload the firmware to your device and load the
+	driver module when the device is plugged in.  If you have
+	errors, check your system log files (not dmesg) for messages
+	from the hotplug scripts.  For systems using udev the rules
+	files are installed in /etc/udev/rules.d/ which invoke the
+	USB hotplug scripts.
+	
 E) Trying it out
 ----------------
 
@@ -188,3 +191,20 @@ F) Bindings for other languages
 	them with the appropriate configure option, or if the necessary
 	header files/libraries are not found on your machine.
 
+G) Uninstalling
+---------------
+
+	Type 'make uninstall' as root from the install root of the
+	build tree (i.e. the same directory from which the package was
+	originally installed).
+
+	Note: The configuration files and scripts are not uninstalled
+	by this procedure. They need to be removed manually if you
+	wish to re-install the standard distribution configuration
+	files and scripts later since existing files are not
+	overwritten by the install procedure. Check the following file
+	and directories:
+
+	      /etc/gpib.conf
+	      /etc/hotplug/usb/
+	      /etc/udev/rules.d/

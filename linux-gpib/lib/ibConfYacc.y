@@ -112,7 +112,7 @@ static void gpib_conf_warn_missing_equals()
 
 %}
 
-%pure_parser
+%pure-parser
 %parse-param {void *parse_arg}
 %parse-param {void* yyscanner}
 %lex-param {void* yyscanner}

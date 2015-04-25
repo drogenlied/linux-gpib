@@ -109,9 +109,10 @@ gpib_status_queue_t * get_gpib_status_queue( gpib_board_t *board, unsigned int p
 int get_serial_poll_byte( gpib_board_t *board, unsigned int pad, int sad, unsigned int usec_timeout,
 		uint8_t *poll_byte )
 {
-	GPIB_DPRINTK( "entering get_serial_poll_byte()\n" );
 
 	gpib_status_queue_t *device;
+
+	GPIB_DPRINTK( "entering get_serial_poll_byte()\n" );
 
 	device = get_gpib_status_queue( board, pad, sad );
 	if( num_status_bytes( device ) )
