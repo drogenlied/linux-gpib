@@ -1,3 +1,12 @@
+2015-04-25 10:19:18 dpenkler
+
+	* [r1632] Prepare for 4.0 release
+	- Bumped version number to 4.0.0 to mark change in kernel interface for modules.
+	User space interface is unchanged.
+	- Added udev hotplug support for usb adaptors
+	- Added Keysight products to supported hardware list in doc
+	- Removed some compile time warnings
+
 2015-04-13 20:17:57 fmhess
 
 	* [r1631] Fixed board-level serial polls.

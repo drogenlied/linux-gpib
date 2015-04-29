@@ -17,7 +17,7 @@ class Gpib(object):
 
 	def __init__(self, name = 'gpib0', pad = None, sad = 0, timeout = 13, send_eoi = 1, eos_mode = 0):
 		self._own = False
-		if isinstance(name, basestring):
+		if isinstance(name, str):
 			self.id = gpib.find(name)
 			self._own = True
 		elif pad is None:

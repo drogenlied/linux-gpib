@@ -10,6 +10,13 @@
 #else
 #include <gpib/ib.h>
 #endif
+#if PY_MAJOR_VERSION >= 3
+#define IS_PY3K
+#define PyInt_FromLong PyLong_FromLong
+#define PyString_FromStringAndSize PyBytes_FromStringAndSize
+#define PyString_AS_STRING PyBytes_AS_STRING
+#define _PyString_Resize _PyBytes_Resize
+#endif
 
 #include <errno.h>
 #include <unistd.h>
@@ -598,14 +605,36 @@ static char gpib_module_documentation[] =
 	"As in the C API, all functions return the value of ibsta,\n"
 	"except where otherwise specified.";
 
-void initgpib(void)
+#ifdef IS_PY3K
+static struct PyModuleDef moduledef = {
+	PyModuleDef_HEAD_INIT,
+	"gpib",                     /* m_name */
+	gpib_module_documentation,  /* m_doc */
+	-1,                         /* m_size */
+	gpib_methods,               /* m_methods */
+	NULL,                       /* m_reload */
+	NULL,                       /* m_traverse */
+	NULL,                       /* m_clear */
+	NULL,                       /* m_free */
+};
+#endif
+
+PyMODINIT_FUNC
+#ifdef IS_PY3K
+PyInit_gpib(void)
+#else
+initgpib(void)
+#endif
 {
 	PyObject *m;
 
 	/* Create the module and add the functions */
+#ifdef IS_PY3K
+ 	m = PyModule_Create(&moduledef);
+#else
 	m = Py_InitModule4("gpib", gpib_methods, gpib_module_documentation,
 		(PyObject*)NULL, PYTHON_API_VERSION);
-
+#endif
 	/* Add GpibError exception to the module */
 	GpibError = PyErr_NewException("gpib.GpibError", NULL, NULL);
 	PyModule_AddObject(m, "GpibError", GpibError);
@@ -697,4 +726,8 @@ void initgpib(void)
 	/* Check for errors */
 	if (PyErr_Occurred())
 		Py_FatalError("can't initialize module gpib");
+
+#ifdef IS_PY3K
+	return m;
+#endif
 }

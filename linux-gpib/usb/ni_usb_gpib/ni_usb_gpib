@@ -29,6 +29,9 @@ case $PRODUCT in
 
 esac
 
+if [ -x /usr/bin/logger ]; then
+        /usr/bin/logger -t $0 "Running Firmware: $FIRMWARE Product: $PRODUCT Device $DEVICE"
+fi 
 
 # quit unless we were called to download some firmware
 if [ "$FIRMWARE" = "" ]; then
