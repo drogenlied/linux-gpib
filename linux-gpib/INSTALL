@@ -74,7 +74,7 @@ o) cd to your linux-gpib directory and run the './configure' script.
 	In particular, the '--with-linux-srcdir' option is useful for
 	specifying the location of your Linux kernel source directory,
 	and the '--enable-pcmcia' option is useful for laptops. If you
-	have an ISA based card you will need to user the
+	have an ISA based card you will need to use the
 	'--enable-isa' option unless you have a kernel version >=
 	3.12.0 with CONFIG_ISA set.
 
