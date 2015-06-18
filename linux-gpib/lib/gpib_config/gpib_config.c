@@ -143,7 +143,7 @@ static int parse_options( int argc, char *argv[], parsed_options_t *settings )
 {
 	int c, index;
 	int retval;
-
+	char *version;
 	struct option options[] =
 	{
 		{ "iobase", required_argument, NULL, 'b' },
@@ -160,6 +160,7 @@ static int parse_options( int argc, char *argv[], parsed_options_t *settings )
 		{ "sad", required_argument, NULL, 's' },
 		{ "board-type", required_argument, NULL, 't' },
 		{ "pci-bus", required_argument, NULL, 'u' },
+		{ "version", no_argument, NULL, 'v' },
 		{ "no-ifc", no_argument, &settings->assert_ifc, 0 },
 		{ "ifc", no_argument, &settings->assert_ifc, 1 },
 		{ "no-sre", no_argument, &settings->assert_remote_enable, 0 },
@@ -183,7 +184,7 @@ static int parse_options( int argc, char *argv[], parsed_options_t *settings )
 
 	while( 1 )
 	{
-		c = getopt_long(argc, argv, "b:c:d:f:hi:I:l:m:op:s:t:u:", options, &index);
+		c = getopt_long(argc, argv, "b:c:d:f:hi:I:l:m:op:s:t:u:v", options, &index);
 		if( c == -1 ) break;
 		switch( c )
 		{
@@ -237,6 +238,11 @@ static int parse_options( int argc, char *argv[], parsed_options_t *settings )
 			break;
 		case 'u':
 			settings->pci_bus = strtol( optarg, NULL, 0 );
+			break;
+		case 'v':
+		        ibvers(&version);
+			printf("linux-gpib version = %s\n",version);
+			exit(0);
 			break;
 		default:
 			help();

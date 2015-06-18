@@ -74,6 +74,7 @@ GPIB_DUMMY_VERSION {
 		ibstop;
 		ibtmo;
 		ibtrg;
+		ibvers;
 		ibwait;
 		ibwrt;
 		ibwrta;

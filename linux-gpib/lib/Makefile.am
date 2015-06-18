@@ -28,9 +28,9 @@ libgpib_la_SOURCES = \
 	ibGts.c ibBoard.c ibutil.c globals.c ibask.c ibppc.c \
 	ibLoc.c ibDma.c ibdev.c ibbna.c async.c ibconfig.c ibFindLstn.c \
 	ibEvent.c local_lockout.c self_test.c pass_control.c ibstop.c \
-	ibConfLex.c ibConfLex.h ibConfYacc.c ibConfYacc.h
+	ibConfLex.c ibConfLex.h ibConfYacc.c ibConfYacc.h ibVers.c
 
-libgpib_la_CFLAGS = $(LIBGPIB_CFLAGS) -DDEFAULT_CONFIG_FILE=\"/etc/gpib.conf\"
+libgpib_la_CFLAGS = $(LIBGPIB_CFLAGS) -DDEFAULT_CONFIG_FILE=\"/etc/gpib.conf\" -DGPIB_VERSION=$(VERSION)
 libgpib_la_LDFLAGS = -version-info @GPIB_SO_VERSION@ -Wl,--version-script=$(srcdir)/gpib_version_script -lpthread
 
 $(srcdir)/ibConfLex.c $(srcdir)/ibConfLex.h: $(srcdir)/ibConfLex.l

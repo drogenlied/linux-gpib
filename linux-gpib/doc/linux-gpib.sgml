@@ -347,6 +347,7 @@ device {
 <arg>--no-sre</arg>
 <arg>--system-controller</arg>
 <arg>--no-system-controller</arg>
+<arg>--version</arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 <refsect1>
@@ -413,6 +414,8 @@ should be 0 (disabled) or in the range 96 through 126 (0x60 through 0x7e hexadec
 <para>Specify pci bus <replaceable>number</replaceable> to select a specific
 pci board.  If used, you must also specify the pci slot with <option>--pci-slot</option>.
 </para>
+<para><option>-v, --version </option></para>
+<para> Prints the current linux-gpib version and exits.</para>
 <para><option>--[no-]ifc</option></para>
 <para> Perform (or not) interface clear after bringing board online.
 Default is <option>--ifc</option>.</para>
@@ -3688,6 +3691,35 @@ volatile int ibsta;
 	</title>
 	<para>
 	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-ibvers">
+<refmeta>
+	<refentrytitle>ibvers</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibvers</refname>
+	<refpurpose>Obtain the current linux gpib version.</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>void <function>ibvers</function></funcdef>
+		<paramdef>char * <parameter>version</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	ibvers() will return the current version string in
+	<parameter>version</parameter>.
 	</para>
 </refsect1>
 </refentry>
