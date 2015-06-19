@@ -15,19 +15,9 @@
 
 #define xstr(s) str(s)
 #define str(s) #s
-static char *my_version = xstr(GPIB_VERSION);
+static char *my_version = xstr(GPIB_SCM_VERSION);
+
 void ibvers( char **vers )
 {
   *vers = my_version;
 }
-
-
-
-
-
-
-
-
-
-
-

@@ -3,7 +3,11 @@
 if [ ! -f NEWS ] ; then
 	touch NEWS
 fi
-
+if which svnversion > /dev/null 2>&1;  then
+	svnversion -n . >util/.scm_version.tmp
+else
+ 	rm -f util/.scm_version.tmp
+fi
 aclocal -I m4 && \
 libtoolize --copy --force && \
 autoheader && \

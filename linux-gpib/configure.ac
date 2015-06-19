@@ -30,6 +30,12 @@ AC_SUBST([GPIB_SO_VERSION])
 [ISODATE=`date +%Y-%m-%d`]
 AC_SUBST([ISODATE])
 
+AC_CHECK_FILE([util/.scm_version.tmp],
+  [SCM_VERSION=[$VERSION"\ [r"`cat util/.scm_version.tmp`"]"]],
+  [SCM_VERSION=$VERSION])
+
+AC_SUBST(SCM_VERSION)
+
 AC_CANONICAL_HOST
 
 AC_ENABLE_SHARED([yes])
