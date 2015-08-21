@@ -1,3 +1,4 @@
+
 /***********************************************************
  * Python wrapper module for gpib library functions.
  ************************************************************/
@@ -13,6 +14,7 @@
 #if PY_MAJOR_VERSION >= 3
 #define IS_PY3K
 #define PyInt_FromLong PyLong_FromLong
+#define PyString_FromString PyBytes_FromString
 #define PyString_FromStringAndSize PyBytes_FromStringAndSize
 #define PyString_AS_STRING PyBytes_AS_STRING
 #define _PyString_Resize _PyBytes_Resize
@@ -569,6 +571,19 @@ static PyObject* gpib_ibcnt(PyObject *self, PyObject *args)
 	return PyInt_FromLong(ThreadIbcntl());
 }
 
+static char gpib_version__doc__[] =
+	"version -- obtain the current linux gpib version\n"
+	"version()";
+
+static PyObject* gpib_version(PyObject *self, PyObject *args)
+{
+	char *version;
+
+	ibvers(&version);
+
+	return PyString_FromString(version);
+}
+
 /* List of methods defined in the module */
 
 static struct PyMethodDef gpib_methods[] = {
@@ -591,7 +606,8 @@ static struct PyMethodDef gpib_methods[] = {
 	{"trigger",		gpib_trigger,		METH_VARARGS,	gpib_trigger__doc__},
 	{"ibsta",		gpib_ibsta,		METH_NOARGS,	gpib_ibsta__doc__},
 	{"ibcnt",		gpib_ibcnt,		METH_NOARGS,	gpib_ibcnt__doc__},
-	{"ibloc", gpib_ibloc, METH_VARARGS, gpib_ibloc__doc__},
+	{"ibloc",		gpib_ibloc,		METH_VARARGS,	gpib_ibloc__doc__},
+	{"version",		gpib_version,		METH_NOARGS,	gpib_version__doc__},
 	{NULL,		NULL}		/* sentinel */
 };
 

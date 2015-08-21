@@ -1,3 +1,17 @@
+2015-06-19 14:31:11 dpenkler
+
+	* [r1637] Added SCM version to ibvers output for bootstrap users
+
+2015-06-18 18:14:31 dpenkler
+
+	* [r1636] Add lib/ibVers.c file to svn
+
+2015-06-18 18:10:02  dpenkler
+
+	* [r1635] Added ibvers() to return current version of linux-gpib.
+		  - Bumped library interface number.
+                  - Added -v, --version option to gpib_config.
+
 2015-06-18 09:41:36 dpenkler
 
         * [r1634] Fix command arguments for pc2 driver

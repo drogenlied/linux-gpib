@@ -122,6 +122,7 @@ extern int ibsre( int ud, int v );
 extern int ibstop( int ud );
 extern int ibtmo( int ud, int v );
 extern int ibtrg( int ud );
+extern void ibvers( char **version); 
 extern int ibwait( int ud, int mask );
 extern int ibwrt( int ud, const void *buf, long count );
 extern int ibwrta( int ud, const void *buf, long count );
