@@ -1,3 +1,12 @@
+2015-08-22 08:37:23 dpenkler
+
+        * [r1639] Tag for 4.0.0 release
+
+2015-08-21 14:34:32 dpenkler
+
+	* [r1638] Add patch for python gpib.version() from bessman
+	          - Split out 99-gpib-generic.rules from usb device udev rules.
+
 2015-06-19 14:31:11 dpenkler
 
 	* [r1637] Added SCM version to ibvers output for bootstrap users
