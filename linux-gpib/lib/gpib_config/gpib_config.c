@@ -93,6 +93,8 @@ static void help( void )
 	printf("\t-s, --sad NUM\n"
 		"\t\tSpecify secondary gpib address.  NUM should be 0 (disabled) or in the range\n"
 		"\t\t96 through 126 (0x60 through 0x7e hexadecimal).\n");
+	printf("\t-v, --version\n"
+		"\t\tPrint version of linux-gpib library and exit.\n");
 }
 
 static int load_init_data(parsed_options_t *settings, const char *file_path)

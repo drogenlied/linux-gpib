@@ -1,2 +1,1 @@
-ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="0957", ATTR{idProduct}=="0[57]18", MODE="660", GROUP="gpib", SYMLINK+="usb_gpib"
-ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="0957", ATTR{idProduct}=="0[57]18", ENV{DEVICE}="$devpath", RUN+="@hotplug_usb_conf_dir@/agilent_82357a"
+ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="0957", ATTR{idProduct}=="0[57]18", ENV{DEVICE}="$devnode", ENV{SERIAL}="$attr{serial}", RUN+="@hotplug_usb_conf_dir@/agilent_82357a"

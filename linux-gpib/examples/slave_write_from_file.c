@@ -92,7 +92,7 @@ int main( int argc, char *argv[] )
 	status = ibtmo( board, TNONE );
 	if( status & ERR )
 	{
-		fprintf( stderr, "ibeos() failed\n" );
+		fprintf( stderr, "ibtmo() failed\n" );
 		fprintf( stderr, "%s\n", gpib_error_string( ThreadIberr() ) );
 		return -1;
 	}

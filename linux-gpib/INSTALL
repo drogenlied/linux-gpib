@@ -162,18 +162,32 @@ o) USB devices
 
 	USB hotplug scripts will be installed into /etc/hotplug/usb if
 	they do not already exist.  You may wish to edit the
-	GPIB_CONFIG_OPTIONS in the hotplug script for your device.
-	You will also need to install firmware files for your device,
-	a tarball is available from
-	http://linux-gpib.sourceforge.net/firmware/.  Make sure you
-	have the "fxload" and either the "hotplug" or "udev" packages
-	installed on your computer.  The hotplug scripts will
+	GPIB_CONFIG_OPTIONS in the hotplug script for your device.  If
+	your device requires a external firmware you will also need to
+	install firmware files for your device, a tarball is available
+	from http://linux-gpib.sourceforge.net/firmware/.  Make sure
+	you have the "fxload" and either the "hotplug" or "udev"
+	packages installed on your computer.  The hotplug scripts will
 	automatically upload the firmware to your device and load the
 	driver module when the device is plugged in.  If you have
 	errors, check your system log files (not dmesg) for messages
 	from the hotplug scripts.  For systems using udev the rules
-	files are installed in /etc/udev/rules.d/ which invoke the
-	USB hotplug scripts.
+	files are installed in /etc/udev/rules.d/ which invoke the USB
+	hotplug scripts.
+
+        Using multiple-boards of the same type with hotplug requires
+	udev support: In the hotplug scripts you can use either the
+	serial number $SERIAL or the device path $DEVPATH to decide
+	which board is to be associated with which minor in your
+	gpib.conf.  Using serial number it does not matter which usb
+	ports you use.  Using device path the association will be made
+	with the physical usb port in your system. To obtain the
+	serial numbers or device paths for your boards plug the boards
+	in and check the syslog for the output from the default
+	hotplog script. The order of the messages will correspond to
+	the order in which you plugged the boards in. Edit the hotplug
+	scripts to setup the serial numbers/device paths and minors
+	that correspond to your system.
 	
 E) Trying it out
 ----------------

@@ -6,8 +6,38 @@ FXLOAD=fxload
 FXLOAD_OPTIONS="-t fx"
 
 PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin
+HOME=/root
+export HOME PATH
 FIRMWARE=
 SS_LOADER=
+
+if [ -x /usr/bin/logger ]; then
+        /usr/bin/logger -t $0 "entered for Product: $PRODUCT Device: $DEVICE Serial: $SERIAL Devpath: $DEVPATH"
+fi 
+
+# Multi-board with serial numbers
+# Uncomment and edit the code below to setup the serial numbers and minors
+# that correspond to your system.
+#
+#case $SERIAL in
+#    N0000001) GPIB_CONFIG_OPTIONS="--minor 0"
+#	      ;;
+#    N0000002) GPIB_CONFIG_OPTIONS="--minor 1"
+#	      ;;
+#esac
+#
+
+# Multi-board with device path
+# Uncomment and edit the code below to setup the device paths and minors
+# that correspond to your system.
+#
+#case $DEVPATH in
+#    */usb2/2-1) GPIB_CONFIG_OPTIONS="--minor 0"
+#	      ;;
+#    */usb2/2-2) GPIB_CONFIG_OPTIONS="--minor 1"
+#	      ;;
+#esac
+#
 
 # pre-renumeration device IDs
 case $PRODUCT in
@@ -16,8 +46,8 @@ case $PRODUCT in
 	gpib_config $GPIB_CONFIG_OPTIONS
 	;;
 
-# ni-usb-b without firmware
-3923/702b/*)
+# ni-usb-b or kusb-488 without firmware
+3923/702b/* | 3923/713b/*)
 	FIRMWARE=$DATADIR/usb/ni_usb_gpib/niusbb_firmware.hex
 	SS_LOADER=$DATADIR/usb/ni_usb_gpib/niusbb_loader.hex
 	;;
@@ -28,10 +58,6 @@ case $PRODUCT in
 	;;
 
 esac
-
-if [ -x /usr/bin/logger ]; then
-        /usr/bin/logger -t $0 "Running Firmware: $FIRMWARE Product: $PRODUCT Device $DEVICE"
-fi 
 
 # quit unless we were called to download some firmware
 if [ "$FIRMWARE" = "" ]; then
@@ -60,12 +86,13 @@ fi
 if ! which $FXLOAD; then
     if [ -x /usr/bin/logger ]; then
 	/usr/bin/logger -t $0 "missing $FXLOAD ??"
+	which $FXLOAD | /usr/bin/logger -t $0
     fi
     exit 1
 fi
 
 if [ -x /usr/bin/logger ]; then
-    /usr/bin/logger -t $0 "load $FIRMWARE for $PRODUCT to $DEVICE"
+    /usr/bin/logger -t $0 "loading $FIRMWARE for $PRODUCT to $DEVICE"
 fi
 
 $FXLOAD $FXLOAD_OPTIONS -I $FIRMWARE -s $SS_LOADER
