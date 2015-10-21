@@ -3715,7 +3715,7 @@ volatile int ibsta;
 	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
 	<funcprototype>
 		<funcdef>void <function>ibvers</function></funcdef>
-		<paramdef>char * <parameter>version</parameter></paramdef>
+		<paramdef>char ** <parameter>version</parameter></paramdef>
 	</funcprototype>
 	</funcsynopsis>
 </refsynopsisdiv>

@@ -1,3 +1,25 @@
+2015-10-14 16:02:01 dpenkler
+
+	* [r1643] Apply patch for pkg-config libgpib -cflags from Dale
+
+2015-09-07 12:33:31 dpenkler
+
+	* [r1642] Revert driver patch for KUSB-488
+
+2015-09-07 12:19:49 dpenkler
+
+	* [r1641] Hotplug and other minor fixes
+	- Added udev/hotplug patch for Keithly KUSB-488 (non-A)
+	- Fixed udev/hotplug scripts failing to find fxload.
+	- Added support for udev/hotplug of multiple boards of same type
+	(see INSTALL).
+	- Minor fixes to gpib_config and test programs.
+	- Bumped version to 4.0.1.
+
+2015-09-02 12:51:23 dpenkler
+
+	* [r1640] Add patch for Keithley KUSB-488 (non-A) support
+
 2015-08-22 08:37:23 dpenkler
 
         * [r1639] Tag for 4.0.0 release
