@@ -158,6 +158,9 @@ if (var != 0 && var != 1)  abend(#flag " flag must be 1 or 0.\n");
 #define CHECK_ADDR(var)		  \
 if (var < 0 || var > 30)  abend(#var " must be between 0 and 30.\n"); 
 
+#define CHECK_SADDR(var) 	\
+if (var < 0x60 || var > 0x7e)  abend("linux-gpib requires the secondary address to be offset by 96,\n   that is sad must be between 96 and 126.\n"); 
+
 void parse_options(int argc, char ** argv) {
   int eos_char  = 0;   // End of string character
   int reos_mode = 0;   // Don't terminate read on eos_char
@@ -193,7 +196,7 @@ void parse_options(int argc, char ** argv) {
     usage(1);
   }
   CHECK_ADDR(pad);
-  CHECK_ADDR(sad);
+  CHECK_SADDR(sad);
   CHECK_FLAG(send_eoi, eoi);
   CHECK_FLAG(reos_mode,reos);
   CHECK_FLAG(bin_mode, bin);

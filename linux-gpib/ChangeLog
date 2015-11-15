@@ -1,3 +1,11 @@
+2015-10-21 15:36:27 dpenkler
+
+	* [r1645] Tag for 4.0.1 release
+
+2015-10-21 11:50:07 dpenkler
+
+	* [r1644] Fix documentation for ibvers
+
 2015-10-14 16:02:01 dpenkler
 
 	* [r1643] Apply patch for pkg-config libgpib -cflags from Dale
