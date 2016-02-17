@@ -69,12 +69,12 @@ static const int hp82335_upper_iomem_size = 0x2000;
 // hp82335 register offsets
 enum hp_read_regs
 {
-	HPREG_CSR = 0x37f8,
-	HPREG_STATUS = 0x3ffc,
+	HPREG_CSR = 0x17f8,
+	HPREG_STATUS = 0x1ffc,
 };
 enum hp_write_regs
 {
-	HPREG_INTR_CLEAR = 0x37f7,
+	HPREG_INTR_CLEAR = 0x17f7,
 	HPREG_CCR = HPREG_CSR,
 };
 
