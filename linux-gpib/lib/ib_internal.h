@@ -68,6 +68,7 @@ int lock_board_mutex( ibBoard_t *board );
 int unlock_board_mutex( ibBoard_t *board );
 int conf_lock_board( ibConf_t *conf );
 void conf_unlock_board( ibConf_t *conf );
+int ibstatus( ibConf_t *conf, int error, int clear_mask, int set_mask );
 int exit_library( int ud, int error );
 int general_exit_library( int ud, int error, int no_sync_globals, int no_update_ibsta,
 	int status_clear_mask, int status_set_mask, int no_unlock_board );

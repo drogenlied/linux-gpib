@@ -196,7 +196,7 @@ void parse_options(int argc, char ** argv) {
     usage(1);
   }
   CHECK_ADDR(pad);
-  CHECK_SADDR(sad);
+  if (sad) CHECK_SADDR(sad);
   CHECK_FLAG(send_eoi, eoi);
   CHECK_FLAG(reos_mode,reos);
   CHECK_FLAG(bin_mode, bin);
@@ -245,7 +245,7 @@ char * readline(char * prompt) {
   void write_history(char * buf) {};
 #endif
 
-main (int argc, char ** argv) {
+int main (int argc, char ** argv) {
   char * line;
   int i, devdatalen,datasent;
   unsigned char devbuf[DEVICE_BUFFER_SIZE];

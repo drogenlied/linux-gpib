@@ -1,3 +1,15 @@
+2016-04-09 08:14:26  dpenkler
+
+	* [r1649] Tag for 4.0.2 release
+
+2016-02-17 07:30:18 dpenkler
+
+        * [r1648] 82335.h Fix offset bug introduced in r1461
+
+2015-11-15 19:26:38 dpenkler
+
+	* [r1647] Bumped version to 4.0.2
+
 2015-11-15 19:12:11 dpenkler
 
 	* [r1646] Fix sad error in ibterm
