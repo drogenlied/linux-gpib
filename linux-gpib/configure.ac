@@ -42,18 +42,18 @@ AC_ENABLE_SHARED([yes])
 AC_ENABLE_STATIC([no])
 AC_ARG_ENABLE([isa],[  --enable-isa		Enable support for ISA cards in GPIB kernel drivers],
 	[ENABLE_ISA=$enableval],[ENABLE_ISA="no"])
-if test "$ENABLE_ISA" == "yes" ; then
+if test "$ENABLE_ISA" = "yes" ; then
 	AC_DEFINE([GPIB_CONFIG_ISA],[1],[Define to enable ISA support in drivers])
 fi
 AC_SUBST([ENABLE_ISA])
 AC_ARG_ENABLE([pcmcia],[  --enable-pcmcia	Enable support for PCMCIA cards in GPIB kernel drivers],
 	[ENABLE_PCMCIA=$enableval],[ENABLE_PCMCIA="no"])
-if test "$ENABLE_PCMCIA" == "yes" ; then
+if test "$ENABLE_PCMCIA" = "yes" ; then
 	AC_DEFINE([GPIB_CONFIG_PCMCIA],[1],[Define to enable pcmcia support in drivers])
 fi
 AC_ARG_ENABLE([driver-debug],[  --enable-driver-debug	Enable debug spam to console in GPIB kernel drivers],
 	[ENABLE_DRIVER_SPAM=$enableval],[ENABLE_DRIVER_SPAM="no"])
-if test "$ENABLE_DRIVER_SPAM" == "yes" ; then
+if test "$ENABLE_DRIVER_SPAM" = "yes" ; then
 	AC_DEFINE([GPIB_CONFIG_KERNEL_DEBUG],[1],[Define to enable debug spam to console in drivers])
 fi
 AC_ARG_ENABLE([guile-binding],[  --disable-guile-binding	Disable Guile binding to libgpib],
@@ -73,7 +73,7 @@ dnl check kernel source directory
 AC_ARG_WITH([linux-srcdir],
 	[  --with-linux-srcdir=DIR	location of Linux kernel source directory [[DIR=/lib/modules/$(uname -r)/build/]]],
 	[LINUX_SRCDIR=$withval],[LINUX_SRCDIR=/lib/modules/$(uname -r)/build/])
-if test "$LINUX_SRCDIR" == "no" ; then
+if test "$LINUX_SRCDIR" = "no" ; then
 	AC_MSG_WARN([A Linux kernel source directory is required to compile driver modules.  Use --with-linux-srcdir=DIR.])
 fi
 AC_SUBST([LINUX_SRCDIR])
@@ -104,16 +104,16 @@ AM_PROG_LEX
 AC_PROG_YACC
 AC_PROG_LIBTOOL
 AC_PATH_PROG([JW_PATH], [jw], [no])
-if test "$JW_PATH" == "no" ; then
+if test "$JW_PATH" = "no" ; then
 	AC_MSG_NOTICE([docbook-tools (jw) not found, disabling documentation])
 	BUILD_DOCS="no"
 fi
 AC_PATH_PROG([DEPMOD], [depmod], [true], [PATH:/sbin:/usr/sbin:/usr/local/sbin])
-if test "$DEPMOD" == "true" ; then
+if test "$DEPMOD" = "true" ; then
 	AC_MSG_WARN([unable to find the 'depmod' program.  Is it in your path?])
 fi
 
-if test "$BIND_PYTHON" == "yes"; then
+if test "$BIND_PYTHON" = "yes"; then
 	AM_PATH_PYTHON()
 	PYTHON_MAJOR_VERSION=$(echo $PYTHON_VERSION | cut -d. -f1 )
 	PYTHON_MINOR_VERSION=$(echo $PYTHON_VERSION | cut -d. -f2 )
@@ -123,11 +123,11 @@ if test "$BIND_PYTHON" == "yes"; then
 	fi
 fi
 AC_PATH_PROG([PERL], [perl], [no], [])
-if test "$PERL" == "no"; then
+if test "$PERL" = "no"; then
 	AC_MSG_NOTICE([perl not found, disabling perl binding])
 	BIND_PERL="no"
 fi
-if test "$BIND_TCL" == "yes"; then
+if test "$BIND_TCL" = "yes"; then
    SC_PATH_TCLCONFIG   
    if [[ $no_tcl ]]; then
         AC_MSG_NOTICE([TCL config not found, disabling TCL binding])
@@ -137,7 +137,7 @@ if test "$BIND_TCL" == "yes"; then
    fi
 fi
 AC_PATH_PROG([PHP_CONFIG], [php-config], [no],[])
-if test "$PHP_CONFIG" == "no"; then
+if test "$PHP_CONFIG" = "no"; then
 	AC_MSG_NOTICE([php-config not found, disabling PHP binding])
 	BIND_PHP="no"
 fi
@@ -159,7 +159,7 @@ AC_CHECK_HEADER([libguile.h],[],[BIND_GUILE="no";AC_MSG_NOTICE([libguile headers
 
 AC_CHECK_HEADER(readline/readline.h,[readline_h=yes])
 AC_CHECK_HEADER(readline/history.h,[history_h=yes])
-if test $readline_lib == "yes" -a $readline_h == "yes" -a $history_h == "yes"; then
+if test $readline_lib = "yes" && test $readline_h = "yes" && test $history_h = "yes"; then
    AC_SUBST([LIB_READLINE_CFLAGS], ["-DREADLINE"])
 fi
 
@@ -199,17 +199,17 @@ AC_DEFINE([IBMAJOR],[160],[Major number of device files])
 
 echo
 echo Configuration:
-AM_CONDITIONAL([BUILD_DOCS], [test "$BUILD_DOCS" == "yes"])
+AM_CONDITIONAL([BUILD_DOCS], [test "$BUILD_DOCS" = "yes"])
 echo "SGML Documentation: $BUILD_DOCS"
-AM_CONDITIONAL([BIND_GUILE], [test "$BIND_GUILE" == "yes"])
+AM_CONDITIONAL([BIND_GUILE], [test "$BIND_GUILE" = "yes"])
 echo "Guile binding: $BIND_GUILE"
-AM_CONDITIONAL([BIND_PERL], [test "$BIND_PERL" == "yes"])
+AM_CONDITIONAL([BIND_PERL], [test "$BIND_PERL" = "yes"])
 echo "Perl binding: $BIND_PERL"
-AM_CONDITIONAL([BIND_PHP], [test "$BIND_PHP" == "yes"])
+AM_CONDITIONAL([BIND_PHP], [test "$BIND_PHP" = "yes"])
 echo "PHP binding: $BIND_PHP"
-AM_CONDITIONAL([BIND_PYTHON], [test "$BIND_PYTHON" == "yes"])
+AM_CONDITIONAL([BIND_PYTHON], [test "$BIND_PYTHON" = "yes"])
 echo "Python binding: $BIND_PYTHON"
-AM_CONDITIONAL([BIND_TCL], [test "$BIND_TCL" == "yes"])
+AM_CONDITIONAL([BIND_TCL], [test "$BIND_TCL" = "yes"])
 echo "TCL binding: $BIND_TCL"
 
 AC_OUTPUT([\

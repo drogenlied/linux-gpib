@@ -1,3 +1,14 @@
+
+2016-07-06 11:40:37 penkler
+
+	* [r1651] Tag for 4.0.3 release
+
+2016-04-09 13:33:17 dpenkler
+
+	* [r1650] Skip check when no sad in ibterm
+		- Fix some compile warnings
+		- Bump version to 4.0.3
+
 2016-04-09 08:14:26  dpenkler
 
 	* [r1649] Tag for 4.0.2 release

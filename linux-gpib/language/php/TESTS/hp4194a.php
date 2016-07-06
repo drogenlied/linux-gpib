@@ -1,4 +1,4 @@
-#!/usr/bin/php4 -q
+#!/usr/bin/php -q
 <?
 $u = ibfind("dev1");
 print "numero d'unite = $u\n";

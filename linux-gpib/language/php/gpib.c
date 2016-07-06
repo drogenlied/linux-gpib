@@ -11,6 +11,8 @@ for
 	the Minerva "Emerge" project, in February 2003
 	(C) Michel Billaud, 2003
 
+php5 modifications suggested Richard Klingler, richard@klingler.net
+
  ***************************************************************************
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
@@ -29,6 +31,9 @@ The list of variable and function names was borrowed from
 the linux-gpib-3.1.92 files. http://linux-gpib.sourceforge.net
 
 MODIFICATIONS
+ * 2016/07/06 : removed checks for pass by ref for php5
+                removed support for old NI_GPIB library
+                added ibvers
  * 2003/02/25 : in ibrd, string terminated after ibcnt chars
  * 2003/03/14 : more comments
 	
@@ -37,11 +42,11 @@ TODO:
 - integrate more constants (for ibconf)
 
 NOTES :
- * installation under Debian/Woody requires the php4-dev package
+ * installation under Debian requires the php dev package
  * for convenience, install the gpib.so where dynamic extensions live
- and add the line
+ * and add the followin line to your php.ini files:
     extension=gpib.so
- to the /etc/php/{apache,cgi}/php.ini files
+
     
 BIBLIOGRAPHY:
  
@@ -49,14 +54,8 @@ BIBLIOGRAPHY:
  Till Gerken, Campus Press, pp. 327-...
  file://localhost/opt/doc.php.nexen.html/zend.structure.exporting-functions.html */
 
-#ifdef USE_LINUX_GPIB
+
 #include "gpib/ib.h" 
-#endif
-
-#ifdef USE_NI_GPIB
-#include <ugpib.h>
-#endif
-
 #include "php.h"
 #include "ext/standard/info.h"
 
@@ -175,10 +174,6 @@ ZEND_FUNCTION(functionName) { \
 	    == FAILURE) { \
 		return; \
 	} \
-	if (!PZVAL_IS_REF(z)) {     \
-		zend_error(E_WARNING, "Not a reference"); \
-		RETURN_NULL(); \
-	} \
 	r=functionName(n,&result); \
 	ZVAL_LONG(z,result); \
 	RETURN_LONG(r); \
@@ -195,10 +190,6 @@ ZEND_FUNCTION(functionName) { \
 	    == FAILURE) { \
 		return; \
 	} \
-	if (!PZVAL_IS_REF(z)) {     \
-		zend_error(E_WARNING, "Not a reference"); \
-		RETURN_NULL(); \
-	} \
 	r=functionName(n,&result); \
 	ZVAL_LONG(z,result); \
 	RETURN_LONG(r); \
@@ -214,10 +205,6 @@ ZEND_FUNCTION(functionName) { \
 				  "llz", &n, &nn, &z) \
 	    == FAILURE) { \
 		return; \
-	} \
-	if (!PZVAL_IS_REF(z)) {     \
-		zend_error(E_WARNING, "Not a reference"); \
-		RETURN_NULL(); \
 	} \
 	r=functionName(n,nn,&result); \
 	ZVAL_LONG(z,result); \
@@ -253,12 +240,11 @@ ZEND_FUNCTION(ibsic);
 ZEND_FUNCTION(ibsre);
 ZEND_FUNCTION(ibtmo);
 ZEND_FUNCTION(ibtrg);
+ZEND_FUNCTION(ibvers);
 ZEND_FUNCTION(ibwait);
 ZEND_FUNCTION(ibwrtf);
 
-#ifdef USE_LINUX_GPIB
 ZEND_FUNCTION(gpib_error_string);
-#endif 
 
 ZEND_FUNCTION(ibsta);
 ZEND_FUNCTION(ibcnt);
@@ -303,12 +289,11 @@ zend_function_entry php_gpib_functions[] =
 	ZEND_FE(ibsre,	NULL)
 	ZEND_FE(ibtmo,	NULL)
 	ZEND_FE(ibtrg,	NULL)
+	ZEND_FE(ibvers,	NULL)
 	ZEND_FE(ibwait,	NULL)
 	ZEND_FE(ibwrtf,	NULL)
 
-#ifdef USE_LINUX_GPIB
 	ZEND_FE(gpib_error_string, NULL)
-#endif
 					   
         ZEND_FE(ibsta,		NULL)
 	ZEND_FE(ibcnt,		NULL)
@@ -348,18 +333,9 @@ PHP_MINFO_FUNCTION(gpib)
 {
    php_info_print_table_start();
    php_info_print_table_row(2,"GPIB Support","Enabled");
-
-#ifdef USE_LINUX_GPIB
    php_info_print_table_row(2,"Supported library",
 			    "Linux GPIB "
 			    "(http://linux-gpib/sourceforge.net)");
-#endif
-
-#ifdef USE_NI_GPIB
-   php_info_print_table_row(2,"Supported library",
-			    "National Instruments");
-#endif
-
    php_info_print_table_end();
 }
 
@@ -445,7 +421,7 @@ DLEXPORT zend_module_entry *get_module(void)
  * most functions are defined by macros 
  */
 
-FUN_ACCESSOR(iberr)
+     FUN_ACCESSOR(iberr)
      FUN_ACCESSOR(ibcnt)
      FUN_ACCESSOR(ibsta)
      
@@ -486,7 +462,6 @@ FUN_ACCESSOR(iberr)
  */
 
 
-#ifdef USE_LINUX_GPIB
 ZEND_FUNCTION(gpib_error_string)
 {
   long n;
@@ -497,7 +472,6 @@ ZEND_FUNCTION(gpib_error_string)
 	}
 	RETURN_STRING((char*)gpib_error_string(n), 1);
 }
-#endif
 
 ZEND_FUNCTION(ibwrt)
 {
@@ -522,6 +496,19 @@ ZEND_FUNCTION(ibwrt)
 	RETURN_LONG(ibwrt(n,s,len));
 }
 
+ZEND_FUNCTION(ibvers) 
+{
+        zval *z;
+        char *version;
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, 
+				  "z", &z)
+	    == FAILURE) {
+		return;
+	}
+	ibvers(&version);
+	ZVAL_STRING(z,version,1);
+	RETURN_STRING(version,1);
+}
 
 ZEND_FUNCTION(ibrd) 
 {
@@ -541,10 +528,6 @@ ZEND_FUNCTION(ibrd)
 				  "lzl", &n, &z, &len)
 	    == FAILURE) {
 		return;
-	}
-	if (!PZVAL_IS_REF(z)) {    
-		zend_error(E_WARNING, "Not a reference");
-		RETURN_NULL();
 	}
         p = (char *) malloc(len + 1);
         memset(p,0,len+1);
