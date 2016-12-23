@@ -1,3 +1,16 @@
+2016-07-06 15:05:48 dpenkler
+
+	* [r1652] Maintenance patches
+	 - Removed test bashism: changed == to = in confic.ac
+	   thanks to Dale Smith
+ 	 - Added test in bootstrap for non svn directory
+	   thanks to Ian Hodds
+	 - PHP language binding changes:
+           removed checks for pass by ref for php5 support
+           removed support for old NI_GPIB library ugpib
+           thanks to Richard Klingler and Carsten
+           added ibvers binding
+	   new file language/php/TESTS/vers.php
 
 2016-07-06 11:40:37 penkler
 

@@ -318,10 +318,11 @@ void ni_usb_soft_update_status(gpib_board_t *board, unsigned int ni_usb_ibsta, u
 //		printk("%s: debug: ibsta from ni gpib usb adapter is 0x%x\n", __FILE__, ni_usb_ibsta);
 //	}
 	//FIXME should generate events on DTAS and DCAS
-	need_monitoring_bits = ni_usb_ibsta_monitor_mask;
+#if 0
+	need_monitoring_bits = ni_usb_ibsta_monitor_mask; /* no change from init exit */
 	spin_lock_irqsave(&board->spinlock, flags);
-	ni_priv->monitored_ibsta_bits &= ~ni_usb_ibsta;
-	need_monitoring_bits &= ~ni_priv->monitored_ibsta_bits;
+	ni_priv->monitored_ibsta_bits &= ~ni_usb_ibsta;   /* remove set status bits from monitored set why ?***/
+	need_monitoring_bits &= ~ni_priv->monitored_ibsta_bits; /* mm - monitored set */
 	spin_unlock_irqrestore(&board->spinlock, flags);
 	if(need_monitoring_bits & ~ni_usb_ibsta)
 	{
@@ -330,6 +331,7 @@ void ni_usb_soft_update_status(gpib_board_t *board, unsigned int ni_usb_ibsta, u
 	{
 		wake_up_interruptible( &board->wait );
 	}
+#endif
 // 	printk("%s: ni_usb_ibsta=0x%x\n", __FUNCTION__, ni_usb_ibsta);
 	return;
 }
@@ -653,10 +655,14 @@ int ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, s
 	while(i % 4)	// pad with zeros to 4-byte boundary
 		out_data[i++] = 0x0;
 	i += ni_usb_bulk_termination(&out_data[i]);
+	
+	mutex_lock(&ni_priv->addressed_transfer_lock);
+
 	retval = ni_usb_send_bulk_msg(ni_priv, out_data, i, &usb_bytes_written, 1000);
 	kfree(out_data);
 	if(retval || usb_bytes_written != i)
 	{
+	        mutex_unlock(&ni_priv->addressed_transfer_lock);
 		if(retval == 0) retval = -EIO;
 		printk("%s: %s: ni_usb_send_bulk_msg returned %i, usb_bytes_written=%i, i=%i\n", __FILE__, __FUNCTION__, retval, usb_bytes_written, i);
 		return retval;
@@ -666,6 +672,9 @@ int ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, s
 	if(in_data == NULL) return -ENOMEM;
 	retval = ni_usb_receive_bulk_msg(ni_priv, in_data, in_data_length, &usb_bytes_read,
 		ni_usb_timeout_msecs(board->usec_timeout), 1);
+
+	mutex_unlock(&ni_priv->addressed_transfer_lock);
+	
 	if(retval == -ERESTARTSYS)
 	{}
 	else if(retval)
@@ -761,12 +770,16 @@ static int ni_usb_write(gpib_board_t *board, uint8_t *buffer, size_t length, int
 	while(i % 4)	// pad with zeros to 4-byte boundary
 		out_data[i++] = 0x0;
 	i += ni_usb_bulk_termination(&out_data[i]);
+	
+	mutex_lock(&ni_priv->addressed_transfer_lock);
+	
 	retval = ni_usb_send_bulk_msg(ni_priv, out_data, i, &usb_bytes_written,
 		ni_usb_timeout_msecs(board->usec_timeout));
 	kfree(out_data);
 	if(retval || usb_bytes_written != i)
 	{
-		printk("%s: %s: ni_usb_send_bulk_msg returned %i, usb_bytes_written=%i, i=%i\n", __FILE__, __FUNCTION__, retval, usb_bytes_written, i);
+	        mutex_unlock(&ni_priv->addressed_transfer_lock);
+	        printk("%s: %s: ni_usb_send_bulk_msg returned %i, usb_bytes_written=%i, i=%i\n", __FILE__, __FUNCTION__, retval, usb_bytes_written, i);
 		return retval;
 	}
 	in_data_length = 0x10;
@@ -774,6 +787,9 @@ static int ni_usb_write(gpib_board_t *board, uint8_t *buffer, size_t length, int
 	if(in_data == NULL) return -ENOMEM;
 	retval = ni_usb_receive_bulk_msg(ni_priv, in_data, in_data_length, &usb_bytes_read,
 		ni_usb_timeout_msecs(board->usec_timeout), 1);
+	
+	mutex_unlock(&ni_priv->addressed_transfer_lock);
+
 	if((retval && retval != -ERESTARTSYS) || usb_bytes_read != 12)
 	{
 		printk("%s: %s: ni_usb_receive_bulk_msg returned %i, usb_bytes_read=%i\n", __FILE__, __FUNCTION__, retval, usb_bytes_read);
@@ -1450,6 +1466,14 @@ int ni_usb_line_status( const gpib_board_t *board )
 		printk("%s: kmalloc failed\n", __FILE__);
 		return -ENOMEM;
 	}
+	
+	retval = mutex_trylock(&ni_priv->addressed_transfer_lock);  /* line status gets called during ibwait */
+
+	if(retval == 0)
+	{
+	        kfree(out_data);
+		return -EBUSY;
+	}
 	i += ni_usb_bulk_register_read_header(&out_data[i], 1);
 	i += ni_usb_bulk_register_read(&out_data[i], NIUSB_SUBDEV_TNT4882, BSR);
 	while(i % 4)
@@ -1471,6 +1495,9 @@ int ni_usb_line_status( const gpib_board_t *board )
 		return -ENOMEM;
 	}
 	retval = ni_usb_nonblocking_receive_bulk_msg(ni_priv, in_data, in_data_length, &bytes_read, 1000, 0);
+
+	mutex_unlock(&ni_priv->addressed_transfer_lock);
+
 	if(retval)
 	{
 		if(retval != -EAGAIN)

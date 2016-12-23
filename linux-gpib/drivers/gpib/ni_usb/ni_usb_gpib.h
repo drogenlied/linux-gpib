@@ -76,7 +76,8 @@ typedef struct
 	struct urb *bulk_urb;
 	struct urb *interrupt_urb;
 	uint8_t interrupt_buffer[0x11];
-	struct mutex bulk_transfer_lock;
+        struct mutex addressed_transfer_lock;
+        struct mutex bulk_transfer_lock;
 	struct mutex control_transfer_lock;
 	struct mutex interrupt_transfer_lock;
 } ni_usb_private_t;
