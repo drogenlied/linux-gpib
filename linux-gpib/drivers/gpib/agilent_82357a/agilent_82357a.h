@@ -137,6 +137,9 @@ enum xfer_abort_type
 	XA_FLUSH = 0x1
 };
 
+#define STATUS_DATA_LEN 8
+#define INTERRUPT_BUF_LEN 8
+
 // struct which defines local data for each 82357 device
 typedef struct
 {
@@ -147,13 +150,14 @@ typedef struct
 	unsigned long interrupt_flags;
 	struct urb *bulk_urb;
 	struct urb *interrupt_urb;
-	uint8_t interrupt_buffer[0x8];
+	uint8_t *interrupt_buffer;
 	struct mutex bulk_transfer_lock;
 	struct mutex bulk_alloc_lock;
 	struct mutex interrupt_alloc_lock;
 	struct mutex control_alloc_lock;
 	unsigned bulk_out_endpoint;
 	unsigned interrupt_in_endpoint;
+        uint8_t *status_data;
 	unsigned is_cic : 1;
 } agilent_82357a_private_t;
 

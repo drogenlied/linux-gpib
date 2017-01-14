@@ -446,23 +446,23 @@ static int agilent_82357a_abort(agilent_82357a_private_t *a_priv, int flush)
 {
 	int retval;
 	uint16_t wIndex = 0;
-	uint8_t status_data[2];
+	//	uint8_t status_data[2];
 
 	if(flush)
 		wIndex |= XA_FLUSH;
 	retval = agilent_82357a_receive_control_msg(a_priv, agilent_82357a_control_request, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
-		XFER_ABORT, wIndex, status_data, sizeof(status_data), 100);
+						    XFER_ABORT, wIndex, a_priv->status_data, STATUS_DATA_LEN, 100);
 	if(retval < 0)
 	{
 		printk("%s: %s: agilent_82357a_receive_control_msg() returned %i\n", __FILE__, __FUNCTION__, retval);
 		return -EIO;
 	}
-	if(status_data[0] != (~XFER_ABORT & 0xff))
+	if(a_priv->status_data[0] != (~XFER_ABORT & 0xff))
 	{
-		printk("%s: %s: error, major code=0x%x != ~XFER_ABORT\n", __FILE__, __FUNCTION__, status_data[0]);
+		printk("%s: %s: error, major code=0x%x != ~XFER_ABORT\n", __FILE__, __FUNCTION__, a_priv->status_data[0]);
 		return -EIO;
 	}
-	switch(status_data[1])
+	switch(a_priv->status_data[1])
 	{
 	case UGP_SUCCESS:
 		return 0;
@@ -472,7 +472,7 @@ static int agilent_82357a_abort(agilent_82357a_private_t *a_priv, int flush)
 		//fall-through
 	case UGP_ERR_FLUSHING_ALREADY:
 	default:
-		printk("%s: %s: abort returned error code=0x%x\n", __FILE__, __FUNCTION__, status_data[1]);
+		printk("%s: %s: abort returned error code=0x%x\n", __FILE__, __FUNCTION__, a_priv->status_data[1]);
 		return -EIO;
 		break;
 	}
@@ -590,7 +590,7 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 	int retval;
 	agilent_82357a_private_t *a_priv = board->private_data;
 	uint8_t *out_data;
-	uint8_t status_data[0x8];
+	//uint8_t status_data[0x8];
 	int out_data_length;
 	int raw_bytes_written;
 	int i = 0, j;
@@ -617,7 +617,7 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 		out_data[i++] = buffer[j];
 	//printk("%s: sending bulk msg(), send_commands=%i\n", __FUNCTION__, send_commands);
 	clear_bit(AIF_WRITE_COMPLETE_BN, &a_priv->interrupt_flags);
-	msec_timeout = board->usec_timeout + 999 / 1000;
+	msec_timeout = (board->usec_timeout + 999) / 1000;
 	retval = mutex_lock_interruptible(&a_priv->bulk_transfer_lock);
 	if(retval)
 	{
@@ -646,22 +646,25 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 	}
 	if(test_bit(AIF_WRITE_COMPLETE_BN, &a_priv->interrupt_flags) == 0)
 	{
+	        printk("%s: write aborted ibs %i, tmo %i\n", __FUNCTION__,test_bit(TIMO_NUM, &board->status),msec_timeout);
 		agilent_82357a_abort(a_priv, 0);
+		mutex_unlock(&a_priv->bulk_transfer_lock);
+		return -ETIMEDOUT;
 	}
-	//printk("%s: receiving control msg\n", __FUNCTION__);
+	// printk("%s: receiving control msg\n", __FUNCTION__);
 	retval = agilent_82357a_receive_control_msg(a_priv, agilent_82357a_control_request, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
-		XFER_STATUS, 0, status_data, sizeof(status_data), 100);
+		XFER_STATUS, 0, a_priv->status_data, STATUS_DATA_LEN, 100);
 	mutex_unlock(&a_priv->bulk_transfer_lock);
 	if(retval < 0)
 	{
 		printk("%s: %s: agilent_82357a_receive_control_msg() returned %i\n", __FILE__, __FUNCTION__, retval);
 		return -EIO;
 	}
-	*bytes_written = status_data[2];
-	*bytes_written |= status_data[3] << 8;
-	*bytes_written |= status_data[4] << 16;
-	*bytes_written |= status_data[5] << 24;
-	//printk("%s: write completed, bytes_completed=%i\n", __FUNCTION__, bytes_completed);
+	*bytes_written  = a_priv->status_data[2];
+	*bytes_written |= a_priv->status_data[3] << 8;
+	*bytes_written |= a_priv->status_data[4] << 16;
+	*bytes_written |= a_priv->status_data[5] << 24;
+	//printk("%s: write completed, bytes_written=%i\n", __FUNCTION__, (int)*bytes_written);
 	return 0;
 }
 
@@ -1073,6 +1076,20 @@ static int agilent_82357a_setup_urbs(gpib_board_t *board)
 		mutex_unlock(&a_priv->interrupt_alloc_lock);
 		return -ENODEV;
 	}
+
+	a_priv->status_data = kmalloc(STATUS_DATA_LEN, GFP_KERNEL);
+	if(a_priv->status_data == NULL)
+	{
+	        mutex_unlock(&a_priv->interrupt_alloc_lock);
+		return -ENOMEM;
+	}
+	a_priv->interrupt_buffer = kmalloc(INTERRUPT_BUF_LEN, GFP_KERNEL);
+	if(a_priv->interrupt_buffer == NULL)
+	{
+	        kfree(a_priv->status_data);
+	        mutex_unlock(&a_priv->interrupt_alloc_lock);
+		return -ENOMEM;
+	}
 	a_priv->interrupt_urb = usb_alloc_urb(0, GFP_KERNEL);
 	if(a_priv->interrupt_urb == NULL)
 	{
@@ -1082,7 +1099,7 @@ static int agilent_82357a_setup_urbs(gpib_board_t *board)
 	usb_dev = interface_to_usbdev(a_priv->bus_interface);
 	int_pipe = usb_rcvintpipe(usb_dev, a_priv->interrupt_in_endpoint);
 	usb_fill_int_urb(a_priv->interrupt_urb, usb_dev, int_pipe, a_priv->interrupt_buffer,
-		sizeof(a_priv->interrupt_buffer), &agilent_82357a_interrupt_complete, board, 1);
+		INTERRUPT_BUF_LEN, &agilent_82357a_interrupt_complete, board, 1);
 	retval = usb_submit_urb(a_priv->interrupt_urb, GFP_KERNEL);
 	if(retval)
 	{
@@ -1148,6 +1165,8 @@ static void agilent_82357a_free_private(agilent_82357a_private_t *a_priv)
 {
 	if(a_priv->interrupt_urb)
 		usb_free_urb(a_priv->interrupt_urb);
+	if(a_priv->status_data)
+		kfree(a_priv->status_data);
 	kfree(a_priv);
 	return;
 }
