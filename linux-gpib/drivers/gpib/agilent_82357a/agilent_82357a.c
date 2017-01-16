@@ -1073,28 +1073,27 @@ static int agilent_82357a_setup_urbs(gpib_board_t *board)
 	if(retval) return retval;
 	if(a_priv->bus_interface == NULL)
 	{
-		mutex_unlock(&a_priv->interrupt_alloc_lock);
-		return -ENODEV;
+	        retval = -ENODEV;
+		goto setup_exit;
 	}
 
 	a_priv->status_data = kmalloc(STATUS_DATA_LEN, GFP_KERNEL);
 	if(a_priv->status_data == NULL)
 	{
-	        mutex_unlock(&a_priv->interrupt_alloc_lock);
-		return -ENOMEM;
+		retval = -ENOMEM;
+		goto setup_exit;
 	}
 	a_priv->interrupt_buffer = kmalloc(INTERRUPT_BUF_LEN, GFP_KERNEL);
 	if(a_priv->interrupt_buffer == NULL)
 	{
-	        kfree(a_priv->status_data);
-	        mutex_unlock(&a_priv->interrupt_alloc_lock);
-		return -ENOMEM;
+		retval = -ENOMEM;
+		goto setup_exit;
 	}
 	a_priv->interrupt_urb = usb_alloc_urb(0, GFP_KERNEL);
 	if(a_priv->interrupt_urb == NULL)
 	{
-		mutex_unlock(&a_priv->interrupt_alloc_lock);
-		return -ENOMEM;
+	        retval = -ENOMEM;
+		goto setup_exit;
 	}
 	usb_dev = interface_to_usbdev(a_priv->bus_interface);
 	int_pipe = usb_rcvintpipe(usb_dev, a_priv->interrupt_in_endpoint);
@@ -1106,11 +1105,18 @@ static int agilent_82357a_setup_urbs(gpib_board_t *board)
 		usb_free_urb(a_priv->interrupt_urb);
 		a_priv->interrupt_urb = NULL;
 		printk("%s: failed to submit first interrupt urb, retval=%i\n", __FILE__, retval);
-		mutex_unlock(&a_priv->interrupt_alloc_lock);
-		return retval;
+		goto setup_exit;
 	}
 	mutex_unlock(&a_priv->interrupt_alloc_lock);
 	return 0;
+	
+ setup_exit:
+	if(a_priv->status_data)
+	        kfree(a_priv->status_data);
+	if(a_priv->interrupt_buffer)
+	        kfree(a_priv->interrupt_buffer);
+	mutex_unlock(&a_priv->interrupt_alloc_lock);
+	return retval;
 }
 
 #if 0
@@ -1167,6 +1173,8 @@ static void agilent_82357a_free_private(agilent_82357a_private_t *a_priv)
 		usb_free_urb(a_priv->interrupt_urb);
 	if(a_priv->status_data)
 		kfree(a_priv->status_data);
+	if(a_priv->interrupt_buffer)
+	        kfree(a_priv->interrupt_buffer);
 	kfree(a_priv);
 	return;
 }
