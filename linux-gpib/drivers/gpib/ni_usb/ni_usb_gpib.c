@@ -1597,6 +1597,7 @@ static int ni_usb_allocate_private(gpib_board_t *board)
 	mutex_init(&ni_priv->bulk_transfer_lock);
 	mutex_init(&ni_priv->control_transfer_lock);
 	mutex_init(&ni_priv->interrupt_transfer_lock);
+	mutex_init(&ni_priv->addressed_transfer_lock);
 	return 0;
 }
 
