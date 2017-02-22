@@ -49,7 +49,7 @@ int pc2_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi,
 	pc2_private_t *priv = board->private_data;
 	return nec7210_write(board, &priv->nec7210_priv, buffer, length, send_eoi, bytes_written);
 }
-ssize_t pc2_command(gpib_board_t *board, uint8_t *buffer, size_t length, size_t *bytes_written)
+int pc2_command(gpib_board_t *board, uint8_t *buffer, size_t length, size_t *bytes_written)
 {
 	pc2_private_t *priv = board->private_data;
 	return nec7210_command(board, &priv->nec7210_priv, buffer, length, bytes_written);

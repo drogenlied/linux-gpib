@@ -1,3 +1,20 @@
+2017-01-16 09:29:00 dpenkler
+	* [r1655] agilent_82357a fix buffer leaks
+
+2017-01-14 20:54:35 dpenkler
+	* [r1654] agilent_82357a fix DMA buffers for raspi and linux 4.9
+
+2016-12-23 12:48:15 dpenkler
+	* [r1653]  Attempt to fix NI-USB-HS slowness when using ibwait
+	- Protected read and write with separate mutex which
+	  is checked in line-status. Issue is that line status
+	  is called in ibwait which can destroy addressing setup
+	  that might be in effect for ibrd/ibwrt from another thread.
+	  Normally status monitoring interrupts are setup
+	  on attach and should not need to be re-enabled.
+	  Here we commented out the code in soft_update_status.
+
+
 2016-07-06 15:05:48 dpenkler
 
 	* [r1652] Maintenance patches
