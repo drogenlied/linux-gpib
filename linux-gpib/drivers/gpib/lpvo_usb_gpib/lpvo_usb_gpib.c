@@ -161,13 +161,12 @@ typedef struct {                /* private data to the device */
  */
 
 #define TTY_LOG(format,...) {						\
-		char buf[80];						\
-		snprintf (buf, 80, format, __VA_ARGS__);		\
-		if (current->signal->tty) {				\
-			current->signal->tty->driver->ops->write (	\
-				current->signal->tty, buf, strlen(buf)); \
-			current->signal->tty->driver->ops->write (	\
-				current->signal->tty, "\r", 1);		\
+		char buf[80];	                                        \
+                struct tty_struct *tty=get_current_tty();		\
+		if (tty) {						\
+		  snprintf (buf, 80, format, __VA_ARGS__);		\
+		  tty->driver->ops->write (tty, buf, strlen(buf));	\
+		  tty->driver->ops->write (tty, "\r", 1);		\
 		}							\
 	}
 
