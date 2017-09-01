@@ -35,6 +35,7 @@ enum
 	USB_DEVICE_ID_NI_USB_B = 0x702a,
 	USB_DEVICE_ID_NI_USB_B_PREINIT = 0x702b,	// device id before firmware is loaded
 	USB_DEVICE_ID_NI_USB_HS = 0x709b,
+	USB_DEVICE_ID_NI_USB_HS_PLUS = 0x7618,
 	USB_DEVICE_ID_KUSB_488A = 0x725c,
 	USB_DEVICE_ID_MC_USB_488 = 0x725d
 };
@@ -61,6 +62,15 @@ enum hs_enpoint_addresses
 	NIUSB_HS_BULK_IN_ENDPOINT = 0x4,
 	NIUSB_HS_BULK_IN_ALT_ENDPOINT = 0x8,
 	NIUSB_HS_INTERRUPT_IN_ENDPOINT = 0x1,
+};
+
+enum hs_plus_endpoint_addresses
+{
+  	NIUSB_HS_PLUS_BULK_OUT_ENDPOINT = 0x1,
+	NIUSB_HS_PLUS_BULK_OUT_ALT_ENDPOINT = 0x4,
+	NIUSB_HS_PLUS_BULK_IN_ENDPOINT = 0x2,
+	NIUSB_HS_PLUS_BULK_IN_ALT_ENDPOINT = 0x5,
+	NIUSB_HS_PLUS_INTERRUPT_IN_ENDPOINT = 0x3,
 };
 
 // struct which defines private_data for ni_usb devices

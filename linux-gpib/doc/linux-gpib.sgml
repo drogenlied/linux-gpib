@@ -707,6 +707,12 @@ Default is <option>--sre</option>.</para>
 	</row>
 	<row>
 	<entry>National Instruments</entry>
+	<entry><link LINKEND="ni-usb-hs">GPIB-USB-HS+</link></entry>
+	<entry>ni_usb_gpib.ko</entry>
+	<entry>ni_usb_b</entry>
+	</row>
+	<row>
+	<entry>National Instruments</entry>
 	<entry>PCI-GPIB</entry>
 	<entry>tnt4882.ko</entry>
 	<entry>ni_pci</entry>
@@ -931,12 +937,12 @@ tarball available from the
 </para>
 </section>
 <section ID="ni-usb-hs">
-<title>National Instruments GPIB-USB-HS</title>
+<title>National Instruments GPIB-USB-HS and GPIP-USB-HS+</title>
 <para>
-Unlike the USB-B, the USB-HS does not require a firmware upload to become
-functional
-after being plugged in.  The linux-gpib tarball contains hotplug scripts
-which will automatically run gpib_config after the device is plugged in.
+Unlike the USB-B, the USB-HS and USB-HS+ do not require a firmware
+upload to become functional after being plugged in.
+The linux-gpib tarball contains hotplug scripts which will
+automatically run gpib_config after the device is plugged in.
 </para>
 </section>
 </section>
@@ -1549,7 +1555,7 @@ volatile int ibsta;
 	</row>
 	<row>
 	<entry>IbaPPollTime</entry>
-	<entry>0x18</entry>
+	<entry>0x19</entry>
 	<entry>Timeout for parallel polls.  The value of the result
 	is between 0 and 17, and has the same meaning as in
 	<link LINKEND="reference-function-ibtmo">ibtmo()</link>.
@@ -2097,7 +2103,7 @@ volatile int ibsta;
 	</row>
 	<row>
 	<entry>IbcPPollTime</entry>
-	<entry>0x18</entry>
+	<entry>0x19</entry>
 	<entry>Sets timeout for parallel polls.  The setting must be
 	between 0 and 17, which correspond to the same time periods as in
 	<link LINKEND="reference-function-ibtmo">ibtmo()</link>.

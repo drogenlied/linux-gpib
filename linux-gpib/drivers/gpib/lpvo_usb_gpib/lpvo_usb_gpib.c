@@ -606,7 +606,7 @@ int usb_gpib_line_status (const gpib_board_t *board ) {
 	int buffer;
 	int line_status = ValidALL;   /* all lines will be read */
 	struct list_head *p, *q;
-	wait_queue_t * item;
+	wait_queue_entry_t * item;
         unsigned long flags;
         int sleep=0;
 
@@ -614,9 +614,9 @@ int usb_gpib_line_status (const gpib_board_t *board ) {
            reading status line; instead, pause a little */
 
         spin_lock_irqsave ((spinlock_t *) &(board->wait.lock), flags);
-	q = (struct list_head *) &(board->wait.task_list);
+	q = (struct list_head *) &(board->wait.head);
         list_for_each(p, q) {
-		item = container_of(p, wait_queue_t, task_list);
+		item = container_of(p, wait_queue_entry_t, entry);
                 if (item->private == current) {
                         sleep = 20;
                         break;

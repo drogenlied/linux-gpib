@@ -57,6 +57,11 @@ case $PRODUCT in
 	gpib_config $GPIB_CONFIG_OPTIONS
 	;;
 
+# ni-usb-hs+
+3923/7618/*)
+	gpib_config $GPIB_CONFIG_OPTIONS
+	;;
+
 esac
 
 # quit unless we were called to download some firmware

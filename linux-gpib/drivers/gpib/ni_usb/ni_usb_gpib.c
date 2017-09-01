@@ -1937,9 +1937,10 @@ static int ni_usb_hs_wait_for_ready(ni_usb_private_t *ni_priv)
 	}
 	if(unexpected)
 		ni_usb_dump_raw_block(buffer, retval);
-	if(retval != 5)
+	// NI-USB-HS+ pads the serial with 0x0 to make 16 bytes
+	if(retval != 5 && retval != 16)
 	{
-		printk("%s: %s: received unexpected number of bytes = %i, expected 5\n",
+		printk("%s: %s: received unexpected number of bytes = %i, expected 5 or 16\n",
 			__FILE__, __FUNCTION__, retval);
 		ni_usb_dump_raw_block(buffer, retval);
 	}
@@ -1967,10 +1968,11 @@ static int ni_usb_hs_wait_for_ready(ni_usb_private_t *ni_priv)
 				__FILE__, __FUNCTION__, j, (int)buffer[j], NI_USB_POLL_READY_REQUEST);
 			unexpected = 1;
 		}
-		if(buffer[++j] != 0x1)
+		++j;
+		if(buffer[j] != 0x1 && buffer[j] != 0x0) // HS+ sends 0x0
 		{
-			printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
-				__FILE__, __FUNCTION__, j, (int)buffer[j], 0x1);
+			printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x1 or 0x0\n",
+				__FILE__, __FUNCTION__, j, (int)buffer[j]);
 			unexpected = 1;
 		}
 		if(buffer[++j] != 0x0)
@@ -1981,20 +1983,24 @@ static int ni_usb_hs_wait_for_ready(ni_usb_private_t *ni_priv)
 		}
 		++j;
 		// MC usb-488 (and sometimes NI-USB-HS?) sends 0x8 here; MC usb-488A sends 0x7 here
-		if(buffer[j] != 0x1 && buffer[j] != 0x8 && buffer[j] != 0x7 )
+		// NI-USB-HS+ sends 0x0
+		if(buffer[j] != 0x1 && buffer[j] != 0x8 && buffer[j] != 0x7 && buffer[j] != 0x0)
 		{
-			printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x1, 0x7 or 0x8\n",
+			printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x0, 0x1, 0x7 or 0x8\n",
 				__FILE__, __FUNCTION__, j, (int)buffer[j]);
 			unexpected = 1;
 		}
-		if(buffer[++j] != 0x30)
+		++j;
+		// NI-USB-HS+ sends 0 here
+		if(buffer[j] != 0x30 && buffer[j] != 0x0)
 		{
-			printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
-				__FILE__, __FUNCTION__, j, (int)buffer[j], 0x30);
+			printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x0 or 0x30\n",
+				__FILE__, __FUNCTION__, j, (int)buffer[j]);
 			unexpected = 1;
 		}
 		++j;
-		if(buffer[j] != 0x1 && buffer[j] != 0x0) // MC usb-488 (and sometimes NI-USB-HS?) sends 0x0 here
+		// MC usb-488 (and sometimes NI-USB-HS?) and NI-USB-HS+ sends 0x0 here
+		if(buffer[j] != 0x1 && buffer[j] != 0x0) 
 		{
 			printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x1 or 0x0\n",
 				__FILE__, __FUNCTION__, j, (int)buffer[j]);
@@ -2003,10 +2009,11 @@ static int ni_usb_hs_wait_for_ready(ni_usb_private_t *ni_priv)
 		if(buffer[++j] != 0x0)
 		{
 			ready = 1;
-			if(buffer[j] != 0x2 && buffer[j] != 0xe)
+			// NI-USB-HS+ sends 0xf here
+			if(buffer[j] != 0x2 && buffer[j] != 0xe && buffer[j] != 0xf)
 			{
-				printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x%x\n",
-					__FILE__, __FUNCTION__, j, (int)buffer[j], 0x2);
+				printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x2, 0xe or 0xf\n",
+					__FILE__, __FUNCTION__, j, (int)buffer[j]);
 				unexpected = 1;
 			}
 		}
@@ -2029,10 +2036,10 @@ static int ni_usb_hs_wait_for_ready(ni_usb_private_t *ni_priv)
 			unexpected = 1;
 		}
 		++j;
-		// MC usb-488A and NI-USB-HS sends 0x3 here
-		if(buffer[j] != 0x0 && buffer[j] != 0x3)
+		// MC usb-488A and NI-USB-HS sends 0x3 here; NI-USB-HS+ sends 0x30 here
+		if(buffer[j] != 0x0 && buffer[j] != 0x3 && buffer[j] != 0x30)
 		{
-			printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x0 or 0x3\n",
+			printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x0, 0x3 or 0x30\n",
 				__FILE__, __FUNCTION__, j, (int)buffer[j]);
 			unexpected = 1;
 		}
@@ -2057,7 +2064,7 @@ static int ni_usb_hs_wait_for_ready(ni_usb_private_t *ni_priv)
 			goto ready_out;
 		}
 	}
-	retval = 0;
+		retval = 0;
  ready_out:
 	kfree(buffer);
 	printk("%s: %s exit retval=%d\n", __FILE__,__FUNCTION__,retval);
@@ -2115,6 +2122,17 @@ int ni_usb_attach(gpib_board_t *board, gpib_board_config_t config)
 		ni_priv->bulk_out_endpoint = NIUSB_HS_BULK_OUT_ENDPOINT;
 		ni_priv->bulk_in_endpoint = NIUSB_HS_BULK_IN_ENDPOINT;
 		ni_priv->interrupt_in_endpoint = NIUSB_HS_INTERRUPT_IN_ENDPOINT;
+		retval = ni_usb_hs_wait_for_ready(ni_priv);
+		if(retval < 0)
+		{
+			mutex_unlock(&ni_usb_hotplug_lock);
+			return retval;
+		}
+	}else if(product_id == USB_DEVICE_ID_NI_USB_HS_PLUS)
+	{
+		ni_priv->bulk_out_endpoint = NIUSB_HS_PLUS_BULK_OUT_ENDPOINT;
+		ni_priv->bulk_in_endpoint = NIUSB_HS_PLUS_BULK_IN_ENDPOINT;
+		ni_priv->interrupt_in_endpoint = NIUSB_HS_PLUS_INTERRUPT_IN_ENDPOINT;
 		retval = ni_usb_hs_wait_for_ready(ni_priv);
 		if(retval < 0)
 		{
@@ -2245,6 +2263,7 @@ static struct usb_device_id ni_usb_driver_device_table [] =
 {
 	{USB_DEVICE(USB_VENDOR_ID_NI, USB_DEVICE_ID_NI_USB_B)},
 	{USB_DEVICE(USB_VENDOR_ID_NI, USB_DEVICE_ID_NI_USB_HS)},
+	{USB_DEVICE(USB_VENDOR_ID_NI, USB_DEVICE_ID_NI_USB_HS_PLUS)},
 	{USB_DEVICE(USB_VENDOR_ID_NI, USB_DEVICE_ID_KUSB_488A)},
 	{USB_DEVICE(USB_VENDOR_ID_NI, USB_DEVICE_ID_MC_USB_488)},
 	{} /* Terminating entry */
