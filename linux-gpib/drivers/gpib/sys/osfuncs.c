@@ -892,7 +892,7 @@ static int serial_poll_ioctl( gpib_board_t *board, unsigned long arg )
 	serial_poll_ioctl_t serial_cmd;
 	int retval;
 
-	GPIB_DPRINTK( "pid %i, entering serial_poll_ioctl()\n" current->pid);
+	GPIB_DPRINTK( "pid %i, entering serial_poll_ioctl()\n", current->pid);
 
 	retval = copy_from_user( &serial_cmd, ( void* ) arg, sizeof( serial_cmd ) );
 	if( retval )
