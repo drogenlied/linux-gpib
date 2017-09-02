@@ -7,4 +7,4 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
-EXTRA_DIST = alim1.php hp4194.php hp4194a.php vers.php
+EXTRA_DIST = alim1.php hp4194.php hp4194a.php vers.php tek11402a.php tek11402b.php infile1.txt infile2.txt

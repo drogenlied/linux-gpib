@@ -113,7 +113,7 @@ int ibopen(struct inode *inode, struct file *filep)
 	priv = filep->private_data;
 	init_gpib_file_private( ( gpib_file_private_t * ) filep->private_data );
 
-	GPIB_DPRINTK( "gpib: opening minor %d\n", minor );
+	GPIB_DPRINTK( "pid %i, gpib: opening minor %d\n", current->pid, minor );
 
 	if(board->use_count == 0)
 	{
@@ -124,7 +124,7 @@ int ibopen(struct inode *inode, struct file *filep)
 		retval = request_module( module_string );
 		if( retval )
 		{
-			GPIB_DPRINTK( "gpib: request module returned %i\n", retval );
+			GPIB_DPRINTK( "pid %i, gpib: request module returned %i\n", current->pid, retval );
 		}
 	}
 	if(board->interface)
@@ -153,7 +153,7 @@ int ibclose(struct inode *inode, struct file *filep)
 		return -ENODEV;
 	}
 
-	GPIB_DPRINTK( "gpib: closing minor %d\n", minor );
+	GPIB_DPRINTK( "pid %i, gpib: closing minor %d\n", current->pid, minor );
 
 	board = &board_array[ minor ];
 
@@ -730,8 +730,8 @@ static int increment_open_device_count( struct list_head *head, unsigned int pad
 		device = list_entry( list_ptr, gpib_status_queue_t, list );
 		if( gpib_address_equal( device->pad, device->sad, pad, sad ) )
 		{
-			GPIB_DPRINTK( "incrementing open count for pad %i, sad %i\n",
-				device->pad, device->sad );
+			GPIB_DPRINTK( "pid %i, incrementing open count for pad %i, sad %i\n",
+				current->pid, device->pad, device->sad );
 			device->reference_count++;
 			return 0;
 		}
@@ -748,8 +748,8 @@ static int increment_open_device_count( struct list_head *head, unsigned int pad
 
 	list_add( &device->list, head );
 
-	GPIB_DPRINTK( "opened pad %i, sad %i\n",
-		device->pad, device->sad );
+	GPIB_DPRINTK( "pid %i, opened pad %i, sad %i\n",
+		current->pid, device->pad, device->sad );
 
 	return 0;
 }
@@ -764,8 +764,8 @@ static int subtract_open_device_count( struct list_head *head, unsigned int pad,
 		device = list_entry( list_ptr, gpib_status_queue_t, list );
 		if( gpib_address_equal( device->pad, device->sad, pad, sad ) )
 		{
-			GPIB_DPRINTK( "decrementing open count for pad %i, sad %i\n",
-				device->pad, device->sad );
+			GPIB_DPRINTK( "pid %i, decrementing open count for pad %i, sad %i\n",
+				current->pid, device->pad, device->sad );
 			if( count > device->reference_count )
 			{
 				printk( "gpib: bug! in subtract_open_device_count()\n" );
@@ -774,8 +774,8 @@ static int subtract_open_device_count( struct list_head *head, unsigned int pad,
 			device->reference_count -= count;
 			if( device->reference_count == 0 )
 			{
-				GPIB_DPRINTK( "closing pad %i, sad %i\n",
-					device->pad, device->sad );
+				GPIB_DPRINTK( "pid %i, closing pad %i, sad %i\n",
+					current->pid, device->pad, device->sad );
 				list_del( list_ptr );
 				kfree( device );
 			}
@@ -892,7 +892,7 @@ static int serial_poll_ioctl( gpib_board_t *board, unsigned long arg )
 	serial_poll_ioctl_t serial_cmd;
 	int retval;
 
-	GPIB_DPRINTK( "entering serial_poll_ioctl()\n" );
+	GPIB_DPRINTK( "pid %i, entering serial_poll_ioctl()\n" current->pid);
 
 	retval = copy_from_user( &serial_cmd, ( void* ) arg, sizeof( serial_cmd ) );
 	if( retval )
@@ -1231,7 +1231,7 @@ static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 		spin_unlock(&board->locking_pid_spinlock);
 
 		atomic_set(&file_priv->holding_mutex, 1);
-		GPIB_DPRINTK("locked board %d mutex\n", board->minor);
+		GPIB_DPRINTK("pid %i, locked board %d mutex\n", current->pid, board->minor);
 	}else
 	{
 		spin_lock(&board->locking_pid_spinlock);
@@ -1248,7 +1248,7 @@ static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 		atomic_set(&file_priv->holding_mutex, 0);
 
 		mutex_unlock( &board->user_mutex );
-		GPIB_DPRINTK("unlocked board %i mutex\n", board->minor);
+		GPIB_DPRINTK("pid %i, unlocked board %i mutex\n", current->pid, board->minor);
 	}
 
 
@@ -1265,7 +1265,7 @@ static int timeout_ioctl( gpib_board_t *board, unsigned long arg )
 		return -EFAULT;
 
 	board->usec_timeout = timeout;
-	GPIB_DPRINTK( "timeout set to %i usec\n", timeout );
+	GPIB_DPRINTK( "pid %i, timeout set to %i usec\n", current->pid, timeout );
 
 	return 0;
 }

@@ -8,7 +8,7 @@
 #   (at your option) any later version.
 
 EXTRA_DIST = ni_usb_gpib ni_usb_gpib.usermap 99-ni_usb_gpib.rules.in
-CLEANFILES = 99-ni_usb_gpib.rule
+CLEANFILES = 99-ni_usb_gpib.rules
 HOTPLUG_USB_CONF_DIR=/etc/hotplug/usb
 USB_FIRMWARE_DIR=/usr/share/usb
 UDEV_RULES_DIR=/etc/udev/rules.d

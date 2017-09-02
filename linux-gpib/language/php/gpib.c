@@ -1,17 +1,19 @@
-/* -*- linux-c -*- 
+/*
+-*- linux-c -*-
 
    A PHP extension for GPIB commands
 
-written by 
-	Michel Billaud, billaud@labri.fr, 
+written by
+	Michel Billaud, billaud@labri.fr,
 	Laboratoire Bordelais de Recherche en Informatique
 	Université Bordeaux 1 - France
- 	billaud@labri.fr 
-for 
+ 	billaud@labri.fr
+for
 	the Minerva "Emerge" project, in February 2003
 	(C) Michel Billaud, 2003
 
 php5 modifications suggested Richard Klingler, richard@klingler.net
+Updated for PHP 5.6 by Vince Vielhaber, vev@michvhf.com
 
  ***************************************************************************
  *                                                                         *
@@ -26,36 +28,40 @@ STATUS: alpha code
 
 LIMITS: Only ib* command are considered for the moment.
 
-CREDITS: 
+CREDITS:
 The list of variable and function names was borrowed from
 the linux-gpib-3.1.92 files. http://linux-gpib.sourceforge.net
 
 MODIFICATIONS
+ * 2017/08/18 : updated to current PHP library
+              : added more error checking in ibrd
  * 2016/07/06 : removed checks for pass by ref for php5
                 removed support for old NI_GPIB library
                 added ibvers
  * 2003/02/25 : in ibrd, string terminated after ibcnt chars
  * 2003/03/14 : more comments
-	
+
 TODO:
-- support for $r = ibrd($ud, &$buffer)
+- support for $r = ibrd($ud, $buffer)
 - integrate more constants (for ibconf)
 
 NOTES :
- * installation under Debian requires the php dev package
- * for convenience, install the gpib.so where dynamic extensions live
- * and add the followin line to your php.ini files:
+ * Installation under Debian requires the php dev package.
+ * For convenience, install the gpib.so where dynamic extensions live
+ * and add the following line to your php.ini files:
     extension=gpib.so
 
-    
+
 BIBLIOGRAPHY:
- 
+
 [php4] PHP Developpement d'applications WEB, Tobias Ratschiller et
  Till Gerken, Campus Press, pp. 327-...
- file://localhost/opt/doc.php.nexen.html/zend.structure.exporting-functions.html */
+ file://localhost/opt/doc.php.nexen.html/zend.structure.exporting-functions.html
+
+*/
 
 
-#include "gpib/ib.h" 
+#include "gpib/ib.h"
 #include "php.h"
 #include "ext/standard/info.h"
 
@@ -219,14 +225,14 @@ ZEND_FUNCTION(functionName) \
 	       "GPIB-PHP: Function not implemented yet"); \
 }
 
-/* 
+/*
  * predefinition of all functions
  */
 
 ZEND_FUNCTION(ibfind);
 ZEND_FUNCTION(ibbna);
 ZEND_FUNCTION(ibclr);
-ZEND_FUNCTION(ibcac); 
+ZEND_FUNCTION(ibcac);
 ZEND_FUNCTION(ibloc);
 ZEND_FUNCTION(ibonl);
 ZEND_FUNCTION(ibpad);
@@ -266,7 +272,7 @@ ZEND_MINIT_FUNCTION(start_module);
 
 PHP_MINFO_FUNCTION(gpib);
 
-/* 
+/*
  * table of all PHP  GPIB functions
  */
 
@@ -294,11 +300,11 @@ zend_function_entry php_gpib_functions[] =
 	ZEND_FE(ibwrtf,	NULL)
 
 	ZEND_FE(gpib_error_string, NULL)
-					   
-        ZEND_FE(ibsta,		NULL)
+
+	ZEND_FE(ibsta,		NULL)
 	ZEND_FE(ibcnt,		NULL)
 	ZEND_FE(iberr,		NULL)
-	
+
 	ZEND_FE(ibwrt,		NULL)
 	ZEND_FE(ibrd,		NULL)
 
@@ -310,7 +316,7 @@ zend_function_entry php_gpib_functions[] =
 	ZEND_FE (iblines,	NULL)
 	ZEND_FE (ibrpp,		NULL)
 	ZEND_FE (ibrsp,		NULL)
-	
+
 	{ NULL, NULL, NULL}
 };
 
@@ -362,49 +368,49 @@ ZEND_MINIT_FUNCTION(start_module)
 	REGISTER_LONG_CONSTANT("END",	END, CONST_CS | CONST_PERSISTENT);
 	REGISTER_LONG_CONSTANT("TIMO",	TIMO, CONST_CS | CONST_PERSISTENT);
 	REGISTER_LONG_CONSTANT("ERR",	ERR, CONST_CS | CONST_PERSISTENT);
-	
-	REGISTER_LONG_CONSTANT("EDVR", 0, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("ECIC", 1, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("ENOL", 2, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("EADR", 3, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("EARG", 4, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("ESAC", 5, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("EABO", 6, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("ENEB", 7, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("EDMA", 8, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("EOIP", 10, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("ECAP", 11, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("EFSO", 12, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("EBUS", 14, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("ESTB", 15, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("ESRQ", 16, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("ETAB", 20,  CONST_CS | CONST_PERSISTENT); 
-	
-	REGISTER_LONG_CONSTANT("TNONE", 0, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("T10us", 1, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("T30us", 2, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("T100us", 3, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("T300us", 4, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("T1ms", 5, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("T3ms", 6, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("T10ms", 7, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("T30ms", 8, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("T100ms", 9, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("T300ms", 10, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("T1s", 11, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("T3s", 12, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("T10s", 13, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("T30s", 14, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("T100s", 15, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("T300s", 16, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("T1000s", 17,  CONST_CS | CONST_PERSISTENT); 
-	
-	REGISTER_LONG_CONSTANT("EOS_ASK",0x1c00, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("REOS", 0x0400, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("XEOS", 0x800, CONST_CS | CONST_PERSISTENT); 
-	REGISTER_LONG_CONSTANT("BIN", 0x1000,	 CONST_CS | CONST_PERSISTENT); 
-	
-	
+
+	REGISTER_LONG_CONSTANT("EDVR", 0, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("ECIC", 1, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("ENOL", 2, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("EADR", 3, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("EARG", 4, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("ESAC", 5, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("EABO", 6, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("ENEB", 7, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("EDMA", 8, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("EOIP", 10, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("ECAP", 11, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("EFSO", 12, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("EBUS", 14, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("ESTB", 15, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("ESRQ", 16, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("ETAB", 20,  CONST_CS | CONST_PERSISTENT);
+
+	REGISTER_LONG_CONSTANT("TNONE", 0, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("T10us", 1, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("T30us", 2, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("T100us", 3, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("T300us", 4, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("T1ms", 5, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("T3ms", 6, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("T10ms", 7, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("T30ms", 8, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("T100ms", 9, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("T300ms", 10, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("T1s", 11, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("T3s", 12, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("T10s", 13, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("T30s", 14, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("T100s", 15, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("T300s", 16, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("T1000s", 17,  CONST_CS | CONST_PERSISTENT);
+
+	REGISTER_LONG_CONSTANT("EOS_ASK",0x1c00, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("REOS", 0x0400, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("XEOS", 0x800, CONST_CS | CONST_PERSISTENT);
+	REGISTER_LONG_CONSTANT("BIN", 0x1000,	 CONST_CS | CONST_PERSISTENT);
+
+
 	return(SUCCESS);
 }
 
@@ -416,15 +422,15 @@ DLEXPORT zend_module_entry *get_module(void)
 #endif
 
 
-/* 
+/*
  * the accessors for the status variables and
- * most functions are defined by macros 
+ * most functions are defined by macros
  */
 
      FUN_ACCESSOR(iberr)
      FUN_ACCESSOR(ibcnt)
      FUN_ACCESSOR(ibsta)
-     
+
      FUN_STRING(ibfind)
      FUN_INT_STRING(ibbna)
      FUN_INT(ibclr)
@@ -447,7 +453,7 @@ DLEXPORT zend_module_entry *get_module(void)
      FUN_INT_PINT(ibrpp)
      FUN_INT_PINT(ibrsp)
      FUN_INT_PSHORT(ibevent)
-     
+
      FUN_INT_PSHORT(iblines)
      FUN_INT_INT_PINT(ibask)
 
@@ -457,7 +463,7 @@ DLEXPORT zend_module_entry *get_module(void)
      FUN_6INT(ibdev)
 
 
-/* 
+/*
  * a few functions need a special treatment
  */
 
@@ -475,32 +481,34 @@ ZEND_FUNCTION(gpib_error_string)
 
 ZEND_FUNCTION(ibwrt)
 {
-	long n;
+	long n,llen;
 	char *s;
 	int s_len;
 	int len;
 	if (ZEND_NUM_ARGS() == 2) {
-		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, 
+		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
 					  "ls", &n, &s, &s_len)
 		    == FAILURE) {
 			return;
 		}
 		len = s_len;
 	}
-	else  
-		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, 
-					  "lsl", &n, &s, &s_len, &len)
+	else {
+		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+					  "lsl", &n, &s, &s_len, &llen)
 		    == FAILURE) {
 			return;
 		}
+        len = (int)llen;
+    }
 	RETURN_LONG(ibwrt(n,s,len));
 }
 
-ZEND_FUNCTION(ibvers) 
+ZEND_FUNCTION(ibvers)
 {
         zval *z;
         char *version;
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, 
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
 				  "z", &z)
 	    == FAILURE) {
 		return;
@@ -510,13 +518,13 @@ ZEND_FUNCTION(ibvers)
 	RETURN_STRING(version,1);
 }
 
-ZEND_FUNCTION(ibrd) 
+ZEND_FUNCTION(ibrd)
 {
 	/* at the moment only the traditional form is supported
-	   $r = ibrd($ud,&$string,$count)
+	   $r = ibrd($ud,$string,$count)
 	   (read at most $count bytes into $string)
-	   but 
-	   $r = ibrd($ud,&$string)
+	   but
+	   $r = ibrd($ud,$string)
 	   (read unlimited number of bytes) will be. Soon. Really.
 	*/
 	long n;
@@ -524,17 +532,22 @@ ZEND_FUNCTION(ibrd)
 	long len;
 	char *p;
 	long r;
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, 
-				  "lzl", &n, &z, &len)
-	    == FAILURE) {
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+					"lzl", &n, &z, &len)
+		== FAILURE) {
 		return;
 	}
-        p = (char *) malloc(len + 1);
-        memset(p,0,len+1);
+	p = (char *) emalloc(len + 1);
+	if(p == NULL) {
+		ibsta |= ERR;
+		iberr = EABO;  // should be ENOMEM
+		RETURN_LONG(ibsta);
+	}
+	memset(p,0,len+1);
 	r=ibrd(n,p,len);
-        p[ibcnt]='\0';
-        ZVAL_STRING(z,p,1);
-	free(p);
+	p[ibcnt]='\0';
+	ZVAL_STRING(z,p,1);
+	efree(p);
 	RETURN_LONG(r);
 }
-

@@ -601,12 +601,22 @@ void usb_gpib_interface_clear(gpib_board_t *board, int assert) {
  *    We can read all lines.
  */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,13,0)
+#define WQT wait_queue_t
+#define WQH task_list
+#define WQE task_list
+#else       
+#define WQT wait_queue_entry_t
+#define WQH head
+#define WQE entry
+#endif
+
 int usb_gpib_line_status (const gpib_board_t *board ) {
 
 	int buffer;
 	int line_status = ValidALL;   /* all lines will be read */
 	struct list_head *p, *q;
-	wait_queue_entry_t * item;
+	WQT * item;
         unsigned long flags;
         int sleep=0;
 
@@ -614,9 +624,9 @@ int usb_gpib_line_status (const gpib_board_t *board ) {
            reading status line; instead, pause a little */
 
         spin_lock_irqsave ((spinlock_t *) &(board->wait.lock), flags);
-	q = (struct list_head *) &(board->wait.head);
+	q = (struct list_head *) &(board->wait.WQH);
         list_for_each(p, q) {
-		item = container_of(p, wait_queue_entry_t, entry);
+		item = container_of(p, WQT, WQE);
                 if (item->private == current) {
                         sleep = 20;
                         break;
