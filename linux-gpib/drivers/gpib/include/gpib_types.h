@@ -299,6 +299,7 @@ typedef struct
 	int sad;	/* secondary gpib address (negative means disabled) */
 	atomic_t io_in_progress;
 	unsigned is_board : 1;
+	unsigned autopoll_enabled : 1;
 } gpib_descriptor_t;
 
 typedef struct

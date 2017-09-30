@@ -7,7 +7,7 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
-EXTRA_DIST = gpibtest.py setup.py Gpib.py gpibinter.c
+EXTRA_DIST = gpibtest.py setup.py Gpib.py gpibinter.c srq_board.py srq_device.py
 
 all-local: build
 

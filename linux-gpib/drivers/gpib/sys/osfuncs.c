@@ -48,7 +48,8 @@ static int request_service_ioctl( gpib_board_t *board, unsigned long arg );
 static int iobase_ioctl( gpib_board_t *board, unsigned long arg );
 static int irq_ioctl( gpib_board_t *board, unsigned long arg );
 static int dma_ioctl( gpib_board_t *board, unsigned long arg );
-static int autospoll_ioctl(gpib_board_t *board, unsigned long arg);
+static int autospoll_ioctl(gpib_board_t *board, gpib_file_private_t *file_priv,
+			unsigned long arg);
 static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 	unsigned long arg );
 static int timeout_ioctl( gpib_board_t *board, unsigned long arg );
@@ -146,6 +147,7 @@ int ibclose(struct inode *inode, struct file *filep)
 	unsigned int minor = iminor(inode);
 	gpib_board_t *board;
 	gpib_file_private_t *priv = filep->private_data;
+	gpib_descriptor_t *desc;
 
 	if(minor >= GPIB_MAX_NUM_BOARDS)
 	{
@@ -159,7 +161,25 @@ int ibclose(struct inode *inode, struct file *filep)
 
 	if( priv )
 	{
+		desc = handle_to_descriptor(priv, 0);
+		if (desc != NULL)
+		{
+			if (desc->autopoll_enabled)
+			{
+				GPIB_DPRINTK( "pid %i, gpib: decrementing autospollers \n", current->pid );
+				if (board->autospollers > 0)
+					board->autospollers--;
+				else
+					printk("gpib: Attempt to decrement zero autospollers \n");
+			}
+		}
+		else
+		{
+			printk("gpib: Unexpected null gpib_descriptor\n");
+		}
+
 		cleanup_open_devices( priv, board );
+
 		if( atomic_read(&priv->holding_mutex) )
 			mutex_unlock( &board->user_mutex );
 
@@ -168,6 +188,7 @@ int ibclose(struct inode *inode, struct file *filep)
 			module_put(board->provider_module);
 			--board->use_count;
 		}
+
 		kfree( filep->private_data );
 		filep->private_data = NULL;
 	}
@@ -251,7 +272,7 @@ long ibioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 			goto done;
 			break;
 		case IBAUTOSPOLL:
-			retval = autospoll_ioctl(board, arg);
+			retval = autospoll_ioctl(board, file_priv, arg);
 			goto done;
 			break;
 		case IBBOARD_INFO:
@@ -500,7 +521,7 @@ static int read_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
 
 	if(read_cmd.completed_transfer_count > read_cmd.requested_transfer_count)
 		return -EINVAL;
-	
+
 	desc = handle_to_descriptor( file_priv, read_cmd.handle );
 	if( desc == NULL ) return -EINVAL;
 
@@ -588,12 +609,12 @@ static int command_ioctl( gpib_file_private_t *file_priv,
 		order to allow them to insure previous commands were
 		completely finished, in the case of a restarted ioctl.  */
 	atomic_set(&desc->io_in_progress, 1);
-	do 
+	do
 	{
 		fault = copy_from_user(board->buffer, userbuf, (board->buffer_length < remain) ?
 			board->buffer_length : remain );
-		if(fault) 
-		{	
+		if(fault)
+		{
 			retval = -EFAULT;
 			bytes_written = 0;
 		}else
@@ -610,7 +631,7 @@ static int command_ioctl( gpib_file_private_t *file_priv,
 			break;
 		}
 	}while( remain > 0 );
-	
+
 	cmd.completed_transfer_count = cmd.requested_transfer_count - remain;
 
 	if(fault == 0)
@@ -644,7 +665,7 @@ static int write_ioctl(gpib_file_private_t *file_priv, gpib_board_t *board,
 
 	userbuf = (uint8_t*)(unsigned long)write_cmd.buffer_ptr;
 	userbuf += write_cmd.completed_transfer_count;
-	
+
 	remain = write_cmd.requested_transfer_count - write_cmd.completed_transfer_count;
 
 	/* Check read access to buffer */
@@ -834,7 +855,10 @@ static int open_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned lon
 	for( i = 0; i < GPIB_MAX_NUM_DESCRIPTORS; i++ )
 		if( file_priv->descriptors[ i ] == NULL ) break;
 	if( i == GPIB_MAX_NUM_DESCRIPTORS )
+	{
+		mutex_unlock(&file_priv->descriptors_mutex);
 		return -ERANGE;
+	}
 	file_priv->descriptors[ i ] = kmalloc( sizeof( gpib_descriptor_t ), GFP_KERNEL );
 	if( file_priv->descriptors[ i ] == NULL )
 	{
@@ -1179,30 +1203,48 @@ static int dma_ioctl( gpib_board_t *board, unsigned long arg )
 	return 0;
 }
 
-static int autospoll_ioctl(gpib_board_t *board, unsigned long arg)
+static int autospoll_ioctl(gpib_board_t *board, gpib_file_private_t *file_priv,
+			unsigned long arg)
 {
 	autospoll_ioctl_t enable;
 	int retval;
+	gpib_descriptor_t *desc;
 
 	retval = copy_from_user( &enable, ( void * ) arg, sizeof( enable ) );
 	if(retval)
 		return -EFAULT;
 
-/*FIXME: should keep track of whether autospolling is on or off
- * by descriptor.  That would also allow automatic decrement
- * of autospollers when descriptors are closed. */
+	desc = handle_to_descriptor( file_priv, 0 ); /* board handle is 0 */
+
 	if(enable)
-		board->autospollers++;
+	{
+		if (!desc->autopoll_enabled)
+		{
+			board->autospollers++;
+			desc->autopoll_enabled = 1;
+		}
+		retval = 0;
+	}
 	else
 	{
-		if(board->autospollers <= 0)
+		if(desc->autopoll_enabled)
 		{
-			printk("gpib: tried to set number of autospollers negative\n");
+			desc->autopoll_enabled = 0;
+			if(board->autospollers > 0)
+			{
+				board->autospollers--;
+				retval = 0;
+			}
+					else
+			{
+				printk("gpib: tried to set number of autospollers negative\n");
+				retval = -EINVAL;
+			}
+		}
+		else
+		{
+			printk("gpib: autopoll disable requested before enable\n");
 			retval = -EINVAL;
-		}else
-		{
-			board->autospollers--;
-			retval = 0;
 		}
 	}
 	return retval;

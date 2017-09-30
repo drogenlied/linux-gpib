@@ -101,7 +101,7 @@ int ibwait( int ud, int mask )
 	int status;
 	int clear_mask;
 	int error = 0;
-	
+
 	conf = general_enter_library( ud, 1, 0 );
 	if( conf == NULL )
 		return general_exit_library(ud, 1, 0, 0, 0, 0, 1);

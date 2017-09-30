@@ -505,7 +505,7 @@ static PyObject* gpib_timeout(PyObject *self, PyObject *args)
 }
 
 static char gpib_serial_poll__doc__[] =
-	"serial_poll -- conduct serial poll (device)\n"
+	"serial_poll -- read status byte / conduct serial poll (device)\n"
 	"serial_poll(handle) -> status_byte";
 
 static PyObject* gpib_serial_poll(PyObject *self, PyObject *args)
@@ -526,7 +526,32 @@ static PyObject* gpib_serial_poll(PyObject *self, PyObject *args)
 		return NULL;
 	}
 
-	return Py_BuildValue("c", spr);
+	return PyInt_FromLong((int)spr);
+}
+
+static char gpib_spoll_bytes_doc__[] =
+	"spoll_bytes -- get length of status byte queue (device)\n"
+	"spoll_bytes(handle) -> status_byte_queue_length";
+
+static PyObject* gpib_spoll_bytes(PyObject *self, PyObject *args)
+{
+	short spb;
+	int device;
+	int sta;
+
+	if (!PyArg_ParseTuple(args, "i:spoll_bytes", &device))
+		return NULL;
+
+	Py_BEGIN_ALLOW_THREADS
+	sta = ibspb(device, &spb);
+	Py_END_ALLOW_THREADS
+
+	if( sta & ERR ){
+		_SetGpibError("spoll_bytes");
+		return NULL;
+	}
+
+	return PyInt_FromLong(spb);
 }
 
 static char gpib_trigger__doc__[] =
@@ -603,6 +628,7 @@ static struct PyMethodDef gpib_methods[] = {
 	{"wait",		gpib_wait,		METH_VARARGS,	gpib_wait__doc__},
 	{"timeout",		gpib_timeout,		METH_VARARGS,	gpib_timeout__doc__},
 	{"serial_poll",		gpib_serial_poll,	METH_VARARGS,	gpib_serial_poll__doc__},
+	{"spoll_bytes",		gpib_spoll_bytes,	METH_VARARGS,	gpib_spoll_bytes_doc__},
 	{"trigger",		gpib_trigger,		METH_VARARGS,	gpib_trigger__doc__},
 	{"ibsta",		gpib_ibsta,		METH_NOARGS,	gpib_ibsta__doc__},
 	{"ibcnt",		gpib_ibcnt,		METH_NOARGS,	gpib_ibcnt__doc__},
@@ -738,7 +764,14 @@ initgpib(void)
 	PyModule_AddIntConstant(m, "IbaRsv", IbaRsv);
 	PyModule_AddIntConstant(m, "IbaBNA", IbaBNA);
 	PyModule_AddIntConstant(m, "Iba7BitEOS", Iba7BitEOS);
-
+	/* ibwait() condition bits */
+	PyModule_AddIntConstant(m, "RQS", RQS);
+	PyModule_AddIntConstant(m, "SRQI", SRQI);
+	PyModule_AddIntConstant(m, "TIMO", TIMO);
+	/* GPIB status byte bits */
+	PyModule_AddIntConstant(m, "IbStbRQS", IbStbRQS);
+	PyModule_AddIntConstant(m, "IbStbESB", IbStbESB);
+	PyModule_AddIntConstant(m, "IbStbMAV", IbStbMAV);
 	/* Check for errors */
 	if (PyErr_Occurred())
 		Py_FatalError("can't initialize module gpib");

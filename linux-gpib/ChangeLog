@@ -1,10 +1,58 @@
+2017-09-02 18:00:05 dpenkler
+
+	* [r1662] Fix compile error in osfuncs when
+	          GPIB_CONFIG_KERNEL_DEBUG is set
+
+2017-09-02 16:07:56 dpenkler
+
+	*[r1661] Prepare for 4.0.4
+	- Fix lpvo use of wait_queue_entry_t for linux versions < 4.13.0
+	- Next attempt to fix race conditions / slowness on ni_usb
+	- More debugging in osfuncs.c
+	- Incorporated patch from Vince Vielhaber for php5.6 bindings
+	- Fixed typo in usb/ni_usb_gpib/Makefile.am
+
+2017-09-01 16:33:05 dpenkler
+
+	* [r1660] Commit for 4.0.4rc3
+	- Fix lpvo use of wait_queue_t
+	- Fix doc defines for IbaPPollTime & IbcPPollTime.
+	  Thanks Vince Vielhaber.
+	- Bumped version number to 4.0.4rc3
+	- Included patch to support NI GPIB-USB-HS+. Thanks Lukas Botsch.
+	- Updated doc to include NI GPIB-USB-HS+
+	- Added include of <sys/sysmacros.h> in gpib_config.c
+	  for minor() definition.
+
+2017-09-01 14:30:37 dpenkler
+
+	* [r1659] fix lpvo compile issue
+
+2017-02-22 19:34:47 dpenkler
+
+	* [r1658] bump version to 4.0.4rc2
+
+2017-02-22 19:24:27 dpenkler
+
+	* [r1657] ni_usb: initialise addressed_lock mutex
+
+2017-02-22 11:15:48 dpenkler
+
+	* [r1656] Commit for 4.0.4rc1
+	- Fix DMA buffer problem for ni_usb
+	- Fix Bug: #60 type mismatch pc2_command patch from dac922
+	- Bumped version number to 4.0.4
+
 2017-01-16 09:29:00 dpenkler
+
 	* [r1655] agilent_82357a fix buffer leaks
 
 2017-01-14 20:54:35 dpenkler
+
 	* [r1654] agilent_82357a fix DMA buffers for raspi and linux 4.9
 
 2016-12-23 12:48:15 dpenkler
+
 	* [r1653]  Attempt to fix NI-USB-HS slowness when using ibwait
 	- Protected read and write with separate mutex which
 	  is checked in line-status. Issue is that line status

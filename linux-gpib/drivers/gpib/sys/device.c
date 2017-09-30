@@ -26,7 +26,7 @@ static int setup_serial_poll( gpib_board_t *board, unsigned int usec_timeout )
 	int i;
 	size_t bytes_written;
 	int ret;
-	
+
 	GPIB_DPRINTK( "entering setup_serial_poll()\n" );
 
 	ibcac( board, 0 );
@@ -99,7 +99,7 @@ static int cleanup_serial_poll( gpib_board_t *board, unsigned int usec_timeout )
 	uint8_t cmd_string[8];
 	int ret;
 	size_t bytes_written;
-	
+
 	GPIB_DPRINTK( "entering cleanup_serial_poll()\n" );
 
 	ibcac( board, 0 );

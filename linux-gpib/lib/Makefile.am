@@ -24,7 +24,7 @@ libgpib_la_SOURCES = \
 	ib.h ib_internal.h ibConf.h ibP.h parse.h \
 	ibCac.c ibClr.c ibCmd.c ibEos.c ibEot.c \
 	ibFind.c ibLines.c ibOnl.c ibPad.c ibRd.c ibRpp.c ibRsp.c ibRsv.c \
-	ibSad.c ibSic.c ibSre.c ibTmo.c ibTrg.c ibWait.c ibWrt.c \
+	ibSad.c ibSic.c ibSpb.c ibSre.c ibTmo.c ibTrg.c ibWait.c ibWrt.c \
 	ibGts.c ibBoard.c ibutil.c globals.c ibask.c ibppc.c \
 	ibLoc.c ibDma.c ibdev.c ibbna.c async.c ibconfig.c ibFindLstn.c \
 	ibEvent.c local_lockout.c self_test.c pass_control.c ibstop.c \

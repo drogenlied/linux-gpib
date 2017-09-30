@@ -49,6 +49,7 @@ void init_gpib_descriptor( gpib_descriptor_t *desc )
 	desc->pad = 0;
 	desc->sad = -1;
 	desc->is_board = 0;
+	desc->autopoll_enabled = 0;
 	atomic_set(&desc->io_in_progress, 0);
 }
 

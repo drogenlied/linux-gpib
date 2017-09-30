@@ -27,7 +27,7 @@ static int autospoll_wait_should_wake_up(gpib_board_t *board)
 	mutex_lock(&board->big_gpib_mutex);
 
 	retval = board->master && board->autospollers > 0 &&
-		atomic_read(&board->stuck_srq) &&
+		!atomic_read(&board->stuck_srq) &&
 		test_and_clear_bit(SRQI_NUM, &board->status);
 
 	mutex_unlock(&board->big_gpib_mutex);

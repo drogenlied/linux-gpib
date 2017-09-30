@@ -319,4 +319,14 @@ enum gpib_events
 	EventIFC = 3
 };
 
+
+enum gpib_stb
+{
+	IbStbRQS = 0x40, /* IEEE 488.1 & 2  */
+	IbStbESB = 0x20, /* IEEE 488.2 only */
+	IbStbMAV = 0x10  /* IEEE 488.2 only */
+};
+
 #endif	/* _GPIB_USER_H */
+
+/* Check for errors */

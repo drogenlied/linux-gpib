@@ -22,6 +22,16 @@
 	</affiliation>
 </author>
 
+<author>
+	<firstname>Dave</firstname>
+	<surname>Penkler</surname>
+	<affiliation>
+	<address>
+		dpenkler@gmail.com
+	</address>
+	</affiliation>
+</author>
+
 <copyright>
 <year>2003-2006, 2008</year>
 <holder>Frank Mori Hess</holder>
@@ -3262,7 +3272,7 @@ volatile int ibsta;
 </refmeta>
 <refnamediv>
 	<refname>ibrsp</refname>
-	<refpurpose>conduct serial poll (device)</refpurpose>
+	<refpurpose> read status byte /  serial poll (device)</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
@@ -3275,13 +3285,72 @@ volatile int ibsta;
 	</funcsynopsis>
 </refsynopsisdiv>
 <refsect1>
-	<title>
-	Description
-	</title>
-	<para>
-	ibrsp() serial polls the device specified by <parameter>ud</parameter>.
-	The status byte is stored in the location specified by <parameter>result</parameter>.
-	</para>
+  <title>
+    Description
+  </title>
+  <para>
+    ibrsp() obtains the status byte from the device specified
+    by <parameter>ud</parameter>. The status byte is stored in the
+    location specified by <parameter>result</parameter>.
+  </para>
+  <para>
+    If automatic serial polling is enabled on the board controlling
+    the device, the status byte is automatically read and queued
+    whenever the device requests service. If the status byte queue
+    is not empty <function>ibrsp()</function> obtains the status
+    byte information from the queue. If the queue is empty the
+    status byte is obtained by serial polling the
+    device. Automatic serial polling is controlled with
+    <link LINKEND="reference-function-ibconfig">ibconfig()</link>.
+    The contents of the status byte returned
+    in <parameter>result</parameter> are device specific. Refer to
+    the device manufacturer's documentation for details. For
+    devices conforming to the IEEE488.1 or 2 specification the
+    bits defined in the table below are available if enabled in
+    the device's Status Byte Enable register.
+    <table COLSEP="1" ROWSEP="1" ORIENT="port" PGWIDE="0">
+      <title>Standard IEEE.488 GPIB status byte bits</title>
+      <tgroup COLS="3" ALIGN="left" >
+	<thead>
+	  <row>
+	    <entry>constant</entry>
+	    <entry>value</entry>
+	    <entry>description</entry>
+	  </row>
+	</thead>
+	<tbody>
+	  <row>
+	    <entry>IbStbRQS</entry>
+	    <entry>0x40</entry>
+	    <entry>The request service bit is set when device asserts
+	      RQS. It is cleared by serial polling the
+	      device. Supported by devices conforming to IEEE 488.1 or
+	      IEEE 488.2.
+	    </entry>
+	  </row>
+	  <row>
+	    <entry>IbStbESB</entry>
+	    <entry>0x20</entry>
+	    <entry>The event-status bit is set when there are one or more
+	      bits set in the device's Standard Event Status Register.  It
+	      is cleared by reading the Standard Event Status Register.
+	      For devices conforming to IEEE 488.2 only.</entry>
+	  </row>
+	  <row>
+	    <entry>IbStbMAV</entry>
+	    <entry>0x10</entry>
+	    <entry>The message available bit indicates whether or not the
+	      device's data output queue is empty. Whenever the device has
+	      data available, this bit will be set. It is cleared when the
+	      output queue is empty. The queue is emptied by reading data
+	      from the device with
+	      <link LINKEND="reference-function-ibrd">ibrd()</link> for
+	      example. For devices conforming to IEEE 488.2 only.</entry>
+	  </row>
+	</tbody>
+      </tgroup>
+    </table>
+  </para>
 </refsect1>
 <refsect1>
 	<title>
@@ -3419,6 +3488,57 @@ volatile int ibsta;
 	to conduct serial polls), and the board becomes
 	controller-in-charge.
 	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The value of <link LINKEND="reference-globals-ibsta">ibsta</link> is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-ibspb">
+<refmeta>
+	<refentrytitle>ibspb</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>ibspb</refname>
+	<refpurpose> obtain length of serial poll bytes queue (device)</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>ibspb</function></funcdef>
+		<paramdef>int <parameter>ud</parameter></paramdef>
+		<paramdef>short *<parameter>result</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+  <title>
+    Description
+  </title>
+  <para>
+    ibspb() obtains the number of serial poll bytes queued for the
+    device specified by <parameter>ud</parameter>. The number of
+    queued serial poll bytes is stored in the location specified
+    by <parameter>result</parameter>.
+  </para>
+  <para>
+    If automatic serial polling is enabled on the board controlling
+    the device, the status byte is automatically read and queued
+    whenever the device requests service. Automatic serial polling is
+    controlled with
+    <link LINKEND="reference-function-ibconfig">ibconfig()</link>.
+  </para>
+  <para>
+    The queued status bytes are read with
+    <link LINKEND="reference-function-ibrsp">ibrsp()</link>.
+  </para>
 </refsect1>
 <refsect1>
 	<title>
@@ -3770,6 +3890,16 @@ volatile int ibsta;
 	If <parameter>status_mask</parameter> is zero, then ibwait() will
 	return immediately.  This is useful if you simply wish to get an
 	updated ibsta.
+	</para>
+	<para>
+	When calling ibwait() on a device, only the following
+	condition bits in the <parameter>status_mask</parameter> are
+	valid: TIMO, END, CMPL, and RQS. For the RQS bit to be set in
+	the returned ibsta automatic serial polling must be enabled
+	for the board controlling the device, see
+	<link LINKEND="reference-function-ibconfig">ibconfig()</link>.
+	The RQS condition is cleared by serial polling the device, see
+	<link LINKEND="reference-function-ibrsp">ibrsp()</link>.
 	</para>
 </refsect1>
 <refsect1>
