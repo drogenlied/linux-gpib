@@ -1,3 +1,21 @@
+2017-09-30 20:03:16 dpenkler
+
+	* [r1663] 4.1.0 release patches
+	- Attempt fix of automatic serial polling sys/ibinit.c
+	- Implement per board open descriptor autospoll accounting
+	- Add doc on condition bits for device in ibwait
+	- Clarify doc on ibrsp(), added standard status byte bits
+	- Add ibwait() condition bit constants in python binding
+	- Add GPIB status byte bit constants in python binding
+	- Change python binding for serial_poll to return an int
+	  instead of string to facilitate bit mask operations
+	- Add ibspb() call to get status byte queue length
+	- Add python binding for ibspb() -> gpib.spoll_bytes()
+	- Add python examples using srq at board and device level
+	- Unlock descriptors_mutex on ERANGE error in sys/osfuncs.c
+	- Remove annoying trailing whitespace sys/device.c sys/osfuncs.c lib/ibWait.c
+	- Change version number to 4.1.0
+
 2017-09-02 18:00:05 dpenkler
 
 	* [r1662] Fix compile error in osfuncs when
