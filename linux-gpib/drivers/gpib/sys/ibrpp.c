@@ -30,7 +30,7 @@ int ibrpp(gpib_board_t *board, uint8_t *result )
 	int retval = 0;
 
 	osStartTimer( board, board->usec_timeout );
-	retval = ibcac( board, 0 );
+	retval = ibcac( board, 1 );
 	if( retval ) return -1;
 
 	if(board->interface->parallel_poll( board, result ) )

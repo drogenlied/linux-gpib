@@ -29,7 +29,8 @@ static int setup_serial_poll( gpib_board_t *board, unsigned int usec_timeout )
 
 	GPIB_DPRINTK( "entering setup_serial_poll()\n" );
 
-	ibcac( board, 0 );
+	osStartTimer( board, usec_timeout );
+	ibcac( board, 1 );
 
 	i = 0;
 	cmd_string[ i++ ] = UNL;
@@ -38,7 +39,6 @@ static int setup_serial_poll( gpib_board_t *board, unsigned int usec_timeout )
 		cmd_string[ i++ ] = MSA( board->sad );
 	cmd_string[ i++ ] = SPE;	//serial poll enable
 
-	osStartTimer( board, usec_timeout );
 	ret = board->interface->command( board, cmd_string, i, &bytes_written);
 	if(ret < 0 || bytes_written < i )
 	{
@@ -62,7 +62,8 @@ static int read_serial_poll_byte( gpib_board_t *board, unsigned int pad,
 
 	GPIB_DPRINTK( "entering read_serial_poll_byte(), pad=%i sad=%i\n", pad, sad );
 
-	ibcac( board, 0);
+	osStartTimer( board, usec_timeout );
+	ibcac( board, 1);
 
 	i = 0;
 	// send talk address
@@ -70,7 +71,6 @@ static int read_serial_poll_byte( gpib_board_t *board, unsigned int pad,
 	if( sad >= 0 )
 		cmd_string[i++] = MSA( sad );
 
-	osStartTimer( board, usec_timeout );
 	ret = board->interface->command( board, cmd_string, i, &nbytes );
 	if( ret < 0 || nbytes < i )
 	{
@@ -102,11 +102,11 @@ static int cleanup_serial_poll( gpib_board_t *board, unsigned int usec_timeout )
 
 	GPIB_DPRINTK( "entering cleanup_serial_poll()\n" );
 
-	ibcac( board, 0 );
+	osStartTimer( board, usec_timeout );
+	ibcac( board, 1 );
 
 	cmd_string[ 0 ] = SPD;	/* disable serial poll bytes */
 	cmd_string[ 1 ] = UNT;
-	osStartTimer( board, usec_timeout );
 	ret = board->interface->command( board, cmd_string, 2, &bytes_written );
 	if( ret < 0 || bytes_written < 2 )
 	{

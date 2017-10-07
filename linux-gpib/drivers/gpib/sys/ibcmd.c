@@ -46,7 +46,7 @@ int ibcmd( gpib_board_t *board, uint8_t *buf, size_t length, size_t *bytes_writt
 
 	osStartTimer( board, board->usec_timeout );
 
-	ret = ibcac( board, 0 );
+	ret = ibcac( board, 1 );
 	if( ret == 0 )
 	{
 		ret = board->interface->command(board, buf, length, bytes_written);
