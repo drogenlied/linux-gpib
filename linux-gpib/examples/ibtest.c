@@ -137,7 +137,11 @@ int prompt_for_device(int minor)
 	while(1)
 	{
 		printf("enter primary gpib address for device you wish to open [0-30]: ");
-		fgets(input, sizeof(input), stdin);
+		if(fgets(input, sizeof(input), stdin) == NULL)
+		{
+			fprintf(stderr, "Error reading from standard input.\n");
+			continue;
+		}
 		pad = strtol(input, NULL, 0);
 		if(pad < 0 || pad > 30)
 			printf("primary address must be between 0 and 30\n");
@@ -158,14 +162,18 @@ int prompt_for_device(int minor)
 /* returns a device descriptor after prompting user for primary address */
 int prompt_for_board(void)
 {
-	int ud;
+	int ud = -1;
 	char board_name[100];
 
 	do
 	{
 		int length;
 		printf("enter name of interface board (or device) you wish to open: ");
-		fgets( board_name, sizeof( board_name ), stdin);
+		if(fgets( board_name, sizeof( board_name ), stdin) == NULL)
+		{
+			fprintf(stderr, "Error reading from standard input.\n");
+			continue;
+		}
 		length = strlen( board_name );
 		if( board_name[ length - 1 ] == '\n' )
 			board_name[ length - 1 ] = 0;
@@ -188,7 +196,11 @@ int prompt_for_descriptor(int minor)
 	{
 		printf( "Do you wish to open a (d)evice or an interface (b)oard?\n"
 			"\t(you probably want to open a device): ");
-		fgets( input, sizeof( input ), stdin );
+		if(fgets(input, sizeof(input), stdin) == NULL)
+		{
+			fprintf(stderr, "Error reading from standard input.\n");
+			break;
+		}
 		switch( input[0] )
 		{
 			case 'd':
@@ -211,6 +223,7 @@ int prompt_for_descriptor(int minor)
 int prompt_for_action(void)
 {
 	char input[100];
+	
 	while(1)
 	{
 		printf("You can:\n"
@@ -231,8 +244,12 @@ int prompt_for_action(void)
 			"\trequest ser(v)ice (board only)\n"
 			"\t(w)rite data string\n"
 			": " );
-		do fgets( input, sizeof( input ), stdin );
-		while( input[0] == '\n' );
+
+		if(fgets( input, sizeof( input ), stdin ) == NULL)
+		{
+			fprintf(stderr, "Error reading from standard input.\n");
+			continue;
+		}
 
 		switch( input[0] )
 		{
@@ -361,7 +378,12 @@ int prompt_for_commands(int ud)
 	int i;
 
 	printf("enter command bytes to send to the bus: ");
-	fgets( buffer, sizeof(buffer), stdin );
+	if(fgets( buffer, sizeof(buffer), stdin ) == NULL)
+	{
+		fprintf(stderr, "Error reading from standard input.\n");
+		return -1;
+	}
+	
 	for(i = 0; i < sizeof(buffer); ++i)
 	{
 		buffer[i] = strtol(next, &end, 0);
@@ -388,7 +410,11 @@ int prompt_for_read(int ud)
 	if(buffer == NULL)
 		return -ENOMEM;
 	printf("enter maximum number of bytes to read [1024]: ");
-	fgets(buffer, buffer_size, stdin);
+	if(fgets(buffer, buffer_size, stdin) == NULL)
+	{
+		fprintf(stderr, "Error reading from standard input.\n");
+		return -1;
+	}
 	max_num_bytes = strtol(buffer, &endptr, 0);
 	if(endptr == buffer)
 		max_num_bytes = default_num_bytes;
@@ -401,7 +427,11 @@ int prompt_for_write(int ud)
 	char buffer[ 1024 ];
 
 	printf("enter a string to send to your device: ");
-	fgets( buffer, sizeof(buffer), stdin );
+	if(fgets( buffer, sizeof(buffer), stdin ) == NULL)
+	{
+		fprintf(stderr, "Error reading from standard input.\n");
+		return -1;
+	}
 
 	printf("sending string: %s\n", buffer);
 	if( ibwrt(ud, buffer, strlen(buffer)) & ERR )
@@ -446,7 +476,11 @@ int request_service( int ud )
 	}
 
 	printf( "enter new status byte (bit 0x40 requests service): " );
-	scanf( "%i", &status_byte );
+	if(scanf( "%i", &status_byte ) < 1)
+	{
+		fprintf(stderr, "Error reading from standard input.\n");
+		return -1;
+	}
 
 	status = ibrsv( ud, status_byte );
 
@@ -482,7 +516,11 @@ int prompt_for_timeout( int ud )
 		"\t(16) 300 sec\n"
 		"\t(17) 1000 sec\n"
 		);
-	scanf( "%i", &timeout );
+	if(scanf( "%i", &timeout ) < 1)
+	{
+		fprintf(stderr, "Error reading from standard input.");
+		return -1;
+	}
 
 	if( ibtmo( ud, timeout ) & ERR )
 	{
@@ -503,8 +541,12 @@ int prompt_for_wait( int ud )
 		"\t0x%x board serial polled\n",
 			TIMO, RQS, SPOLL);
 	printf("Enter wait mask: ");
-	scanf( "%i", &wait_mask );
-
+	if(scanf( "%i", &wait_mask ) < 1)
+	{
+		fprintf(stderr, "Error reading from standard input.\n");
+		return -1;
+	}
+	
 	status = ibwait( ud, wait_mask );
 
 	return 0;
@@ -590,7 +632,11 @@ int prompt_for_remote_enable( int ud )
 	int assert;
 
 	printf("Enter '1' to assert remote enable, or '0' to unassert: ");
-	scanf( "%i", &assert );
+	if(scanf( "%i", &assert ) < 1)
+	{
+		fprintf(stderr, "Error reading from standard input.");
+		return -1;
+	}
 
 	status = ibsre( ud, assert );
 	if( status & ERR )
@@ -611,7 +657,11 @@ int prompt_for_take_control(int ud)
 	if(buffer == NULL)
 		return -ENOMEM;
 	printf("Enter '1' to assert ATN synchronously, or '0' for asynchronously [0]: ");
-	fgets(buffer, buffer_size, stdin);
+	if(fgets(buffer, buffer_size, stdin) == NULL)
+	{
+		fprintf(stderr, "Error reading from standard input.\n");
+		return -1;
+	}
 	synchronous = strtol(buffer, &endptr, 0);
 	if(endptr == buffer)
 		synchronous = 0;
@@ -640,7 +690,11 @@ int prompt_for_eot(int ud)
 	if(buffer == NULL)
 		return -ENOMEM;
 	printf("Enter '1' to assert EOI with the last byte of writes, or '0' otherwise [1]: ");
-	fgets(buffer, buffer_size, stdin);
+	if(fgets(buffer, buffer_size, stdin) == NULL)
+	{
+		fprintf(stderr, "Error reading from standard input.\n");
+		return -1;
+	}
 	assert_eoi = strtol(buffer, &endptr, 0);
 	if(endptr == buffer)
 		assert_eoi = 1;
