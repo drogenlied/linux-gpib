@@ -955,12 +955,12 @@ static int usb_gpib_write(gpib_board_t *board,
 
 	DIA_LOG ("<%.*s> -> %x\n", (int) length, buffer, retval);
 
-	if (retval != ACK) return -EIO;
+	if (retval != ACK) return -EPIPE;
 
 	*bytes_written = length;
 
         if (send_command(board, USB_GPIB_UNLISTEN, sizeof(USB_GPIB_UNLISTEN))
-            != 0x06) return  -EIO;
+            != 0x06) return  -EPIPE;
 
 	return length;
 }

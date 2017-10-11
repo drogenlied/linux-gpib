@@ -823,7 +823,7 @@ static int ni_usb_write(gpib_board_t *board, uint8_t *buffer, size_t length, int
 			and returned -ERESTARTSYS */
 		break;
 	case NIUSB_ADDRESSING_ERROR:
-		retval = -EIO;
+		retval = -ENXIO;
 		break;
 	case NIUSB_NO_LISTENER_ERROR:
 		retval = -EIO;
@@ -833,7 +833,7 @@ static int ni_usb_write(gpib_board_t *board, uint8_t *buffer, size_t length, int
 		break;
 	default:
 		printk("%s: %s: unknown error code=%i\n", __FILE__, __FUNCTION__, status.error_code);
-		retval = -EIO;
+		retval = -EPIPE;
 		break;
 	}
 	ni_usb_soft_update_status(board, status.ibsta, 0);
