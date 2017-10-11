@@ -76,7 +76,7 @@ int fifo_write( gpib_board_t *board, uint8_t *buffer, size_t length, size_t *byt
 	if(cb_priv->fifo_iobase == 0)
 	{
 		printk("cb7210: fifo iobase is zero!\n");
-		return -EIO;
+		return -EINVAL;
 	}
 	if(length == 0) return 0;
 
@@ -174,7 +174,6 @@ int cb7210_accel_write(gpib_board_t *board, uint8_t *buffer, size_t length, int 
 	retval = fifo_write(board, buffer, fast_chunk_size, &num_bytes);
 	*bytes_written += num_bytes;
 	if( retval < 0 ) return retval;
-	if( retval < fast_chunk_size ) return -EIO;
 	
 	retval = nec7210_write( board, nec_priv, buffer + fast_chunk_size, leftover, send_eoi, &num_bytes);
 	*bytes_written += num_bytes;
