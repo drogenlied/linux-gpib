@@ -58,7 +58,11 @@ static int sync_message(const struct program_options *options, const char *messa
 		fprintf(stdout, "%s\n", message);
 		fflush(stdout);
 	}
-	fgets(buffer, sizeof(buffer), stdin);
+	if(fgets(buffer, sizeof(buffer), stdin) == NULL)
+	{
+		fprintf(stderr, "failed to read from standard input.\n");
+		return -1;
+	}
 	if(strncmp(message, buffer, strlen(message)))
 	{
 		fprintf(stderr, "received unexpected sync message: %s\n", buffer);
