@@ -1,10 +1,11 @@
 /***************************************************************************
-                          driver/eastwood_gpib.c  -  description
+                          fluke_gpib.c  -  description
                              -------------------
-GPIB Driver for Fluke "Eastwood" device.
+GPIB Driver for Fluke cda devices.  Basically, its a driver for a (bugfixed) 
+cb7210 connected to channel 0 of a pl330 dma controller.
 
-    Author: Frank Mori Hess <fmhess@users.sourceforge.net>
-    copyright: (C) 2006 Fluke Corporation
+    Author: Frank Mori Hess <fmh6jj@gmail.com>
+    copyright: (C) 2006, 2010, 2015 Fluke Corporation
  ***************************************************************************/
 
 /***************************************************************************
@@ -16,153 +17,156 @@ GPIB Driver for Fluke "Eastwood" device.
  *                                                                         *
  ***************************************************************************/
 
-#include "eastwood_gpib.h"
+#include "fluke_gpib.h"
 
-#include <asm/dma.h>
 #include "gpibP.h"
 #include <linux/dma-mapping.h>
 #include <linux/ioport.h>
 #include <linux/module.h>
-#include <nios2_system.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
 
 MODULE_LICENSE("GPL");
 
-int eastwood_attach(gpib_board_t *board, gpib_board_config_t config);
-void eastwood_detach(gpib_board_t *board);
-void eastwood_config_dma(gpib_board_t *board, int output);
-irqreturn_t eastwood_gpib_internal_interrupt(gpib_board_t *board);
+int fluke_attach_holdoff_all(gpib_board_t *board, gpib_board_config_t config);
+int fluke_attach_holdoff_end(gpib_board_t *board, gpib_board_config_t config);
+void fluke_detach(gpib_board_t *board);
+static int fluke_config_dma(gpib_board_t *board, int output);
+irqreturn_t fluke_gpib_internal_interrupt(gpib_board_t *board);
 
-uint8_t eastwood_locking_read_byte(nec7210_private_t *nec_priv, unsigned int register_number)
+static struct platform_device *fluke_gpib_pdev = NULL;
+
+uint8_t fluke_locking_read_byte(nec7210_private_t *nec_priv, unsigned int register_number)
 {
 	uint8_t retval;
 	unsigned long flags;
 
 	spin_lock_irqsave(&nec_priv->register_page_lock, flags);
-	retval = eastwood_read_byte_nolock(nec_priv, register_number);
+	retval = fluke_read_byte_nolock(nec_priv, register_number);
 	spin_unlock_irqrestore(&nec_priv->register_page_lock, flags);
 	return retval;
 }
 
-void eastwood_locking_write_byte(nec7210_private_t *nec_priv, uint8_t byte, unsigned int register_number)
+void fluke_locking_write_byte(nec7210_private_t *nec_priv, uint8_t byte, unsigned int register_number)
 {
 	unsigned long flags;
 
 	spin_lock_irqsave(&nec_priv->register_page_lock, flags);
-	eastwood_write_byte_nolock(nec_priv, byte, register_number);
+	fluke_write_byte_nolock(nec_priv, byte, register_number);
 	spin_unlock_irqrestore(&nec_priv->register_page_lock, flags);
 }
 
 // wrappers for interface functions
-int eastwood_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, size_t *bytes_read)
+int fluke_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, size_t *bytes_read)
 {
-	eastwood_private_t *priv = board->private_data;
+	fluke_private_t *priv = board->private_data;
 	return nec7210_read(board, &priv->nec7210_priv, buffer, length, end, bytes_read);
 }
-int eastwood_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written)
+int fluke_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written)
 {
-	eastwood_private_t *priv = board->private_data;
+	fluke_private_t *priv = board->private_data;
 	return nec7210_write(board, &priv->nec7210_priv, buffer, length, send_eoi, bytes_written);
 }
-ssize_t eastwood_command(gpib_board_t *board, uint8_t *buffer, size_t length, size_t *bytes_written)
+ssize_t fluke_command(gpib_board_t *board, uint8_t *buffer, size_t length)
 {
-	eastwood_private_t *priv = board->private_data;
-	return nec7210_command(board, &priv->nec7210_priv, buffer, length, bytes_written);
+	fluke_private_t *priv = board->private_data;
+	return nec7210_command(board, &priv->nec7210_priv, buffer, length);
 }
-int eastwood_take_control(gpib_board_t *board, int synchronous)
+int fluke_take_control(gpib_board_t *board, int synchronous)
 {
-	eastwood_private_t *priv = board->private_data;
+	fluke_private_t *priv = board->private_data;
 	return nec7210_take_control(board, &priv->nec7210_priv, synchronous);
 }
-int eastwood_go_to_standby(gpib_board_t *board)
+int fluke_go_to_standby(gpib_board_t *board)
 {
-	eastwood_private_t *priv = board->private_data;
+	fluke_private_t *priv = board->private_data;
 	return nec7210_go_to_standby(board, &priv->nec7210_priv);
 }
-void eastwood_request_system_control( gpib_board_t *board, int request_control )
+void fluke_request_system_control( gpib_board_t *board, int request_control )
 {
-	eastwood_private_t *priv = board->private_data;
+	fluke_private_t *priv = board->private_data;
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 	nec7210_request_system_control( board, nec_priv, request_control );
 }
-void eastwood_interface_clear(gpib_board_t *board, int assert)
+void fluke_interface_clear(gpib_board_t *board, int assert)
 {
-	eastwood_private_t *priv = board->private_data;
+	fluke_private_t *priv = board->private_data;
 	nec7210_interface_clear(board, &priv->nec7210_priv, assert);
 }
-void eastwood_remote_enable(gpib_board_t *board, int enable)
+void fluke_remote_enable(gpib_board_t *board, int enable)
 {
-	eastwood_private_t *priv = board->private_data;
+	fluke_private_t *priv = board->private_data;
 	nec7210_remote_enable(board, &priv->nec7210_priv, enable);
 }
-int eastwood_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits)
+int fluke_enable_eos(gpib_board_t *board, uint8_t eos_byte, int compare_8_bits)
 {
-	eastwood_private_t *priv = board->private_data;
+	fluke_private_t *priv = board->private_data;
 	return nec7210_enable_eos(board, &priv->nec7210_priv, eos_byte, compare_8_bits);
 }
-void eastwood_disable_eos(gpib_board_t *board)
+void fluke_disable_eos(gpib_board_t *board)
 {
-	eastwood_private_t *priv = board->private_data;
+	fluke_private_t *priv = board->private_data;
 	nec7210_disable_eos(board, &priv->nec7210_priv);
 }
-unsigned int eastwood_update_status( gpib_board_t *board, unsigned int clear_mask )
+unsigned int fluke_update_status( gpib_board_t *board, unsigned int clear_mask )
 {
-	eastwood_private_t *priv = board->private_data;
+	fluke_private_t *priv = board->private_data;
 	return nec7210_update_status( board, &priv->nec7210_priv, clear_mask );
 }
-void eastwood_primary_address(gpib_board_t *board, unsigned int address)
+void fluke_primary_address(gpib_board_t *board, unsigned int address)
 {
-	eastwood_private_t *priv = board->private_data;
+	fluke_private_t *priv = board->private_data;
 	nec7210_primary_address(board, &priv->nec7210_priv, address);
 }
-void eastwood_secondary_address(gpib_board_t *board, unsigned int address, int enable)
+void fluke_secondary_address(gpib_board_t *board, unsigned int address, int enable)
 {
-	eastwood_private_t *priv = board->private_data;
+	fluke_private_t *priv = board->private_data;
 	nec7210_secondary_address(board, &priv->nec7210_priv, address, enable);
 }
-int eastwood_parallel_poll(gpib_board_t *board, uint8_t *result)
+int fluke_parallel_poll(gpib_board_t *board, uint8_t *result)
 {
-	eastwood_private_t *priv = board->private_data;
+	fluke_private_t *priv = board->private_data;
 	return nec7210_parallel_poll(board, &priv->nec7210_priv, result);
 }
-void eastwood_parallel_poll_configure( gpib_board_t *board, uint8_t configuration )
+void fluke_parallel_poll_configure( gpib_board_t *board, uint8_t configuration )
 {
-	eastwood_private_t *priv = board->private_data;
+	fluke_private_t *priv = board->private_data;
 	nec7210_parallel_poll_configure(board, &priv->nec7210_priv, configuration );
 }
-void eastwood_parallel_poll_response( gpib_board_t *board, int ist )
+void fluke_parallel_poll_response( gpib_board_t *board, int ist )
 {
-	eastwood_private_t *priv = board->private_data;
+	fluke_private_t *priv = board->private_data;
 	nec7210_parallel_poll_response(board, &priv->nec7210_priv, ist );
 }
-void eastwood_serial_poll_response(gpib_board_t *board, uint8_t status)
+void fluke_serial_poll_response(gpib_board_t *board, uint8_t status)
 {
-	eastwood_private_t *priv = board->private_data;
+	fluke_private_t *priv = board->private_data;
 	nec7210_serial_poll_response(board, &priv->nec7210_priv, status);
 }
-uint8_t eastwood_serial_poll_status( gpib_board_t *board )
+uint8_t fluke_serial_poll_status( gpib_board_t *board )
 {
-	eastwood_private_t *priv = board->private_data;
+	fluke_private_t *priv = board->private_data;
 	return nec7210_serial_poll_status( board, &priv->nec7210_priv );
 }
-void eastwood_return_to_local( gpib_board_t *board )
+void fluke_return_to_local( gpib_board_t *board )
 {
-	eastwood_private_t *priv = board->private_data;
+	fluke_private_t *priv = board->private_data;
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 	write_byte(nec_priv, AUX_RTL2, AUXMR);
 	udelay(1);
 	write_byte(nec_priv, AUX_RTL, AUXMR);
 }
-int eastwood_line_status( const gpib_board_t *board )
+int fluke_line_status( const gpib_board_t *board )
 {
 	int status = ValidALL;
 	int bsr_bits;
-	eastwood_private_t *e_priv;
+	fluke_private_t *e_priv;
 	nec7210_private_t *nec_priv;
 
 	e_priv = board->private_data;
 	nec_priv = &e_priv->nec7210_priv;
 
-	bsr_bits = eastwood_paged_read_byte(e_priv, BUS_STATUS, BUS_STATUS_PAGE);
+	bsr_bits = fluke_paged_read_byte(e_priv, BUS_STATUS, BUS_STATUS_PAGE);
 
 	if( ( bsr_bits & BSR_REN_BIT ) == 0 )
 		status |= BusREN;
@@ -184,9 +188,9 @@ int eastwood_line_status( const gpib_board_t *board )
 	return status;
 }
 
-unsigned int eastwood_t1_delay( gpib_board_t *board, unsigned int nano_sec )
+unsigned int fluke_t1_delay( gpib_board_t *board, unsigned int nano_sec )
 {
-	eastwood_private_t *e_priv = board->private_data;
+	fluke_private_t *e_priv = board->private_data;
 	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
 	unsigned int retval;
 
@@ -202,65 +206,10 @@ unsigned int eastwood_t1_delay( gpib_board_t *board, unsigned int nano_sec )
 	return retval;
 }
 
-unsigned get_dma_status(void)
-{
-	return readl(na_gpib_dma_0 + AVALON_STATUS_REG);
-}
-
-/* clear fifo by doing an otherwise useless dma transfer 
- between two locations in memory */
-int clear_dma_fifo(gpib_board_t *board)
-{
-	eastwood_private_t *e_priv = board->private_data;
-	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
-	int retval;
-	char *fifo_read_buffer = NULL;
-	char *fifo_write_buffer = NULL;
-	unsigned long flags;
-	dma_addr_t read_bus_address;
-	dma_addr_t write_bus_address;
-	static const int bogus_transfer_length = AVALON_DMA_FIFO_SIZE;
-	if(e_priv->fifo_dirty == 0) return 0;
-// 	printk("%s: enter\n", __FUNCTION__);
-	if(e_priv->dma_buffer_size < 2 * bogus_transfer_length) BUG(); 
-	fifo_read_buffer = e_priv->dma_buffer;
-	fifo_write_buffer = e_priv->dma_buffer + bogus_transfer_length;
-	read_bus_address = dma_map_single(NULL, fifo_read_buffer,
-		bogus_transfer_length, DMA_TO_DEVICE);
-	write_bus_address = dma_map_single(NULL, fifo_write_buffer,
-		bogus_transfer_length, DMA_FROM_DEVICE);
-	disable_dma(e_priv->dma_channel);
-	set_dma_count(e_priv->dma_channel, bogus_transfer_length);
-	nios2_set_dma_rcon(e_priv->dma_channel, 0);
-	nios2_set_dma_wcon(e_priv->dma_channel, 0);
-	nios2_set_dma_raddr(e_priv->dma_channel, read_bus_address);
-	nios2_set_dma_waddr(e_priv->dma_channel, write_bus_address);
-	spin_lock_irqsave(&board->spinlock, flags);
-	enable_dma(e_priv->dma_channel);
-	set_bit(DMA_WRITE_IN_PROGRESS_BN, &nec_priv->state);
-	spin_unlock_irqrestore(&board->spinlock, flags);
-
-	retval = wait_event_interruptible(board->wait, 
-		get_dma_residue(e_priv->dma_channel) == 0 &&
-		test_bit(DMA_WRITE_IN_PROGRESS_BN, &nec_priv->state) == 0);
-	disable_dma(e_priv->dma_channel);
-	if(retval)
-	{
-		printk("%s: interrupted by signal, residue=%i.\n", 
-			__FUNCTION__, get_dma_residue(e_priv->dma_channel));
-		retval = -EINTR;
-	}else
-		e_priv->fifo_dirty = 0;
-	dma_unmap_single(NULL, read_bus_address, bogus_transfer_length, DMA_TO_DEVICE);
-	dma_unmap_single(NULL, write_bus_address, bogus_transfer_length, DMA_FROM_DEVICE);
-// 	printk("%s: exit, retval=%i\n", __FUNCTION__, retval);
-	return retval;
-}
-
 static int wait_for_idle(gpib_board_t *board, short wake_on_listener_idle,
 	short wake_on_talker_idle)
 {
-	eastwood_private_t *e_priv = board->private_data;
+	fluke_private_t *e_priv = board->private_data;
 	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
 	int retval = 0;
 // 	printk("%s: enter\n", __FUNCTION__);
@@ -270,7 +219,7 @@ static int wait_for_idle(gpib_board_t *board, short wake_on_listener_idle,
 		test_bit(DEV_CLEAR_BN, &nec_priv->state) ||
 		test_bit(TIMO_NUM, &board->status)))
 	{
-		retval = -EINTR;
+		retval = -ERESTARTSYS;
 	}
 	if(test_bit(TIMO_NUM, &board->status))
 		retval = -ETIMEDOUT;
@@ -280,37 +229,67 @@ static int wait_for_idle(gpib_board_t *board, short wake_on_listener_idle,
 	return retval;
 }
 
-static int eastwood_dma_write(gpib_board_t *board, 
+static void fluke_dma_callback(void *arg)
+{
+	gpib_board_t *board = arg;
+	fluke_private_t *e_priv = board->private_data;
+	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
+	unsigned long flags;
+	spin_lock_irqsave(&board->spinlock, flags);
+//	printk("%s: enter\n", __FUNCTION__);
+
+	nec7210_set_reg_bits(nec_priv, IMR1, HR_DOIE | HR_DIIE, HR_DOIE | HR_DIIE);
+	wake_up_interruptible(&board->wait);
+
+	fluke_gpib_internal_interrupt(board);
+	clear_bit(DMA_WRITE_IN_PROGRESS_BN, &nec_priv->state);
+	clear_bit(DMA_READ_IN_PROGRESS_BN, &nec_priv->state);
+//	printk("%s: exit\n", __FUNCTION__);
+	spin_unlock_irqrestore(&board->spinlock, flags);
+}
+
+static int fluke_dma_write(gpib_board_t *board, 
 	uint8_t *buffer, size_t length, size_t *bytes_written)
 {
-	eastwood_private_t *e_priv = board->private_data;
+	fluke_private_t *e_priv = board->private_data;
 	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
 	unsigned long flags;
 	int retval = 0;
 	dma_addr_t address;
+	struct dma_async_tx_descriptor *tx_desc;
+	
 	*bytes_written = 0;
 // 	printk("%s: enter\n", __FUNCTION__);
 	if(length > e_priv->dma_buffer_size)
 		BUG();
-	clear_dma_fifo(board);
+	dmaengine_terminate_all(e_priv->dma_channel);
 	// write-clear counter
 	writel(0x0, e_priv->write_transfer_counter);
 	retval = wait_for_idle(board, 1, 0);
 	if(retval < 0) return retval;
 	memcpy(e_priv->dma_buffer, buffer, length);
-	address = dma_map_single(NULL, buffer,
+	address = dma_map_single(NULL, e_priv->dma_buffer,
 		 length, DMA_TO_DEVICE);
 	/* program dma controller */
-	disable_dma(e_priv->dma_channel);
-	eastwood_config_dma(board, 1);
-	set_dma_count(e_priv->dma_channel, length);
-	nios2_set_dma_raddr(e_priv->dma_channel, address);
+	retval = fluke_config_dma(board, 1);
+	if(retval) goto cleanup;
 
+	tx_desc = dmaengine_prep_slave_single(e_priv->dma_channel, address, length, DMA_MEM_TO_DEV, 
+			DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
+	if(tx_desc == NULL)
+	{
+		printk("fluke_gpib: failed to allocate dma transmit descriptor\n");
+		retval = -ENOMEM;
+		goto cleanup;
+	}
+	tx_desc->callback = fluke_dma_callback;
+	tx_desc->callback_param = board;
+	
 	spin_lock_irqsave(&board->spinlock, flags);
 	nec7210_set_reg_bits(nec_priv, IMR1, HR_DOIE, 0);
 	nec7210_set_reg_bits(nec_priv, IMR2, HR_DMAO, HR_DMAO);
-	e_priv->fifo_dirty = 1;
-	enable_dma(e_priv->dma_channel);
+	dmaengine_submit(tx_desc);
+	dma_async_issue_pending(e_priv->dma_channel);
 	clear_bit(WRITE_READY_BN, &nec_priv->state);
 	set_bit(DMA_WRITE_IN_PROGRESS_BN, &nec_priv->state);
 // 	printk("%s: in spin lock\n", __FUNCTION__);
@@ -326,7 +305,7 @@ static int eastwood_dma_write(gpib_board_t *board,
 		test_bit(TIMO_NUM, &board->status)))
 	{
 		GPIB_DPRINTK( "gpib write interrupted!\n" );
-		retval = -EINTR;
+		retval = -ERESTARTSYS;
 	}
 	if(test_bit(TIMO_NUM, &board->status))
 		retval = -ETIMEDOUT;
@@ -337,26 +316,39 @@ static int eastwood_dma_write(gpib_board_t *board,
 	// disable board's dma
 	nec7210_set_reg_bits(nec_priv, IMR2, HR_DMAO, 0);
 
-	disable_dma(e_priv->dma_channel);
-	if(retval)
-		write_byte(nec_priv, AUX_NBAF, AUXMR);	
+	dmaengine_terminate_all(e_priv->dma_channel);
+	// make sure fluke_dma_callback got called
+	if(test_bit(DMA_WRITE_IN_PROGRESS_BN, &nec_priv->state))
+	{
+		fluke_dma_callbacard);
+	}
+
 	*bytes_written = readl(e_priv->write_transfer_counter) & write_transfer_counter_mask;
 	if(*bytes_written > length) BUG();
 	/*	printk("length=%i, *bytes_written=%i, residue=%i, retval=%i\n",
 		length, *bytes_written, get_dma_residue(e_priv->dma_channel), retval);*/
+cleanup:
 	dma_unmap_single(NULL, address, length, DMA_TO_DEVICE);
+//	printk("%s: exit, retval=%d\n", __FUNCTION__, retval);
 	return retval;
 }
 
-static int eastwood_accel_write(gpib_board_t *board, 
+static int fluke_accel_write(gpib_board_t *board, 
 	uint8_t *buffer, size_t length, int send_eoi, size_t *bytes_written)
 {
-	eastwood_private_t *e_priv = board->private_data;
+	fluke_private_t *e_priv = board->private_data;
 	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
 	size_t remainder = length;
 	size_t transfer_size;
 	ssize_t retval = 0;
 	size_t dma_remainder = remainder;
+	
+	if(e_priv->dma_channel == NULL) 
+	{
+		printk("fluke_gpib: No dma channel available, cannot do accel write.");
+		return -ENXIO;
+	}
+	
 	*bytes_written = 0;
 	if(length < 1) return 0;
 	clear_bit(DEV_CLEAR_BN, &nec_priv->state); // XXX FIXME
@@ -368,7 +360,7 @@ static int eastwood_accel_write(gpib_board_t *board,
 		size_t num_bytes;
 		transfer_size = (e_priv->dma_buffer_size < dma_remainder) ? 
 			e_priv->dma_buffer_size : dma_remainder;
-		retval = eastwood_dma_write(board, buffer, transfer_size, &num_bytes);
+		retval = fluke_dma_write(board, buffer, transfer_size, &num_bytes);
 		*bytes_written += num_bytes;
 		if(retval < 0) break;
 		dma_remainder -= num_bytes;
@@ -384,7 +376,7 @@ static int eastwood_accel_write(gpib_board_t *board,
 		// 		printk("%s: handling last byte\n", __FUNCTION__);
 		if(remainder != 1) BUG();
 		write_byte(nec_priv, AUX_SEOI, AUXMR);
-		retval = eastwood_dma_write(board, buffer, remainder, &num_bytes);
+		retval = fluke_dma_write(board, buffer, remainder, &num_bytes);
 		*bytes_written += num_bytes;
 		if(retval < 0) return retval;
 		remainder -= num_bytes;
@@ -393,16 +385,36 @@ static int eastwood_accel_write(gpib_board_t *board,
 	return 0;
 }
 
-static int eastwood_dma_read(gpib_board_t *board, uint8_t *buffer,
+static unsigned fluke_get_dma_residue(struct dma_chan *chan, dma_cookie_t cookie)
+{
+	struct dma_tx_state state;
+	int result;
+	
+	result = dmaengine_pause(chan);
+	if(result < 0)
+	{
+		printk("fluke_gpib: dma pause failed?\n");
+		BUG();
+	}
+	dmaengine_tx_status(chan, cookie, &state);
+	// hardware doesn't support resume, so dont call this
+	// method unless the dma transfer is done.
+	return state.residue;
+}
+
+static int fluke_dma_read(gpib_board_t *board, uint8_t *buffer,
 	size_t length, int *end, size_t *bytes_read)
 {
-	eastwood_private_t *e_priv = board->private_data;
+	fluke_private_t *e_priv = board->private_data;
 	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
 	int retval = 0;
 	unsigned long flags;
-	int residue;
+	unsigned residue;
 	int wait_retval;
 	dma_addr_t bus_address;
+	struct dma_async_tx_descriptor *tx_desc;
+	dma_cookie_t dma_cookie;
+	
 	// 	printk("%s: enter, bus_address=0x%x, length=%i\n", __FUNCTION__, (unsigned)bus_address,
 // 		   (int)length);
 
@@ -411,24 +423,36 @@ static int eastwood_dma_read(gpib_board_t *board, uint8_t *buffer,
 	if(length == 0)
 		return 0;
 
-	clear_dma_fifo(board);
 	retval = wait_for_idle(board, 0, 1);
 	if(retval < 0) return retval;
 	bus_address = dma_map_single(NULL, e_priv->dma_buffer,
 		length, DMA_FROM_DEVICE);
-	spin_lock_irqsave(&board->spinlock, flags);
+
 	/* program dma controller */
-	disable_dma(e_priv->dma_channel);
-	eastwood_config_dma(board, 0);
-	set_dma_count(e_priv->dma_channel, length);
-// 	printk("set dma%i count to %i\n", e_priv->dma_channel, (int)length);
-	nios2_set_dma_waddr(e_priv->dma_channel, bus_address);
-// 	printk("set dma%i waddr to 0x%x\n", e_priv->dma_channel, (int)bus_address);
+	retval = fluke_config_dma(board, 0);
+	if(retval) 
+	{
+		dma_unmap_single(NULL, bus_address, length, DMA_FROM_DEVICE);
+		return retval;
+	}
+	tx_desc = dmaengine_prep_slave_single(e_priv->dma_channel, bus_address, length, DMA_DEV_TO_MEM, 
+		DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
+	if(tx_desc == NULL)
+	{
+		printk("fluke_gpib: failed to allocate dma transmit descriptor\n");
+		dma_unmap_single(NULL, bus_address, length, DMA_FROM_DEVICE);
+		return -EIO;
+	}
+	tx_desc->callback = fluke_dma_callback;
+	tx_desc->callback_param = board;
+
+	spin_lock_irqsave(&board->spinlock, flags);
 	// enable nec7210 dma
 	nec7210_set_reg_bits(nec_priv, IMR1, HR_DIIE, 0);
 	nec7210_set_reg_bits(nec_priv, IMR2, HR_DMAI, HR_DMAI);
-	e_priv->fifo_dirty = 1;
-	enable_dma(e_priv->dma_channel);
+
+	dma_cookie = dmaengine_submit(tx_desc);
+	dma_async_issue_pending(e_priv->dma_channel);
 
 	set_bit(DMA_READ_IN_PROGRESS_BN, &nec_priv->state);
 	clear_bit(READ_READY_BN, &nec_priv->state);
@@ -437,65 +461,65 @@ static int eastwood_dma_read(gpib_board_t *board, uint8_t *buffer,
 // 	printk("waiting for data transfer.\n");
 	// wait for data to transfer
 	if((wait_retval = wait_event_interruptible(board->wait,
-		((residue = get_dma_residue(e_priv->dma_channel)) == 0 && 
-			test_bit(DMA_READ_IN_PROGRESS_BN, &nec_priv->state) == 0) ||
+		test_bit(DMA_READ_IN_PROGRESS_BN, &nec_priv->state) == 0 ||
 		test_bit(RECEIVED_END_BN, &nec_priv->state) ||
 		test_bit(DEV_CLEAR_BN, &nec_priv->state) ||
 		test_bit(TIMO_NUM, &board->status))))
 	{
-		printk("eastwood: dma read wait interrupted\n");
-		retval = -EINTR;
+		printk("fluke: dma read wait interrupted\n");
+		retval = -ERESTARTSYS;
 	}
 	if(test_bit(TIMO_NUM, &board->status))
 		retval = -ETIMEDOUT;
 	if(test_bit(DEV_CLEAR_BN, &nec_priv->state))
 		retval = -EINTR;
-	if(test_and_clear_bit(RECEIVED_END_BN, &nec_priv->state)) 
-		*end = 1;
 	// stop the dma transfer
 	nec7210_set_reg_bits(nec_priv, IMR2, HR_DMAI, 0);
 	/* delay a little just to make sure any bytes in dma controller's fifo get
 	 written to memory before we disable it */
-	udelay(1);
-	disable_dma(e_priv->dma_channel);
-	/* deal with race if and END byte arrives just as we disable
-	 * dma */
-	if(*end == 0 && get_dma_residue(e_priv->dma_channel))
+	udelay(10);
+	residue = fluke_get_dma_residue(e_priv->dma_channel, dma_cookie);
+	BUG_ON(residue > length);
+	*bytes_read += length - residue;
+	dmaengine_terminate_all(e_priv->dma_channel);
+	// make sure fluke_dma_callback got called
+	if(test_bit(DMA_READ_IN_PROGRESS_BN, &nec_priv->state))
 	{
-		/* run the interrupt handler to make sure the RECEIVED_END bit
-		* is updated */
-		spin_lock_irqsave(&board->spinlock, flags);
-		eastwood_gpib_internal_interrupt(board);
-		spin_unlock_irqrestore(&board->spinlock, flags);
-		/* if end is true now, re-enable dma to be sure we got the
-		 * last byte that caused END to be true */
+		fluke_dma_callback(board);
+	}
+
+	dma_unmap_single(NULL, bus_address, length, DMA_FROM_DEVICE);
+	memcpy(buffer, e_priv->dma_buffer, *bytes_read);
+
+	/* If we got an end interrupt, figure out if it was
+	 * associated with the last byte we dma'd or with a
+	 * byte still sitting on the cb7210.
+	 */
+	spin_lock_irqsave(&board->spinlock, flags);
+	if(read_byte( nec_priv, ADR0 ) & DATA_IN_STATUS)
+	{
+		set_bit(READ_READY_BN, &nec_priv->state);
+	}else
+	{
+		clear_bit(READ_READY_BN, &nec_priv->state);
+		// There is no byte sitting on the cb7210.  If we
+		// saw an end interrupt, we need to deal with it now
 		if(test_and_clear_bit(RECEIVED_END_BN, &nec_priv->state)) 
 		{
 			*end = 1;
-			nec7210_set_reg_bits(nec_priv, IMR2, HR_DMAI, 1);
-			enable_dma(e_priv->dma_channel);
-			/* 10 usec should be long enough to transfer a byte if it is there */
-			udelay(10);
-			nec7210_set_reg_bits(nec_priv, IMR2, HR_DMAI, 0);
-			disable_dma(e_priv->dma_channel);
 		}
 	}
-	// record how many bytes we transferred
-	residue = get_dma_residue(e_priv->dma_channel);
-	if(residue < 0) BUG();
-	*bytes_read += length - residue;
-	dma_unmap_single(NULL, bus_address, length, DMA_FROM_DEVICE);
-	memcpy(buffer, e_priv->dma_buffer, *bytes_read);
+	spin_unlock_irqrestore(&board->spinlock, flags);
 // 	printk("\tbytes_read=%i, residue=%i, end=%i, retval=%i, wait_retval=%i\n", 
 // 		   *bytes_read, residue, *end, retval, wait_retval);
 
 	return retval;
 }
 
-static ssize_t eastwood_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length,
+static ssize_t fluke_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 	int *end, size_t *bytes_read)
 {
-	eastwood_private_t *e_priv = board->private_data;
+	fluke_private_t *e_priv = board->private_data;
 	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
 	size_t remain = length;
 	size_t transfer_size;
@@ -507,14 +531,12 @@ static ssize_t eastwood_accel_read(gpib_board_t *board, uint8_t *buffer, size_t 
 	clear_bit(DEV_CLEAR_BN, &nec_priv->state); // XXX FIXME
 	*end = 0;
 	*bytes_read = 0;
-	nec7210_set_handshake_mode(board, nec_priv, HR_HLDE);
-	write_byte(nec_priv, AUX_FH, AUXMR );
-//	nec7210_release_rfd_holdoff(board, nec_priv);
+	nec7210_release_rfd_holdoff(board, nec_priv);
 // 	printk("%s: entering while loop\n", __FUNCTION__);
-	while(remain > 1)
+	while(remain > 0)
 	{
-		transfer_size = (e_priv->dma_buffer_size < remain - 1) ? e_priv->dma_buffer_size : remain - 1;
-		retval = eastwood_dma_read(board, buffer, transfer_size, end, &dma_nbytes);
+		transfer_size = (e_priv->dma_buffer_size < remain) ? e_priv->dma_buffer_size : remain;
+		retval = fluke_dma_read(board, buffer, transfer_size, end, &dma_nbytes);
 		remain -= dma_nbytes;
 		buffer += dma_nbytes;
 		*bytes_read += dma_nbytes;
@@ -529,168 +551,165 @@ static ssize_t eastwood_accel_read(gpib_board_t *board, uint8_t *buffer, size_t 
 		}
 		if(need_resched()) schedule();
 	}
-	if(*end == 0)
-	{
-// 		printk("%s: reading last byte\n", __FUNCTION__);
-		nec7210_set_handshake_mode(board, nec_priv, HR_HLDA);
-		retval = eastwood_dma_read(board, buffer, 1, end, &dma_nbytes);
-		*bytes_read += dma_nbytes;
-	}
 // 	printk("%s: exit, retval=%i\n", __FUNCTION__, (int)retval);
 	return retval;
 }
 
-gpib_interface_t eastwood_unaccel_interface =
+gpib_interface_t fluke_unaccel_interface =
 {
-	name: "eastwood_unaccel",
-	attach: eastwood_attach,
-	detach: eastwood_detach,
-	read: eastwood_read,
-	write: eastwood_write,
-	command: eastwood_command,
-	take_control: eastwood_take_control,
-	go_to_standby: eastwood_go_to_standby,
-	request_system_control: eastwood_request_system_control,
-	interface_clear: eastwood_interface_clear,
-	remote_enable: eastwood_remote_enable,
-	enable_eos: eastwood_enable_eos,
-	disable_eos: eastwood_disable_eos,
-	parallel_poll: eastwood_parallel_poll,
-	parallel_poll_configure: eastwood_parallel_poll_configure,
-	parallel_poll_response: eastwood_parallel_poll_response,
-	line_status: eastwood_line_status,
-	update_status: eastwood_update_status,
-	primary_address: eastwood_primary_address,
-	secondary_address: eastwood_secondary_address,
-	serial_poll_response: eastwood_serial_poll_response,
-	serial_poll_status: eastwood_serial_poll_status,
-	t1_delay: eastwood_t1_delay,
-	return_to_local: eastwood_return_to_local,
+	name: "fluke_unaccel",
+	attach: fluke_attach_holdoff_all,
+	detach: fluke_detach,
+	read: fluke_read,
+	write: fluke_write,
+	command: fluke_command,
+	take_control: fluke_take_control,
+	go_to_standby: fluke_go_to_standby,
+	request_system_control: fluke_request_system_control,
+	interface_clear: fluke_interface_clear,
+	remote_enable: fluke_remote_enable,
+	enable_eos: fluke_enable_eos,
+	disable_eos: fluke_disable_eos,
+	parallel_poll: fluke_parallel_poll,
+	parallel_poll_configure: fluke_parallel_poll_configure,
+	parallel_poll_response: fluke_parallel_poll_response,
+	line_status: fluke_line_status,
+	update_status: fluke_update_status,
+	primary_address: fluke_primary_address,
+	secondary_address: fluke_secondary_address,
+	serial_poll_response: fluke_serial_poll_response,
+	serial_poll_status: fluke_serial_poll_status,
+	t1_delay: fluke_t1_delay,
+	return_to_local: fluke_return_to_local,
 };
 
-/* eastwood_hybrid uses dma for writes but not for reads.  Added
+/* fluke_hybrid uses dma for writes but not for reads.  Added
  to deal with occasional corruption of bytes seen when doing dma
  reads.  From looking at the cb7210 vhdl, I believe the corruption
  is due to a hardware bug triggered by the cpu reading a cb7210
  register just as the dma controller is also doing a read. */
-gpib_interface_t eastwood_hybrid_interface =
+gpib_interface_t fluke_hybrid_interface =
 {
-	name: "eastwood_hybrid",
-	attach: eastwood_attach,
-	detach: eastwood_detach,
-	read: eastwood_read,
-	write: eastwood_accel_write,
-	command: eastwood_command,
-	take_control: eastwood_take_control,
-	go_to_standby: eastwood_go_to_standby,
-	request_system_control: eastwood_request_system_control,
-	interface_clear: eastwood_interface_clear,
-	remote_enable: eastwood_remote_enable,
-	enable_eos: eastwood_enable_eos,
-	disable_eos: eastwood_disable_eos,
-	parallel_poll: eastwood_parallel_poll,
-	parallel_poll_configure: eastwood_parallel_poll_configure,
-	parallel_poll_response: eastwood_parallel_poll_response,
-	line_status: eastwood_line_status,
-	update_status: eastwood_update_status,
-	primary_address: eastwood_primary_address,
-	secondary_address: eastwood_secondary_address,
-	serial_poll_response: eastwood_serial_poll_response,
-	serial_poll_status: eastwood_serial_poll_status,
-	t1_delay: eastwood_t1_delay,
-	return_to_local: eastwood_return_to_local,
+	name: "fluke_hybrid",
+	attach: fluke_attach_holdoff_all,
+	detach: fluke_detach,
+	read: fluke_read,
+	write: fluke_accel_write,
+	command: fluke_command,
+	take_control: fluke_take_control,
+	go_to_standby: fluke_go_to_standby,
+	request_system_control: fluke_request_system_control,
+	interface_clear: fluke_interface_clear,
+	remote_enable: fluke_remote_enable,
+	enable_eos: fluke_enable_eos,
+	disable_eos: fluke_disable_eos,
+	parallel_poll: fluke_parallel_poll,
+	parallel_poll_configure: fluke_parallel_poll_configure,
+	parallel_poll_response: fluke_parallel_poll_response,
+	line_status: fluke_line_status,
+	update_status: fluke_update_status,
+	primary_address: fluke_primary_address,
+	secondary_address: fluke_secondary_address,
+	serial_poll_response: fluke_serial_poll_response,
+	serial_poll_status: fluke_serial_poll_status,
+	t1_delay: fluke_t1_delay,
+	return_to_local: fluke_return_to_local,
 };
 
-gpib_interface_t eastwood_interface =
+gpib_interface_t fluke_interface =
 {
-	name: "eastwood",
-	attach: eastwood_attach,
-	detach: eastwood_detach,
-	read: eastwood_accel_read,
-	write: eastwood_accel_write,
-	command: eastwood_command,
-	take_control: eastwood_take_control,
-	go_to_standby: eastwood_go_to_standby,
-	request_system_control: eastwood_request_system_control,
-	interface_clear: eastwood_interface_clear,
-	remote_enable: eastwood_remote_enable,
-	enable_eos: eastwood_enable_eos,
-	disable_eos: eastwood_disable_eos,
-	parallel_poll: eastwood_parallel_poll,
-	parallel_poll_configure: eastwood_parallel_poll_configure,
-	parallel_poll_response: eastwood_parallel_poll_response,
-	line_status: eastwood_line_status,
-	update_status: eastwood_update_status,
-	primary_address: eastwood_primary_address,
-	secondary_address: eastwood_secondary_address,
-	serial_poll_response: eastwood_serial_poll_response,
-	serial_poll_status: eastwood_serial_poll_status,
-	t1_delay: eastwood_t1_delay,
-	return_to_local: eastwood_return_to_local,
+	name: "fluke",
+	attach: fluke_attach_holdoff_end,
+	detach: fluke_detach,
+	read: fluke_accel_read,
+	write: fluke_accel_write,
+	command: fluke_command,
+	take_control: fluke_take_control,
+	go_to_standby: fluke_go_to_standby,
+	request_system_control: fluke_request_system_control,
+	interface_clear: fluke_interface_clear,
+	remote_enable: fluke_remote_enable,
+	enable_eos: fluke_enable_eos,
+	disable_eos: fluke_disable_eos,
+	parallel_poll: fluke_parallel_poll,
+	parallel_poll_configure: fluke_parallel_poll_configure,
+	parallel_poll_response: fluke_parallel_poll_response,
+	line_status: fluke_line_status,
+	update_status: fluke_update_status,
+	primary_address: fluke_primary_address,
+	secondary_address: fluke_secondary_address,
+	serial_poll_response: fluke_serial_poll_response,
+	serial_poll_status: fluke_serial_poll_status,
+	t1_delay: fluke_t1_delay,
+	return_to_local: fluke_return_to_local,
 };
 
-irqreturn_t eastwood_gpib_internal_interrupt(gpib_board_t *board)
+irqreturn_t fluke_gpib_internal_interrupt(gpib_board_t *board)
 {
-	int status1, status2;
-	eastwood_private_t *priv = board->private_data;
+	int status0, status1, status2;
+	fluke_private_t *priv = board->private_data;
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
-	int retval;
+	int retval = IRQ_NONE;
+
+	status0 = fluke_paged_read_byte(e_priv, ISR0_IMR0, ISR0_IMR0_PAGE);
 	status1 = read_byte( nec_priv, ISR1 );
 	status2 = read_byte( nec_priv, ISR2 );
-	retval = nec7210_interrupt_have_status(board, nec_priv, status1, status2);
+
+	if(status0 & FLUKE_IFCI_BIT)
+	{
+		push_gpib_event( board, EventIFC );
+		wake_up_interruptible( &board->wait );
+		retval = IRQ_HANDLED;
+	}
 	
-/*	if((status1 & nec_priv->reg_bits[IMR1]) ||
+	if( nec7210_interrupt_have_status(board, nec_priv, status1, status2) == IRQ_HANDLED)
+		retval = IRQ_HANDLED;
+/* 
+	if((status1 & nec_priv->reg_bits[IMR1]) ||
 		(status2 & (nec_priv->reg_bits[IMR2] & IMR2_ENABLE_INTR_MASK)))
 	{
-		printk("eastwood: status1 0x%x, status2 0x%x\n", status1, status2);
+		printk("fluke: status1 0x%x, status2 0x%x\n", status1, status2);
 	}
 */
+
 	return retval;
 }
 
-irqreturn_t eastwood_gpib_interrupt(int irq, void *arg, struct pt_regs *registerp)
+irqreturn_t fluke_gpib_interrupt(int irq, void *arg)
 {
 	gpib_board_t *board = arg;
 	unsigned long flags;
 	irqreturn_t retval;
 	
 	spin_lock_irqsave(&board->spinlock, flags);
-	retval = eastwood_gpib_internal_interrupt(board);
+	retval = fluke_gpib_internal_interrupt(board);
 	spin_unlock_irqrestore(&board->spinlock, flags);
 	return retval;
 }
 
-int eastwood_allocate_private(gpib_board_t *board)
+int fluke_allocate_private(gpib_board_t *board)
 {
-	eastwood_private_t *priv;
+	fluke_private_t *priv;
 
-	board->private_data = kmalloc(sizeof(eastwood_private_t), GFP_KERNEL);
+	board->private_data = kmalloc(sizeof(fluke_private_t), GFP_KERNEL);
 	if(board->private_data == NULL)
 		return -ENOMEM;
 	priv = board->private_data;
-	memset( priv, 0, sizeof(eastwood_private_t));
+	memset( priv, 0, sizeof(fluke_private_t));
 	init_nec7210_private(&priv->nec7210_priv);
-	priv->dma_channel = -1;
 	priv->dma_buffer_size = 0x7ff;
-#if 0	
-	priv->dma_buffer = (void*)na_ocmem_s1;
-// printk("eastwood: using ocmem dma buffer at 0x%p\n", priv->dma_buffer);
-#else
 	priv->dma_buffer = kmalloc(priv->dma_buffer_size, GFP_KERNEL);
-// printk("eastwood: using sdram dma buffer at 0x%p\n", priv->dma_buffer);
-#endif
 	if(priv->dma_buffer == NULL)
 		return -ENOMEM;
-	priv->fifo_dirty = 1;
 	return 0;
 }
 
-void eastwood_generic_detach(gpib_board_t *board)
+void fluke_generic_detach(gpib_board_t *board)
 {
 	if(board->private_data)
 	{
-		eastwood_private_t *e_priv = board->private_data;
-		if(e_priv->dma_buffer && (unsigned long)(e_priv->dma_buffer) != na_ocmem_s1)
+		fluke_private_t *e_priv = board->private_data;
+		if(e_priv->dma_buffer)
 			kfree(e_priv->dma_buffer);
 		kfree(board->private_data);
 		board->private_data = NULL;
@@ -698,198 +717,294 @@ void eastwood_generic_detach(gpib_board_t *board)
 }
 
 // generic part of attach functions shared by all cb7210 boards
-int eastwood_generic_attach(gpib_board_t *board)
+int fluke_generic_attach(gpib_board_t *board)
 {
-	eastwood_private_t *e_priv;
+	fluke_private_t *e_priv;
 	nec7210_private_t *nec_priv;
 	int retval;
 
 	board->status = 0;
 
-	retval = eastwood_allocate_private(board);
+	retval = fluke_allocate_private(board);
 	if(retval < 0)
 		return retval;
 	e_priv = board->private_data;
 	nec_priv = &e_priv->nec7210_priv;
-	nec_priv->read_byte = eastwood_locking_read_byte;
-	nec_priv->write_byte = eastwood_locking_write_byte;
-	nec_priv->offset = eastwood_reg_offset;
+	nec_priv->read_byte = fluke_locking_read_byte;
+	nec_priv->write_byte = fluke_locking_write_byte;
+	nec_priv->offset = fluke_reg_offset;
 	nec_priv->type = CB7210;
 	return 0;
 }
 
-int eastwood_dma_handler(void *arg, int status)
+static int fluke_config_dma(gpib_board_t *board, int output)
 {
-	gpib_board_t *board = arg;
-	eastwood_private_t *e_priv = board->private_data;
-	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
-	unsigned long flags;
-	spin_lock_irqsave(&board->spinlock, flags);
-// 	printk("%s: dma status=0x%x\n", __FUNCTION__, status);
-	if((get_dma_status() & AVALON_BUSY_BIT) == 0)
-	{
-		clear_bit(DMA_WRITE_IN_PROGRESS_BN, &nec_priv->state);
-		clear_bit(DMA_READ_IN_PROGRESS_BN, &nec_priv->state);
-		nec7210_set_reg_bits(nec_priv, IMR1, HR_DOIE | HR_DIIE, HR_DOIE | HR_DIIE);
-		e_priv->fifo_dirty = 0;
-		wake_up_interruptible(&board->wait);
-	}
-	eastwood_gpib_internal_interrupt(board);
-// 	printk("%s: exit\n", __FUNCTION__);
-	spin_unlock_irqrestore(&board->spinlock, flags);
-	return IRQ_HANDLED;
-}
-
-void eastwood_config_dma(gpib_board_t *board, int output)
-{
-	eastwood_private_t *e_priv = board->private_data;
+	fluke_private_t *e_priv = board->private_data;
+	struct dma_slave_config config;
+	config.src_maxburst = 1;
+	config.dst_maxburst = 1;
+	config.device_fc = true;
+	config.slave_id = 0;
+	
 	if(output)
 	{
-		nios2_set_dma_waddr(e_priv->dma_channel, (dma_addr_t)e_priv->dma_port);
-		nios2_set_dma_wcon(e_priv->dma_channel, 1);
-		nios2_set_dma_rcon(e_priv->dma_channel, 0);
+		config.direction = DMA_MEM_TO_DEV;
+		config.src_addr = 0;
+		config.dst_addr = e_priv->dma_port_res->start;
+		config.src_addr_width = 1;
+		config.dst_addr_width = 1;
 	}else
 	{
-		nios2_set_dma_raddr(e_priv->dma_channel, (dma_addr_t)e_priv->dma_port);
-// 		printk("set dma%i raddr to 0x%x\n", e_priv->dma_channel, (int)e_priv->dma_port);
-		nios2_set_dma_rcon(e_priv->dma_channel, 1);
-// 		printk("set dma%i rcon to 1\n", e_priv->dma_channel);
-		nios2_set_dma_wcon(e_priv->dma_channel, 0);
-// 		printk("set dma%i wcon to 0\n", e_priv->dma_channel);
+		config.direction = DMA_DEV_TO_MEM;
+		config.src_addr = e_priv->dma_port_res->start;
+		config.dst_addr = 0;
+		config.src_addr_width = 1;
+		config.dst_addr_width = 1;
 	}
+	return dmaengine_slave_config(e_priv->dma_channel, &config);
 }
 
-int eastwood_init(eastwood_private_t *e_priv, gpib_board_t *board )
+int fluke_init(fluke_private_t *e_priv, gpib_board_t *board, int handshake_mode)
 {
 	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
 
 	nec7210_board_reset(nec_priv, board);
 	write_byte(nec_priv, AUX_LO_SPEED, AUXMR);
-	/* set clock register for maximum (20 MHz) driving frequency
+	/* set clock register for driving frequency
 	 * ICR should be set to clock in megahertz (1-15) and to zero
 	 * for clocks faster than 15 MHz (max 20MHz) */
 	write_byte(nec_priv, ICR | 10, AUXMR);
+	nec7210_set_handshake_mode(board, nec_priv, handshake_mode);
 
 	nec7210_board_online( nec_priv, board );
 
 	/* poll so we can detect ATN changes */
-#if 1	
-	if(gpib_request_pseudo_irq(board, eastwood_gpib_interrupt))
+	if(gpib_request_pseudo_irq(board, fluke_gpib_interrupt))
 	{
-		printk("eastwood_gpib: failed to allocate pseudo_irq\n");
+		printk("fluke_gpib: failed to allocate pseudo_irq\n");
 		return -EINVAL;
 	}
-#endif
+	
+	fluke_paged_write_byte(e_priv, FLUKE_IFCIE_BIT, ISR0_IMR0, ISR0_IMR0_PAGE);
 	return 0;
 }
 
-int eastwood_attach(gpib_board_t *board, gpib_board_config_t config)
+/* This function is passed to dma_request_channel() in order to
+ * select the pl330 dma channel which has been hardwired to
+ * the gpib controller. */
+static bool gpib_dma_channel_filter(struct dma_chan *chan, void *filter_param)
 {
-	eastwood_private_t *e_priv;
+	// select the channel which is wired to the gpib chip
+	return chan->chan_id == 0;
+}
+
+static int fluke_attach_impl(gpib_board_t *board, gpib_board_config_t config, unsigned handshake_mode)
+{
+	fluke_private_t *e_priv;
 	nec7210_private_t *nec_priv;
 	int isr_flags = 0;
 	int retval;
-
-	retval = eastwood_generic_attach(board);
+	int irq;
+	struct resource *res;
+	dma_cap_mask_t dma_cap;
+	
+	if(!fluke_gpib_pdev)
+	{
+		printk("No gpib platform device was found, attach failed.");
+		return -ENODEV;
+	}
+	
+	retval = fluke_generic_attach(board);
 	if(retval) return retval;
 
 	e_priv = board->private_data;
 	nec_priv = &e_priv->nec7210_priv;
-	nec_priv->offset = eastwood_reg_offset;	
-	if(request_mem_region(na_gpib_0_s0, eastwood_num_regs * eastwood_reg_offset, "eastwood_gpib") == NULL)
+	nec_priv->offset = fluke_reg_offset;	
+	
+	res = platform_get_resource(fluke_gpib_pdev, IORESOURCE_MEM, 0);
+	if (!res) {
+		dev_err(&fluke_gpib_pdev->dev, "Unable to locate mmio resource for cb7210 gpib\n");
+		return -ENODEV;
+	}
+
+	if(request_mem_region(res->start,
+			resource_size(res),
+			fluke_gpib_pdev->name) == NULL) {
+		dev_err(&fluke_gpib_pdev->dev, "cannot claim registers\n");
+		return -ENXIO;
+        }
+        e_priv->gpib_iomem_res = res;
+
+	nec_priv->iobase = ioremap_nocache(e_priv->gpib_iomem_res->start, 
+			resource_size(e_priv->gpib_iomem_res));
+	printk("gpib: iobase %lx remapped to %p, length=%d\n", (unsigned long)e_priv->gpib_iomem_res->start,
+		nec_priv->iobase, resource_size(e_priv->gpib_iomem_res));
+	if (!nec_priv->iobase) {
+		dev_err(&fluke_gpib_pdev->dev, "Could not map I/O memory\n");
+		return -ENOMEM;
+	}
+
+	res = platform_get_resource(fluke_gpib_pdev, IORESOURCE_MEM, 1);
+	if (!res) {
+		dev_err(&fluke_gpib_pdev->dev, "Unable to locate mmio resource for gpib dma port\n");
+		return -ENODEV;
+	}
+	if(request_mem_region(res->start,
+			resource_size(res),
+			fluke_gpib_pdev->name) == NULL) {
+		dev_err(&fluke_gpib_pdev->dev, "cannot claim registers\n");
+		return -ENXIO;
+        }
+        e_priv->dma_port_res = res;
+
+	res = platform_get_resource(fluke_gpib_pdev, IORESOURCE_MEM, 2);
+	if (!res) {
+		dev_err(&fluke_gpib_pdev->dev, "Unable to locate mmio resource for write transfer counter\n");
+		return -ENODEV;
+	}
+
+	if(request_mem_region(res->start,
+			resource_size(res),
+			fluke_gpib_pdev->name) == NULL) {
+		dev_err(&fluke_gpib_pdev->dev, "cannot claim registers\n");
+		return -ENXIO;
+        }
+        e_priv->write_transfer_counter_res = res;
+
+	e_priv->write_transfer_counter = ioremap_nocache(e_priv->write_transfer_counter_res->start, 
+			resource_size(e_priv->write_transfer_counter_res));
+	printk("gpib: write transfer counter %lx remapped to %p, length=%d\n",
+		(unsigned long)e_priv->write_transfer_counter_res->start, e_priv->write_transfer_counter, 
+		resource_size(e_priv->write_transfer_counter_res));
+	if (!e_priv->write_transfer_counter) {
+		dev_err(&fluke_gpib_pdev->dev, "Could not map I/O memory\n");
+		return -ENOMEM;
+	}
+
+	irq = platform_get_irq(fluke_gpib_pdev, 0);
+	printk("gpib: irq %d\n", irq);
+	if(irq < 0)
 	{
-		printk("eastwood_gpib: failed to allocate io memory region starting at 0x%x.\n",
-			   na_gpib_0_s0);
+		dev_err(&fluke_gpib_pdev->dev, "fluke_gpib: request for IRQ failed\n");
 		return -EBUSY;
 	}
-	nec_priv->iobase = (void*)(na_gpib_0_s0);
-	if(request_mem_region(na_gpib_0_s1, 1, "eastwood_gpib") == NULL)
-	{
-		printk("eastwood_gpib: failed to allocate io memory port at 0x%x for dma.\n",
-			   na_gpib_0_s1);
-		return -EBUSY;
-	}
-	e_priv->dma_port = (void*)na_gpib_0_s1;
-	if(request_mem_region(na_gpib_0_s2, 4, "eastwood_gpib") == NULL)
-	{
-		printk("eastwood_gpib: failed to allocate io memory at 0x%x for write transfer counter.\n",
-			   na_gpib_0_s2);
-		return -EBUSY;
-	}
-	e_priv->write_transfer_counter = (void*)na_gpib_0_s2;
-	if(request_irq(na_gpib_0_s0_irq, eastwood_gpib_interrupt, isr_flags, "eastwood_gpib", board))
-	{
-		printk( "eastwood_gpib: request for IRQ %d failed\n", na_gpib_0_s0_irq);
-		return -EBUSY;
-	}
-	e_priv->irq = na_gpib_0_s0_irq;
-	retval = nios2_request_dma("eastwood_gpib");
-	if(retval < 0) 
-	{
-		printk( "eastwood_gpib: failed to allocate a dma channel.\n");
+	retval = request_irq(irq, fluke_gpib_interrupt, isr_flags, fluke_gpib_pdev->name, board);
+	if(retval){
+		dev_err(&fluke_gpib_pdev->dev,
+			"cannot register interrupt handler err=%d\n",
+				retval);
 		return retval;
 	}
-	e_priv->dma_channel = retval;
-	nios2_set_dma_data_width(e_priv->dma_channel, 1);
-	nios2_set_dma_handler(e_priv->dma_channel, &eastwood_dma_handler, board);
+	e_priv->irq = irq;
+
+        dma_cap_zero(dma_cap);
+        dma_cap_set(DMA_SLAVE, dma_cap);
+	e_priv->dma_channel = dma_request_channel(dma_cap, gpib_dma_channel_filter, NULL);
+	if(e_priv->dma_channel == NULL) 
+	{
+		printk( "fluke_gpib: failed to allocate a dma channel.\n");
+		// we don't error out here because unaccel interface will still
+		// work without dma
+	}
 	
-	return eastwood_init(e_priv, board);
+	return fluke_init(e_priv, board, handshake_mode);
 }
 
-void eastwood_detach(gpib_board_t *board)
+int fluke_attach_holdoff_all(gpib_board_t *board, gpib_board_config_t config)
 {
-	eastwood_private_t *e_priv = board->private_data;
+	return fluke_attach_impl(board, config, HR_HLDA);
+}
+
+int fluke_attach_holdoff_end(gpib_board_t *board, gpib_board_config_t config)
+{
+	return fluke_attach_impl(board, config, HR_HLDE);
+}
+
+void fluke_detach(gpib_board_t *board)
+{
+	fluke_private_t *e_priv = board->private_data;
 	nec7210_private_t *nec_priv;
 
 	if(e_priv)
 	{
-		if(e_priv->dma_channel >= 0)
-			free_dma(e_priv->dma_channel);
+		if(e_priv->dma_channel != NULL)
+			dma_release_channel(e_priv->dma_channel);
 		gpib_free_pseudo_irq(board);
 		nec_priv = &e_priv->nec7210_priv;
+
+		if(nec_priv->iobase)
+		{
+			fluke_paged_write_byte(e_priv, 0, ISR0_IMR0, ISR0_IMR0_PAGE);
+			nec7210_board_reset(nec_priv, board);
+		}
 		if(e_priv->irq)
 		{
 			free_irq(e_priv->irq, board);
 		}
-		if(e_priv->write_transfer_counter)
+		if(e_priv->write_transfer_counter_res)
 		{
-			release_mem_region((unsigned long)e_priv->write_transfer_counter, 4);
+			release_mem_region(e_priv->write_transfer_counter_res->start, 
+				resource_size(e_priv->write_transfer_counter_res));
 		}
-		if(e_priv->dma_port)
+		if(e_priv->dma_port_res)
 		{
-			release_mem_region((unsigned long)e_priv->dma_port, 1);
+			release_mem_region(e_priv->dma_port_res->start, 
+				resource_size(e_priv->dma_port_res));
 		}
-		if(nec_priv->iobase)
+		if(e_priv->gpib_iomem_res)
 		{
-			nec7210_board_reset(nec_priv, board);
-			release_mem_region((unsigned long)nec_priv->iobase, eastwood_num_regs * eastwood_reg_offset);
+			release_mem_region(e_priv->gpib_iomem_res->start, 
+				resource_size(e_priv->gpib_iomem_res));
 		}
 	}
-	eastwood_generic_detach(board);
+	fluke_generic_detach(board);
 }
 
-static int __init eastwood_init_module( void )
-{
-	gpib_register_driver(&eastwood_unaccel_interface, THIS_MODULE);
-	gpib_register_driver(&eastwood_hybrid_interface, THIS_MODULE);
-	gpib_register_driver(&eastwood_interface, THIS_MODULE);
-	printk("eastwood_gpib: driver version 2006-06-18-1845\n");
+static int fluke_gpib_probe(struct platform_device *pdev) {
+	fluke_gpib_pdev = pdev;
 	return 0;
 }
 
-static void __exit eastwood_exit_module( void )
+static const struct of_device_id fluke_gpib_of_match[] = {
+	{ .compatible = "flk,fgpib-4.0"},
+	{ {0} }
+};
+MODULE_DEVICE_TABLE(of, fluke_gpib_of_match);
+
+static struct platform_driver fluke_gpib_platform_driver = {
+	.driver = {
+		.name = "fluke_gpib",
+		.owner = THIS_MODULE,
+		.of_match_table = fluke_gpib_of_match,
+	},
+	.probe = &fluke_gpib_probe
+};
+
+static int __init fluke_init_module( void )
 {
-	gpib_unregister_driver(&eastwood_unaccel_interface);
-	gpib_unregister_driver(&eastwood_hybrid_interface);
-	gpib_unregister_driver(&eastwood_interface);
+	int result;
+	
+	result = platform_driver_register(&fluke_gpib_platform_driver);
+	if (result) {
+		printk("fluke_gpib: platform_driver_register failed!\n");
+		return result;
+	}
+	
+	gpib_register_driver(&fluke_unaccel_interface, THIS_MODULE);
+	gpib_register_driver(&fluke_hybrid_interface, THIS_MODULE);
+	gpib_register_driver(&fluke_interface, THIS_MODULE);
+
+	printk("fluke_gpib\n");
+	return 0;
 }
 
-module_init( eastwood_init_module );
-module_exit( eastwood_exit_module );
+static void __exit fluke_exit_module( void )
+{
+	gpib_unregister_driver(&fluke_unaccel_interface);
+	gpib_unregister_driver(&fluke_hybrid_interface);
+	gpib_unregister_driver(&fluke_interface);
+	platform_driver_unregister(&fluke_gpib_platform_driver);
+}
 
-
-
-
-
-
-
+module_init( fluke_init_module );
+module_exit( fluke_exit_module );

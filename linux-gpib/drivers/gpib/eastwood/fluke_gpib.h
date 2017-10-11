@@ -1,9 +1,9 @@
 /***************************************************************************
-                              eastwood/eastwood_gpib.h
+                              fluke_gpib.h
                              -------------------
 
-    Author: Frank Mori Hess <fmhess@users.sourceforge.net>
-    copyright: (C) 2006 Fluke Corporation
+    Author: Frank Mori Hess <fmh6jj@gmail.com>
+    copyright: (C) 2006, 2010, 2015 Fluke Corporation
  ***************************************************************************/
 
 /***************************************************************************
@@ -15,36 +15,59 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef _EASTWOOD_GPIB_H
-#define _EASTWOOD_GPIB_H
+#ifndef _FLUKE_GPIB_H
+#define _FLUKE_GPIB_H
 
+#include <linux/compiler.h>
+#include <linux/dmaengine.h>
 #include <asm/io.h>
 #include <linux/delay.h>
 #include "nec7210.h"
-
-#define AVALON_DMA_FIFO_SIZE (8)
+#include <linux/interrupt.h>
 
 typedef struct
 {
 	nec7210_private_t nec7210_priv;
+	struct resource *gpib_iomem_res;
+	struct resource *write_transfer_counter_res;
+	struct resource *dma_port_res;
 	int irq;
-	int dma_channel;
+	struct dma_chan *dma_channel;
 	uint8_t *dma_buffer;
 	int dma_buffer_size;
-	void *dma_port;
 	void *write_transfer_counter;
-	unsigned fifo_dirty : 1;
-} eastwood_private_t;
+} fluke_private_t;
 
 
 // cb7210 specific registers and bits
 enum cb7210_regs
 {
+	ISR0_IMR0 = 0x6,
 	BUS_STATUS = 0x7,
 };
 enum cb7210_page_in
 {
-	BUS_STATUS_PAGE = 1,
+	ISR0_IMR0_PAGE = 1,
+	BUS_STATUS_PAGE = 1
+};
+
+/* IMR0 -- Interrupt Mode Register 0 */
+enum imr0_bits
+{
+	FLUKE_IFCIE_BIT = 0x8,	/* interface clear interrupt */
+};
+
+/* ISR0 -- Interrupt Status Register 0 */
+enum isr0_bits
+{
+	FLUKE_IFCI_BIT = 0x8,	/* interface clear interrupt */
+};
+
+// we customized the cb7210 vhdl to give the "data in" status
+// on the unused bit 7 of the address0 register.
+enum cb7210_address0
+{
+	DATA_IN_STATUS = 0x80
 };
 
 static inline int cb7210_page_in_bits(unsigned int page)
@@ -52,7 +75,7 @@ static inline int cb7210_page_in_bits(unsigned int page)
 	return 0x50 | (page & 0xf);
 }
 // don't use without locking nec_priv->register_page_lock
-static inline uint8_t eastwood_read_byte_nolock(nec7210_private_t *nec_priv,
+static inline uint8_t fluke_read_byte_nolock(nec7210_private_t *nec_priv,
 	int register_num)
 {
 	uint8_t retval;
@@ -61,12 +84,12 @@ static inline uint8_t eastwood_read_byte_nolock(nec7210_private_t *nec_priv,
 	return retval;
 }
 // don't use without locking nec_priv->register_page_lock
-static inline void eastwood_write_byte_nolock(nec7210_private_t *nec_priv,
+static inline void fluke_write_byte_nolock(nec7210_private_t *nec_priv,
 	uint8_t data, int register_num)
 {
 	writel(data, nec_priv->iobase + register_num * nec_priv->offset);
 }
-static inline uint8_t eastwood_paged_read_byte(eastwood_private_t *e_priv,
+static inline uint8_t fluke_paged_read_byte(fluke_private_t *e_priv,
 	unsigned int register_num, unsigned int page)
 {
 	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
@@ -74,22 +97,22 @@ static inline uint8_t eastwood_paged_read_byte(eastwood_private_t *e_priv,
 	unsigned long flags;
 
 	spin_lock_irqsave(&nec_priv->register_page_lock, flags);
-	eastwood_write_byte_nolock(nec_priv, cb7210_page_in_bits(page), AUXMR);
+	fluke_write_byte_nolock(nec_priv, cb7210_page_in_bits(page), AUXMR);
 	udelay(1);
-	retval = eastwood_read_byte_nolock(nec_priv, register_num);
+	retval = fluke_read_byte_nolock(nec_priv, register_num);
 	spin_unlock_irqrestore(&nec_priv->register_page_lock, flags);
 	return retval;
 }
-static inline void eastwood_paged_write_byte(eastwood_private_t *e_priv,
+static inline void fluke_paged_write_byte(fluke_private_t *e_priv,
 	uint8_t data, unsigned int register_num, unsigned int page)
 {
 	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
 	unsigned long flags;
 
 	spin_lock_irqsave(&nec_priv->register_page_lock, flags);
-	eastwood_write_byte_nolock(nec_priv, cb7210_page_in_bits(page), AUXMR);
+	fluke_write_byte_nolock(nec_priv, cb7210_page_in_bits(page), AUXMR);
 	udelay(1);
-	eastwood_write_byte_nolock(nec_priv, data, register_num);
+	fluke_write_byte_nolock(nec_priv, data, register_num);
 	spin_unlock_irqrestore(&nec_priv->register_page_lock, flags);
 }
 
@@ -119,22 +142,8 @@ enum cb7210_aux_cmds
 	AUX_HI_SPEED = 0x41,
 };
 
-enum avalon_dma_registers
-{
-	AVALON_STATUS_REG = 0,
-};
-
-enum avalon_dma_status_bits
-{
-	AVALON_DONE_BIT = 0x1,
-	AVALON_BUSY_BIT = 0x2,
-	AVALON_REOP_BIT = 0x4,
-	AVALON_WEOP_BIT = 0x8,
-	AVALON_LEN_BIT = 0x10
-};
-
-static const int eastwood_reg_offset = 4;
-static const int eastwood_num_regs = 8;
+static const int fluke_reg_offset = 4;
+static const int fluke_num_regs = 8;
 static const unsigned write_transfer_counter_mask = 0x7ff;
 
-#endif	// _EASTWOOD_GPIB_H
+#endif	// _FLUKE_GPIB_H
