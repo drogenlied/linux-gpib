@@ -320,7 +320,7 @@ static int fluke_dma_write(gpib_board_t *board,
 	// make sure fluke_dma_callback got called
 	if(test_bit(DMA_WRITE_IN_PROGRESS_BN, &nec_priv->state))
 	{
-		fluke_dma_callbacard);
+		fluke_dma_callback(board);
 	}
 
 	*bytes_written = readl(e_priv->write_transfer_counter) & write_transfer_counter_mask;
@@ -651,7 +651,7 @@ irqreturn_t fluke_gpib_internal_interrupt(gpib_board_t *board)
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 	int retval = IRQ_NONE;
 
-	status0 = fluke_paged_read_byte(e_priv, ISR0_IMR0, ISR0_IMR0_PAGE);
+	status0 = fluke_paged_read_byte(priv, ISR0_IMR0, ISR0_IMR0_PAGE);
 	status1 = read_byte( nec_priv, ISR1 );
 	status2 = read_byte( nec_priv, ISR2 );
 
