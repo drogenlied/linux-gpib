@@ -229,6 +229,56 @@ static int wait_for_idle(gpib_board_t *board, short wake_on_listener_idle,
 	return retval;
 }
 
+/* Check if the SH state machine is in SGNS.  We check twice since there is a very small chance 
+ * we could be blowing through SGNS from SIDS to SDYS if there is already a
+ * byte available in the handshake state machine.  We are interested
+ * in the case where the handshake is stuck in SGNS due to no byte being
+ * available to the chip (and thus we can be confident a dma transfer will
+ * result in at least one byte making it into the chip).  This matters
+ * because we want to be confident before sending a "send eoi" auxillary
+ * command that we will be able to also put the associated data byte
+ * in the chip before any potential timeout.
+*/
+static int source_handshake_is_sgns(fluke_private_t *e_priv)
+{
+	int i;
+	
+	for(i = 0; i < 2; ++i)
+	{
+		if((fluke_paged_read_byte(e_priv, STATE1_REG, STATE1_PAGE) & SOURCE_HANDSHAKE_MASK) != SOURCE_HANDSHAKE_SGNS_BITS)
+		{
+			return 0;
+		}
+	}
+	return 1;
+}
+
+/* Wait until the gpib chip is ready to accept a data out byte.
+ * If the chip is SGNS it is probably waiting for a a byte to
+ * be written to it.
+ */
+static int wait_for_data_out_ready(gpib_board_t *board)
+{
+	fluke_private_t *e_priv = board->private_data;
+	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
+	int retval = 0;
+// 	printk("%s: enter\n", __FUNCTION__);
+
+	if(wait_event_interruptible(board->wait,
+		source_handshake_is_sgns(e_priv) ||
+		test_bit(DEV_CLEAR_BN, &nec_priv->state) ||
+		test_bit(TIMO_NUM, &board->status)))
+	{
+		retval = -ERESTARTSYS;
+	}
+	if(test_bit(TIMO_NUM, &board->status))
+		retval = -ETIMEDOUT;
+	if(test_and_clear_bit(DEV_CLEAR_BN, &nec_priv->state))
+		retval = -EINTR;
+// 	printk("%s: exit, retval=%i\n", __FUNCTION__, retval);
+	return retval;
+}
+
 static void fluke_dma_callback(void *arg)
 {
 	gpib_board_t *board = arg;
@@ -375,6 +425,15 @@ static int fluke_accel_write(gpib_board_t *board,
 		size_t num_bytes;
 		// 		printk("%s: handling last byte\n", __FUNCTION__);
 		if(remainder != 1) BUG();
+		
+		/* wait until we are sure we will be able to write the data byte
+		 * into the chip before we send AUX_SEOI.  This prevents a timeout
+		 * scenerio where we send AUX_SEOI but then timeout without getting
+		 * any bytes into the gpib chip.  This will result in the first byte
+		 * of the next write having a spurious EOI set on the first byte. */
+		retval = wait_for_data_out_ready(board);
+		if(retval < 0) return retval;
+		
 		write_byte(nec_priv, AUX_SEOI, AUXMR);
 		retval = fluke_dma_write(board, buffer, remainder, &num_bytes);
 		*bytes_written += num_bytes;
@@ -658,7 +717,6 @@ irqreturn_t fluke_gpib_internal_interrupt(gpib_board_t *board)
 	if(status0 & FLUKE_IFCI_BIT)
 	{
 		push_gpib_event( board, EventIFC );
-		wake_up_interruptible( &board->wait );
 		retval = IRQ_HANDLED;
 	}
 	
@@ -672,6 +730,11 @@ irqreturn_t fluke_gpib_internal_interrupt(gpib_board_t *board)
 	}
 */
 
+	if( retval == IRQ_HANDLED )
+	{
+		wake_up_interruptible( &board->wait );
+	}
+    
 	return retval;
 }
 

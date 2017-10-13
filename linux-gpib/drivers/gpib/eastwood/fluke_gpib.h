@@ -42,13 +42,15 @@ typedef struct
 // cb7210 specific registers and bits
 enum cb7210_regs
 {
+	STATE1_REG = 0x4,
 	ISR0_IMR0 = 0x6,
-	BUS_STATUS = 0x7,
+	BUS_STATUS = 0x7
 };
 enum cb7210_page_in
 {
 	ISR0_IMR0_PAGE = 1,
-	BUS_STATUS_PAGE = 1
+	BUS_STATUS_PAGE = 1,
+	STATE1_PAGE = 1
 };
 
 /* IMR0 -- Interrupt Mode Register 0 */
@@ -61,6 +63,15 @@ enum imr0_bits
 enum isr0_bits
 {
 	FLUKE_IFCI_BIT = 0x8,	/* interface clear interrupt */
+};
+
+enum state1_bits
+{
+	SOURCE_HANDSHAKE_SIDS_BITS = 0x0, /* source idle state */
+	SOURCE_HANDSHAKE_SGNS_BITS = 0x1, /* source generate state */
+	SOURCE_HANDSHAKE_SDYS_BITS = 0x2, /* source delay state */
+	SOURCE_HANDSHAKE_STRS_BITS = 0x5, /* source transfer state */
+	SOURCE_HANDSHAKE_MASK = 0x7
 };
 
 // we customized the cb7210 vhdl to give the "data in" status
