@@ -110,6 +110,7 @@ static inline uint8_t fluke_paged_read_byte(fluke_private_t *e_priv,
 	spin_lock_irqsave(&nec_priv->register_page_lock, flags);
 	fluke_write_byte_nolock(nec_priv, cb7210_page_in_bits(page), AUXMR);
 	udelay(1);
+	/* chip auto clears the page after a read */
 	retval = fluke_read_byte_nolock(nec_priv, register_num);
 	spin_unlock_irqrestore(&nec_priv->register_page_lock, flags);
 	return retval;
@@ -124,6 +125,8 @@ static inline void fluke_paged_write_byte(fluke_private_t *e_priv,
 	fluke_write_byte_nolock(nec_priv, cb7210_page_in_bits(page), AUXMR);
 	udelay(1);
 	fluke_write_byte_nolock(nec_priv, data, register_num);
+	fluke_write_byte_nolock(nec_priv, cb7210_page_in_bits(0), AUXMR);
+	udelay(1);
 	spin_unlock_irqrestore(&nec_priv->register_page_lock, flags);
 }
 
