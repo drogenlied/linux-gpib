@@ -208,6 +208,13 @@ int nec7210_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer,
 	if(send_eoi)
 	{
 		size_t num_bytes;
+
+		/* We need to wait to make sure we will immediately be able to write the data byte
+		* into the chip before sending the associated AUX_SEOI command.  This is really
+		* only needed for length==1 since otherwise the earlier calls to pio_write
+		* will have dont the wait already.  */
+		retval = pio_write_wait(board, priv, 0, 0, priv->type == NEC7210);
+		if(retval < 0) return retval;
 		/*send EOI */
 		write_byte(priv, AUX_SEOI, AUXMR);
 
