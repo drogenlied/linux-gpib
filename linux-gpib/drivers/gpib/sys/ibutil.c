@@ -116,14 +116,15 @@ int general_ibstatus( gpib_board_t *board, const gpib_status_queue_t *device,
 
 	if( desc )
 	{
-		if( atomic_read(&desc->io_in_progress) )
-			status &= ~CMPL;
-		else
-			status |= CMPL;
 		if( set_mask & CMPL )
 			atomic_set(&desc->io_in_progress, 1);
 		else if( clear_mask & CMPL )
 			atomic_set(&desc->io_in_progress, 0);
+		
+		if( atomic_read(&desc->io_in_progress) )
+			status &= ~CMPL;
+		else
+			status |= CMPL;
 	}
 	if( num_gpib_events( &board->event_queue ) )
 		status |= EVENT;
