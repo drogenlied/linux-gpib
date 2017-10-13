@@ -47,7 +47,8 @@ enum Action
 	GPIB_TAKE_CONTROL,
 	GPIB_TIMEOUT,
 	GPIB_WAIT,
-	GPIB_WRITE
+	GPIB_WRITE,
+	GPIB_GROUP_EXECUTE_TRIGGER
 };
 
 typedef struct
@@ -243,6 +244,7 @@ int prompt_for_action(void)
 			"\tchange (t)imeout on io operations\n"
 			"\trequest ser(v)ice (board only)\n"
 			"\t(w)rite data string\n"
+			"\tsend group e(x)ecute trigger (device only)\n"
 			": " );
 
 		if(fgets( input, sizeof( input ), stdin ) == NULL)
@@ -316,6 +318,10 @@ int prompt_for_action(void)
 			case 'w':
 			case 'W':
 				return GPIB_WRITE;
+				break;
+			case 'x':
+			case 'X':
+				return GPIB_GROUP_EXECUTE_TRIGGER;
 				break;
 			default:
 				fprintf( stderr, "invalid selection\n");
@@ -595,6 +601,16 @@ int device_clear(int ud)
 	return 0;
 }
 
+int group_execute_trigger(int ud)
+{
+	if(ibtrg(ud) & ERR)
+	{
+		return -1;
+	}
+	printf("Group execute trigger sent.\n" );
+	return 0;
+}
+
 int interface_clear( int ud )
 {
 
@@ -771,6 +787,9 @@ int main(int argc, char **argv)
 				break;
 			case GPIB_WRITE:
 				prompt_for_write( dev );
+				break;
+			case GPIB_GROUP_EXECUTE_TRIGGER:
+				group_execute_trigger(dev);
 				break;
 			default:
 				fprintf( stderr, "bug, unknown selection\n");
