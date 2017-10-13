@@ -43,7 +43,8 @@ int internal_ibstop( ibConf_t *conf )
 	conf->async.in_progress = 0;
 	pthread_mutex_unlock( &conf->async.lock );
 
-	setIberr( EABO );
+	setIberr( conf->async.iberr );
+	setIbcnt( conf->async.ibcntl );
 
 	return 1;
 }
@@ -61,5 +62,5 @@ int ibstop( int ud )
 	if( retval < 0 )
 		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
 
-	return general_exit_library( ud, 0, 0, 0, 0, CMPL, 1 );
+	return general_exit_library( ud, 0, 0, 0, 0, conf->async.ibsta & (ERR | CMPL), 1 );
 }

@@ -90,6 +90,9 @@ ssize_t read_data(ibConf_t *conf, uint8_t *buffer, size_t count, size_t *bytes_r
 				conf->timed_out = 1;
 				setIberr(EABO);
 				break;
+			case EINTR:
+				setIberr( EABO );
+				break;
 			default:
 				setIberr(EDVR);
 				setIbcnt(errno);
