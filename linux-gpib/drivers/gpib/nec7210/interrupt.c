@@ -157,7 +157,6 @@ irqreturn_t nec7210_interrupt_have_status( gpib_board_t *board,
 	if(status1 & HR_ERR)
 	{
 		set_bit( BUS_ERROR_BN, &priv->state );
-		printk("nec7210: bus error\n");
 	}
 
 	if( status1 & HR_DEC )

@@ -37,12 +37,12 @@ static int pio_write_wait(gpib_board_t *board, nec7210_private_t *priv,
 	}
 	if(test_bit(TIMO_NUM, &board->status))
 	{
-		printk("nec7210: write timed out\n");
+		GPIB_DPRINTK("nec7210: write timed out\n");
 		return -ETIMEDOUT;
 	}
 	if(test_bit(DEV_CLEAR_BN, &priv->state))
 	{
-		printk("nec7210: write interrupted by clear\n");
+		GPIB_DPRINTK("nec7210: write interrupted by clear\n");
 		return -EINTR;
 	}
 	if(wake_on_bus_error && test_and_clear_bit(BUS_ERROR_BN, &priv->state))
