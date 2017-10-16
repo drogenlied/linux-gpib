@@ -339,6 +339,8 @@ int perform_read(int ud, int max_num_bytes)
 	buffer = malloc(buffer_size);
 	int is_string;
 	int i;
+	long read_count = 0;
+	
 	if(buffer == NULL) 
 	{
 		fprintf(stderr, "%s: failed to allocate buffer.\n", __FUNCTION__);
@@ -348,8 +350,12 @@ int perform_read(int ud, int max_num_bytes)
 	printf("trying to read %i bytes from device...\n", max_num_bytes);
 
 	ibrd(ud, buffer, buffer_size - 1);
+	if((ThreadIbsta() & ERR == 0) || ThreadIberr() != EDVR)
+	{
+		read_count = ThreadIbcntl();
+	}
 	is_string = 1;
-	for(i = 0; i < ThreadIbcntl(); ++i)
+	for(i = 0; i < read_count; ++i)
 	{
 		if(isascii(buffer[i]) == 0) 
 		{
@@ -363,14 +369,14 @@ int perform_read(int ud, int max_num_bytes)
 	}else
 	{
 		printf("received binary data (hex): ");
-		for(i = 0; i < ThreadIbcntl(); ++i)
+		for(i = 0; i < read_count; ++i)
 		{
 			printf("%2x ", (unsigned)buffer[i]);
 		}
 		printf("\n");
 	}
 	free(buffer);
-	printf("Number of bytes read: %li\n", ThreadIbcntl());
+	printf("Number of bytes read: %li\n", read_count);
 	if(ThreadIbsta() & ERR)
 		return -1;
 	return 0;
@@ -672,7 +678,7 @@ int prompt_for_take_control(int ud)
 	buffer = malloc(buffer_size);
 	if(buffer == NULL)
 		return -ENOMEM;
-	printf("Enter '1' to assert ATN synchronously, or '0' for asynchronously [0]: ");
+	printf("Enter '1' to assert ATN synchronously, or '0' for asynchronously [1]: ");
 	if(fgets(buffer, buffer_size, stdin) == NULL)
 	{
 		fprintf(stderr, "Error reading from standard input.\n");
@@ -680,7 +686,7 @@ int prompt_for_take_control(int ud)
 	}
 	synchronous = strtol(buffer, &endptr, 0);
 	if(endptr == buffer)
-		synchronous = 0;
+		synchronous = 1;
 	free(buffer);
 	printf("Taking control ");
 	if(synchronous)
