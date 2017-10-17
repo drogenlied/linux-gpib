@@ -46,7 +46,7 @@ int internal_ibstop( ibConf_t *conf )
 	setIberr( conf->async.iberr );
 	setIbcnt( conf->async.ibcntl );
 
-	return 1;
+	return 0;
 }
 
 int ibstop( int ud )
@@ -62,5 +62,5 @@ int ibstop( int ud )
 	if( retval < 0 )
 		return general_exit_library( ud, 1, 0, 0, 0, 0, 1 );
 
-	return general_exit_library( ud, 0, 0, 0, 0, conf->async.ibsta & (ERR | CMPL), 1 );
+	return general_exit_library( ud, conf->async.ibsta & ERR, 0, 0, 0, 0, 1 );
 }
