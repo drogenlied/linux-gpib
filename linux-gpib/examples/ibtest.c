@@ -837,7 +837,7 @@ void fprint_status( FILE* filep, char *msg )
 	if(ThreadIbsta() & DTAS) fprintf(filep, "DTAS ");
 	fprintf( filep, ">\n" );
 
-	fprintf( filep,"iberr= %d\n", iberr);
+	fprintf( filep,"iberr= %d\n", ThreadIberr());
 	if( ( ThreadIbsta() & ERR ) )
 	{
 		fprintf( filep, "%s\n", gpib_error_string( ThreadIberr() ) );
@@ -845,6 +845,6 @@ void fprint_status( FILE* filep, char *msg )
 
 	fprintf( filep, "\n" );
 
-	fprintf( filep, "ibcnt = %d\n", ibcnt );
+	fprintf( filep, "ibcntl = %ld\n", ThreadIbcntl() );
 }
 
