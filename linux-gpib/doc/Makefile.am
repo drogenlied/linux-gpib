@@ -31,7 +31,7 @@ linux-gpib.pdf: $(SGML)
 	$(JW_PATH) -f docbook -b pdf linux-gpib.sgml
 
 doc_html/*: $(SGML)
-	{ $(JW_PATH) -f docbook -b html -o doc_html linux-gpib.sgml; } && { touch doc_html/*; }
+	{ $(JW_PATH) -f docbook -b html -o doc_html -V '%use-id-as-filename%' linux-gpib.sgml; } && { touch doc_html/*; }
 
 man/*: $(SGML)
 	{ $(JW_PATH) -f docbook -b man -o man linux-gpib.sgml; } && { touch man/*; }
