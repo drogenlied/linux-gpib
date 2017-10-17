@@ -3,6 +3,10 @@ GPIB_DUMMY_VERSION {
 	global:
 		AllSPoll;
 		AllSpoll;
+		AsyncIbsta;
+		AsyncIberr;
+		AsyncIbcnt;
+		AsyncIbcntl;
 		DevClear;
 		DevClearList;
 		EnableLocal;

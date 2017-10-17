@@ -170,6 +170,8 @@ static void* do_aio( void *varg )
 		conf->async.ibcntl = count;
 		conf->async.iberr = 0;
 		conf->async.ibsta = CMPL;
+		if(conf->end) conf->async.ibsta |= END;
+		if(conf->timed_out) conf->async.ibsta |= TIMO;
 	}
 	pthread_mutex_unlock( &conf->async.lock );
 	pthread_cleanup_pop( 1 );
@@ -182,9 +184,13 @@ int gpib_aio_join( struct async_operation *async )
 
 	pthread_mutex_lock( &async->join_lock );
 	retval = pthread_join( async->thread, NULL );
+	pthread_mutex_unlock( &async->join_lock );
 	switch( retval )
 	{
 	case 0:
+		setAsyncIbsta(async->ibsta);
+		setAsyncIberr(async->iberr);
+		setAsyncIbcnt(async->ibcntl);
 		break;
 	case ESRCH:	/* thread has already been joined */
 		retval = 0;
@@ -196,6 +202,5 @@ int gpib_aio_join( struct async_operation *async )
 		setIbcnt( retval );
 		break;
 	}
-	pthread_mutex_unlock( &async->join_lock );
 	return retval;
 }

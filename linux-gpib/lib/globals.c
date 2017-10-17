@@ -30,50 +30,35 @@ static pthread_key_t ibsta_key;
 static pthread_key_t iberr_key;
 static pthread_key_t ibcntl_key;
 
+static pthread_key_t async_ibsta_key;
+static pthread_key_t async_iberr_key;
+static pthread_key_t async_ibcntl_key;
+
 static pthread_once_t global_keys_once = PTHREAD_ONCE_INIT;
-
-static void ibsta_destroy( void *thread_ibsta )
-{
-	if( thread_ibsta )
-	{
-		free( thread_ibsta );
-		thread_ibsta = NULL;
-	}
-}
-
-static void iberr_destroy( void *thread_iberr )
-{
-	if( thread_iberr )
-	{
-		free( thread_iberr );
-		thread_iberr = NULL;
-	}
-}
-
-static void ibcntl_destroy( void *thread_ibcntl )
-{
-	if( thread_ibcntl )
-	{
-		free( thread_ibcntl );
-		thread_ibcntl = NULL;
-	}
-}
 
 static void global_keys_alloc()
 {
 	int retval;
 
-	retval = pthread_key_create( &ibsta_key, ibsta_destroy );
+	retval = pthread_key_create( &ibsta_key, free );
 	if( retval ) fprintf( stderr, "libgpib: failed to allocate TSD key!\n" );
-	retval = pthread_key_create( &iberr_key, iberr_destroy );
+	retval = pthread_key_create( &iberr_key, free );
 	if( retval ) fprintf( stderr, "libgpib: failed to allocate TSD key!\n" );
-	retval = pthread_key_create( &ibcntl_key, ibcntl_destroy );
+	retval = pthread_key_create( &ibcntl_key, free );
+	if( retval ) fprintf( stderr, "libgpib: failed to allocate TSD key!\n" );
+
+	retval = pthread_key_create( &async_ibsta_key, free );
+	if( retval ) fprintf( stderr, "libgpib: failed to allocate TSD key!\n" );
+	retval = pthread_key_create( &async_iberr_key, free );
+	if( retval ) fprintf( stderr, "libgpib: failed to allocate TSD key!\n" );
+	retval = pthread_key_create( &async_ibcntl_key, free );
 	if( retval ) fprintf( stderr, "libgpib: failed to allocate TSD key!\n" );
 }
 
 void globals_alloc( void )
 {
 	int *ibsta_p, *iberr_p, *ibcntl_p;
+	int *async_ibsta_p, *async_iberr_p, *async_ibcntl_p;
 
 	pthread_once( &global_keys_once, global_keys_alloc );
 	if( pthread_getspecific( ibsta_key ) == NULL )
@@ -87,12 +72,29 @@ void globals_alloc( void )
 		ibcntl_p = malloc( sizeof( long ) );
 		if( ibcntl_p == NULL )
 		fprintf( stderr, "libgpib: failed to allocate ibcntl!\n" );
+		async_ibsta_p = malloc( sizeof( int ) );
+		if( async_ibsta_p == NULL )
+		fprintf( stderr, "libgpib: failed to allocate async_ibsta!\n" );
+		async_iberr_p = malloc( sizeof( int ) );
+		if( async_iberr_p == NULL )
+		fprintf( stderr, "libgpib: failed to allocate async_iberr!\n" );
+		async_ibcntl_p = malloc( sizeof( long ) );
+		if( async_ibcntl_p == NULL )
+		fprintf( stderr, "libgpib: failed to allocate async_ibcntl!\n" );
+
 		*ibsta_p = 0;
 		*iberr_p = 0;
 		*ibcntl_p = 0;
+		*async_ibsta_p = 0;
+		*async_iberr_p = 0;
+		*async_ibcntl_p = 0;
+
 		pthread_setspecific( ibsta_key, ibsta_p );
 		pthread_setspecific( iberr_key, iberr_p );
 		pthread_setspecific( ibcntl_key, ibcntl_p );
+		pthread_setspecific( async_ibsta_key, async_ibsta_p );
+		pthread_setspecific( async_iberr_key, async_iberr_p );
+		pthread_setspecific( async_ibcntl_key, async_ibcntl_p );
 	}
 }
 
@@ -138,6 +140,48 @@ void setIbcnt( long count )
 	*thread_ibcntl = count;
 }
 
+void setAsyncIbsta( int status )
+{
+	int *async_thread_ibsta;
+
+	globals_alloc();
+	async_thread_ibsta = pthread_getspecific( async_ibsta_key );
+	if( async_thread_ibsta == NULL )
+	{
+		fprintf( stderr, "libgpib: failed to set async_ibsta TSD\n" );
+		return;
+	}
+	*async_thread_ibsta = status;
+}
+
+void setAsyncIberr( int error )
+{
+	int *async_thread_iberr;
+
+	globals_alloc();
+	async_thread_iberr = pthread_getspecific( async_iberr_key );
+	if( async_thread_iberr == NULL )
+	{
+		fprintf( stderr, "libgpib: failed to set async_iberr TSD\n" );
+		return;
+	}
+	*async_thread_iberr = error;
+}
+
+void setAsyncIbcnt( long count )
+{
+	int *async_thread_ibcntl;
+
+	globals_alloc();
+	async_thread_ibcntl = pthread_getspecific( async_ibcntl_key );
+	if( async_thread_ibcntl == NULL )
+	{
+		fprintf( stderr, "libgpib: failed to set async_ibcntl TSD\n" );
+		return;
+	}
+	*async_thread_ibcntl = count;
+}
+
 int ThreadIbsta( void )
 {
 	int *thread_ibsta;
@@ -148,7 +192,7 @@ int ThreadIbsta( void )
 	if( thread_ibsta == NULL )
 	{
 		fprintf( stderr, "libgpib: failed to get ibsta TSD\n" );
-		return ERR;
+		return -1;
 	}
 
 	return *thread_ibsta;
@@ -164,7 +208,7 @@ int ThreadIberr( void )
 	if( thread_iberr == NULL )
 	{
 		fprintf( stderr, "libgpib: failed to get iberr TSD\n" );
-		return EDVR;
+		return -1;
 	}
 
 	return *thread_iberr;
@@ -184,16 +228,68 @@ long ThreadIbcntl( void )
 	if( thread_ibcntl == NULL )
 	{
 		fprintf( stderr, "libgpib: failed to get ibcntl TSD\n" );
-		return 0;
+		return -1;
 	}
 
 	return *thread_ibcntl;
+}
+
+int AsyncIbsta( void )
+{
+	int *async_thread_ibsta;
+
+	globals_alloc();
+
+	async_thread_ibsta = pthread_getspecific( async_ibsta_key );
+	if( async_thread_ibsta == NULL )
+	{
+		fprintf( stderr, "libgpib: failed to get async_ibsta TSD\n" );
+		return -1;
+	}
+
+	return *async_thread_ibsta;
+}
+
+int AsyncIberr( void )
+{
+	int *async_thread_iberr;
+
+	globals_alloc();
+
+	async_thread_iberr = pthread_getspecific( async_iberr_key );
+	if( async_thread_iberr == NULL )
+	{
+		fprintf( stderr, "libgpib: failed to get async_iberr TSD\n" );
+		return -1;
+	}
+
+	return *async_thread_iberr;
+}
+
+int AsyncIbcnt( void )
+{
+	return AsyncIbcntl();
+}
+
+long AsyncIbcntl( void )
+{
+	int *async_thread_ibcntl;
+
+	globals_alloc();
+	async_thread_ibcntl = pthread_getspecific( async_ibcntl_key );
+	if( async_thread_ibcntl == NULL )
+	{
+		fprintf( stderr, "libgpib: failed to get async_ibcntl TSD\n" );
+		return -1;
+	}
+
+	return *async_thread_ibcntl;
 }
 
 void sync_globals( void )
 {
 	ibsta = ThreadIbsta();
 	iberr = ThreadIberr();
-	ibcntl = ThreadIbcnt();
+	ibcntl = ThreadIbcntl();
 	ibcnt = ibcntl;
 }

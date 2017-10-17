@@ -1262,7 +1262,7 @@ volatile int ibsta;
 	<entry>CMPL</entry>
 	<entry>0x100</entry>
 	<entry>I/O operation is complete.  Useful for determining when
-	an asynchronous io operation (ibrda(), ibwrta(), etc) has
+	an asynchronous I/O operation (ibrda(), ibwrta(), etc) has
 	completed.</entry>
 	<entry>board or device</entry>
 	</row>
@@ -3109,15 +3109,17 @@ volatile int ibsta;
 	operation is in progress, most library functions will
 	fail with an EOIP error.  In order to sucessfully
 	complete an
-	asynchronous operation, you must call
+	asynchronous operation and resynchronize its results
+	with the current thread, you must call
 	<link LINKEND="reference-function-ibwait">ibwait()</link>
 	with CMPL set in the wait mask,	until the CMPL bit is set ibsta.  Asynchronous
 	operations
-	may also be aborted with an
+	may also be completed by a call to
 	<link LINKEND="reference-function-ibstop">ibstop()</link>
 	or
 	<link LINKEND="reference-function-ibonl">ibonl()</link>
-	call.
+	call.  Note, ibwait() will only complete the asynchronous operation
+	if you explicitly set the CMPL bit in the wait mask parameter of ibwait().
 	</para>
 </refsect1>
 <refsect1>
@@ -3902,10 +3904,10 @@ volatile int ibsta;
 	<link LINKEND="reference-function-ibrsp">ibrsp()</link>.
 	</para>
 	<para>
-	If you wish to resynchronize and obtain the results from an asynchronous io operation,
+	If you wish to resynchronize and obtain the results from an asynchronous I/O operation,
 	you must wait on CMPL by setting its bit in the <parameter>status_mask</parameter> parameter.
 	Then if ibwait returns with CMPL set, it will have updated iberr, ibcnt, and the ERR bit of ibsta 
-	with the most recent asynchronous io results.
+	with the most recent asynchronous I/O results.
 	</para>
 </refsect1>
 <refsect1>
@@ -5255,6 +5257,165 @@ constant NOADDR.
 <title>
 	Utility Functions
 </title>
+
+<refentry ID="reference-function-async-ibcnt">
+<refmeta>
+	<refentrytitle>AsyncIbcnt and AsyncIbcntl</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>AsyncIbcnt and AsyncIbcntl</refname>
+	<refpurpose>ibcnt and ibcntl values for asynchronous I/O operation</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>AsyncIbcnt</function></funcdef>
+		<paramdef>void</paramdef>
+	</funcprototype>
+	<funcprototype>
+		<funcdef>long <function>AsyncIbcntl</function></funcdef>
+		<paramdef>void</paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	AsyncIbcnt() and AsyncIbcntl() return thread-local counts related to
+	the global
+	variables <link LINKEND="reference-globals-ibcnt">ibcnt and ibcntl</link>.
+	Their values correspond to the result of the last asynchronous I/O operation
+	resynchronized to the current thread by an <link LINKEND="reference-function-ibwait">ibwait</link>
+	or <link LINKEND="reference-function-ibstop">ibstop</link> call.  These
+	functions only reflect the result of the asynchronous I/O operation itself
+	and not, for example, the ibwait which resynchronized the asynchronous result
+	to the current thread.  Thus the result from AsyncIbcnt() is easier
+	to interpret than ThreadIbcnt(), since it is unambiguous whether the value
+	is associated with the asynchronous I/O result, or with the function call used
+	to resynchronize (ibwait or ibstop).
+	</para>
+	<para>These functions are Linux-GPIB extensions.</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	A value related to <link LINKEND="reference-globals-ibcnt">ibcnt or ibcntl</link>
+	corresponding to the last asynchronous I/O operation
+	resynchronized to the current thread is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-async-iberr">
+<refmeta>
+	<refentrytitle>AsyncIberr</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>AsyncIberr</refname>
+	<refpurpose>iberr value for last asynchronous I/O operation</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>AsyncIberr</function></funcdef>
+		<paramdef>void</paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	AsyncIberr() returns a thread-local error number related to the global
+	variable <link LINKEND="reference-globals-iberr">iberr</link>.
+	Its value corresponds to the result of the last asynchronous I/O operation
+	resynchronized to the current thread 
+	by an <link LINKEND="reference-function-ibwait">ibwait</link>
+	or <link LINKEND="reference-function-ibstop">ibstop</link> call.
+	This
+	function only reflects the result of the asynchronous I/O operation itself
+	and not, for example, the ibwait which resynchronized the asynchronous result
+	to the current thread.  Thus the result from AsyncIberr() is easier
+	to interpret than ThreadIberr(), since it is unambiguous whether the value
+	is associated with the asynchronous I/O result, or with the function call used
+	to resynchronize (ibwait or ibstop).
+	</para>
+	<para>This function is a Linux-GPIB extension.</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	A value related to <link LINKEND="reference-globals-iberr">iberr</link>
+	corresponding to the last asynchronous I/O operation resynchronized
+	to the current thread is returned.
+	</para>
+</refsect1>
+</refentry>
+
+<refentry ID="reference-function-async-ibsta">
+<refmeta>
+	<refentrytitle>AsyncIbsta</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>AsyncIbsta</refname>
+	<refpurpose>ibsta value for last asynchronous I/O operation</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>int <function>AsyncIbsta</function></funcdef>
+		<paramdef>void</paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	AsyncIbsta() returns a thread-local status value related to the global
+	variable <link LINKEND="reference-globals-ibsta">ibsta</link>.
+	Its value corresponds to the result of the last asynchronous I/O operation
+	resynchronized to the current thread 
+	by an <link LINKEND="reference-function-ibwait">ibwait</link>
+	or <link LINKEND="reference-function-ibstop">ibstop</link> call.
+	This
+	function only reflects the result of the asynchronous I/O operation itself
+	and not, for example, the ibwait which resynchronized the asynchronous result
+	to the current thread.  Thus the result from AsyncIbsta() is easier
+	to interpret than ThreadIbsta(), since it is unambiguous whether the value
+	is associated with the asynchronous I/O result, or with the function call used
+	to resynchronize (ibwait or ibstop).
+	</para>
+	<para>Only the status bits END | ERR | TIMO | CMPL are valid in the returned
+	status byte.  The rest of the bits should be ignored and will be set to zero.
+	</para>
+	<para>This function is a Linux-GPIB extension.</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	A value related to <link LINKEND="reference-globals-ibsta">ibsta</link>
+	corresponding to the last asynchronous I/O operation resynchronized
+	to the current thread.
+	</para>
+</refsect1>
+</refentry>
 
 <refentry ID="reference-function-get-pad">
 <refmeta>
