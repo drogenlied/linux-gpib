@@ -1862,7 +1862,7 @@ volatile int ibsta;
 	complete an
 	asynchronous operation, you must call
 	<link LINKEND="reference-function-ibwait">ibwait()</link>
-	until the CMPL bit is set ibsta.  Asynchronous
+	with CMPL set in the wait mask, until the CMPL bit is set ibsta.  Asynchronous
 	operations
 	may also be aborted with an
 	<link LINKEND="reference-function-ibstop">ibstop()</link>
@@ -3111,7 +3111,7 @@ volatile int ibsta;
 	complete an
 	asynchronous operation, you must call
 	<link LINKEND="reference-function-ibwait">ibwait()</link>
-	until the CMPL bit is set ibsta.  Asynchronous
+	with CMPL set in the wait mask,	until the CMPL bit is set ibsta.  Asynchronous
 	operations
 	may also be aborted with an
 	<link LINKEND="reference-function-ibstop">ibstop()</link>
@@ -3901,6 +3901,12 @@ volatile int ibsta;
 	The RQS condition is cleared by serial polling the device, see
 	<link LINKEND="reference-function-ibrsp">ibrsp()</link>.
 	</para>
+	<para>
+	If you wish to resynchronize and obtain the results from an asynchronous io operation,
+	you must wait on CMPL by setting its bit in the <parameter>status_mask</parameter> parameter.
+	Then if ibwait returns with CMPL set, it will have updated iberr, ibcnt, and the ERR bit of ibsta 
+	with the most recent asynchronous io results.
+	</para>
 </refsect1>
 <refsect1>
 	<title>
@@ -4012,7 +4018,7 @@ volatile int ibsta;
 	complete an
 	asynchronous operation, you must call
 	<link LINKEND="reference-function-ibwait">ibwait()</link>
-	and until the CMPL bit is set ibsta.  Asynchronous
+	with CMPL set in the wait mask, until the CMPL bit is set ibsta.  Asynchronous
 	operations
 	may also be aborted with an
 	<link LINKEND="reference-function-ibstop">ibstop()</link>

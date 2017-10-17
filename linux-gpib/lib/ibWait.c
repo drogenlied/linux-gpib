@@ -111,30 +111,52 @@ int ibwait( int ud, int mask )
 	if( retval < 0 )
 		return general_exit_library(ud, 1, 0, 0, 0, 0, 1);
 
-//XXX
-	if(conf->async.in_progress && (status & CMPL))
+	/* We will only try to resync with async io if
+	 the user explicitly asked to wait on CMPL.  That way,
+	 they won't be confused by possible errors associated with
+	 the async io on random ibwait calls.  If CMPL
+	 was specified in the wait mask, then any running
+	 async io will be joined and the library status
+	 variables will be updated with the results from
+	 the most recent async io operation completed on this
+	 descriptor. 
+	 
+	 If errors occur both on this ibwait itself and on
+	 the most recent async io, then reporting errors from
+	 the ibwait takes precedence. 
+	 */
+	if(mask & CMPL)
 	{
-		if( gpib_aio_join( &conf->async ) )
-			error++;
-		pthread_mutex_lock( &conf->async.lock );
-		if( conf->async.ibsta & CMPL )
+		if(status & CMPL)
 		{
-			conf->async.in_progress = 0;
-			setIbcnt( conf->async.ibcntl );
-			setIberr( conf->async.iberr );
-			if( conf->async.ibsta & ERR )
+			if(conf->async.in_progress )
 			{
-				error++;
+				if( gpib_aio_join( &conf->async ) )
+				{
+					error++;
+					general_exit_library( ud, error, 0, 1, 0, 0, 1);
+				}else
+					conf->async.in_progress = 0;
 			}
+			
+			pthread_mutex_lock( &conf->async.lock );
+			if( conf->async.ibsta & CMPL )
+			{
+				setIbcnt( conf->async.ibcntl );
+				setIberr( conf->async.iberr );
+				if( conf->async.ibsta & ERR )
+				{
+					error++;
+				}
+			}
+			pthread_mutex_unlock( &conf->async.lock );
 		}
-		pthread_mutex_unlock( &conf->async.lock );
-		if(error && (ThreadIbsta() & ERR) == 0)
+		if(error)
 		{
 			status |= ERR;
 			setIbsta(status);
 		}
 	}
-
 	general_exit_library( ud, error, 0, 1, 0, 0, 1);
 
 	return status;
