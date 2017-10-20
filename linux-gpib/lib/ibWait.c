@@ -18,11 +18,12 @@
 #include "ib_internal.h"
 #include <pthread.h>
 
+static const int device_wait_mask = TIMO | END | CMPL | RQS;
+static const int board_wait_mask =  TIMO | END | CMPL | SPOLL |
+	EVENT | LOK | REM | CIC | ATN | TACS | LACS | DTAS | DCAS | SRQI;
+
 void fixup_status_bits( const ibConf_t *conf, int *status )
 {
-	const int board_wait_mask = board_status_mask & ~ERR;
-	const int device_wait_mask = device_status_mask & ~ERR;
-
 	if( conf->is_interface == 0 )
 	{
 		*status &= device_wait_mask;
@@ -105,7 +106,28 @@ int ibwait( int ud, int mask )
 	conf = general_enter_library( ud, 1, 0 );
 	if( conf == NULL )
 		return general_exit_library(ud, 1, 0, 0, 0, 0, 1);
-
+	
+	/** check for invalid mask bits */
+	if( conf->is_interface == 0 )
+	{
+		if((mask & device_wait_mask) != mask)
+		{
+			fprintf(stderr, "Invalid wait mask for device descriptor, valid wait bits are 0x%x\n",
+				device_wait_mask);
+			setIberr(EARG);
+			return general_exit_library(ud, 1, 0, 0, 0, 0, 1);
+		}
+	}else
+	{
+		if((mask & board_wait_mask) != mask)
+		{
+			fprintf(stderr, "Invalid wait mask for board descriptor, valid wait bits are 0x%x\n",
+				board_wait_mask);
+			setIberr(EARG);
+			return general_exit_library(ud, 1, 0, 0, 0, 0, 1);
+		}
+	}
+	
 	clear_mask = mask & ( DTAS | DCAS | SPOLL);
 	retval = my_wait( conf, mask, clear_mask, 0, &status );
 	if( retval < 0 )

@@ -215,8 +215,7 @@ static int ibCheckDescriptor( int ud )
 	if( ud < 0 || ud >= GPIB_CONFIGS_LENGTH || ibConfigs[ud] == NULL )
 	{
 		fprintf( stderr, "libgpib: invalid descriptor\n" );
-		setIberr( EDVR );
-		setIbcnt( EINVAL );
+		setIberr( EARG );
 		return -1;
 	}
 
