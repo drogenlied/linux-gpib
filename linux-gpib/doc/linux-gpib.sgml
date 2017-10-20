@@ -1870,6 +1870,14 @@ volatile int ibsta;
 	<link LINKEND="reference-function-ibonl">ibonl()</link>
 	call.
 	</para>
+	<para>After the asynchronous I/O has completed and the results resynchronized
+	with the current thread, the Linux-GPIB extensions 
+	<link LINKEND="reference-function-async-ibsta">AsyncIbsta</link>, 
+	<link LINKEND="reference-function-async-iberr">AsyncIberr</link>, 
+	<link LINKEND="reference-function-async-ibcnt">AsyncIbcnt and AsyncIbcntl</link>
+	may be useful to more cleanly separate the results of the asynchronous I/O from
+	the results of the ibwait or similar call used to resynchronize.
+	</para>
 </refsect1>
 <refsect1>
 	<title>
@@ -3121,6 +3129,14 @@ volatile int ibsta;
 	call.  Note, ibwait() will only complete the asynchronous operation
 	if you explicitly set the CMPL bit in the wait mask parameter of ibwait().
 	</para>
+	<para>After the asynchronous I/O has completed and the results resynchronized
+	with the current thread, the Linux-GPIB extensions 
+	<link LINKEND="reference-function-async-ibsta">AsyncIbsta</link>, 
+	<link LINKEND="reference-function-async-iberr">AsyncIberr</link>, 
+	<link LINKEND="reference-function-async-ibcnt">AsyncIbcnt and AsyncIbcntl</link>
+	may be useful to more cleanly separate the results of the asynchronous I/O from
+	the results of the ibwait or similar call used to resynchronize.
+	</para>
 </refsect1>
 <refsect1>
 	<title>
@@ -3666,7 +3682,9 @@ volatile int ibsta;
 	Description
 	</title>
 	<para>
-	ibtmo() sets timeout for IO operations performed using the board
+	ibtmo() sets the timeout for IO operations and 
+	<link LINKEND="reference-function-ibwait">ibwait</link> calls
+	performed using the board
 	or device descriptor
 	<parameter>ud</parameter>.  The actual amount of time before
 	a timeout occurs may be greater than the period specified, but
@@ -3909,6 +3927,11 @@ volatile int ibsta;
 	Then if ibwait returns with CMPL set, it will have updated iberr, ibcnt, and the ERR bit of ibsta 
 	with the most recent asynchronous I/O results.
 	</para>
+	<para>
+	If TIMO is set in the <parameter>status_mask</parameter> parameter, then ibwait
+	will timeout after the time period set by <link LINKEND="reference-function-ibtmo">ibtmo</link>
+	and set TIMO in ibsta.
+	</para>
 </refsect1>
 <refsect1>
 	<title>
@@ -4028,6 +4051,14 @@ volatile int ibsta;
 	<link LINKEND="reference-function-ibonl">ibonl()</link>
 	call.
 	</para>
+	<para>After the asynchronous I/O has completed and the results resynchronized
+	with the current thread, the Linux-GPIB extensions 
+	<link LINKEND="reference-function-async-ibsta">AsyncIbsta</link>, 
+	<link LINKEND="reference-function-async-iberr">AsyncIberr</link>, 
+	<link LINKEND="reference-function-async-ibcnt">AsyncIbcnt and AsyncIbcntl</link>
+	may be useful to more cleanly separate the results of the asynchronous I/O from
+	the results of the ibwait or similar call used to resynchronize.
+	</para>
 </refsect1>
 <refsect1>
 	<title>
@@ -4088,7 +4119,7 @@ volatile int ibsta;
 <para>
 The "Multidevice" API functions provide similar functionality to the "Traditional" API functions.
 However, some of the "multidevice" functions can be
-to be performed on multiple devices simultaneously.  For example,
+performed on multiple devices simultaneously.  For example,
 <link LINKEND="reference-function-sendlist">SendList()</link>
 can be used to write a message to multiple devices.  Such functions take an array of Addr4882_t
 as an argument.  The end of the array is specified by setting the last element to the
@@ -5265,7 +5296,7 @@ constant NOADDR.
 </refmeta>
 <refnamediv>
 	<refname>AsyncIbcnt and AsyncIbcntl</refname>
-	<refpurpose>ibcnt and ibcntl values for asynchronous I/O operation</refpurpose>
+	<refpurpose>ibcnt and ibcntl values for last asynchronous I/O operation</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
 	<funcsynopsis>
