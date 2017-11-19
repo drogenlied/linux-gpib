@@ -5976,16 +5976,16 @@ addressList[ 4 ] = NOADDR;
 	</entry>
 	</row>
 	<row>
-	<entry>0x70 to 0x7d</entry>
-	<entry>MSA16 to MSA29, also PPD</entry>
+	<entry>0x70 to 0x7e</entry>
+	<entry>MSA16 to MSA30, also PPD</entry>
 	<entry>When following a talk or listen address, this is
 	'my secondary address' 16 to 29.  When following a parallel
 	poll configure, this is 'parallel poll disable'.</entry>
 	</row>
 	<row>
-	<entry>0x7e</entry>
-	<entry>MSA30</entry>
-	<entry>My secondary address 30</entry>
+	<entry>0x7f</entry>
+	<entry>PPD</entry>
+	<entry>Parallel poll disable</entry>
 	</row>
 	</tbody>
 	</tgroup>
