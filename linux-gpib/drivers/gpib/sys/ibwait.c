@@ -127,7 +127,7 @@ int ibwait( gpib_board_t *board, int wait_mask, int clear_mask, int set_mask,
 	if( wait_event_interruptible( board->wait,
 		wait_satisfied( &winfo, status_queue, wait_mask, status, desc ) ) )
 	{
-		printk( "wait interrupted\n" );
+		GPIB_DPRINTK( "wait interrupted\n" );
 		retval = -ERESTARTSYS;
 	}
 	removeWaitTimer( &winfo );

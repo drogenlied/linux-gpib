@@ -22,7 +22,7 @@
 int tms9914_take_control(gpib_board_t *board, tms9914_private_t *priv, int synchronous)
 {
 	int i;
-	const int timeout = 1000;
+	const int timeout = 100;
 	
 	if(synchronous)
 	{
@@ -38,7 +38,6 @@ int tms9914_take_control(gpib_board_t *board, tms9914_private_t *priv, int synch
 	}
 	if( i == timeout )
 	{
-		printk(" tms9914: error waiting for ATN\n");
 		return -ETIMEDOUT;
 	};
 	clear_bit(WRITE_READY_BN, &priv->state);

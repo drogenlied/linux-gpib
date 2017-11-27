@@ -32,6 +32,8 @@ MODULE_LICENSE("GPL");
 static struct usb_interface *agilent_82357a_driver_interfaces[MAX_NUM_82357A_INTERFACES];
 DEFINE_MUTEX(agilent_82357a_hotplug_lock);
 
+unsigned int agilent_82357a_update_status( gpib_board_t *board, unsigned int clear_mask );
+
 static void agilent_82357a_bulk_complete(struct urb *urb PT_REGS_ARG)
 {
 	agilent_82357a_urb_context_t *context = urb->context;
@@ -681,10 +683,11 @@ int agilent_82357a_command(gpib_board_t *board, uint8_t *buffer, size_t length, 
 int agilent_82357a_take_control(gpib_board_t *board, int synchronous)
 {
 	agilent_82357a_private_t *a_priv = board->private_data;
-//	const int timeout = 1000;
+	const int timeout = 10;
 	struct agilent_82357a_register_pairlet write;
 	int retval;
-
+	int i;
+	
 	write.address = AUXCR;
 	if(synchronous)
 	{
@@ -696,21 +699,18 @@ int agilent_82357a_take_control(gpib_board_t *board, int synchronous)
 	{
 		printk("%s: %s: agilent_82357a_write_registers() returned error\n", __FILE__, __FUNCTION__);
 	}
-#if 0
 	// busy wait until ATN is asserted
 	for(i = 0; i < timeout; ++i)
 	{
-		if((read_byte(priv, ADSR) & HR_ATN))
+		agilent_82357a_update_status(board, 0);
+		if(test_bit( ATN_NUM, &board->status ))
 			break;
 		udelay(1);
 	}
 	if( i == timeout )
 	{
-		printk(" tms9914: error waiting for ATN\n");
 		return -ETIMEDOUT;
 	};
-	clear_bit(WRITE_READY_BN, &priv->state);
-#endif
 	return 0;
 }
 
@@ -827,51 +827,49 @@ unsigned int agilent_82357a_update_status( gpib_board_t *board, unsigned int cle
 	agilent_82357a_private_t *a_priv = board->private_data;
 	struct agilent_82357a_register_pairlet address_status;
 	int retval;
-	unsigned long status;
 
 	board->status &= ~clear_mask;
-	status = board->status;
 	if(a_priv->is_cic)
-		status |= CIC;
+		set_bit( CIC_NUM, &board->status);
 	else
-		status &= ~CIC;
+		clear_bit( CIC_NUM, &board->status);
 	address_status.address = ADSR;
 	retval = agilent_82357a_read_registers(a_priv, &address_status, 1, 0);
 	if(retval)
 	{
 		printk("%s: %s: agilent_82357a_read_registers() returned error\n", __FILE__, __FUNCTION__);
-		return status;
+		return board->status;
 	}
 	// check for remote/local
 	if(address_status.value & HR_REM)
-		set_bit( REM_NUM, &status );
+		set_bit( REM_NUM, &board->status );
 	else
-		clear_bit( REM_NUM, &status );
+		clear_bit( REM_NUM, &board->status );
 	// check for lockout
 	if(address_status.value & HR_LLO)
-		set_bit( LOK_NUM, &status );
+		set_bit( LOK_NUM, &board->status );
 	else
-		clear_bit( LOK_NUM, &status );
+		clear_bit( LOK_NUM, &board->status );
 	// check for ATN
 	if(address_status.value & HR_ATN)
 	{
-		set_bit( ATN_NUM, &status );
+		set_bit( ATN_NUM, &board->status );
 	}else
 	{
-		clear_bit( ATN_NUM, &status );
+		clear_bit( ATN_NUM, &board->status );
 	}
 	// check for talker/listener addressed
 	if(address_status.value & HR_TA)
 	{
-		set_bit( TACS_NUM, &status );
+		set_bit( TACS_NUM, &board->status );
 	}else
-		clear_bit( TACS_NUM, &status );
+		clear_bit( TACS_NUM, &board->status );
 	if(address_status.value & HR_LA)
 	{
-		set_bit(LACS_NUM, &status);
+		set_bit(LACS_NUM, &board->status);
 	}else
-		clear_bit( LACS_NUM, &status );
-	return status;
+		clear_bit( LACS_NUM, &board->status );
+	return board->status;
 }
 //FIXME: prototype should return int
 void agilent_82357a_primary_address(gpib_board_t *board, unsigned int address)
