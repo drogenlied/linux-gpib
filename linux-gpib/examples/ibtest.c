@@ -247,12 +247,15 @@ int prompt_for_action(void)
 			"\tsend group e(x)ecute trigger (device only)\n"
 			": " );
 
-		if(fgets( input, sizeof( input ), stdin ) == NULL)
+		do
 		{
-			fprintf(stderr, "Error reading from standard input.\n");
-			continue;
-		}
-
+			if(fgets( input, sizeof( input ), stdin ) == NULL)
+			{
+				fprintf(stderr, "Error reading from standard input.\n");
+				return -1;
+			}
+		}while (input[0] = '\n');
+		
 		switch( input[0] )
 		{
 			case 'A':
