@@ -26,9 +26,11 @@ static int autospoll_wait_should_wake_up(gpib_board_t *board)
 
 	mutex_lock(&board->big_gpib_mutex);
 
+	smp_mb__before_atomic();
 	retval = board->master && board->autospollers > 0 &&
 		!atomic_read(&board->stuck_srq) &&
 		test_and_clear_bit(SRQI_NUM, &board->status);
+	smp_mb__after_atomic();
 
 	mutex_unlock(&board->big_gpib_mutex);
 	return retval;
@@ -68,8 +70,11 @@ static int autospoll_thread(void *board_void)
 		if(retval <= 0)
 		{
 			printk("gpib%i: %s: struck SRQ\n", board->minor, __FUNCTION__);
+
+			smp_mb__before_atomic();
 			atomic_set(&board->stuck_srq, 1);	// XXX could be better
 			set_bit(SRQI_NUM, &board->status);
+			smp_mb__after_atomic();
 		}
 	}
 	printk("gpib%i: exiting autospoll thread\n", board->minor);

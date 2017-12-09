@@ -57,7 +57,11 @@ int agilent_82350b_accel_write( gpib_board_t *board, uint8_t *buffer, size_t len
 	{
 		--fifoTransferLength;
 	}
+
+	smp_mb__before_atomic();
 	clear_bit(DEV_CLEAR_BN, &tms_priv->state);
+	smp_mb__after_atomic();
+
 	read_and_clear_event_status(board);
 	writeb(0, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG);
 
@@ -72,7 +76,9 @@ int agilent_82350b_accel_write( gpib_board_t *board, uint8_t *buffer, size_t len
 
 	for(i = 0; i < fifoTransferLength;)
 	{
+		smp_mb__before_atomic();
 		clear_bit(WRITE_READY_BN, &tms_priv->state);
+		smp_mb__after_atomic();
 
 		if(fifoTransferLength - i < agilent_82350b_fifo_size)
 			block_size = fifoTransferLength - i;

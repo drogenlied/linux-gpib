@@ -40,7 +40,11 @@ int tms9914_take_control(gpib_board_t *board, tms9914_private_t *priv, int synch
 	{
 		return -ETIMEDOUT;
 	};
+
+	smp_mb__before_atomic();
 	clear_bit(WRITE_READY_BN, &priv->state);
+	smp_mb__after_atomic();
+
 	return 0;
 }
 
@@ -62,7 +66,11 @@ int tms9914_go_to_standby(gpib_board_t *board, tms9914_private_t *priv)
 		printk("error waiting for NATN\n");
 		return -ETIMEDOUT;
 	}
+
+	smp_mb__before_atomic();
 	clear_bit(COMMAND_READY_BN, &priv->state);
+	smp_mb__after_atomic();
+
 	return 0;
 }
 
@@ -71,7 +79,10 @@ void tms9914_interface_clear(gpib_board_t *board, tms9914_private_t *priv, int a
 	if(assert)
 	{
 		write_byte(priv, AUX_SIC | AUX_CS, AUXCR);
+
+		smp_mb__before_atomic();
 		set_bit(CIC_NUM, &board->status);
+		smp_mb__after_atomic();
 	}else
 		write_byte(priv, AUX_SIC, AUXCR);
 }
@@ -92,7 +103,10 @@ void tms9914_request_system_control( gpib_board_t *board, tms9914_private_t *pri
 		write_byte(priv, AUX_RQC, AUXCR);
 	else
 	{
+		smp_mb__before_atomic();
 		clear_bit(CIC_NUM, &board->status);
+		smp_mb__after_atomic();
+
 		write_byte(priv, AUX_RLC, AUXCR);
 	}
 }

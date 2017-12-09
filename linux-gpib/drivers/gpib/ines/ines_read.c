@@ -80,7 +80,9 @@ int ines_accel_read( gpib_board_t *board, uint8_t *buffer,
 	*bytes_read = 0;
 	if(length == 0) return 0;
 
+	smp_mb__before_atomic();
 	clear_bit( DEV_CLEAR_BN, &nec_priv->state );
+	smp_mb__after_atomic();
 
 	write_byte( nec_priv, INES_RFD_HLD_IMMEDIATE, AUXMR );
 

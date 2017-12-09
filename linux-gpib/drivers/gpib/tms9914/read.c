@@ -119,7 +119,9 @@ int tms9914_read(gpib_board_t *board, tms9914_private_t *priv, uint8_t *buffer, 
 	*bytes_read = 0;
 	if(length == 0) return 0;
 
+	smp_mb__before_atomic();
 	clear_bit( DEV_CLEAR_BN, &priv->state );
+	smp_mb__after_atomic();
 
 	// transfer data (except for last byte)
 	if(length > 1)

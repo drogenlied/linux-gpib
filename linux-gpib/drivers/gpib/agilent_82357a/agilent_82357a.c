@@ -618,7 +618,11 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 	for(j = 0; j < length; j++)
 		out_data[i++] = buffer[j];
 	//printk("%s: sending bulk msg(), send_commands=%i\n", __FUNCTION__, send_commands);
+	
+	smp_mb__before_atomic();
 	clear_bit(AIF_WRITE_COMPLETE_BN, &a_priv->interrupt_flags);
+	smp_mb__after_atomic();
+
 	msec_timeout = (board->usec_timeout + 999) / 1000;
 	retval = mutex_lock_interruptible(&a_priv->bulk_transfer_lock);
 	if(retval)
@@ -828,6 +832,8 @@ unsigned int agilent_82357a_update_status( gpib_board_t *board, unsigned int cle
 	struct agilent_82357a_register_pairlet address_status;
 	int retval;
 
+	smp_mb__before_atomic();
+	
 	board->status &= ~clear_mask;
 	if(a_priv->is_cic)
 		set_bit( CIC_NUM, &board->status);
@@ -869,6 +875,9 @@ unsigned int agilent_82357a_update_status( gpib_board_t *board, unsigned int cle
 		set_bit(LACS_NUM, &board->status);
 	}else
 		clear_bit( LACS_NUM, &board->status );
+
+	smp_mb__after_atomic();
+
 	return board->status;
 }
 //FIXME: prototype should return int
@@ -1032,6 +1041,9 @@ void agilent_82357a_interrupt_complete(struct urb *urb PT_REGS_ARG)
 	int retval;
 	uint8_t *transfer_buffer = urb->transfer_buffer;
 	unsigned long interrupt_flags;
+	
+	smp_mb__before_atomic();
+
 #if 0
 	int i;
 
@@ -1057,6 +1069,9 @@ void agilent_82357a_interrupt_complete(struct urb *urb PT_REGS_ARG)
 	{
 		printk("%s: failed to resubmit interrupt urb\n", __FUNCTION__);
 	}
+
+	smp_mb__after_atomic();
+
 	wake_up_interruptible(&board->wait);
 }
 

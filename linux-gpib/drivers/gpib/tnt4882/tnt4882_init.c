@@ -51,7 +51,11 @@ int tnt4882_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, 
 	if( retval < 0 )
 	{	// force immediate holdoff
 		write_byte( nec_priv, AUX_HLDI, AUXMR );
+
+		smp_mb__before_atomic();
 		set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
+		smp_mb__after_atomic();
+
 		nec7210_read_data_in( board, nec_priv, &dummy );
 	}
 	return retval;
@@ -468,7 +472,10 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 
 	// force immediate holdoff
 	write_byte( &tnt_priv->nec7210_priv, AUX_HLDI, AUXMR );
+
+	smp_mb__before_atomic();
 	set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
+	smp_mb__after_atomic();
 
 	tnt_priv->auxg_bits = AUXRG | NTNL_BIT;
 	write_byte( &tnt_priv->nec7210_priv, tnt_priv->auxg_bits, AUXMR );

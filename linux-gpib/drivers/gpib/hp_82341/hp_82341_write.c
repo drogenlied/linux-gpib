@@ -56,7 +56,11 @@ int hp_82341_accel_write( gpib_board_t *board, uint8_t *buffer, size_t length, i
 	{
 		--fifoTransferLength;
 	}
+
+	smp_mb__before_atomic();
 	clear_bit(DEV_CLEAR_BN, &tms_priv->state);
+	smp_mb__after_atomic();
+
 	read_and_clear_event_status(board);
 	outb(0, hp_priv->iobase[3] + BUFFER_CONTROL_REG); 
 	outb(0x00, hp_priv->iobase[3] + BUFFER_FLUSH_REG);

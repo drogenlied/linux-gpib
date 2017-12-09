@@ -25,7 +25,11 @@ int nec7210_command(gpib_board_t *board, nec7210_private_t *priv, uint8_t
 	unsigned long flags;
 
 	*bytes_written = 0;
+
+	smp_mb__before_atomic();
 	clear_bit( BUS_ERROR_BN, &priv->state );
+	smp_mb__after_atomic();
+
 	while(*bytes_written < length)
 	{
 		if(wait_event_interruptible(board->wait, test_bit(COMMAND_READY_BN, &priv->state) ||

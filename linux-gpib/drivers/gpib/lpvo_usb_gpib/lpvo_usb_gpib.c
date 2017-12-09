@@ -586,7 +586,10 @@ void usb_gpib_interface_clear(gpib_board_t *board, int assert) {
 
 	if (assert) {
 		retval = send_command (board, USB_GPIB_IBCL, 0);
+
+		smp_mb__before_atomic();
 		set_bit(CIC_NUM, &board->status);
+		smp_mb__after_atomic();
 	}
 
 	DIA_LOG ("done with %d %d\n", assert, retval);
@@ -887,11 +890,13 @@ void usb_gpib_remote_enable(gpib_board_t *board, int enable) {
 void usb_gpib_request_system_control(gpib_board_t *board,
 				int request_control ) {
 
+	smp_mb__before_atomic();
 	if (request_control) {
 		set_bit(CIC_NUM, &board->status);
 	} else {
 		clear_bit(CIC_NUM, &board->status);
 	}
+	smp_mb__after_atomic();
 
 	DIA_LOG ("done with %d -> %lx\n", request_control, board->status);
 

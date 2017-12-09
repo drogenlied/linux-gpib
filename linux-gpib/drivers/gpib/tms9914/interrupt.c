@@ -36,6 +36,8 @@ irqreturn_t tms9914_interrupt( gpib_board_t *board, tms9914_private_t *priv )
 irqreturn_t tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t *priv, int status0,
 		int status1)
 {
+	smp_mb__before_atomic();
+
 	// record reception of END
 	if(status0 & HR_END)
 	{
@@ -156,6 +158,8 @@ irqreturn_t tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t
 		}else
 			write_byte(priv, AUX_INVAL, AUXCR);
 	}
+
+	smp_mb__after_atomic();
 
 	if( ( status0 & priv->imr0_bits ) || ( status1 & priv->imr1_bits ) )
 	{

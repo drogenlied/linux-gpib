@@ -104,7 +104,10 @@ int tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length, int
 
 	*bytes_read = 0;
 	// FIXME: really, DEV_CLEAR_BN should happen elsewhere to prevent race
+	smp_mb__before_atomic();
 	clear_bit(DEV_CLEAR_BN, &nec_priv->state);	
+	smp_mb__after_atomic();
+
 	imr1_bits = nec_priv->reg_bits[ IMR1 ];
 	imr2_bits = nec_priv->reg_bits[ IMR2 ];
 	nec7210_set_reg_bits( nec_priv, IMR1, 0xff, HR_ENDIE | HR_DECIE );
@@ -229,7 +232,10 @@ int tnt4882_accel_read( gpib_board_t *board, uint8_t *buffer, size_t length, int
 	{
 		// force immediate holdoff
 		write_byte( nec_priv, AUX_HLDI, AUXMR );
+
+		smp_mb__before_atomic();
 		set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
+		smp_mb__after_atomic();
 	}
 	*bytes_read = count;
 

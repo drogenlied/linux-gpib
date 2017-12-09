@@ -43,7 +43,11 @@ int nec7210_take_control(gpib_board_t *board, nec7210_private_t *priv, int syncr
 	{
 		return -ETIMEDOUT;
 	}
+
+	smp_mb__before_atomic();
 	clear_bit( WRITE_READY_BN, &priv->state );
+	smp_mb__after_atomic();
+	
 	return retval;
 }
 
@@ -81,7 +85,10 @@ int nec7210_go_to_standby(gpib_board_t *board, nec7210_private_t *priv)
 			return -ETIMEDOUT;
 		}
 	}
+
+	smp_mb__before_atomic();
 	clear_bit( COMMAND_READY_BN, &priv->state );
+	smp_mb__after_atomic();
 	return retval;
 }
 

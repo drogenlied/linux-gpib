@@ -31,7 +31,11 @@ int hp_82341_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length, int
 	{
 		return tms9914_read( board, tms_priv, buffer, length, end, bytes_read);
 	}
+
+	smp_mb__before_atomic();
 	clear_bit( DEV_CLEAR_BN, &tms_priv->state );
+	smp_mb__after_atomic();
+
 	read_and_clear_event_status(board);
 	*end = 0;
 	*bytes_read = 0;
@@ -75,7 +79,11 @@ int hp_82341_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length, int
 		outb(ENABLE_TI_BUFFER_BIT | DIRECTION_GPIB_TO_HOST_BIT, hp_priv->iobase[3] + BUFFER_CONTROL_REG);
 		if(inb(hp_priv->iobase[0] + STREAM_STATUS_REG) & HALTED_STATUS_BIT) 
 			outb(RESTART_STREAM_BIT, hp_priv->iobase[0] + STREAM_STATUS_REG); 
+
+		smp_mb__before_atomic();
 		clear_bit(READ_READY_BN, &tms_priv->state);
+		smp_mb__after_atomic();
+
 		if(wait_event_interruptible(board->wait, 
 			((event_status = read_and_clear_event_status(board)) & (TERMINAL_COUNT_EVENT_BIT | BUFFER_END_EVENT_BIT)) ||
 			test_bit(DEV_CLEAR_BN, &tms_priv->state) ||
@@ -102,7 +110,10 @@ int hp_82341_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length, int
 		}
 		if(event_status & BUFFER_END_EVENT_BIT)
 		{
+			smp_mb__before_atomic();
 			clear_bit(RECEIVED_END_BN, &tms_priv->state);
+			smp_mb__after_atomic();
+			
 			*end = 1;
 			tms_priv->holdoff_active = 1;
 		}

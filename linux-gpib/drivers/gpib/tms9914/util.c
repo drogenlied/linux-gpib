@@ -170,6 +170,8 @@ unsigned int update_status_nolock( gpib_board_t *board, tms9914_private_t *priv 
 {
 	int address_status;
 
+	smp_mb__before_atomic();
+
 	address_status = read_byte( priv, ADSR );
 
 	// check for remote/local
@@ -203,6 +205,8 @@ unsigned int update_status_nolock( gpib_board_t *board, tms9914_private_t *priv 
 		set_bit(LACS_NUM, &board->status);
 	}else
 		clear_bit( LACS_NUM, &board->status );
+
+	smp_mb__after_atomic();
 
 //	GPIB_DPRINTK( "status 0x%x, state 0x%x\n", board->status, priv->state );
 	

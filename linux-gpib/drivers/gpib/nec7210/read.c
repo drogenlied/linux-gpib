@@ -98,8 +98,10 @@ static ssize_t __dma_read(gpib_board_t *board, nec7210_private_t *priv, size_t l
 
 	enable_dma(priv->dma_channel);
 
+	smp_mb__before_atomic();
 	set_bit(DMA_READ_IN_PROGRESS_BN, &priv->state);
 	clear_bit(READ_READY_BN, &priv->state);
+	smp_mb__after_atomic();
 
 	// enable nec7210 dma
 	nec7210_set_reg_bits( priv, IMR2, HR_DMAI, HR_DMAI );
@@ -165,7 +167,9 @@ int nec7210_read(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer,
 	
 	if( length == 0 ) return 0;
 
+	smp_mb__before_atomic();
 	clear_bit( DEV_CLEAR_BN, &priv->state ); // XXX wrong
+	smp_mb__after_atomic();
 
 	nec7210_release_rfd_holdoff( board, priv );
 

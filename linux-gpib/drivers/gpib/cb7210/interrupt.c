@@ -64,6 +64,8 @@ irqreturn_t cb7210_internal_interrupt( gpib_board_t *board )
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 	int clear_bits;
 
+	smp_mb__before_atomic();
+
 	if((priv->hs_mode_bits & HS_ENABLE_MASK))
 	{
 		status1 = 0;
@@ -113,6 +115,9 @@ irqreturn_t cb7210_internal_interrupt( gpib_board_t *board )
 		cb7210_write_byte(priv, priv->hs_mode_bits, HS_MODE);
 		wake_up_interruptible(&board->wait);
 	}
+
+	smp_mb__after_atomic();
+
 	return IRQ_HANDLED;
 }
 

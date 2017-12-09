@@ -62,7 +62,11 @@ static int pio_write(gpib_board_t *board, nec7210_private_t *priv,
 	const int max_bus_errors = (length > 1000) ? length : 1000;
 	int bus_error_count = 0;
 	*bytes_written = 0;
+
+	smp_mb__before_atomic();
 	clear_bit(BUS_ERROR_BN, &priv->state);
+	smp_mb__after_atomic();
+
 	while(*bytes_written < length)
 	{
 		if(need_resched())
@@ -113,8 +117,10 @@ static ssize_t __dma_write(gpib_board_t *board, nec7210_private_t *priv, dma_add
 	// enable board's dma for output
 	nec7210_set_reg_bits( priv, IMR2, HR_DMAO, HR_DMAO );
 
+	smp_mb__before_atomic();
 	clear_bit(WRITE_READY_BN, &priv->state);
 	set_bit(DMA_WRITE_IN_PROGRESS_BN, &priv->state);
+	smp_mb__after_atomic();
 
 	spin_unlock_irqrestore(&board->spinlock, flags);
 
@@ -175,7 +181,10 @@ int nec7210_write(gpib_board_t *board, nec7210_private_t *priv, uint8_t *buffer,
 	int retval = 0;
 
 	*bytes_written = 0;
+
+	smp_mb__before_atomic();
 	clear_bit( DEV_CLEAR_BN, &priv->state ); //XXX
+	smp_mb__after_atomic();
 
 	if(send_eoi)
 	{

@@ -80,6 +80,7 @@ static gpib_descriptor_t* handle_to_descriptor( const gpib_file_private_t *file_
 static int init_gpib_file_private( gpib_file_private_t *priv )
 {
 	memset(priv, 0, sizeof(*priv));
+	atomic_set(&priv->holding_mutex, 0);
 	priv->descriptors[ 0 ] = kmalloc( sizeof( gpib_descriptor_t ), GFP_KERNEL );
 	if( priv->descriptors[ 0 ] == NULL )
 	{
@@ -180,8 +181,10 @@ int ibclose(struct inode *inode, struct file *filep)
 
 		cleanup_open_devices( priv, board );
 
+		smp_mb__before_atomic();
 		if( atomic_read(&priv->holding_mutex) )
 			mutex_unlock( &board->user_mutex );
+		smp_mb__after_atomic();
 
 		if(priv->got_module && board->use_count)
 		{
@@ -535,8 +538,10 @@ static int read_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
 	if(!access_ok(VERIFY_WRITE, userbuf, remain))
 		return -EFAULT;
 
+	smp_mb__before_atomic();
 	atomic_set(&desc->io_in_progress, 1);
-
+	smp_mb__after_atomic();
+	
 	/* Read buffer loads till we fill the user supplied buffer */
 	while(remain > 0 && end_flag == 0)
 	{
@@ -567,7 +572,11 @@ static int read_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
 	}
 	if(retval == 0)
 		retval = copy_to_user((void*) arg, &read_cmd, sizeof(read_cmd));
+
+	smp_mb__before_atomic();
 	atomic_set(&desc->io_in_progress, 0);
+	smp_mb__after_atomic();
+
 	wake_up_interruptible( &board->wait );
 	if(retval) return -EFAULT;
 
@@ -608,7 +617,11 @@ static int command_ioctl( gpib_file_private_t *file_priv,
 		Call drivers at least once, even if remain is zero, in
 		order to allow them to insure previous commands were
 		completely finished, in the case of a restarted ioctl.  */
+
+	smp_mb__before_atomic();
 	atomic_set(&desc->io_in_progress, 1);
+	smp_mb__after_atomic();
+	
 	do
 	{
 		fault = copy_from_user(board->buffer, userbuf, (board->buffer_length < remain) ?
@@ -626,7 +639,10 @@ static int command_ioctl( gpib_file_private_t *file_priv,
 		userbuf += bytes_written;
 		if(retval < 0)
 		{
+			smp_mb__before_atomic();
 			atomic_set(&desc->io_in_progress, 0);
+			smp_mb__after_atomic();
+			
 			wake_up_interruptible( &board->wait );
 			break;
 		}
@@ -636,7 +652,11 @@ static int command_ioctl( gpib_file_private_t *file_priv,
 
 	if(fault == 0)
 		fault = copy_to_user((void*) arg, &cmd, sizeof(cmd));
+
+	smp_mb__before_atomic();
 	atomic_set(&desc->io_in_progress, 0);
+	smp_mb__after_atomic();
+
 	wake_up_interruptible( &board->wait );
 	if( fault ) return -EFAULT;
 
@@ -672,7 +692,9 @@ static int write_ioctl(gpib_file_private_t *file_priv, gpib_board_t *board,
 	if(!access_ok(VERIFY_READ, userbuf, remain))
 		return -EFAULT;
 
+	smp_mb__before_atomic();
 	atomic_set(&desc->io_in_progress, 1);
+	smp_mb__after_atomic();
 
 	/* Write buffer loads till we empty the user supplied buffer */
 	while(remain > 0)
@@ -709,7 +731,11 @@ static int write_ioctl(gpib_file_private_t *file_priv, gpib_board_t *board,
 	}
 	if(fault == 0)
 		fault = copy_to_user((void*) arg, &write_cmd, sizeof(write_cmd));
+
+	smp_mb__before_atomic();
 	atomic_set(&desc->io_in_progress, 0);
+	smp_mb__after_atomic();
+
 	wake_up_interruptible( &board->wait );
 	if(fault) return -EFAULT;
 
@@ -878,7 +904,9 @@ static int open_dev_ioctl( struct file *filep, gpib_board_t *board, unsigned lon
 
 	/* clear stuck srq state, since we may be able to find service request on
 	 * the new device */
+	smp_mb__before_atomic();
 	atomic_set(&board->stuck_srq, 0);
+	smp_mb__after_atomic();
 
 	open_dev_cmd.handle = i;
 	retval = copy_to_user( ( void* ) arg, &open_dev_cmd, sizeof( open_dev_cmd ) );
@@ -1272,7 +1300,10 @@ static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 		board->locking_pid = current->pid;
 		spin_unlock(&board->locking_pid_spinlock);
 
+		smp_mb__before_atomic();
 		atomic_set(&file_priv->holding_mutex, 1);
+		smp_mb__after_atomic();
+
 		GPIB_DPRINTK("pid %i, locked board %d mutex\n", current->pid, board->minor);
 	}else
 	{
@@ -1287,7 +1318,9 @@ static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 		board->locking_pid = 0;
 		spin_unlock(&board->locking_pid_spinlock);
 
+		smp_mb__before_atomic();
 		atomic_set(&file_priv->holding_mutex, 0);
+		smp_mb__after_atomic();
 
 		mutex_unlock( &board->user_mutex );
 		GPIB_DPRINTK("pid %i, unlocked board %i mutex\n", current->pid, board->minor);

@@ -127,7 +127,11 @@ int ines_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, siz
 	if( retval < 0 )
 	{
 		write_byte( nec_priv, INES_RFD_HLD_IMMEDIATE, AUXMR );
+
+		smp_mb__before_atomic();
 		set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
+		smp_mb__after_atomic();
+
 		nec7210_read_data_in( board, nec_priv, &dummy );
 	}
 	return retval;
@@ -386,7 +390,11 @@ void ines_online( ines_private_t *ines_priv, const gpib_board_t *board, int use_
 
 	write_byte( nec_priv, INES_AUX_XMODE, AUXMR );
 	write_byte( nec_priv, INES_RFD_HLD_IMMEDIATE, AUXMR );
+
+	smp_mb__before_atomic();
 	set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
+	smp_mb__after_atomic();
+
 	write_byte( nec_priv, INES_AUXD | 0, AUXMR );
 	ines_outb( ines_priv, 0, XDMA_CONTROL );
 	ines_priv->extend_mode_bits = 0;

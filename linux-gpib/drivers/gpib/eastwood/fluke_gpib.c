@@ -340,8 +340,12 @@ static int fluke_dma_write(gpib_board_t *board,
 	nec7210_set_reg_bits(nec_priv, IMR2, HR_DMAO, HR_DMAO);
 	dmaengine_submit(tx_desc);
 	dma_async_issue_pending(e_priv->dma_channel);
+	
+	smp_mb__before_atomic();
 	clear_bit(WRITE_READY_BN, &nec_priv->state);
 	set_bit(DMA_WRITE_IN_PROGRESS_BN, &nec_priv->state);
+	smp_mb__after_atomic();
+
 // 	printk("%s: in spin lock\n", __FUNCTION__);
 	spin_unlock_irqrestore(&board->spinlock, flags);
 
@@ -401,7 +405,11 @@ static int fluke_accel_write(gpib_board_t *board,
 	
 	*bytes_written = 0;
 	if(length < 1) return 0;
+
+	smp_mb__before_atomic();
 	clear_bit(DEV_CLEAR_BN, &nec_priv->state); // XXX FIXME
+	smp_mb__after_atomic();
+
 	if(send_eoi) --dma_remainder;
 // 	printk("%s: entering while loop\n", __FUNCTION__);
 	
@@ -513,8 +521,10 @@ static int fluke_dma_read(gpib_board_t *board, uint8_t *buffer,
 	dma_cookie = dmaengine_submit(tx_desc);
 	dma_async_issue_pending(e_priv->dma_channel);
 
+	smp_mb__before_atomic();
 	set_bit(DMA_READ_IN_PROGRESS_BN, &nec_priv->state);
 	clear_bit(READ_READY_BN, &nec_priv->state);
+	smp_mb__after_atomic();
 	
 	spin_unlock_irqrestore(&board->spinlock, flags);
 // 	printk("waiting for data transfer.\n");
@@ -587,7 +597,11 @@ static ssize_t fluke_accel_read(gpib_board_t *board, uint8_t *buffer, size_t len
 /*	printk("%s: enter, buffer=0x%p, length=%i\n", __FUNCTION__,
 		   buffer, (int)length);
 	printk("\t dma_buffer=0x%p\n", e_priv->dma_buffer);*/
+
+	smp_mb__before_atomic();
 	clear_bit(DEV_CLEAR_BN, &nec_priv->state); // XXX FIXME
+	smp_mb__after_atomic();
+
 	*end = 0;
 	*bytes_read = 0;
 	nec7210_release_rfd_holdoff(board, nec_priv);

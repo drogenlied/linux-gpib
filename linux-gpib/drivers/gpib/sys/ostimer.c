@@ -25,7 +25,10 @@ void watchdog_timeout( unsigned long arg )
 {
 	gpib_board_t *board = (gpib_board_t*) arg;
 
+	smp_mb__before_atomic();
 	set_bit( TIMO_NUM, &board->status );
+	smp_mb__after_atomic();
+	
 	wake_up_interruptible( &board->wait );
 }
 
@@ -38,7 +41,9 @@ void osStartTimer( gpib_board_t *board, unsigned int usec_timeout )
 		printk("gpib: bug! timer already running?\n");
 		return;
 	}
+	smp_mb__before_atomic();
 	clear_bit( TIMO_NUM, &board->status );
+	smp_mb__after_atomic();
 
 	if( usec_timeout > 0 )
 	{

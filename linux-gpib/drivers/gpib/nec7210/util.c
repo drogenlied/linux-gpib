@@ -41,7 +41,10 @@ int nec7210_parallel_poll(gpib_board_t *board, nec7210_private_t *priv, uint8_t 
 {
 	int ret;
 
+	smp_mb__before_atomic();
 	clear_bit(COMMAND_READY_BN, &priv->state);
+	smp_mb__after_atomic();
+
 	// execute parallel poll
 	write_byte(priv, AUX_EPP, AUXMR);
 	// wait for result FIXME: support timeouts
@@ -79,7 +82,11 @@ void nec7210_serial_poll_response(gpib_board_t *board, nec7210_private_t *priv, 
 		priv->srq_pending = 1;
 	else
 		priv->srq_pending = 0;
+
+	smp_mb__before_atomic();
 	clear_bit(SPOLL_NUM, &board->status);
+	smp_mb__after_atomic();
+
 	write_byte(priv, status, SPMR);
 	spin_unlock_irqrestore( &board->spinlock, flags );
 }
@@ -162,6 +169,8 @@ unsigned int update_status_nolock( gpib_board_t *board, nec7210_private_t *priv 
 
 	if(priv == NULL) return 0;
 
+	smp_mb__before_atomic();
+
 	address_status_bits = read_byte(priv, ADSR);
 	if(address_status_bits & HR_CIC)
 		set_bit(CIC_NUM, &board->status);
@@ -197,6 +206,8 @@ unsigned int update_status_nolock( gpib_board_t *board, nec7210_private_t *priv 
 
 	/* we rely on the interrupt handler to set the
 	 * rest of the status bits */
+
+	smp_mb__after_atomic();
 
 	return board->status;
 }

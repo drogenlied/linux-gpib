@@ -31,7 +31,11 @@ int agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t leng
 	{
 		return tms9914_read( board, tms_priv, buffer, length, end, bytes_read);
 	}
+	
+	smp_mb__before_atomic();
 	clear_bit( DEV_CLEAR_BN, &tms_priv->state );
+	smp_mb__after_atomic();
+
 	read_and_clear_event_status(board);
 	*end = 0;
 	*bytes_read = 0;
@@ -70,7 +74,11 @@ int agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t leng
 		writeb(ENABLE_TI_TO_SRAM | DIRECTION_GPIB_TO_HOST, a_priv->gpib_base + SRAM_ACCESS_CONTROL_REG); 
 		if(agilent_82350b_fifo_is_halted(a_priv))
 			writeb(RESTART_STREAM_BIT, a_priv->gpib_base + STREAM_STATUS_REG); 
+
+		smp_mb__before_atomic();
 		clear_bit(READ_READY_BN, &tms_priv->state);
+		smp_mb__after_atomic();
+		
 		if(wait_event_interruptible(board->wait, 
 			((event_status = read_and_clear_event_status(board)) & (TERM_COUNT_STATUS_BIT | BUFFER_END_STATUS_BIT)) ||
 			test_bit(DEV_CLEAR_BN, &tms_priv->state) ||
@@ -85,7 +93,10 @@ int agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t leng
 			buffer[i++] = readb(a_priv->sram_base + j); 
 		if(event_status & BUFFER_END_STATUS_BIT)
 		{
+			smp_mb__before_atomic();
 			clear_bit(RECEIVED_END_BN, &tms_priv->state);
+			smp_mb__after_atomic();
+
 			tms_priv->holdoff_active = 1;
 			*end = 1;
 		}

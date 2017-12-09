@@ -80,8 +80,10 @@ int fifo_write( gpib_board_t *board, uint8_t *buffer, size_t length, size_t *byt
 	}
 	if(length == 0) return 0;
 
+	smp_mb__before_atomic();
 	clear_bit( DEV_CLEAR_BN, &nec_priv->state );
 	clear_bit( BUS_ERROR_BN, &nec_priv->state );
+	smp_mb__after_atomic();
 
 	output_fifo_enable( board, 1 );
 
