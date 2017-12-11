@@ -353,7 +353,7 @@ int perform_read(int ud, int max_num_bytes)
 	printf("trying to read %i bytes from device...\n", max_num_bytes);
 
 	ibrd(ud, buffer, buffer_size - 1);
-	if((ThreadIbsta() & ERR == 0) || ThreadIberr() != EDVR)
+	if((ThreadIbsta() & ERR) == 0 || ThreadIberr() != EDVR)
 	{
 		read_count = ThreadIbcntl();
 	}
