@@ -73,6 +73,12 @@ enum hs_plus_endpoint_addresses
 	NIUSB_HS_PLUS_INTERRUPT_IN_ENDPOINT = 0x3,
 };
 
+typedef struct
+{
+	struct semaphore complete;
+	unsigned timed_out : 1;
+} ni_usb_urb_context_t;
+
 // struct which defines private_data for ni_usb devices
 typedef struct
 {
@@ -90,13 +96,9 @@ typedef struct
         struct mutex bulk_transfer_lock;
 	struct mutex control_transfer_lock;
 	struct mutex interrupt_transfer_lock;
+	struct timer_list bulk_timer;
+	ni_usb_urb_context_t context;
 } ni_usb_private_t;
-
-typedef struct
-{
-	struct semaphore complete;
-	unsigned timed_out : 1;
-} ni_usb_urb_context_t;
 
 struct ni_usb_status_block
 {

@@ -28,11 +28,29 @@ struct wait_info
 	unsigned long usec_timeout;
 };
 
+
+#ifdef HAVE_TIMER_SETUP
+static void wait_timeout( struct timer_list *t )
+{
+	struct wait_info *winfo = from_timer(winfo, t, timer);
+#else
+static void wait_timeout( unsigned long arg )
+{
+	struct wait_info *winfo = ( struct wait_info * ) arg;
+#endif
+	winfo->timed_out = 1;
+	wake_up_interruptible( &winfo->board->wait );
+}
+
 static void init_wait_info( struct wait_info *winfo )
 {
 	winfo->board = NULL;
-	init_timer( &winfo->timer );
 	winfo->timed_out = 0;
+#ifdef HAVE_TIMER_SETUP
+	timer_setup_on_stack( &winfo->timer, wait_timeout, 0 );
+#else
+	setup_timer( &winfo->timer, wait_timeout, (unsigned long)winfo );
+#endif
 }
 
 static int wait_satisfied( struct wait_info *winfo, gpib_status_queue_t *status_queue,
@@ -63,15 +81,6 @@ static int wait_satisfied( struct wait_info *winfo, gpib_status_queue_t *status_
 	return 0;
 }
 
-static void wait_timeout( unsigned long arg )
-/* Watchdog timeout routine */
-{
-	struct wait_info *winfo = ( struct wait_info * ) arg;
-
-	winfo->timed_out = 1;
-	wake_up_interruptible( &winfo->board->wait );
-}
-
 /* install timer interrupt handler */
 static void startWaitTimer( struct wait_info *winfo )
 /* Starts the timeout task  */
@@ -80,17 +89,16 @@ static void startWaitTimer( struct wait_info *winfo )
 
 	if( winfo->usec_timeout > 0 )
 	{
-		winfo->timer.expires = jiffies + usec_to_jiffies( winfo->usec_timeout );
-		winfo->timer.function = wait_timeout;
-		winfo->timer.data = (unsigned long) winfo;
-		add_timer( &winfo->timer );              /* add timer           */
+		mod_timer( &winfo->timer, jiffies + usec_to_jiffies( winfo->usec_timeout ));
 	}
 }
 
 static void removeWaitTimer( struct wait_info *winfo )
 {
-	if( timer_pending( &winfo->timer ) )
-		del_timer_sync( &winfo->timer );
+	del_timer_sync( &winfo->timer );
+#ifdef HAVE_TIMER_SETUP
+	destroy_timer_on_stack( &winfo->timer );
+#endif
 }
 
 /*

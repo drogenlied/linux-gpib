@@ -20,15 +20,22 @@
 /*
  * Timer functions
  */
-void watchdog_timeout( unsigned long arg )
+
 /* Watchdog timeout routine */
+
+#ifdef HAVE_TIMER_SETUP
+void watchdog_timeout( struct timer_list *t )
+{
+	gpib_board_t *board = from_timer(board, t, timer);
+#else
+void watchdog_timeout( unsigned long arg )
 {
 	gpib_board_t *board = (gpib_board_t*) arg;
-
+#endif
 	smp_mb__before_atomic();
 	set_bit( TIMO_NUM, &board->status );
 	smp_mb__after_atomic();
-	
+
 	wake_up_interruptible( &board->wait );
 }
 
@@ -47,10 +54,8 @@ void osStartTimer( gpib_board_t *board, unsigned int usec_timeout )
 
 	if( usec_timeout > 0 )
 	{
-		board->timer.expires = jiffies + usec_to_jiffies( usec_timeout );   /* set number of ticks */
 		board->timer.function = watchdog_timeout;
-		board->timer.data = (unsigned long) board;
-		add_timer( &board->timer );              /* add timer           */
+		mod_timer(&board->timer, jiffies + usec_to_jiffies( usec_timeout ));   /* set number of ticks */
 	}
 }
 

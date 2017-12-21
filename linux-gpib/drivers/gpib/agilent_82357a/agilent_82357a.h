@@ -19,6 +19,7 @@
 #ifndef _AGILENT_82357_H
 #define _AGILENT_82357_H
 
+#include <linux/kernel.h>
 #include <linux/mutex.h>
 #include <linux/semaphore.h>
 #include <linux/usb.h>
@@ -140,6 +141,12 @@ enum xfer_abort_type
 #define STATUS_DATA_LEN 8
 #define INTERRUPT_BUF_LEN 8
 
+typedef struct
+{
+	struct semaphore complete;
+	unsigned timed_out : 1;
+} agilent_82357a_urb_context_t ;
+
 // struct which defines local data for each 82357 device
 typedef struct
 {
@@ -155,17 +162,14 @@ typedef struct
 	struct mutex bulk_alloc_lock;
 	struct mutex interrupt_alloc_lock;
 	struct mutex control_alloc_lock;
+	struct timer_list bulk_timer;
+        agilent_82357a_urb_context_t context;
 	unsigned bulk_out_endpoint;
 	unsigned interrupt_in_endpoint;
         uint8_t *status_data;
 	unsigned is_cic : 1;
 } agilent_82357a_private_t;
 
-typedef struct
-{
-	struct semaphore complete;
-	unsigned timed_out : 1;
-} agilent_82357a_urb_context_t;
 
 struct agilent_82357a_register_pairlet
 {

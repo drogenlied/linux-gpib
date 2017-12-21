@@ -9,7 +9,7 @@ int ibclose( struct inode *inode, struct file *file );
 long ibioctl(struct file *filep, unsigned int cmd, unsigned long arg );
 int osInit( void );
 void osReset( void );
-void watchdog_timeout( unsigned long arg );
+//void watchdog_timeout( struct timer_list *t );
 void osStartTimer( gpib_board_t *board, unsigned int usec_timeout );
 void osRemoveTimer( gpib_board_t *board );
 void osSendEOI( void );

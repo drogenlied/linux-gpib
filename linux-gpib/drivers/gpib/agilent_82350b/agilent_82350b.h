@@ -33,7 +33,7 @@ enum pci_device_ids
   PCI_DEVICE_ID_82350B = 0x0b01,
   PCI_DEVICE_ID_82351A = 0x1218
 };
-	
+
 enum pci_subdevice_ids
 {
 	PCI_SUBDEVICE_ID_82350A = 0x10b0,

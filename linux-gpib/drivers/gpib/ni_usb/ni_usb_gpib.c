@@ -81,9 +81,16 @@ static void ni_usb_bulk_complete(struct urb *urb PT_REGS_ARG)
 	up(&context->complete);
 }
 
-static void ni_usb_timeout_handler(unsigned long arg)
+#ifdef HAVE_TIMER_SETUP
+static void ni_usb_timeout_handler(struct timer_list *t)
 {
-	ni_usb_urb_context_t *context = (ni_usb_urb_context_t *) arg;
+	ni_usb_private_t *ni_priv = from_timer(ni_priv, t, bulk_timer);
+#else
+static void ni_usb_timeout_handler (unsigned long arg)
+{
+	ni_usb_private_t *ni_priv = (ni_usb_private_t *) arg;
+#endif
+	ni_usb_urb_context_t *context = &ni_priv->context;
 	context->timed_out = 1;
 	up(&context->complete);
 };
@@ -94,8 +101,7 @@ int ni_usb_nonblocking_send_bulk_msg(ni_usb_private_t *ni_priv, void *data, int 
 	struct usb_device *usb_dev;
 	int retval;
 	unsigned int out_pipe;
-	ni_usb_urb_context_t context;
-	struct timer_list timer;
+	ni_usb_urb_context_t *context = &ni_priv->context;
 
 	*actual_data_length = 0;
 	mutex_lock(&ni_priv->bulk_transfer_lock);
@@ -117,24 +123,19 @@ int ni_usb_nonblocking_send_bulk_msg(ni_usb_private_t *ni_priv, void *data, int 
 	}
 	usb_dev = interface_to_usbdev(ni_priv->bus_interface);
 	out_pipe = usb_sndbulkpipe(usb_dev, ni_priv->bulk_out_endpoint);
-	sema_init(&context.complete, 0);
-	context.timed_out = 0;
+	sema_init(&context->complete, 0);
+	context->timed_out = 0;
 	usb_fill_bulk_urb(ni_priv->bulk_urb, usb_dev, out_pipe, data, data_length,
-		&ni_usb_bulk_complete, &context);
-	init_timer(&timer);
+		&ni_usb_bulk_complete, context);
+
 	if(timeout_msecs)
-	{
-		timer.expires = jiffies + msecs_to_jiffies(timeout_msecs);
-		timer.function = ni_usb_timeout_handler;
-		timer.data = (unsigned long) &context;
-		add_timer(&timer);
-	}
+		mod_timer(&ni_priv->bulk_timer, jiffies + msecs_to_jiffies(timeout_msecs));
+
 	//printk("%s: submitting urb\n", __FUNCTION__);
 	retval = usb_submit_urb(ni_priv->bulk_urb, GFP_KERNEL);
 	if(retval)
 	{
-		if(timer_pending(&timer))
-			del_timer_sync(&timer);
+		del_timer_sync(&ni_priv->bulk_timer);
 		usb_free_urb(ni_priv->bulk_urb);
 		ni_priv->bulk_urb = NULL;
 		printk("%s: failed to submit bulk out urb, retval=%i\n", __FILE__, retval);
@@ -142,16 +143,16 @@ int ni_usb_nonblocking_send_bulk_msg(ni_usb_private_t *ni_priv, void *data, int 
 		return retval;
 	}
 	mutex_unlock(&ni_priv->bulk_transfer_lock);
-	down(&context.complete);    // wait for ni_usb_bulk_complete
-	if(context.timed_out)
+	down(&context->complete);    // wait for ni_usb_bulk_complete
+	if(context->timed_out)
 	{
 		usb_kill_urb(ni_priv->bulk_urb);
 		printk("%s: killed urb due to timeout\n", __FUNCTION__);
 		retval = -ETIMEDOUT;
 	}else
 		retval = ni_priv->bulk_urb->status;
-	if(timer_pending(&timer))
-		del_timer_sync(&timer);
+
+	del_timer_sync(&ni_priv->bulk_timer);
 	*actual_data_length = ni_priv->bulk_urb->actual_length;
 	mutex_lock(&ni_priv->bulk_transfer_lock);
 	usb_free_urb(ni_priv->bulk_urb);
@@ -183,8 +184,7 @@ int ni_usb_nonblocking_receive_bulk_msg(ni_usb_private_t *ni_priv,
 	struct usb_device *usb_dev;
 	int retval;
 	unsigned int in_pipe;
-	ni_usb_urb_context_t context;
-	struct timer_list timer;
+	ni_usb_urb_context_t *context = &ni_priv->context;
 
 	*actual_data_length = 0;
 	mutex_lock(&ni_priv->bulk_transfer_lock);
@@ -206,24 +206,19 @@ int ni_usb_nonblocking_receive_bulk_msg(ni_usb_private_t *ni_priv,
 	}
 	usb_dev = interface_to_usbdev(ni_priv->bus_interface);
 	in_pipe = usb_rcvbulkpipe(usb_dev, ni_priv->bulk_in_endpoint);
-	sema_init(&context.complete, 0);
-	context.timed_out = 0;
+	sema_init(&context->complete, 0);
+	context->timed_out = 0;
 	usb_fill_bulk_urb(ni_priv->bulk_urb, usb_dev, in_pipe, data, data_length,
-		&ni_usb_bulk_complete, &context);
-	init_timer(&timer);
+		&ni_usb_bulk_complete, context);
+
 	if(timeout_msecs)
-	{
-		timer.expires = jiffies + msecs_to_jiffies(timeout_msecs);
-		timer.function = ni_usb_timeout_handler;
-		timer.data = (unsigned long) &context;
-		add_timer(&timer);
-	}
+		mod_timer(&ni_priv->bulk_timer, jiffies + msecs_to_jiffies(timeout_msecs));
+
 	//printk("%s: submitting urb\n", __FUNCTION__);
 	retval = usb_submit_urb(ni_priv->bulk_urb, GFP_KERNEL);
 	if(retval)
 	{
-		if(timer_pending(&timer))
-			del_timer_sync(&timer);
+		del_timer_sync(&ni_priv->bulk_timer);
 		usb_free_urb(ni_priv->bulk_urb);
 		ni_priv->bulk_urb = NULL;
 		printk("%s: failed to submit bulk out urb, retval=%i\n", __FILE__, retval);
@@ -233,7 +228,7 @@ int ni_usb_nonblocking_receive_bulk_msg(ni_usb_private_t *ni_priv,
 	mutex_unlock(&ni_priv->bulk_transfer_lock);
 	if(interruptible)
 	{
-		if(down_interruptible(&context.complete))
+		if(down_interruptible(&context->complete))
 		{
 			/* If we got interrupted by a signal while waiting for the usb gpib
 				to respond, we should send a stop command so it will finish
@@ -242,21 +237,21 @@ int ni_usb_nonblocking_receive_bulk_msg(ni_usb_private_t *ni_priv,
 			retval = -ERESTARTSYS;
 			/* now do an uninterruptible wait, it shouldn't take long
 				for the board to respond now. */
-			down(&context.complete);
+			down(&context->complete);
 		}
 	}else
 	{
-		down(&context.complete);
+		down(&context->complete);
 	}
-	if(context.timed_out)
+	if(context->timed_out)
 	{
 		usb_kill_urb(ni_priv->bulk_urb);
 		printk("%s: killed urb due to timeout\n", __FUNCTION__);
 		retval = -ETIMEDOUT;
 	}else if(ni_priv->bulk_urb->status)
 		retval = ni_priv->bulk_urb->status;
-	if(timer_pending(&timer))
-		del_timer_sync(&timer);
+
+	del_timer_sync(&ni_priv->bulk_timer);
 	*actual_data_length = ni_priv->bulk_urb->actual_length;
 	mutex_lock(&ni_priv->bulk_transfer_lock);
 	usb_free_urb(ni_priv->bulk_urb);
@@ -2170,6 +2165,13 @@ int ni_usb_attach(gpib_board_t *board, gpib_board_config_t config)
 		mutex_unlock(&ni_usb_hotplug_lock);
 		return retval;
 	}
+
+#ifdef HAVE_TIMER_SETUP
+	timer_setup(&ni_priv->bulk_timer, ni_usb_timeout_handler, 0);
+#else
+	setup_timer(&ni_priv->bulk_timer, ni_usb_timeout_handler, (unsigned long)ni_priv);
+#endif
+
 	retval = ni_usb_init(board);
 	if(retval < 0)
 	{
@@ -2182,6 +2184,7 @@ int ni_usb_attach(gpib_board_t *board, gpib_board_config_t config)
 		mutex_unlock(&ni_usb_hotplug_lock);
 		return retval;
 	}
+
 	mutex_unlock(&ni_usb_hotplug_lock);
 	return retval;
 }

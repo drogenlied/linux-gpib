@@ -44,9 +44,16 @@ static void agilent_82357a_bulk_complete(struct urb *urb PT_REGS_ARG)
 	up(&context->complete);
 }
 
+#ifdef HAVE_TIMER_SETUP
+static void agilent_82357a_timeout_handler(struct timer_list *t)
+{
+	agilent_82357a_private_t *a_priv = from_timer(a_priv, t, bulk_timer);
+#else
 static void agilent_82357a_timeout_handler(unsigned long arg)
 {
-	agilent_82357a_urb_context_t *context = (agilent_82357a_urb_context_t *) arg;
+	agilent_82357a_private_t *a_priv = (agilent_82357a_private_t *) arg;
+#endif
+	agilent_82357a_urb_context_t *context = &a_priv->context;
 	context->timed_out = 1;
 	up(&context->complete);
 }
@@ -57,8 +64,7 @@ int agilent_82357a_send_bulk_msg(agilent_82357a_private_t *a_priv, void *data, i
 	struct usb_device *usb_dev;
 	int retval;
 	unsigned int out_pipe;
-	agilent_82357a_urb_context_t context;
-	struct timer_list *timer = NULL;
+	agilent_82357a_urb_context_t *context = &a_priv->context;
 
 	*actual_data_length = 0;
 	retval = mutex_lock_interruptible(&a_priv->bulk_alloc_lock);
@@ -81,25 +87,14 @@ int agilent_82357a_send_bulk_msg(agilent_82357a_private_t *a_priv, void *data, i
 	}
 	usb_dev = interface_to_usbdev(a_priv->bus_interface);
 	out_pipe = usb_sndbulkpipe(usb_dev, a_priv->bulk_out_endpoint);
-	sema_init(&context.complete, 0);
-	context.timed_out = 0;
+	sema_init(&context->complete, 0);
+	context->timed_out = 0;
 	usb_fill_bulk_urb(a_priv->bulk_urb, usb_dev, out_pipe, data, data_length,
-		&agilent_82357a_bulk_complete, &context);
+		&agilent_82357a_bulk_complete, context);
+
 	if(timeout_msecs)
-	{
-		timer = kmalloc(sizeof(struct timer_list), GFP_KERNEL);
-		if(timer == NULL)
-		{
-			mutex_unlock(&a_priv->bulk_alloc_lock);
-			retval = -ENOMEM;
-			goto cleanup;
-		}
-		init_timer(timer);
-		timer->expires = jiffies + msecs_to_jiffies(timeout_msecs);
-		timer->function = agilent_82357a_timeout_handler;
-		timer->data = (unsigned long) &context;
-		add_timer(timer);
-	}
+		mod_timer(&a_priv->bulk_timer, jiffies + msecs_to_jiffies(timeout_msecs));
+
 	//printk("%s: submitting urb\n", __FUNCTION__);
 	retval = usb_submit_urb(a_priv->bulk_urb, GFP_KERNEL);
 	if(retval)
@@ -109,13 +104,13 @@ int agilent_82357a_send_bulk_msg(agilent_82357a_private_t *a_priv, void *data, i
 		goto cleanup;
 	}
 	mutex_unlock(&a_priv->bulk_alloc_lock);
-	if(down_interruptible(&context.complete))
+	if(down_interruptible(&context->complete))
 	{
 		printk("%s: %s: interrupted\n", __FILE__, __FUNCTION__);
 		retval = -ERESTARTSYS;
 		goto cleanup;
 	}
-	if(context.timed_out)
+	if(context->timed_out)
 	{
 		retval = -ETIMEDOUT;
 	}else
@@ -124,11 +119,10 @@ int agilent_82357a_send_bulk_msg(agilent_82357a_private_t *a_priv, void *data, i
 		*actual_data_length = a_priv->bulk_urb->actual_length;
 	}
 cleanup:
-	if(timer)
+	if(timeout_msecs)
 	{
-		if(timer_pending(timer))
-			del_timer_sync(timer);
-		kfree(timer);
+		if(timer_pending(&a_priv->bulk_timer))
+			del_timer_sync(&a_priv->bulk_timer);
 	}
 	mutex_lock(&a_priv->bulk_alloc_lock);
 	if(a_priv->bulk_urb)
@@ -147,8 +141,7 @@ int agilent_82357a_receive_bulk_msg(agilent_82357a_private_t *a_priv, void *data
 	struct usb_device *usb_dev;
 	int retval;
 	unsigned int in_pipe;
-	agilent_82357a_urb_context_t context;
-	struct timer_list *timer = NULL;
+	agilent_82357a_urb_context_t *context = &a_priv->context;
 
 	*actual_data_length = 0;
 	retval = mutex_lock_interruptible(&a_priv->bulk_alloc_lock);
@@ -171,25 +164,14 @@ int agilent_82357a_receive_bulk_msg(agilent_82357a_private_t *a_priv, void *data
 	}
 	usb_dev = interface_to_usbdev(a_priv->bus_interface);
 	in_pipe = usb_rcvbulkpipe(usb_dev, AGILENT_82357_BULK_IN_ENDPOINT);
-	sema_init(&context.complete, 0);
-	context.timed_out = 0;
+	sema_init(&context->complete, 0);
+	context->timed_out = 0;
 	usb_fill_bulk_urb(a_priv->bulk_urb, usb_dev, in_pipe, data, data_length,
-		&agilent_82357a_bulk_complete, &context);
+		&agilent_82357a_bulk_complete, context);
+
 	if(timeout_msecs)
-	{
-		timer = kmalloc(sizeof(struct timer_list), GFP_KERNEL);
-		if(timer == NULL)
-		{
-			retval = -ENOMEM;
-			mutex_unlock(&a_priv->bulk_alloc_lock);
-			goto cleanup;
-		}
-		init_timer(timer);
-		timer->expires = jiffies + msecs_to_jiffies(timeout_msecs);
-		timer->function = agilent_82357a_timeout_handler;
-		timer->data = (unsigned long) &context;
-		add_timer(timer);
-	}
+		mod_timer(&a_priv->bulk_timer, jiffies + msecs_to_jiffies(timeout_msecs));
+
 	//printk("%s: submitting urb\n", __FUNCTION__);
 	retval = usb_submit_urb(a_priv->bulk_urb, GFP_KERNEL);
 	if(retval)
@@ -199,13 +181,13 @@ int agilent_82357a_receive_bulk_msg(agilent_82357a_private_t *a_priv, void *data
 		goto cleanup;
 	}
 	mutex_unlock(&a_priv->bulk_alloc_lock);
-	if(down_interruptible(&context.complete))
+	if(down_interruptible(&context->complete))
 	{
 		printk("%s: %s: interrupted\n", __FILE__, __FUNCTION__);
 		retval = -ERESTARTSYS;
 		goto cleanup;
 	}
-	if(context.timed_out)
+	if(context->timed_out)
 	{
 		retval = -ETIMEDOUT;
 		goto cleanup;
@@ -213,14 +195,9 @@ int agilent_82357a_receive_bulk_msg(agilent_82357a_private_t *a_priv, void *data
 	retval = a_priv->bulk_urb->status;
 	*actual_data_length = a_priv->bulk_urb->actual_length;
 cleanup:
-	if(timer)
-	{
-		if(timer_pending(timer))
-		{
-			del_timer_sync(timer);
-		}
-		kfree(timer);
-	}
+	if(timeout_msecs)
+		del_timer_sync(&a_priv->bulk_timer);
+
 	mutex_lock(&a_priv->bulk_alloc_lock);
 	if(a_priv->bulk_urb)
 	{
@@ -1041,7 +1018,7 @@ void agilent_82357a_interrupt_complete(struct urb *urb PT_REGS_ARG)
 	int retval;
 	uint8_t *transfer_buffer = urb->transfer_buffer;
 	unsigned long interrupt_flags;
-	
+
 	smp_mb__before_atomic();
 
 #if 0
@@ -1364,13 +1341,22 @@ int agilent_82357a_attach(gpib_board_t *board, gpib_board_config_t config)
 		return retval;
 	}
 	//printk("%s: finished setup_urbs()()\n", __FUNCTION__);
+
+#ifdef HAVE_TIMER_SETUP
+	timer_setup(&a_priv->bulk_timer, agilent_82357a_timeout_handler, 0);
+#else
+	setup_timer(&a_priv->bulk_timer, agilent_82357a_timeout_handler, (unsigned long) a_priv);
+#endif
+
 	retval = agilent_82357a_init(board);
+
 	if(retval < 0)
 	{
 		mutex_unlock(&agilent_82357a_hotplug_lock);
 		return retval;
 	}
 	//printk("%s: finished init()\n", __FUNCTION__);
+
 	printk("%s: attached\n", __FUNCTION__);
 	mutex_unlock(&agilent_82357a_hotplug_lock);
 	return retval;
