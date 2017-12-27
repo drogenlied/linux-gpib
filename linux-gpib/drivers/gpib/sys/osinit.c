@@ -120,6 +120,7 @@ void init_gpib_board( gpib_board_t *board )
 #else
 	setup_timer(&board->timer, NULL, (unsigned long)board);
 #endif
+	board->dev = NULL;
 	board->ibbase = 0;
 	board->ibirq = 0;
 	board->ibdma = 0;
