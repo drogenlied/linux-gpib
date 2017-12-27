@@ -26,6 +26,7 @@
  */
 #include "gpib/gpib_user.h"
 #include <asm/atomic.h>
+#include <linux/device.h>
 #include <linux/mutex.h>
 #include <linux/wait.h>
 #include <linux/sched.h>
@@ -222,6 +223,7 @@ struct gpib_board_struct
 	spinlock_t spinlock;
 	/* Watchdog timer to enable timeouts */
 	struct timer_list timer;
+	struct device *dev;
 	/* IO base address to use for non-pnp cards (set by core, driver should make local copy) */
 	void *ibbase;
 	/* IRQ to use for non-pnp cards (set by core, driver should make local copy) */
