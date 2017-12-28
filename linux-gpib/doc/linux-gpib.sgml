@@ -537,6 +537,12 @@ Default is <option>--sre</option>.</para>
 	<entry>pcIIa</entry>
 	</row>
 	<row>
+	<entry>Frank Mori Hess</entry>
+	<entry><link LINKEND="fmh-gpib-core">fmh_gpib_core</link></entry>
+	<entry>fmh_gpib.ko</entry>
+	<entry>fmh_gpib, fmh_gpib_unaccel</entry>
+	</row>
+	<row>
 	<entry>Hameg</entry>
 	<entry>HO80</entry>
 	<entry>pc2_gpib.ko</entry>
@@ -893,6 +899,36 @@ They can only do 8-bit end-of-string (EOS) compares.
 </listitem>
 </itemizedList>
 </para>
+</section>
+<section ID="fmh-gpib-core">
+<title>fmh_gpib_core</title>
+<para>
+fmh_gpib_core is a GPIB chip written in VHDL suitable for programming into a FPGA.  The code
+for the chip may be found at 
+<ulink URL="https://github.com/fmhess/fmh_gpib_core">https://github.com/fmhess/fmh_gpib_core</ulink>.
+It supports a cb7210.2 style register interface with some extensions.
+</para>
+<para>
+The driver obtains its hardware information (base addresses, interrupt, dma, etc.) from the device tree.
+It expects to find two i/o memory resources, an interrupt, and a dma channel.  One i/o memory
+resource is called "gpib-control-status" which contains the 8 bit cb7210.2 registers.  The other
+i/o memory resource is called "dma-fifos" and contains 16 bit registers for the fifos and
+transfer counter.  An integer property called "dma-channel" gives the channel id for the 
+dma channel the chip is connected to.  So, the device tree entry for the chip might look
+something like:
+</para>
+<programlisting>
+fmh_gpib_0: fmh_gpib@0x00049800 {
+                compatible = "fmhess,fmh-gpib-core";
+                reg = < 0x00049600 0x00000080
+                        0x00049800 0x00000008 >;
+                reg-names = "gpib-control-status", "dma-fifos";
+                interrupt-parent = &lt; &amp;intc &gt;;
+                interrupts = &lt; 0 57 4 &gt;;
+                clocks = &lt; &amp;FPGA_IO_HPS_CLK &gt;;
+                dma-channel = &lt; 2 &gt;;
+            }; //end fmh_gpib@0x00049800 (fmh_gpib_0)
+</programlisting>
 </section>
 <section ID="lpvo-usb-gpib-notes">
 <title>Self-made usb-gpib adapter</title>
