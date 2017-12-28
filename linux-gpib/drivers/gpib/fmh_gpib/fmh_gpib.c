@@ -811,8 +811,9 @@ int fmh_gpib_init(fmh_gpib_private_t *e_priv, gpib_board_t *board, int handshake
  * the gpib controller. */
 static bool gpib_dma_channel_filter(struct dma_chan *chan, void *filter_param)
 {
+	s32 *dma_channel_id = (s32*)filter_param;
 	// select the channel which is wired to the gpib chip
-	return chan->chan_id == 0;
+	return chan->chan_id == *dma_channel_id;
 }
 
 /* Match callback for driver_find_device */
@@ -836,7 +837,8 @@ static int fmh_gpib_attach_impl(gpib_board_t *board, gpib_board_config_t config,
 	struct resource *res;
 	dma_cap_mask_t dma_cap;
 	struct platform_device *pdev;
-    
+	s32 dma_channel_id;
+	
 	board->dev = driver_find_device(&fmh_gpib_platform_driver.driver,
 		NULL, board, &fmh_gpib_device_match);
 	if(board->dev == NULL)
@@ -894,6 +896,7 @@ static int fmh_gpib_attach_impl(gpib_board_t *board, gpib_board_config_t config,
 		(unsigned long)e_priv->dma_port_res->start, e_priv->fifo_base, 
 		(unsigned long)resource_size(e_priv->dma_port_res));
 	
+	
 	irq = platform_get_irq(pdev, 0);
 	printk("gpib: irq %d\n", irq);
 	if(irq < 0)
@@ -910,16 +913,28 @@ static int fmh_gpib_attach_impl(gpib_board_t *board, gpib_board_config_t config,
 	}
 	e_priv->irq = irq;
 
-	dma_cap_zero(dma_cap);
-	dma_cap_set(DMA_SLAVE, dma_cap);
-	e_priv->dma_channel = dma_request_channel(dma_cap, gpib_dma_channel_filter, NULL);
-	if(e_priv->dma_channel == NULL) 
+	retval = of_property_read_s32(dev_of_node(board->dev),
+		"dma",
+		&dma_channel_id);
+	if(retval < 0)
 	{
-		printk( "fmh_gpib_gpib: failed to allocate a dma channel.\n");
+		dev_warn(board->dev,
+			"failed to read \"dma\" property from device tree entry, err=%d\n",
+			retval);
 		// we don't error out here because unaccel interface will still
 		// work without dma
+	}else
+	{
+		dma_cap_zero(dma_cap);
+		dma_cap_set(DMA_SLAVE, dma_cap);
+		e_priv->dma_channel = dma_request_channel(dma_cap, gpib_dma_channel_filter, &dma_channel_id);
+		if(e_priv->dma_channel == NULL) 
+		{
+			dev_warn(board->dev, "failed to allocate a dma channel.\n");
+			// we don't error out here because unaccel interface will still
+			// work without dma
+		}
 	}
-	
 	return fmh_gpib_init(e_priv, board, handshake_mode);
 }
 
