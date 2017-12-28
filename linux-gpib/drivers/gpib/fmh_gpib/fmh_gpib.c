@@ -631,7 +631,7 @@ gpib_interface_t fmh_gpib_unaccel_interface =
 
 gpib_interface_t fmh_gpib_interface =
 {
-	name: "fluke",
+	name: "fmh_gpib",
 	attach: fmh_gpib_attach_holdoff_end,
 	detach: fmh_gpib_detach,
 	read: fmh_gpib_accel_read,
