@@ -914,7 +914,7 @@ static int fmh_gpib_attach_impl(gpib_board_t *board, gpib_board_config_t config,
 	e_priv->irq = irq;
 
 	retval = of_property_read_s32(dev_of_node(board->dev),
-		"dma",
+		"dma-channel",
 		&dma_channel_id);
 	if(retval < 0)
 	{
