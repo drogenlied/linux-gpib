@@ -744,7 +744,7 @@ void fmh_gpib_generic_detach(gpib_board_t *board)
 		dev_set_drvdata(board->dev, NULL);
 }
 
-// generic part of attach functions shared by all cb7210 boards
+// generic part of attach functions
 int fmh_gpib_generic_attach(gpib_board_t *board)
 {
 	fmh_gpib_private_t *e_priv;
@@ -827,7 +827,7 @@ static int fmh_gpib_device_match(struct device *dev, void *data)
 	}
 }
 
-static int fmh_gpib_attach_impl(gpib_board_t *board, gpib_board_config_t config, unsigned handshake_mode)
+static int fmh_gpib_attach_impl(gpib_board_t *board, gpib_board_config_t config, unsigned handshake_mode, int acquire_dma)
 {
 	fmh_gpib_private_t *e_priv;
 	nec7210_private_t *nec_priv;
@@ -871,7 +871,7 @@ static int fmh_gpib_attach_impl(gpib_board_t *board, gpib_board_config_t config,
 
 	nec_priv->iobase = ioremap_nocache(e_priv->gpib_iomem_res->start, 
 			resource_size(e_priv->gpib_iomem_res));
-	printk("gpib: iobase 0x%lx remapped to %p, length=%ld\n", (unsigned long)e_priv->gpib_iomem_res->start,
+	dev_info(board->dev, "iobase 0x%lx remapped to %p, length=%ld\n", (unsigned long)e_priv->gpib_iomem_res->start,
 		nec_priv->iobase, (unsigned long)resource_size(e_priv->gpib_iomem_res));
 	if (!nec_priv->iobase) {
 		dev_err(board->dev, "Could not map I/O memory\n");
@@ -892,7 +892,7 @@ static int fmh_gpib_attach_impl(gpib_board_t *board, gpib_board_config_t config,
 	e_priv->dma_port_res = res;
 	e_priv->fifo_base = ioremap_nocache(e_priv->dma_port_res->start, 
 			resource_size(e_priv->dma_port_res));
-	printk("gpib: dma fifos 0x%lx remapped to %p, length=%ld\n",
+	dev_info(board->dev, "dma fifos 0x%lx remapped to %p, length=%ld\n",
 		(unsigned long)e_priv->dma_port_res->start, e_priv->fifo_base, 
 		(unsigned long)resource_size(e_priv->dma_port_res));
 	
@@ -913,26 +913,27 @@ static int fmh_gpib_attach_impl(gpib_board_t *board, gpib_board_config_t config,
 	}
 	e_priv->irq = irq;
 
-	retval = of_property_read_s32(dev_of_node(board->dev),
-		"dma-channel",
-		&dma_channel_id);
-	if(retval < 0)
+	if(acquire_dma)
 	{
-		dev_warn(board->dev,
-			"failed to read \"dma\" property from device tree entry, err=%d\n",
-			retval);
-		// we don't error out here because unaccel interface will still
-		// work without dma
-	}else
-	{
-		dma_cap_zero(dma_cap);
-		dma_cap_set(DMA_SLAVE, dma_cap);
-		e_priv->dma_channel = dma_request_channel(dma_cap, gpib_dma_channel_filter, &dma_channel_id);
-		if(e_priv->dma_channel == NULL) 
+		retval = of_property_read_s32(dev_of_node(board->dev),
+			"dma-channel",
+			&dma_channel_id);
+		if(retval < 0)
 		{
-			dev_warn(board->dev, "failed to allocate a dma channel.\n");
-			// we don't error out here because unaccel interface will still
-			// work without dma
+			dev_err(board->dev,
+				"failed to read \"dma\" property from device tree entry, err=%d\n",
+				retval);
+			return retval;
+		}else
+		{
+			dma_cap_zero(dma_cap);
+			dma_cap_set(DMA_SLAVE, dma_cap);
+			e_priv->dma_channel = dma_request_channel(dma_cap, gpib_dma_channel_filter, &dma_channel_id);
+			if(e_priv->dma_channel == NULL) 
+			{
+				dev_err(board->dev, "failed to allocate a dma channel.\n");
+				return -EIO;
+			}
 		}
 	}
 	return fmh_gpib_init(e_priv, board, handshake_mode);
@@ -940,12 +941,12 @@ static int fmh_gpib_attach_impl(gpib_board_t *board, gpib_board_config_t config,
 
 int fmh_gpib_attach_holdoff_all(gpib_board_t *board, gpib_board_config_t config)
 {
-	return fmh_gpib_attach_impl(board, config, HR_HLDA);
+	return fmh_gpib_attach_impl(board, config, HR_HLDA, 0);
 }
 
 int fmh_gpib_attach_holdoff_end(gpib_board_t *board, gpib_board_config_t config)
 {
-	return fmh_gpib_attach_impl(board, config, HR_HLDE);
+	return fmh_gpib_attach_impl(board, config, HR_HLDE, 1);
 }
 
 void fmh_gpib_detach(gpib_board_t *board)
