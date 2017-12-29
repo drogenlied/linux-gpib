@@ -30,10 +30,10 @@
 
 MODULE_LICENSE("GPL");
 
-int ni_tnt_isa_attach( gpib_board_t *board, gpib_board_config_t config );
-int ni_nat4882_isa_attach( gpib_board_t *board, gpib_board_config_t config );
-int ni_nec_isa_attach( gpib_board_t *board, gpib_board_config_t config );
-int ni_pci_attach(gpib_board_t *board, gpib_board_config_t config);
+int ni_tnt_isa_attach( gpib_board_t *board, const gpib_board_config_t *config );
+int ni_nat4882_isa_attach( gpib_board_t *board, const gpib_board_config_t *config );
+int ni_nec_isa_attach( gpib_board_t *board, const gpib_board_config_t *config );
+int ni_pci_attach(gpib_board_t *board, const gpib_board_config_t *config);
 
 void ni_isa_detach(gpib_board_t *board);
 void ni_pci_detach(gpib_board_t *board);
@@ -486,7 +486,7 @@ void tnt4882_init( tnt4882_private_t *tnt_priv, const gpib_board_t *board )
 	tnt_writeb( tnt_priv, tnt_priv->imr0_bits, IMR0 );
 }
 
-int ni_pci_attach(gpib_board_t *board, gpib_board_config_t config)
+int ni_pci_attach(gpib_board_t *board, const gpib_board_config_t *config)
 {
 	tnt4882_private_t *tnt_priv;
 	nec7210_private_t *nec_priv;
@@ -520,10 +520,10 @@ int ni_pci_attach(gpib_board_t *board, gpib_board_config_t config)
 		short found_board;
 
 		if(mite->used) continue;
-		if( board->pci_bus >=0 && board->pci_bus !=
+		if( config->pci_bus >=0 && config->pci_bus !=
 			mite->pcidev->bus->number )
 			continue;
-		if( board->pci_slot >= 0 && board->pci_slot !=
+		if( config->pci_slot >= 0 && config->pci_slot !=
 			PCI_SLOT(mite->pcidev->devfn))
 			continue;
 		switch(mite_device_id(mite))
@@ -626,12 +626,13 @@ int ni_isapnp_find( struct pnp_dev **dev )
 	return 0;
 }
 
-int ni_isa_attach_common( gpib_board_t *board, enum nec7210_chipset chipset )
+int ni_isa_attach_common( gpib_board_t *board, const gpib_board_config_t *config, enum nec7210_chipset chipset )
 {
 	tnt4882_private_t *tnt_priv;
 	nec7210_private_t *nec_priv;
 	int isr_flags = 0;
 	void *iobase;
+	int irq;
 
 	board->status = 0;
 
@@ -649,7 +650,7 @@ int ni_isa_attach_common( gpib_board_t *board, enum nec7210_chipset chipset )
 	nec_priv->offset = atgpib_reg_offset;
 
 	// look for plug-n-play board
-	if( board->ibbase == 0 )
+	if( config->ibbase == 0 )
 	{
 		struct pnp_dev *dev;
 		int retval;
@@ -658,10 +659,12 @@ int ni_isa_attach_common( gpib_board_t *board, enum nec7210_chipset chipset )
 		if( retval < 0 ) return retval;
 		tnt_priv->pnp_dev = dev;
 		iobase = (void*)(pnp_port_start(dev, 0));
-		board->ibirq = pnp_irq(dev, 0);
+		irq = pnp_irq(dev, 0);
 	}else
-		iobase = board->ibbase;
-
+	{
+		iobase = config->ibbase;
+		irq = config->ibirq;
+	}
 	// allocate ioports
 	if(request_region((unsigned long)(iobase), atgpib_iosize, "atgpib") == NULL)
 	{
@@ -671,31 +674,31 @@ int ni_isa_attach_common( gpib_board_t *board, enum nec7210_chipset chipset )
 	nec_priv->iobase = iobase;
 
 	// get irq
-	if(request_irq(board->ibirq, tnt4882_interrupt, isr_flags, "atgpib", board))
+	if(request_irq(irq, tnt4882_interrupt, isr_flags, "atgpib", board))
 	{
-		printk("gpib: can't request IRQ %d\n", board->ibirq);
+		printk("gpib: can't request IRQ %d\n", irq);
 		return -1;
 	}
-	tnt_priv->irq = board->ibirq;
+	tnt_priv->irq = irq;
 
 	tnt4882_init( tnt_priv, board );
 
 	return 0;
 }
 
-int ni_tnt_isa_attach( gpib_board_t *board, gpib_board_config_t config )
+int ni_tnt_isa_attach( gpib_board_t *board, const gpib_board_config_t *config )
 {
-	return ni_isa_attach_common( board, TNT4882 );
+	return ni_isa_attach_common( board, config, TNT4882 );
 }
 
-int ni_nat4882_isa_attach( gpib_board_t *board, gpib_board_config_t config )
+int ni_nat4882_isa_attach( gpib_board_t *board, const gpib_board_config_t *config )
 {
-	return ni_isa_attach_common( board, NAT4882 );
+	return ni_isa_attach_common( board, config, NAT4882 );
 }
 
-int ni_nec_isa_attach( gpib_board_t *board, gpib_board_config_t config )
+int ni_nec_isa_attach( gpib_board_t *board, const gpib_board_config_t *config )
 {
-	return ni_isa_attach_common( board, NEC7210 );
+	return ni_isa_attach_common( board, config, NEC7210 );
 }
 
 void ni_isa_detach(gpib_board_t *board)

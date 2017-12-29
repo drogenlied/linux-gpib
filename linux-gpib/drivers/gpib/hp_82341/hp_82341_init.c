@@ -27,7 +27,7 @@ Driver for hp 82341a/b/c/d boards.  Might be worth merging with Agilent
 
 MODULE_LICENSE("GPL");
 
-int hp_82341_attach(gpib_board_t *board, gpib_board_config_t config);
+int hp_82341_attach(gpib_board_t *board, const gpib_board_config_t *config);
 
 void hp_82341_detach( gpib_board_t *board );
 
@@ -365,9 +365,9 @@ int hp_82341_load_firmware_array(hp_82341_private_t *hp_priv, const unsigned cha
 	return 0;
 }
 
-int hp_82341_load_firmware(hp_82341_private_t *hp_priv, gpib_board_config_t config)
+int hp_82341_load_firmware(hp_82341_private_t *hp_priv, const gpib_board_config_t *config)
 {
-	if(config.init_data_length == 0)
+	if(config->init_data_length == 0)
 	{
 		if(xilinx_done(hp_priv))
 			return 0;
@@ -381,18 +381,18 @@ int hp_82341_load_firmware(hp_82341_private_t *hp_priv, gpib_board_config_t conf
 	switch(hp_priv->hw_version)
 	{
 	case HW_VERSION_82341C:
-		if(config.init_data_length != hp_82341c_firmware_length)
+		if(config->init_data_length != hp_82341c_firmware_length)
 		{
 			printk("hp_82341: bad firmware length=%i for 82341c (expected %i).\n",
-				config.init_data_length, hp_82341c_firmware_length);
+				config->init_data_length, hp_82341c_firmware_length);
 			return -EINVAL;
 		}
 		break;
 	case HW_VERSION_82341D:
-		if(config.init_data_length != hp_82341d_firmware_length)
+		if(config->init_data_length != hp_82341d_firmware_length)
 		{
 			printk("hp_82341: bad firmware length=%i for 82341d (expected %i).\n",
-				config.init_data_length, hp_82341d_firmware_length);
+				config->init_data_length, hp_82341d_firmware_length);
 			return -EINVAL;
 		}
 		break;
@@ -400,7 +400,7 @@ int hp_82341_load_firmware(hp_82341_private_t *hp_priv, gpib_board_config_t conf
 		printk("hp_82341: %s: bug! unknown hw_version\n", __FUNCTION__); 
 		break;
 	}
-	return hp_82341_load_firmware_array(hp_priv, config.init_data, config.init_data_length);
+	return hp_82341_load_firmware_array(hp_priv, config->init_data, config->init_data_length);
 }
 
 void set_xilinx_not_prog(hp_82341_private_t *hp_priv, int assert)
@@ -437,11 +437,13 @@ int clear_xilinx(hp_82341_private_t *hp_priv)
 	return 0;
 }
 
-int hp_82341_attach(gpib_board_t *board, gpib_board_config_t config)
+int hp_82341_attach(gpib_board_t *board, const gpib_board_config_t *config)
 {
 	hp_82341_private_t *hp_priv;
 	tms9914_private_t *tms_priv;
 	unsigned long start_addr;
+	void *iobase;
+	int irq;
 	int i;
 	int retval;
 	
@@ -454,26 +456,28 @@ int hp_82341_attach(gpib_board_t *board, gpib_board_config_t config)
 	tms_priv->write_byte = hp_82341_write_byte;
 	tms_priv->offset = 1;
 
-	if(board->ibbase == 0)
+	if(config->ibbase == 0)
 	{
 		struct pnp_dev *dev;
 		int retval = hp_82341_find_isapnp_board(&dev);
 		if(retval < 0)
 			return retval;
 		hp_priv->pnp_dev = dev;
-		board->ibbase = (void*)(pnp_port_start(dev, 0));
-		board->ibirq = pnp_irq(dev, 0);
+		iobase = (void*)(pnp_port_start(dev, 0));
+		irq = pnp_irq(dev, 0);
 		hp_priv->hw_version = HW_VERSION_82341D;
 		hp_priv->io_region_offset = 0x8;
 	}else
 	{
+		iobase = config->ibbase;
+		irq = config->ibirq;
 		hp_priv->hw_version = HW_VERSION_82341C;
 		hp_priv->io_region_offset = 0x400;
 	}	
-	printk("hp_82341: base io 0x%p\n", board->ibbase);
+	printk("hp_82341: base io 0x%p\n", iobase);
 	for(i = 0; i < hp_82341_num_io_regions; ++i)
 	{
-		start_addr = (unsigned long)(board->ibbase) + i * hp_priv->io_region_offset;
+		start_addr = (unsigned long)(iobase) + i * hp_priv->io_region_offset;
 		if(request_region(start_addr, hp_82341_region_iosize, "hp_82341" ) == NULL)
 		{
 			printk( "hp_82341: failed to allocate io ports 0x%lx-0x%lx\n",
@@ -502,19 +506,19 @@ int hp_82341_attach(gpib_board_t *board, gpib_board_config_t config)
 		isapnp_cfg_end();
 	}
 	if(retval < 0) return retval;
-	if(irq_valid(hp_priv, board->ibirq) == 0)
+	if(irq_valid(hp_priv, irq) == 0)
 	{
 		return -EINVAL;
 	}
-	if(request_irq(board->ibirq, hp_82341_interrupt, 0, "hp_82341", board))
+	if(request_irq(irq, hp_82341_interrupt, 0, "hp_82341", board))
 	{
-		printk( "hp_82341: failed to allocate IRQ %d\n", board->ibirq);
+		printk( "hp_82341: failed to allocate IRQ %d\n", irq);
 		return -EIO;
 	}
-	hp_priv->irq = board->ibirq;
-	printk("hp_82341: IRQ %d\n", board->ibirq);
+	hp_priv->irq = irq;
+	printk("hp_82341: IRQ %d\n", irq);
 	hp_priv->config_control_bits &= ~IRQ_SELECT_MASK;
-	hp_priv->config_control_bits |= IRQ_SELECT_BITS(board->ibirq);	
+	hp_priv->config_control_bits |= IRQ_SELECT_BITS(irq);	
 	outb(hp_priv->config_control_bits, hp_priv->iobase[0] + CONFIG_CONTROL_STATUS_REG);
 	hp_priv->mode_control_bits |= ENABLE_IRQ_CONFIG_BIT;
 	outb(hp_priv->mode_control_bits, hp_priv->iobase[0] + MODE_CONTROL_STATUS_REG);

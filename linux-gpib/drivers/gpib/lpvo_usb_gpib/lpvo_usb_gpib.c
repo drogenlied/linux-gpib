@@ -376,11 +376,11 @@ void set_timeout (gpib_board_t *board) {
  * detach() will be called. Always.
  */
 
-int usb_gpib_attach(gpib_board_t *board, gpib_board_config_t config) {
+int usb_gpib_attach(gpib_board_t *board, const gpib_board_config_t *config) {
 
 	int retval;
 	char device[]="/dev/ttyUSBxx";
-	int base = (long int) board->ibbase;
+	int base = (long int) config->ibbase;
 	struct file *f;
 	mm_segment_t oldfs;
 
@@ -473,8 +473,8 @@ void usb_gpib_detach(gpib_board_t *board) {
 
 			set_fs (oldfs);
 
-			printk (KERN_NOTICE "%s:%s - ttyUSB%ld off\n",
-				HERE, (long) board->ibbase);
+			printk (KERN_NOTICE "%s:%s - ttyUSB off\n",
+				HERE);
 		}
 
 		if (board->private_data) kfree (board->private_data);

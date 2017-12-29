@@ -2079,7 +2079,7 @@ static int ni_usb_hs_wait_for_ready(ni_usb_private_t *ni_priv)
 	return retval;
 }
 
-int ni_usb_attach(gpib_board_t *board, gpib_board_config_t config)
+int ni_usb_attach(gpib_board_t *board, const gpib_board_config_t *config)
 {
 	int retval;
 	int i;

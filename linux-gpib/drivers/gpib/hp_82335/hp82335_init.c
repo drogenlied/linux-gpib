@@ -30,7 +30,7 @@
 
 MODULE_LICENSE("GPL");
 
-int hp82335_attach(gpib_board_t *board, gpib_board_config_t config);
+int hp82335_attach(gpib_board_t *board, const gpib_board_config_t *config);
 
 void hp82335_detach( gpib_board_t *board );
 
@@ -207,12 +207,12 @@ void hp82335_clear_interrupt( hp82335_private_t *hp_priv )
 	writeb( 0, tms_priv->iobase + HPREG_INTR_CLEAR );
 }
 
-int hp82335_attach( gpib_board_t *board, gpib_board_config_t config )
+int hp82335_attach( gpib_board_t *board, const gpib_board_config_t *config )
 {
 	hp82335_private_t *hp_priv;
 	tms9914_private_t *tms_priv;
 	int retval;
-	const unsigned long upper_iomem_base = (unsigned long)board->ibbase + hp82335_rom_size;
+	const unsigned long upper_iomem_base = (unsigned long)config->ibbase + hp82335_rom_size;
 
 	board->status = 0;
 
@@ -224,7 +224,7 @@ int hp82335_attach( gpib_board_t *board, gpib_board_config_t config )
 	tms_priv->write_byte = hp82335_write_byte;
 	tms_priv->offset = 1;
 
-	switch((unsigned long)(board->ibbase))
+	switch((unsigned long)(config->ibbase))
 	{
 		case 0xc4000:
 		case 0xc8000:
@@ -243,7 +243,7 @@ int hp82335_attach( gpib_board_t *board, gpib_board_config_t config )
 		case 0xfc000:
 			break;
 		default:
-			printk( "hp82335: invalid base io address 0x%p\n", board->ibbase );
+			printk( "hp82335: invalid base io address 0x%p\n", config->ibbase );
 			return -EINVAL;
 			break;
 	}
@@ -258,13 +258,13 @@ int hp82335_attach( gpib_board_t *board, gpib_board_config_t config )
 	printk("hp82335: upper half of 82335 iomem region 0x%lx remapped to 0x%p\n", hp_priv->raw_iobase,
 		tms_priv->iobase);
 
-	if((retval = request_irq( board->ibirq, hp82335_interrupt, 0, "hp82335", board)))
+	if((retval = request_irq( config->ibirq, hp82335_interrupt, 0, "hp82335", board)))
 	{
-		printk( "hp82335: can't request IRQ %d\n", board->ibirq );
+		printk( "hp82335: can't request IRQ %d\n", config->ibirq );
 		return retval;
 	}
-	hp_priv->irq = board->ibirq;
-	printk( "hp82335: IRQ %d\n", board->ibirq );
+	hp_priv->irq = config->ibirq;
+	printk( "hp82335: IRQ %d\n", config->ibirq );
 
 	tms9914_board_reset(tms_priv);
 

@@ -31,8 +31,8 @@
 
 MODULE_LICENSE("GPL");
 
-int cb_pci_attach(gpib_board_t *board, gpib_board_config_t config);
-int cb_isa_attach(gpib_board_t *board, gpib_board_config_t config);
+int cb_pci_attach(gpib_board_t *board, const gpib_board_config_t *config);
+int cb_isa_attach(gpib_board_t *board, const gpib_board_config_t *config);
 
 void cb_pci_detach(gpib_board_t *board);
 void cb_isa_detach(gpib_board_t *board);
@@ -392,7 +392,7 @@ int cb7210_init( cb7210_private_t *cb_priv, gpib_board_t *board )
 	return 0;
 }
 
-int cb_pci_attach(gpib_board_t *board, gpib_board_config_t config)
+int cb_pci_attach(gpib_board_t *board, const gpib_board_config_t *config)
 {
 	cb7210_private_t *cb_priv;
 	nec7210_private_t *nec_priv;
@@ -406,20 +406,20 @@ int cb_pci_attach(gpib_board_t *board, gpib_board_config_t config)
 	cb_priv = board->private_data;
 	nec_priv = &cb_priv->nec7210_priv;
 
-	cb_priv->pci_device = gpib_pci_get_device(board, PCI_VENDOR_ID_CBOARDS,
+	cb_priv->pci_device = gpib_pci_get_device(config, PCI_VENDOR_ID_CBOARDS,
 		PCI_DEVICE_ID_CBOARDS_PCI_GPIB, NULL);
 	if(cb_priv->pci_device != NULL)
 		cb_priv->pci_chip = PCI_CHIP_AMCC_S5933;
 	if(cb_priv->pci_device == NULL)
 	{
-		cb_priv->pci_device = gpib_pci_get_device(board, PCI_VENDOR_ID_CBOARDS,
+		cb_priv->pci_device = gpib_pci_get_device(config, PCI_VENDOR_ID_CBOARDS,
 			PCI_DEVICE_ID_CBOARDS_CPCI_GPIB, NULL);
 		if(cb_priv->pci_device != NULL)
 			cb_priv->pci_chip = PCI_CHIP_AMCC_S5933;
 	}
 	if(cb_priv->pci_device == NULL)
 	{
-		cb_priv->pci_device = gpib_pci_get_device(board, PCI_VENDOR_ID_QUANCOM,
+		cb_priv->pci_device = gpib_pci_get_device(config, PCI_VENDOR_ID_QUANCOM,
 			PCI_DEVICE_ID_QUANCOM_GPIB, NULL);
 		if(cb_priv->pci_device != NULL)
 		{
@@ -507,7 +507,7 @@ void cb_pci_detach(gpib_board_t *board)
 	cb7210_generic_detach(board);
 }
 
-int cb_isa_attach(gpib_board_t *board, gpib_board_config_t config)
+int cb_isa_attach(gpib_board_t *board, const gpib_board_config_t *config)
 {
 	int isr_flags = 0;
 	cb7210_private_t *cb_priv;
@@ -519,27 +519,27 @@ int cb_isa_attach(gpib_board_t *board, gpib_board_config_t config)
 	if(retval) return retval;
 	cb_priv = board->private_data;
 	nec_priv = &cb_priv->nec7210_priv;
-	if(request_region((unsigned long)(board->ibbase), cb7210_iosize, "cb7210") == 0)
+	if(request_region((unsigned long)(config->ibbase), cb7210_iosize, "cb7210") == 0)
 	{
-		printk("gpib: ioports starting at 0x%p are already in use\n", board->ibbase);
+		printk("gpib: ioports starting at 0x%p are already in use\n", config->ibbase);
 		return -EIO;
 	}
-	nec_priv->iobase = board->ibbase;
+	nec_priv->iobase = config->ibbase;
 	cb_priv->fifo_iobase = nec7210_iobase(cb_priv);
 	
-	bits = irq_bits( board->ibirq );
+	bits = irq_bits( config->ibirq );
 	if( bits == 0 )
 	{
-		printk("board incapable of using irq %i, try 2-5, 7, 10, or 11\n", board->ibirq);
+		printk("board incapable of using irq %i, try 2-5, 7, 10, or 11\n", config->ibirq);
 	}
 
 	// install interrupt handler
-	if(request_irq(board->ibirq, cb7210_interrupt, isr_flags, "cb7210", board))
+	if(request_irq(config->ibirq, cb7210_interrupt, isr_flags, "cb7210", board))
 	{
-		printk("gpib: can't request IRQ %d\n", board->ibirq);
+		printk("gpib: can't request IRQ %d\n", config->ibirq);
 		return -EBUSY;
 	}
-	cb_priv->irq = board->ibirq;
+	cb_priv->irq = config->ibirq;
 
 	return cb7210_init( cb_priv, board );
 }

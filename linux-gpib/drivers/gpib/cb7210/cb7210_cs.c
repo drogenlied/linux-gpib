@@ -67,7 +67,7 @@ static int pc_debug = PCMCIA_DEBUG;
 
 static int cb_gpib_config( struct pcmcia_device  *link );
 static void cb_gpib_release( struct pcmcia_device  *link );
-int cb_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config);
+int cb_pcmcia_attach(gpib_board_t *board, const gpib_board_config_t *config);
 void cb_pcmcia_detach(gpib_board_t *board);
 
 /*
@@ -396,7 +396,7 @@ gpib_interface_t cb_pcmcia_accel_interface =
 	return_to_local: cb7210_return_to_local,
 };
 
-int cb_pcmcia_attach( gpib_board_t *board, gpib_board_config_t config )
+int cb_pcmcia_attach( gpib_board_t *board, const gpib_board_config_t *config )
 {
 	cb7210_private_t *cb_priv;
 	nec7210_private_t *nec_priv;

@@ -40,10 +40,24 @@
 typedef struct gpib_interface_struct gpib_interface_t;
 typedef struct gpib_board_struct gpib_board_t;
 
+/* config parameters that are only used by driver attach functions */
 typedef struct
 {
+	/* firmware blob */
 	void *init_data;
 	int init_data_length;
+	/* IO base address to use for non-pnp cards (set by core, driver should make local copy) */
+	void *ibbase;
+	/* IRQ to use for non-pnp cards (set by core, driver should make local copy) */
+	unsigned int ibirq;
+	/* dma channel to use for non-pnp cards (set by core, driver should make local copy) */
+	unsigned int ibdma;
+	/* pci bus of card, useful for distinguishing multiple identical pci cards
+	 * (negative means don't care) */
+	int pci_bus;
+	/* pci slot of card, useful for distinguishing multiple identical pci cards
+	 * (negative means don't care) */
+	int pci_slot;
 } gpib_board_config_t;
 
 struct gpib_interface_struct
@@ -51,7 +65,7 @@ struct gpib_interface_struct
 	/* name of board */
 	char *name;
 	/* attach() initializes board and allocates resources */
-	int (*attach)(gpib_board_t *board, gpib_board_config_t config);
+	int (*attach)(gpib_board_t *board, const gpib_board_config_t *config);
 	/* detach() shuts down board and frees resources */
 	void (*detach)(gpib_board_t *board);
 	/* read() should read at most 'length' bytes from the bus into
@@ -224,18 +238,6 @@ struct gpib_board_struct
 	/* Watchdog timer to enable timeouts */
 	struct timer_list timer;
 	struct device *dev;
-	/* IO base address to use for non-pnp cards (set by core, driver should make local copy) */
-	void *ibbase;
-	/* IRQ to use for non-pnp cards (set by core, driver should make local copy) */
-	unsigned int ibirq;
-	/* dma channel to use for non-pnp cards (set by core, driver should make local copy) */
-	unsigned int ibdma;
-	/* pci bus of card, useful for distinguishing multiple identical pci cards
-	 * (negative means don't care) */
-	int pci_bus;
-	/* pci slot of card, useful for distinguishing multiple identical pci cards
-	 * (negative means don't care) */
-	int pci_slot;
 	/* 'private_data' can be used as seen fit by the driver to
 	 * store additional variables for this board */
 	void *private_data;
@@ -267,6 +269,7 @@ struct gpib_board_struct
 	struct gpib_pseudo_irq pseudo_irq;
 	/* error dong autopoll */
 	atomic_t stuck_srq;
+	gpib_board_config_t config;
 	/* Flag that indicates whether board is system controller of the bus */
 	unsigned master : 1;
 	/* individual status bit */

@@ -29,8 +29,8 @@
 
 MODULE_LICENSE("GPL");
 
-int agilent_82350b_unaccel_attach(gpib_board_t *board, gpib_board_config_t config);
-int agilent_82350b_accel_attach(gpib_board_t *board, gpib_board_config_t config);
+int agilent_82350b_unaccel_attach(gpib_board_t *board, const gpib_board_config_t *config);
+int agilent_82350b_accel_attach(gpib_board_t *board, const gpib_board_config_t *config);
 
 void agilent_82350b_detach( gpib_board_t *board );
 
@@ -363,7 +363,7 @@ int agilent_82350b_generic_attach(gpib_board_t *board, const gpib_board_config_t
 	tms_priv->offset = 1;
 
 	// find board
-	a_priv->pci_device = gpib_pci_get_device(board, PCI_VENDOR_ID_AGILENT,
+	a_priv->pci_device = gpib_pci_get_device(config, PCI_VENDOR_ID_AGILENT,
 		PCI_DEVICE_ID_82350B, NULL);
 	if(a_priv->pci_device)
 	{       
@@ -372,7 +372,7 @@ int agilent_82350b_generic_attach(gpib_board_t *board, const gpib_board_config_t
 
 	}else
 	{
-	         a_priv->pci_device = gpib_pci_get_device(board, PCI_VENDOR_ID_AGILENT,
+	         a_priv->pci_device = gpib_pci_get_device(config, PCI_VENDOR_ID_AGILENT,
 							  PCI_DEVICE_ID_82351A, NULL);
 	        if(a_priv->pci_device)
 		{
@@ -381,7 +381,7 @@ int agilent_82350b_generic_attach(gpib_board_t *board, const gpib_board_config_t
 
 		}else
 	        {
-		        a_priv->pci_device = gpib_pci_get_subsys(board, PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050,
+		        a_priv->pci_device = gpib_pci_get_subsys(config, PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050,
 								 PCI_VENDOR_ID_HP,  PCI_SUBDEVICE_ID_82350A,
 								 a_priv->pci_device);
 			if(a_priv->pci_device)
@@ -483,14 +483,14 @@ int agilent_82350b_generic_attach(gpib_board_t *board, const gpib_board_config_t
 	return 0;
 }
 
-int agilent_82350b_unaccel_attach(gpib_board_t *board, gpib_board_config_t config)
+int agilent_82350b_unaccel_attach(gpib_board_t *board, const gpib_board_config_t *config)
 {
-	return agilent_82350b_generic_attach(board, &config, 0);
+	return agilent_82350b_generic_attach(board, config, 0);
 }
 
-int agilent_82350b_accel_attach(gpib_board_t *board, gpib_board_config_t config)
+int agilent_82350b_accel_attach(gpib_board_t *board, const gpib_board_config_t *config)
 {
-	return agilent_82350b_generic_attach(board, &config, 1);
+	return agilent_82350b_generic_attach(board, config, 1);
 }
 
 void agilent_82350b_detach(gpib_board_t *board)

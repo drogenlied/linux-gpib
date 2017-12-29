@@ -31,9 +31,9 @@
 
 void gpib_register_driver(gpib_interface_t *interface, struct module *mod);
 void gpib_unregister_driver(gpib_interface_t *interface);
-struct pci_dev* gpib_pci_get_device( const gpib_board_t *board, unsigned int vendor_id,
+struct pci_dev* gpib_pci_get_device( const gpib_board_config_t *config, unsigned int vendor_id,
 	unsigned int device_id, struct pci_dev *from);
-struct pci_dev* gpib_pci_get_subsys( const gpib_board_t *board, unsigned int vendor_id,
+struct pci_dev* gpib_pci_get_subsys( const gpib_board_config_t *config, unsigned int vendor_id,
 	unsigned int device_id, unsigned ss_vendor, unsigned ss_device,
 	struct pci_dev *from);
 unsigned int num_gpib_events( const gpib_event_queue_t *queue );

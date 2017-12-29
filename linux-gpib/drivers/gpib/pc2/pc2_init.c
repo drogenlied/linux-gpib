@@ -29,10 +29,10 @@
 
 MODULE_LICENSE("GPL");
 
-int pc2_attach(gpib_board_t *board, gpib_board_config_t config);
-int pc2a_attach(gpib_board_t *board, gpib_board_config_t config);
-int pc2a_cb7210_attach(gpib_board_t *board, gpib_board_config_t config);
-int pc2_2a_attach(gpib_board_t *board, gpib_board_config_t config);
+int pc2_attach(gpib_board_t *board, const gpib_board_config_t *config);
+int pc2a_attach(gpib_board_t *board, const gpib_board_config_t *config);
+int pc2a_cb7210_attach(gpib_board_t *board, const gpib_board_config_t *config);
+int pc2_2a_attach(gpib_board_t *board, const gpib_board_config_t *config);
 
 void pc2_detach(gpib_board_t *board);
 void pc2a_detach(gpib_board_t *board);
@@ -274,7 +274,7 @@ static void free_private(gpib_board_t *board)
 	}
 }
 
-int pc2_generic_attach(gpib_board_t *board, enum nec7210_chipset chipset)
+int pc2_generic_attach(gpib_board_t *board, const gpib_board_config_t *config, enum nec7210_chipset chipset)
 {
 	pc2_private_t *pc2_priv;
 	nec7210_private_t *nec_priv;
@@ -287,7 +287,7 @@ int pc2_generic_attach(gpib_board_t *board, enum nec7210_chipset chipset)
 	nec_priv->read_byte = nec7210_ioport_read_byte;
 	nec_priv->write_byte = nec7210_ioport_write_byte;
 	nec_priv->type = chipset;
-	if(board->ibdma)
+	if(config->ibdma)
 	{
 		nec_priv->dma_buffer_length = 0x1000;
 		nec_priv->dma_buffer = pci_alloc_consistent(NULL, nec_priv->dma_buffer_length,
@@ -296,49 +296,49 @@ int pc2_generic_attach(gpib_board_t *board, enum nec7210_chipset chipset)
 			return -ENOMEM;
 
 		// request isa dma channel
-		if( request_dma( board->ibdma, "pc2" ) )
+		if( request_dma( config->ibdma, "pc2" ) )
 		{
-			printk("gpib: can't request DMA %d\n", board->ibdma);
+			printk("gpib: can't request DMA %d\n", config->ibdma);
 			return -1;
 		}
-		nec_priv->dma_channel = board->ibdma;
+		nec_priv->dma_channel = config->ibdma;
 	}
 	return 0;
 }
 
-int pc2_attach(gpib_board_t *board, gpib_board_config_t config)
+int pc2_attach(gpib_board_t *board, const gpib_board_config_t *config)
 {
 	int isr_flags = 0;
 	pc2_private_t *pc2_priv;
 	nec7210_private_t *nec_priv;
 	int retval;
 
-	retval = pc2_generic_attach(board, NEC7210);
+	retval = pc2_generic_attach(board, config, NEC7210);
 	if(retval) return retval;
 
 	pc2_priv = board->private_data;
 	nec_priv = &pc2_priv->nec7210_priv;
 	nec_priv->offset = pc2_reg_offset;
 
-	if(request_region((unsigned long)(board->ibbase), pc2_iosize, "pc2") == 0)
+	if(request_region((unsigned long)(config->ibbase), pc2_iosize, "pc2") == 0)
 	{
 		printk("gpib: ioports are already in use\n");
 		return -1;
 	}
-	nec_priv->iobase = board->ibbase;
+	nec_priv->iobase = config->ibbase;
 
 	nec7210_board_reset( nec_priv, board );
 
 	// install interrupt handler
-	if(board->ibirq)
+	if(config->ibirq)
 	{
-		if(request_irq(board->ibirq, pc2_interrupt, isr_flags, "pc2", board))
+		if(request_irq(config->ibirq, pc2_interrupt, isr_flags, "pc2", board))
 		{
-			printk("gpib: can't request IRQ %d\n", board->ibirq);
+			printk("gpib: can't request IRQ %d\n", config->ibirq);
 			return -1;
 		}
 	}
-	pc2_priv->irq = board->ibirq;
+	pc2_priv->irq = config->ibirq;
 	/* poll so we can detect assertion of ATN */
 	if(gpib_request_pseudo_irq(board, pc2_interrupt))
 	{
@@ -385,21 +385,22 @@ void pc2_detach(gpib_board_t *board)
 	free_private(board);
 }
 
-int pc2a_common_attach(gpib_board_t *board, unsigned int num_registers, enum nec7210_chipset chipset)
+int pc2a_common_attach(gpib_board_t *board, const gpib_board_config_t *config, 
+	unsigned int num_registers, enum nec7210_chipset chipset)
 {
         unsigned int i, j;
 	pc2_private_t *pc2_priv;
 	nec7210_private_t *nec_priv;
 	int retval;
 
-	retval = pc2_generic_attach(board, chipset);
+	retval = pc2_generic_attach(board, config, chipset);
 	if(retval) return retval;
 
 	pc2_priv = board->private_data;
 	nec_priv = &pc2_priv->nec7210_priv;
 	nec_priv->offset = pc2a_reg_offset;
 
-	switch((unsigned long)(board->ibbase))
+	switch((unsigned long)(config->ibbase))
 	{
 		case 0x02e1:
 		case 0x22e1:
@@ -407,16 +408,16 @@ int pc2a_common_attach(gpib_board_t *board, unsigned int num_registers, enum nec
 		case 0x62e1:
 			break;
 		default:
-			printk("PCIIa base range invalid, must be one of 0x[0246]2e1, but is 0x%p \n", board->ibbase);
+			printk("PCIIa base range invalid, must be one of 0x[0246]2e1, but is 0x%p \n", config->ibbase);
 			return -1;
 			break;
 	}
 
-	if(board->ibirq)
+	if(config->ibirq)
 	{
-		if(board->ibirq < 2 || board->ibirq > 7)
+		if(config->ibirq < 2 || config->ibirq > 7)
 		{
-			printk("pc2_gpib: illegal interrupt level %i\n", board->ibirq);
+			printk("pc2_gpib: illegal interrupt level %i\n", config->ibirq);
 			return -1;
 		}
 	}else
@@ -427,10 +428,10 @@ int pc2a_common_attach(gpib_board_t *board, unsigned int num_registers, enum nec
 	unsigned int err = 0;
 	for(i = 0; i < num_registers; i++)
 	{
-		if(check_region((unsigned long)(board->ibbase) + i * pc2a_reg_offset, 1))
+		if(check_region((unsigned long)(config->ibbase) + i * pc2a_reg_offset, 1))
 			err++;
 	}
-	if(board->ibirq && check_region(pc2a_clear_intr_iobase + board->ibirq, 1))
+	if(config->ibirq && check_region(pc2a_clear_intr_iobase + config->ibirq, 1))
 	{
 		err++;
 	}
@@ -442,32 +443,32 @@ int pc2a_common_attach(gpib_board_t *board, unsigned int num_registers, enum nec
 #endif
 	for(i = 0; i < num_registers; i++)
 	{
-	  if (!request_region((unsigned long)(board->ibbase) + i * pc2a_reg_offset, 1, "pc2a"))
+	  if (!request_region((unsigned long)(config->ibbase) + i * pc2a_reg_offset, 1, "pc2a"))
 	    {
 	      printk("gpib: ioports are already in use");
 	      for (j = 0; j < i; j++) 
 		{
-		  release_region((unsigned long)(board->ibbase) + j * pc2a_reg_offset, 1);
+		  release_region((unsigned long)(config->ibbase) + j * pc2a_reg_offset, 1);
 		}
 	      return -1;
 	    }
 	}
-	nec_priv->iobase = board->ibbase;
-	if(board->ibirq)
+	nec_priv->iobase = config->ibbase;
+	if(config->ibirq)
 	{
-	  if (!request_region(pc2a_clear_intr_iobase + board->ibirq, 1, "pc2a"))
+	  if (!request_region(pc2a_clear_intr_iobase + config->ibirq, 1, "pc2a"))
 		  {
 		    printk("gpib: ioports are already in use");
 		    return -1;
 		  }
-		pc2_priv->clear_intr_addr = pc2a_clear_intr_iobase + board->ibirq;
-		if(request_irq(board->ibirq, pc2a_interrupt, 0, "pc2a", board))
+		pc2_priv->clear_intr_addr = pc2a_clear_intr_iobase + config->ibirq;
+		if(request_irq(config->ibirq, pc2a_interrupt, 0, "pc2a", board))
 		{
-			printk("gpib: can't request IRQ %d\n", board->ibirq);
+			printk("gpib: can't request IRQ %d\n", config->ibirq);
 			return -1;
 		}
 	}
-	pc2_priv->irq = board->ibirq;
+	pc2_priv->irq = config->ibirq;
 	/* poll so we can detect assertion of ATN */
 	if(gpib_request_pseudo_irq(board, pc2_interrupt))
 	{
@@ -489,19 +490,19 @@ int pc2a_common_attach(gpib_board_t *board, unsigned int num_registers, enum nec
 	return 0;
 }
 
-int pc2a_attach( gpib_board_t *board, gpib_board_config_t config )
+int pc2a_attach( gpib_board_t *board, const gpib_board_config_t *config )
 {
-	return pc2a_common_attach(board, pc2a_iosize, NEC7210);
+	return pc2a_common_attach(board, config, pc2a_iosize, NEC7210);
 }
 
-int pc2a_cb7210_attach( gpib_board_t *board, gpib_board_config_t config )
+int pc2a_cb7210_attach( gpib_board_t *board, const gpib_board_config_t *config )
 {
-	return pc2a_common_attach(board, pc2a_iosize, CB7210);
+	return pc2a_common_attach(board, config, pc2a_iosize, CB7210);
 }
 
-int pc2_2a_attach( gpib_board_t *board, gpib_board_config_t config )
+int pc2_2a_attach( gpib_board_t *board, const gpib_board_config_t *config )
 {
-	return pc2a_common_attach( board, pc2_2a_iosize, NAT4882);
+	return pc2a_common_attach( board, config, pc2_2a_iosize, NAT4882);
 }
 
 void pc2a_common_detach( gpib_board_t *board, unsigned int num_registers )

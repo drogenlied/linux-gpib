@@ -55,8 +55,8 @@ static int pc_debug = PCMCIA_DEBUG;
 
 static int ines_gpib_config( struct pcmcia_device  *link );
 static void ines_gpib_release( struct pcmcia_device  *link );
-int ines_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config);
-int ines_pcmcia_accel_attach(gpib_board_t *board, gpib_board_config_t config);
+int ines_pcmcia_attach(gpib_board_t *board, const gpib_board_config_t *config);
+int ines_pcmcia_accel_attach(gpib_board_t *board, const gpib_board_config_t *config);
 void ines_pcmcia_detach(gpib_board_t *board);
 
 /*
@@ -421,7 +421,7 @@ int ines_common_pcmcia_attach( gpib_board_t *board )
 
 	if(request_region(curr_dev->resource[0]->start, resource_size(curr_dev->resource[0]), "ines_gpib") == 0)
 	{
-		printk("ines_gpib: ioports at 0x%x already in use\n", curr_dev->resource[0]->start);
+		printk("ines_gpib: ioports at 0x%lx already in use\n", (unsigned long)(curr_dev->resource[0]->start));
 		return -1;
 	}
 
@@ -439,7 +439,7 @@ int ines_common_pcmcia_attach( gpib_board_t *board )
 	return 0;
 }
 
-int ines_pcmcia_attach( gpib_board_t *board , gpib_board_config_t config)
+int ines_pcmcia_attach( gpib_board_t *board, const gpib_board_config_t *config)
 {
 	ines_private_t *ines_priv;
 	int retval;
@@ -453,7 +453,7 @@ int ines_pcmcia_attach( gpib_board_t *board , gpib_board_config_t config)
 	return 0;
 }
 
-int ines_pcmcia_accel_attach( gpib_board_t *board , gpib_board_config_t config)
+int ines_pcmcia_accel_attach( gpib_board_t *board , const gpib_board_config_t *config)
 {
 	ines_private_t *ines_priv;
 	int retval;

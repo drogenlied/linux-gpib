@@ -36,8 +36,8 @@ Copyright: (C) 2006, 2010, 2015 Fluke Corporation
 
 MODULE_LICENSE("GPL");
 
-int fmh_gpib_attach_holdoff_all(gpib_board_t *board, gpib_board_config_t config);
-int fmh_gpib_attach_holdoff_end(gpib_board_t *board, gpib_board_config_t config);
+int fmh_gpib_attach_holdoff_all(gpib_board_t *board, const gpib_board_config_t *config);
+int fmh_gpib_attach_holdoff_end(gpib_board_t *board, const gpib_board_config_t *config);
 void fmh_gpib_detach(gpib_board_t *board);
 static int fmh_gpib_config_dma(gpib_board_t *board, int output);
 irqreturn_t fmh_gpib_internal_interrupt(gpib_board_t *board);
@@ -827,7 +827,7 @@ static int fmh_gpib_device_match(struct device *dev, void *data)
 	}
 }
 
-static int fmh_gpib_attach_impl(gpib_board_t *board, gpib_board_config_t config, unsigned handshake_mode, int acquire_dma)
+static int fmh_gpib_attach_impl(gpib_board_t *board, const gpib_board_config_t *config, unsigned handshake_mode, int acquire_dma)
 {
 	fmh_gpib_private_t *e_priv;
 	nec7210_private_t *nec_priv;
@@ -939,12 +939,12 @@ static int fmh_gpib_attach_impl(gpib_board_t *board, gpib_board_config_t config,
 	return fmh_gpib_init(e_priv, board, handshake_mode);
 }
 
-int fmh_gpib_attach_holdoff_all(gpib_board_t *board, gpib_board_config_t config)
+int fmh_gpib_attach_holdoff_all(gpib_board_t *board, const gpib_board_config_t *config)
 {
 	return fmh_gpib_attach_impl(board, config, HR_HLDA, 0);
 }
 
-int fmh_gpib_attach_holdoff_end(gpib_board_t *board, gpib_board_config_t config)
+int fmh_gpib_attach_holdoff_end(gpib_board_t *board, const gpib_board_config_t *config)
 {
 	return fmh_gpib_attach_impl(board, config, HR_HLDE, 1);
 }

@@ -81,7 +81,7 @@ static int autospoll_thread(void *board_void)
 	return retval;
 }
 
-int ibonline(gpib_board_t *board, gpib_board_config_t config)
+int ibonline(gpib_board_t *board)
 {
 	int retval;
 
@@ -90,7 +90,7 @@ int ibonline(gpib_board_t *board, gpib_board_config_t config)
 	retval = gpib_allocate_board( board );
 	if( retval < 0 ) return retval;
 
-	retval = board->interface->attach(board, config);
+	retval = board->interface->attach(board, &board->config);
 	if(retval < 0)
 	{
 		board->interface->detach(board);

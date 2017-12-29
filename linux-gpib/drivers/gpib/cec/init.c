@@ -29,7 +29,7 @@ MODULE_LICENSE("GPL");
 #define CEC_DEV_ID    0x5cec
 #define CEC_SUBID 0x9050
 
-int cec_pci_attach(gpib_board_t *board, gpib_board_config_t config);
+int cec_pci_attach(gpib_board_t *board, const gpib_board_config_t *config);
 
 void cec_pci_detach(gpib_board_t *board);
 
@@ -215,7 +215,7 @@ void cec_init( cec_private_t *cec_priv, const gpib_board_t *board )
 	nec7210_board_online( nec_priv, board );
 }
 
-int cec_pci_attach(gpib_board_t *board, gpib_board_config_t config)
+int cec_pci_attach(gpib_board_t *board, const gpib_board_config_t *config)
 {
 	cec_private_t *cec_priv;
 	nec7210_private_t *nec_priv;
@@ -230,7 +230,7 @@ int cec_pci_attach(gpib_board_t *board, gpib_board_config_t config)
 
 	// find board
 	cec_priv->pci_device = NULL;
-	while( ( cec_priv->pci_device = gpib_pci_get_device( board, CEC_VENDOR_ID,
+	while( ( cec_priv->pci_device = gpib_pci_get_device( config, CEC_VENDOR_ID,
 		CEC_DEV_ID, cec_priv->pci_device ) ) )
 	{
 		// check for board with plx9050 controller
@@ -262,7 +262,7 @@ int cec_pci_attach(gpib_board_t *board, gpib_board_config_t config)
 	isr_flags |= IRQF_SHARED;
 	if(request_irq(cec_priv->pci_device->irq, cec_interrupt, isr_flags, "pci-gpib", board))
 	{
-		printk("gpib: can't request IRQ %d\n",cec_priv->pci_device->irq);
+		printk("gpib: can't request IRQ %d\n", cec_priv->pci_device->irq);
 		return -1;
 	}
 	cec_priv->irq = cec_priv->pci_device->irq;

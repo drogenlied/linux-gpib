@@ -28,9 +28,9 @@
 
 MODULE_LICENSE("GPL");
 
-int ines_pci_attach(gpib_board_t *board, gpib_board_config_t config);
-int ines_pci_accel_attach(gpib_board_t *board, gpib_board_config_t config);
-int ines_isa_attach(gpib_board_t *board, gpib_board_config_t config);
+int ines_pci_attach(gpib_board_t *board, const gpib_board_config_t *config);
+int ines_pci_accel_attach(gpib_board_t *board, const gpib_board_config_t *config);
+int ines_isa_attach(gpib_board_t *board, const gpib_board_config_t *config);
 
 void ines_pci_detach(gpib_board_t *board);
 void ines_isa_detach(gpib_board_t *board);
@@ -418,7 +418,7 @@ void ines_online( ines_private_t *ines_priv, const gpib_board_t *board, int use_
 		nec7210_set_reg_bits( nec_priv, IMR1, HR_DOIE | HR_DIIE, 0 );
 }
 
-int ines_common_pci_attach( gpib_board_t *board )
+int ines_common_pci_attach( gpib_board_t *board, const gpib_board_config_t *config)
 {
 	ines_private_t *ines_priv;
 	nec7210_private_t *nec_priv;
@@ -450,9 +450,9 @@ int ines_common_pci_attach( gpib_board_t *board )
 				pdev = pci_get_device(pci_ids[i].vendor_id, pci_ids[i].device_id, pdev);
 			if( pdev == NULL )
 				break;
-			if( board->pci_bus >=0 && board->pci_bus != pdev->bus->number )
+			if( config->pci_bus >= 0 && config->pci_bus != pdev->bus->number )
 				continue;
-			if( board->pci_slot >= 0 && board->pci_slot !=
+			if( config->pci_slot >= 0 && config->pci_slot !=
 				PCI_SLOT( pdev->devfn ) )
 				continue;
 			found_id = pci_ids[i];
@@ -550,12 +550,12 @@ int ines_common_pci_attach( gpib_board_t *board )
 	return 0;
 }
 
-int ines_pci_attach( gpib_board_t *board, gpib_board_config_t config )
+int ines_pci_attach( gpib_board_t *board, const gpib_board_config_t *config )
 {
 	ines_private_t *ines_priv;
 	int retval;
 
-	retval = ines_common_pci_attach( board );
+	retval = ines_common_pci_attach( board, config );
 	if( retval < 0 ) return retval;
 
 	ines_priv = board->private_data;
@@ -564,12 +564,12 @@ int ines_pci_attach( gpib_board_t *board, gpib_board_config_t config )
 	return 0;
 }
 
-int ines_pci_accel_attach( gpib_board_t *board, gpib_board_config_t config )
+int ines_pci_accel_attach( gpib_board_t *board, const gpib_board_config_t *config )
 {
 	ines_private_t *ines_priv;
 	int retval;
 
-	retval = ines_common_pci_attach( board );
+	retval = ines_common_pci_attach( board, config );
 	if( retval < 0 ) return retval;
 
 	ines_priv = board->private_data;
@@ -578,7 +578,7 @@ int ines_pci_accel_attach( gpib_board_t *board, gpib_board_config_t config )
 	return 0;
 }
 
-int ines_isa_attach( gpib_board_t *board, gpib_board_config_t config )
+int ines_isa_attach( gpib_board_t *board, const gpib_board_config_t *config )
 {
 	ines_private_t *ines_priv;
 	nec7210_private_t *nec_priv;
@@ -592,20 +592,20 @@ int ines_isa_attach( gpib_board_t *board, gpib_board_config_t config )
 	nec_priv = &ines_priv->nec7210_priv;
 
 
-	if(request_region((unsigned long)(board->ibbase), ines_isa_iosize, "ines_gpib") == 0)
+	if(request_region((unsigned long)(config->ibbase), ines_isa_iosize, "ines_gpib") == 0)
 	{
-		printk("ines_gpib: ioports at 0x%p already in use\n", board->ibbase);
+		printk("ines_gpib: ioports at 0x%p already in use\n", config->ibbase);
 		return -1;
 	}
-	nec_priv->iobase = board->ibbase;
+	nec_priv->iobase = config->ibbase;
 	nec_priv->offset = 1;
 	nec7210_board_reset(nec_priv, board);
-	if(request_irq(board->ibirq, ines_pci_interrupt, isr_flags, "ines_gpib", board))
+	if(request_irq(config->ibirq, ines_pci_interrupt, isr_flags, "ines_gpib", board))
 	{
-		printk("ines_gpib: failed to allocate IRQ %d\n", board->ibirq);
+		printk("ines_gpib: failed to allocate IRQ %d\n", config->ibirq);
 		return -1;
 	}
-	ines_priv->irq = board->ibirq;
+	ines_priv->irq = config->ibirq;
 	ines_online(ines_priv, board, 1);
 	return 0;
 }

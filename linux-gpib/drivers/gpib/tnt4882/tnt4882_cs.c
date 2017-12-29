@@ -59,7 +59,7 @@ module_param(pc_debug, int, 0);
 
 static int ni_gpib_config(struct pcmcia_device  *link);
 static void ni_gpib_release(struct pcmcia_device *link);
-int ni_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config);
+int ni_pcmcia_attach(gpib_board_t *board, const gpib_board_config_t *config);
 void ni_pcmcia_detach(gpib_board_t *board);
 
 /*
@@ -334,7 +334,7 @@ gpib_interface_t ni_pcmcia_accel_interface =
 	return_to_local: tnt4882_return_to_local,
 };
 
-int ni_pcmcia_attach(gpib_board_t *board, gpib_board_config_t config)
+int ni_pcmcia_attach(gpib_board_t *board, const gpib_board_config_t *config)
 {
 	local_info_t *info;
 	tnt4882_private_t *tnt_priv;

@@ -45,9 +45,9 @@ static int sad_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 	unsigned long arg );
 static int eos_ioctl( gpib_board_t *board, unsigned long arg );
 static int request_service_ioctl( gpib_board_t *board, unsigned long arg );
-static int iobase_ioctl( gpib_board_t *board, unsigned long arg );
-static int irq_ioctl( gpib_board_t *board, unsigned long arg );
-static int dma_ioctl( gpib_board_t *board, unsigned long arg );
+static int iobase_ioctl( gpib_board_config_t *config, unsigned long arg );
+static int irq_ioctl( gpib_board_config_t *config, unsigned long arg );
+static int dma_ioctl( gpib_board_config_t *config, unsigned long arg );
 static int autospoll_ioctl(gpib_board_t *board, gpib_file_private_t *file_priv,
 			unsigned long arg);
 static int mutex_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
@@ -58,7 +58,7 @@ static int board_info_ioctl( const gpib_board_t *board, unsigned long arg );
 static int ppc_ioctl( gpib_board_t *board, unsigned long arg );
 static int query_board_rsv_ioctl( gpib_board_t *board, unsigned long arg );
 static int interface_clear_ioctl( gpib_board_t *board, unsigned long arg );
-static int select_pci_ioctl( gpib_board_t *board, unsigned long arg );
+static int select_pci_ioctl( gpib_board_config_t *config, unsigned long arg );
 static int event_ioctl( gpib_board_t *board, unsigned long arg );
 static int request_system_control_ioctl( gpib_board_t *board, unsigned long arg );
 static int t1_delay_ioctl( gpib_board_t *board, unsigned long arg );
@@ -263,15 +263,15 @@ long ibioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 	switch( cmd )
 	{
 		case CFCBASE:
-			retval = iobase_ioctl( board, arg );
+			retval = iobase_ioctl( &board->config, arg );
 			goto done;
 			break;
 		case CFCIRQ:
-			retval = irq_ioctl( board, arg );
+			retval = irq_ioctl( &board->config, arg );
 			goto done;
 			break;
 		case CFCDMA:
-			retval = dma_ioctl( board, arg );
+			retval = dma_ioctl( &board->config, arg );
 			goto done;
 			break;
 		case IBAUTOSPOLL:
@@ -297,7 +297,7 @@ long ibioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 			goto done;
 			break;
 		case IBSELECT_PCI:
-			retval = select_pci_ioctl( board, arg );
+			retval = select_pci_ioctl( &board->config, arg );
 			goto done;
 			break;
 		default:
@@ -1006,11 +1006,10 @@ static int parallel_poll_ioctl( gpib_board_t *board, unsigned long arg )
 static int online_ioctl( gpib_board_t *board, unsigned long arg )
 {
 	online_ioctl_t online_cmd;
-	gpib_board_config_t config;
 	int retval;
 	void *init_data = NULL;
 
-	config.init_data = NULL;
+	board->config.init_data = NULL;
 
 	if(!capable(CAP_SYS_ADMIN))
 		return -EPERM;
@@ -1020,29 +1019,33 @@ static int online_ioctl( gpib_board_t *board, unsigned long arg )
 		return -EFAULT;
 	if(online_cmd.init_data_length > 0)
 	{
-		config.init_data = vmalloc(online_cmd.init_data_length);
-		if(config.init_data == NULL)
+		board->config.init_data = vmalloc(online_cmd.init_data_length);
+		if(board->config.init_data == NULL)
 			return -ENOMEM;
 		BUG_ON(sizeof(init_data) > sizeof(online_cmd.init_data_ptr));
 		init_data = (void*)(unsigned long)(online_cmd.init_data_ptr);
-		retval = copy_from_user(config.init_data, init_data, online_cmd.init_data_length);
+		retval = copy_from_user(board->config.init_data, init_data, online_cmd.init_data_length);
 		if(retval)
 		{
-			vfree(config.init_data);
+			vfree(board->config.init_data);
 			return -EFAULT;
 		}
-		config.init_data_length = online_cmd.init_data_length;
+		board->config.init_data_length = online_cmd.init_data_length;
 	}else
 	{
-		config.init_data = NULL;
-		config.init_data_length = 0;
+		board->config.init_data = NULL;
+		board->config.init_data_length = 0;
 	}
 	if(online_cmd.online)
-		retval = ibonline(board, config);
+		retval = ibonline(board);
 	else
 		retval = iboffline(board);
-	if(config.init_data)
-		vfree(config.init_data);
+	if(board->config.init_data)
+	{
+		vfree(board->config.init_data);
+		board->config.init_data = NULL;
+		board->config.init_data_length = 0;
+	}
 	return retval;
 }
 
@@ -1179,7 +1182,7 @@ static int request_service_ioctl( gpib_board_t *board, unsigned long arg )
 	return ibrsv( board, status_byte );
 }
 
-static int iobase_ioctl( gpib_board_t *board, unsigned long arg )
+static int iobase_ioctl( gpib_board_config_t *config, unsigned long arg )
 {
 	uint64_t base_addr;
 	int retval;
@@ -1192,12 +1195,12 @@ static int iobase_ioctl( gpib_board_t *board, unsigned long arg )
 		return -EFAULT;
 
 	BUG_ON(sizeof(void*) > sizeof(base_addr));
-	board->ibbase = (void*)(unsigned long)(base_addr);
+	config->ibbase = (void*)(unsigned long)(base_addr);
 
 	return 0;
 }
 
-static int irq_ioctl( gpib_board_t *board, unsigned long arg )
+static int irq_ioctl( gpib_board_config_t *config, unsigned long arg )
 {
 	unsigned int irq;
 	int retval;
@@ -1209,12 +1212,12 @@ static int irq_ioctl( gpib_board_t *board, unsigned long arg )
 	if( retval )
 		return -EFAULT;
 
-	board->ibirq = irq;
+	config->ibirq = irq;
 
 	return 0;
 }
 
-static int dma_ioctl( gpib_board_t *board, unsigned long arg )
+static int dma_ioctl( gpib_board_config_t *config, unsigned long arg )
 {
 	unsigned int dma_channel;
 	int retval;
@@ -1226,7 +1229,7 @@ static int dma_ioctl( gpib_board_t *board, unsigned long arg )
 	if( retval )
 		return -EFAULT;
 
-	board->ibdma = dma_channel;
+	config->ibdma = dma_channel;
 
 	return 0;
 }
@@ -1422,7 +1425,7 @@ static int interface_clear_ioctl( gpib_board_t *board, unsigned long arg )
 	return ibsic( board, usec_duration );
 }
 
-static int select_pci_ioctl( gpib_board_t *board, unsigned long arg )
+static int select_pci_ioctl( gpib_board_config_t *config, unsigned long arg )
 {
 	select_pci_ioctl_t selection;
 	int retval;
@@ -1433,8 +1436,8 @@ static int select_pci_ioctl( gpib_board_t *board, unsigned long arg )
 	retval = copy_from_user( &selection, ( void * ) arg, sizeof( selection ) );
 	if( retval ) return -EFAULT;
 
-	board->pci_bus = selection.pci_bus;
-	board->pci_slot = selection.pci_slot;
+	config->pci_bus = selection.pci_bus;
+	config->pci_slot = selection.pci_slot;
 
 	return 0;
 }
