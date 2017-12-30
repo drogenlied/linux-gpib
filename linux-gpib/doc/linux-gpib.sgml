@@ -2087,10 +2087,14 @@ volatile int ibsta;
 	<entry>IbcPP2</entry>
 	<entry>0x10</entry>
 	<entry>If setting is nonzero then the board is put into
-	local parallel poll configure mode, and will not change
+	local parallel poll configure mode (IEEE 488.1 PP2 subset), and will not change
 	its parallel poll configuration in response to receiving
 	'parallel poll enable' command bytes from the controller-in-charge.
-	Otherwise the board is put in remote parallel poll configure mode.
+	Instead, the parallel poll configuration is set locally by doing a board-level
+	call of <link LINKEND="reference-function-ibppc">ibppc()</link>.
+	A zero value puts the board in remote parallel poll configure mode
+	(IEEE 488.1 PP1 subset).  IEEE 488.2 requires devices to support
+	the remote PP1 subset and not the local PP2 subset.
 	Some older hardware does not support local parallel poll
 	configure mode.
 	</entry>
@@ -3037,6 +3041,17 @@ volatile int ibsta;
 	<link LINKEND="reference-function-ppe-byte">PPE_byte()</link> inline
 	function to enable and
 	configure the parallel poll response.
+	</para>
+	<para>If <parameter>ud</parameter> is a device descriptor then
+	the device will be remotely configured by the controller.
+	</para>
+	<para>If <parameter>ud</parameter> is a board descriptor then
+	the board will be locally configured.  Note, in order to do a local
+	parallel poll configuration IbcPP2 must be set using 
+	<link LINKEND="reference-function-ibconfig">ibconfig()</link>.
+	IEEE 488.2 prohibits local parallel poll configuration (IEEE 488.1 PP2 subset), 
+	requiring support for remote parallel poll configuration (IEEE 488.1 PP1 subset)
+	instead.
 	</para>
 	<para>
 	After configuring the parallel poll response of devices on a bus,
