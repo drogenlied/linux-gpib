@@ -122,6 +122,8 @@ struct gpib_interface_struct
 	int (*parallel_poll)(gpib_board_t *board, uint8_t *result);
 	/* set/clear ist (individual status bit) */
 	void (*parallel_poll_response)( gpib_board_t *board, int ist );
+	/* select local parallel poll configuration mode PP2 versus remote PP1 */
+	void (*local_parallel_poll_mode)( gpib_board_t *board, int local );
 	/* Returns current status of the bus lines.  Should be set to
 	 * NULL if your board does not have the ability to query the
 	 * state of the bus lines. */
@@ -274,6 +276,9 @@ struct gpib_board_struct
 	unsigned master : 1;
 	/* individual status bit */
 	unsigned ist : 1;
+	/* one means local parallel poll mode ieee 488.1 PP2 (or no parallel poll PP0), 
+	 * zero means remote parallel poll configuration mode ieee 488.1 PP1 */
+	unsigned local_ppoll_mode : 1;
 };
 
 /* element of event queue */

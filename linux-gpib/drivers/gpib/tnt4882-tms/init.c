@@ -145,6 +145,7 @@ gpib_interface_t ni_pci_interface =
 	disable_eos: tnt4882_disable_eos,
 	parallel_poll: tnt4882_parallel_poll,
 	parallel_poll_configure: tnt4882_parallel_poll_configure,
+	local_parallel_poll_mode: NULL, // XXX
 	line_status: NULL,	//XXX
 	update_status: tnt4882_update_status,
 	primary_address: tnt4882_primary_address,

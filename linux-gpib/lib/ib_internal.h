@@ -82,6 +82,7 @@ void setAsyncIberr( int error );
 void setAsyncIbcnt( long count );
 unsigned int usec_to_timeout( unsigned int usec );
 int query_ppc( const ibBoard_t *board );
+int query_local_ppoll_mode( const ibBoard_t *board );
 int query_ist( const ibBoard_t *board );
 int query_pad( const ibBoard_t *board, unsigned int *pad );
 int query_sad( const ibBoard_t *board, int *sad );

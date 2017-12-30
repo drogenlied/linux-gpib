@@ -161,6 +161,7 @@ gpib_interface_t hp_82341_unaccel_interface =
 	parallel_poll: hp_82341_parallel_poll,
 	parallel_poll_configure: hp_82341_parallel_poll_configure,
 	parallel_poll_response: hp_82341_parallel_poll_response,
+	local_parallel_poll_mode: NULL, // XXX
 	line_status: hp_82341_line_status,
 	update_status: hp_82341_update_status,
 	primary_address: hp_82341_primary_address,
@@ -188,6 +189,7 @@ gpib_interface_t hp_82341_interface =
 	parallel_poll: hp_82341_parallel_poll,
 	parallel_poll_configure: hp_82341_parallel_poll_configure,
 	parallel_poll_response: hp_82341_parallel_poll_response,
+	local_parallel_poll_mode: NULL, // XXX
 	line_status: hp_82341_line_status,
 	update_status: hp_82341_update_status,
 	primary_address: hp_82341_primary_address,

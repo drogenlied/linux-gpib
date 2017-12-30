@@ -76,7 +76,13 @@ int board_ppc( ibConf_t *conf, int ppc_configuration )
 
 	board = interfaceBoard( conf );
 
-	if( conf->settings.local_ppc == 0 )
+	// check if we are in local ppoll configuration mode
+	retval = query_local_ppoll_mode(board);
+	if(retval < 0)
+	{
+		return retval;
+	}
+	if( retval == 0 )
 	{
 		setIberr( ECAP );
 		return -1;

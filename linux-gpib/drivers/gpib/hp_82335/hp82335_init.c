@@ -159,6 +159,7 @@ gpib_interface_t hp82335_interface =
 	parallel_poll: hp82335_parallel_poll,
 	parallel_poll_configure: hp82335_parallel_poll_configure,
 	parallel_poll_response: hp82335_parallel_poll_response,
+	local_parallel_poll_mode: NULL, // XXX
 	line_status: hp82335_line_status,
 	update_status: hp82335_update_status,
 	primary_address: hp82335_primary_address,

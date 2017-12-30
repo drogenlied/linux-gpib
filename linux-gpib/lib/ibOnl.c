@@ -79,7 +79,6 @@ int reinit_descriptor( ibConf_t *conf )
 	conf->settings.ppoll_config = conf->defaults.ppoll_config;
 	internal_ibeot( conf, conf->defaults.send_eoi );
 	conf->settings.local_lockout = conf->defaults.local_lockout;
-	conf->settings.local_ppc = conf->defaults.local_ppc;
 	conf->settings.readdr = conf->defaults.readdr;
 	return 0;
 }

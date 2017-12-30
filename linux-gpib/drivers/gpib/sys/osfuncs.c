@@ -56,6 +56,8 @@ static int timeout_ioctl( gpib_board_t *board, unsigned long arg );
 static int status_bytes_ioctl( gpib_board_t *board, unsigned long arg );
 static int board_info_ioctl( const gpib_board_t *board, unsigned long arg );
 static int ppc_ioctl( gpib_board_t *board, unsigned long arg );
+static int set_local_ppoll_mode_ioctl( gpib_board_t *board, unsigned long arg);
+static int get_local_ppoll_mode_ioctl( gpib_board_t *board, unsigned long arg);
 static int query_board_rsv_ioctl( gpib_board_t *board, unsigned long arg );
 static int interface_clear_ioctl( gpib_board_t *board, unsigned long arg );
 static int select_pci_ioctl( gpib_board_config_t *config, unsigned long arg );
@@ -385,6 +387,14 @@ long ibioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 			break;
 		case IBPPC:
 			retval = ppc_ioctl( board, arg );
+			goto done;
+			break;
+		case IBPP2_SET:
+			retval = set_local_ppoll_mode_ioctl(board, arg);
+			goto done;
+			break;
+		case IBPP2_GET:
+			retval = get_local_ppoll_mode_ioctl(board, arg);
 			goto done;
 			break;
 		case IBQUERY_BOARD_RSV:
@@ -1372,6 +1382,39 @@ static int ppc_ioctl( gpib_board_t *board, unsigned long arg)
 		retval = ibppc( board, cmd.config );
 		if( retval < 0 ) return retval;
 	}
+
+	return 0;
+}
+
+static int set_local_ppoll_mode_ioctl( gpib_board_t *board, unsigned long arg)
+{
+	local_ppoll_mode_ioctl_t cmd;
+	int retval;
+
+	retval = copy_from_user( &cmd, ( void * ) arg, sizeof( cmd ) );
+	if( retval )
+		return -EFAULT;
+
+	if(board->interface->local_parallel_poll_mode == NULL)
+	{
+		printk("gpib: local/remote parallel poll mode not supported by driver.");
+		return -EIO;
+	}
+	board->local_ppoll_mode = cmd != 0;
+	board->interface->local_parallel_poll_mode( board, board->local_ppoll_mode );
+
+	return 0;
+}
+
+static int get_local_ppoll_mode_ioctl( gpib_board_t *board, unsigned long arg)
+{
+	local_ppoll_mode_ioctl_t cmd;
+	int retval;
+
+	cmd = board->local_ppoll_mode;
+	retval = copy_to_user( ( void * ) arg, &cmd, sizeof( cmd ) );
+	if( retval )
+		return -EFAULT;
 
 	return 0;
 }

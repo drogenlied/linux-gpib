@@ -153,6 +153,7 @@ gpib_interface_t cec_pci_interface =
 	parallel_poll: cec_parallel_poll,
 	parallel_poll_configure: cec_parallel_poll_configure,
 	parallel_poll_response: cec_parallel_poll_response,
+	local_parallel_poll_mode: NULL, // XXX
 	line_status: NULL,	//XXX
 	update_status: cec_update_status,
 	primary_address: cec_primary_address,

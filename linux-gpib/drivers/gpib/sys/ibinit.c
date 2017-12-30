@@ -90,6 +90,8 @@ int ibonline(gpib_board_t *board)
 	retval = gpib_allocate_board( board );
 	if( retval < 0 ) return retval;
 
+	board->dev = NULL;
+	board->local_ppoll_mode = 0;
 	retval = board->interface->attach(board, &board->config);
 	if(retval < 0)
 	{

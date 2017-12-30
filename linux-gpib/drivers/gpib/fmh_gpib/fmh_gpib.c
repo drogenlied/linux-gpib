@@ -619,6 +619,7 @@ gpib_interface_t fmh_gpib_unaccel_interface =
 	parallel_poll: fmh_gpib_parallel_poll,
 	parallel_poll_configure: fmh_gpib_parallel_poll_configure,
 	parallel_poll_response: fmh_gpib_parallel_poll_response,
+	local_parallel_poll_mode: NULL, // XXX
 	line_status: fmh_gpib_line_status,
 	update_status: fmh_gpib_update_status,
 	primary_address: fmh_gpib_primary_address,
@@ -647,6 +648,7 @@ gpib_interface_t fmh_gpib_interface =
 	parallel_poll: fmh_gpib_parallel_poll,
 	parallel_poll_configure: fmh_gpib_parallel_poll_configure,
 	parallel_poll_response: fmh_gpib_parallel_poll_response,
+	local_parallel_poll_mode: NULL, // XXX
 	line_status: fmh_gpib_line_status,
 	update_status: fmh_gpib_update_status,
 	primary_address: fmh_gpib_primary_address,

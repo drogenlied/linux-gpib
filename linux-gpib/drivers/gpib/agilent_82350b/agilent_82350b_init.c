@@ -201,6 +201,7 @@ gpib_interface_t agilent_82350b_unaccel_interface =
 	parallel_poll: agilent_82350b_parallel_poll,
 	parallel_poll_configure: agilent_82350b_parallel_poll_configure,
 	parallel_poll_response: agilent_82350b_parallel_poll_response,
+	local_parallel_poll_mode: NULL, // XXX
 	line_status: agilent_82350b_line_status,
 	update_status: agilent_82350b_update_status,
 	primary_address: agilent_82350b_primary_address,
@@ -228,6 +229,7 @@ gpib_interface_t agilent_82350b_interface =
 	parallel_poll: agilent_82350b_parallel_poll,
 	parallel_poll_configure: agilent_82350b_parallel_poll_configure,
 	parallel_poll_response: agilent_82350b_parallel_poll_response,
+	local_parallel_poll_mode: NULL, // XXX
 	line_status: agilent_82350b_line_status,
 	update_status: agilent_82350b_update_status,
 	primary_address: agilent_82350b_primary_address,

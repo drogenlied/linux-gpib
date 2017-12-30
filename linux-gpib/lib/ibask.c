@@ -49,6 +49,22 @@ int query_ppc( const ibBoard_t *board )
 	return info.parallel_poll_configuration;
 }
 
+int query_local_ppoll_mode( const ibBoard_t *board )
+{
+	int retval;
+	local_ppoll_mode_ioctl_t local_mode;
+
+	retval = ioctl( board->fileno, IBPP2_GET, &local_mode );
+	if( retval < 0 )
+	{
+		setIberr( EDVR );
+		setIbcnt( errno );
+		return retval;
+	}
+
+	return local_mode;
+}
+
 int query_autopoll( const ibBoard_t *board )
 {
 	int retval;
@@ -276,8 +292,15 @@ int ibask( int ud, int option, int *value )
 				return exit_library( ud, 0 );
 				break;
 			case IbaPP2:
-				*value = conf->settings.local_ppc;
-				return exit_library( ud, 0 );
+				retval = query_local_ppoll_mode(board);
+				if(retval < 0)
+				{
+					return exit_library(ud, 1);
+				}else
+				{
+					*value = retval;
+					return exit_library( ud, 0 );
+				}
 				break;
 			case IbaTIMING:
 				retval = query_board_t1_delay( board );

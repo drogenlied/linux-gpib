@@ -646,6 +646,7 @@ gpib_interface_t fluke_unaccel_interface =
 	parallel_poll: fluke_parallel_poll,
 	parallel_poll_configure: fluke_parallel_poll_configure,
 	parallel_poll_response: fluke_parallel_poll_response,
+	local_parallel_poll_mode: NULL, // XXX
 	line_status: fluke_line_status,
 	update_status: fluke_update_status,
 	primary_address: fluke_primary_address,
@@ -679,6 +680,7 @@ gpib_interface_t fluke_hybrid_interface =
 	parallel_poll: fluke_parallel_poll,
 	parallel_poll_configure: fluke_parallel_poll_configure,
 	parallel_poll_response: fluke_parallel_poll_response,
+	local_parallel_poll_mode: NULL, // XXX
 	line_status: fluke_line_status,
 	update_status: fluke_update_status,
 	primary_address: fluke_primary_address,
@@ -707,6 +709,7 @@ gpib_interface_t fluke_interface =
 	parallel_poll: fluke_parallel_poll,
 	parallel_poll_configure: fluke_parallel_poll_configure,
 	parallel_poll_response: fluke_parallel_poll_response,
+	local_parallel_poll_mode: NULL, // XXX
 	line_status: fluke_line_status,
 	update_status: fluke_update_status,
 	primary_address: fluke_primary_address,

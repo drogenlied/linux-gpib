@@ -235,7 +235,6 @@ void init_descriptor_settings( descriptor_settings_t *settings )
 	settings->ppoll_config = 0;
 	settings->send_eoi = 1;
 	settings->local_lockout = 0;
-	settings->local_ppc = 0;
 	settings->readdr = 0;
 }
 

@@ -60,7 +60,6 @@ typedef struct
 	int ppoll_config;	/* current parallel poll configuration */
 	unsigned send_eoi : 1;	/* assert EOI at end of writes */
 	unsigned local_lockout : 1;	/* send local lockout when device is brought online */
-	unsigned local_ppc : 1;	/* enable local configuration of board's parallel poll response */
 	unsigned readdr : 1;	/* useless, exists for compatibility only at present */
 }descriptor_settings_t;
 

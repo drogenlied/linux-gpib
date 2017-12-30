@@ -148,6 +148,7 @@ void init_gpib_board( gpib_board_t *board )
 	init_gpib_pseudo_irq(&board->pseudo_irq);
 	board->master = 1;
 	atomic_set(&board->stuck_srq, 0);
+	board->local_ppoll_mode = 0;
 }
 
 int gpib_allocate_board( gpib_board_t *board )

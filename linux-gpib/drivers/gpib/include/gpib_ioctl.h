@@ -132,6 +132,7 @@ typedef short event_ioctl_t;
 typedef int rsc_ioctl_t;
 typedef unsigned int t1_delay_ioctl_t;
 typedef short autospoll_ioctl_t;
+typedef short local_ppoll_mode_ioctl_t;
 
 /* Standard functions. */
 enum gpib_ioctl
@@ -173,7 +174,9 @@ enum gpib_ioctl
 	IBLOC = _IO( GPIB_CODE, 36 ),
 
 	IBAUTOSPOLL = _IOW( GPIB_CODE, 38, autospoll_ioctl_t ),
-	IBONL = _IOW( GPIB_CODE, 39, online_ioctl_t )
+	IBONL = _IOW( GPIB_CODE, 39, online_ioctl_t ),
+	IBPP2_SET = _IOW( GPIB_CODE, 40, local_ppoll_mode_ioctl_t ),
+	IBPP2_GET = _IOR( GPIB_CODE, 41, local_ppoll_mode_ioctl_t )
 };
 
 #endif	/* _GPIB_IOCTL_H */

@@ -1057,6 +1057,7 @@ gpib_interface_t usb_gpib_interface =
 	parallel_poll: usb_gpib_parallel_poll,
 	parallel_poll_configure: usb_gpib_parallel_poll_configure,
 	parallel_poll_response: usb_gpib_parallel_poll_response,
+	local_parallel_poll_mode: NULL, // XXX
 	line_status: usb_gpib_line_status,
 	update_status: usb_gpib_update_status,
 	primary_address: usb_gpib_primary_address,

@@ -245,6 +245,7 @@ gpib_interface_t ines_pci_unaccel_interface =
 	parallel_poll: ines_parallel_poll,
 	parallel_poll_configure: ines_parallel_poll_configure,
 	parallel_poll_response: ines_parallel_poll_response,
+	local_parallel_poll_mode: NULL, // XXX
 	line_status: ines_line_status,
 	update_status: ines_update_status,
 	primary_address: ines_primary_address,
@@ -273,6 +274,7 @@ gpib_interface_t ines_pci_interface =
 	parallel_poll: ines_parallel_poll,
 	parallel_poll_configure: ines_parallel_poll_configure,
 	parallel_poll_response: ines_parallel_poll_response,
+	local_parallel_poll_mode: NULL, // XXX
 	line_status: ines_line_status,
 	update_status: ines_update_status,
 	primary_address: ines_primary_address,
@@ -301,6 +303,7 @@ gpib_interface_t ines_pci_accel_interface =
 	parallel_poll: ines_parallel_poll,
 	parallel_poll_configure: ines_parallel_poll_configure,
 	parallel_poll_response: ines_parallel_poll_response,
+	local_parallel_poll_mode: NULL, // XXX
 	line_status: ines_line_status,
 	update_status: ines_update_status,
 	primary_address: ines_primary_address,
@@ -329,6 +332,7 @@ gpib_interface_t ines_isa_interface =
 	parallel_poll: ines_parallel_poll,
 	parallel_poll_configure: ines_parallel_poll_configure,
 	parallel_poll_response: ines_parallel_poll_response,
+	local_parallel_poll_mode: NULL, // XXX
 	line_status: ines_line_status,
 	update_status: ines_update_status,
 	primary_address: ines_primary_address,

@@ -2264,6 +2264,7 @@ gpib_interface_t ni_usb_gpib_interface =
 	parallel_poll: ni_usb_parallel_poll,
 	parallel_poll_configure: ni_usb_parallel_poll_configure,
 	parallel_poll_response: ni_usb_parallel_poll_response,
+	local_parallel_poll_mode: NULL, // XXX
 	line_status: ni_usb_line_status,
 	update_status: ni_usb_update_status,
 	primary_address: ni_usb_primary_address,

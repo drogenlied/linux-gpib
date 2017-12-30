@@ -77,6 +77,24 @@ static int set_t1_delay( ibBoard_t *board, int delay )
 	return 0;
 }
 
+static int set_local_parallel_poll_mode( ibBoard_t *board, int local )
+{
+	int retval;
+	local_ppoll_mode_ioctl_t local_mode;
+	
+	local_mode = local != 0;
+	
+	retval = ioctl( board->fileno, IBPP2_SET, &local_mode );
+	if( retval < 0 )
+	{
+		setIberr( EDVR );
+		setIbcnt( errno );
+		return -1;
+	}
+
+	return 0;
+}
+
 int ibconfig( int ud, int option, int value )
 {
 	ibConf_t *conf;
@@ -219,10 +237,9 @@ int ibconfig( int ud, int option, int value )
 				return exit_library( ud, 0 );
 				break;
 			case IbcPP2:
-				// XXX
-				fprintf( stderr, "libgpib: local/remote parallel poll configuration not implemented\n");
-				setIberr( ECAP );
-				return exit_library( ud, 1 );
+				retval = set_local_parallel_poll_mode( interfaceBoard(conf), value );
+				if( retval < 0 ) return exit_library( ud, 1 );
+				return exit_library( ud, 0 );
 				break;
 			case IbcTIMING:
 				if( set_t1_delay( interfaceBoard( conf ), value ) < 0 )

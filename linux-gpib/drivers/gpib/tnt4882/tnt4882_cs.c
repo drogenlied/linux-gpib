@@ -296,6 +296,7 @@ gpib_interface_t ni_pcmcia_interface =
 	parallel_poll: tnt4882_parallel_poll,
 	parallel_poll_configure: tnt4882_parallel_poll_configure,
 	parallel_poll_response: tnt4882_parallel_poll_response,
+	local_parallel_poll_mode: NULL, // XXX
 	line_status: tnt4882_line_status,
 	update_status: tnt4882_update_status,
 	primary_address: tnt4882_primary_address,
@@ -324,6 +325,7 @@ gpib_interface_t ni_pcmcia_accel_interface =
 	parallel_poll: tnt4882_parallel_poll,
 	parallel_poll_configure: tnt4882_parallel_poll_configure,
 	parallel_poll_response: tnt4882_parallel_poll_response,
+	local_parallel_poll_mode: NULL, // XXX
 	line_status: tnt4882_line_status,
 	update_status: tnt4882_update_status,
 	primary_address: tnt4882_primary_address,
