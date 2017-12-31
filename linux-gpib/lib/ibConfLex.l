@@ -50,6 +50,7 @@ device	     { return(T_DEVICE);}
 name         { return (T_NAME);}
 board_type         { return (T_BOARD_TYPE);}
 minor         { return (T_MINOR);}
+device_tree_path { return (T_DEVICE_TREE_PATH);}
 
 pad          { return(T_PAD);}
 sad          { return(T_SAD);}

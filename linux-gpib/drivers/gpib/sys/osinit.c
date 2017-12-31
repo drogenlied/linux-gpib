@@ -111,6 +111,7 @@ void init_gpib_board_config(gpib_board_config_t *config)
 	config->ibdma = 0;
 	config->pci_bus = -1;
 	config->pci_slot = -1;
+	config->device_tree_path = NULL;
 }
 
 void init_gpib_board( gpib_board_t *board )

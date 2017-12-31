@@ -89,11 +89,12 @@ typedef struct ibBoardStruct {
 	int pci_bus;
 	int pci_slot;
 	int fileno;                        /* device file descriptor           */
-	char device[100];	/* name of device file ( /dev/gpib0, etc.) */
 	unsigned int open_count;	/* reference count */
 	unsigned is_system_controller : 1;	/* board is busmaster or not */
 	unsigned use_event_queue : 1;	/* use event queue, or DTAS/DCAS */
 	unsigned autospoll : 1; /* do auto serial polling */
+	char device[0x1000];	/* name of device file ( /dev/gpib0, etc.) */
+	char device_tree_path[0x1000];	/* full device tree path, which may be used to select specific piece of hardware */
 } ibBoard_t;
 
 #endif	/* _IBCONF_H */

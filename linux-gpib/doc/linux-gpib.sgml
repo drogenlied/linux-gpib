@@ -185,6 +185,12 @@ device {
 	<entry>required</entry>
 	</row>
 	<row>
+	<entry>device_tree_path</entry>
+	<entry>A string which may be used to select a particular piece of hardware by its full device tree path.</entry>
+	<entry>interface</entry>
+	<entry>optional</entry>
+	</row>
+	<row>
 	<entry>dma</entry>
 	<entry>Specifies the dma channel for a board that lacks plug-and-play
 	capability.</entry>

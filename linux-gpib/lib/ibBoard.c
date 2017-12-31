@@ -46,6 +46,7 @@ void init_ibboard(ibBoard_t *board)
 	board->is_system_controller = 0;
 	board->use_event_queue = 0;
 	board->autospoll = 0;
+	strcpy(board->device_tree_path, "");
 }
 
 int configure_autospoll(ibConf_t *conf, int enable)

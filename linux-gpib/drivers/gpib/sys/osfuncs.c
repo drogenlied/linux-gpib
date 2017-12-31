@@ -20,6 +20,7 @@
 
 #include <linux/fcntl.h>
 #include <linux/kmod.h>
+#include <linux/string.h>
 #include <linux/vmalloc.h>
 #include <linux/version.h>
 
@@ -61,6 +62,7 @@ static int get_local_ppoll_mode_ioctl( gpib_board_t *board, unsigned long arg);
 static int query_board_rsv_ioctl( gpib_board_t *board, unsigned long arg );
 static int interface_clear_ioctl( gpib_board_t *board, unsigned long arg );
 static int select_pci_ioctl( gpib_board_config_t *config, unsigned long arg );
+static int select_device_tree_path_ioctl( gpib_board_config_t *config, unsigned long arg );
 static int event_ioctl( gpib_board_t *board, unsigned long arg );
 static int request_system_control_ioctl( gpib_board_t *board, unsigned long arg );
 static int t1_delay_ioctl( gpib_board_t *board, unsigned long arg );
@@ -300,6 +302,10 @@ long ibioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 			break;
 		case IBSELECT_PCI:
 			retval = select_pci_ioctl( &board->config, arg );
+			goto done;
+			break;
+		case IBSELECT_DEVICE_TREE_PATH:
+			retval = select_device_tree_path_ioctl( &board->config, arg );
 			goto done;
 			break;
 		default:
@@ -1482,6 +1488,36 @@ static int select_pci_ioctl( gpib_board_config_t *config, unsigned long arg )
 	config->pci_bus = selection.pci_bus;
 	config->pci_slot = selection.pci_slot;
 
+	return 0;
+}
+
+static int select_device_tree_path_ioctl( gpib_board_config_t *config, unsigned long arg )
+{
+	select_device_tree_path_ioctl_t *selection;
+	int retval;
+
+	if(!capable(CAP_SYS_ADMIN))
+		return -EPERM;
+
+	selection = vmalloc(sizeof(select_device_tree_path_ioctl_t));
+	if(selection == NULL) return -ENOMEM;
+	
+	retval = copy_from_user( selection, ( void * ) arg, sizeof(select_device_tree_path_ioctl_t) );
+	if( retval ) 
+	{
+		vfree(selection);
+		return -EFAULT;
+	}
+
+	selection->device_tree_path[sizeof(selection->device_tree_path) - 1] = '\0';
+	kfree(config->device_tree_path);
+	config->device_tree_path = NULL;
+	if(strlen(selection->device_tree_path) > 0)
+	{
+		config->device_tree_path = kstrdup(selection->device_tree_path, GFP_KERNEL);
+	}
+
+	vfree(selection);
 	return 0;
 }
 

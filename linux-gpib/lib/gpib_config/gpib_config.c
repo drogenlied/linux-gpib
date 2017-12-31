@@ -47,6 +47,7 @@ typedef struct
 	int is_system_controller;
 	void *init_data;
 	int init_data_length;
+	char *device_tree_path;
 } parsed_options_t;
 
 static void help( void )
@@ -57,6 +58,8 @@ static void help( void )
 	printf("\t-c, --device-file FILEPATH\n"
 		"\t\tSpecify character device file path for the board.\n"
 		"\t\tThis can be used as an alternative to the --minor option.\n");
+	printf("\t-a, --device-tree-path DTPATH\n"
+		"\t\tSelect a specific board to attach by its full device tree path.\n");
 	printf("\t-d, --dma NUM\n"
 		"\t\tSpecify isa dma channel NUM for boards without plug-and-play cabability.\n");
 	printf("\t-b, --iobase NUM\n"
@@ -150,6 +153,7 @@ static int parse_options( int argc, char *argv[], parsed_options_t *settings )
 	{
 		{ "iobase", required_argument, NULL, 'b' },
 		{ "device-file", required_argument, NULL, 'c' },
+		{ "device-tree-path", required_argument, NULL, 'a' },
 		{ "dma", required_argument, NULL, 'd' },
 		{ "file", required_argument, NULL, 'f' },
 		{ "help", no_argument, NULL, 'h' },
@@ -186,11 +190,15 @@ static int parse_options( int argc, char *argv[], parsed_options_t *settings )
 
 	while( 1 )
 	{
-		c = getopt_long(argc, argv, "b:c:d:f:hi:I:l:m:op:s:t:u:v", options, &index);
+		c = getopt_long(argc, argv, "a:b:c:d:f:hi:I:l:m:op:s:t:u:v", options, &index);
 		if( c == -1 ) break;
 		switch( c )
 		{
 		case 0:
+			break;
+		case 'a':
+			free(settings->device_tree_path);
+			settings->device_tree_path = strdup(optarg);
 			break;
 		case 'b':
 			settings->iobase = strtol( optarg, NULL, 0 );
@@ -280,6 +288,7 @@ static int configure_board( int fileno, const parsed_options_t *options )
 {
 	board_type_ioctl_t boardtype;
 	select_pci_ioctl_t pci_selection;
+	select_device_tree_path_ioctl_t dtpath_selection;
 	pad_ioctl_t pad_cmd;
 	sad_ioctl_t sad_cmd;
 	online_ioctl_t online_cmd;
@@ -345,6 +354,27 @@ static int configure_board( int fileno, const parsed_options_t *options )
 		fprintf(stderr, "failed to configure pci bus\n");
 		return retval;
 	}
+
+	if(options->device_tree_path != NULL)
+	{
+		if(strlen(options->device_tree_path) >= sizeof(dtpath_selection.device_tree_path))
+		{
+			fprintf(stderr, "device tree path too long.\n");
+			return -EINVAL;
+		}
+		strncpy(dtpath_selection.device_tree_path, options->device_tree_path, 
+			sizeof(dtpath_selection.device_tree_path));
+	}else
+	{
+		memset(dtpath_selection.device_tree_path, 0, sizeof(dtpath_selection.device_tree_path));
+	}
+	retval = ioctl( fileno, IBSELECT_DEVICE_TREE_PATH, &dtpath_selection);
+	if( retval < 0 )
+	{
+		fprintf(stderr, "failed to configure device tree path\n");
+		return retval;
+	}
+	 
 	online_cmd.online = 1;
 	assert(sizeof(options->init_data) <= sizeof(online_cmd.init_data_ptr));
 	online_cmd.init_data_ptr = (uintptr_t)options->init_data;
@@ -438,7 +468,7 @@ int main( int argc, char *argv[] )
 	{
 		options.board_type = strdup( board->board_type );
 		if( options.board_type == NULL )
-			abort();
+			return -ENOMEM;
 	}
 	if( options.irq < 0 )
 		options.irq = board->irq;
@@ -472,6 +502,14 @@ int main( int argc, char *argv[] )
 		fprintf( stderr, "failed to open device file '%s'\n", options.device_file );
 		perror( __FUNCTION__ );
 		return board->fileno;
+	}
+	if( options.device_tree_path == NULL )
+	{
+		options.device_tree_path = strdup(board->device_tree_path);
+		if(options.device_tree_path == NULL)
+		{
+			return -ENOMEM;
+		}
 	}
 	retval = configure_board( board->fileno, &options );
 	if( retval < 0 )
