@@ -73,6 +73,16 @@ enum state1_bits
 	SOURCE_HANDSHAKE_MASK = 0x7
 };
 
+enum fmh_gpib_auxmr_bits
+{
+	AUX_I_REG = 0xe0,
+};
+
+enum aux_reg_i_bits
+{
+	LOCAL_PPOLL_MODE_BIT = 0x4
+};
+
 enum ext_status_1_bits
 {
 	DATA_IN_STATUS_BIT = 0x01,

@@ -125,6 +125,20 @@ void fmh_gpib_parallel_poll_response( gpib_board_t *board, int ist )
 	fmh_gpib_private_t *priv = board->private_data;
 	nec7210_parallel_poll_response(board, &priv->nec7210_priv, ist );
 }
+void fmh_gpib_local_parallel_poll_mode( gpib_board_t *board, int local )
+{
+	fmh_gpib_private_t *priv = board->private_data;
+	if(local)
+	{
+		write_byte(&priv->nec7210_priv, AUX_I_REG | LOCAL_PPOLL_MODE_BIT, AUXMR);
+	}else
+	{
+		/* For fmh_gpib_core, remote parallel poll config mode is unaffected by the
+		state of the disable bit of the parallel poll register (unlike the tnt4882).  So,
+		we don't need to worry about that. */
+		write_byte(&priv->nec7210_priv, AUX_I_REG | 0x0, AUXMR);
+	}
+}
 void fmh_gpib_serial_poll_response(gpib_board_t *board, uint8_t status)
 {
 	fmh_gpib_private_t *priv = board->private_data;
@@ -619,7 +633,7 @@ gpib_interface_t fmh_gpib_unaccel_interface =
 	parallel_poll: fmh_gpib_parallel_poll,
 	parallel_poll_configure: fmh_gpib_parallel_poll_configure,
 	parallel_poll_response: fmh_gpib_parallel_poll_response,
-	local_parallel_poll_mode: NULL, // XXX
+	local_parallel_poll_mode: fmh_gpib_local_parallel_poll_mode,
 	line_status: fmh_gpib_line_status,
 	update_status: fmh_gpib_update_status,
 	primary_address: fmh_gpib_primary_address,
@@ -648,7 +662,7 @@ gpib_interface_t fmh_gpib_interface =
 	parallel_poll: fmh_gpib_parallel_poll,
 	parallel_poll_configure: fmh_gpib_parallel_poll_configure,
 	parallel_poll_response: fmh_gpib_parallel_poll_response,
-	local_parallel_poll_mode: NULL, // XXX
+	local_parallel_poll_mode: fmh_gpib_local_parallel_poll_mode,
 	line_status: fmh_gpib_line_status,
 	update_status: fmh_gpib_update_status,
 	primary_address: fmh_gpib_primary_address,
