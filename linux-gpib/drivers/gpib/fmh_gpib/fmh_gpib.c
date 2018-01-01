@@ -835,9 +835,20 @@ static bool gpib_dma_channel_filter(struct dma_chan *chan, void *filter_param)
 /* Match callback for driver_find_device */
 static int fmh_gpib_device_match(struct device *dev, void *data)
 {
+	const gpib_board_config_t *config = data;
+	struct device_node *of_node;
+	
 	if(dev_get_drvdata(dev) != NULL) return -1;
 	else
 	{
+		if(config->device_tree_path != NULL)
+		{
+			of_node = of_find_node_by_path(config->device_tree_path);
+			if(of_node == NULL || of_node != dev_of_node(dev))
+			{
+				return -1;
+			}
+		}
 		dev_notice(dev, "matched: %s\n", of_node_full_name(dev_of_node((dev))));
 		return 0;
 	}
@@ -856,7 +867,7 @@ static int fmh_gpib_attach_impl(gpib_board_t *board, const gpib_board_config_t *
 	s32 dma_channel_id;
 	
 	board->dev = driver_find_device(&fmh_gpib_platform_driver.driver,
-		NULL, board, &fmh_gpib_device_match);
+		NULL, (void*)config, &fmh_gpib_device_match);
 	if(board->dev == NULL)
 	{
 		printk("No matching fmh_gpib_core device was found, attach failed.");
