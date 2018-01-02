@@ -884,7 +884,7 @@ static int fmh_gpib_attach_impl(gpib_board_t *board, const gpib_board_config_t *
 	e_priv = board->private_data;
 	nec_priv = &e_priv->nec7210_priv;
 	
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "gpib-control-status");
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "gpib_control_status");
 	if (!res) {
 		dev_err(board->dev, "Unable to locate mmio resource for cb7210 gpib\n");
 		return -ENODEV;
@@ -907,7 +907,7 @@ static int fmh_gpib_attach_impl(gpib_board_t *board, const gpib_board_config_t *
 		return -ENOMEM;
 	}
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "dma-fifos");
+	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "dma_fifos");
 	if (!res) {
 		dev_err(board->dev, "Unable to locate mmio resource for gpib dma port\n");
 		return -ENODEV;
@@ -1021,7 +1021,7 @@ static int fmh_gpib_probe(struct platform_device *pdev) {
 }
 
 static const struct of_device_id fmh_gpib_of_match[] = {
-	{ .compatible = "fmh,fmh-gpib"},
+	{ .compatible = "fmhess,fmh_gpib_core"},
 	{ {0} }
 };
 MODULE_DEVICE_TABLE(of, fmh_gpib_of_match);

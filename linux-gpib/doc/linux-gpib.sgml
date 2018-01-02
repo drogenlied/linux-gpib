@@ -917,21 +917,20 @@ It supports a cb7210.2 style register interface with some extensions.
 <para>
 The driver obtains its hardware information (base addresses, interrupt, dma, etc.) from the device tree.
 It expects to find two i/o memory resources, an interrupt, and a dma channel.  One i/o memory
-resource is called "gpib-control-status" which contains the 8 bit cb7210.2 registers.  The other
-i/o memory resource is called "dma-fifos" and contains 16 bit registers for the fifos and
+resource is called "gpib_control_status" which contains the 8 bit cb7210.2 registers.  The other
+i/o memory resource is called "dma_fifos" and contains 16 bit registers for the fifos and
 transfer counter.  An integer property called "dma-channel" gives the channel id for the 
 dma channel the chip is connected to.  So, the device tree entry for the chip might look
 something like:
 </para>
 <programlisting>
 fmh_gpib_0: fmh_gpib@0x00049800 {
-                compatible = "fmhess,fmh-gpib-core";
+                compatible = "fmhess,fmh_gpib_core";
                 reg = < 0x00049600 0x00000080
                         0x00049800 0x00000008 >;
-                reg-names = "gpib-control-status", "dma-fifos";
+                reg-names = "gpib_control_status", "dma_fifos";
                 interrupt-parent = &lt; &amp;intc &gt;;
                 interrupts = &lt; 0 57 4 &gt;;
-                clocks = &lt; &amp;FPGA_IO_HPS_CLK &gt;;
                 dma-channel = &lt; 2 &gt;;
             }; //end fmh_gpib@0x00049800 (fmh_gpib_0)
 </programlisting>
