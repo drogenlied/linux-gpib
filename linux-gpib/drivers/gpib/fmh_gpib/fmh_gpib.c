@@ -812,6 +812,8 @@ int fmh_gpib_init(fmh_gpib_private_t *e_priv, gpib_board_t *board, int handshake
 {
 	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
 
+	fifos_write(e_priv, 0, FIFO_CONTROL_STATUS_REG); 
+
 	nec7210_board_reset(nec_priv, board);
 	write_byte(nec_priv, AUX_LO_SPEED, AUXMR);
 	nec7210_set_handshake_mode(board, nec_priv, handshake_mode);
@@ -838,7 +840,7 @@ static int fmh_gpib_device_match(struct device *dev, void *data)
 	const gpib_board_config_t *config = data;
 	struct device_node *of_node;
 	
-	if(dev_get_drvdata(dev) != NULL) return -1;
+	if(dev_get_drvdata(dev) != NULL) return 0;
 	else
 	{
 		if(config->device_tree_path != NULL)
@@ -846,11 +848,11 @@ static int fmh_gpib_device_match(struct device *dev, void *data)
 			of_node = of_find_node_by_path(config->device_tree_path);
 			if(of_node == NULL || of_node != dev_of_node(dev))
 			{
-				return -1;
+				return 0;
 			}
 		}
 		dev_notice(dev, "matched: %s\n", of_node_full_name(dev_of_node((dev))));
-		return 0;
+		return 1;
 	}
 }
 
@@ -948,7 +950,7 @@ static int fmh_gpib_attach_impl(gpib_board_t *board, const gpib_board_config_t *
 		if(retval < 0)
 		{
 			dev_err(board->dev,
-				"failed to read \"dma\" property from device tree entry, err=%d\n",
+				"failed to read \"dma-channel\" property from device tree entry, err=%d\n",
 				retval);
 			return retval;
 		}else
