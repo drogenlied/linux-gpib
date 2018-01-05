@@ -371,8 +371,14 @@ static int configure_board( int fileno, const parsed_options_t *options )
 	retval = ioctl( fileno, IBSELECT_DEVICE_TREE_PATH, &dtpath_selection);
 	if( retval < 0 )
 	{
-		fprintf(stderr, "failed to configure device tree path\n");
-		return retval;
+		/* If the user didn't request any device tree path, EINVAL error is probably just
+		 * due to using an older kernel module that doesn't support this ioctl.  So
+		 * only error out if a path was specified. */
+		if(errno != EINVAL || strlen(dtpath_selection.device_tree_path) > 0)
+		{
+			fprintf(stderr, "failed to configure device tree path \"%s\"\n", dtpath_selection.device_tree_path);
+			return retval;
+		}
 	}
 	 
 	online_cmd.online = 1;
@@ -505,10 +511,12 @@ int main( int argc, char *argv[] )
 	}
 	if( options.device_tree_path == NULL )
 	{
-		options.device_tree_path = strdup(board->device_tree_path);
-		if(options.device_tree_path == NULL)
-		{
-			return -ENOMEM;
+		if(board->device_tree_path != NULL)
+		{	options.device_tree_path = strdup(board->device_tree_path);
+			if(options.device_tree_path == NULL)
+			{
+				return -ENOMEM;
+			}
 		}
 	}
 	retval = configure_board( board->fileno, &options );
