@@ -681,9 +681,10 @@ irqreturn_t fmh_gpib_internal_interrupt(gpib_board_t *board)
 	int retval = IRQ_NONE;
 
 	status0 = read_byte( nec_priv, ISR0_IMR0_REG );
+	// read ext_status_1_reg before IRS1 to avoid race where we could see data in byte but miss associated END
+	ext_status_1 = read_byte(nec_priv, EXT_STATUS_1_REG);
 	status1 = read_byte( nec_priv, ISR1 );
 	status2 = read_byte( nec_priv, ISR2 );
-	ext_status_1 = read_byte(nec_priv, EXT_STATUS_1_REG);
 	
 	if(status0 & IFC_INTERRUPT_BIT)
 	{
