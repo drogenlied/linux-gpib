@@ -160,6 +160,17 @@ typedef struct {                /* private data to the device */
  * TTY_LOG - write a message to the current work terminal (if any)
  */
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,26)
+#define TTY_LOG(format,...) {						\
+		char buf[80];	                                        \
+                struct tty_struct *tty=get_current_tty();		\
+		if (tty) {						\
+		  snprintf (buf, 80, format, __VA_ARGS__);		\
+		  tty->driver->write (tty, buf, strlen(buf));	\
+		  tty->driver->write (tty, "\r", 1);		\
+		}							\
+	}
+#else
 #define TTY_LOG(format,...) {						\
 		char buf[80];	                                        \
                 struct tty_struct *tty=get_current_tty();		\
@@ -169,6 +180,7 @@ typedef struct {                /* private data to the device */
 		  tty->driver->ops->write (tty, "\r", 1);		\
 		}							\
 	}
+#endif
 
 /*
  *   usec_diff : take difference in MICROsec between two 'timespec'
