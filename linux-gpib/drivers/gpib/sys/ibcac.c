@@ -22,10 +22,11 @@
  * controller standby state, i.e., turn ATN on.  Note
  * that in order to enter the controller active state
  * from the controller idle state, ibsic must be called.
- * If v is non-zero, take control synchronously, if
- * possible.  Otherwise, take control asynchronously.
+ * If sync is non-zero, attempt to take control synchronously.
+ * If fallback_to_async is non-zero, try to take control asynchronously
+ * if synchronous attempt fails.
  */
-int ibcac( gpib_board_t *board, int sync )
+int ibcac( gpib_board_t *board, int sync , int fallback_to_async)
 {
 	int status = ibstatus( board );
 	int retval;
@@ -40,9 +41,18 @@ int ibcac( gpib_board_t *board, int sync )
 	{
 		return 0;
 	}
-
-	retval = board->interface->take_control( board, sync );
-	if( retval < 0 )
+	
+	if(sync && (status & LACS) == 0)
+	{
+		/* tcs (take control synchronously) can only possibly work when
+		* controller is listener. */
+		retval = -EIO;
+	}
+	else
+	{
+		retval = board->interface->take_control( board, sync );
+	}
+	if( retval < 0 && fallback_to_async)
 	{
 		if(sync && retval == -ETIMEDOUT)
 			retval = board->interface->take_control( board, 0 );

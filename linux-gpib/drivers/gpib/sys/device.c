@@ -30,7 +30,7 @@ static int setup_serial_poll( gpib_board_t *board, unsigned int usec_timeout )
 	GPIB_DPRINTK( "entering setup_serial_poll()\n" );
 
 	osStartTimer( board, usec_timeout );
-	ret = ibcac( board, 1 );
+	ret = ibcac( board, 1, 1 );
 	if(ret < 0)
 	{
 		osRemoveTimer( board );
@@ -68,7 +68,7 @@ static int read_serial_poll_byte( gpib_board_t *board, unsigned int pad,
 	GPIB_DPRINTK( "entering read_serial_poll_byte(), pad=%i sad=%i\n", pad, sad );
 
 	osStartTimer( board, usec_timeout );
-	ret = ibcac( board, 1);
+	ret = ibcac( board, 1, 1);
 	if(ret < 0) 
 	{
 		osRemoveTimer( board );
@@ -113,7 +113,7 @@ static int cleanup_serial_poll( gpib_board_t *board, unsigned int usec_timeout )
 	GPIB_DPRINTK( "entering cleanup_serial_poll()\n" );
 
 	osStartTimer( board, usec_timeout );
-	ret = ibcac( board, 1 );
+	ret = ibcac( board, 1, 1 );
 	if(ret < 0)
 	{
 		osRemoveTimer( board );

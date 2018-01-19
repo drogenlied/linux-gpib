@@ -28,7 +28,7 @@ int dvrsp(gpib_board_t *board, unsigned int pad, int sad,
 int ibAPWait(gpib_board_t *board, int pad);
 int ibAPrsp(gpib_board_t *board, int padsad, char *spb);
 void ibAPE(gpib_board_t *board, int pad, int v);
-int ibcac(gpib_board_t *board, int sync);
+int ibcac(gpib_board_t *board, int sync, int fallback_to_async);
 int ibcmd( gpib_board_t *board, uint8_t *buf, size_t length, size_t *bytes_written );
 int ibgts(gpib_board_t *board);
 int ibonline(gpib_board_t *board);

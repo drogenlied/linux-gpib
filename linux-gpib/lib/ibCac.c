@@ -42,6 +42,12 @@ int ibcac( int ud, int synchronous )
 	}
 
 	retval = ioctl( board->fileno, IBCAC, &synchronous );
+	// if synchronous failed, fall back to asynchronous
+	if( retval < 0 && synchronous  )
+	{
+		synchronous = 0;
+		retval = ioctl( board->fileno, IBCAC, &synchronous );
+	}
 	if(retval < 0)
 	{
 		switch( errno )
