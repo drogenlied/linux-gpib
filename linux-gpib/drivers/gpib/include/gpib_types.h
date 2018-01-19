@@ -188,9 +188,9 @@ static inline void init_gpib_pseudo_irq( struct gpib_pseudo_irq *pseudo_irq)
 {
 	pseudo_irq->handler = NULL;
 #ifdef HAVE_TIMER_SETUP
-	timer_setup(&pseudo_irq->timer,NULL,0);
+	timer_setup(&pseudo_irq->timer, NULL, 0);
 #else
-	setup_timer(&pseudo_irq->timer,NULL,0);
+	setup_timer(&pseudo_irq->timer, NULL, (unsigned long)pseudo_irq);
 #endif
 	smp_mb__before_atomic();
 	atomic_set(&pseudo_irq->active, 0);
