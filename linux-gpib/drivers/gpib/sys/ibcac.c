@@ -45,8 +45,9 @@ int ibcac( gpib_board_t *board, int sync , int fallback_to_async)
 	if(sync && (status & LACS) == 0)
 	{
 		/* tcs (take control synchronously) can only possibly work when
-		* controller is listener. */
-		retval = -EIO;
+		*  controller is listener.  Error code also needs to be -ETIMEDOUT
+		*  or it will giveout without doing fallback. */
+		retval = -ETIMEDOUT;
 	}
 	else
 	{
