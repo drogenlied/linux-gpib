@@ -1266,13 +1266,13 @@ volatile int ibsta;
 	<row>
 	<entry>LACS</entry>
 	<entry>0x4</entry>
-	<entry>Board is currently addressed as a listener.</entry>
+	<entry>Board is currently addressed as a listener (IEEE listener state machine is in LACS or LADS).</entry>
 	<entry>board</entry>
 	</row>
 	<row>
 	<entry>TACS</entry>
 	<entry>0x8</entry>
-	<entry>Board is currently addressed as talker.</entry>
+	<entry>Board is currently addressed as talker (IEEE talker state machine is in TACS or TADS).</entry>
 	<entry>board</entry>
 	</row>
 	<row>

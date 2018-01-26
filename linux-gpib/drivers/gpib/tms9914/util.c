@@ -194,13 +194,13 @@ unsigned int update_status_nolock( gpib_board_t *board, tms9914_private_t *priv 
 	}
 	// check for talker/listener addressed
 	update_talker_state(priv, address_status);
-	if(priv->talker_state == talker_active)
+	if(priv->talker_state == talker_active || priv->talker_state == talker_addressed)
 	{
 		set_bit( TACS_NUM, &board->status );
 	}else
 		clear_bit( TACS_NUM, &board->status );
 	update_listener_state(priv, address_status);
-	if(priv->listener_state == listener_active)
+	if(priv->listener_state == listener_active || priv->listener_state == listener_addressed)
 	{
 		set_bit(LACS_NUM, &board->status);
 	}else
