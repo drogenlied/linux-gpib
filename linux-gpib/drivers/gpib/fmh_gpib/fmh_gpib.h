@@ -37,6 +37,7 @@ typedef struct
 	struct dma_chan *dma_channel;
 	uint8_t *dma_buffer;
 	int dma_buffer_size;
+	int dma_burst_length;
 	void *fifo_base;
 } fmh_gpib_private_t;
 
@@ -95,7 +96,8 @@ enum dma_fifo_regs
 {
 	FIFO_DATA_REG = 0x0,
 	FIFO_CONTROL_STATUS_REG = 0x1,
-	FIFO_XFER_COUNTER_REG = 0x2
+	FIFO_XFER_COUNTER_REG = 0x2,
+	FIFO_MAX_BURST_LENGTH_REG = 0x3
 };
 
 enum fifo_control_bits
@@ -114,7 +116,9 @@ enum fifo_status_bits
 	RX_FIFO_FULL = 0x0200
 };
 
+static const unsigned fifo_data_mask = 0x00ff;
 static const unsigned fifo_xfer_counter_mask = 0x0fff;
+static const unsigned fifo_max_burst_length_mask = 0x00ff;
 
 static inline uint8_t gpib_cs_read_byte(nec7210_private_t *nec_priv,
 	unsigned int register_num)

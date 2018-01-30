@@ -454,8 +454,6 @@ static int fmh_gpib_dma_read(gpib_board_t *board, uint8_t *buffer,
 	dma_addr_t bus_address;
 	struct dma_async_tx_descriptor *tx_desc;
 	dma_cookie_t dma_cookie;
-	int i;
-	const int timeout = 100;
 	
 	// 	printk("%s: enter, bus_address=0x%x, length=%i\n", __FUNCTION__, (unsigned)bus_address,
 // 		   (int)length);
@@ -523,20 +521,6 @@ static int fmh_gpib_dma_read(gpib_board_t *board, uint8_t *buffer,
 		retval = -EINTR;
 	// stop the dma transfer
 	nec7210_set_reg_bits(nec_priv, IMR2, HR_DMAI, 0);
-	for(i = 0; 
-		((fifos_read(e_priv, FIFO_CONTROL_STATUS_REG) & RX_FIFO_EMPTY) == 0) && i < timeout; 
-		++i)
-	{
-		udelay(10);
-	}
-	if(i == timeout)
-	{
-		dev_err(board->dev, "timed out waiting for rx fifo to empty!\n");
-		printk("timeout: 0x%x\n", (unsigned)fifos_read(e_priv, FIFO_CONTROL_STATUS_REG)); 
-	}
-	/* delay a little just to make sure any bytes in dma controller's fifo get
-	 written to memory before we disable it */
-	udelay(10);
 	fifos_write(e_priv, 0, FIFO_CONTROL_STATUS_REG); 
 	residue = fmh_gpib_get_dma_residue(e_priv->dma_channel, dma_cookie);
 	BUG_ON(residue > length);
@@ -551,6 +535,18 @@ static int fmh_gpib_dma_read(gpib_board_t *board, uint8_t *buffer,
 	dma_unmap_single(NULL, bus_address, length, DMA_FROM_DEVICE);
 	memcpy(buffer, e_priv->dma_buffer, *bytes_read);
 
+	/* Manually read any dregs out of fifo. */
+	while((fifos_read(e_priv, FIFO_CONTROL_STATUS_REG) & RX_FIFO_EMPTY) == 0)
+	{
+		if((*bytes_read) >= length)
+		{
+			dev_err(board->dev, "unexpected extra bytes in rx fifo, discarding!  bytes_read=%d length=%d residue=%d\n",
+				(int)(*bytes_read), (int)length, (int)residue);
+			break;
+		}
+		buffer[(*bytes_read)++] = fifos_read(e_priv, FIFO_DATA_REG) & fifo_data_mask;
+	}
+	
 	/* If we got an end interrupt, figure out if it was
 	 * associated with the last byte we dma'd or with a
 	 * byte still sitting on the cb7210.
@@ -788,23 +784,30 @@ static int fmh_gpib_config_dma(gpib_board_t *board, int output)
 	struct dma_slave_config config;
 	config.device_fc = true;
 	config.slave_id = 0;
-	config.src_maxburst = 1;
-	config.dst_maxburst = 1;
 	
+	if(e_priv->dma_burst_length < 1)
+	{
+		config.src_maxburst = 1;
+		config.dst_maxburst = 1;
+	}else
+	{
+		config.src_maxburst = e_priv->dma_burst_length;
+		config.dst_maxburst = e_priv->dma_burst_length;
+	}
+	
+	config.src_addr_width = 1;
+	config.dst_addr_width = 1;
+
 	if(output)
 	{
 		config.direction = DMA_MEM_TO_DEV;
 		config.src_addr = 0;
 		config.dst_addr = e_priv->dma_port_res->start + FIFO_DATA_REG * fifo_reg_offset;
-		config.src_addr_width = 1;
-		config.dst_addr_width = 1;
 	}else
 	{
 		config.direction = DMA_DEV_TO_MEM;
 		config.src_addr = e_priv->dma_port_res->start + FIFO_DATA_REG * fifo_reg_offset;
 		config.dst_addr = 0;
-		config.src_addr_width = 1;
-		config.dst_addr_width = 1;
 	}
 	return dmaengine_slave_config(e_priv->dma_channel, &config);
 }
@@ -823,16 +826,6 @@ int fmh_gpib_init(fmh_gpib_private_t *e_priv, gpib_board_t *board, int handshake
 
 	write_byte(nec_priv, IFC_INTERRUPT_ENABLE_BIT | ATN_INTERRUPT_ENABLE_BIT, ISR0_IMR0_REG);
 	return 0;
-}
-
-/* This function is passed to dma_request_channel() in order to
- * select the pl330 dma channel which has been hardwired to
- * the gpib controller. */
-static bool gpib_dma_channel_filter(struct dma_chan *chan, void *filter_param)
-{
-	s32 *dma_channel_id = (s32*)filter_param;
-	// select the channel which is wired to the gpib chip
-	return chan->chan_id == *dma_channel_id;
 }
 
 /* Match callback for driver_find_device */
@@ -865,9 +858,7 @@ static int fmh_gpib_attach_impl(gpib_board_t *board, const gpib_board_config_t *
 	int retval;
 	int irq;
 	struct resource *res;
-	dma_cap_mask_t dma_cap;
 	struct platform_device *pdev;
-	s32 dma_channel_id;
 	
 	board->dev = driver_find_device(&fmh_gpib_platform_driver.driver,
 		NULL, (void*)config, &fmh_gpib_device_match);
@@ -945,26 +936,13 @@ static int fmh_gpib_attach_impl(gpib_board_t *board, const gpib_board_config_t *
 
 	if(acquire_dma)
 	{
-		retval = of_property_read_s32(dev_of_node(board->dev),
-			"dma-channel",
-			&dma_channel_id);
-		if(retval < 0)
+		e_priv->dma_channel = dma_request_slave_channel(board->dev, "rxtx");
+		if(e_priv->dma_channel == NULL) 
 		{
-			dev_err(board->dev,
-				"failed to read \"dma-channel\" property from device tree entry, err=%d\n",
-				retval);
-			return retval;
-		}else
-		{
-			dma_cap_zero(dma_cap);
-			dma_cap_set(DMA_SLAVE, dma_cap);
-			e_priv->dma_channel = dma_request_channel(dma_cap, gpib_dma_channel_filter, &dma_channel_id);
-			if(e_priv->dma_channel == NULL) 
-			{
-				dev_err(board->dev, "failed to allocate a dma channel.\n");
-				return -EIO;
-			}
+			dev_err(board->dev, "failed to acquire dma channel \"rxtx\".\n");
+			return -EIO;
 		}
+		e_priv->dma_burst_length = fifos_read(e_priv, FIFO_MAX_BURST_LENGTH_REG) & fifo_max_burst_length_mask; 
 	}
 	return fmh_gpib_init(e_priv, board, handshake_mode);
 }
