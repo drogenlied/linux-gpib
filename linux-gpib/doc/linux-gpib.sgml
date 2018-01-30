@@ -912,15 +912,18 @@ They can only do 8-bit end-of-string (EOS) compares.
 fmh_gpib_core is a GPIB chip written in VHDL suitable for programming into a FPGA.  The code
 for the chip may be found at 
 <ulink URL="https://github.com/fmhess/fmh_gpib_core">https://github.com/fmhess/fmh_gpib_core</ulink>.
-It supports a cb7210.2 style register interface with some extensions.
+It supports a cb7210.2 style register interface with some extensions.  More specifically, the driver
+is for the hardware layout specified in src/example/fmh_gpib_top.vhd file in the fmh_gpib_core
+repository.
 </para>
 <para>
 The driver obtains its hardware information (base addresses, interrupt, dma, etc.) from the device tree.
 It expects to find two i/o memory resources, an interrupt, and a dma channel.  One i/o memory
 resource is called "gpib_control_status" which contains the 8 bit cb7210.2 registers.  The other
 i/o memory resource is called "dma_fifos" and contains 16 bit registers for the fifos and
-transfer counter.  An integer property called "dma-channel" gives the channel id for the 
-dma channel the chip is connected to.  So, the device tree entry for the chip might look
+transfer counter.  The dma channel the chip is wired to is specified with the standard
+"dmas" and "dma-names" fields, with a dma-name of "rxtx".  So, the device tree entry for a chip 
+connected to channel 2 of dma controller "dmac" might look
 something like:
 </para>
 <programlisting>
@@ -931,7 +934,8 @@ fmh_gpib_0: fmh_gpib@0x00049800 {
                 reg-names = "gpib_control_status", "dma_fifos";
                 interrupt-parent = &lt; &amp;intc &gt;;
                 interrupts = &lt; 0 57 4 &gt;;
-                dma-channel = &lt; 2 &gt;;
+                dmas = &lt; &amp;dmac 2 &gt;;
+                dma-names = "rxtx";
             }; //end fmh_gpib@0x00049800 (fmh_gpib_0)
 </programlisting>
 </section>
