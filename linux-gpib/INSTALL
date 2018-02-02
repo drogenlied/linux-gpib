@@ -165,7 +165,7 @@ o) USB devices
 	GPIB_CONFIG_OPTIONS in the hotplug script for your device.  If
 	your device requires a external firmware you will also need to
 	install firmware files for your device, a tarball is available
-	from http://linux-gpib.sourceforge.net/firmware/.  Make sure
+	from https://linux-gpib.sourceforge.io/firmware/.  Make sure
 	you have the "fxload" and either the "hotplug" or "udev"
 	packages installed on your computer.  The hotplug scripts will
 	automatically upload the firmware to your device and load the

@@ -809,7 +809,7 @@ can be used.  This can be accomplished using the "--init-data" option of
 <link LINKEND="configuration-gpib-config">gpib_config</link>.  The
 firmware data can be found in the gpib_firmware
 tarball available from the
-<ulink URL="http://linux-gpib.sourceforge.net/">Linux-GPIB home page</ulink>.
+<ulink URL="https://linux-gpib.sourceforge.io/">Linux-GPIB home page</ulink>.
 Note the C and D versions use different firmware data.
 </para>
 <para>
@@ -843,7 +843,7 @@ can be used.  This can be accomplished using the "--init-data" option of
 <link LINKEND="configuration-gpib-config">gpib_config</link>.  The
 firmware data can be found in the gpib_firmware
 tarball available from the
-<ulink URL="http://linux-gpib.sourceforge.net/">Linux-GPIB home page</ulink>.
+<ulink URL="https://linux-gpib.sourceforge.io/">Linux-GPIB home page</ulink>.
 The 82350B and 82351A do not require a firmware upload.
 </para>
 </section>
@@ -858,7 +858,7 @@ to run gpib_config after the firmware is uploaded).
 However, the actual firmware
 data itself must be obtained seperately, as part of the gpib_firmware
 tarball available from the
-<ulink URL="http://linux-gpib.sourceforge.net/">Linux-GPIB home page</ulink>.
+<ulink URL="https://linux-gpib.sourceforge.io/">Linux-GPIB home page</ulink>.
 </para>
 <para>
 The 82357A/B have a few limitation due to their firmware code:
@@ -988,7 +988,7 @@ to run gpib_config after the firmware is uploaded).
 However, the actual firmware
 data itself must be obtained seperately, as part of the gpib_firmware
 tarball available from the
-<ulink URL="http://linux-gpib.sourceforge.net/">Linux-GPIB home page</ulink>.
+<ulink URL="https://linux-gpib.sourceforge.io/">Linux-GPIB home page</ulink>.
 </para>
 </section>
 <section ID="ni-usb-hs">
