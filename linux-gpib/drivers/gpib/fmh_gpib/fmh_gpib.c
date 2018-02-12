@@ -273,6 +273,19 @@ static void fmh_gpib_dma_callback(void *arg)
 	spin_unlock_irqrestore(&board->spinlock, flags);
 }
 
+/* returns true when all the bytes of a dma write have been transferred to
+ * the chip and successfully transferred out over the gpib bus. */
+static int fmh_gpib_all_dma_bytes_are_sent(fmh_gpib_private_t *e_priv)
+{
+	if( fifos_read(e_priv, FIFO_XFER_COUNTER_REG) & fifo_xfer_counter_mask)
+		return 0;
+	
+	if( (read_byte(&e_priv->nec7210_priv, EXT_STATUS_1_REG) & DATA_OUT_STATUS_BIT) == 0)
+		return 0;
+	
+	return 1;
+}
+
 static int fmh_gpib_dma_write(gpib_board_t *board, 
 	uint8_t *buffer, size_t length, size_t *bytes_written)
 {
@@ -328,8 +341,7 @@ static int fmh_gpib_dma_write(gpib_board_t *board,
 //	printk("%s: waiting for write.\n", __FUNCTION__);
 	// suspend until message is sent
 	if(wait_event_interruptible(board->wait, 
-	   ((fifos_read(e_priv, FIFO_XFER_COUNTER_REG) & fifo_xfer_counter_mask) == 0 
-			   /*&& test_bit(WRITE_READY_BN, &nec_priv->state) */) ||
+	   fmh_gpib_all_dma_bytes_are_sent(e_priv) ||
 		test_bit(BUS_ERROR_BN, &nec_priv->state) || 
 		test_bit(DEV_CLEAR_BN, &nec_priv->state) ||
 		test_bit(TIMO_NUM, &board->status)))
