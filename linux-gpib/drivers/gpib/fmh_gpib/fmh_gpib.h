@@ -88,7 +88,9 @@ enum ext_status_1_bits
 {
 	DATA_IN_STATUS_BIT = 0x01,
 	DATA_OUT_STATUS_BIT = 0x02,
-	COMMAND_OUT_STATUS_BIT = 0x04
+	COMMAND_OUT_STATUS_BIT = 0x04,
+	RFD_HOLDOFF_STATUS_BIT = 0x08,
+	END_STATUS_BIT = 0x10
 };
 
 /* dma fifo reg and bits */
@@ -163,8 +165,9 @@ enum fmh_gpib_aux_cmds
 	pulses the rtl message, having the effect of clearing rtl if it was left
 	asserted by AUX_RTL2. */
 	AUX_RTL2 = 0x0d,
+	AUX_RFD_HOLDOFF_ASAP = 0x15,
 	AUX_LO_SPEED = 0x40,
-	AUX_HI_SPEED = 0x41,
+	AUX_HI_SPEED = 0x41
 };
 
 #endif	// _FMH_GPIB_H

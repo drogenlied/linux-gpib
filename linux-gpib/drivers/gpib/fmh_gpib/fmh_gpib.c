@@ -207,16 +207,29 @@ unsigned int fmh_gpib_t1_delay( gpib_board_t *board, unsigned int nano_sec )
 	return retval;
 }
 
-static int wait_for_idle(gpib_board_t *board, short wake_on_listener_idle,
-	short wake_on_talker_idle)
+static int lacs_or_read_ready(gpib_board_t *board)
+{
+	const fmh_gpib_private_t *e_priv = board->private_data;
+	const nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
+	int retval = 0;
+	unsigned long flags;
+	
+	spin_lock_irqsave(&board->spinlock, flags);
+	retval = test_bit(LACS_NUM, &board->status) ||
+		test_bit(READ_READY_BN, &nec_priv->state);
+	spin_unlock_irqrestore(&board->spinlock, flags);
+
+	return retval;
+}
+
+static int wait_for_read(gpib_board_t *board)
 {
 	fmh_gpib_private_t *e_priv = board->private_data;
 	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
 	int retval = 0;
-// 	printk("%s: enter\n", __FUNCTION__);
+
 	if(wait_event_interruptible(board->wait,
-		(wake_on_listener_idle && test_bit(LACS_NUM, &board->status) == 0) ||
-		(wake_on_talker_idle && test_bit(TACS_NUM, &board->status) == 0) ||
+		lacs_or_read_ready(board) ||
 		test_bit(DEV_CLEAR_BN, &nec_priv->state) ||
 		test_bit(TIMO_NUM, &board->status)))
 	{
@@ -226,7 +239,6 @@ static int wait_for_idle(gpib_board_t *board, short wake_on_listener_idle,
 		retval = -ETIMEDOUT;
 	if(test_and_clear_bit(DEV_CLEAR_BN, &nec_priv->state))
 		retval = -EINTR;
-// 	printk("%s: exit, retval=%i\n", __FUNCTION__, retval);
 	return retval;
 }
 
@@ -240,7 +252,7 @@ static int wait_for_data_out_ready(gpib_board_t *board)
 // 	printk("%s: enter\n", __FUNCTION__);
 
 	if(wait_event_interruptible(board->wait,
-		(gpib_cs_read_byte(nec_priv, EXT_STATUS_1_REG) & DATA_OUT_STATUS_BIT) ||
+		(test_bit(TACS_NUM, &board->status) && (read_byte(nec_priv, EXT_STATUS_1_REG) & DATA_OUT_STATUS_BIT)) ||
 		test_bit(DEV_CLEAR_BN, &nec_priv->state) ||
 		test_bit(TIMO_NUM, &board->status)))
 	{
@@ -301,8 +313,6 @@ static int fmh_gpib_dma_write(gpib_board_t *board,
 	if(length > e_priv->dma_buffer_size)
 		BUG();
 	dmaengine_terminate_all(e_priv->dma_channel);
-	retval = wait_for_idle(board, 1, 0);
-	if(retval < 0) return retval;
 	memcpy(e_priv->dma_buffer, buffer, length);
 	address = dma_map_single(NULL, e_priv->dma_buffer,
 		 length, DMA_TO_DEVICE);
@@ -401,6 +411,10 @@ static int fmh_gpib_accel_write(gpib_board_t *board,
 	while(dma_remainder > 0)
 	{
 		size_t num_bytes;
+
+		retval = wait_for_data_out_ready(board);
+		if(retval < 0) break;
+		
 		transfer_size = (e_priv->dma_buffer_size < dma_remainder) ? 
 			e_priv->dma_buffer_size : dma_remainder;
 		retval = fmh_gpib_dma_write(board, buffer, transfer_size, &num_bytes);
@@ -475,8 +489,6 @@ static int fmh_gpib_dma_read(gpib_board_t *board, uint8_t *buffer,
 	if(length == 0)
 		return 0;
 
-	retval = wait_for_idle(board, 0, 1);
-	if(retval < 0) return retval;
 	bus_address = dma_map_single(NULL, e_priv->dma_buffer,
 		length, DMA_FROM_DEVICE);
 	if(dma_mapping_error(NULL, bus_address))
@@ -513,7 +525,6 @@ static int fmh_gpib_dma_read(gpib_board_t *board, uint8_t *buffer,
 	dma_async_issue_pending(e_priv->dma_channel);
 
 	set_bit(DMA_READ_IN_PROGRESS_BN, &nec_priv->state);
-	clear_bit(READ_READY_BN, &nec_priv->state);
 	
 	spin_unlock_irqrestore(&board->spinlock, flags);
 // 	printk("waiting for data transfer.\n");
@@ -564,15 +575,12 @@ static int fmh_gpib_dma_read(gpib_board_t *board, uint8_t *buffer,
 	 * byte still sitting on the cb7210.
 	 */
 	spin_lock_irqsave(&board->spinlock, flags);
-	if(read_byte( nec_priv, EXT_STATUS_1_REG ) & DATA_IN_STATUS_BIT)
+	if (*bytes_read > 0)
 	{
-		set_bit(READ_READY_BN, &nec_priv->state);
-	}else
-	{
-		clear_bit(READ_READY_BN, &nec_priv->state);
-		// There is no byte sitting on the cb7210.  If we
-		// saw an end interrupt, we need to deal with it now
-		if(test_and_clear_bit(RECEIVED_END_BN, &nec_priv->state)) 
+		// If there is no byte sitting on the cb7210 and we
+		// saw an end, we need to deal with it now
+		if(test_bit(RECEIVED_END_BN, &nec_priv->state) && 
+			test_bit(READ_READY_BN, &nec_priv->state) == 0) 
 		{
 			*end = 1;
 		}
@@ -593,14 +601,16 @@ static int fmh_gpib_accel_read(gpib_board_t *board, uint8_t *buffer, size_t leng
 	size_t transfer_size;
 	int retval = 0;
 	size_t dma_nbytes;
-/*	printk("%s: enter, buffer=0x%p, length=%i\n", __FUNCTION__,
-		   buffer, (int)length);
-	printk("\t dma_buffer=0x%p\n", e_priv->dma_buffer);*/
+	unsigned long flags;
+	
 	clear_bit(DEV_CLEAR_BN, &nec_priv->state); // XXX FIXME
 	*end = 0;
 	*bytes_read = 0;
+	
+	retval = wait_for_read(board);
+	if(retval < 0) return retval;
+	
 	nec7210_release_rfd_holdoff(board, nec_priv);
-// 	printk("%s: entering while loop\n", __FUNCTION__);
 	while(remain > 0)
 	{
 		transfer_size = (e_priv->dma_buffer_size < remain) ? e_priv->dma_buffer_size : remain;
@@ -614,12 +624,19 @@ static int fmh_gpib_accel_read(gpib_board_t *board, uint8_t *buffer, size_t leng
 		}
 		if(retval < 0) 
 		{
-// 			printk("%s: early exit, retval=%i\n", __FUNCTION__, (int)retval);
-			return retval;
+			break;
 		}
 		if(need_resched()) schedule();
 	}
-// 	printk("%s: exit, retval=%i\n", __FUNCTION__, (int)retval);
+
+	spin_lock_irqsave(&board->spinlock, flags);
+	if(test_bit(RFD_HOLDOFF_BN, &nec_priv->state) == 0)
+	{
+		write_byte(nec_priv, AUX_RFD_HOLDOFF_ASAP, AUXMR);
+		set_bit(RFD_HOLDOFF_BN, &nec_priv->state);
+	}
+	spin_unlock_irqrestore(&board->spinlock, flags);
+
 	return retval;
 }
 
@@ -689,8 +706,6 @@ irqreturn_t fmh_gpib_internal_interrupt(gpib_board_t *board)
 	int retval = IRQ_NONE;
 
 	status0 = read_byte( nec_priv, ISR0_IMR0_REG );
-	// read ext_status_1_reg before IRS1 to avoid race where we could see data in byte but miss associated END
-	ext_status_1 = read_byte(nec_priv, EXT_STATUS_1_REG);
 	status1 = read_byte( nec_priv, ISR1 );
 	status2 = read_byte( nec_priv, ISR2 );
 	
@@ -702,6 +717,8 @@ irqreturn_t fmh_gpib_internal_interrupt(gpib_board_t *board)
 	
 	if( nec7210_interrupt_have_status(board, nec_priv, status1, status2) == IRQ_HANDLED)
 		retval = IRQ_HANDLED;
+
+	ext_status_1 = read_byte(nec_priv, EXT_STATUS_1_REG);
 
 	if(ext_status_1 & DATA_IN_STATUS_BIT)
 		set_bit(READ_READY_BN, &nec_priv->state);
@@ -717,6 +734,16 @@ irqreturn_t fmh_gpib_internal_interrupt(gpib_board_t *board)
 		set_bit(COMMAND_READY_BN, &nec_priv->state);
 	else
 		clear_bit(COMMAND_READY_BN, &nec_priv->state);
+
+	if(ext_status_1 & RFD_HOLDOFF_STATUS_BIT)
+		set_bit(RFD_HOLDOFF_BN, &nec_priv->state);
+	else
+		clear_bit(RFD_HOLDOFF_BN, &nec_priv->state);
+
+	if(ext_status_1 & END_STATUS_BIT)
+		set_bit(RECEIVED_END_BN, &nec_priv->state);
+	else
+		clear_bit(RECEIVED_END_BN, &nec_priv->state);
 
 	if( retval == IRQ_HANDLED )
 	{
@@ -827,7 +854,8 @@ static int fmh_gpib_config_dma(gpib_board_t *board, int output)
 int fmh_gpib_init(fmh_gpib_private_t *e_priv, gpib_board_t *board, int handshake_mode)
 {
 	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
-
+	unsigned long flags;
+	
 	fifos_write(e_priv, 0, FIFO_CONTROL_STATUS_REG); 
 
 	nec7210_board_reset(nec_priv, board);
@@ -837,6 +865,11 @@ int fmh_gpib_init(fmh_gpib_private_t *e_priv, gpib_board_t *board, int handshake
 	nec7210_board_online( nec_priv, board );
 
 	write_byte(nec_priv, IFC_INTERRUPT_ENABLE_BIT | ATN_INTERRUPT_ENABLE_BIT, ISR0_IMR0_REG);
+
+	spin_lock_irqsave(&board->spinlock, flags);
+	write_byte(nec_priv, AUX_RFD_HOLDOFF_ASAP, AUXMR);
+	set_bit(RFD_HOLDOFF_BN, &nec_priv->state);
+	spin_unlock_irqrestore(&board->spinlock, flags);
 	return 0;
 }
 
