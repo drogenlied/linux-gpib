@@ -575,12 +575,11 @@ static int fmh_gpib_dma_read(gpib_board_t *board, uint8_t *buffer,
 	 * byte still sitting on the cb7210.
 	 */
 	spin_lock_irqsave(&board->spinlock, flags);
-	if (*bytes_read > 0)
+	if (*bytes_read > 0 && test_bit(READ_READY_BN, &nec_priv->state) == 0)
 	{
 		// If there is no byte sitting on the cb7210 and we
 		// saw an end, we need to deal with it now
-		if(test_bit(RECEIVED_END_BN, &nec_priv->state) && 
-			test_bit(READ_READY_BN, &nec_priv->state) == 0) 
+		if(test_and_clear_bit(RECEIVED_END_BN, &nec_priv->state))
 		{
 			*end = 1;
 		}
@@ -741,8 +740,14 @@ irqreturn_t fmh_gpib_internal_interrupt(gpib_board_t *board)
 		clear_bit(RFD_HOLDOFF_BN, &nec_priv->state);
 
 	if(ext_status_1 & END_STATUS_BIT)
-		set_bit(RECEIVED_END_BN, &nec_priv->state);
-	else
+	{
+		/* only set RECEIVED_END while there is still a data byte sitting in the chip,
+		 * to avoid spuriously setting it multiple times after it has been cleared
+		 * during a read.
+		 */
+		if(ext_status_1 & DATA_IN_STATUS_BIT)
+			set_bit(RECEIVED_END_BN, &nec_priv->state);
+	}else
 		clear_bit(RECEIVED_END_BN, &nec_priv->state);
 
 	if( retval == IRQ_HANDLED )
