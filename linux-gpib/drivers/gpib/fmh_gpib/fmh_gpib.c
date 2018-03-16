@@ -591,6 +591,42 @@ static int fmh_gpib_dma_read(gpib_board_t *board, uint8_t *buffer,
 	return retval;
 }
 
+static void fmh_gpib_release_rfd_holdoff(gpib_board_t *board, fmh_gpib_private_t *e_priv)
+{
+	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
+	unsigned int ext_status_1;
+	unsigned long flags;
+	
+	spin_lock_irqsave(&board->spinlock, flags);
+
+	ext_status_1 = read_byte(nec_priv, EXT_STATUS_1_REG);
+
+	/* if there is an end byte sitting on the chip, don't release holdoff.  We want it left
+	 * set after we read out the end byte. */
+	if((ext_status_1 & (DATA_IN_STATUS_BIT | END_STATUS_BIT)) != (DATA_IN_STATUS_BIT | END_STATUS_BIT))
+	{
+		if(ext_status_1 & RFD_HOLDOFF_STATUS_BIT)
+		{
+			write_byte( nec_priv, AUX_FH, AUXMR );
+		}
+		
+		/* Check if an end byte raced in before we executed the AUX_FH command.
+		 * If it did, we want to make sure the rfd holdoff is in effect.  The end
+		 * byte can arrive since
+		 * AUX_RFD_HOLDOFF_ASAP doesn't immediately force the acceptor handshake
+		 * to leave ACRS. */
+		if((read_byte(nec_priv, EXT_STATUS_1_REG) & (RFD_HOLDOFF_STATUS_BIT | DATA_IN_STATUS_BIT | END_STATUS_BIT)) == 
+			(DATA_IN_STATUS_BIT | END_STATUS_BIT))
+		{
+			write_byte( nec_priv, AUX_RFD_HOLDOFF_ASAP, AUXMR );
+			set_bit( RFD_HOLDOFF_BN, &nec_priv->state );
+		}else
+			clear_bit( RFD_HOLDOFF_BN, &nec_priv->state );
+	}
+	
+	spin_unlock_irqrestore(&board->spinlock, flags);
+}
+
 static int fmh_gpib_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 	int *end, size_t *bytes_read)
 {
@@ -609,7 +645,7 @@ static int fmh_gpib_accel_read(gpib_board_t *board, uint8_t *buffer, size_t leng
 	retval = wait_for_read(board);
 	if(retval < 0) return retval;
 	
-	nec7210_release_rfd_holdoff(board, nec_priv);
+	fmh_gpib_release_rfd_holdoff(board, e_priv);
 	while(remain > 0)
 	{
 		transfer_size = (e_priv->dma_buffer_size < remain) ? e_priv->dma_buffer_size : remain;
