@@ -7,19 +7,14 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
-BUILT_SOURCES = gpib gpib_ioctl.h gpib_types.h gpib_user.h ib.h ibConf.h ibP.h
+BUILT_SOURCES = gpib ib.h ibConf.h ibP.h
+
+headersdir = $(includedir)/gpib
+headers_HEADERS = gpib_user.h
+noinst_HEADERS = gpib_ioctl.h
 
 gpib:
 	ln -sf . gpib
-
-gpib_ioctl.h:
-	ln -sf $(top_srcdir)/drivers/gpib/include/gpib_ioctl.h
-
-gpib_types.h:
-	ln -sf $(top_srcdir)/drivers/gpib/include/gpib_types.h
-
-gpib_user.h:
-	ln -sf $(top_srcdir)/drivers/gpib/include/gpib_user.h
 
 ib.h:
 	ln -sf $(top_srcdir)/lib/ib.h

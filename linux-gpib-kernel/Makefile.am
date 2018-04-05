@@ -7,17 +7,25 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
-SUBDIRS = include lib drivers examples test doc language usb
+SUBDIRS = drivers
 
-EXTRA_DIST = etc util m4 README.HAMEG README.hp82335 bootstrap
+EXTRA_DIST = util bootstrap
 
 ACLOCAL_AMFLAGS = -I m4
 
 distclean-local:
+	$(RM) $(srcdir)/util/linux_flags/fake.*
+	$(RM) $(srcdir)/util/linux_flags/.*.cmd
+	$(RM) -r $(srcdir)/util/linux_flags/.tmp_versions
 	$(RM) $(srcdir)/util/.scm_version.tmp
 
 dist-hook:
 	-find $(distdir) -depth -name '.svn' -type d -exec $(RM) -r \{\} \;
 	-find $(distdir) \( -name '*~' -o -name '.#*' \) -exec $(RM) \{\} \;
+	$(RM) $(distdir)/util/linux_flags/fake.*
+	$(RM) $(distdir)/util/linux_flags/.*.cmd
+	$(RM) $(distdir)/util/linux_flags/flags 
+	$(RM) $(distdir)/util/linux_flags/Module.*
+	$(RM) $(distdir)/util/linux_flags/modules.order
+	$(RM) -r $(distdir)/util/linux_flags/.tmp_versions
 	$(RM) $(distdir)/util/.scm_version.tmp
-

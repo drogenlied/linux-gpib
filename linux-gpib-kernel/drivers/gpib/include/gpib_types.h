@@ -24,7 +24,7 @@
  * and generic interface provided by gpib-common.
  * This really should be in a different header file.
  */
-#include "gpib/gpib_user.h"
+#include "gpib_user.h"
 #include <asm/atomic.h>
 #include <linux/device.h>
 #include <linux/mutex.h>

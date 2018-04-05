@@ -28,7 +28,7 @@
 #include <linux/vmalloc.h>
 
 MODULE_LICENSE("GPL");
-MODULE_ALIAS_CHARDEV_MAJOR(IBMAJOR);
+MODULE_ALIAS_CHARDEV_MAJOR(GPIB_CODE);
 
 struct file_operations ib_fops =
 {
@@ -209,21 +209,21 @@ static int __init gpib_common_init_module( void )
 	int i;
 	printk("Linux-GPIB %s Driver\n", VERSION);
 	init_board_array(board_array, GPIB_MAX_NUM_BOARDS);
-	if(register_chrdev(IBMAJOR, "gpib", &ib_fops))
+	if(register_chrdev(GPIB_CODE, "gpib", &ib_fops))
 	{
-		printk( "gpib: can't get major %d\n", IBMAJOR );
+		printk( "gpib: can't get major %d\n", GPIB_CODE );
 		return -EIO;
 	}
 	gpib_class = class_create(THIS_MODULE, "gpib_common");
 	if(IS_ERR(gpib_class))
 	{
 		printk("gpib: failed to create gpib class\n");
-		unregister_chrdev(IBMAJOR, "gpib");
+		unregister_chrdev(GPIB_CODE, "gpib");
 		return PTR_ERR(gpib_class);
 	}
 	for(i = 0; i < GPIB_MAX_NUM_BOARDS; ++i)
 	{
-		CLASS_DEVICE_CREATE(gpib_class, 0, MKDEV(IBMAJOR, i), NULL, "gpib%i", i);
+		CLASS_DEVICE_CREATE(gpib_class, 0, MKDEV(GPIB_CODE, i), NULL, "gpib%i", i);
 	}
 	return 0;
 }
@@ -233,10 +233,10 @@ static void __exit gpib_common_exit_module( void )
 	int i;
 	for(i = 0; i < GPIB_MAX_NUM_BOARDS; ++i)
 	{
-		device_destroy(gpib_class, MKDEV(IBMAJOR, i));
+		device_destroy(gpib_class, MKDEV(GPIB_CODE, i));
 	}
 	class_destroy(gpib_class);
-	unregister_chrdev(IBMAJOR, "gpib");
+	unregister_chrdev(GPIB_CODE, "gpib");
 }
 
 module_init( gpib_common_init_module );

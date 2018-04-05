@@ -20,7 +20,6 @@
 
 #include "ib.h"
 #include "ibP.h"
-#include "gpib_types.h"
 #include "gpib_ioctl.h"
 #include <unistd.h>
 #include <sys/ioctl.h>
