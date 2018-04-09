@@ -1,4 +1,4 @@
-subdir-ccflags-y := -Igpib/include
+subdir-ccflags-y := -I$(src)/include
 
 obj-y += agilent_82350b/
 obj-$(CONFIG_USB) += agilent_82357a/
