@@ -18,18 +18,18 @@ EXTRA_DIST = $(GPIB_MODULE_SUBDIR)
 #on nfs filesystem with root_squash
 all-local:
 	-$(MAKE) -C $(LINUX_SRCDIR) V=1 modules\
-		CC="$(LINUX_CC) -I@abs_top_srcdir@ -I@abs_top_srcdir@/drivers/gpib/include -I@abs_top_srcdir@/include" \
+		CC="$(LINUX_CC) -I@abs_top_srcdir@ -I@abs_top_srcdir@/compat/include" \
 		CONFIG_GPIB_ISA="$(ENABLE_ISA)" \
 		SUBDIRS="$(GPIB_ABS_MODULE_SUBDIR)"
 
 clean-local:
 	$(MAKE) -C $(LINUX_SRCDIR) V=1 clean\
-		CC="$(LINUX_CC) -I@abs_top_srcdir@ -I@abs_top_srcdir@/drivers/gpib/include -I@abs_top_srcdir@/include" \
+		CC="$(LINUX_CC) -I@abs_top_srcdir@ -I@abs_top_srcdir@/compat/include" \
 		SUBDIRS="$(GPIB_ABS_MODULE_SUBDIR)"
 
 install-data-hook:
 	$(MAKE) -C $(LINUX_SRCDIR) V=1 modules_install\
-		CC="$(LINUX_CC) -I@abs_top_srcdir@ -I@abs_top_srcdir@/driver/include -I@abs_top_srcdir@/include" \
+		CC="$(LINUX_CC) -I@abs_top_srcdir@ -I@abs_top_srcdir@/compat/include" \
 		SUBDIRS="$(GPIB_ABS_MODULE_SUBDIR)" INSTALL_MOD_DIR="gpib"
 	$(DEPMOD) -a
 

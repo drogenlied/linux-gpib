@@ -9,7 +9,7 @@
 
 SUBDIRS = drivers
 
-EXTRA_DIST = util bootstrap
+EXTRA_DIST = util bootstrap compat
 
 ACLOCAL_AMFLAGS = -I m4
 
