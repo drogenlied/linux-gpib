@@ -17,6 +17,7 @@
  ***************************************************************************/
 
 
+#include <compat_device_create.h>
 #include "ibsys.h"
 #include <linux/module.h>
 #include <linux/wait.h>
