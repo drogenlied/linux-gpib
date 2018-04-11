@@ -143,7 +143,7 @@ dnl Checks for typedefs, structures, and compiler characteristics.
 dnl Checks for library functions.
 
 LIBGPIB_CFLAGS="-I\$(top_srcdir)/include -D_REENTRANT"
-LIBGPIB_LDFLAGS="\$(top_srcdir)/lib/libgpib.la -lpthread"
+LIBGPIB_LDFLAGS="\$(top_builddir)/lib/libgpib.la -lpthread"
 AC_SUBST([LIBGPIB_CFLAGS])
 AC_SUBST([LIBGPIB_LDFLAGS])
 IBMAJOR=160

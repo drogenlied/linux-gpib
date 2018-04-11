@@ -28,13 +28,13 @@ maintainer-clean-local:
 	$(RM) -r $(docs)
 
 linux-gpib.pdf: $(SGML)
-	$(JW_PATH) -f docbook -b pdf linux-gpib.sgml
+	$(JW_PATH) -f docbook -b pdf $(srcdir)/linux-gpib.sgml
 
 doc_html/*: $(SGML)
-	{ $(JW_PATH) -f docbook -b html -o doc_html -V '%use-id-as-filename%' linux-gpib.sgml; } && { touch doc_html/*; }
+	{ $(JW_PATH) -f docbook -b html -o doc_html -V '%use-id-as-filename%' $(srcdir)/linux-gpib.sgml; } && { touch doc_html/*; }
 
 man/*: $(SGML)
-	{ $(JW_PATH) -f docbook -b man -o man linux-gpib.sgml; } && { touch man/*; }
+	{ $(JW_PATH) -f docbook -b man -o man $(srcdir)/linux-gpib.sgml; } && { touch man/*; }
 
 gpib_version.txt: 
 	if test x`echo $(VERSION)` != x`cat gpib_version.txt` ; then \
