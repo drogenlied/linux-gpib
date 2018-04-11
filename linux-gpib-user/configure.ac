@@ -30,8 +30,8 @@ AC_SUBST([GPIB_SO_VERSION])
 [ISODATE=`date +%Y-%m-%d`]
 AC_SUBST([ISODATE])
 
-AC_CHECK_FILE([util/.scm_version.tmp],
-  [SCM_VERSION=[$VERSION"\ [r"`cat util/.scm_version.tmp`"]"]],
+AS_IF([test -f ${srcdir}/util/.scm_version.tmp],
+  [SCM_VERSION=[$VERSION"\ [r"`cat ${srcdir}/util/.scm_version.tmp`"]"]],
   [SCM_VERSION=$VERSION])
 
 AC_SUBST(SCM_VERSION)
