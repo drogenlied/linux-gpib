@@ -16,7 +16,7 @@ UDEV_RULES_DIR=/etc/udev/rules.d
 do_subst = sed -e 's,[@]sbindir[@],$(sbindir),g'  -e 's,[@]hotplug_usb_conf_dir[@],$(HOTPLUG_USB_CONF_DIR),g' 
 
 99-ni_usb_gpib.rules: 99-ni_usb_gpib.rules.in
-	$(do_subst) < 99-ni_usb_gpib.rules.in >99-ni_usb_gpib.rules
+	$(do_subst) < $(srcdir)/99-ni_usb_gpib.rules.in >99-ni_usb_gpib.rules
 
 install-data-local: 99-ni_usb_gpib.rules
 	test -e $(HOTPLUG_USB_CONF_DIR)/ni_usb_gpib || $(INSTALL_SCRIPT) -D ni_usb_gpib $(HOTPLUG_USB_CONF_DIR)/ni_usb_gpib

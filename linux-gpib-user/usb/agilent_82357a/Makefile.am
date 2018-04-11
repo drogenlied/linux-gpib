@@ -16,7 +16,7 @@ UDEV_RULES_DIR=/etc/udev/rules.d
 do_subst = sed -e 's,[@]sbindir[@],$(sbindir),g'  -e 's,[@]hotplug_usb_conf_dir[@],$(HOTPLUG_USB_CONF_DIR),g' 
 
 99-agilent_82357a.rules: 99-agilent_82357a.rules.in
-	$(do_subst) < 99-agilent_82357a.rules.in >99-agilent_82357a.rules
+	$(do_subst) < $(srcdir)/99-agilent_82357a.rules.in >99-agilent_82357a.rules
 
 install-data-local: 99-agilent_82357a.rules
 	test -e $(HOTPLUG_USB_CONF_DIR)/agilent_82357a || $(INSTALL_SCRIPT) -D agilent_82357a $(HOTPLUG_USB_CONF_DIR)/agilent_82357a
