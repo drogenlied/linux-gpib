@@ -175,6 +175,7 @@ AC_OUTPUT([\
 	test/Makefile \
 	doc/Makefile \
 	include/Makefile \
+	include/gpib/Makefile \
 	language/Makefile \
 	language/guile/Makefile \
 	language/php/Makefile \

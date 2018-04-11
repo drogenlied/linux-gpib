@@ -18,9 +18,9 @@
 #ifndef _IB_INTERNAL_H
 #define _IB_INTERNAL_H
 
-#include "ib.h"
+#include "gpib/ib.h"
 #include "ibP.h"
-#include "gpib_ioctl.h"
+#include "gpib/gpib_ioctl.h"
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <assert.h>

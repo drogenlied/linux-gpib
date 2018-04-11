@@ -12,8 +12,6 @@ SUBDIRS = . gpib_config
 lib_LTLIBRARIES = libgpib.la
 
 noinst_HEADERS = ibConf.h ib_internal.h
-headersdir = $(includedir)/gpib
-headers_HEADERS = ib.h
 
 BUILT_SOURCES = ibConfLex.c ibConfLex.h ibConfYacc.c ibConfYacc.h
 MAINTAINERCLEANFILES = ibConfLex.c ibConfLex.h ibConfYacc.c ibConfYacc.h

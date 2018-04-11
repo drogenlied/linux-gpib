@@ -7,4 +7,7 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
-SUBDIRS = gpib
+headersdir = $(includedir)/gpib
+headers_HEADERS = gpib_user.h ib.h
+noinst_HEADERS = gpib_ioctl.h
+
