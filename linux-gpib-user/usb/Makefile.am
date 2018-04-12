@@ -12,6 +12,6 @@ EXTRA_DIST = 99-gpib-generic.rules
 UDEV_RULES_DIR = $(sysconfdir)/udev/rules.d
 
 install-data-local: 99-gpib-generic.rules
-	test -d $(UDEV_RULES_DIR) && test -e $(UDEV_RULES_DIR)/99-gpib-generic.rules ||\
-		$(INSTALL_DATA) -D $(srcdir)/99-gpib-generic.rules $(UDEV_RULES_DIR)/99-gpib-generic.rules
+	test -d $(DESTDIR)$(UDEV_RULES_DIR) && test -e $(DESTDIR)$(UDEV_RULES_DIR)/99-gpib-generic.rules ||\
+		$(INSTALL_DATA) -D $(srcdir)/99-gpib-generic.rules $(DESTDIR)$(UDEV_RULES_DIR)/99-gpib-generic.rules
 

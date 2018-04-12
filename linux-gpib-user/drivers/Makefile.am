@@ -36,5 +36,5 @@ device-file-check: /dev/gpib0
 #should move this to util/templates Makefile.am when it exists
 .PHONY : gpib.conf
 gpib.conf:
-	test -e $(sysconfdir)/gpib.conf || \
-		$(INSTALL_DATA) -D $(top_srcdir)/util/templates/gpib.conf $(sysconfdir)/gpib.conf
+	test -e $(DESTDIR)$(sysconfdir)/gpib.conf || \
+		$(INSTALL_DATA) -D $(top_srcdir)/util/templates/gpib.conf $(DESTDIR)$(sysconfdir)/gpib.conf
