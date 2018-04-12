@@ -40,18 +40,26 @@ o) cd to your linux-gpib-user directory and run the './configure' script.
 	your /etc/ld.so.conf file, so that ld can find libgpib.so.  If
 	the directory is not listed, add it and then run 'ldconfig'.
 
-	To give a user access to the computer's gpib board you will
-	have to add them to the group 'gpib' (you can use the
-	'usermod' tool or edit /etc/groups to change the groups a user
-	belongs to).  Or, you could change the permissions on the
-	device files /dev/gpib[0-15] to something you like better,
-	using 'chmod' (or edit devfsd.conf if you are using devfs).
+	With the default setup, to give a user access to the computer's 
+	gpib boards you will have to add them to the group 'gpib'.  If
+	this group does not already exist on your computer you may add
+	it by running the command 'groupadd gpib' as root.  You can 
+	then use the 'usermod' tool or edit /etc/groups to change the groups 
+	the user account belongs to.  Or, you could change the permissions on the
+	device files /dev/gpib[0-15] to something you like better.
 	If you are using udev, you can set the permissions on the gpib
 	device files with a line like: KERNEL=="gpib[0-9]*",
 	MODE="0660", GROUP="gpib" in your udev rules 
-	(see $(sysconfdir)/etc/udev/rules.d/99-gpib-generic.rules
-	which should be installed by linux-gpib-user).
+	(see $(sysconfdir)/udev/rules.d/99-gpib-generic.rules
+	which should be installed by 'make install').
 
+	If you are not using udev (you probably are) you can use 'chmod' 
+	(or edit devfsd.conf if you are using devfs) to change the
+	device file permissions.  You may also
+	need to manually create the device files /dev/gpibX if they
+	don't already exist.  This can be done by running 
+	'make device_files'.
+	
 C) Configuring the driver modules
 -----------------------------
 

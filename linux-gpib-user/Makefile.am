@@ -21,3 +21,6 @@ dist-hook:
 	-find $(distdir) \( -name '*~' -o -name '.#*' \) -exec $(RM) \{\} \;
 	$(RM) $(distdir)/util/.scm_version.tmp
 
+.PHONY : device_files
+device_files: 
+	cd drivers && $(MAKE) $(AM_MAKEFLAGS) device_files

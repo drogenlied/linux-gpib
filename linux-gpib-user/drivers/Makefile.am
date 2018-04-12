@@ -7,18 +7,17 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
-install-data-hook: device-file-check gpib.conf
+install-data-hook: gpib.conf
 
 /dev/gpib0:
-	groupadd gpib || echo "group gpib exists"
 	for i in `seq 0 15`; \
 	do \
 		mknod -m u=rw,g=rw,o= /dev/gpib$${i} c $(IBMAJOR) $${i} || exit 1; \
 		chown root:gpib /dev/gpib$${i}; \
 	done
 
-.PHONY : device-file-check
-device-file-check: /dev/gpib0
+.PHONY : device_files
+device_files: /dev/gpib0
 	@if [ ! -c /dev/gpib0 ]; then \
 		if [ -a /dev/gpib0 ]; then \
 			echo "A file or directory called /dev/gpib0 exists but it is not" \
