@@ -10,6 +10,9 @@
 SUBDIRS = $(PYTHON_SUBDIR) $(PHP_SUBDIR) $(GUILE_SUBDIR) $(TCL_SUBDIR)
 EXTRA_DIST = $(PERL_DIST)
 
+do_subst = $(SED) -e 's,[@]abs_top_builddir[@],$(abs_top_builddir),g'\
+	-e 's,[@]abs_top_srcdir[@],$(abs_top_srcdir),g'
+
 PERL_DIST = perl/Changes perl/LinuxGpib.pm perl/LinuxGpib.xs \
 	perl/MANIFEST perl/Makefile.PL perl/README perl/test.pl \
 	perl/typemap perl/examples/
@@ -65,6 +68,9 @@ clean-perl: perl/Makefile
 .PHONY: distclean-perl
 distclean-perl: 
 	$(RM) perl/Makefile
+
+perl/Makefile.PL: perl/Makefile.PL.in
+	$(do_subst) < $(srcdir)/perl/Makefile.PL.in >perl/Makefile.PL
 
 perl/Makefile:
 	-(cd perl && $(PERL) Makefile.PL)

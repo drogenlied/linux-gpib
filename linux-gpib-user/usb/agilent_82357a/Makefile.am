@@ -13,7 +13,7 @@ HOTPLUG_USB_CONF_DIR=$(sysconfdir)/hotplug/usb
 USB_FIRMWARE_DIR=$(datadir)/usb
 UDEV_RULES_DIR=$(sysconfdir)/udev/rules.d
 
-do_subst = sed -e 's,[@]sbindir[@],$(sbindir),g'\
+do_subst = $(SED) -e 's,[@]sbindir[@],$(sbindir),g'\
 	-e 's,[@]datadir[@],$(datadir),g'\
 	-e 's,[@]hotplug_usb_conf_dir[@],$(HOTPLUG_USB_CONF_DIR),g'
 
