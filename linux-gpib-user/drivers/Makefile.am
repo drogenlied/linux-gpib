@@ -7,7 +7,7 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
-install-data-hook: device-file-check /etc/gpib.conf
+install-data-hook: device-file-check gpib.conf
 
 /dev/gpib0:
 	groupadd gpib || echo "group gpib exists"
@@ -34,6 +34,7 @@ device-file-check: /dev/gpib0
 	fi
 
 #should move this to util/templates Makefile.am when it exists
-/etc/gpib.conf:
-	$(INSTALL_DATA) -D $(top_srcdir)/util/templates/gpib.conf /etc/gpib.conf
-
+.PHONY : gpib.conf
+gpib.conf:
+	test -e $(sysconfdir)/gpib.conf || \
+		$(INSTALL_DATA) -D $(top_srcdir)/util/templates/gpib.conf $(sysconfdir)/gpib.conf

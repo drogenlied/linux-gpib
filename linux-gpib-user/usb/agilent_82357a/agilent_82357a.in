@@ -1,15 +1,14 @@
 #!/bin/sh
 
 GPIB_CONFIG_OPTIONS="--minor 0"
-DATADIR=/usr/share
+DATADIR=@datadir@
 FXLOAD=fxload
-FXLOAD_OPTIONS="-t fx"
+FXLOAD_OPTIONS=
 
 PATH=$PATH:/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin
 HOME=/root
 export HOME PATH
 FIRMWARE=
-SS_LOADER=
 
 if [ -x /usr/bin/logger ]; then
         /usr/bin/logger -t $0 "entered for Product: $PRODUCT Device: $DEVICE Serial: $SERIAL Devpath: $DEVPATH"
@@ -20,9 +19,9 @@ fi
 # that correspond to your system.
 #
 #case $SERIAL in
-#    N0000001) GPIB_CONFIG_OPTIONS="--minor 0"
+#    A0000001) GPIB_CONFIG_OPTIONS="--minor 0"
 #	      ;;
-#    N0000002) GPIB_CONFIG_OPTIONS="--minor 1"
+#    A0000002) GPIB_CONFIG_OPTIONS="--minor 1"
 #	      ;;
 #esac
 #
@@ -41,30 +40,30 @@ fi
 
 # pre-renumeration device IDs
 case $PRODUCT in
-# ni-usb-b with firmware already loaded
-3923/702a/*)
+# 82357a with firmware already loaded
+957/107/*)
 	gpib_config $GPIB_CONFIG_OPTIONS
 	;;
 
-# ni-usb-b or kusb-488 without firmware
-3923/702b/* | 3923/713b/*)
-	FIRMWARE=$DATADIR/usb/ni_usb_gpib/niusbb_firmware.hex
-	SS_LOADER=$DATADIR/usb/ni_usb_gpib/niusbb_loader.hex
+# 82357a without firmware
+957/7/*)
+	FIRMWARE=$DATADIR/usb/agilent_82357a/82357a_fw.hex
 	;;
 
-# ni-usb-hs
-3923/709b/*)
+# 82357b with firmware already loaded
+957/718/*)
 	gpib_config $GPIB_CONFIG_OPTIONS
 	;;
 
-# ni-usb-hs+
-3923/7618/*)
-	gpib_config $GPIB_CONFIG_OPTIONS
+# 82357b without firmware
+957/518/*)
+	FIRMWARE=$DATADIR/usb/agilent_82357a/measat_releaseX1.8.hex
+	FXLOAD_OPTIONS="-t fx2"
 	;;
 
 esac
 
-# quit unless we were called to download some firmware
+# quit unless we were called to download some firmware 
 if [ "$FIRMWARE" = "" ]; then
     # OR:  restructure to do other things for
     # specific post-renumeration devices
@@ -75,14 +74,6 @@ fi
 if [ ! -r $FIRMWARE ]; then
     if [ -x /usr/bin/logger ]; then
 	/usr/bin/logger -t $0 "missing $FIRMWARE for $PRODUCT ??"
-    fi
-    exit 1
-fi
-
-# missing second stage loader?
-if [ ! -r $SS_LOADER ]; then
-    if [ -x /usr/bin/logger ]; then
-	/usr/bin/logger -t $0 "missing $SS_LOADER for $PRODUCT ??"
     fi
     exit 1
 fi
@@ -100,5 +91,5 @@ if [ -x /usr/bin/logger ]; then
     /usr/bin/logger -t $0 "loading $FIRMWARE for $PRODUCT to $DEVICE"
 fi
 
-$FXLOAD $FXLOAD_OPTIONS -I $FIRMWARE -s $SS_LOADER
+$FXLOAD $FXLOAD_OPTIONS -I $FIRMWARE
 
