@@ -53,12 +53,12 @@ o) cd to your linux-gpib-user directory and run the './configure' script.
 	(see $(sysconfdir)/udev/rules.d/99-gpib-generic.rules
 	which should be installed by 'make install').
 
-	If you are not using udev (you probably are) you can use 'chmod' 
+	In the unlikely case you are not using udev, you can use 'chmod' 
 	(or edit devfsd.conf if you are using devfs) to change the
 	device file permissions.  You may also
 	need to manually create the device files /dev/gpibX if they
 	don't already exist.  This can be done by running 
-	'make device_files'.
+	'make device_files_install'.
 	
 C) Configuring the driver modules
 -----------------------------

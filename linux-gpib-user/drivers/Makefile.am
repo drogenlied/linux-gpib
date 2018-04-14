@@ -9,26 +9,27 @@
 
 install-data-hook: gpib.conf
 
-/dev/gpib0:
+$(DESTDIR)/dev/gpib0:
+	$(INSTALL) -d $(DESTDIR)/dev
 	for i in `seq 0 15`; \
 	do \
-		mknod -m u=rw,g=rw,o= /dev/gpib$${i} c $(IBMAJOR) $${i} || exit 1; \
-		chown root:gpib /dev/gpib$${i}; \
+		mknod -m u=rw,g=rw,o= $(DESTDIR)/dev/gpib$${i} c $(IBMAJOR) $${i} || exit 1; \
+		chown root:gpib $(DESTDIR)/dev/gpib$${i}; \
 	done
 
-.PHONY : device_files
-device_files: /dev/gpib0
-	@if [ ! -c /dev/gpib0 ]; then \
-		if [ -a /dev/gpib0 ]; then \
+.PHONY : device_files_install
+device_files_install: $(DESTDIR)/dev/gpib0
+	@if [ ! -c $(DESTDIR)/dev/gpib0 ]; then \
+		if [ -a $(DESTDIR)/dev/gpib0 ]; then \
 			echo "A file or directory called /dev/gpib0 exists but it is not" \
 				"a character device.  Delete or move it and try again."; \
 			exit 1; \
 		fi; \
 	fi
-	@ls -l /dev/gpib0 | grep -q "$(IBMAJOR)"; \
+	@ls -l $(DESTDIR)/dev/gpib0 | grep -q "$(IBMAJOR)"; \
 	if [ $$? != 0 ]; then \
-		echo "/dev/gpib0 has the wrong major number. " \
-			"Delete your /dev/gpibX files and try again."; \
+		echo "$(DESTDIR)/dev/gpib0 has the wrong major number. " \
+			"Delete your $(DESTDIR)/dev/gpibX files and try again."; \
 		exit 1; \
 	fi
 
