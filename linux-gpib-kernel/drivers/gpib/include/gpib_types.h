@@ -33,10 +33,6 @@
 #include <linux/timer.h>
 #include <linux/interrupt.h>
 
-#if defined(timer_setup) && defined(from_timer)
-#define HAVE_TIMER_SETUP
-#endif
-
 typedef struct gpib_interface_struct gpib_interface_t;
 typedef struct gpib_board_struct gpib_board_t;
 
@@ -187,11 +183,7 @@ struct gpib_pseudo_irq
 static inline void init_gpib_pseudo_irq( struct gpib_pseudo_irq *pseudo_irq)
 {
 	pseudo_irq->handler = NULL;
-#ifdef HAVE_TIMER_SETUP
 	timer_setup(&pseudo_irq->timer, NULL, 0);
-#else
-	setup_timer(&pseudo_irq->timer, NULL, (unsigned long)pseudo_irq);
-#endif
 	smp_mb__before_atomic();
 	atomic_set(&pseudo_irq->active, 0);
 	smp_mb__after_atomic();

@@ -81,15 +81,9 @@ static void ni_usb_bulk_complete(struct urb *urb PT_REGS_ARG)
 	up(&context->complete);
 }
 
-#ifdef HAVE_TIMER_SETUP
-static void ni_usb_timeout_handler(struct timer_list *t)
+static void ni_usb_timeout_handler(COMPAT_TIMER_ARG_TYPE t)
 {
-	ni_usb_private_t *ni_priv = from_timer(ni_priv, t, bulk_timer);
-#else
-static void ni_usb_timeout_handler (unsigned long arg)
-{
-	ni_usb_private_t *ni_priv = (ni_usb_private_t *) arg;
-#endif
+	ni_usb_private_t *ni_priv = COMPAT_FROM_TIMER(ni_priv, t, bulk_timer);
 	ni_usb_urb_context_t *context = &ni_priv->context;
 	context->timed_out = 1;
 	up(&context->complete);
@@ -2120,11 +2114,7 @@ int ni_usb_attach(gpib_board_t *board, const gpib_board_config_t *config)
 	product_id = USBID_TO_CPU(interface_to_usbdev(ni_priv->bus_interface)->descriptor.idProduct);
 	printk("\tproduct id=0x%x\n", product_id);
     
-#ifdef HAVE_TIMER_SETUP
 	timer_setup(&ni_priv->bulk_timer, ni_usb_timeout_handler, 0);
-#else
-	setup_timer(&ni_priv->bulk_timer, ni_usb_timeout_handler, (unsigned long)ni_priv);
-#endif
     
 	if(product_id == USB_DEVICE_ID_NI_USB_B)
 	{

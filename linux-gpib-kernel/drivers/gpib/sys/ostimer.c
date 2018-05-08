@@ -23,15 +23,9 @@
 
 /* Watchdog timeout routine */
 
-#ifdef HAVE_TIMER_SETUP
-void watchdog_timeout( struct timer_list *t )
+void watchdog_timeout( COMPAT_TIMER_ARG_TYPE t )
 {
-	gpib_board_t *board = from_timer(board, t, timer);
-#else
-void watchdog_timeout( unsigned long arg )
-{
-	gpib_board_t *board = (gpib_board_t*) arg;
-#endif
+	gpib_board_t *board = COMPAT_FROM_TIMER(board, t, timer);
 	smp_mb__before_atomic();
 	set_bit( TIMO_NUM, &board->status );
 	smp_mb__after_atomic();

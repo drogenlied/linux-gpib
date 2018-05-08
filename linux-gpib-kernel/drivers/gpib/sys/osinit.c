@@ -128,11 +128,7 @@ void init_gpib_board( gpib_board_t *board )
 	board->locking_pid = 0;
 	spin_lock_init(&board->locking_pid_spinlock);
 	spin_lock_init(&board->spinlock);
-#ifdef HAVE_TIMER_SETUP
 	timer_setup(&board->timer, NULL, 0);
-#else
-	setup_timer(&board->timer, NULL, (unsigned long)board);
-#endif
 	board->dev = NULL;
 	init_gpib_board_config(&board->config);
 	board->private_data = NULL;

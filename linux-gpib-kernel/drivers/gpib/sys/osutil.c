@@ -49,15 +49,9 @@ static inline int pseudo_irq_period(void)
 	return (HZ + 99) / 100;
 }
 
-#ifdef HAVE_TIMER_SETUP
-void pseudo_irq_handler(struct timer_list *t)
+void pseudo_irq_handler(COMPAT_TIMER_ARG_TYPE t)
 {
-        struct gpib_pseudo_irq *pseudo_irq = from_timer(pseudo_irq, t, timer);
-#else
-void pseudo_irq_handler(unsigned long arg)
-{
-	struct gpib_pseudo_irq *pseudo_irq = (struct gpib_pseudo_irq *)arg;
-#endif
+	struct gpib_pseudo_irq *pseudo_irq = COMPAT_FROM_TIMER(pseudo_irq, t, timer);
 	if(pseudo_irq->handler)
 		pseudo_irq->handler(0, pseudo_irq->board
 #ifdef HAVE_PT_REGS

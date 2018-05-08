@@ -44,15 +44,9 @@ static void agilent_82357a_bulk_complete(struct urb *urb PT_REGS_ARG)
 	up(&context->complete);
 }
 
-#ifdef HAVE_TIMER_SETUP
-static void agilent_82357a_timeout_handler(struct timer_list *t)
+static void agilent_82357a_timeout_handler(COMPAT_TIMER_ARG_TYPE t)
 {
-	agilent_82357a_private_t *a_priv = from_timer(a_priv, t, bulk_timer);
-#else
-static void agilent_82357a_timeout_handler(unsigned long arg)
-{
-	agilent_82357a_private_t *a_priv = (agilent_82357a_private_t *) arg;
-#endif
+	agilent_82357a_private_t *a_priv = COMPAT_FROM_TIMER(a_priv, t, bulk_timer);
 	agilent_82357a_urb_context_t *context = &a_priv->context;
 	context->timed_out = 1;
 	up(&context->complete);
@@ -1342,11 +1336,7 @@ int agilent_82357a_attach(gpib_board_t *board, const gpib_board_config_t *config
 	}
 	//printk("%s: finished setup_urbs()()\n", __FUNCTION__);
 
-#ifdef HAVE_TIMER_SETUP
 	timer_setup(&a_priv->bulk_timer, agilent_82357a_timeout_handler, 0);
-#else
-	setup_timer(&a_priv->bulk_timer, agilent_82357a_timeout_handler, (unsigned long) a_priv);
-#endif
 
 	retval = agilent_82357a_init(board);
 

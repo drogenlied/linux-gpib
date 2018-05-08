@@ -29,15 +29,9 @@ struct wait_info
 };
 
 
-#ifdef HAVE_TIMER_SETUP
-static void wait_timeout( struct timer_list *t )
+static void wait_timeout( COMPAT_TIMER_ARG_TYPE t )
 {
-	struct wait_info *winfo = from_timer(winfo, t, timer);
-#else
-static void wait_timeout( unsigned long arg )
-{
-	struct wait_info *winfo = ( struct wait_info * ) arg;
-#endif
+	struct wait_info *winfo = COMPAT_FROM_TIMER(winfo, t, timer);
 	winfo->timed_out = 1;
 	wake_up_interruptible( &winfo->board->wait );
 }
@@ -46,11 +40,7 @@ static void init_wait_info( struct wait_info *winfo )
 {
 	winfo->board = NULL;
 	winfo->timed_out = 0;
-#ifdef HAVE_TIMER_SETUP
 	timer_setup_on_stack( &winfo->timer, wait_timeout, 0 );
-#else
-	setup_timer( &winfo->timer, wait_timeout, (unsigned long)winfo );
-#endif
 }
 
 static int wait_satisfied( struct wait_info *winfo, gpib_status_queue_t *status_queue,
@@ -96,9 +86,7 @@ static void startWaitTimer( struct wait_info *winfo )
 static void removeWaitTimer( struct wait_info *winfo )
 {
 	del_timer_sync( &winfo->timer );
-#ifdef HAVE_TIMER_SETUP
 	destroy_timer_on_stack( &winfo->timer );
-#endif
 }
 
 /*
