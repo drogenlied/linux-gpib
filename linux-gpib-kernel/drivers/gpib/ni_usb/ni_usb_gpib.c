@@ -2119,6 +2119,13 @@ int ni_usb_attach(gpib_board_t *board, const gpib_board_config_t *config)
 	}
 	product_id = USBID_TO_CPU(interface_to_usbdev(ni_priv->bus_interface)->descriptor.idProduct);
 	printk("\tproduct id=0x%x\n", product_id);
+    
+#ifdef HAVE_TIMER_SETUP
+	timer_setup(&ni_priv->bulk_timer, ni_usb_timeout_handler, 0);
+#else
+	setup_timer(&ni_priv->bulk_timer, ni_usb_timeout_handler, (unsigned long)ni_priv);
+#endif
+    
 	if(product_id == USB_DEVICE_ID_NI_USB_B)
 	{
 		ni_priv->bulk_out_endpoint = NIUSB_B_BULK_OUT_ENDPOINT;
@@ -2165,12 +2172,6 @@ int ni_usb_attach(gpib_board_t *board, const gpib_board_config_t *config)
 		mutex_unlock(&ni_usb_hotplug_lock);
 		return retval;
 	}
-
-#ifdef HAVE_TIMER_SETUP
-	timer_setup(&ni_priv->bulk_timer, ni_usb_timeout_handler, 0);
-#else
-	setup_timer(&ni_priv->bulk_timer, ni_usb_timeout_handler, (unsigned long)ni_priv);
-#endif
 
 	retval = ni_usb_init(board);
 	if(retval < 0)
