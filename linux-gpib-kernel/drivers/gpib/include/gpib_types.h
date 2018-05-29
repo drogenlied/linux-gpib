@@ -183,7 +183,7 @@ struct gpib_pseudo_irq
 static inline void init_gpib_pseudo_irq( struct gpib_pseudo_irq *pseudo_irq)
 {
 	pseudo_irq->handler = NULL;
-	timer_setup(&pseudo_irq->timer, NULL, 0);
+	COMPAT_TIMER_SETUP(&pseudo_irq->timer, NULL, 0);
 	smp_mb__before_atomic();
 	atomic_set(&pseudo_irq->active, 0);
 	smp_mb__after_atomic();

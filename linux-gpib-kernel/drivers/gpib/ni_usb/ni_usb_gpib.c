@@ -2114,7 +2114,7 @@ int ni_usb_attach(gpib_board_t *board, const gpib_board_config_t *config)
 	product_id = USBID_TO_CPU(interface_to_usbdev(ni_priv->bus_interface)->descriptor.idProduct);
 	printk("\tproduct id=0x%x\n", product_id);
     
-	timer_setup(&ni_priv->bulk_timer, ni_usb_timeout_handler, 0);
+	COMPAT_TIMER_SETUP(&ni_priv->bulk_timer, ni_usb_timeout_handler, 0);
     
 	if(product_id == USB_DEVICE_ID_NI_USB_B)
 	{

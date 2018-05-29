@@ -1336,7 +1336,7 @@ int agilent_82357a_attach(gpib_board_t *board, const gpib_board_config_t *config
 	}
 	//printk("%s: finished setup_urbs()()\n", __FUNCTION__);
 
-	timer_setup(&a_priv->bulk_timer, agilent_82357a_timeout_handler, 0);
+	COMPAT_TIMER_SETUP(&a_priv->bulk_timer, agilent_82357a_timeout_handler, 0);
 
 	retval = agilent_82357a_init(board);
 

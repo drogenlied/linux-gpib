@@ -29,8 +29,10 @@
 #define COMPAT_TIMER_ARG_TYPE unsigned long
 #define COMPAT_FROM_TIMER(var, callback_timer, timer_fieldname) \
 	container_of((struct timer_list *)(callback_timer), typeof(*var), timer_fieldname)
+/* 4.14 implemented a broken timer_setup function, which we need to avoid.  This is why we have a COMPAT_TIMER_SETUP macro. */
+#define COMPAT_TIMER_SETUP(timer, func, flags) compat_timer_setup((timer), (func), (flags))
 
-static inline void timer_setup(struct timer_list *timer,
+static inline void compat_timer_setup(struct timer_list *timer,
 	void (*func)(COMPAT_TIMER_ARG_TYPE), unsigned int flags)
 {
 	/* flags not supported */
@@ -38,14 +40,15 @@ static inline void timer_setup(struct timer_list *timer,
 	
 	setup_timer(timer, func, (COMPAT_TIMER_ARG_TYPE)timer);
 }
-#define timer_setup_on_stack(timer, func, flags) timer_setup(timer, func, flags)
-#define destroy_timer_on_stack(timer)
+#define timer_setup_on_stack(timer, func, flags) compat_timer_setup((timer), (func), (flags))
+#define destroy_timer_on_stack(timer) do {} while(0)
 
 #else
 
 #define COMPAT_TIMER_ARG_TYPE struct timer_list *
 #define COMPAT_FROM_TIMER(var, callback_timer, timer_fieldname) \
 	from_timer(var, callback_timer, timer_fieldname)
+#define COMPAT_TIMER_SETUP(timer, func, flags) timer_setup((timer), (func), (flags))
 
 #endif
 
