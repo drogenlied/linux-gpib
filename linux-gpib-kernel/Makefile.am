@@ -17,7 +17,6 @@ distclean-local:
 	$(RM) $(srcdir)/util/linux_flags/fake.*
 	$(RM) $(srcdir)/util/linux_flags/.*.cmd
 	$(RM) -r $(srcdir)/util/linux_flags/.tmp_versions
-	$(RM) $(srcdir)/util/.scm_version.tmp
 
 dist-hook:
 	-find $(distdir) -depth -name '.svn' -type d -exec $(RM) -r \{\} \;
@@ -28,4 +27,3 @@ dist-hook:
 	$(RM) $(distdir)/util/linux_flags/Module.*
 	$(RM) $(distdir)/util/linux_flags/modules.order
 	$(RM) -r $(distdir)/util/linux_flags/.tmp_versions
-	$(RM) $(distdir)/util/.scm_version.tmp

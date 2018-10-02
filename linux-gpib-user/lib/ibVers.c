@@ -12,7 +12,7 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
-
+#include "ibVers.h"
 #define xstr(s) str(s)
 #define str(s) #s
 static char *my_version = xstr(GPIB_SCM_VERSION);

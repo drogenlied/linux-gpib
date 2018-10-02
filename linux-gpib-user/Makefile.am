@@ -14,12 +14,12 @@ EXTRA_DIST = etc util m4 README.HAMEG README.hp82335 bootstrap
 ACLOCAL_AMFLAGS = -I m4
 
 distclean-local:
-	$(RM) $(srcdir)/util/.scm_version.tmp
+	$(RM) $(srcdir)/lib/ibVers.h
 
 dist-hook:
 	-find $(distdir) -depth -name '.svn' -type d -exec $(RM) -r \{\} \;
 	-find $(distdir) \( -name '*~' -o -name '.#*' \) -exec $(RM) \{\} \;
-	$(RM) $(distdir)/util/.scm_version.tmp
+	$(RM) $(distdir)/lib/ibVers.h
 
 .PHONY : device_files_install
 device_files_install: 

@@ -476,7 +476,7 @@ ZEND_FUNCTION(gpib_error_string)
 		) == FAILURE) {
 		return;
 	}
-	RETURN_STRING((char*)gpib_error_string(n), 1);
+	RETURN_STRING((char*)gpib_error_string(n));
 }
 
 ZEND_FUNCTION(ibwrt)
@@ -514,8 +514,8 @@ ZEND_FUNCTION(ibvers)
 		return;
 	}
 	ibvers(&version);
-	ZVAL_STRING(z,version,1);
-	RETURN_STRING(version,1);
+	ZVAL_STRING(z,version);
+	RETURN_STRING(version);
 }
 
 ZEND_FUNCTION(ibrd)
@@ -547,7 +547,7 @@ ZEND_FUNCTION(ibrd)
 	memset(p,0,len+1);
 	r=ibrd(n,p,len);
 	p[ibcnt]='\0';
-	ZVAL_STRING(z,p,1);
+	ZVAL_STRING(z,p);
 	efree(p);
 	RETURN_LONG(r);
 }

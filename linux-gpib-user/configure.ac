@@ -1,7 +1,7 @@
 
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([linux-gpib-user], [4.1.0])
+AC_INIT([linux-gpib-user], [4.2.0_rc1])
 # libtool version: current:revision:age
 #
 # If the library source code has changed at all since the last update, then
@@ -29,12 +29,6 @@ AC_SUBST([GPIB_SO_VERSION])
 
 [ISODATE=`date +%Y-%m-%d`]
 AC_SUBST([ISODATE])
-
-AS_IF([test -f ${srcdir}/util/.scm_version.tmp],
-  [SCM_VERSION=[$VERSION"\ [r"`cat ${srcdir}/util/.scm_version.tmp`"]"]],
-  [SCM_VERSION=$VERSION])
-
-AC_SUBST(SCM_VERSION)
 
 AC_CANONICAL_HOST
 

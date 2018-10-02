@@ -1,7 +1,7 @@
 
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([linux-gpib-kernel], [4.1.0])
+AC_INIT([linux-gpib-kernel], [4.2.0_rc1])
 
 AC_CONFIG_SRCDIR([drivers/gpib/sys/osfuncs.c])
 AM_INIT_AUTOMAKE
@@ -15,12 +15,6 @@ AC_SUBST([VERSION])
 
 [ISODATE=`date +%Y-%m-%d`]
 AC_SUBST([ISODATE])
-
-AC_CHECK_FILE([util/.scm_version.tmp],
-  [SCM_VERSION=[$VERSION"\ [r"`cat util/.scm_version.tmp`"]"]],
-  [SCM_VERSION=$VERSION])
-
-AC_SUBST(SCM_VERSION)
 
 AC_CANONICAL_HOST
 

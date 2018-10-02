@@ -205,7 +205,7 @@ void parse_options(int argc, char ** argv) {
   if (eos_char < 0 || eos_char > 255) {
     abend("eos character must be between 0 and 255,\n");
   }
-  if (!xeos_mode && eos_char > 127) {
+  if (!bin_mode && eos_char > 127) {
     EMES("Warning eos is 8 bits but compares are set to 7.\n");
   }
   if (timeout < 1 || timeout > 15) abend("<timeout> must be between 1 and 15.");

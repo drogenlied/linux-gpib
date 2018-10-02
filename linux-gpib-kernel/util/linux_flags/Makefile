@@ -3,7 +3,8 @@
 obj-m += fake.o
 
 $(obj)/fake.c: flags
-	touch $(obj)/fake.c
+	echo  '#include<linux/module.h>' > $(obj)/fake.c
+	echo  'MODULE_LICENSE("GPL");' >> $(obj)/fake.c
 
 $(obj)/fake.o: flags
 
@@ -23,4 +24,3 @@ flags:
 	echo LINUX_LD="$(LD) $(LDFLAGS) $(LDFLAGS_MODULE)" >>$(obj)/flags
 	echo LINUX_AS="$(AS)" >>$(obj)/flags
 	echo LINUX_MODLIB="$(MODLIB)" >>$(obj)/flags
-	

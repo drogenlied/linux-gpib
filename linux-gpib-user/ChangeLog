@@ -1,3 +1,457 @@
+2018-06-25 00:46  fmhess
+
+	* [r1755] Updated COPYING with latest gpl-2.0.txt download from FSF
+	  in order to update their address.
+
+2018-06-25 00:41  fmhess
+
+	* [r1754] Updated COPYING with latest gpl-2.0.txt download from FSF
+	  in order to update their address.
+
+2018-05-29 23:20  fmhess
+
+	* [r1753] Fix timer_setup usage on 4.14 kernel.
+
+2018-05-08 23:26  fmhess
+
+	* [r1752] Deal with timer_setup versus setup_timer using new
+	  compat/include/linux/timer.h compatibility header.
+
+2018-05-08 18:05  fmhess
+
+	* [r1751] Added compatibility header for linux/sched/signal.h
+	  header
+	  which was introduced in 4.11.0. Fixes bug 61.
+
+2018-05-08 17:50  fmhess
+
+	* [r1750] Patch from Stefan.Mahr@zyxel.eu :
+	  
+	  There's a timer initialisation bug in ni_usb driver, especially
+	  for NI_USB_B. The timer is setup after first use of mod_timer
+	  (ni_usb_b_read_serial_number->usb_send_bulk_msg), so kernel
+	  throws a
+	  bug in timer.c: BUG_ON(!timer->function);
+
+2018-04-14 21:56  fmhess
+
+	* [r1749] Renamed "device_files" target to "device_files_install"
+	  and
+	  made it respect DESTDIR.
+
+2018-04-12 22:46  fmhess
+
+	* [r1748] Don't mknod device files, or add "gpib" group during
+	  "make install". Add instructions to INSTALL for performing
+	  these tasks.
+
+2018-04-12 02:46  fmhess
+
+	* [r1747] Added DESTDIR support for some files installed into
+	  sysconfdir.
+
+2018-04-12 02:22  fmhess
+
+	* [r1746] Add empty NEWS files to svn to make autoconf happy when
+	  not using our bootstrap script.
+
+2018-04-12 00:45  fmhess
+
+	* [r1745] Fix perl binding from choking when builddir != srcdir.
+
+2018-04-12 00:04  fmhess
+
+	* [r1744] Trimmed and updated INSTALL for linux-gpib-user. Made
+	  install respect configured sysconfdir and datadir.
+	  More fixes for builddir != srcdir.
+
+2018-04-11 02:10  fmhess
+
+	* [r1743] Fix some bugs in make install when srcdir != builddir
+
+2018-04-11 01:52  fmhess
+
+	* [r1742] Move some headers into include/gpib/ and stop
+	  generating symbolic links for them.
+
+2018-04-11 01:13  fmhess
+
+	* [r1741] Fix some compilation issues when srcdir != builddir.
+	  Perl binding still broken in this case.
+
+2018-04-11 00:16  fmhess
+
+	* [r1740] Replace AC_CHECK_FILE with AS_IF, since AC_CHECK_FILE
+	  fails when cross-compiling.
+
+2018-04-10 19:57  fmhess
+
+	* [r1739] Copyed license file into linux-gpib-kernel
+
+2018-04-09 19:41  fmhess
+
+	* [r1738] Added copies of a couple shared header files to
+	  linux-gpib-user.
+
+2018-04-09 19:35  fmhess
+
+	* [r1737] Added compat_device_create.h header so we can compile
+	  without
+	  the compat/include/linux headers.
+
+2018-04-09 19:02  fmhess
+
+	* [r1736] Fix include of drivers/gpib/include through use
+	  of subdir-ccflags-y
+
+2018-04-09 18:55  fmhess
+
+	* [r1735] Re-added util/linux_flags/Makefile which somehow got
+	  dropped when splitting out kernel modules to separate
+	  directory.
+
+2018-04-09 18:53  fmhess
+
+	* [r1734] Moved compatibility headers to compat directory.
+
+2018-04-05 01:59  fmhess
+
+	* [r1733] Moved "linux-gpib" dir to "linux-gpib-user"
+
+2018-04-05 01:58  fmhess
+
+	* [r1732] Cleaned up some files which were supposed to be deleted
+	  as part of the user/kernel split in last commit.
+
+2018-04-05 01:56  fmhess
+
+	* [r1731] First pass at splitting kernel modules from the
+	  user-space stuff.
+
+2018-03-16 21:27  fmhess
+
+	* [r1730] Use fmh_gpib_core extra status bits to handle releasing
+	  rfd_holdoff, instead of using the generic nec7210 function.
+
+2018-03-07 22:24  fmhess
+
+	* [r1729] Don't spuriously set RECEIVED_END_BN after clearing it.
+
+2018-03-06 21:24  fmhess
+
+	* [r1728] Tweak waits during accel read/write. Use new end and rfd
+	  status
+	  bits in interrupt handler to keep track of board state more
+	  easily. Use RFD holdoff ASAP to try and maintain holdoff
+	  after reads that don't see an END.
+
+2018-02-12 20:54  fmhess
+
+	* [r1727] Make fmh_gpib_dma_write() wait for last byte to be
+	  transferred
+	  over the GPIB bus, rather than just be transferred into the
+	  chip.
+
+2018-02-02 18:05  fmhess
+
+	* [r1726] Updated links to project page with https link.
+
+2018-01-30 04:35  fmhess
+
+	* [r1725] Update board-specific notes for fmh_gpib_core.
+
+2018-01-30 04:30  fmhess
+
+	* [r1724] Update fmh_gpib driver for burst transfers and use
+	  standard
+	  device tree "dmas" and "dma-names" to specify channel for
+	  dma_request_channel.
+
+2018-01-26 22:02  fmhess
+
+	* [r1723] LACS bit in ibsta corresponds to IEEE LACS or LADS.
+	  TACS bit in ibsta corresponds to IEEE TACS or TADS.
+
+2018-01-24 23:42  fmhess
+
+	* [r1722] Fix ibcac fallback to async, which I broke recently.
+
+2018-01-19 18:42  fmhess
+
+	* [r1721] Undo changes to existing ioctl behavior introduced in
+	  r1695.
+	  I should have kept kernel/userspace interface
+	  stable. Only bother trying to take control synchronously
+	  if we are already addressed as listener.
+
+2018-01-19 02:30  fmhess
+
+	* [r1720] Fix init of timer used by pseudo irqs, which was broken
+	  by changes for new linux timer api.
+
+2018-01-17 14:49  dpenkler
+
+	* [r1719] lpvo patch for struct tty_operations in pre 2.6.26
+	  kernels
+
+2018-01-12 00:13  fmhess
+
+	* [r1718] Fix (unlikely) race.
+
+2018-01-05 20:37  fmhess
+
+	* [r1717] Ignore error in gpib_config caused by kernel driver not
+	  supporting IBSELECT_DEVICE_TREE_PATH ioctl, unless user
+	  actually tried to specify a device tree path.
+
+2018-01-02 23:15  fmhess
+
+	* [r1716] Fix device tree prop names for fmh_gpib_core.
+
+2018-01-02 03:08  fmhess
+
+	* [r1715] Fix return value from fmh_gpib_device_match. Init
+	  fifo control reg in attach.
+
+2018-01-01 23:29  fmhess
+
+	* [r1714] Add Makefile for fmh_gpib
+
+2018-01-01 00:02  fmhess
+
+	* [r1713] Make fmh_gpib driver check device_tree_path during attach
+	  if it has been specified.
+
+2017-12-31 22:17  fmhess
+
+	* [r1712] Allow hardware to be specified by device tree path during
+	  gpib_config.
+
+2017-12-31 20:10  fmhess
+
+	* [r1711] Implement local_parallel_poll_mode for fmh_gpib driver.
+
+2017-12-30 02:28  fmhess
+
+	* [r1710] Add a bit to ibppc and IbcPP2 docs.
+
+2017-12-30 02:11  fmhess
+
+	* [r1709] Add infrastructure for supporting selection of local
+	  (PP2) or
+	  remote (PP1) parallel poll configuration, although no drivers
+	  implement support yet.
+
+2017-12-29 00:13  fmhess
+
+	* [r1708] Moved some parameters that are only used by driver attach
+	  functions into gpib_board_config_t.
+
+2017-12-28 22:47  fmhess
+
+	* [r1707] Return errors (or not) related to acquiring dma
+	  resources.
+
+2017-12-28 02:13  fmhess
+
+	* [r1706] Add fmh_gpib_core to supported hardware list.
+
+2017-12-28 01:08  fmhess
+
+	* [r1705] Fix interface name for accelerated interface.
+
+2017-12-28 00:57  fmhess
+
+	* [r1704] Dma device tree property is actually "dma-channel" rather
+	  than "dma".
+
+2017-12-28 00:43  fmhess
+
+	* [r1703] Read dma channel from device tree.
+
+2017-12-27 17:28  fmhess
+
+	* [r1702] Init board->dev.
+
+2017-12-27 17:26  fmhess
+
+	* [r1701] Added driver for fmh_gpib_core.
+
+2017-12-21 16:38  dpenkler
+
+	* [r1700] Changes for linux kernel 4.15 timer api
+
+2017-12-11 00:14  fmhess
+
+	* [r1699] Fix printout of number of bytes read in ibtest.
+
+2017-12-09 01:58  fmhess
+
+	* [r1698] I learned that some of the atomic operations do not imply
+	  memory barriers.
+	  So, added a bunch of memory barriers.
+
+2017-12-07 21:29  fmhess
+
+	* [r1697] That should have been equality not assignment
+
+2017-12-07 21:23  fmhess
+
+	* [r1696] Fixed bogus complaints about invalid selection
+	  that I introduced in r1669
+
+2017-11-27 00:45  fmhess
+
+	* [r1695] sychronous take control only works when in ANRS according
+	  to 488.1
+	  so cannot be relied on. Always fall back on asynchronous after
+	  a short timeout.
+
+2017-11-19 17:35  fmhess
+
+	* [r1694] command bytes 0x7e and 0x7f are parallel poll disable.
+
+2017-10-20 20:14  fmhess
+
+	* [r1693] Clairify that ibtmo sets a timeout for ibwait too. Added
+	  some more references to AsyncIbsta, etc.
+
+2017-10-20 15:39  fmhess
+
+	* [r1692] Check wait mask argument of ibWait for invalid bits.
+
+2017-10-17 20:16  fmhess
+
+	* [r1691] Added AsyncIbsta(), AsyncIberr(), AsyncIbcnt(), and
+	  AsyncIbcntl().
+
+2017-10-17 18:54  fmhess
+
+	* [r1690] Replace iberr, ibcnt usage with ThreadIberr() and
+	  ThreadIbcntl().
+
+2017-10-17 15:38  fmhess
+
+	* [r1689] Make jw generate recognizable and predictable html output
+	  file names again.
+
+2017-10-17 15:07  fmhess
+
+	* [r1688] Fixed ibstop ERR status return.
+
+2017-10-17 15:01  fmhess
+
+	* [r1687] Only resync with asynchronous io during ibwait if the
+	  user
+	  is waiting on CMPL.
+
+2017-10-17 13:35  fmhess
+
+	* [r1686] bumped current/age of library so version to account for
+	  addition of ibspb function.
+
+2017-10-16 20:48  fmhess
+
+	* [r1685] Reduce printk spam.
+
+2017-10-16 14:25  fmhess
+
+	* [r1684] Make ibtest correctly report number of bytes read when
+	  ibrd fails
+	  with an EDVR error.
+
+2017-10-16 13:57  fmhess
+
+	* [r1683] Fix setting/clearing of CMPL through ibwait, should help
+	  waits
+	  on async io completion.
+	  
+
+2017-10-13 23:58  fmhess
+
+	* [r1682] Removed an unneeded paranoid cb7210 register page reset
+
+2017-10-13 22:43  fmhess
+
+	* [r1681] If CMPL is cleared or set by ibwait, return the updated
+	  state of the CMPL bit, not the previous state.
+
+2017-10-13 18:22  fmhess
+
+	* [r1680] Added group execute trigger option to ibtest.
+
+2017-10-13 16:47  fmhess
+
+	* [r1679] Clear register page after paged write.
+
+2017-10-13 15:32  fmhess
+
+	* [r1678] Fixed corner case where EOI could become desynchronized
+	  from
+	  its associated data byte during a timed out 1 byte write.
+
+2017-10-13 15:19  fmhess
+
+	* [r1677] Set iberr and ibcnt when async io is interrupted by
+	  ibstop.
+
+2017-10-13 01:02  fmhess
+
+	* [r1676] Fix problem where byte with EOI asserted times out and
+	  never makes it to hardware, but the chip was already
+	  told the next byte should assert EOI.
+
+2017-10-11 22:27  fmhess
+
+	* [r1675] Fixed a couple compile warnings.
+
+2017-10-11 21:53  fmhess
+
+	* [r1674] Fixed a couple compile errors.
+
+2017-10-11 19:55  fmhess
+
+	* [r1673] Update fluke driver to current version.
+
+2017-10-11 19:53  fmhess
+
+	* [r1672] Rename fluke gpib driver.
+
+2017-10-11 18:12  fmhess
+
+	* [r1671] EIO returned from a write has a special meaning (no gpib
+	  listeners)
+	  so change error code for other errors.
+
+2017-10-11 17:46  fmhess
+
+	* [r1670] Removed bogus error check.
+
+2017-10-10 21:39  fmhess
+
+	* [r1669] Added some error checking to suppress compile warnings.
+
+2017-10-10 20:55  fmhess
+
+	* [r1668] Check for errors on sync ibcac calls.
+
+2017-10-07 16:02  dpenkler
+
+	* [r1667] Add ibSpb.c
+
+2017-10-07 15:01  fmhess
+
+	* [r1666] Don't take control asynchronously on a routine basis. It
+	  is
+	  dangerous to do so due to the omission of the T10 delay.
+	  This will unfortunately lead to timeouts when a talker
+	  leaves a data byte sitting on the bus with noone reading
+	  it, but that is unavoidable.
+
+2017-10-03 16:08  dpenkler
+
+	* [r1664] Update Changelog for 4.1.0
+
 2017-09-30 20:03:16 dpenkler
 
 	* [r1663] 4.1.0 release patches
