@@ -10,6 +10,7 @@
 sbin_PROGRAMS = gpib_config
 
 gpib_config_SOURCES = gpib_config.c
-gpib_config_CFLAGS = $(LIBGPIB_CFLAGS) -I$(top_srcdir)/lib -DDEFAULT_CONFIG_FILE=\"/etc/gpib.conf\"
+gpib_config_CFLAGS = $(LIBGPIB_CFLAGS) -I$(top_srcdir)/lib -DDEFAULT_CONFIG_FILE="\"$(sysconfdir)/gpib.conf\""
+
 gpib_config_LDADD = $(LIBGPIB_LDFLAGS) -lpthread
 

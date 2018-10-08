@@ -28,7 +28,7 @@ libgpib_la_SOURCES = \
 	ibEvent.c local_lockout.c self_test.c pass_control.c ibstop.c \
 	ibConfLex.c ibConfLex.h ibConfYacc.c ibConfYacc.h ibVers.c ibVers.h
 
-libgpib_la_CFLAGS = $(LIBGPIB_CFLAGS) -DDEFAULT_CONFIG_FILE=\"/etc/gpib.conf\"
+libgpib_la_CFLAGS = $(LIBGPIB_CFLAGS) -DDEFAULT_CONFIG_FILE="\"$(sysconfdir)/gpib.conf\""
 libgpib_la_LDFLAGS = -version-info @GPIB_SO_VERSION@ -Wl,--version-script=$(srcdir)/gpib_version_script -lpthread
 
 $(srcdir)/ibConfLex.c $(srcdir)/ibConfLex.h: $(srcdir)/ibConfLex.l
