@@ -8,8 +8,8 @@
 
 =====================================================
 
-This is Linux-GPIB the IEEE-488 card support
-package and measurement suite for LINUX.
+This is the user space part of the Linux-GPIB the IEEE-488 card
+support package and measurement suite for LINUX.
 
 This version of Linux-GPIB requires a version 2.6.x or above 
 of the Linux kernel.

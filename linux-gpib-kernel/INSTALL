@@ -1,5 +1,5 @@
 
-Installing Linux-GPIB
+Installing Linux-GPIB kernel space
 --------------------------------------------------------------------
 
 A) First steps:
@@ -20,7 +20,7 @@ o) Installing your Hardware:
 
 o) Unpacking the Software:
 	Unpack the archives with the 'tar' program, for example
-	'tar -xzf linux-gpib-3.2.21.tar.gz'.
+	'tar -xzf linux-gpib-kernel-4.2.0.tar.gz'.
 
 	You will also need the linux kernel source code, or a
 	reasonable approximation thereof, which the linux-gpib package
@@ -69,7 +69,7 @@ o) Unpacking the Software:
 B) Installing Linux-GPIB
 -------------------------
 
-o) cd to your linux-gpib directory and run the './configure' script.
+o) cd to your linux-gpib-kernel directory and run the './configure' script.
 	run './configure --help' for a list of the possible options.
 	In particular, the '--with-linux-srcdir' option is useful for
 	specifying the location of your Linux kernel source directory,
@@ -92,32 +92,11 @@ o) cd to your linux-gpib directory and run the './configure' script.
 	Makefile (the CC variable).
 
 	Type 'make install' (as root).  This will copy the kernel
-	driver to /lib/modules/<kernel version>/gpib as well as
-	install the library and headers files.  Make sure the
-	directory you installed the shared library to is listed in
-	your /etc/ld.so.conf file, so that ld can find libgpib.so.  If
-	the directory is not listed, add it and then run 'ldconfig'.
+	drivers to /lib/modules/<kernel version>/gpib.
 
-	To give a user access to the computer's gpib board you will
-	have to add them to the group 'gpib' (you can use the
-	'usermod' tool or edit /etc/groups to change the groups a user
-	belongs to).  Or, you could change the permissions on the
-	device files /dev/gpib[0-15] to something you like better,
-	using 'chmod' (or edit devfsd.conf if you are using devfs).
-	If you are using udev, you can set the permissions on the gpib
-	device files by adding a line like: KERNEL=="gpib[0-9]*",
-	MODE="0660", GROUP="gpib" to your udev rules
-	(/etc/udev/permissions.rules on Debian Etch).
-
-C) Configuring the GPIB-Library
--------------------------------
-
-	Edit /etc/gpib.conf to match your interface board, and any
-	devices you wish to open via ibfind().  See the documentation
-	in doc/ for more information.
-
-D) Loading the driver modules
+C) Loading the driver modules
 -----------------------------
+
 
 o) PCI and ISA boards
 
@@ -125,16 +104,21 @@ o) PCI and ISA boards
 
 		modprobe <driver name>
 
-	See the documentation in doc/ to see which driver your board
-	is supported by.
+	See the documentation in linux-gpib-user-x.x.x/doc/ to see
+	which driver your board is supported by.
 
-	You need to run the 'gpib_config' utility to setup the driver
+        You need to run the 'gpib_config' utility to setup the driver
 	before you can use it (the 'minor' options specifies which
 	board index you are setting up):
 
 		gpib_config --minor 0
 
-	You can also set up the modules to load automatically by adding lines
+        In most modern systems the modprobe utility, which is run at
+        boot-up, will automatically ensure that the appropriate
+        modules are loaded when the boards/adaptors are plugged in.
+	'sudo modprobe -c' will show the list of modules it has detected.
+
+  	You can also set up the modules to load automatically by adding lines
 	something like 
 
 	alias char-major-160 gpib_common
@@ -147,78 +131,5 @@ o) PCI and ISA boards
 	file to the /etc/modprobe.d directory, and then running
 	'update-modules'.
 
-o) PCMCIA cards
+o) For PCMCIA and USB adaptors see the linux-gpib-usr-x.x.x/INSTALL file.
 
-	If you are using a PCMCIA board, copy the files in the etc/pcmcia
-	subdirectory to /etc/pcmcia.  You may need to send a SIGHUP signal
-	to the cardmgr daemon to force it to reload the files in 
-	/etc/pcmcia (alternatively you could use your pcmcia init.d script
-	to restart the cardmgr, or you could just reboot).  The driver
-	module will be loaded as needed by the cardmgr.
-	You may wish to edit the options passed to the gpib_config call in the
-	/etc/pcmcia/linux-gpib-pcmcia script.
-
-o) USB devices
-
-	USB hotplug scripts will be installed into /etc/hotplug/usb if
-	they do not already exist.  You may wish to edit the
-	GPIB_CONFIG_OPTIONS in the hotplug script for your device.  If
-	your device requires a external firmware you will also need to
-	install firmware files for your device, a tarball is available
-	from https://linux-gpib.sourceforge.io/firmware/.  Make sure
-	you have the "fxload" and either the "hotplug" or "udev"
-	packages installed on your computer.  The hotplug scripts will
-	automatically upload the firmware to your device and load the
-	driver module when the device is plugged in.  If you have
-	errors, check your system log files (not dmesg) for messages
-	from the hotplug scripts.  For systems using udev the rules
-	files are installed in /etc/udev/rules.d/ which invoke the USB
-	hotplug scripts.
-
-        Using multiple-boards of the same type with hotplug requires
-	udev support: In the hotplug scripts you can use either the
-	serial number $SERIAL or the device path $DEVPATH to decide
-	which board is to be associated with which minor in your
-	gpib.conf.  Using serial number it does not matter which usb
-	ports you use.  Using device path the association will be made
-	with the physical usb port in your system. To obtain the
-	serial numbers or device paths for your boards plug the boards
-	in and check the syslog for the output from the default
-	hotplog script. The order of the messages will correspond to
-	the order in which you plugged the boards in. Edit the hotplug
-	scripts to setup the serial numbers/device paths and minors
-	that correspond to your system.
-	
-E) Trying it out
-----------------
-
-	You may find the examples/ibtest program useful as a starting
-	point in trying out your setup.  The examples/ibterm program
-	provides a simple terminal interface to send commands to a
-	specific instrument and view the response.
-
-F) Bindings for other languages
--------------------------------
-
-	The bindings to other languages will be enabled by default in the
-	'./configure' script.  They will not be built if you disable
-	them with the appropriate configure option, or if the necessary
-	header files/libraries are not found on your machine.
-
-G) Uninstalling
----------------
-
-	Type 'make uninstall' as root from the install root of the
-	build tree (i.e. the same directory from which the package was
-	originally installed).
-
-	Note: The configuration files and scripts are not uninstalled
-	by this procedure. They need to be removed manually if you
-	wish to re-install the standard distribution configuration
-	files and scripts later since existing files are not
-	overwritten by the install procedure. Check the following file
-	and directories:
-
-	      /etc/gpib.conf
-	      /etc/hotplug/usb/
-	      /etc/udev/rules.d/
