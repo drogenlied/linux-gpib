@@ -1,7 +1,7 @@
 
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([linux-gpib-kernel], [4.2.0_rc1])
+AC_INIT([linux-gpib-kernel], [4.2.0])
 
 AC_CONFIG_SRCDIR([drivers/gpib/sys/osfuncs.c])
 AM_INIT_AUTOMAKE

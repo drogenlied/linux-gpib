@@ -1,3 +1,32 @@
+2018-11-07 13:23  dpenkler
+
+	* [r1760] Bump revision to 4.2.0
+
+2018-11-07 13:22  dpenkler
+
+	* [r1759] Remove annoying trailing whitespace
+
+2018-10-11 09:43  dpenkler
+
+	* [r1758] Update README and INSTALL files
+
+2018-10-08 09:52  dpenkler
+
+	* [r1757] Set default config file to $(sysconfdir)/gpib.conf
+
+2018-10-02 16:15  dpenkler
+
+	* [r1756] Commit for 4.2.0_rc1
+	  - Fix generation of version information for ibvers()
+	  - Added ChangeLog in top level directory (trunk)
+	  - Linked kernel and user land ChangeLog's to top level Changelog
+	  - Updated ChangeLog
+	  - Fix reference to ib.h in lib/Makefile.am
+	  - Fix MODULE_LICENSE warning when compiling fake module
+	  - Fix php-bindings for PHP 7.2.10
+	  - Fix bug with xeos/bin mode confusion in ibterm
+	  - Bumped version number to 4.2.0
+
 2018-06-25 00:46  fmhess
 
 	* [r1755] Updated COPYING with latest gpl-2.0.txt download from FSF
@@ -26,7 +55,6 @@
 2018-05-08 17:50  fmhess
 
 	* [r1750] Patch from Stefan.Mahr@zyxel.eu :
-	  
 	  There's a timer initialisation bug in ni_usb driver, especially
 	  for NI_USB_B. The timer is setup after first use of mod_timer
 	  (ni_usb_b_read_serial_number->usb_send_bulk_msg), so kernel
