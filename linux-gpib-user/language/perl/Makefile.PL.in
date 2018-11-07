@@ -7,9 +7,9 @@ WriteMakefile(
     'PREREQ_PM'			=> {}, # e.g., Module::Name => 1.1
 #    'ABSTRACT_FROM' => 'LinuxGpib.pm', # retrieve abstract from module
     'AUTHOR'     		=> 'Thomas Nisius <tnisius@web.de>',
-    'LIBS'					=> ['-L../../lib/.libs -lgpib -lpthread'],
+    'LIBS'					=> ['-L@abs_top_builddir@/lib/.libs -lgpib -lpthread'],
 #    'DEFINE'				=> '', # e.g., '-DHAVE_SOMETHING'
-    'INC'						=> '-I../../include',
+    'INC'						=> '-I@abs_top_srcdir@/include',
 #    'OBJECT'				=> '$(O_FILES)', # link all the C files too
     'DISTNAME'			=> 'LinuxGpib',
 );
