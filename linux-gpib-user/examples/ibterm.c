@@ -7,7 +7,7 @@
    An interactive terminal program for sending commands to an instrument
    and printing its response.
 
-    copyright : (C) 2013 by Dave Penkler 
+    copyright : (C) 2013 by Dave Penkler
     email     : dpenkler@gmail.com
  ***************************************************************************/
 
@@ -52,14 +52,14 @@ static int eos_mode = 0;   // No end of string processing
 static int timeout  = 10;  // 300 milliseconds
 static char errmes[256];   // error message buffer
 
-static const char * help_string = 
+static const char * help_string =
   "ibterm help info -\n"
   "\nSummary:\n"
   "An interactive terminal program for sending commands to a device over an \n"
   "IEEE488 general purpose instrument bus and printing the responses.\n"
   "\nOptions:\n"
   " -d <device primary address (pad)>                (required, no default)\n"
-  " -m <minor>                                       (optional, default=0)\n" 
+  " -m <minor>                                       (optional, default=0)\n"
   " -s <secondary address of device (sad)>           (optional, default=0)\n"
   " -i <assert EIO with last byte sent (eoi) flag>   (optional, default=1)\n"
   " -e <ASCII code of end of string (eos) character> (optional, default=0)\n"
@@ -74,12 +74,12 @@ static const char * help_string =
   " -N No automatic read on device, enter return at prompt to read.\n"
   " -X forces hexadecimal output.\n"
   " -h prints this help info and exits.\n"
-  "\nOperation:\n" 
+  "\nOperation:\n"
   "  loop:\n"
   "    Prompt on stdout\n"
   "    Read a line of text from stdin\n"
   "    Write the text (if any) to the device at pad\n"
-  "    If -N is not set, or no text was entered\n" 
+  "    If -N is not set, or no text was entered\n"
   "        Attempt to read response from the device\n"
   "        If no response is received before timeout go to loop\n"
   "        else print the response on stdout\n"
@@ -97,7 +97,7 @@ static const char * help_string =
 #endif
   ;
 
-static const char * usage_options = 
+static const char * usage_options =
   " -d pad \\\n"
   "         [-m minor] [-s sad] [-i eoi] [-e eos]"
   " [-r reos] [-b bin] [-x xeos] \\\n"
@@ -130,7 +130,7 @@ static void usage(int abort) {
 
 /* Print buffer contents in parallel hexadecimal and ASCII */
 static const char * hexdig = "0123456789ABCDEF";
-static char * template = 
+static char * template =
   "12345678 |                         | "
              "                        |                 ";
 void prhex(unsigned char * buf, int len) {
@@ -139,9 +139,9 @@ void prhex(unsigned char * buf, int len) {
 
   for (i=0;i<len;i++)  {
     if ((i % 16) == 0) {
-      k = 8; l = 63;  
+      k = 8; l = 63;
       strcpy(ob,template);
-      for (j=0,c=&ob[8],m=i;j<8;m >>= 4,j++) 
+      for (j=0,c=&ob[8],m=i;j<8;m >>= 4,j++)
 	*--c = hexdig[m & 0xf];
     }
     k += 1 + 2*((i % 8) == 0);
@@ -154,13 +154,13 @@ void prhex(unsigned char * buf, int len) {
 }
 
 #define CHECK_FLAG(var, flag)			\
-if (var != 0 && var != 1)  abend(#flag " flag must be 1 or 0.\n"); 
+if (var != 0 && var != 1)  abend(#flag " flag must be 1 or 0.\n");
 
 #define CHECK_ADDR(var)		  \
-if (var < 0 || var > 30)  abend(#var " must be between 0 and 30.\n"); 
+if (var < 0 || var > 30)  abend(#var " must be between 0 and 30.\n");
 
 #define CHECK_SADDR(var) 	\
-if (var < 0x60 || var > 0x7e)  abend("linux-gpib requires the secondary address to be offset by 96,\n   that is sad must be between 96 and 126.\n"); 
+if (var < 0x60 || var > 0x7e)  abend("linux-gpib requires the secondary address to be offset by 96,\n   that is sad must be between 96 and 126.\n");
 
 void parse_options(int argc, char ** argv) {
   int eos_char  = 0;   // End of string character
@@ -168,30 +168,30 @@ void parse_options(int argc, char ** argv) {
   int bin_mode  = 0;   // Match only 7 bits of eos_char
   int xeos_mode = 0;   // Don't assert EOI when sending eos_char
   int c;
- 
+
   mProg = argv[0];
 
   while ((c = getopt (argc, argv, "d:m:s:i:e:r:b:x:t:f:p:NXh")) != -1)
     switch (c)  {
     case 'd': pad       = atoi(optarg);    break;
-    case 'm': minor     = atoi(optarg);    break; 
+    case 'm': minor     = atoi(optarg);    break;
     case 's': sad       = atoi(optarg);    break;
     case 'i': send_eoi  = atoi(optarg);    break;
     case 'e': eos_char  = atoi(optarg);    break;
     case 'r': reos_mode = atoi(optarg);    break;
     case 'b': bin_mode  = atoi(optarg);    break;
     case 'x': xeos_mode = atoi(optarg);    break;
-    case 't': timeout   = atoi(optarg);    break; 
-    case 'f': mHist     = optarg;          break;  
+    case 't': timeout   = atoi(optarg);    break;
+    case 'f': mHist     = optarg;          break;
     case 'p': mPrompt   = optarg;          break;
     case 'N': mAutoRead = false;           break;
     case 'X': mHex      = true;            break;
-    case 'h': 
+    case 'h':
       EMES(help_string);
       usage(0);
       break;
     default: usage(1);
-    } 
+    }
   if (pad == -1) {
     EMES("No primary device address (pad) specified!\n");
     usage(1);
@@ -269,7 +269,7 @@ int main (int argc, char ** argv) {
   while (line = readline(mPrompt)) { /* prompt  and read from user */
 
     /* write to device */
-    if (*line) { /* send to device only if we got something */ 
+    if (*line) { /* send to device only if we got something */
      if (ibwrt(devdesc,line,strlen(line)) & ERR ) {
 	sprintf(errmes,"Unable to write to device at pad %d\n",pad);
 	showError(errmes);
@@ -313,7 +313,7 @@ int main (int argc, char ** argv) {
       prhex(devbuf,devdatalen); /* print contents with hex and ascii */
     }
   }
-  
+
   /* Finish up */
   ibonl(devdesc, 0);   /* free up gpib library resources */
   write_history(mHist);
