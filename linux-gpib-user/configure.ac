@@ -1,7 +1,7 @@
 
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([linux-gpib-user], [4.2.0_rc1])
+AC_INIT([linux-gpib-user], [4.2.0_rc2])
 # libtool version: current:revision:age
 #
 # If the library source code has changed at all since the last update, then
@@ -34,16 +34,18 @@ AC_CANONICAL_HOST
 
 AC_ENABLE_SHARED([yes])
 AC_ENABLE_STATIC([no])
+AC_ARG_ENABLE([all-bindings],[  --disable-all-bindings	Disable all language binding to libgpib],
+	[BINDING_DEFAULT=$enableval],[BINDING_DEFAULT="yes"])
 AC_ARG_ENABLE([guile-binding],[  --disable-guile-binding	Disable Guile binding to libgpib],
-	[BIND_GUILE=$enableval],[BIND_GUILE="yes"])
+	[BIND_GUILE=$enableval],[BIND_GUILE=$BINDING_DEFAULT])
 AC_ARG_ENABLE([perl-binding],[  --disable-perl-binding	Disable Perl binding to libgpib],
-	[BIND_PERL=$enableval],[BIND_PERL="yes"])
-AC_ARG_ENABLE([php-binding],[  --disable-php-binding	Disable PHP binding to libgpib],
-	[BIND_PHP=$enableval],[BIND_PHP="yes"])
+	[BIND_PERL=$enableval],[BIND_PERL=$BINDING_DEFAULT])
+AC_ARG_ENABLE([php-binding],[  --disable-php-binding		Disable PHP binding to libgpib],
+	[BIND_PHP=$enableval],[BIND_PHP=$BINDING_DEFAULT])
 AC_ARG_ENABLE([python-binding],[  --disable-python-binding	Disable Python binding to libgpib],
-	[BIND_PYTHON=$enableval],[BIND_PYTHON="yes"])
-AC_ARG_ENABLE([tcl-binding],[  --disable-tcl-binding	Disable TCL binding to libgpib],
-	[BIND_TCL=$enableval],[BIND_TCL="yes"])
+	[BIND_PYTHON=$enableval],[BIND_PYTHON=$BINDING_DEFAULT])
+AC_ARG_ENABLE([tcl-binding],[  --disable-tcl-binding		Disable TCL binding to libgpib],
+	[BIND_TCL=$enableval],[BIND_TCL=$BINDING_DEFAULT])
 AC_ARG_ENABLE([documentation],[  --disable-documentation	Disable building documentation from SGML sources],
 	[BUILD_DOCS=$enableval],[BUILD_DOCS="yes"])
 
