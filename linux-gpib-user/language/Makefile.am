@@ -72,5 +72,5 @@ distclean-perl:
 perl/Makefile.PL: perl/Makefile.PL.in
 	$(do_subst) < $(srcdir)/perl/Makefile.PL.in >perl/Makefile.PL
 
-perl/Makefile:
+perl/Makefile: perl/Makefile.PL
 	-(cd perl && $(PERL) Makefile.PL)
