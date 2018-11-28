@@ -32,9 +32,11 @@
 #include <linux/sched.h>
 #include <linux/timer.h>
 #include <linux/interrupt.h>
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3,16,0)
 #define smp_mb__before_atomic()	barrier()
 #define smp_mb__after_atomic()	barrier()
-
+#endif
 
 
 typedef struct gpib_interface_struct gpib_interface_t;
