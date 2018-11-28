@@ -30,7 +30,7 @@ clean-local:
 install-data-hook:
 	$(MAKE) -C $(LINUX_SRCDIR) V=1 modules_install\
 		CC="$(LINUX_CC) -I@abs_top_srcdir@ -I@abs_top_srcdir@/compat/include" \
-		SUBDIRS="$(GPIB_ABS_MODULE_SUBDIR)" INSTALL_MOD_DIR="gpib"
+		SUBDIRS="$(GPIB_ABS_MODULE_SUBDIR)" INSTALL_MOD_DIR="gpib" INSTALL_MOD_PATH="$(DESTDIR)"
 	$(DEPMOD) -a
 
 #make sure compiled files, etc don't make it into distribution tarballs
