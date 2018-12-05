@@ -210,6 +210,31 @@ static PyObject* gpib_listener(PyObject *self, PyObject *args)
 	return PyBool_FromLong(found_listener);
 }
 
+static char gpib_lines__doc__[] =
+	"lines -- get status of the control and handshaking bus lines (board)\n"
+    "lines(handle) -> line_status_int";
+
+static PyObject* gpib_lines(PyObject *self, PyObject *args)
+{
+	int board;
+	int sta;
+	short line_status;
+
+	if(!PyArg_ParseTuple(args, "i:lines", &board))
+		return NULL;
+	
+	Py_BEGIN_ALLOW_THREADS
+	sta = iblines(board, &line_status);
+	Py_END_ALLOW_THREADS
+
+	if(sta & ERR){
+		_SetGpibError("lines");
+		return NULL;
+	}
+
+	return PyInt_FromLong(line_status);
+}
+
 static char gpib_read__doc__[] =
 	"read -- read data bytes (board or device)\n"
 	"read(handle, num_bytes) -> string";
@@ -617,6 +642,7 @@ static struct PyMethodDef gpib_methods[] = {
 	{"dev",			gpib_dev,		METH_VARARGS,	gpib_dev__doc__},
 	{"config",		gpib_config,		METH_VARARGS,	gpib_config__doc__},
 	{"listener",		gpib_listener,		METH_VARARGS,	gpib_listener__doc__},
+	{"lines",		gpib_lines, 	METH_VARARGS,	gpib_lines__doc__},
 	{"read",		gpib_read,		METH_VARARGS,	gpib_read__doc__},
 	{"write",		gpib_write,		METH_VARARGS,	gpib_write__doc__},
 	{"write_async",		gpib_write_async,	METH_VARARGS,	gpib_write_async__doc__},
@@ -772,6 +798,24 @@ initgpib(void)
 	PyModule_AddIntConstant(m, "IbStbRQS", IbStbRQS);
 	PyModule_AddIntConstant(m, "IbStbESB", IbStbESB);
 	PyModule_AddIntConstant(m, "IbStbMAV", IbStbMAV);
+
+	/* line status bits */
+	PyModule_AddIntConstant(m, "ValidDAV", ValidDAV);
+	PyModule_AddIntConstant(m, "ValidNDAC", ValidNDAC);
+	PyModule_AddIntConstant(m, "ValidNRFD", ValidNRFD);
+	PyModule_AddIntConstant(m, "ValidIFC", ValidIFC);
+	PyModule_AddIntConstant(m, "ValidREN", ValidREN);
+	PyModule_AddIntConstant(m, "ValidSRQ", ValidSRQ);
+	PyModule_AddIntConstant(m, "ValidATN", ValidATN);
+	PyModule_AddIntConstant(m, "ValidEOI", ValidEOI);
+	PyModule_AddIntConstant(m, "BusDAV", BusDAV);
+	PyModule_AddIntConstant(m, "BusNDAC", BusNDAC);
+	PyModule_AddIntConstant(m, "BusNRFD", BusNRFD);
+	PyModule_AddIntConstant(m, "BusIFC", BusIFC);
+	PyModule_AddIntConstant(m, "BusREN", BusREN);
+	PyModule_AddIntConstant(m, "BusSRQ", BusSRQ);
+	PyModule_AddIntConstant(m, "BusATN", BusATN);
+	PyModule_AddIntConstant(m, "BusEOI", BusEOI);
 	/* Check for errors */
 	if (PyErr_Occurred())
 		Py_FatalError("can't initialize module gpib");
