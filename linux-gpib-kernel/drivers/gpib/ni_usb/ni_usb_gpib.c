@@ -2073,11 +2073,6 @@ static int ni_usb_hs_wait_for_ready(ni_usb_private_t *ni_priv)
 	return retval;
 }
 
-static inline int ni_usb_device_match(struct usb_interface *interface, const gpib_board_config_t *config)
-{
-    return config->device_tree_path == NULL || strcmp(interface_to_usbdev(interface)->serial, config->device_tree_path) == 0;
-}
-
 int ni_usb_attach(gpib_board_t *board, const gpib_board_config_t *config)
 {
 	int retval;
@@ -2094,9 +2089,11 @@ int ni_usb_attach(gpib_board_t *board, const gpib_board_config_t *config)
 		return retval;
 	}
 	ni_priv = board->private_data;
+	/*FIXME: should allow user to specifiy which device he wants to attach.
+	 Use usb_make_path() */
 	for(i = 0; i < MAX_NUM_NI_USB_INTERFACES; i++)
 	{
-		if(ni_usb_driver_interfaces[i] && usb_get_intfdata(ni_usb_driver_interfaces[i]) == NULL && ni_usb_device_match(ni_usb_driver_interfaces[i], config))
+		if(ni_usb_driver_interfaces[i] && usb_get_intfdata(ni_usb_driver_interfaces[i]) == NULL)
 		{
 			ni_priv->bus_interface = ni_usb_driver_interfaces[i];
 			usb_set_intfdata(ni_usb_driver_interfaces[i], board);
