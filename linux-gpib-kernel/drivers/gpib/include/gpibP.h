@@ -24,7 +24,7 @@
 #include "gpib_types.h"
 #include "gpib_proto.h"
 #include "gpib_ioctl.h"
-#include "config.h"
+#include "version.h"
 
 #include <linux/fs.h>
 #include <linux/interrupt.h>

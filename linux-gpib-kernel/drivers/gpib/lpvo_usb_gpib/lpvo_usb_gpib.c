@@ -163,20 +163,20 @@ typedef struct {                /* private data to the device */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,26)
 #define TTY_LOG(format,...) {						\
-		char buf[80];	                                        \
+		char buf[128];	                                        \
                 struct tty_struct *tty=get_current_tty();		\
 		if (tty) {						\
-		  snprintf (buf, 80, format, __VA_ARGS__);		\
+		  snprintf (buf, 128, format, __VA_ARGS__);		\
 		  tty->driver->write (tty, buf, strlen(buf));	\
 		  tty->driver->write (tty, "\r", 1);		\
 		}							\
 	}
 #else
 #define TTY_LOG(format,...) {						\
-		char buf[80];	                                        \
+		char buf[128];	                                        \
                 struct tty_struct *tty=get_current_tty();		\
 		if (tty) {						\
-		  snprintf (buf, 80, format, __VA_ARGS__);		\
+		  snprintf (buf, 128, format, __VA_ARGS__);		\
 		  tty->driver->ops->write (tty, buf, strlen(buf));	\
 		  tty->driver->ops->write (tty, "\r", 1);		\
 		}							\
@@ -345,7 +345,7 @@ static int one_char(gpib_board_t *board, struct char_buf * b) {
 void set_timeout (gpib_board_t *board) {
 
         int n, val;
-	char command[strlen(USB_GPIB_TTMO)+7];
+	char command[sizeof(USB_GPIB_TTMO)+6];
         usb_gpib_private_t * data = board->private_data;
 
         if (data->timeout == board->usec_timeout) return;
@@ -411,7 +411,7 @@ int usb_gpib_attach(gpib_board_t *board, const gpib_board_config_t *config) {
 
 	f = filp_open (device, O_RDWR | O_SYNC, 0777);
 	((usb_gpib_private_t *)board->private_data)->f = f;
-	
+
 	set_fs (oldfs);
 
 	DIA_LOG ("found %p %ld\n", f, IS_ERR(f));

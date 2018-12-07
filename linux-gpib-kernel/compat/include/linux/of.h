@@ -12,10 +12,12 @@ static inline struct device_node *of_find_node_by_path(const char *path)
        return NULL;
 }
 
+#if (HAVE_DEV_OF_NODE != 1)
 static inline struct device_node *dev_of_node(struct device *dev)
 {
 	return NULL;
 }
+#endif
 #endif
 #endif
 

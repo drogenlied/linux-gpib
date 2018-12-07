@@ -33,11 +33,12 @@
 #include <linux/timer.h>
 #include <linux/interrupt.h>
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3,16,0)
+#ifndef smp_mb__before_atomic
 #define smp_mb__before_atomic()	mb()
+#endif
+#ifndef smp_mb__after_atomic
 #define smp_mb__after_atomic()	mb()
 #endif
-
 
 typedef struct gpib_interface_struct gpib_interface_t;
 typedef struct gpib_board_struct gpib_board_t;

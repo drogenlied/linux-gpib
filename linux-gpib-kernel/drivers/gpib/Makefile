@@ -1,4 +1,8 @@
-subdir-ccflags-y := -I$(src)/include
+ifneq ($(LINUXINCLUDE),)
+	LINUXINCLUDE := -I$(GPIB_TOP_DIR)/compat/include $(LINUXINCLUDE)
+endif
+
+subdir-ccflags-y := -I$(src)/include -DHAVE_DEV_OF_NODE=$(HAVE_DEV_OF_NODE)
 
 obj-y += agilent_82350b/
 obj-$(CONFIG_USB) += agilent_82357a/
