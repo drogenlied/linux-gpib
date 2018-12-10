@@ -25,20 +25,13 @@
  * This really should be in a different header file.
  */
 #include "gpib_user.h"
-#include <asm/atomic.h>
+#include <linux/atomic.h>
 #include <linux/device.h>
 #include <linux/mutex.h>
 #include <linux/wait.h>
 #include <linux/sched.h>
 #include <linux/timer.h>
 #include <linux/interrupt.h>
-
-#ifndef smp_mb__before_atomic
-#define smp_mb__before_atomic()	mb()
-#endif
-#ifndef smp_mb__after_atomic
-#define smp_mb__after_atomic()	mb()
-#endif
 
 typedef struct gpib_interface_struct gpib_interface_t;
 typedef struct gpib_board_struct gpib_board_t;
