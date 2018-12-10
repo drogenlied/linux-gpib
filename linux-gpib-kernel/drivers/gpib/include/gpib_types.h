@@ -61,8 +61,10 @@ typedef struct
 	/* pci slot of card, useful for distinguishing multiple identical pci cards
 	 * (negative means don't care) */
 	int pci_slot;
-	/* full device tree path of hardware to attach */
-	char *device_tree_path;
+	/* sysfs device path of hardware to attach */
+	char *device_path;
+	/* serial number of hardware to attach */
+	char *serial_number;
 } gpib_board_config_t;
 
 struct gpib_interface_struct

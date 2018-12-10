@@ -41,6 +41,7 @@ int push_gpib_event( gpib_board_t *board, short event_type );
 int pop_gpib_event( gpib_event_queue_t *queue, short *event_type );
 int gpib_request_pseudo_irq(gpib_board_t *board, irqreturn_t (*handler)(int, void * PT_REGS_ARG));
 void gpib_free_pseudo_irq(gpib_board_t *board);
+int gpib_match_device_path(struct device *dev, const char *device_path_in);
 
 extern gpib_board_t board_array[GPIB_MAX_NUM_BOARDS];
 

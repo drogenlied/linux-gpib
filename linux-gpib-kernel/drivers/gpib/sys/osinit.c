@@ -26,6 +26,7 @@
 #include <linux/pci.h>
 #include <linux/device.h>
 #include <linux/init.h>
+#include <linux/string.h>
 #include <linux/vmalloc.h>
 
 MODULE_LICENSE("GPL");
@@ -105,14 +106,9 @@ void gpib_unregister_driver(gpib_interface_t *interface)
 
 void init_gpib_board_config(gpib_board_config_t *config)
 {
-	config->init_data = NULL;
-	config->init_data_length = 0;
-	config->ibbase = 0;
-	config->ibirq = 0;
-	config->ibdma = 0;
+	memset(config, 0, sizeof(gpib_board_config_t));
 	config->pci_bus = -1;
 	config->pci_slot = -1;
-	config->device_tree_path = NULL;
 }
 
 void init_gpib_board( gpib_board_t *board )
@@ -239,6 +235,28 @@ static void __exit gpib_common_exit_module( void )
 module_init( gpib_common_init_module );
 module_exit( gpib_common_exit_module );
 
+int gpib_match_device_path(struct device *dev, const char *device_path_in)
+{
+	if(device_path_in != NULL)
+	{
+		char *device_path;
+		
+		device_path = kobject_get_path(&dev->kobj, GFP_KERNEL);
+		if(device_path == NULL)
+		{
+			dev_err(dev, "kobject_get_path returned NULL.");
+			return 0;
+		}
+		if(strcmp(device_path_in, device_path) != 0)
+		{
+			kfree(device_path);
+			return 0;
+		}
+		kfree(device_path);
+	}
+	return 1;
+}
+
 struct pci_dev* gpib_pci_get_device( const gpib_board_config_t *config, unsigned int vendor_id,
 	unsigned int device_id, struct pci_dev *from)
 {
@@ -251,6 +269,7 @@ struct pci_dev* gpib_pci_get_device( const gpib_board_config_t *config, unsigned
 		if( config->pci_slot >= 0 && config->pci_slot !=
 			PCI_SLOT( pci_device->devfn ) )
 			continue;
+		if(gpib_match_device_path(&pci_device->dev, config->device_path) == 0) continue;
 		return pci_device;
 	}
 	return NULL;
@@ -269,6 +288,7 @@ struct pci_dev* gpib_pci_get_subsys( const gpib_board_config_t *config, unsigned
 		if(config->pci_slot >= 0 && config->pci_slot !=
 			PCI_SLOT( pci_device->devfn))
 			continue;
+		if(gpib_match_device_path(&pci_device->dev, config->device_path) == 0) continue;
 		return pci_device;
 	}
 	return NULL;
@@ -278,3 +298,4 @@ EXPORT_SYMBOL( gpib_register_driver );
 EXPORT_SYMBOL( gpib_unregister_driver );
 EXPORT_SYMBOL( gpib_pci_get_device );
 EXPORT_SYMBOL(gpib_pci_get_subsys);
+EXPORT_SYMBOL(gpib_match_device_path);

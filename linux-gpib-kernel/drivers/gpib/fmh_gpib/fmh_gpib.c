@@ -918,22 +918,22 @@ int fmh_gpib_init(fmh_gpib_private_t *e_priv, gpib_board_t *board, int handshake
 static int fmh_gpib_device_match(struct device *dev, void *data)
 {
 	const gpib_board_config_t *config = data;
-	struct device_node *of_node;
 	
 	if(dev_get_drvdata(dev) != NULL) return 0;
-	else
+
+	if(gpib_match_device_path(dev, config->device_path) == 0)
 	{
-		if(config->device_tree_path != NULL)
-		{
-			of_node = of_find_node_by_path(config->device_tree_path);
-			if(of_node == NULL || of_node != dev_of_node(dev))
-			{
-				return 0;
-			}
-		}
-		dev_notice(dev, "matched: %s\n", of_node_full_name(dev_of_node((dev))));
-		return 1;
+		return 0;
 	}
+	
+	// driver doesn't support selection by serial number
+	if(config->serial_number != NULL)
+	{
+		return 0;
+	}
+	
+	dev_notice(dev, "matched: %s\n", of_node_full_name(dev_of_node((dev))));
+	return 1;
 }
 
 static int fmh_gpib_attach_impl(gpib_board_t *board, const gpib_board_config_t *config, unsigned handshake_mode, int acquire_dma)

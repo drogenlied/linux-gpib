@@ -1269,6 +1269,23 @@ static int agilent_82357a_init(gpib_board_t *board)
 	return 0;
 }
 
+static inline int agilent_82357a_device_match(struct usb_interface *interface, const gpib_board_config_t *config)
+{
+	struct usb_device * const usbdev = interface_to_usbdev(interface);
+	
+	if(gpib_match_device_path(&usbdev->dev, config->device_path) == 0)
+	{
+		return 0;
+	}
+	if(config->serial_number != NULL &&
+		strcmp(usbdev->serial, config->serial_number) != 0)
+	{
+		return 0;
+	};
+
+	return 1;
+}
+
 int agilent_82357a_attach(gpib_board_t *board, const gpib_board_config_t *config)
 {
 	int retval;
@@ -1286,11 +1303,10 @@ int agilent_82357a_attach(gpib_board_t *board, const gpib_board_config_t *config
 		return retval;
 	}
 	a_priv = board->private_data;
-	/*FIXME: should allow user to specifiy which device he wants to attach.
-	 Use usb_make_path() */
 	for(i = 0; i < MAX_NUM_82357A_INTERFACES; ++i)
 	{
-		if(agilent_82357a_driver_interfaces[i] && usb_get_intfdata(agilent_82357a_driver_interfaces[i]) == NULL)
+		if(agilent_82357a_driver_interfaces[i] && usb_get_intfdata(agilent_82357a_driver_interfaces[i]) == NULL &&
+			agilent_82357a_device_match(agilent_82357a_driver_interfaces[i], config))
 		{
 			a_priv->bus_interface = agilent_82357a_driver_interfaces[i];
 			usb_set_intfdata(agilent_82357a_driver_interfaces[i], board);
