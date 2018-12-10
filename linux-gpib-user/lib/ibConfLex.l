@@ -50,7 +50,8 @@ device	     { return(T_DEVICE);}
 name         { return (T_NAME);}
 board_type         { return (T_BOARD_TYPE);}
 minor         { return (T_MINOR);}
-device_tree_path { return (T_DEVICE_TREE_PATH);}
+sysfs_device_path { return (T_SYSFS_DEVICE_PATH);}
+serial_number { return (T_SERIAL_NUMBER);}
 
 pad          { return(T_PAD);}
 sad          { return(T_SAD);}

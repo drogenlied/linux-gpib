@@ -129,7 +129,7 @@ char cval;
 %token T_PAD T_SAD T_TIMO T_EOSBYTE T_BOARD_TYPE T_PCI_BUS T_PCI_SLOT
 %token T_REOS T_BIN T_INIT_S T_DCL T_XEOS T_EOT
 %token T_MASTER T_LLO T_EXCL T_INIT_F T_AUTOPOLL
-%token T_DEVICE_TREE_PATH
+%token T_SYSFS_DEVICE_PATH T_SERIAL_NUMBER
 
 %token T_NUMBER T_STRING T_BOOL T_TIVAL
 %type <ival> T_NUMBER
@@ -207,10 +207,15 @@ char cval;
 				strncpy(current_config( parse_arg )->name, $3,
 					sizeof(current_config( parse_arg )->name));
 			}
-		| T_DEVICE_TREE_PATH '=' T_STRING
+		| T_SYSFS_DEVICE_PATH '=' T_STRING
 			{
-				strncpy(current_board( parse_arg )->device_tree_path, $3,
-					sizeof(current_board( parse_arg )->device_tree_path));
+				strncpy(current_board( parse_arg )->sysfs_device_path, $3,
+					sizeof(current_board( parse_arg )->sysfs_device_path));
+			}
+		| T_SERIAL_NUMBER '=' T_STRING
+			{
+				strncpy(current_board( parse_arg )->serial_number, $3,
+					sizeof(current_board( parse_arg )->serial_number));
 			}
 		;
 

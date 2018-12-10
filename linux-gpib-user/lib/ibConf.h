@@ -94,7 +94,8 @@ typedef struct ibBoardStruct {
 	unsigned use_event_queue : 1;	/* use event queue, or DTAS/DCAS */
 	unsigned autospoll : 1; /* do auto serial polling */
 	char device[0x1000];	/* name of device file ( /dev/gpib0, etc.) */
-	char device_tree_path[0x1000];	/* full device tree path, which may be used to select specific piece of hardware */
+	char sysfs_device_path[0x1000];	/* sysfs device path, which may be used to select specific piece of hardware */
+	char serial_number[0x1000];	/* serial number, which may be used to select specific piece of hardware */
 } ibBoard_t;
 
 #endif	/* _IBCONF_H */

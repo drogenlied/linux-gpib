@@ -47,7 +47,8 @@ typedef struct
 	int is_system_controller;
 	void *init_data;
 	int init_data_length;
-	char *device_tree_path;
+	char *sysfs_device_path;
+	char *serial_number;
 } parsed_options_t;
 
 static void help( void )
@@ -55,36 +56,30 @@ static void help( void )
 	printf("gpib_config [options] - configures a GPIB interface board\n");
 	printf("\t-t, --board-type BOARD_TYPE\n"
 		"\t\tSet board type to BOARD_TYPE.\n");
-	printf("\t-c, --device-file FILEPATH\n"
+	printf("\t-c, --device-file FILE_PATH\n"
 		"\t\tSpecify character device file path for the board.\n"
 		"\t\tThis can be used as an alternative to the --minor option.\n");
-	printf("\t-a, --device-tree-path DTPATH\n"
-		"\t\tSelect a specific board to attach by its full device tree path.\n");
 	printf("\t-d, --dma NUM\n"
 		"\t\tSpecify isa dma channel NUM for boards without plug-and-play cabability.\n");
-	printf("\t-b, --iobase NUM\n"
-		"\t\tSet io base address to NUM for boards without plug-and-play cabability.\n");
 	printf("\t-I, --init-data FILE_PATH\n"
 		"\t\tSpecify file containing binary initialization data (firmware) for board.\n");
+	printf("\t--[no-]ifc\n"
+		"\t\tPerform (or not) interface clear after bringing board online.  Default is --ifc.\n");
+	printf("\t-b, --iobase NUM\n"
+		"\t\tSet io base address to NUM for boards without plug-and-play cabability.\n");
 	printf("\t-i, --irq NUM\n"
 		"\t\tSpecify irq line NUM for boards without plug-and-play cabability.\n");
-	printf("\t-f, --file FILEPATH\n"
+	printf("\t-f, --file FILE_PATH\n"
 		"\t\tSpecify file path for configuration file.  The values in the configuration\n"
 		"\t\tfile will be used as defaults for unspecified options.  The default configuration\n"
-		"\t\tfile is /etc/gpib.conf\n");
+		"\t\tfile is %s\n", DEFAULT_CONFIG_FILE);
 	printf("\t-h, --help\n"
 		"\t\tPrint this help and exit.\n");
 	printf("\t-m, --minor NUM\n"
 		"\t\tConfigure gpib device file with minor number NUM (default 0).\n"
 		"\t\tAlternatively, the device file may be specified with the --device-file option.\n");
-	printf("\t--[no-]ifc\n"
-		"\t\tPerform (or not) interface clear after bringing board online.  Default is --ifc.\n");
-	printf("\t--[no-]sre\n"
-		"\t\tAssert (or not) remote enable line after bringing board online.  Default is --sre.\n");
-	printf("\t--[no-]system-controller\n"
-		"\t\tConfigure board as system controller (or not).\n");
 	printf("\t-o, --offline\n"
-		"\t\tDon't bring board online.\n");
+		"\t\tUnconfigure an already configured board, don't bring board online.\n");
 	printf("\t-p, --pad NUM\n"
 		"\t\tSpecify primary gpib address.  NUM should be in the range 0 through 30.\n");
 	printf("\t-u, --pci-bus NUM\n"
@@ -96,6 +91,14 @@ static void help( void )
 	printf("\t-s, --sad NUM\n"
 		"\t\tSpecify secondary gpib address.  NUM should be 0 (disabled) or in the range\n"
 		"\t\t96 through 126 (0x60 through 0x7e hexadecimal).\n");
+	printf("\t-e, --serial-number SERIAL_NUMBER\n"
+		"\t\tSelect a specific board to attach by its serial number.\n");
+	printf("\t--[no-]sre\n"
+		"\t\tAssert (or not) remote enable line after bringing board online.  Default is --sre.\n");
+	printf("\t-a, --sysfs-device-path DEVPATH\n"
+		"\t\tSelect a specific board to attach by its sysfs device path.\n");
+	printf("\t--[no-]system-controller\n"
+		"\t\tConfigure board as system controller (or not).\n");
 	printf("\t-v, --version\n"
 		"\t\tPrint version of linux-gpib library and exit.\n");
 }
@@ -153,7 +156,8 @@ static int parse_options( int argc, char *argv[], parsed_options_t *settings )
 	{
 		{ "iobase", required_argument, NULL, 'b' },
 		{ "device-file", required_argument, NULL, 'c' },
-		{ "device-tree-path", required_argument, NULL, 'a' },
+		{ "sysfs-device-path", required_argument, NULL, 'a' },
+		{ "serial-number", required_argument, NULL, 'e' },
 		{ "dma", required_argument, NULL, 'd' },
 		{ "file", required_argument, NULL, 'f' },
 		{ "help", no_argument, NULL, 'h' },
@@ -190,15 +194,15 @@ static int parse_options( int argc, char *argv[], parsed_options_t *settings )
 
 	while( 1 )
 	{
-		c = getopt_long(argc, argv, "a:b:c:d:f:hi:I:l:m:op:s:t:u:v", options, &index);
+		c = getopt_long(argc, argv, "a:b:c:d:e:f:hi:I:l:m:op:s:t:u:v", options, &index);
 		if( c == -1 ) break;
 		switch( c )
 		{
 		case 0:
 			break;
 		case 'a':
-			free(settings->device_tree_path);
-			settings->device_tree_path = strdup(optarg);
+			free(settings->sysfs_device_path);
+			settings->sysfs_device_path = strdup(optarg);
 			break;
 		case 'b':
 			settings->iobase = strtol( optarg, NULL, 0 );
@@ -209,6 +213,10 @@ static int parse_options( int argc, char *argv[], parsed_options_t *settings )
 			break;
 		case 'd':
 			settings->dma = strtol( optarg, NULL, 0 );
+			break;
+		case 'e':
+			free(settings->serial_number);
+			settings->serial_number = strdup(optarg);
 			break;
 		case 'f':
 			free(settings->config_file);
@@ -284,11 +292,76 @@ static int parse_options( int argc, char *argv[], parsed_options_t *settings )
 	return 0;
 }
 
+static int configure_sysfs_device_path(int fileno, const char *sysfs_device_path)
+{
+	select_device_path_ioctl_t devpath_selection;
+	int retval;
+	
+	if(sysfs_device_path != NULL)
+	{
+		if(strlen(sysfs_device_path) >= sizeof(devpath_selection.device_path))
+		{
+			fprintf(stderr, "device path too long.\n");
+			return -EINVAL;
+		}
+		strncpy(devpath_selection.device_path, sysfs_device_path, 
+			sizeof(devpath_selection.device_path));
+	}else
+	{
+		memset(devpath_selection.device_path, 0, sizeof(devpath_selection.device_path));
+	}
+	retval = ioctl( fileno, IBSELECT_DEVICE_PATH, &devpath_selection);
+	if( retval < 0 )
+	{
+		/* If the user didn't request any device path, EINVAL error is probably just
+		 * due to using an older kernel module that doesn't support this ioctl.  So
+		 * only error out if a path was specified. */
+		if(errno != EINVAL || strlen(devpath_selection.device_path) > 0)
+		{
+			fprintf(stderr, "failed to configure device path \"%s\"\n", devpath_selection.device_path);
+			return retval;
+		}
+	}
+	return 0;
+}
+
+static int configure_serial_number(int fileno, const char *serial_number)
+{
+	select_serial_number_ioctl_t serial_number_selection;
+	int retval;
+	
+	if(serial_number != NULL)
+	{
+		if(strlen(serial_number) >= sizeof(serial_number_selection.serial_number))
+		{
+			fprintf(stderr, "device path too long.\n");
+			return -EINVAL;
+		}
+		strncpy(serial_number_selection.serial_number, serial_number, 
+			sizeof(serial_number_selection.serial_number));
+	}else
+	{
+		memset(serial_number_selection.serial_number, 0, sizeof(serial_number_selection.serial_number));
+	}
+	retval = ioctl( fileno, IBSELECT_SERIAL_NUMBER, &serial_number_selection);
+	if( retval < 0 )
+	{
+		/* If the user didn't request any device path, EINVAL error is probably just
+		 * due to using an older kernel module that doesn't support this ioctl.  So
+		 * only error out if a path was specified. */
+		if(errno != EINVAL || strlen(serial_number_selection.serial_number) > 0)
+		{
+			fprintf(stderr, "failed to configure serial number \"%s\"\n", serial_number_selection.serial_number);
+			return retval;
+		}
+	}
+	return 0;
+}
+
 static int configure_board( int fileno, const parsed_options_t *options )
 {
 	board_type_ioctl_t boardtype;
 	select_pci_ioctl_t pci_selection;
-	select_device_tree_path_ioctl_t dtpath_selection;
 	pad_ioctl_t pad_cmd;
 	sad_ioctl_t sad_cmd;
 	online_ioctl_t online_cmd;
@@ -355,31 +428,8 @@ static int configure_board( int fileno, const parsed_options_t *options )
 		return retval;
 	}
 
-	if(options->device_tree_path != NULL)
-	{
-		if(strlen(options->device_tree_path) >= sizeof(dtpath_selection.device_tree_path))
-		{
-			fprintf(stderr, "device tree path too long.\n");
-			return -EINVAL;
-		}
-		strncpy(dtpath_selection.device_tree_path, options->device_tree_path, 
-			sizeof(dtpath_selection.device_tree_path));
-	}else
-	{
-		memset(dtpath_selection.device_tree_path, 0, sizeof(dtpath_selection.device_tree_path));
-	}
-	retval = ioctl( fileno, IBSELECT_DEVICE_TREE_PATH, &dtpath_selection);
-	if( retval < 0 )
-	{
-		/* If the user didn't request any device tree path, EINVAL error is probably just
-		 * due to using an older kernel module that doesn't support this ioctl.  So
-		 * only error out if a path was specified. */
-		if(errno != EINVAL || strlen(dtpath_selection.device_tree_path) > 0)
-		{
-			fprintf(stderr, "failed to configure device tree path \"%s\"\n", dtpath_selection.device_tree_path);
-			return retval;
-		}
-	}
+	configure_sysfs_device_path(fileno, options->sysfs_device_path);
+	configure_serial_number(fileno, options->serial_number);
 	 
 	online_cmd.online = 1;
 	assert(sizeof(options->init_data) <= sizeof(online_cmd.init_data_ptr));
@@ -509,11 +559,23 @@ int main( int argc, char *argv[] )
 		perror( __FUNCTION__ );
 		return board->fileno;
 	}
-	if( options.device_tree_path == NULL )
+	if( options.sysfs_device_path == NULL )
 	{
-		if(board->device_tree_path != NULL)
-		{	options.device_tree_path = strdup(board->device_tree_path);
-			if(options.device_tree_path == NULL)
+		if(board->sysfs_device_path != NULL)
+		{
+			options.sysfs_device_path = strdup(board->sysfs_device_path);
+			if(options.sysfs_device_path == NULL)
+			{
+				return -ENOMEM;
+			}
+		}
+	}
+	if( options.serial_number == NULL )
+	{
+		if(board->serial_number != NULL)
+		{
+			options.serial_number = strdup(board->serial_number);
+			if(options.serial_number == NULL)
 			{
 				return -ENOMEM;
 			}
