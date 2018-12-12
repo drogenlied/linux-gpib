@@ -4,9 +4,9 @@ ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="0957", ATTR{idProduct}=="0007"
 ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="0957", ATTR{idProduct}=="0518", ENV{DEVICE}="$devnode", RUN+="@libdir@/usb/agilent_82357a"
 
 #82357a with firmware
-ACTION=="add|change", SUBSYSTEM=="usb", DRIVER="agilent_82357a", ATTRS{idVendor}=="0957", ATTRS{idProduct}=="0107", ENV{SERIAL}="$attr{serial}", RUN+="@libdir@/usb/agilent_82357a"
+ACTION=="add|change", SUBSYSTEM=="usb", DRIVER=="agilent_82357a", ATTRS{idVendor}=="0957", ATTRS{idProduct}=="0107", ENV{SERIAL}="$attr{serial}", RUN+="@libdir@/usb/agilent_82357a"
 #82357b with firmware
-ACTION=="add|change", SUBSYSTEM=="usb", DRIVER="agilent_82357a", ATTRS{idVendor}=="0957", ATTRS{idProduct}=="0718", ENV{SERIAL}="$attr{serial}", RUN+="@libdir@/usb/agilent_82357a"
+ACTION=="add|change", SUBSYSTEM=="usb", DRIVER=="agilent_82357a", ATTRS{idVendor}=="0957", ATTRS{idProduct}=="0718", ENV{SERIAL}="$attr{serial}", RUN+="@libdir@/usb/agilent_82357a"
 
 #this rule generates new "change" udev events for devices supported by the 
 #driver after the module is loaded.
