@@ -9,6 +9,7 @@
 
 EXTRA_DIST = ni_usb_gpib.in 99-ni_usb_gpib.rules.in
 CLEANFILES = 99-ni_usb_gpib.rules ni_usb_gpib
+
 USB_FIRMWARE_DIR=$(datadir)/usb
 UDEV_RULES_DIR=$(sysconfdir)/udev/rules.d
 UDEV_LIB_DIR=$(libdir)/udev
@@ -23,7 +24,9 @@ do_subst = $(SED) -e 's,[@]sbindir[@],$(sbindir),g'\
 ni_usb_gpib: ni_usb_gpib.in
 	$(do_subst) < $(srcdir)/ni_usb_gpib.in >ni_usb_gpib
 
-install-data-local: 99-ni_usb_gpib.rules ni_usb_gpib
+all-local: 99-ni_usb_gpib.rules ni_usb_gpib
+
+install-data-local:
 	test -e $(DESTDIR)$(UDEV_LIB_DIR)/ni_usb_gpib ||\
 		$(INSTALL_SCRIPT) -D ni_usb_gpib $(DESTDIR)$(UDEV_LIB_DIR)/ni_usb_gpib
 	$(INSTALL) -d $(DESTDIR)$(USB_FIRMWARE_DIR)/ni_usb_gpib

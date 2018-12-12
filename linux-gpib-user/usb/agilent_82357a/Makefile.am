@@ -9,6 +9,7 @@
 
 EXTRA_DIST = agilent_82357a.in 99-agilent_82357a.rules.in
 CLEANFILES = 99-agilent_82357a.rules agilent_82357a
+
 USB_FIRMWARE_DIR=$(datadir)/usb
 UDEV_RULES_DIR=$(sysconfdir)/udev/rules.d
 UDEV_LIB_DIR=$(libdir)/udev
@@ -23,7 +24,9 @@ do_subst = $(SED) -e 's,[@]sbindir[@],$(sbindir),g'\
 agilent_82357a: agilent_82357a.in
 	$(do_subst) < $(srcdir)/agilent_82357a.in >agilent_82357a
 
-install-data-local: 99-agilent_82357a.rules agilent_82357a
+all-local: 99-agilent_82357a.rules agilent_82357a
+
+install-data-local:
 	test -e $(DESTDIR)$(UDEV_LIB_DIR)/agilent_82357a ||\
 		$(INSTALL_SCRIPT) -D agilent_82357a $(DESTDIR)$(UDEV_LIB_DIR)/agilent_82357a
 	$(INSTALL) -d $(DESTDIR)$(USB_FIRMWARE_DIR)/agilent_82357a
