@@ -19,9 +19,9 @@ fi
 # that correspond to your system.
 #
 #case $SERIAL in
-#    A0000001) GPIB_CONFIG_OPTIONS="--minor 0 --serial-number $SERIAL"
+#    A0000001) GPIB_CONFIG_OPTIONS="--minor 0"
 #	      ;;
-#    A0000002) GPIB_CONFIG_OPTIONS="--minor 1 --serial-number $SERIAL"
+#    A0000002) GPIB_CONFIG_OPTIONS="--minor 1"
 #	      ;;
 #esac
 #
@@ -31,35 +31,31 @@ fi
 # that correspond to your system.
 #
 #case $DEVPATH in
-#    */usb2/2-1) GPIB_CONFIG_OPTIONS="--minor 0 --sysfs-devfice-path $DEVPATH"
+#    */usb2/2-1) GPIB_CONFIG_OPTIONS="--minor 0"
 #	      ;;
-#    */usb2/2-2) GPIB_CONFIG_OPTIONS="--minor 1 --sysfs-devfice-path $DEVPATH"
+#    */usb2/2-2) GPIB_CONFIG_OPTIONS="--minor 1"
 #	      ;;
 #esac
 #
 
 # pre-renumeration device IDs
 case $PRODUCT in
-# 82357a with firmware already loaded
-957/107/*)
-	gpib_config $GPIB_CONFIG_OPTIONS
-	;;
 
-# 82357a without firmware
-957/7/*)
-	FIRMWARE=$DATADIR/usb/agilent_82357a/82357a_fw.hex
-	;;
+	# 82357a without firmware
+	957/7/*)
+		FIRMWARE=$DATADIR/usb/agilent_82357a/82357a_fw.hex
+		;;
 
-# 82357b with firmware already loaded
-957/718/*)
-	gpib_config $GPIB_CONFIG_OPTIONS
-	;;
+	# 82357b without firmware
+	957/518/*)
+		FIRMWARE=$DATADIR/usb/agilent_82357a/measat_releaseX1.8.hex
+		FXLOAD_OPTIONS="-t fx2"
+		;;
 
-# 82357b without firmware
-957/518/*)
-	FIRMWARE=$DATADIR/usb/agilent_82357a/measat_releaseX1.8.hex
-	FXLOAD_OPTIONS="-t fx2"
-	;;
+	# device ready to be configured
+	*)
+		gpib_config $GPIB_CONFIG_OPTIONS --sysfs-device-path $DEVPATH
+		;;
 
 esac
 

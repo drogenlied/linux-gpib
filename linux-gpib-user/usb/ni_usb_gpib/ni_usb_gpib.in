@@ -20,9 +20,9 @@ fi
 # that correspond to your system.
 #
 #case $SERIAL in
-#    N0000001) GPIB_CONFIG_OPTIONS="--minor 0 --serial-number $SERIAL"
+#    N0000001) GPIB_CONFIG_OPTIONS="--minor 0"
 #	      ;;
-#    N0000002) GPIB_CONFIG_OPTIONS="--minor 1 --serial-number $SERIAL"
+#    N0000002) GPIB_CONFIG_OPTIONS="--minor 1"
 #	      ;;
 #esac
 #
@@ -32,35 +32,25 @@ fi
 # that correspond to your system.
 #
 #case $DEVPATH in
-#    */usb2/2-1) GPIB_CONFIG_OPTIONS="--minor 0 --sysfs-devfice-path $DEVPATH"
+#    */usb2/2-1) GPIB_CONFIG_OPTIONS="--minor 0"
 #	      ;;
-#    */usb2/2-2) GPIB_CONFIG_OPTIONS="--minor 1 --sysfs-devfice-path $DEVPATH"
+#    */usb2/2-2) GPIB_CONFIG_OPTIONS="--minor 1"
 #	      ;;
 #esac
 #
 
 # pre-renumeration device IDs
 case $PRODUCT in
-# ni-usb-b with firmware already loaded
-3923/702a/*)
-	gpib_config $GPIB_CONFIG_OPTIONS
-	;;
 
 # ni-usb-b or kusb-488 without firmware
-3923/702b/* | 3923/713b/*)
-	FIRMWARE=$DATADIR/usb/ni_usb_gpib/niusbb_firmware.hex
-	SS_LOADER=$DATADIR/usb/ni_usb_gpib/niusbb_loader.hex
-	;;
+	3923/702b/* | 3923/713b/*)
+		FIRMWARE=$DATADIR/usb/ni_usb_gpib/niusbb_firmware.hex
+		SS_LOADER=$DATADIR/usb/ni_usb_gpib/niusbb_loader.hex
+		;;
 
-# ni-usb-hs
-3923/709b/*)
-	gpib_config $GPIB_CONFIG_OPTIONS
-	;;
-
-# ni-usb-hs+
-3923/7618/*)
-	gpib_config $GPIB_CONFIG_OPTIONS
-	;;
+	*)
+		gpib_config $GPIB_CONFIG_OPTIONS --sysfs-device-path $DEVPATH
+		;;
 
 esac
 

@@ -1,4 +1,16 @@
-SUBSYSTEM=="usb", ACTION=="add", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="3923", ATTR{idProduct}=="702[ab]", ENV{DEVICE}="$devnode", ENV{SERIAL}="$attr{serial}", RUN+="@hotplug_usb_conf_dir@/ni_usb_gpib"
-SUBSYSTEM=="usb", ACTION=="add", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="3923", ATTR{idProduct}=="713b", ENV{DEVICE}="$devnode", ENV{SERIAL}="$attr{serial}", RUN+="@hotplug_usb_conf_dir@/ni_usb_gpib"
-SUBSYSTEM=="usb", ACTION=="add", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="3923", ATTR{idProduct}=="709b", ENV{DEVICE}="$devnode", ENV{SERIAL}="$attr{serial}", RUN+="@hotplug_usb_conf_dir@/ni_usb_gpib"
-SUBSYSTEM=="usb", ACTION=="add", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="3923", ATTR{idProduct}=="7618", ENV{DEVICE}="$devnode", ENV{SERIAL}="$attr{serial}", RUN+="@hotplug_usb_conf_dir@/ni_usb_gpib"
+#gpib-usb-b without firmware
+SUBSYSTEM=="usb", ACTION=="add", ATTR{idVendor}=="3923", ATTR{idProduct}=="702b", ENV{DEVICE}="$devnode", RUN+="@libdir@/udev/ni_usb_gpib"
+#device id 713b is a keithley kusb-488 before we load it with firmware
+SUBSYSTEM=="usb", ACTION=="add", ATTR{idVendor}=="3923", ATTR{idProduct}=="713b", ENV{DEVICE}="$devnode", RUN+="@libdir@/udev/ni_usb_gpib"
+
+#devices ready to be configured with gpib_config
+SUBSYSTEM=="usb", ACTION=="add|change", DRIVER=="ni_usb_gpib", ATTRS{idVendor}=="3923", ATTRS{idProduct}=="702a", RUN+="@libdir@/udev/ni_usb_gpib"
+SUBSYSTEM=="usb", ACTION=="add|change", DRIVER=="ni_usb_gpib", ATTRS{idVendor}=="3923", ATTRS{idProduct}=="709b", RUN+="@libdir@/udev/ni_usb_gpib"
+SUBSYSTEM=="usb", ACTION=="add|change", DRIVER=="ni_usb_gpib", ATTRS{idVendor}=="3923", ATTRS{idProduct}=="7618", RUN+="@libdir@/udev/ni_usb_gpib"
+SUBSYSTEM=="usb", ACTION=="add|change", DRIVER=="ni_usb_gpib", ATTRS{idVendor}=="3923", ATTRS{idProduct}=="725[cd]", RUN+="@libdir@/udev/ni_usb_gpib"
+
+#this rule generates new "change" udev events for devices supported by the
+#driver after the module is loaded.
+#it is needed because if the driver is not already loaded when the hardware is plugged in,
+#then the initial hardware "add" event will not be able to accomplish anything.
+SUBSYSTEM=="module", ACTION=="add", DEVPATH=="/module/ni_usb_gpib", RUN+="/bin/udevadm trigger --property-match DRIVER=ni_usb_gpib"

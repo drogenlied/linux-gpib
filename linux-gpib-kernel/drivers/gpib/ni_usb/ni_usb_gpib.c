@@ -2077,7 +2077,7 @@ static inline int ni_usb_device_match(struct usb_interface *interface, const gpi
 {
 	struct usb_device * const usbdev = interface_to_usbdev(interface);
 	
-	if(gpib_match_device_path(&usbdev->dev, config->device_path) == 0)
+	if(gpib_match_device_path(&interface->dev, config->device_path) == 0)
 	{
 		return 0;
 	}

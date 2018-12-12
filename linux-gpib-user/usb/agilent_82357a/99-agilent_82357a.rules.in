@@ -1,1 +1,15 @@
-ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="0957", ATTR{idProduct}=="0[57]18", ENV{DEVICE}="$devnode", ENV{SERIAL}="$attr{serial}", RUN+="@hotplug_usb_conf_dir@/agilent_82357a"
+#82357a without firmware
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="0957", ATTR{idProduct}=="0007", ENV{DEVICE}="$devnode", RUN+="@libdir@/usb/agilent_82357a"
+#82357b without firmware
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="0957", ATTR{idProduct}=="0518", ENV{DEVICE}="$devnode", RUN+="@libdir@/usb/agilent_82357a"
+
+#82357a with firmware
+ACTION=="add|change", SUBSYSTEM=="usb", DRIVER="agilent_82357a", ATTRS{idVendor}=="0957", ATTRS{idProduct}=="0107", ENV{SERIAL}="$attr{serial}", RUN+="@libdir@/usb/agilent_82357a"
+#82357b with firmware
+ACTION=="add|change", SUBSYSTEM=="usb", DRIVER="agilent_82357a", ATTRS{idVendor}=="0957", ATTRS{idProduct}=="0718", ENV{SERIAL}="$attr{serial}", RUN+="@libdir@/usb/agilent_82357a"
+
+#this rule generates new "change" udev events for devices supported by the 
+#driver after the module is loaded.
+#it is needed because if the driver is not already loaded when the hardware is plugged in,
+#then the initial hardware "add" event will not be able to accomplish anything.
+SUBSYSTEM=="module", ACTION=="add", DEVPATH=="/module/agilent_82357a", RUN+="/bin/udevadm trigger --property-match DRIVER=agilent_82357a"

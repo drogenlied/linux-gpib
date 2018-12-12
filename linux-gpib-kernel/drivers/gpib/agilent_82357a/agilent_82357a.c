@@ -1273,7 +1273,7 @@ static inline int agilent_82357a_device_match(struct usb_interface *interface, c
 {
 	struct usb_device * const usbdev = interface_to_usbdev(interface);
 	
-	if(gpib_match_device_path(&usbdev->dev, config->device_path) == 0)
+	if(gpib_match_device_path(&interface->dev, config->device_path) == 0)
 	{
 		return 0;
 	}
