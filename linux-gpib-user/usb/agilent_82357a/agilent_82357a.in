@@ -19,9 +19,9 @@ fi
 # that correspond to your system.
 #
 #case $SERIAL in
-#    A0000001) GPIB_CONFIG_OPTIONS="--minor 0"
+#    A0000001) GPIB_CONFIG_OPTIONS="--minor 0 --serial-number $SERIAL"
 #	      ;;
-#    A0000002) GPIB_CONFIG_OPTIONS="--minor 1"
+#    A0000002) GPIB_CONFIG_OPTIONS="--minor 1 --serial-number $SERIAL"
 #	      ;;
 #esac
 #
@@ -31,9 +31,9 @@ fi
 # that correspond to your system.
 #
 #case $DEVPATH in
-#    */usb2/2-1) GPIB_CONFIG_OPTIONS="--minor 0"
+#    */usb2/2-1) GPIB_CONFIG_OPTIONS="--minor 0 --sysfs-devfice-path $DEVPATH"
 #	      ;;
-#    */usb2/2-2) GPIB_CONFIG_OPTIONS="--minor 1"
+#    */usb2/2-2) GPIB_CONFIG_OPTIONS="--minor 1 --sysfs-devfice-path $DEVPATH"
 #	      ;;
 #esac
 #
