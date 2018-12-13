@@ -8,10 +8,12 @@
 #   (at your option) any later version.
 
 SUBDIRS = agilent_82357a ni_usb_gpib
-EXTRA_DIST = 99-gpib-generic.rules
+EXTRA_DIST = 99-gpib-generic.rules udevadm.sh
 UDEV_RULES_DIR = $(sysconfdir)/udev/rules.d
 
 install-data-local: 99-gpib-generic.rules
 	test -d $(DESTDIR)$(UDEV_RULES_DIR) && test -e $(DESTDIR)$(UDEV_RULES_DIR)/99-gpib-generic.rules ||\
 		$(INSTALL_DATA) -D $(srcdir)/99-gpib-generic.rules $(DESTDIR)$(UDEV_RULES_DIR)/99-gpib-generic.rules
 
+install-exec-local: udevadm.sh
+	$(INSTALL_SCRIPT) -D $(srcdir)/udevadm.sh $(DESTDIR)$(sbindir)/udevadm
