@@ -12,6 +12,7 @@ EXTRA_DIST = 99-gpib-generic.rules gpib_udev_fxloader gpib_udev_config udevadm.s
 CLEANFILES = gpib_udev_fxloader
 
 UDEV_RULES_DIR = $(sysconfdir)/udev/rules.d
+UDEV_LIBDIR = $(libdir)/udev
 
 do_subst = $(SED) -e 's,[@]sbindir[@],$(sbindir),g'\
 	-e 's,[@]datadir[@],$(datadir),g'\
