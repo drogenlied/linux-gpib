@@ -12,4 +12,4 @@ ACTION=="add|change", SUBSYSTEM=="usb", DRIVER=="agilent_82357a_gpib", ATTRS{idV
 #driver after the module is loaded.
 #it is needed because if the driver is not already loaded when the hardware is plugged in,
 #then the initial hardware "add" event will not be able to accomplish anything.
-SUBSYSTEM=="module", ACTION=="add", DEVPATH=="/module/agilent_82357a", RUN+="@sbindir@/udevadm trigger --property-match DRIVER=agilent_82357a_gpib"
+SUBSYSTEM=="module", ACTION=="add", DEVPATH=="/module/agilent_82357a", RUN+="@libdir@/gpib_udevadm_wrapper trigger --property-match DRIVER=agilent_82357a_gpib"
