@@ -1,7 +1,7 @@
 #gpib-usb-b without firmware
-SUBSYSTEM=="usb", ACTION=="add", ATTR{idVendor}=="3923", ATTR{idProduct}=="702b", ENV{DEVICE}="$devnode", RUN+="@libdir@/udev/ni_usb_gpib"
+SUBSYSTEM=="usb", ACTION=="add", ATTR{idVendor}=="3923", ATTR{idProduct}=="702b", ENV{DEVICE}="$devnode", RUN+="@libdir@/udev/gpib_udev_fxloader"
 #device id 713b is a keithley kusb-488 before we load it with firmware
-SUBSYSTEM=="usb", ACTION=="add", ATTR{idVendor}=="3923", ATTR{idProduct}=="713b", ENV{DEVICE}="$devnode", RUN+="@libdir@/udev/ni_usb_gpib"
+SUBSYSTEM=="usb", ACTION=="add", ATTR{idVendor}=="3923", ATTR{idProduct}=="713b", ENV{DEVICE}="$devnode", RUN+="@libdir@/udev/gpib_udev_fxloader"
 
 #devices ready to be configured with gpib_config
 SUBSYSTEM=="usb", ACTION=="add|change", DRIVER=="ni_usb_gpib", ATTRS{idVendor}=="3923", ATTRS{idProduct}=="702a", RUN+="@libdir@/udev/ni_usb_gpib"

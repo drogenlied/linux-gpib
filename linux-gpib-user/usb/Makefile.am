@@ -8,8 +8,19 @@
 #   (at your option) any later version.
 
 SUBDIRS = agilent_82357a ni_usb_gpib
-EXTRA_DIST = 99-gpib-generic.rules udevadm.sh
+EXTRA_DIST = 99-gpib-generic.rules gpib_udev_fxloader udevadm.sh
+CLEANFILES = gpib_udev_fxloader
+
 UDEV_RULES_DIR = $(sysconfdir)/udev/rules.d
+
+do_subst = $(SED) -e 's,[@]sbindir[@],$(sbindir),g'\
+	-e 's,[@]datadir[@],$(datadir),g'\
+	-e 's,[@]libdir[@],$(libdir),g'
+
+gpib_udev_fxloader: gpib_udev_fxloader.in
+	$(do_subst) < $(srcdir)/gpib_udev_fxloader.in >$@
+
+all-local: gpib_udev_fxloader
 
 install-data-local: 99-gpib-generic.rules
 	test -d $(DESTDIR)$(UDEV_RULES_DIR) && test -e $(DESTDIR)$(UDEV_RULES_DIR)/99-gpib-generic.rules ||\
@@ -17,3 +28,4 @@ install-data-local: 99-gpib-generic.rules
 
 install-exec-local: udevadm.sh
 	$(INSTALL_SCRIPT) -D $(srcdir)/udevadm.sh $(DESTDIR)$(sbindir)/udevadm
+	$(INSTALL_SCRIPT) -D gpib_udev_fxloader $(DESTDIR)$(UDEV_LIB_DIR)/gpib_udev_fxloader

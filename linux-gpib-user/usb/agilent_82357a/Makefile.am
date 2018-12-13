@@ -7,8 +7,8 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
-EXTRA_DIST = agilent_82357a.in 99-agilent_82357a.rules.in
-CLEANFILES = 99-agilent_82357a.rules agilent_82357a
+EXTRA_DIST = agilent_82357a 99-agilent_82357a.rules.in
+CLEANFILES = 99-agilent_82357a.rules
 
 USB_FIRMWARE_DIR=$(datadir)/usb
 UDEV_RULES_DIR=$(sysconfdir)/udev/rules.d
@@ -21,10 +21,7 @@ do_subst = $(SED) -e 's,[@]sbindir[@],$(sbindir),g'\
 99-agilent_82357a.rules: 99-agilent_82357a.rules.in
 	$(do_subst) < $(srcdir)/99-agilent_82357a.rules.in >99-agilent_82357a.rules
 
-agilent_82357a: agilent_82357a.in
-	$(do_subst) < $(srcdir)/agilent_82357a.in >agilent_82357a
-
-all-local: 99-agilent_82357a.rules agilent_82357a
+all-local: 99-agilent_82357a.rules
 
 install-data-local:
 	test -e $(DESTDIR)$(UDEV_LIB_DIR)/agilent_82357a ||\

@@ -7,8 +7,8 @@
 #   the Free Software Foundation; either version 2 of the License, or
 #   (at your option) any later version.
 
-EXTRA_DIST = ni_usb_gpib.in 99-ni_usb_gpib.rules.in
-CLEANFILES = 99-ni_usb_gpib.rules ni_usb_gpib
+EXTRA_DIST = ni_usb_gpib 99-ni_usb_gpib.rules.in
+CLEANFILES = 99-ni_usb_gpib.rules
 
 USB_FIRMWARE_DIR=$(datadir)/usb
 UDEV_RULES_DIR=$(sysconfdir)/udev/rules.d
@@ -21,10 +21,7 @@ do_subst = $(SED) -e 's,[@]sbindir[@],$(sbindir),g'\
 99-ni_usb_gpib.rules: 99-ni_usb_gpib.rules.in
 	$(do_subst) < $(srcdir)/99-ni_usb_gpib.rules.in >99-ni_usb_gpib.rules
 
-ni_usb_gpib: ni_usb_gpib.in
-	$(do_subst) < $(srcdir)/ni_usb_gpib.in >ni_usb_gpib
-
-all-local: 99-ni_usb_gpib.rules ni_usb_gpib
+all-local: 99-ni_usb_gpib.rules
 
 install-data-local:
 	test -e $(DESTDIR)$(UDEV_LIB_DIR)/ni_usb_gpib ||\

@@ -1,7 +1,7 @@
 #82357a without firmware
-ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="0957", ATTR{idProduct}=="0007", ENV{DEVICE}="$devnode", RUN+="@libdir@/udev/agilent_82357a"
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="0957", ATTR{idProduct}=="0007", ENV{DEVICE}="$devnode", RUN+="@libdir@/udev/gpib_udev_fxloader"
 #82357b without firmware
-ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="0957", ATTR{idProduct}=="0518", ENV{DEVICE}="$devnode", RUN+="@libdir@/udev/agilent_82357a"
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="0957", ATTR{idProduct}=="0518", ENV{DEVICE}="$devnode", RUN+="@libdir@/udev/gpib_udev_fxloader"
 
 #82357a with firmware
 ACTION=="add|change", SUBSYSTEM=="usb", DRIVER=="agilent_82357a_gpib", ATTRS{idVendor}=="0957", ATTRS{idProduct}=="0107", ENV{SERIAL}="$attr{serial}", RUN+="@libdir@/udev/agilent_82357a"
