@@ -12,7 +12,6 @@ EXTRA_DIST = 99-gpib-generic.rules gpib_udev_fxloader gpib_udev_config udevadm.s
 CLEANFILES = gpib_udev_fxloader
 
 UDEV_RULES_DIR = $(sysconfdir)/udev/rules.d
-UDEV_LIB_DIR=$(libdir)/udev
 
 do_subst = $(SED) -e 's,[@]sbindir[@],$(sbindir),g'\
 	-e 's,[@]datadir[@],$(datadir),g'\
@@ -28,6 +27,6 @@ install-data-local: 99-gpib-generic.rules
 		$(INSTALL_DATA) -D $(srcdir)/99-gpib-generic.rules $(DESTDIR)$(UDEV_RULES_DIR)/99-gpib-generic.rules
 
 install-exec-local: udevadm.sh
-	$(INSTALL_SCRIPT) -D $(srcdir)/udevadm.sh $(DESTDIR)$(UDEV_LIB_DIR)/gpib_udevadm_wrapper
-	$(INSTALL_SCRIPT) -D $(srcdir)/gpib_udev_fxloader $(DESTDIR)$(UDEV_LIB_DIR)/gpib_udev_fxloader
-	$(INSTALL_SCRIPT) -D $(srcdir)/gpib_udev_config $(DESTDIR)$(UDEV_LIB_DIR)/gpib_udev_config
+	$(INSTALL_SCRIPT) -D $(srcdir)/udevadm.sh $(DESTDIR)$(UDEV_LIBDIR)/gpib_udevadm_wrapper
+	$(INSTALL_SCRIPT) -D gpib_udev_fxloader $(DESTDIR)$(UDEV_LIBDIR)/gpib_udev_fxloader
+	$(INSTALL_SCRIPT) -D $(srcdir)/gpib_udev_config $(DESTDIR)$(UDEV_LIBDIR)/gpib_udev_config

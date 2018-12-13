@@ -12,11 +12,11 @@ CLEANFILES = 99-ni_usb_gpib.rules
 
 USB_FIRMWARE_DIR=$(datadir)/usb
 UDEV_RULES_DIR=$(sysconfdir)/udev/rules.d
-UDEV_LIB_DIR=$(libdir)/udev
 
 do_subst = $(SED) -e 's,[@]sbindir[@],$(sbindir),g'\
 	-e 's,[@]datadir[@],$(datadir),g'\
-	-e 's,[@]libdir[@],$(libdir),g'
+	-e 's,[@]libdir[@],$(libdir),g'\
+	-e 's,[@]UDEV_LIBDIR[@],$(UDEV_LIBDIR),g'
 
 99-ni_usb_gpib.rules: 99-ni_usb_gpib.rules.in
 	$(do_subst) < $(srcdir)/99-ni_usb_gpib.rules.in >99-ni_usb_gpib.rules
