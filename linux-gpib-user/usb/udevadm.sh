@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Wrapper script for udevadm
 UDEVADM_PATH=""
 for i in /bin /sbin /usr/bin /usr/sbin; do
