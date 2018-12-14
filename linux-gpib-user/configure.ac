@@ -49,6 +49,12 @@ AC_ARG_ENABLE([tcl-binding],[  --disable-tcl-binding		Disable TCL binding to lib
 AC_ARG_ENABLE([documentation],[  --disable-documentation	Disable building documentation from SGML sources],
 	[BUILD_DOCS=$enableval],[BUILD_DOCS="yes"])
 
+dnl udev lib dir
+AC_ARG_WITH([udev-libdir],
+	[AS_HELP_STRING([--with-udev-libdir=DIR], [location to install udev scripts [PREFIX/lib/udev]])],
+	[UDEV_LIBDIR=$withval], [UDEV_LIBDIR='${prefix}'/lib/udev])
+AC_SUBST([UDEV_LIBDIR])
+
 dnl Checks for programs.
 AC_PROG_INSTALL
 AC_PROG_CC
