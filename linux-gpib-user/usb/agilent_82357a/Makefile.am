@@ -12,7 +12,6 @@ CLEANFILES = 99-agilent_82357a.rules
 
 USB_FIRMWARE_DIR=$(datadir)/usb
 UDEV_RULES_DIR=$(sysconfdir)/udev/rules.d
-UDEV_LIBDIR = $(libdir)/udev
 
 do_subst = $(SED) -e 's,[@]sbindir[@],$(sbindir),g'\
 	-e 's,[@]datadir[@],$(datadir),g'\
