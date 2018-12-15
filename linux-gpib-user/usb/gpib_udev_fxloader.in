@@ -12,7 +12,7 @@ SS_LOADER=
 
 mylog() {
 	if [ -x /usr/bin/logger ]; then
-		/usr/bin/logger -t $0 $1
+		/usr/bin/logger -t "$0" -- "$1"
 	fi 
 }
 
