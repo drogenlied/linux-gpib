@@ -3,6 +3,9 @@ ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="0957", ATTR{idProduct}=="0007"
 #82357b without firmware
 ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="0957", ATTR{idProduct}=="0518", ENV{DEVICE}="$devnode", RUN+="@UDEV_LIBDIR@/gpib_udev_fxloader"
 
+#automatically set the correct --board-type option
+ACTION=="add|change", SUBSYSTEM=="usb", DRIVER=="agilent_82357a_gpib", ENV{GPIB_CONFIG_OPTIONS}+="--board-type agilent_82357a"
+
 #82357a with firmware
 ACTION=="add|change", SUBSYSTEM=="usb", DRIVER=="agilent_82357a_gpib", ATTRS{idVendor}=="0957", ATTRS{idProduct}=="0107", RUN+="@UDEV_LIBDIR@/gpib_udev_config"
 #82357b with firmware
