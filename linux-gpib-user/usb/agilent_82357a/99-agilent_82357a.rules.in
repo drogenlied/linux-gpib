@@ -7,9 +7,9 @@ ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="0957", ATTR{idProduct}=="0518"
 ACTION=="add|change", SUBSYSTEM=="usb", DRIVER=="agilent_82357a_gpib", ENV{GPIB_CONFIG_OPTIONS}+="--board-type agilent_82357a"
 
 #82357a with firmware
-ACTION=="add|change", SUBSYSTEM=="usb", DRIVER=="agilent_82357a_gpib", ATTRS{idVendor}=="0957", ATTRS{idProduct}=="0107", RUN+="@UDEV_LIBDIR@/gpib_udev_config"
+ACTION=="add|change", SUBSYSTEM=="usb", DRIVER=="agilent_82357a_gpib", ATTRS{idVendor}=="0957", ATTRS{idProduct}=="0107", ENV{SERIAL}="$attr{serial}", RUN+="@UDEV_LIBDIR@/gpib_udev_config"
 #82357b with firmware
-ACTION=="add|change", SUBSYSTEM=="usb", DRIVER=="agilent_82357a_gpib", ATTRS{idVendor}=="0957", ATTRS{idProduct}=="0718", RUN+="@UDEV_LIBDIR@/gpib_udev_config"
+ACTION=="add|change", SUBSYSTEM=="usb", DRIVER=="agilent_82357a_gpib", ATTRS{idVendor}=="0957", ATTRS{idProduct}=="0718", ENV{SERIAL}="$attr{serial}", RUN+="@UDEV_LIBDIR@/gpib_udev_config"
 
 #this rule generates new "change" udev events for devices supported by the 
 #driver after the module is loaded.

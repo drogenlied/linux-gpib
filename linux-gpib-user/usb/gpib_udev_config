@@ -10,7 +10,7 @@ mylog() {
 	fi 
 }
 
-mylog "entered for Product: $PRODUCT Devpath: $DEVPATH"
+mylog "entered for Product: $PRODUCT Devpath: $DEVPATH Serial: $SERIAL"
 mylog "gpib_config options: $GPIB_CONFIG_OPTIONS"
 
 gpib_config $GPIB_CONFIG_OPTIONS --sysfs-device-path $DEVPATH
