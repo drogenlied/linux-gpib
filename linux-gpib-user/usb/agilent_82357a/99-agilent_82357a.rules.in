@@ -4,12 +4,12 @@ ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="0957", ATTR{idProduct}=="0007"
 ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="0957", ATTR{idProduct}=="0518", ENV{DEVICE}="$devnode", RUN+="@UDEV_LIBDIR@/gpib_udev_fxloader"
 
 #automatically set the correct --board-type option
-ACTION=="add|change", SUBSYSTEM=="usb", DRIVER=="agilent_82357a_gpib", ENV{GPIB_CONFIG_OPTIONS}+="--board-type agilent_82357a"
+ACTION=="add|change", SUBSYSTEM=="usb", DRIVER=="agilent_82357a_gpib", ATTRS{serial}=="*", ENV{GPIB_CONFIG_OPTIONS}+="--board-type agilent_82357a", ENV{SERIAL}="$attr{serial}"
 
 #82357a with firmware
-ACTION=="add|change", SUBSYSTEM=="usb", DRIVER=="agilent_82357a_gpib", ATTRS{idVendor}=="0957", ATTRS{idProduct}=="0107", ENV{SERIAL}="$attr{serial}", RUN+="@UDEV_LIBDIR@/gpib_udev_config"
+ACTION=="add|change", SUBSYSTEM=="usb", DRIVER=="agilent_82357a_gpib", ATTRS{idVendor}=="0957", ATTRS{idProduct}=="0107", RUN+="@UDEV_LIBDIR@/gpib_udev_config"
 #82357b with firmware
-ACTION=="add|change", SUBSYSTEM=="usb", DRIVER=="agilent_82357a_gpib", ATTRS{idVendor}=="0957", ATTRS{idProduct}=="0718", ENV{SERIAL}="$attr{serial}", RUN+="@UDEV_LIBDIR@/gpib_udev_config"
+ACTION=="add|change", SUBSYSTEM=="usb", DRIVER=="agilent_82357a_gpib", ATTRS{idVendor}=="0957", ATTRS{idProduct}=="0718", RUN+="@UDEV_LIBDIR@/gpib_udev_config"
 
 #this rule generates new "change" udev events for devices supported by the 
 #driver after the module is loaded.
