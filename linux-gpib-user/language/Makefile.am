@@ -14,7 +14,7 @@ do_subst = $(SED) -e 's,[@]abs_top_builddir[@],$(abs_top_builddir),g'\
 	-e 's,[@]abs_top_srcdir[@],$(abs_top_srcdir),g'
 
 PERL_DIST = perl/Changes perl/LinuxGpib.pm perl/LinuxGpib.xs \
-	perl/MANIFEST perl/Makefile.PL perl/README perl/test.pl \
+	perl/MANIFEST perl/Makefile.PL.in perl/README perl/test.pl \
 	perl/typemap perl/examples/
 
 if BIND_PERL

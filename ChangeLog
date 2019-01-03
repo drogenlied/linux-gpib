@@ -1,3 +1,254 @@
+2018-12-25 09:50  dpenkler
+
+	* [r1806] Fix board type
+
+2018-12-25 09:46  dpenkler
+
+	* [r1805] Fix ni_usb_gpib cut & paste error
+
+2018-12-25 09:42  dpenkler
+
+	* [r1804] Simplify usb udev rules as per Frank's suggestion
+
+2018-12-21 10:44  dpenkler
+
+	* [r1803] Changes for multiple board configuration
+
+	  Update INSTALL
+	  Add serial to device environment
+	  Print serial in gpib_udev_config
+	  Add example rules for agilent
+
+2018-12-15 08:55  fmhess
+
+	* [r1802] Add some examples for configuring multiple boards with
+	  different minor numbers.
+
+2018-12-15 08:29  fmhess
+
+	* [r1801] Automatically gibe the correct board type to gpib_config
+	  in udev rules
+
+2018-12-15 08:01  fmhess
+
+	* [r1800] rename gpib generic rules so it runs at 98
+	  (before the driver-specific fules which run at 99)
+
+2018-12-15 07:52  fmhess
+
+	* [r1799] Add fix for mylog from gpib_udev_config to
+	  gpib_udev_fxloader.in. Also add some quoting to
+	  ensure whitespace is preserved in log messages.
+
+2018-12-14 16:23  dpenkler
+
+	* [r1798] Fix logging in gpib_udev_config for gpib_config options
+	  --
+
+2018-12-14 08:30  fmhess
+
+	* [r1797] Removed some bash-isms so scripts work with posix
+	  /bin/sh.
+
+2018-12-14 08:11  fmhess
+
+	* [r1796] Revert commit 1793
+
+2018-12-14 08:07  fmhess
+
+	* [r1795] Add --with-udev-libdir option to configure, that I failed
+	  to include in earlier commit.
+
+2018-12-13 17:05  dpenkler
+
+	* [r1794] Really remove unused files
+
+2018-12-13 17:02  dpenkler
+
+	* [r1793] Add UDEV_LIBDIR to Makefile.ams\nRemove unused files
+
+2018-12-13 13:44  fmhess
+
+	* [r1792] Added --with-udev-libdir configure option, defaulted
+	  to PREFIX/lib/udev.
+
+2018-12-13 12:24  dpenkler
+
+	* [r1791] Rename and move udevadm wrapper to libdir
+
+2018-12-13 12:17  fmhess
+
+	* [r1790] Add missing define of UDEV_LIB_DIR to prevent files from
+	  getting installed into root directory.
+
+2018-12-13 12:13  fmhess
+
+	* [r1789] Replaced udev scripts ni_usb_gpib and agilent_82357a with
+	  a single generic script.
+
+2018-12-13 11:53  fmhess
+
+	* [r1788] Really delete usermap files this time.
+
+2018-12-13 11:47  fmhess
+
+	* [r1787] Pull out firmware loading into a single udev script
+	  gpib_udev_fxloader.
+
+2018-12-13 11:44  dpenkler
+
+	* [r1786] Use #!/bin/sh instead of #!/bin/bash
+
+2018-12-13 11:11  dpenkler
+
+	* [r1785] Add wrapper script for udevadm
+
+2018-12-12 18:04  dpenkler
+
+	* [r1784] Fix udev rules scripts for agilent usb
+
+2018-12-12 15:43  fmhess
+
+	* [r1783] Generate usb script/rules during "make all" rather
+	  than possibly waiting until "make install", where the
+	  user may be running as root.
+
+2018-12-12 15:27  fmhess
+
+	* [r1782] Fixed assignment that was supposed to be a comparison
+
+2018-12-12 14:03  fmhess
+
+	* [r1781] Removed obsolete hotplug usermaps.
+
+	  Fixed problems with usb udev rules not working if the driver
+	  module was not already loaded when the hardware was plugged
+	  in.
+
+	  Made usb drivers respond to the sysfs device path of their
+	  usb interface rather than the parent usb device. This is helpful
+	  since the driver binds to the interfaces rather than the device.
+
+2018-12-12 06:25  fmhess
+
+	* [r1780] Update comments in agilent_82357a udev script to use
+	  new --serial and --sysfs-device-path gpib_config options.
+
+2018-12-10 10:49  fmhess
+
+	* [r1779] Added linux/atomic.h compatibility header.
+
+2018-12-10 10:36  fmhess
+
+	* [r1778] Added a couple more devices to ni_usb_gpib.usermap.
+
+2018-12-10 10:28  fmhess
+
+	* [r1777] Add kernel driver support for selecting hardware by sysfs
+	  device path
+	  or serial number.
+
+2018-12-10 10:27  fmhess
+
+	* [r1776] Add support for selecting hardware by sysfs device path
+	  or serial number. Updated gpib_config docs with
+	  missing info on some options. Noted in docs that
+	  gpib.conf will be in the sysconfdir, which isn't
+	  always /etc/ depending on configuration.
+
+2018-12-10 10:11  fmhess
+
+	* [r1775] Add device ids for various ni adapters to
+	  ni_usb_gpib.usermap
+
+2018-12-07 09:12  dpenkler
+
+	* [r1774] Remove dependency on autoconf tools
+	  Modify INSTALL instructions
+	  Update drivers/gpib/Makefile
+	  Add Makefile to invoke kernel build scripts
+	  Add version.h to drivers/gpib/include
+	  Make definitions of smp_mb__xxx_atomic independent of kernel
+	  version
+	  Add VERBOSE flag for make, default is VERBOSE=0
+	  so that build log is more overseeable.
+	  Add HAVE_DEV_OF_NODE workaround for CentOS/RHEL7
+	  Fix compile warnings in lpvo
+
+2018-12-06 06:10  fmhess
+
+	* [r1773] Reverted r1766 since it was actually comparing the serial
+	  number to the device tree path. Linux doesn't seem to
+	  have a universal (for all bus types) way of specifying
+	  a piece of hardware by path, so we can't use the
+	  device tree path to specify a usb device anyways.
+
+2018-12-05 11:19  dpenkler
+
+	* [r1772] Apply gpib_lines patch from Tomislav Ivek
+
+2018-11-29 08:29  dpenkler
+
+	* [r1771] Change barrier() to mb() to be generic
+
+2018-11-28 19:02  dpenkler
+
+	* [r1770] Add kernel version ifdef for smp atomics
+
+2018-11-28 18:02  dpenkler
+
+	* [r1769] Add compat fixes for kernels < 3.15 and 3.16
+
+2018-11-28 14:36  dpenkler
+
+	* [r1768] Add patch from Tomislav Ivek
+
+	  The current linux-gpib Python class can run into a double-close
+	  situation. This bug is related to a design point in Gpib.Gpib
+	  which
+	  cleans up its GPIB handle only on Python's GC cycle. This is not
+	  guaranteed to run when the programmer expects it to and in
+	  extreme
+	  cases might even leak resources. This is resolved by adding a
+	  Gpib.close() method for user-controlled cleanup.
+
+2018-11-28 10:26  fmhess
+
+	* [r1767] Applied patch from Derek Kozel <derek.kozel@gmail.com>:
+
+	  During the linux-gpib-kernel make install process the kernel
+	  modules_install command is run bit the DESTDIR argument is not
+	  passed
+	  in meaning that it will always try to install to the system
+	  directory
+	  rather than a custom directory. Adding
+	  INSTALL_MOD_PATH="$(DESTDIR)" to
+	  the command correctly passes the information.
+
+2018-11-16 20:30  fmhess
+
+	* [r1766] Applied patch from Manuel Mommertz
+	  manuel.mommertz@desy.de to
+	  permit selection of ni usb gpib adapter by device path.
+
+2018-11-15 18:08  dpenkler
+
+	* [r1765] add dependency on perl/Makefile.PL to force build
+
+2018-11-07 19:09  fmhess
+
+	* [r1764] Makefile.PL is generated from Makefile.PL.in now.
+	  Also, use abs_top_srcdir/abs_top_builddir instead
+	  of hard coding dir paths.
+
+2018-11-07 18:05  dpenkler
+
+	* [r1762] Commit for 4.2.0
+	  - Fix top level README.txt
+	  - Bump version in user part
+	  - Add missing file Makefile.PL.in
+
+
 2018-11-07 13:23  dpenkler
 
 	* [r1761] Add top level Readme and update Changelog

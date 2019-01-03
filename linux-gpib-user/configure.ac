@@ -1,7 +1,7 @@
 
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([linux-gpib-user], [4.2.0])
+AC_INIT([linux-gpib-user], [4.2.1])
 # libtool version: current:revision:age
 #
 # If the library source code has changed at all since the last update, then
@@ -114,7 +114,7 @@ AC_CHECK_HEADER([libguile.h],[],[BIND_GUILE="no";AC_MSG_NOTICE([libguile headers
 
 AC_CHECK_HEADER(readline/readline.h,[readline_h=yes])
 AC_CHECK_HEADER(readline/history.h,[history_h=yes])
-if test $readline_lib = "yes" && test $readline_h = "yes" && test $history_h = "yes"; then
+if test "$readline_lib" = "yes" && test "$readline_h" = "yes" && test "$history_h" = "yes"; then
    AC_SUBST([LIB_READLINE_CFLAGS], ["-DREADLINE"])
 fi
 

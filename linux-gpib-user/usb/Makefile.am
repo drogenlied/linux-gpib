@@ -8,7 +8,7 @@
 #   (at your option) any later version.
 
 SUBDIRS = agilent_82357a ni_usb_gpib
-EXTRA_DIST = 98-gpib-generic.rules gpib_udev_fxloader gpib_udev_config udevadm.sh
+EXTRA_DIST = 98-gpib-generic.rules gpib_udev_fxloader.in gpib_udev_config udevadm.sh
 CLEANFILES = gpib_udev_fxloader
 
 UDEV_RULES_DIR = $(sysconfdir)/udev/rules.d
