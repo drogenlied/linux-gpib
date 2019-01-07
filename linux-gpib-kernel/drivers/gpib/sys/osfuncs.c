@@ -556,13 +556,13 @@ static int read_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
 	remain = read_cmd.requested_transfer_count - read_cmd.completed_transfer_count;
 
 	/* Check write access to buffer */
-	if(!access_ok(VERIFY_WRITE, userbuf, remain))
+	if(!COMPAT_ACCESS_OK(VERIFY_WRITE, userbuf, remain))
 		return -EFAULT;
 
 	smp_mb__before_atomic();
 	atomic_set(&desc->io_in_progress, 1);
 	smp_mb__after_atomic();
-	
+
 	/* Read buffer loads till we fill the user supplied buffer */
 	while(remain > 0 && end_flag == 0)
 	{
@@ -631,7 +631,7 @@ static int command_ioctl( gpib_file_private_t *file_priv,
 	remain = cmd.requested_transfer_count - cmd.completed_transfer_count;
 
 	/* Check read access to buffer */
-	if(!access_ok(VERIFY_READ, userbuf, remain))
+	if(!COMPAT_ACCESS_OK(VERIFY_READ, userbuf, remain))
 		return -EFAULT;
 
 	/* Write buffer loads till we empty the user supplied buffer.
@@ -642,7 +642,7 @@ static int command_ioctl( gpib_file_private_t *file_priv,
 	smp_mb__before_atomic();
 	atomic_set(&desc->io_in_progress, 1);
 	smp_mb__after_atomic();
-	
+
 	do
 	{
 		fault = copy_from_user(board->buffer, userbuf, (board->buffer_length < remain) ?
@@ -663,7 +663,7 @@ static int command_ioctl( gpib_file_private_t *file_priv,
 			smp_mb__before_atomic();
 			atomic_set(&desc->io_in_progress, 0);
 			smp_mb__after_atomic();
-			
+
 			wake_up_interruptible( &board->wait );
 			break;
 		}
@@ -710,7 +710,7 @@ static int write_ioctl(gpib_file_private_t *file_priv, gpib_board_t *board,
 	remain = write_cmd.requested_transfer_count - write_cmd.completed_transfer_count;
 
 	/* Check read access to buffer */
-	if(!access_ok(VERIFY_READ, userbuf, remain))
+	if(!COMPAT_ACCESS_OK(VERIFY_READ, userbuf, remain))
 		return -EFAULT;
 
 	smp_mb__before_atomic();
@@ -1506,9 +1506,9 @@ static int select_device_path_ioctl( gpib_board_config_t *config, unsigned long 
 
 	selection = vmalloc(sizeof(select_device_path_ioctl_t));
 	if(selection == NULL) return -ENOMEM;
-	
+
 	retval = copy_from_user( selection, ( void * ) arg, sizeof(select_device_path_ioctl_t) );
-	if( retval ) 
+	if( retval )
 	{
 		vfree(selection);
 		return -EFAULT;
@@ -1536,9 +1536,9 @@ static int select_serial_number_ioctl( gpib_board_config_t *config, unsigned lon
 
 	selection = vmalloc(sizeof(select_serial_number_ioctl_t));
 	if(selection == NULL) return -ENOMEM;
-	
+
 	retval = copy_from_user( selection, ( void * ) arg, sizeof(select_serial_number_ioctl_t) );
-	if( retval ) 
+	if( retval )
 	{
 		vfree(selection);
 		return -EFAULT;
