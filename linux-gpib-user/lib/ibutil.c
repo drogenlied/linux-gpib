@@ -264,7 +264,7 @@ int open_gpib_handle( ibConf_t *conf )
 
 	board = interfaceBoard( conf );
 
-	open_cmd.handle = -1;
+	open_cmd.handle = 0;
 	open_cmd.pad = conf->settings.pad;
 	open_cmd.sad = conf->settings.sad;
 	open_cmd.is_board = conf->is_interface;
