@@ -65,7 +65,7 @@ fi
 mylog "loading firmware $FIRMWARE for $PRODUCT to $DEVICE"
 
 if [ "$SS_LOADER" = "" ]; then
-	SS_LOADER_OPTION = ""
+	SS_LOADER_OPTION=""
 else
 	# missing second stage loader?
 	if [ ! -r $SS_LOADER ]; then
@@ -73,7 +73,7 @@ else
 		exit 1
 	fi
 
-	SS_LOADER_OPTION = "-s $SS_LOADER"
+	SS_LOADER_OPTION="-s $SS_LOADER"
 	mylog "using second stage loader $SS_LOADER"
 fi
 
