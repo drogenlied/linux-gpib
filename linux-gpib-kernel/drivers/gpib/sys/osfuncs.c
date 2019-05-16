@@ -21,6 +21,7 @@
 #include <linux/fcntl.h>
 #include <linux/kmod.h>
 #include <linux/string.h>
+#include <linux/uaccess.h>
 #include <linux/vmalloc.h>
 #include <linux/version.h>
 
