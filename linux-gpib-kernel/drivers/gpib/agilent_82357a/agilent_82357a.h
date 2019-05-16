@@ -138,7 +138,7 @@ enum xfer_abort_type
 	XA_FLUSH = 0x1
 };
 
-#define STATUS_DATA_LEN 8
+#define STATUS_DATA_LEN 2
 #define INTERRUPT_BUF_LEN 8
 
 typedef struct
@@ -166,7 +166,6 @@ typedef struct
         agilent_82357a_urb_context_t context;
 	unsigned bulk_out_endpoint;
 	unsigned interrupt_in_endpoint;
-        uint8_t *status_data;
 	unsigned is_cic : 1;
 } agilent_82357a_private_t;
 
