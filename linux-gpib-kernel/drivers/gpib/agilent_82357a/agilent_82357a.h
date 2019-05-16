@@ -138,7 +138,7 @@ enum xfer_abort_type
 	XA_FLUSH = 0x1
 };
 
-#define STATUS_DATA_LEN 2
+#define STATUS_DATA_LEN 8
 #define INTERRUPT_BUF_LEN 8
 
 typedef struct
