@@ -792,6 +792,12 @@ path is the absolute path to the device's directory under /sys/devices, with the
 	</row>
 	<row>
 	<entry>National Instruments</entry>
+	<entry>PCIe-GPIB</entry>
+	<entry>tnt4882.ko</entry>
+	<entry>ni_pci</entry>
+	</row>
+	<row>
+	<entry>National Instruments</entry>
 	<entry>PCI-GPIB+</entry>
 	<entry>tnt4882.ko</entry>
 	<entry>ni_pci</entry>
