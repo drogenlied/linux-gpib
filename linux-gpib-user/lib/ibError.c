@@ -105,7 +105,7 @@ char strtime[60];
     /*if ( ibsta & LOK )  fprintf(stderr," LOK");*/
     /*if ( ibsta & REM )  fprintf(stderr," REM");*/
     if ( ibsta & CIC )  fprintf(stderr," CIC");
-    if ( ibsta & ATN )  fprintf(stderr," ATM");
+    if ( ibsta & ATN )  fprintf(stderr," ATN");
     if ( ibsta & TACS ) fprintf(stderr," TACS");
     if ( ibsta & LACS ) fprintf(stderr," LACS");
     /*if ( ibsta & DTAS ) fprintf(stderr," DATS");*/
