@@ -28,8 +28,8 @@ cb7210 connected to channel 0 of a pl330 dma controller.
 
 MODULE_LICENSE("GPL");
 
-int fluke_attach_holdoff_all(gpib_board_t *board, gpib_board_config_t config);
-int fluke_attach_holdoff_end(gpib_board_t *board, gpib_board_config_t config);
+int fluke_attach_holdoff_all(gpib_board_t *board, const gpib_board_config_t *config);
+int fluke_attach_holdoff_end(gpib_board_t *board, const gpib_board_config_t *config);
 void fluke_detach(gpib_board_t *board);
 static int fluke_config_dma(gpib_board_t *board, int output);
 irqreturn_t fluke_gpib_internal_interrupt(gpib_board_t *board);
@@ -67,10 +67,10 @@ int fluke_write(gpib_board_t *board, uint8_t *buffer, size_t length, int send_eo
 	fluke_private_t *priv = board->private_data;
 	return nec7210_write(board, &priv->nec7210_priv, buffer, length, send_eoi, bytes_written);
 }
-ssize_t fluke_command(gpib_board_t *board, uint8_t *buffer, size_t length)
+int fluke_command(gpib_board_t *board, uint8_t *buffer, size_t length, size_t *bytes_written)
 {
 	fluke_private_t *priv = board->private_data;
-	return nec7210_command(board, &priv->nec7210_priv, buffer, length);
+	return nec7210_command(board, &priv->nec7210_priv, buffer, length, bytes_written);
 }
 int fluke_take_control(gpib_board_t *board, int synchronous)
 {
@@ -206,16 +206,29 @@ unsigned int fluke_t1_delay( gpib_board_t *board, unsigned int nano_sec )
 	return retval;
 }
 
-static int wait_for_idle(gpib_board_t *board, short wake_on_listener_idle,
-	short wake_on_talker_idle)
+static int lacs_or_read_ready(gpib_board_t *board)
+{
+	const fluke_private_t *e_priv = board->private_data;
+	const nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
+	unsigned long flags;
+	int retval;
+	
+	spin_lock_irqsave(&board->spinlock, flags);
+	retval = test_bit(LACS_NUM, &board->status) || test_bit(READ_READY_BN, &nec_priv->state);
+	spin_unlock_irqrestore(&board->spinlock, flags);
+	return retval;
+}
+
+/* Wait until it is possible for a read to do something useful.  This
+ * is not essential, it only exists to prevent RFD holdoff from being released pointlessly. */
+static int wait_for_read(gpib_board_t *board)
 {
 	fluke_private_t *e_priv = board->private_data;
 	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
 	int retval = 0;
-// 	printk("%s: enter\n", __FUNCTION__);
+
 	if(wait_event_interruptible(board->wait,
-		(wake_on_listener_idle && test_bit(LACS_NUM, &board->status) == 0) ||
-		(wake_on_talker_idle && test_bit(TACS_NUM, &board->status) == 0) ||
+		lacs_or_read_ready(board) ||
 		test_bit(DEV_CLEAR_BN, &nec_priv->state) ||
 		test_bit(TIMO_NUM, &board->status)))
 	{
@@ -225,7 +238,6 @@ static int wait_for_idle(gpib_board_t *board, short wake_on_listener_idle,
 		retval = -ETIMEDOUT;
 	if(test_and_clear_bit(DEV_CLEAR_BN, &nec_priv->state))
 		retval = -EINTR;
-// 	printk("%s: exit, retval=%i\n", __FUNCTION__, retval);
 	return retval;
 }
 
@@ -253,6 +265,16 @@ static int source_handshake_is_sgns(fluke_private_t *e_priv)
 	return 1;
 }
 
+static int source_handshake_is_sids_or_sgns(fluke_private_t *e_priv)
+{
+	unsigned source_handshake_bits;
+
+	source_handshake_bits = fluke_paged_read_byte(e_priv, STATE1_REG, STATE1_PAGE) & SOURCE_HANDSHAKE_MASK;
+	
+	return (source_handshake_bits == SOURCE_HANDSHAKE_SGNS_BITS) || 
+		(source_handshake_bits == SOURCE_HANDSHAKE_SIDS_BITS);
+}
+
 /* Wait until the gpib chip is ready to accept a data out byte.
  * If the chip is SGNS it is probably waiting for a a byte to
  * be written to it.
@@ -262,10 +284,10 @@ static int wait_for_data_out_ready(gpib_board_t *board)
 	fluke_private_t *e_priv = board->private_data;
 	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
 	int retval = 0;
-// 	printk("%s: enter\n", __FUNCTION__);
+//	printk("%s: enter\n", __FUNCTION__);
 
 	if(wait_event_interruptible(board->wait,
-		source_handshake_is_sgns(e_priv) ||
+		(test_bit(TACS_NUM, &board->status) && source_handshake_is_sgns(e_priv)) ||
 		test_bit(DEV_CLEAR_BN, &nec_priv->state) ||
 		test_bit(TIMO_NUM, &board->status)))
 	{
@@ -275,7 +297,29 @@ static int wait_for_data_out_ready(gpib_board_t *board)
 		retval = -ETIMEDOUT;
 	if(test_and_clear_bit(DEV_CLEAR_BN, &nec_priv->state))
 		retval = -EINTR;
-// 	printk("%s: exit, retval=%i\n", __FUNCTION__, retval);
+//	printk("%s: exit, retval=%i\n", __FUNCTION__, retval);
+	return retval;
+}
+
+static int wait_for_sids_or_sgns(gpib_board_t *board)
+{
+	fluke_private_t *e_priv = board->private_data;
+	nec7210_private_t *nec_priv = &e_priv->nec7210_priv;
+	int retval = 0;
+//	printk("%s: enter\n", __FUNCTION__);
+
+	if(wait_event_interruptible(board->wait,
+		source_handshake_is_sids_or_sgns(e_priv) ||
+		test_bit(DEV_CLEAR_BN, &nec_priv->state) ||
+		test_bit(TIMO_NUM, &board->status)))
+	{
+		retval = -ERESTARTSYS;
+	}
+	if(test_bit(TIMO_NUM, &board->status))
+		retval = -ETIMEDOUT;
+	if(test_and_clear_bit(DEV_CLEAR_BN, &nec_priv->state))
+		retval = -EINTR;
+//	printk("%s: exit, retval=%i\n", __FUNCTION__, retval);
 	return retval;
 }
 
@@ -292,8 +336,10 @@ static void fluke_dma_callback(void *arg)
 	wake_up_interruptible(&board->wait);
 
 	fluke_gpib_internal_interrupt(board);
+	smp_mb__before_atomic();
 	clear_bit(DMA_WRITE_IN_PROGRESS_BN, &nec_priv->state);
 	clear_bit(DMA_READ_IN_PROGRESS_BN, &nec_priv->state);
+	smp_mb__after_atomic();
 //	printk("%s: exit\n", __FUNCTION__);
 	spin_unlock_irqrestore(&board->spinlock, flags);
 }
@@ -315,8 +361,7 @@ static int fluke_dma_write(gpib_board_t *board,
 	dmaengine_terminate_all(e_priv->dma_channel);
 	// write-clear counter
 	writel(0x0, e_priv->write_transfer_counter);
-	retval = wait_for_idle(board, 1, 0);
-	if(retval < 0) return retval;
+
 	memcpy(e_priv->dma_buffer, buffer, length);
 	address = dma_map_single(NULL, e_priv->dma_buffer,
 		 length, DMA_TO_DEVICE);
@@ -340,20 +385,19 @@ static int fluke_dma_write(gpib_board_t *board,
 	nec7210_set_reg_bits(nec_priv, IMR2, HR_DMAO, HR_DMAO);
 	dmaengine_submit(tx_desc);
 	dma_async_issue_pending(e_priv->dma_channel);
-	
+
 	smp_mb__before_atomic();
 	clear_bit(WRITE_READY_BN, &nec_priv->state);
 	set_bit(DMA_WRITE_IN_PROGRESS_BN, &nec_priv->state);
 	smp_mb__after_atomic();
 
-// 	printk("%s: in spin lock\n", __FUNCTION__);
+	// 	printk("%s: in spin lock\n", __FUNCTION__);
 	spin_unlock_irqrestore(&board->spinlock, flags);
 
 //	printk("%s: waiting for write.\n", __FUNCTION__);
 	// suspend until message is sent
 	if(wait_event_interruptible(board->wait, 
-	   ((readl(e_priv->write_transfer_counter) & write_transfer_counter_mask) == length 
-			   /*&& test_bit(WRITE_READY_BN, &nec_priv->state) */) ||
+		((readl(e_priv->write_transfer_counter) & write_transfer_counter_mask) == length) ||
 		test_bit(BUS_ERROR_BN, &nec_priv->state) || 
 		test_bit(DEV_CLEAR_BN, &nec_priv->state) ||
 		test_bit(TIMO_NUM, &board->status)))
@@ -376,11 +420,15 @@ static int fluke_dma_write(gpib_board_t *board,
 	{
 		fluke_dma_callback(board);
 	}
+	
+	/* if everything went fine, try to wait until last byte is actually
+	* transmitted across gpib (but don't try _too_ hard) */
+	if(retval == 0)
+		retval = wait_for_sids_or_sgns(board);
 
 	*bytes_written = readl(e_priv->write_transfer_counter) & write_transfer_counter_mask;
 	if(*bytes_written > length) BUG();
-	/*	printk("length=%i, *bytes_written=%i, residue=%i, retval=%i\n",
-		length, *bytes_written, get_dma_residue(e_priv->dma_channel), retval);*/
+
 cleanup:
 	dma_unmap_single(NULL, address, length, DMA_TO_DEVICE);
 //	printk("%s: exit, retval=%d\n", __FUNCTION__, retval);
@@ -409,13 +457,17 @@ static int fluke_accel_write(gpib_board_t *board,
 	smp_mb__before_atomic();
 	clear_bit(DEV_CLEAR_BN, &nec_priv->state); // XXX FIXME
 	smp_mb__after_atomic();
-
+	
 	if(send_eoi) --dma_remainder;
 // 	printk("%s: entering while loop\n", __FUNCTION__);
 	
 	while(dma_remainder > 0)
 	{
 		size_t num_bytes;
+
+		retval = wait_for_data_out_ready(board);
+		if(retval < 0) break;
+
 		transfer_size = (e_priv->dma_buffer_size < dma_remainder) ? 
 			e_priv->dma_buffer_size : dma_remainder;
 		retval = fluke_dma_write(board, buffer, transfer_size, &num_bytes);
@@ -433,15 +485,15 @@ static int fluke_accel_write(gpib_board_t *board,
 		size_t num_bytes;
 		// 		printk("%s: handling last byte\n", __FUNCTION__);
 		if(remainder != 1) BUG();
-		
+               
 		/* wait until we are sure we will be able to write the data byte
 		 * into the chip before we send AUX_SEOI.  This prevents a timeout
 		 * scenerio where we send AUX_SEOI but then timeout without getting
 		 * any bytes into the gpib chip.  This will result in the first byte
 		 * of the next write having a spurious EOI set on the first byte. */
 		retval = wait_for_data_out_ready(board);
-		if(retval < 0) return retval;
-		
+		if(retval < 0) return retval;               
+				
 		write_byte(nec_priv, AUX_SEOI, AUXMR);
 		retval = fluke_dma_write(board, buffer, remainder, &num_bytes);
 		*bytes_written += num_bytes;
@@ -481,6 +533,8 @@ static int fluke_dma_read(gpib_board_t *board, uint8_t *buffer,
 	dma_addr_t bus_address;
 	struct dma_async_tx_descriptor *tx_desc;
 	dma_cookie_t dma_cookie;
+	int i;
+	static const int timeout = 10;
 	
 	// 	printk("%s: enter, bus_address=0x%x, length=%i\n", __FUNCTION__, (unsigned)bus_address,
 // 		   (int)length);
@@ -490,8 +544,6 @@ static int fluke_dma_read(gpib_board_t *board, uint8_t *buffer,
 	if(length == 0)
 		return 0;
 
-	retval = wait_for_idle(board, 0, 1);
-	if(retval < 0) return retval;
 	bus_address = dma_map_single(NULL, e_priv->dma_buffer,
 		length, DMA_FROM_DEVICE);
 
@@ -542,6 +594,23 @@ static int fluke_dma_read(gpib_board_t *board, uint8_t *buffer,
 		retval = -ETIMEDOUT;
 	if(test_bit(DEV_CLEAR_BN, &nec_priv->state))
 		retval = -EINTR;
+	
+	/* If we woke up because of end, wait until the dma transfer has pulled
+	 * the data byte associated with the end before we cancel the dma transfer. */
+	if(test_bit(RECEIVED_END_BN, &nec_priv->state))
+	{ 
+		for (i = 0; i < timeout; ++i)
+		{
+			if(test_bit(DMA_READ_IN_PROGRESS_BN, &nec_priv->state) == 0) break;
+			if( (read_byte( nec_priv, ADR0 ) & DATA_IN_STATUS) == 0) break;
+			udelay(10);
+		}
+		if(i == timeout)
+		{
+			printk("fluke_gpib: timedout out waiting for dma to transfer end data byte.\n");
+		}
+	}
+	
 	// stop the dma transfer
 	nec7210_set_reg_bits(nec_priv, IMR2, HR_DMAI, 0);
 	/* delay a little just to make sure any bytes in dma controller's fifo get
@@ -565,12 +634,8 @@ static int fluke_dma_read(gpib_board_t *board, uint8_t *buffer,
 	 * byte still sitting on the cb7210.
 	 */
 	spin_lock_irqsave(&board->spinlock, flags);
-	if(read_byte( nec_priv, ADR0 ) & DATA_IN_STATUS)
+	if(test_bit(READ_READY_BN, &nec_priv->state) == 0)
 	{
-		set_bit(READ_READY_BN, &nec_priv->state);
-	}else
-	{
-		clear_bit(READ_READY_BN, &nec_priv->state);
 		// There is no byte sitting on the cb7210.  If we
 		// saw an end interrupt, we need to deal with it now
 		if(test_and_clear_bit(RECEIVED_END_BN, &nec_priv->state)) 
@@ -579,8 +644,6 @@ static int fluke_dma_read(gpib_board_t *board, uint8_t *buffer,
 		}
 	}
 	spin_unlock_irqrestore(&board->spinlock, flags);
-// 	printk("\tbytes_read=%i, residue=%i, end=%i, retval=%i, wait_retval=%i\n", 
-// 		   *bytes_read, residue, *end, retval, wait_retval);
 
 	return retval;
 }
@@ -594,17 +657,22 @@ static ssize_t fluke_accel_read(gpib_board_t *board, uint8_t *buffer, size_t len
 	size_t transfer_size;
 	int retval = 0;
 	int dma_nbytes;
+	
 /*	printk("%s: enter, buffer=0x%p, length=%i\n", __FUNCTION__,
 		   buffer, (int)length);
 	printk("\t dma_buffer=0x%p\n", e_priv->dma_buffer);*/
-
+	*end = 0;
+	*bytes_read = 0;
+	
 	smp_mb__before_atomic();
 	clear_bit(DEV_CLEAR_BN, &nec_priv->state); // XXX FIXME
 	smp_mb__after_atomic();
+	
+	retval = wait_for_read(board);
+	if(retval < 0) return retval;
 
-	*end = 0;
-	*bytes_read = 0;
 	nec7210_release_rfd_holdoff(board, nec_priv);
+
 // 	printk("%s: entering while loop\n", __FUNCTION__);
 	while(remain > 0)
 	{
@@ -646,7 +714,6 @@ gpib_interface_t fluke_unaccel_interface =
 	parallel_poll: fluke_parallel_poll,
 	parallel_poll_configure: fluke_parallel_poll_configure,
 	parallel_poll_response: fluke_parallel_poll_response,
-	local_parallel_poll_mode: NULL, // XXX
 	line_status: fluke_line_status,
 	update_status: fluke_update_status,
 	primary_address: fluke_primary_address,
@@ -680,7 +747,6 @@ gpib_interface_t fluke_hybrid_interface =
 	parallel_poll: fluke_parallel_poll,
 	parallel_poll_configure: fluke_parallel_poll_configure,
 	parallel_poll_response: fluke_parallel_poll_response,
-	local_parallel_poll_mode: NULL, // XXX
 	line_status: fluke_line_status,
 	update_status: fluke_update_status,
 	primary_address: fluke_primary_address,
@@ -709,7 +775,6 @@ gpib_interface_t fluke_interface =
 	parallel_poll: fluke_parallel_poll,
 	parallel_poll_configure: fluke_parallel_poll_configure,
 	parallel_poll_response: fluke_parallel_poll_response,
-	local_parallel_poll_mode: NULL, // XXX
 	line_status: fluke_line_status,
 	update_status: fluke_update_status,
 	primary_address: fluke_primary_address,
@@ -726,6 +791,13 @@ irqreturn_t fluke_gpib_internal_interrupt(gpib_board_t *board)
 	fluke_private_t *priv = board->private_data;
 	nec7210_private_t *nec_priv = &priv->nec7210_priv;
 	int retval = IRQ_NONE;
+
+	smp_mb__before_atomic();
+
+	if(read_byte( nec_priv, ADR0 ) & DATA_IN_STATUS)
+	{
+		set_bit(READ_READY_BN, &nec_priv->state);
+	}
 
 	status0 = fluke_paged_read_byte(priv, ISR0_IMR0, ISR0_IMR0_PAGE);
 	status1 = read_byte( nec_priv, ISR1 );
@@ -747,11 +819,24 @@ irqreturn_t fluke_gpib_internal_interrupt(gpib_board_t *board)
 	}
 */
 
+	if(read_byte( nec_priv, ADR0 ) & DATA_IN_STATUS)
+	{
+		if(test_bit(RFD_HOLDOFF_BN, &nec_priv->state))
+		{
+			set_bit(READ_READY_BN, &nec_priv->state);
+		}
+	}else
+	{
+		clear_bit(READ_READY_BN, &nec_priv->state);
+	}
+
 	if( retval == IRQ_HANDLED )
 	{
 		wake_up_interruptible( &board->wait );
 	}
     
+	smp_mb__after_atomic();
+
 	return retval;
 }
 
@@ -878,7 +963,7 @@ static bool gpib_dma_channel_filter(struct dma_chan *chan, void *filter_param)
 	return chan->chan_id == 0;
 }
 
-static int fluke_attach_impl(gpib_board_t *board, gpib_board_config_t config, unsigned handshake_mode)
+static int fluke_attach_impl(gpib_board_t *board, const gpib_board_config_t *config, unsigned handshake_mode)
 {
 	fluke_private_t *e_priv;
 	nec7210_private_t *nec_priv;
@@ -890,7 +975,7 @@ static int fluke_attach_impl(gpib_board_t *board, gpib_board_config_t config, un
 	
 	if(!fluke_gpib_pdev)
 	{
-		printk("No gpib platform device was found, attach failed.");
+		printk("No gpib platform device was found, attach failed.\n");
 		return -ENODEV;
 	}
 	
@@ -989,13 +1074,12 @@ static int fluke_attach_impl(gpib_board_t *board, gpib_board_config_t config, un
 	
 	return fluke_init(e_priv, board, handshake_mode);
 }
-
-int fluke_attach_holdoff_all(gpib_board_t *board, gpib_board_config_t config)
+int fluke_attach_holdoff_all(gpib_board_t *board, const gpib_board_config_t *config)
 {
 	return fluke_attach_impl(board, config, HR_HLDA);
 }
 
-int fluke_attach_holdoff_end(gpib_board_t *board, gpib_board_config_t config)
+int fluke_attach_holdoff_end(gpib_board_t *board, const gpib_board_config_t *config)
 {
 	return fluke_attach_impl(board, config, HR_HLDE);
 }
