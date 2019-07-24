@@ -8,6 +8,7 @@ obj-y += agilent_82350b/
 obj-$(CONFIG_USB) += agilent_82357a/
 obj-y += cb7210/
 obj-y += cec/
+obj-y += eastwood/
 obj-y += fmh_gpib/
 obj-y += hp_82335/
 obj-y += hp_82341/
