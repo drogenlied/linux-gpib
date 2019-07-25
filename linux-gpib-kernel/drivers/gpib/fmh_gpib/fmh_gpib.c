@@ -556,7 +556,10 @@ static int fmh_gpib_dma_read(gpib_board_t *board, uint8_t *buffer,
 		retval = -EINTR;
 	// stop the dma transfer
 	nec7210_set_reg_bits(nec_priv, IMR2, HR_DMAI, 0);
-	fifos_write(e_priv, 0, FIFO_CONTROL_STATUS_REG); 
+	fifos_write(e_priv, 0, FIFO_CONTROL_STATUS_REG);
+	// give time for pl330 to transfer any in-flight data, since
+	// pl330 will throw it away when dmaengine_pause is called.
+	udelay(10);
 	residue = fmh_gpib_get_dma_residue(e_priv->dma_channel, dma_cookie);
 	BUG_ON(residue > length);
 	*bytes_read += length - residue;
