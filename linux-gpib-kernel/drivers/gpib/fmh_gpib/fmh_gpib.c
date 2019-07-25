@@ -279,9 +279,13 @@ static void fmh_gpib_dma_callback(void *arg)
 	wake_up_interruptible(&board->wait);
 
 	fmh_gpib_internal_interrupt(board);
+
+	smp_mb__before_atomic();
 	clear_bit(DMA_WRITE_IN_PROGRESS_BN, &nec_priv->state);
 	clear_bit(DMA_READ_IN_PROGRESS_BN, &nec_priv->state);
-//	printk("%s: exit\n", __FUNCTION__);
+	smp_mb__after_atomic();
+
+	//	printk("%s: exit\n", __FUNCTION__);
 	spin_unlock_irqrestore(&board->spinlock, flags);
 }
 
@@ -343,8 +347,10 @@ static int fmh_gpib_dma_write(gpib_board_t *board,
 
 	dmaengine_submit(tx_desc);
 	dma_async_issue_pending(e_priv->dma_channel);
+	smp_mb__before_atomic();
 	clear_bit(WRITE_READY_BN, &nec_priv->state);
 	set_bit(DMA_WRITE_IN_PROGRESS_BN, &nec_priv->state);
+	smp_mb__after_atomic();
 // 	printk("%s: in spin lock\n", __FUNCTION__);
 	spin_unlock_irqrestore(&board->spinlock, flags);
 
@@ -404,7 +410,11 @@ static int fmh_gpib_accel_write(gpib_board_t *board,
 	
 	*bytes_written = 0;
 	if(length < 1) return 0;
+
+	smp_mb__before_atomic();
 	clear_bit(DEV_CLEAR_BN, &nec_priv->state); // XXX FIXME
+	smp_mb__after_atomic();
+
 	if(send_eoi) --dma_remainder;
 // 	printk("%s: entering while loop\n", __FUNCTION__);
 	
@@ -524,7 +534,9 @@ static int fmh_gpib_dma_read(gpib_board_t *board, uint8_t *buffer,
 	dma_cookie = dmaengine_submit(tx_desc);
 	dma_async_issue_pending(e_priv->dma_channel);
 
+	smp_mb__before_atomic();
 	set_bit(DMA_READ_IN_PROGRESS_BN, &nec_priv->state);
+	smp_mb__after_atomic();
 	
 	spin_unlock_irqrestore(&board->spinlock, flags);
 // 	printk("waiting for data transfer.\n");
@@ -598,6 +610,7 @@ static void fmh_gpib_release_rfd_holdoff(gpib_board_t *board, fmh_gpib_private_t
 	unsigned long flags;
 	
 	spin_lock_irqsave(&board->spinlock, flags);
+	smp_mb__before_atomic();
 
 	ext_status_1 = read_byte(nec_priv, EXT_STATUS_1_REG);
 
@@ -624,6 +637,7 @@ static void fmh_gpib_release_rfd_holdoff(gpib_board_t *board, fmh_gpib_private_t
 			clear_bit( RFD_HOLDOFF_BN, &nec_priv->state );
 	}
 	
+	smp_mb__after_atomic();
 	spin_unlock_irqrestore(&board->spinlock, flags);
 }
 
@@ -638,7 +652,9 @@ static int fmh_gpib_accel_read(gpib_board_t *board, uint8_t *buffer, size_t leng
 	size_t dma_nbytes;
 	unsigned long flags;
 	
+	smp_mb__before_atomic();
 	clear_bit(DEV_CLEAR_BN, &nec_priv->state); // XXX FIXME
+	smp_mb__after_atomic();
 	*end = 0;
 	*bytes_read = 0;
 	
@@ -668,7 +684,9 @@ static int fmh_gpib_accel_read(gpib_board_t *board, uint8_t *buffer, size_t leng
 	if(test_bit(RFD_HOLDOFF_BN, &nec_priv->state) == 0)
 	{
 		write_byte(nec_priv, AUX_RFD_HOLDOFF_ASAP, AUXMR);
+		smp_mb__before_atomic();
 		set_bit(RFD_HOLDOFF_BN, &nec_priv->state);
+		smp_mb__after_atomic();
 	}
 	spin_unlock_irqrestore(&board->spinlock, flags);
 
@@ -755,6 +773,8 @@ irqreturn_t fmh_gpib_internal_interrupt(gpib_board_t *board)
 
 	ext_status_1 = read_byte(nec_priv, EXT_STATUS_1_REG);
 
+	smp_mb__before_atomic();
+
 	if(ext_status_1 & DATA_IN_STATUS_BIT)
 		set_bit(READ_READY_BN, &nec_priv->state);
 	else
@@ -785,6 +805,8 @@ irqreturn_t fmh_gpib_internal_interrupt(gpib_board_t *board)
 			set_bit(RECEIVED_END_BN, &nec_priv->state);
 	}else
 		clear_bit(RECEIVED_END_BN, &nec_priv->state);
+
+	smp_mb__after_atomic();
 
 	if( retval == IRQ_HANDLED )
 	{
@@ -909,7 +931,11 @@ int fmh_gpib_init(fmh_gpib_private_t *e_priv, gpib_board_t *board, int handshake
 
 	spin_lock_irqsave(&board->spinlock, flags);
 	write_byte(nec_priv, AUX_RFD_HOLDOFF_ASAP, AUXMR);
+
+	smp_mb__before_atomic();
 	set_bit(RFD_HOLDOFF_BN, &nec_priv->state);
+	smp_mb__after_atomic();
+
 	spin_unlock_irqrestore(&board->spinlock, flags);
 	return 0;
 }
