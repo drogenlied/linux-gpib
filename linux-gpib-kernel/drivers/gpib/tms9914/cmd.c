@@ -66,10 +66,6 @@ int tms9914_command(gpib_board_t *board, tms9914_private_t *priv,
 	int retval = 0;
 	unsigned long flags;
 
-	smp_mb__before_atomic();
-	clear_bit( BUS_ERROR_BN, &priv->state );
-	smp_mb__after_atomic();
-
 	*bytes_written = 0;
 	while(*bytes_written < length)
 	{
