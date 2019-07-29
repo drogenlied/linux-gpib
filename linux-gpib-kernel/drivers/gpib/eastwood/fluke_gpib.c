@@ -23,6 +23,7 @@ cb7210 connected to channel 0 of a pl330 dma controller.
 #include <linux/dma-mapping.h>
 #include <linux/ioport.h>
 #include <linux/module.h>
+#include <linux/mod_devicetable.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 
@@ -648,7 +649,7 @@ static int fluke_dma_read(gpib_board_t *board, uint8_t *buffer,
 	return retval;
 }
 
-static ssize_t fluke_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length,
+static int fluke_accel_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 	int *end, size_t *bytes_read)
 {
 	fluke_private_t *e_priv = board->private_data;
@@ -656,7 +657,7 @@ static ssize_t fluke_accel_read(gpib_board_t *board, uint8_t *buffer, size_t len
 	size_t remain = length;
 	size_t transfer_size;
 	int retval = 0;
-	int dma_nbytes;
+	size_t dma_nbytes;
 	
 /*	printk("%s: enter, buffer=0x%p, length=%i\n", __FUNCTION__,
 		   buffer, (int)length);
@@ -1003,7 +1004,7 @@ static int fluke_attach_impl(gpib_board_t *board, const gpib_board_config_t *con
 	nec_priv->iobase = ioremap_nocache(e_priv->gpib_iomem_res->start, 
 			resource_size(e_priv->gpib_iomem_res));
 	printk("gpib: iobase %lx remapped to %p, length=%d\n", (unsigned long)e_priv->gpib_iomem_res->start,
-		nec_priv->iobase, resource_size(e_priv->gpib_iomem_res));
+		nec_priv->iobase, (int)resource_size(e_priv->gpib_iomem_res));
 	if (!nec_priv->iobase) {
 		dev_err(&fluke_gpib_pdev->dev, "Could not map I/O memory\n");
 		return -ENOMEM;
@@ -1040,7 +1041,7 @@ static int fluke_attach_impl(gpib_board_t *board, const gpib_board_config_t *con
 			resource_size(e_priv->write_transfer_counter_res));
 	printk("gpib: write transfer counter %lx remapped to %p, length=%d\n",
 		(unsigned long)e_priv->write_transfer_counter_res->start, e_priv->write_transfer_counter, 
-		resource_size(e_priv->write_transfer_counter_res));
+		(int)resource_size(e_priv->write_transfer_counter_res));
 	if (!e_priv->write_transfer_counter) {
 		dev_err(&fluke_gpib_pdev->dev, "Could not map I/O memory\n");
 		return -ENOMEM;
