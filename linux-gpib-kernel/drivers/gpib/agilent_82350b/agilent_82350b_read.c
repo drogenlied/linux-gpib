@@ -84,7 +84,7 @@ int agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t leng
 			test_bit(DEV_CLEAR_BN, &tms_priv->state) ||
 			test_bit(TIMO_NUM, &board->status)))
 		{
-			printk("%s: write wait interrupted\n", driver_name);
+			printk("%s: read wait interrupted\n", driver_name);
 			retval = -ERESTARTSYS;
 			break;
 		}
@@ -108,7 +108,7 @@ int agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t leng
 		}
 		if(test_bit(DEV_CLEAR_BN, &tms_priv->state))
 		{
-			printk("%s: device clear interrupted write\n", driver_name);
+			printk("%s: device clear interrupted read\n", driver_name);
 			retval = -EINTR;
 			break;
 		}
