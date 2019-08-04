@@ -48,6 +48,25 @@ int tms9914_take_control(gpib_board_t *board, tms9914_private_t *priv, int synch
 	return 0;
 }
 
+/* The agilent 82350B has a buggy implementation of tcs which interferes with the
+ * operation of tca.  It appears to be based on the controller state machine
+ * described in the TI 9900 TMS9914A data manual published in 1982.  This
+ * manual describes tcs as putting the controller into a CWAS 
+ * state where it waits indefinitely for ANRS and ignores tca.  Since a 
+ * functioning tca is far more important than tcs, we work around the
+ * problem by never issuing tcs.
+ * 
+ * I don't know if this problem exists in the real tms9914a or just in the fpga
+ * of the 82350B.  For now, only the agilent_82350b uses this workaround.
+ * The rest of the tms9914 based drivers still use tms9914_take_control
+ * directly (which does issue tcs).
+ */
+int tms9914_take_control_workaround(gpib_board_t *board, tms9914_private_t *priv, int synchronous)
+{
+	if(synchronous) return -ETIMEDOUT;
+	else return tms9914_take_control(board, priv, synchronous);
+}
+
 int tms9914_go_to_standby(gpib_board_t *board, tms9914_private_t *priv)
 {
 	int i;
@@ -176,6 +195,7 @@ void tms9914_release_holdoff(tms9914_private_t *priv)
 EXPORT_SYMBOL_GPL(tms9914_t1_delay);
 EXPORT_SYMBOL_GPL(tms9914_request_system_control);
 EXPORT_SYMBOL_GPL(tms9914_take_control);
+EXPORT_SYMBOL_GPL(tms9914_take_control_workaround);
 EXPORT_SYMBOL_GPL(tms9914_go_to_standby);
 EXPORT_SYMBOL_GPL(tms9914_interface_clear);
 EXPORT_SYMBOL_GPL(tms9914_remote_enable);

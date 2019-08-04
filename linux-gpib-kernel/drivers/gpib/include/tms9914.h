@@ -97,6 +97,10 @@ int tms9914_command(gpib_board_t *board, tms9914_private_t *priv,
 	uint8_t *buffer, size_t length, size_t *bytes_written);
 int tms9914_take_control(gpib_board_t *board, tms9914_private_t *priv,
 	int syncronous);
+/* alternate version of tms9914_take_control which works around buggy tcs
+ * implementation. */
+int tms9914_take_control_workaround(gpib_board_t *board, tms9914_private_t *priv,
+	int syncronous);
 int tms9914_go_to_standby(gpib_board_t *board, tms9914_private_t *priv);
 void tms9914_request_system_control( gpib_board_t *board, tms9914_private_t *priv,
 	int request_control );

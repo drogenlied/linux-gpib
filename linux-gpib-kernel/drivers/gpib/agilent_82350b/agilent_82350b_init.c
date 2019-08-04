@@ -74,7 +74,7 @@ int agilent_82350b_command( gpib_board_t *board, uint8_t *buffer, size_t length,
 int agilent_82350b_take_control( gpib_board_t *board, int synchronous )
 {
 	agilent_82350b_private_t *priv = board->private_data;
-	return tms9914_take_control( board, &priv->tms9914_priv, synchronous );
+	return tms9914_take_control_workaround( board, &priv->tms9914_priv, synchronous );
 }
 int agilent_82350b_go_to_standby( gpib_board_t *board )
 {
