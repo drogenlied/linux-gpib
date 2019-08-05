@@ -19,6 +19,36 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+/* Strictly speaking, addressing the controller as talker is
+ * not part of the FindListener 488.2 protocol.  However, doing
+ * so helps with boards that cannot reliably read the state of
+ * the NDAC line due to their transceivers.  Such boards can
+ * only read the state of NDAC (and NRFD and SRQ) when the
+ * transceiver has the line configured as an input.  Addressing
+ * the board as talker insures NDAC (and NRFD) will be inputs
+ * while the FindListener protocol is running.
+ */
+int address_board_as_talker( ibConf_t *conf)
+{
+	uint8_t cmd[2];
+	int j;
+	int retval;
+	unsigned int board_pad;
+	int board_sad;
+	ibBoard_t *board;
+
+	board = interfaceBoard( conf );
+
+	j = 0;
+	/* controller's talk address */
+	if(query_pad(board, &board_pad) < 0) return 0;
+	cmd[j++] = MTA(board_pad);
+	if(query_sad(board, &board_sad) < 0) return 0;
+	if(board_sad >= 0 )
+		cmd[j++] = MSA(board_sad);
+	return my_ibcmd( conf, cmd, j );
+}
+
 int listenerFound( ibConf_t *conf, const Addr4882_t addressList[] )
 {
 	uint8_t *cmd;
@@ -125,6 +155,13 @@ void FindLstn( int boardID, const Addr4882_t padList[],
 		return;
 	}
 
+	retval = address_board_as_talker(conf);
+	if( retval < 0 )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+	
 	resultIndex = 0;
 	for( i = 0; i < numAddresses( padList ); i++ )
 	{
@@ -199,6 +236,12 @@ int ibln( int ud, int pad, int sad, short *found_listener )
 	conf = enter_library( ud );
 	if( conf == NULL )
 		return exit_library( ud, 1 );
+
+	retval = address_board_as_talker(conf);
+	if( retval < 0 )
+	{
+		return exit_library( ud, 1 );
+	}
 
 	switch( sad )
 	{
