@@ -2890,6 +2890,15 @@ volatile int ibsta;
 	<link LINKEND="gpib-protocol-bus-lines">bus line</link>
 	(see <link LINKEND="reference-function-iblines">iblines()</link>).
 	</para>
+	<para>
+	This function has the additional effect of addressing the board as talker
+	for the duration of the Find Listeners protocol,
+	which is beyond what IEEE 488.2 specifies.
+	This is done because some boards cannot reliably read the state of
+	the NDAC bus line unless they are the talker.  Being the talker 
+	causes the board's gpib transceiver to configure NDAC as an input,
+	so its state can be reliably read from the bus through the transceiver.
+	</para>
 </refsect1>
 <refsect1>
 	<title>
@@ -4470,6 +4479,15 @@ constant NOADDR.
 	<para>
 	Your GPIB board must have the capability to monitor the NDAC bus line in order
 	to use this function (see <link LINKEND="reference-function-iblines">iblines</link>).
+	</para>
+	<para>
+	This function has the additional effect of addressing the board as talker
+	for the duration of the Find Listeners protocol,
+	which is beyond what IEEE 488.2 specifies.
+	This is done because some boards cannot reliably read the state of
+	the NDAC bus line unless they are the talker.  Being the talker 
+	causes the board's gpib transceiver to configure NDAC as an input,
+	so its state can be reliably read from the bus through the transceiver.
 	</para>
 </refsect1>
 </refentry>
