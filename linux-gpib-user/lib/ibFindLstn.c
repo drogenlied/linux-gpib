@@ -49,6 +49,18 @@ int address_board_as_talker( ibConf_t *conf)
 	return my_ibcmd( conf, cmd, j );
 }
 
+int unlisten_untalk( ibConf_t *conf)
+{
+	uint8_t cmd[2];
+	int j;
+	int retval;
+
+	j = 0;
+	cmd[j++] = UNL;
+	cmd[j++] = UNT;
+	return my_ibcmd( conf, cmd, j );
+}
+
 int listenerFound( ibConf_t *conf, const Addr4882_t addressList[] )
 {
 	uint8_t *cmd;
@@ -224,6 +236,14 @@ void FindLstn( int boardID, const Addr4882_t padList[],
 			}
 		}
 	}
+	
+	retval = unlisten_untalk(conf);
+	if( retval < 0 )
+	{
+		exit_library( boardID, 1 );
+		return;
+	}
+
 	exit_library( boardID, 0 );
 } /* FindLstn */
 
@@ -259,5 +279,10 @@ int ibln( int ud, int pad, int sad, short *found_listener )
 
 	*found_listener = retval;
 
+	retval = unlisten_untalk(conf);
+	if( retval < 0 )
+	{
+		return exit_library( ud, 1 );
+	}
 	return exit_library( ud, 0 );
 }
