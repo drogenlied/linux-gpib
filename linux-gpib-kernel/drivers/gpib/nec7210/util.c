@@ -73,6 +73,12 @@ void nec7210_parallel_poll_response( gpib_board_t *board, nec7210_private_t *pri
 		write_byte( priv, AUX_CPPF , AUXMR );
 }
 
+/* FIXME: This is really only adequate for chips that do a 488.2 style reqt/reqf
+ * based on bit 6 of the SPMR (see chapter 11.3.3 of 488.2). For simpler chips that simply
+ * set rsv directly based on bit 6, we either need to do more hardware setup to expose
+ * the 488.2 capability (for example with NI chips), or we need to implement the
+ * 488.2 set srv state machine in the driver (if that is even viable).
+ */
 void nec7210_serial_poll_response(gpib_board_t *board, nec7210_private_t *priv, uint8_t status)
 {
 	unsigned long flags;
