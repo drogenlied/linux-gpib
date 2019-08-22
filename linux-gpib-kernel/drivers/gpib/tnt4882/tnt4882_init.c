@@ -160,12 +160,58 @@ void tnt4882_parallel_poll_response(gpib_board_t *board, int ist )
 	tnt4882_private_t *priv = board->private_data;
 	nec7210_parallel_poll_response( board, &priv->nec7210_priv, ist );
 }
-// XXX tnt4882 has fancier serial poll capability, should send reqt AUX command
+
+/* this is just used by the old nec7210 isa interfaces, the newer
+ * boards use tnt4882_serial_poll_response2
+ */
 void tnt4882_serial_poll_response(gpib_board_t *board, uint8_t status)
 {
 	tnt4882_private_t *priv = board->private_data;
 	nec7210_serial_poll_response(board, &priv->nec7210_priv, status);
 }
+
+void tnt4882_serial_poll_response2(gpib_board_t *board, 
+	uint8_t status, int new_reason_for_service)
+{
+	tnt4882_private_t *priv = board->private_data;
+	unsigned long flags;
+	const int MSS = status & request_service_bit;
+	const int reqt = MSS && new_reason_for_service;
+	const int reqf = MSS == 0;
+
+	spin_lock_irqsave( &board->spinlock, flags );
+	if( reqt )
+	{
+		priv->nec7210_priv.srq_pending = 1;
+
+		smp_mb__before_atomic();
+		clear_bit(SPOLL_NUM, &board->status);
+		smp_mb__after_atomic();
+	}else if ( reqf )
+	{
+		priv->nec7210_priv.srq_pending = 0;
+	}
+
+	if( reqt )
+	{
+		/* It may seem like a race to issue reqt before updating
+		 * the status byte, but it is not.  The chip does not
+		 * issue the reqt until the SPMR is written to at
+		 * a later time.
+		 */
+		write_byte(&priv->nec7210_priv, AUX_REQT, AUXMR);
+	} else if ( reqf )
+	{
+		write_byte(&priv->nec7210_priv, AUX_REQF, AUXMR);
+	}
+	/* We need to always zero bit 6 of the status byte before writing it to
+	 * the SPMR to insure we are using
+	 * serial poll mode SP1, and not accidentally triggering mode SP3.
+	*/
+	write_byte(&priv->nec7210_priv, status & ~request_service_bit, SPMR);
+	spin_unlock_irqrestore( &board->spinlock, flags );
+}
+
 uint8_t tnt4882_serial_poll_status( gpib_board_t *board )
 {
 	tnt4882_private_t *priv = board->private_data;
@@ -200,7 +246,7 @@ gpib_interface_t ni_pci_interface =
 	update_status: tnt4882_update_status,
 	primary_address: tnt4882_primary_address,
 	secondary_address: tnt4882_secondary_address,
-	serial_poll_response: tnt4882_serial_poll_response,
+	serial_poll_response2: tnt4882_serial_poll_response2,
 	serial_poll_status: tnt4882_serial_poll_status,
 	t1_delay: tnt4882_t1_delay,
 	return_to_local: tnt4882_return_to_local,
@@ -229,7 +275,7 @@ gpib_interface_t ni_pci_accel_interface =
 	update_status: tnt4882_update_status,
 	primary_address: tnt4882_primary_address,
 	secondary_address: tnt4882_secondary_address,
-	serial_poll_response: tnt4882_serial_poll_response,
+	serial_poll_response2: tnt4882_serial_poll_response2,
 	serial_poll_status: tnt4882_serial_poll_status,
 	t1_delay: tnt4882_t1_delay,
 	return_to_local: tnt4882_return_to_local,
@@ -258,7 +304,7 @@ gpib_interface_t ni_isa_interface =
 	update_status: tnt4882_update_status,
 	primary_address: tnt4882_primary_address,
 	secondary_address: tnt4882_secondary_address,
-	serial_poll_response: tnt4882_serial_poll_response,
+	serial_poll_response2: tnt4882_serial_poll_response2,
 	serial_poll_status: tnt4882_serial_poll_status,
 	t1_delay: tnt4882_t1_delay,
 	return_to_local: tnt4882_return_to_local,
@@ -287,7 +333,7 @@ gpib_interface_t ni_nat4882_isa_interface =
 	update_status: tnt4882_update_status,
 	primary_address: tnt4882_primary_address,
 	secondary_address: tnt4882_secondary_address,
-	serial_poll_response: tnt4882_serial_poll_response,
+	serial_poll_response2: tnt4882_serial_poll_response2,
 	serial_poll_status: tnt4882_serial_poll_status,
 	t1_delay: tnt4882_t1_delay,
 	return_to_local: tnt4882_return_to_local,
@@ -345,7 +391,7 @@ gpib_interface_t ni_isa_accel_interface =
 	update_status: tnt4882_update_status,
 	primary_address: tnt4882_primary_address,
 	secondary_address: tnt4882_secondary_address,
-	serial_poll_response: tnt4882_serial_poll_response,
+	serial_poll_response2: tnt4882_serial_poll_response2,
 	serial_poll_status: tnt4882_serial_poll_status,
 	t1_delay: tnt4882_t1_delay,
 	return_to_local: tnt4882_return_to_local,
@@ -374,7 +420,7 @@ gpib_interface_t ni_nat4882_isa_accel_interface =
 	update_status: tnt4882_update_status,
 	primary_address: tnt4882_primary_address,
 	secondary_address: tnt4882_secondary_address,
-	serial_poll_response: tnt4882_serial_poll_response,
+	serial_poll_response2: tnt4882_serial_poll_response2,
 	serial_poll_status: tnt4882_serial_poll_status,
 	t1_delay: tnt4882_t1_delay,
 	return_to_local: tnt4882_return_to_local,
