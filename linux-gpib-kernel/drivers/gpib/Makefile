@@ -2,7 +2,10 @@ ifneq ($(LINUXINCLUDE),)
 	LINUXINCLUDE := -I$(GPIB_TOP_DIR)/compat/include $(LINUXINCLUDE)
 endif
 
-subdir-ccflags-y := -I$(src)/include -DHAVE_DEV_OF_NODE=$(HAVE_DEV_OF_NODE)
+subdir-ccflags-y := -I$(src)/include \
+			-DHAVE_DEV_OF_NODE=$(HAVE_DEV_OF_NODE) \
+			-DGPIB_CONFIG_KERNEL_DEBUG=$(GPIB_CONFIG_KERNEL_DEBUG)
+
 
 obj-y += agilent_82350b/
 obj-$(CONFIG_USB) += agilent_82357a/
