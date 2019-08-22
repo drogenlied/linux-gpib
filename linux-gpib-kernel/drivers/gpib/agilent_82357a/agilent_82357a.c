@@ -422,7 +422,7 @@ static int agilent_82357a_abort(agilent_82357a_private_t *a_priv, int flush)
 	uint16_t wIndex = 0;
 	uint8_t *status_data;
 	static const unsigned status_data_len = 2;
-	
+
 	status_data = kmalloc(status_data_len, GFP_KERNEL);
 	if(status_data == NULL) return -ENOMEM;
 
@@ -460,7 +460,7 @@ static int agilent_82357a_abort(agilent_82357a_private_t *a_priv, int flush)
 		retval = -EIO;
 		break;
 	}
-	
+
 cleanup:
 	kfree(status_data);
 	return retval;
@@ -604,7 +604,7 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 	for(j = 0; j < length; j++)
 		out_data[i++] = buffer[j];
 	//printk("%s: sending bulk msg(), send_commands=%i\n", __FUNCTION__, send_commands);
-	
+
 	smp_mb__before_atomic();
 	clear_bit(AIF_WRITE_COMPLETE_BN, &a_priv->interrupt_flags);
 	smp_mb__after_atomic();
@@ -645,12 +645,12 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 	}
 
 	status_data = kmalloc(STATUS_DATA_LEN, GFP_KERNEL);
-	if(status_data == NULL) 
+	if(status_data == NULL)
 	{
 		mutex_unlock(&a_priv->bulk_transfer_lock);
 		return -ENOMEM;
 	}
-	
+
 	// printk("%s: receiving control msg\n", __FUNCTION__);
 	retval = agilent_82357a_receive_control_msg(a_priv, agilent_82357a_control_request, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 		XFER_STATUS, 0, status_data, STATUS_DATA_LEN, 100);
@@ -688,7 +688,7 @@ int agilent_82357a_take_control(gpib_board_t *board, int synchronous)
 	struct agilent_82357a_register_pairlet write;
 	int retval;
 	int i;
-	
+
 	write.address = AUXCR;
 	if(synchronous)
 	{
@@ -830,7 +830,7 @@ unsigned int agilent_82357a_update_status( gpib_board_t *board, unsigned int cle
 	int retval;
 
 	smp_mb__before_atomic();
-	
+
 	board->status &= ~clear_mask;
 	if(a_priv->is_cic)
 		set_bit( CIC_NUM, &board->status);
@@ -1113,7 +1113,7 @@ static int agilent_82357a_setup_urbs(gpib_board_t *board)
 	}
 	mutex_unlock(&a_priv->interrupt_alloc_lock);
 	return 0;
-	
+
  setup_exit:
 	if(a_priv->interrupt_buffer)
 	        kfree(a_priv->interrupt_buffer);
@@ -1288,7 +1288,7 @@ static int agilent_82357a_init(gpib_board_t *board)
 static inline int agilent_82357a_device_match(struct usb_interface *interface, const gpib_board_config_t *config)
 {
 	struct usb_device * const usbdev = interface_to_usbdev(interface);
-	
+
 	if(gpib_match_device_path(&interface->dev, config->device_path) == 0)
 	{
 		return 0;
@@ -1496,7 +1496,7 @@ static int agilent_82357a_driver_probe(struct usb_interface *interface,
 	char *path;
 	static const int pathLength = 1024;
 
-//	printk("agilent_82357a_driver_probe\n");
+	GPIB_DPRINTK("agilent_82357a_driver_probe\n");
 	if(mutex_lock_interruptible(&agilent_82357a_hotplug_lock))
 		return -ERESTARTSYS;
 	usb_get_dev(interface_to_usbdev(interface));
@@ -1506,7 +1506,7 @@ static int agilent_82357a_driver_probe(struct usb_interface *interface,
 		{
 			agilent_82357a_driver_interfaces[i] = interface;
 			usb_set_intfdata(interface, NULL);
-//			printk("set bus interface %i to address 0x%p\n", i, interface);
+			GPIB_DPRINTK("set bus interface %i to address 0x%p\n", i, interface);
 			break;
 		}
 	}
@@ -1558,7 +1558,7 @@ static void agilent_82357a_driver_disconnect(struct usb_interface *interface)
 					mutex_unlock(&a_priv->control_alloc_lock);
 				}
 			}
-//			printk("nulled agilent_82357a_driver_interfaces[%i]\n", i);
+			GPIB_DPRINTK("nulled agilent_82357a_driver_interfaces[%i]\n", i);
 			agilent_82357a_driver_interfaces[i] = NULL;
 			break;
 		}
@@ -1568,7 +1568,7 @@ static void agilent_82357a_driver_disconnect(struct usb_interface *interface)
 		printk("unable to find interface in agilent_82357a_driver_interfaces[]? bug?\n");
 	}
 	usb_put_dev(interface_to_usbdev(interface));
-	printk("%s: exit\n", __FUNCTION__);
+//	printk("%s: exit\n", __FUNCTION__);
 	mutex_unlock(&agilent_82357a_hotplug_lock);
 }
 
