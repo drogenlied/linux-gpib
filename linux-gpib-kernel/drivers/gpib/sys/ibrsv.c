@@ -32,7 +32,7 @@ int ibrsv2( gpib_board_t *board, uint8_t status_byte, int new_reason_for_service
 		board->interface->serial_poll_response( board, status_byte );
 	} else 
 	{
-		return -ENOTSUPP;
+		return -EOPNOTSUPP;
 	}
 	
 	return 0;

@@ -52,7 +52,7 @@ int internal_ibrsv2( ibConf_t *conf, int status_byte, int new_reason_for_service
 	}
 	if( retval < 0 )
 	{
-		if( errno == ENOTSUP )
+		if( errno == EOPNOTSUPP )
 		{
 			setIberr( ECAP );
 		}else
