@@ -5740,7 +5740,7 @@ addressList[ 4 ] = NOADDR;
 	MLA() returns a 'my listen address'
 	<link LINKEND="reference-command-bytes">command byte</link> corresponding
 	to the <parameter>address</parameter> argument.  The <parameter>address</parameter>
-	my be between 0 and 30.
+	may be between 0 and 30.
 	</para>
 </refsect1>
 <refsect1>
@@ -5779,7 +5779,7 @@ addressList[ 4 ] = NOADDR;
 	MSA() returns a 'my secondary address'
 	<link LINKEND="reference-command-bytes">command byte</link> corresponding
 	to the <parameter>address</parameter> argument.  The <parameter>address</parameter>
-	my be between 0 and 30.  This macro is also useful for mangling
+	may be between 0 and 30.  This macro is also useful for mangling
 	secondary addresses from the 'real' values between 0 and 30 to the
 	range 0x60 to 0x7e used by most of the library's functions.
 	</para>
@@ -5820,7 +5820,7 @@ addressList[ 4 ] = NOADDR;
 	MTA() returns a 'my talk address'
 	<link LINKEND="reference-command-bytes">command byte</link> corresponding
 	to the <parameter>address</parameter> argument.  The <parameter>address</parameter>
-	my be between 0 and 30.
+	may be between 0 and 30.
 	</para>
 </refsect1>
 <refsect1>
