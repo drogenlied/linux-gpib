@@ -112,8 +112,10 @@ C) Installing the Linux-GPIB drivers
 	drivers to /lib/modules/<kernel_version>/gpib.
 
         If the build was made against a different kernel from the
-        running one the LINUX_SRCDIR variable used also must be
-        specified: sudo make LINUX_SRCDIR=<path_to_linux_kernel_sources>
+        running one the LINUX_SRCDIR variable used for the build 
+        must also be specified: 
+        
+        sudo make install LINUX_SRCDIR=<path_to_linux_kernel_sources>
 
 	To install the modules to a different directory a prefix can
 	be added to the installation directory using the
