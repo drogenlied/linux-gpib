@@ -215,6 +215,34 @@ static __inline__ uint8_t PPE_byte( unsigned int dio_line, int sense )
 	return cmd;
 }
 
+static __inline__ int in_addressed_command_group( uint8_t command )
+{
+	return (command & 0x70) == 0x0;
+}
+
+static __inline__ int in_universal_command_group( uint8_t command )
+{
+	return (command & 0x70) == 0x10;
+}
+
+static __inline__ int in_listen_address_group( uint8_t command )
+{
+	return (command & 0x60) == 0x20;
+}
+
+static __inline__ int in_talk_address_group( uint8_t command )
+{
+	return (command & 0x60) == 0x40;
+}
+
+static __inline__ int in_primary_command_group( uint8_t command )
+{
+	return in_addressed_command_group(command) || 
+		in_universal_command_group(command) || 
+		in_listen_address_group(command) || 
+		in_talk_address_group(command);
+}
+
 static __inline__ int gpib_address_equal( unsigned int pad1, int sad1, unsigned int pad2, int sad2 )
 {
 	if( pad1 == pad2 )
