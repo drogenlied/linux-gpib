@@ -47,6 +47,7 @@ static int sad_ioctl( gpib_board_t *board, gpib_file_private_t *file_priv,
 	unsigned long arg );
 static int eos_ioctl( gpib_board_t *board, unsigned long arg );
 static int request_service_ioctl( gpib_board_t *board, unsigned long arg );
+static int request_service2_ioctl( gpib_board_t *board, unsigned long arg );
 static int iobase_ioctl( gpib_board_config_t *config, unsigned long arg );
 static int irq_ioctl( gpib_board_config_t *config, unsigned long arg );
 static int dma_ioctl( gpib_board_config_t *config, unsigned long arg );
@@ -433,6 +434,10 @@ long ibioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 			break;
 		case IBRSV:
 			retval = request_service_ioctl( board, arg );
+			goto done;
+			break;
+		case IBRSV2:
+			retval = request_service2_ioctl( board, arg );
 			goto done;
 			break;
 		case IBSIC:
@@ -1201,7 +1206,19 @@ static int request_service_ioctl( gpib_board_t *board, unsigned long arg )
 	if( retval )
 		return -EFAULT;
 
-	return ibrsv( board, status_byte );
+	return ibrsv2( board, status_byte, status_byte & request_service_bit );
+}
+
+static int request_service2_ioctl( gpib_board_t *board, unsigned long arg )
+{
+	request_service2_t request_service2_cmd;
+	int retval;
+
+	retval = copy_from_user( &request_service2_cmd, ( void * ) arg, sizeof( request_service2_t ) );
+	if( retval )
+		return -EFAULT;
+
+	return ibrsv2( board, request_service2_cmd.status_byte, request_service2_cmd.new_reason_for_service );
 }
 
 static int iobase_ioctl( gpib_board_config_t *config, unsigned long arg )

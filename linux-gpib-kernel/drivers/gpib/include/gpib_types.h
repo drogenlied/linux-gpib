@@ -143,9 +143,33 @@ struct gpib_interface_struct
 	void (*secondary_address)(gpib_board_t *board, unsigned int address,
 	int enable);
 	/* Sets the byte the board should send in response to a serial poll.
-	 * Function should also request service if appropriate.
+	 * This function should also start or stop requests for service via 
+	 * IEEE 488.2 reqt/reqf, based on MSS (bit 6 of the status_byte).  
+	 * If the more flexible serial_poll_response2 is implemented by the 
+	 * driver, then this method should be left NULL since it will not
+	 * be used.  This method can generate spurious service requests
+	 * which are allowed by IEEE 488.2, but not ideal.
+	 * 
+	 * This method should implement the serial poll response method described
+	 * by IEEE 488.2 section 11.3.3.4.3 "Allowed Coupled Control of
+	 * STB, reqt, and reqf".
 	 */
-	void (*serial_poll_response)(gpib_board_t *board, uint8_t status);
+	void (*serial_poll_response)(gpib_board_t *board, uint8_t status_byte);
+	/* Sets the byte the board should send in response to a serial poll.
+	 * This function should also request service via IEEE 488.2 reqt/reqf
+	 * based on MSS (bit 6 of the status_byte) and new_reason_for_service.
+	 * reqt should be set true if new_reason_for_service is true,
+	 * and reqf should be set true if MSS is false.  This function
+	 * will never be called with MSS false and new_reason_for_service 
+	 * true simultaneously, so don't worry about that case.
+	 * 
+	 * This method implements the serial poll response method described
+	 * by IEEE 488.2 section 11.3.3.4.1 "Preferred Implementation".
+	 * 
+	 * If this method is left NULL by the driver, then the user library 
+	 * function ibrsv2 will not work.
+	 */
+	void (*serial_poll_response2)(gpib_board_t *board, uint8_t status_byte, int new_reason_for_service);
 	/* returns the byte the board will send in response to a serial poll.
 	 */
 	uint8_t ( *serial_poll_status )( gpib_board_t *board );
