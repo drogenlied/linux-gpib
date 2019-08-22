@@ -2069,7 +2069,7 @@ static int ni_usb_hs_wait_for_ready(ni_usb_private_t *ni_priv)
 		retval = 0;
  ready_out:
 	kfree(buffer);
-	printk("%s: %s exit retval=%d\n", __FILE__,__FUNCTION__,retval);
+	GPIB_DPRINTK("%s: %s exit retval=%d\n", __FILE__,__FUNCTION__,retval);
 	return retval;
 }
 
