@@ -95,7 +95,8 @@ irqreturn_t tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t
 			break;
 		case PPU:
 			tms9914_parallel_poll_configure(board, priv, PPD);
-			write_byte(priv, AUX_VAL, AUXCR);	
+			write_byte(priv, AUX_VAL, AUXCR);
+			/* fall through */
 		default:
 			if(priv->ppoll_configure_state)
 			{
