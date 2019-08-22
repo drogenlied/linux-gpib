@@ -312,7 +312,7 @@ int ibconfig( int ud, int option, int value )
 				else return exit_library( ud, 0 );
 				break;
 			case IbcRsv:
-				retval = internal_ibrsv( conf, value );
+				retval = internal_ibrsv2( conf, value, value & request_service_bit );
 				if( retval < 0 )
 					return exit_library( ud, 1 );
 				else

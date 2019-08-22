@@ -109,7 +109,7 @@ void internal_ibeot( ibConf_t *conf, int send_eoi );
 int internal_ibist( ibConf_t *conf, int ist );
 int internal_ibppc( ibConf_t *conf, int v );
 int internal_ibsre( ibConf_t *conf, int v );
-int internal_ibrsv( ibConf_t *conf, int v );
+int internal_ibrsv2( ibConf_t *conf, int status_byte, int new_reason_for_service );
 int internal_iblines( ibConf_t *conf, short *line_status );
 int internal_ibgts( ibConf_t *conf, int shadow_handshake );
 int internal_ibrsc( ibConf_t *conf, int request_control );
