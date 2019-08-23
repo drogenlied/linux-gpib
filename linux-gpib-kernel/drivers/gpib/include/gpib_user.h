@@ -189,19 +189,27 @@ enum ppe_bits
 	PPC_DIO_MASK = 0x7
 };
 
+/* confine address to range 0 to 30. */
+static __inline__ unsigned int gpib_address_restrict(unsigned int addr)
+{
+	addr &= 0x1f;
+	if( addr == 0x1f ) addr = 0;
+	return addr;
+}
+
 static __inline__ uint8_t MLA( unsigned int addr )
 {
-	return addr | LAD;
+	return gpib_address_restrict(addr) | LAD;
 }
 
 static __inline__ uint8_t MTA( unsigned int addr )
 {
-	return addr | TAD;
+	return gpib_address_restrict(addr) | TAD;
 }
 
 static __inline__ uint8_t MSA( unsigned int addr )
 {
-	return addr | SAD;
+	return gpib_address_restrict(addr) | SAD;
 }
 
 static __inline__ uint8_t PPE_byte( unsigned int dio_line, int sense )
@@ -213,6 +221,19 @@ static __inline__ uint8_t PPE_byte( unsigned int dio_line, int sense )
 		cmd |= PPC_SENSE;
 	cmd |= ( dio_line - 1 ) & 0x7;
 	return cmd;
+}
+
+/* mask of bits that actually matter in a command byte */
+static const uint8_t gpib_command_mask = 0x7f;
+
+static __inline__ int is_PPE( uint8_t command )
+{
+	return (command & 0x70) == 0x60;
+}
+
+static __inline__ int is_PPD( uint8_t command )
+{
+	return (command & 0x70) == 0x70;
 }
 
 static __inline__ int in_addressed_command_group( uint8_t command )

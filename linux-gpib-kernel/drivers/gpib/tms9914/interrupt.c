@@ -84,7 +84,7 @@ irqreturn_t tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t
 	// unrecognized command received
 	if(status1 & HR_UNC)
 	{
-		unsigned short command_byte = read_byte(priv, CPTR);
+		unsigned short command_byte = read_byte(priv, CPTR) & gpib_command_mask;
 // 		printk("tms9914: command pass thru 0x%x\n", command_byte);
 		switch(command_byte)
 		{
@@ -98,10 +98,19 @@ irqreturn_t tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t
 			write_byte(priv, AUX_VAL, AUXCR);
 			break;
 		default:
-			if(command_byte >= PPE && command_byte <= PPD + 0xd)
+			if(is_PPE(command_byte) || is_PPD(command_byte))
 			{
 				if(priv->ppoll_configure_state)
 				{
+					/* IEEE 488.1 says we leave PACS when we receive the next command byte
+					 * which is in the primary command group.  PPE and PPD are not in
+					 * the primary command group.  However, since we don't get an interrupt
+					 * on every command byte, the best we can do is clear ppoll_configure_state
+					 * on PPE/PPD, which we ought to receive immediately after the PPC.
+					 * 
+					 */
+					priv->ppoll_configure_state = 0;
+
 					tms9914_parallel_poll_configure(board, priv, command_byte);
 					write_byte(priv, AUX_VAL, AUXCR);
 				}else
@@ -158,7 +167,7 @@ irqreturn_t tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t
 		{
 			printk( "tms9914: bug, APT interrupt without secondary addressing?\n" );
 		}
-		if( read_byte( priv, CPTR ) == MSA( board->sad ) )
+		if( (read_byte( priv, CPTR ) & gpib_command_mask) == MSA( board->sad ) )
 		{
 			write_byte(priv, AUX_VAL, AUXCR);
 		}else
