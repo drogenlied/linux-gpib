@@ -6207,7 +6207,7 @@ addressList[ 4 ] = NOADDR;
 	<entry>0x70 to 0x7e</entry>
 	<entry>MSA16 to MSA30, also PPD</entry>
 	<entry>When following a talk or listen address, this is
-	'my secondary address' 16 to 29.  When following a parallel
+	'my secondary address' 16 to 30.  When following a parallel
 	poll configure, this is 'parallel poll disable'.</entry>
 	</row>
 	<row>
