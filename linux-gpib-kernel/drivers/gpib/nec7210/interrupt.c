@@ -151,7 +151,7 @@ irqreturn_t nec7210_interrupt_have_status( gpib_board_t *board,
 	{
 		unsigned int command;
 
-		command = read_byte(priv, CPTR);
+		command = read_byte(priv, CPTR) & gpib_command_mask;
 		write_byte(priv, AUX_NVAL, AUXMR);
 		printk( "gpib: command pass through 0x%x\n", command );
 	}
