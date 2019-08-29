@@ -14,7 +14,7 @@ o) Unpacking the Software:
 	This install file describes the installation of "linux-gpib-user".
 	
 	Unpack the archives with the 'tar' program, for example
-	'tar -xzf linux-gpib-user-4.2.0.tar.gz'.  
+	'tar -xzf linux-gpib-user-4.3.0.tar.gz'.  
 
 
 B) Installing Linux-GPIB user space
@@ -52,14 +52,14 @@ o) cd to your linux-gpib-user directory and run the './configure' script.
 	KERNEL=="gpib[0-9]*", MODE="0660", GROUP="gpib" in your udev
 	rules.  This is already done by default if you ran
 	./configure --sysconfdir=/etc.
-        (see $(sysconfdir)/udev/rules.d/99-gpib-generic.rules
+        (see $(sysconfdir)/udev/rules.d/98-gpib-generic.rules
 	installed by 'make install')
 
-	In the unlikely case you are not using udev, you can use 'chmod' 
-	(or edit devfsd.conf if you are using devfs) to change the
-	device file permissions.  You may also
-	need to manually create the device files /dev/gpibX if they
-	don't already exist.  This can be done by running 
+	In the unlikely case you are not using udev, you can use
+	'chmod' (or edit devfsd.conf if you are using devfs) to change
+	the device file permissions.  You may also need to manually
+	create the device files /dev/gpibX if they don't already
+	exist.  This can be done by running
 	'make device_files_install'.
 	
 C) Configuring the driver modules
