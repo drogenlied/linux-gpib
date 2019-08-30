@@ -183,6 +183,9 @@ AM_CONDITIONAL([BIND_PYTHON], [test "$BIND_PYTHON" = "yes"])
 echo "Python binding: $BIND_PYTHON"
 AM_CONDITIONAL([BIND_TCL], [test "$BIND_TCL" = "yes"])
 echo "TCL binding: $BIND_TCL"
+AX_DEFINE_DIR([SYSCONFDIR], [sysconfdir], [System configuration directory])
+AS_ECHO "sysconfdir: [$SYSCONFDIR]"
+AS_ECHO ""
 
 AC_OUTPUT([\
 	Makefile \
