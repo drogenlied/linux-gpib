@@ -418,7 +418,7 @@ without plug-and-play cabability.</para>
 <para><option>-f, --file <replaceable>file_path</replaceable></option></para>
 <para>Specify file path for configuration file.  The values in the configuration
 file will be used as defaults for unspecified options.  The default configuration
-file is "/etc/gpib.conf".</para>
+file is "sysconfdir/gpib.conf".</para>
 
 <para><option>-h, --help</option></para>
 <para>Print help on options and exit.</para>
@@ -3615,7 +3615,7 @@ volatile int ibsta;
 	This function follows the preferred implementation technique described in
 	IEEE 488.2 section 11.3.3.4.1.  It can be used to avoid the spurious requests 
 	for service that <link LINKEND="reference-function-ibrsv">ibrsv()</link> is
-	prone to.  However, not all drivers/hardware are implement support for
+	prone to.  However, not all drivers/hardware implement support for
 	this function.  In such a case, this function may result in a ECAP error, and
 	you will have to fall back on using the simpler ibrsv().
 	</para>
@@ -3625,7 +3625,8 @@ volatile int ibsta;
 	The value for <parameter>new_reason_for_request</parameter> may be calculated
 	from:
 	<programlisting>
-	new_reason_for_request = (status_byte & service_request_enable) & ~(old_status_byte & old_service_request_enable);
+	new_reason_for_request = (status_byte &	service_request_enable) &
+                         	~(old_status_byte & old_service_request_enable);
 	</programlisting>
 	</para>
 </refsect1>
