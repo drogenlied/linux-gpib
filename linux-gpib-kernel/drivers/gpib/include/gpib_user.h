@@ -173,6 +173,7 @@ enum cmd_byte
 	PPU = 0x15,	/* parallel poll unconfigure 	*/
 	SPE = 0x18,	/* serial poll enable 		*/
 	SPD = 0x19,	/* serial poll disable 		*/
+	CFE = 0x1f, /* configure enable */
 	LAD = 0x20,	/* value to be 'ored' in to obtain listen address */
 	UNL = 0x3F,	/* unlisten 			*/
 	TAD = 0x40,	/* value to be 'ored' in to obtain talk address   */
@@ -221,6 +222,11 @@ static __inline__ uint8_t PPE_byte( unsigned int dio_line, int sense )
 		cmd |= PPC_SENSE;
 	cmd |= ( dio_line - 1 ) & 0x7;
 	return cmd;
+}
+
+static __inline__ uint8_t CFGn( unsigned int meters )
+{
+	return 0x6 | (meters & 0xf);
 }
 
 /* mask of bits that actually matter in a command byte */
