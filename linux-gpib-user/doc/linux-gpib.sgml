@@ -5677,6 +5677,48 @@ constant NOADDR.
 </refsect1>
 </refentry>
 
+<refentry ID="reference-function-cfgn">
+<refmeta>
+	<refentrytitle>CFGn</refentrytitle>
+	<manvolnum>3</manvolnum>
+</refmeta>
+<refnamediv>
+	<refname>CFGn</refname>
+	<refpurpose>generate 'configure n meters' command byte</refpurpose>
+</refnamediv>
+<refsynopsisdiv>
+	<funcsynopsis>
+	<funcsynopsisinfo>#include &lt;gpib/ib.h&gt;</funcsynopsisinfo>
+	<funcprototype>
+		<funcdef>uint8_t <function>CFGn</function></funcdef>
+		<paramdef>unsigned int <parameter>num_meters</parameter></paramdef>
+	</funcprototype>
+	</funcsynopsis>
+</refsynopsisdiv>
+<refsect1>
+	<title>
+	Description
+	</title>
+	<para>
+	CFGn() returns a 'configure n meters'
+	<link LINKEND="reference-command-bytes">command byte</link> corresponding
+	to the <parameter>num_meters</parameter> argument.  <parameter>num_meters</parameter> 
+	(valid values are 1 through 15)
+	specifies how many meters of cable are in your system.  This is necessary in
+	before high speed non-interlocked handshaking (a.k.a. HS488) can be used on the bus.  
+	The CFGn command byte must be preceded by a CFE command byte to take effect.
+	</para>
+</refsect1>
+<refsect1>
+	<title>
+	Return value
+	</title>
+	<para>
+	The appropriate CFGn command byte is returned.
+	</para>
+</refsect1>
+</refentry>
+
 <refentry ID="reference-function-get-pad">
 <refmeta>
 	<refentrytitle>GetPAD</refentrytitle>
@@ -6171,6 +6213,11 @@ addressList[ 4 ] = NOADDR;
 	<entry>Serial poll disable</entry>
 	</row>
 	<row>
+	<entry>0x1f</entry>
+	<entry>CFE</entry>
+	<entry>Configure enable</entry>
+	</row>
+	<row>
 	<entry>0x20 to 0x3e</entry>
 	<entry>MLA0 to MLA30</entry>
 	<entry>My (primary) listen address 0 to 30</entry>
@@ -6192,16 +6239,22 @@ addressList[ 4 ] = NOADDR;
 	</row>
 	<row>
 	<entry>0x60 to 0x6f</entry>
-	<entry>MSA0 to MSA15, also PPE</entry>
-	<entry>When following a talk or listen address, this is
-	'my secondary address' 0 to 15.  When following a parallel
-	poll configure, this is 'parallel poll enable'.  For
-	parallel poll enable, the least significant 3 bits
+	<entry>MSA0 to MSA15, also PPE, also CFG1 to CFG15</entry>
+	<entry>
+	<para>
+	When following a primary talk or primary listen address, this is
+	"my secondary address" MSA0 (0x60) to MSA15 (0x6f).  When following a PPC "parallel
+	poll configure", this is PPE "parallel poll enable".  When
+	following a CFE "configure enable", this is
+	CFG1 (0x61) to CFG15 (0x6f) "configure n meters". </para>
+	<para>
+	For parallel poll enable, the least significant 3 bits
 	of the command byte specify which DIO line the device
 	should use to send its parallel poll response.  The
 	fourth least significant bit (0x8)
 	indicates the 'sense' or polarity the device should use
 	when responding.
+	</para>
 	</entry>
 	</row>
 	<row>
