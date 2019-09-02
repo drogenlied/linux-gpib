@@ -2253,7 +2253,12 @@ volatile int ibsta;
 	<row>
 	<entry>IbcHSCableLength</entry>
 	<entry>0x1f</entry>
-	<entry>Useless, included only for compatibility.</entry>
+	<entry>Configures the total cable length in meters for your system, by sending the command
+	bytes CFE and CFGn.  This is required to enable high speed noninterlocked
+	handshaking (a.k.a. HS488) and set associated handshake timings.  
+	Valid <parameter>setting</parameter> values
+	are 0 through 15.  A value of zero disables noninterlocked handshaking,
+	otherwise the value is the total number of meters of cable.</entry>
 	<entry>board</entry>
 	</row>
 	<row>
