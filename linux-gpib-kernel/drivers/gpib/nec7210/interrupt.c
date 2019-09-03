@@ -153,7 +153,7 @@ irqreturn_t nec7210_interrupt_have_status( gpib_board_t *board,
 
 		command = read_byte(priv, CPTR) & gpib_command_mask;
 		write_byte(priv, AUX_NVAL, AUXMR);
-		printk( "gpib: command pass through 0x%x\n", command );
+//		printk( "gpib: command pass through 0x%x\n", command );
 	}
 
 	if(status1 & HR_ERR)

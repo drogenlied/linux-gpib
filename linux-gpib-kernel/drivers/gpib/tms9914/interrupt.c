@@ -90,6 +90,8 @@ irqreturn_t tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t
 		{
 		case PPConfig:
 			priv->ppoll_configure_state = 1;
+			/* AUX_PTS generates another UNC interrupt on the next command byte 
+			 * if it is in the secondary address group (such as PPE and PPD). */
 			write_byte(priv, AUX_PTS, AUXCR);
 			write_byte(priv, AUX_VAL, AUXCR);
 			break;
@@ -102,25 +104,16 @@ irqreturn_t tms9914_interrupt_have_status(gpib_board_t *board, tms9914_private_t
 			{
 				if(priv->ppoll_configure_state)
 				{
-					/* IEEE 488.1 says we leave PACS when we receive the next command byte
-					 * which is in the primary command group.  PPE and PPD are not in
-					 * the primary command group.  However, since we don't get an interrupt
-					 * on every command byte, the best we can do is clear ppoll_configure_state
-					 * on PPE/PPD, which we ought to receive immediately after the PPC.
-					 * 
-					 */
-					priv->ppoll_configure_state = 0;
-
 					tms9914_parallel_poll_configure(board, priv, command_byte);
 					write_byte(priv, AUX_VAL, AUXCR);
 				}else
 				{
-					printk("tms9914: bad parallel poll configure byte, command pass thru 0x%x\n", command_byte);
+//					printk("tms9914: bad parallel poll configure byte, command pass thru 0x%x\n", command_byte);
 					write_byte(priv, AUX_INVAL, AUXCR);
 				}
 			} else
 			{
-				printk("tms9914: unrecognized gpib command pass thru 0x%x\n", command_byte);
+//				printk("tms9914: unrecognized gpib command pass thru 0x%x\n", command_byte);
 				// clear dac holdoff
 				write_byte(priv, AUX_INVAL, AUXCR);
 			}
