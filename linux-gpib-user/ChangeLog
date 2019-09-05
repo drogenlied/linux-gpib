@@ -1,3 +1,492 @@
+
+2019-09-03 01:41  fmhess
+
+	* [r1857] Don't generate kernel spam on unrecognized command bytes.
+	  We don't need to clear ppoll_configure_state on
+	  PPE/PPD bytes for tms9914.
+
+2019-09-02 21:32  fmhess
+
+	* [r1856] Update doc for IbcHSCableLength.
+
+2019-09-02 21:24  fmhess
+
+	* [r1855] Implement IbcHSCableLength in ibconfig.
+
+2019-08-31 04:19  fmhess
+
+	* [r1854] Add docs for CFE and CFGn command bytes.
+
+2019-08-31 03:59  fmhess
+
+	* [r1853] Add CFE and CFGn command bytes to gpib_user.h
+
+2019-08-30 14:05  dpenkler
+
+	* [r1852] Output final value of sysconfdir in configure
+
+2019-08-30 10:56  dpenkler
+
+	* [r1851] Bump library version for addition of ibrsv2()
+
+2019-08-30 10:03  dpenkler
+
+	* [r1850] Small fixes to doc
+
+2019-08-29 10:53  dpenkler
+
+	* [r1849] Bump version to 4.3.0 for user and kernel packages
+
+2019-08-29 10:40  dpenkler
+
+	* [r1848] Update INSTALL instructions
+
+2019-08-23 17:29  fmhess
+
+	* [r1847] Mask command byte read from command passthrough register
+	  on nec7210 (makes no practical difference at this point).
+
+2019-08-23 17:27  fmhess
+
+	* [r1846] Sync gpib_user.h in linux-gpib-user with kernel header.
+
+2019-08-23 17:26  fmhess
+
+	* [r1845] Be more careful about masking off bit 7 of command bytes.
+	  Restore clearing of ppoll_configure_state in tms9914 when
+	  receiving PPE/PPD.
+
+2019-08-23 16:48  fmhess
+
+	* [r1844] Fix minor doc error.
+
+2019-08-23 00:30  fmhess
+
+	* [r1843] Add reference entry for ibrsv2 to the documentation.
+
+2019-08-22 20:48  fmhess
+
+	* [r1842] Implement driver support for ibrsv2 in fmh_gpib and
+	  tnt4882 drivers.
+
+2019-08-22 15:16  fmhess
+
+	* [r1841] Fix tms9914 handling of PPU command byte.
+
+2019-08-22 13:37  dpenkler
+
+	* [r1840] Only check language bindings when they are required
+
+2019-08-22 12:55  dpenkler
+
+	* [r1839] Fix some typos in doc
+
+2019-08-22 12:51  dpenkler
+
+	* [r1838] Mark expected switch fall through causing compile warning
+
+2019-08-22 12:41  dpenkler
+
+	* [r1837] Add support for GPIB_CONFIG_KERNEL_DEBUG
+
+2019-08-22 12:39  dpenkler
+
+	* [r1836] Add debug print and remove useless whitespace
+
+2019-08-22 10:06  dpenkler
+
+	* [r1835] Reduce default console verbosity
+
+2019-08-22 08:45  dpenkler
+
+	* [r1834] Clarify INSTALL
+
+2019-08-22 04:34  fmhess
+
+	* [r1833] Use EOPNOTSUPP instead of confusing ENOTSUP and ENOTSUPP.
+
+2019-08-22 04:27  fmhess
+
+	* [r1832] Add ibrsv2, which can be used to avoid spurious service
+	  requests
+	  that ibrsv is prone to.
+
+2019-08-22 04:25  fmhess
+
+	* [r1831] Added support for improved implementations of serial poll
+	  response
+	  to the driver core. No drivers implement support for it yet.
+
+2019-08-19 19:57  fmhess
+
+	* [r1830] Added a comment.
+
+2019-08-14 21:37  fmhess
+
+	* [r1829] Only compile fluke and fmh_gpib_core drivers if CONFIG_OF
+	  is
+	  configured in kernel.
+
+2019-08-05 02:55  fmhess
+
+	* [r1828] Update ibln and FindLstn docs to mention that they
+	  address the interface board as talker.
+
+2019-08-05 02:48  fmhess
+
+	* [r1827] Add UNL (and UNT) to end of FindLstn/ibln. The UNL
+	  at the end is specified by the 488.2 Find Listeners protocol.
+
+2019-08-05 02:31  fmhess
+
+	* [r1826] Make ibln and FindLstn address the board as talker,
+	  to work around problems caused by transceivers preventing
+	  the NDAC line from being read accurately.
+
+2019-08-04 22:58  fmhess
+
+	* [r1825] Work around buggy tcs implementation in 82350b.
+
+2019-07-29 23:13  fmhess
+
+	* [r1824] fix some compile errors for fluke_gpib on amd64
+
+2019-07-29 16:18  fmhess
+
+	* [r1823] revert r1821
+
+2019-07-29 15:43  fmhess
+
+	* [r1822] Fixed some error messages.
+
+2019-07-29 15:15  fmhess
+
+	* [r1821] Clear BUS_ERROR_BN at beginning of command write for
+	  tms9914.
+
+2019-07-25 04:34  fmhess
+
+	* [r1820] Add delay to avoid pl330 driver bug
+
+2019-07-25 04:26  fmhess
+
+	* [r1819] Add required memory barriers around all set_bit and
+	  clear_bit.
+
+2019-07-24 22:47  fmhess
+
+	* [r1818] Re-enable fluke_gpib module.
+
+2019-07-24 22:37  fmhess
+
+	* [r1817] Sync up with current fluke_gpib driver.
+
+2019-07-11 15:57  fmhess
+
+	* [r1816] Fix typo in error message
+
+2019-06-06 21:59  fmhess
+
+	* [r1815] Add NI PCIe-GPIB to supported hardware matrix.
+
+2019-05-16 01:03  fmhess
+
+	* [r1814] Undo accidental change to STATUS_DATA_LEN
+
+2019-05-16 00:59  fmhess
+
+	* [r1813] Give various status_data buffers function local scope
+	  again, to prevent possibility of contention over a single buffer
+	  in agilent_82357a_private_t.
+
+2019-05-16 00:53  fmhess
+
+	* [r1812] Add missing include of linux/uaccess.h
+
+2019-04-30 05:06  fmhess
+
+	* [r1811] Fix assignment of SS_LOADER_OPTION as reported by
+	  Nicolas Morange <gartrog@users.sourceforge.net>
+
+2019-03-26 00:10  fmhess
+
+	* [r1810] Initialize open_cmd.handle with a zero instead of -1
+	  since it is an unsigned int. Shouldn't make any
+	  practical difference.
+
+2019-01-07 12:05  dpenkler
+
+	* [r1809] Change VERSION to GPIB_VERSION to avoid potential
+	  conflict
+
+2019-01-07 12:02  dpenkler
+
+	* [r1808] Compat fix for 5.0 changes to access_ok()
+
+2019-01-03 16:15  dpenkler
+
+	* [r1807] Commit for 4.2.1 distribution release
+	  - Bump version in user part
+	  - Fix readline checks in configure.ac
+	  - Add Makefile.PL.in to distribution
+	  - Add gpib_udev_fxloader.in to distribution
+	  - Update Changelog
+
+2018-12-25 09:50  dpenkler
+
+	* [r1806] Fix board type
+
+2018-12-25 09:46  dpenkler
+
+	* [r1805] Fix ni_usb_gpib cut & paste error
+
+2018-12-25 09:42  dpenkler
+
+	* [r1804] Simplify usb udev rules as per Frank's suggestion
+
+2018-12-21 10:44  dpenkler
+
+	* [r1803] Changes for multiple board configuration
+
+	  Update INSTALL
+	  Add serial to device environment
+	  Print serial in gpib_udev_config
+	  Add example rules for agilent
+
+2018-12-15 08:55  fmhess
+
+	* [r1802] Add some examples for configuring multiple boards with
+	  different minor numbers.
+
+2018-12-15 08:29  fmhess
+
+	* [r1801] Automatically gibe the correct board type to gpib_config
+	  in udev rules
+
+2018-12-15 08:01  fmhess
+
+	* [r1800] rename gpib generic rules so it runs at 98
+	  (before the driver-specific fules which run at 99)
+
+2018-12-15 07:52  fmhess
+
+	* [r1799] Add fix for mylog from gpib_udev_config to
+	  gpib_udev_fxloader.in. Also add some quoting to
+	  ensure whitespace is preserved in log messages.
+
+2018-12-14 16:23  dpenkler
+
+	* [r1798] Fix logging in gpib_udev_config for gpib_config options
+	  --
+
+2018-12-14 08:30  fmhess
+
+	* [r1797] Removed some bash-isms so scripts work with posix
+	  /bin/sh.
+
+2018-12-14 08:11  fmhess
+
+	* [r1796] Revert commit 1793
+
+2018-12-14 08:07  fmhess
+
+	* [r1795] Add --with-udev-libdir option to configure, that I failed
+	  to include in earlier commit.
+
+2018-12-13 17:05  dpenkler
+
+	* [r1794] Really remove unused files
+
+2018-12-13 17:02  dpenkler
+
+	* [r1793] Add UDEV_LIBDIR to Makefile.ams\nRemove unused files
+
+2018-12-13 13:44  fmhess
+
+	* [r1792] Added --with-udev-libdir configure option, defaulted
+	  to PREFIX/lib/udev.
+
+2018-12-13 12:24  dpenkler
+
+	* [r1791] Rename and move udevadm wrapper to libdir
+
+2018-12-13 12:17  fmhess
+
+	* [r1790] Add missing define of UDEV_LIB_DIR to prevent files from
+	  getting installed into root directory.
+
+2018-12-13 12:13  fmhess
+
+	* [r1789] Replaced udev scripts ni_usb_gpib and agilent_82357a with
+	  a single generic script.
+
+2018-12-13 11:53  fmhess
+
+	* [r1788] Really delete usermap files this time.
+
+2018-12-13 11:47  fmhess
+
+	* [r1787] Pull out firmware loading into a single udev script
+	  gpib_udev_fxloader.
+
+2018-12-13 11:44  dpenkler
+
+	* [r1786] Use #!/bin/sh instead of #!/bin/bash
+
+2018-12-13 11:11  dpenkler
+
+	* [r1785] Add wrapper script for udevadm
+
+2018-12-12 18:04  dpenkler
+
+	* [r1784] Fix udev rules scripts for agilent usb
+
+2018-12-12 15:43  fmhess
+
+	* [r1783] Generate usb script/rules during "make all" rather
+	  than possibly waiting until "make install", where the
+	  user may be running as root.
+
+2018-12-12 15:27  fmhess
+
+	* [r1782] Fixed assignment that was supposed to be a comparison
+
+2018-12-12 14:03  fmhess
+
+	* [r1781] Removed obsolete hotplug usermaps.
+
+	  Fixed problems with usb udev rules not working if the driver
+	  module was not already loaded when the hardware was plugged
+	  in.
+
+	  Made usb drivers respond to the sysfs device path of their
+	  usb interface rather than the parent usb device. This is helpful
+	  since the driver binds to the interfaces rather than the device.
+
+2018-12-12 06:25  fmhess
+
+	* [r1780] Update comments in agilent_82357a udev script to use
+	  new --serial and --sysfs-device-path gpib_config options.
+
+2018-12-10 10:49  fmhess
+
+	* [r1779] Added linux/atomic.h compatibility header.
+
+2018-12-10 10:36  fmhess
+
+	* [r1778] Added a couple more devices to ni_usb_gpib.usermap.
+
+2018-12-10 10:28  fmhess
+
+	* [r1777] Add kernel driver support for selecting hardware by sysfs
+	  device path
+	  or serial number.
+
+2018-12-10 10:27  fmhess
+
+	* [r1776] Add support for selecting hardware by sysfs device path
+	  or serial number. Updated gpib_config docs with
+	  missing info on some options. Noted in docs that
+	  gpib.conf will be in the sysconfdir, which isn't
+	  always /etc/ depending on configuration.
+
+2018-12-10 10:11  fmhess
+
+	* [r1775] Add device ids for various ni adapters to
+	  ni_usb_gpib.usermap
+
+2018-12-07 09:12  dpenkler
+
+	* [r1774] Remove dependency on autoconf tools
+	  Modify INSTALL instructions
+	  Update drivers/gpib/Makefile
+	  Add Makefile to invoke kernel build scripts
+	  Add version.h to drivers/gpib/include
+	  Make definitions of smp_mb__xxx_atomic independent of kernel
+	  version
+	  Add VERBOSE flag for make, default is VERBOSE=0
+	  so that build log is more overseeable.
+	  Add HAVE_DEV_OF_NODE workaround for CentOS/RHEL7
+	  Fix compile warnings in lpvo
+
+2018-12-06 06:10  fmhess
+
+	* [r1773] Reverted r1766 since it was actually comparing the serial
+	  number to the device tree path. Linux doesn't seem to
+	  have a universal (for all bus types) way of specifying
+	  a piece of hardware by path, so we can't use the
+	  device tree path to specify a usb device anyways.
+
+2018-12-05 11:19  dpenkler
+
+	* [r1772] Apply gpib_lines patch from Tomislav Ivek
+
+2018-11-29 08:29  dpenkler
+
+	* [r1771] Change barrier() to mb() to be generic
+
+2018-11-28 19:02  dpenkler
+
+	* [r1770] Add kernel version ifdef for smp atomics
+
+2018-11-28 18:02  dpenkler
+
+	* [r1769] Add compat fixes for kernels < 3.15 and 3.16
+
+2018-11-28 14:36  dpenkler
+
+	* [r1768] Add patch from Tomislav Ivek
+
+	  The current linux-gpib Python class can run into a double-close
+	  situation. This bug is related to a design point in Gpib.Gpib
+	  which
+	  cleans up its GPIB handle only on Python's GC cycle. This is not
+	  guaranteed to run when the programmer expects it to and in
+	  extreme
+	  cases might even leak resources. This is resolved by adding a
+	  Gpib.close() method for user-controlled cleanup.
+
+2018-11-28 10:26  fmhess
+
+	* [r1767] Applied patch from Derek Kozel <derek.kozel@gmail.com>:
+
+	  During the linux-gpib-kernel make install process the kernel
+	  modules_install command is run bit the DESTDIR argument is not
+	  passed
+	  in meaning that it will always try to install to the system
+	  directory
+	  rather than a custom directory. Adding
+	  INSTALL_MOD_PATH="$(DESTDIR)" to
+	  the command correctly passes the information.
+
+2018-11-16 20:30  fmhess
+
+	* [r1766] Applied patch from Manuel Mommertz
+	  manuel.mommertz@desy.de to
+	  permit selection of ni usb gpib adapter by device path.
+
+2018-11-15 18:08  dpenkler
+
+	* [r1765] add dependency on perl/Makefile.PL to force build
+
+2018-11-07 19:09  fmhess
+
+	* [r1764] Makefile.PL is generated from Makefile.PL.in now.
+	  Also, use abs_top_srcdir/abs_top_builddir instead
+	  of hard coding dir paths.
+
+2018-11-07 18:05  dpenkler
+
+	* [r1762] Commit for 4.2.0
+	  - Fix top level README.txt
+	  - Bump version in user part
+	  - Add missing file Makefile.PL.in
+
+
+2018-11-07 13:23  dpenkler
+
+	* [r1761] Add top level Readme and update Changelog
+
 2018-11-07 13:23  dpenkler
 
 	* [r1760] Bump revision to 4.2.0
@@ -391,9 +880,7 @@
 2017-10-16 13:57  fmhess
 
 	* [r1683] Fix setting/clearing of CMPL through ibwait, should help
-	  waits
-	  on async io completion.
-	  
+	  waits on async io completion.
 
 2017-10-13 23:58  fmhess
 
@@ -469,9 +956,8 @@
 
 2017-10-07 15:01  fmhess
 
-	* [r1666] Don't take control asynchronously on a routine basis. It
-	  is
-	  dangerous to do so due to the omission of the T10 delay.
+	* [r1666] Don't take control asynchronously on a routine basis.
+	  It is dangerous to do so due to the omission of the T10 delay.
 	  This will unfortunately lead to timeouts when a talker
 	  leaves a data byte sitting on the bus with noone reading
 	  it, but that is unavoidable.
