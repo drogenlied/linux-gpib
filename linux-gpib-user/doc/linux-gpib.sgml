@@ -272,12 +272,6 @@ device {
 	<entry>optional</entry>
 	</row>
 	<row>
-	<entry>serial_number</entry>
-	<entry>A string which may be used to select a particular piece of hardware by its serial number.</entry>
-	<entry>interface</entry>
-	<entry>optional</entry>
-	</row>
-	<row>
 	<entry>set-bin</entry>
 	<entry>Enables 8-bit comparisons when matching the
 	end-of-string byte, instead of only comparing the
@@ -469,10 +463,6 @@ pci board. If used, you must also specify the pci bus with <option>--pci-bus</op
 <para>
 Specify secondary gpib address.  <replaceable>number</replaceable>
 should be 0 (disabled) or in the range 96 through 126 (0x60 through 0x7e hexadecimal).
-</para>
-
-<para><option>-e, --serial-number <replaceable>serial_number</replaceable></option></para>
-<para>Select a specific board to attach by its serial number.
 </para>
 
 <para><option>--[no-]sre</option></para>

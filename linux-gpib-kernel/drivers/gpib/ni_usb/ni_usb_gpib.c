@@ -2075,17 +2075,10 @@ static int ni_usb_hs_wait_for_ready(ni_usb_private_t *ni_priv)
 
 static inline int ni_usb_device_match(struct usb_interface *interface, const gpib_board_config_t *config)
 {
-	struct usb_device * const usbdev = interface_to_usbdev(interface);
-	
 	if(gpib_match_device_path(&interface->dev, config->device_path) == 0)
 	{
 		return 0;
 	}
-	if(config->serial_number != NULL &&
-		strcmp(usbdev->serial, config->serial_number) != 0)
-	{
-		return 0;
-	};
 
 	return 1;
 }
