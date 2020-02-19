@@ -19,6 +19,7 @@
 #ifndef __COMPAT_LINUX_UACCESS_H
 #define __COMPAT_LINUX_UACCESS_H
 
+#include <linux/version.h>
 #include_next <linux/uaccess.h>
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 0, 0)
