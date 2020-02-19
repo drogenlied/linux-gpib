@@ -557,7 +557,7 @@ static int read_ioctl( gpib_file_private_t *file_priv, gpib_board_t *board,
 	remain = read_cmd.requested_transfer_count - read_cmd.completed_transfer_count;
 
 	/* Check write access to buffer */
-	if(!COMPAT_ACCESS_OK(VERIFY_WRITE, userbuf, remain))
+	if(!COMPAT_ACCESS_OK(userbuf, remain))
 		return -EFAULT;
 
 	smp_mb__before_atomic();
@@ -632,7 +632,7 @@ static int command_ioctl( gpib_file_private_t *file_priv,
 	remain = cmd.requested_transfer_count - cmd.completed_transfer_count;
 
 	/* Check read access to buffer */
-	if(!COMPAT_ACCESS_OK(VERIFY_READ, userbuf, remain))
+	if(!COMPAT_ACCESS_OK(userbuf, remain))
 		return -EFAULT;
 
 	/* Write buffer loads till we empty the user supplied buffer.
@@ -711,7 +711,7 @@ static int write_ioctl(gpib_file_private_t *file_priv, gpib_board_t *board,
 	remain = write_cmd.requested_transfer_count - write_cmd.completed_transfer_count;
 
 	/* Check read access to buffer */
-	if(!COMPAT_ACCESS_OK(VERIFY_READ, userbuf, remain))
+	if(!COMPAT_ACCESS_OK(userbuf, remain))
 		return -EFAULT;
 
 	smp_mb__before_atomic();
