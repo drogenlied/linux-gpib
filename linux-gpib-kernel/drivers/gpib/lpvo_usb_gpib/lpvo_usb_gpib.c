@@ -100,6 +100,7 @@ MODULE_LICENSE("GPL");
 
 #define INBUF_SIZE 128
 
+
 struct char_buf {               /* used by one_char() routine */
 	char * inbuf;
 	int last;
@@ -110,7 +111,7 @@ typedef struct {                /* private data to the device */
 	struct file * f;        /* the 'file' structure for the tty-usb line */
 	uint8_t eos;            /* eos character */
 	short eos_flags;        /* eos mode */
-	struct timespec before  ;  /* time value for timings */
+	struct timespec64 before  ;  /* time value for timings */
         int timeout;            /* current value for timeout */
 } usb_gpib_private_t;
 
@@ -188,7 +189,7 @@ typedef struct {                /* private data to the device */
  *               (unix time in sec and NANOsec)
  */
 
-inline int usec_diff (struct timespec * a, struct timespec * b) {
+inline int usec_diff (struct timespec64 * a, struct timespec64 * b) {
 	return ((a->tv_sec - b->tv_sec)*1000000 +
 		(a->tv_nsec - b->tv_nsec)/1000);
 }
@@ -302,17 +303,17 @@ int set_control_line (gpib_board_t *board, int line, int value) {
 
 static int one_char(gpib_board_t *board, struct char_buf * b) {
 
-	struct timespec before, after;
+	struct timespec64 before, after;
 	struct file *f = ((usb_gpib_private_t *)board->private_data)->f;
 
 	if (b->nchar) {
 		DIA_LOG ("-> %x\n", b->inbuf[b->last - b->nchar]);
 		return b->inbuf[b->last - b->nchar--];
 	}
-	getnstimeofday (&before);
+	ktime_get_real_ts64 (&before);
 	b->last = b->nchar =
 		f->f_op->read (f, b->inbuf, INBUF_SIZE, &f->f_pos);
-	getnstimeofday (&after);
+	ktime_get_real_ts64 (&after);
 
 	DIA_LOG ("read %d bytes in %d usec\n",
 		b->nchar, usec_diff(&after, &before));
@@ -721,7 +722,7 @@ static int usb_gpib_read (gpib_board_t *board,
 	int retval;
 	mm_segment_t oldfs;
 	char c;
-	struct timespec before, after;
+	struct timespec64 before, after;
 	int read_count = MAX_READ_EXCESS;
 	usb_gpib_private_t * pd = (usb_gpib_private_t *)board->private_data;
 
@@ -743,7 +744,7 @@ static int usb_gpib_read (gpib_board_t *board,
 		oldfs = get_fs();
 		set_fs (KERNEL_DS);
 
-		getnstimeofday (&before);
+		ktime_get_real_ts64 (&before);
 
 		if (write_loop (pd->f, USB_GPIB_READ_1,
 				strlen(USB_GPIB_READ_1)) == -EIO) {
@@ -755,7 +756,7 @@ static int usb_gpib_read (gpib_board_t *board,
 					&pd->f->f_pos);
 		retval += pd->f->f_op->read (pd->f, inbuf+1, 1,
 					&pd->f->f_pos);
-		getnstimeofday (&after);
+		ktime_get_real_ts64 (&after);
 
 		set_fs (oldfs);
 
