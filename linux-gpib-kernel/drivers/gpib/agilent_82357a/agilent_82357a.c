@@ -1039,8 +1039,6 @@ void agilent_82357a_interrupt_complete(struct urb *urb PT_REGS_ARG)
 	uint8_t *transfer_buffer = urb->transfer_buffer;
 	unsigned long interrupt_flags;
 
-	smp_mb__before_atomic();
-
 #if 0
 	int i;
 
@@ -1052,8 +1050,26 @@ void agilent_82357a_interrupt_complete(struct urb *urb PT_REGS_ARG)
 	}
 	printk("\n");
 #endif
-	// don't resubmit if urb was unlinked
-	if(urb->status) return;
+	switch (urb->status) {
+	/* success */
+	case 0: 
+		break;
+	/* unlinked, don't resubmit */
+	case -ECONNRESET:
+	case -ENOENT:
+	case -ESHUTDOWN:
+		return;
+	default: /* other error, resubmit */
+		retval = usb_submit_urb(a_priv->interrupt_urb, GFP_ATOMIC);
+		if(retval)
+		{
+			printk("%s: failed to resubmit interrupt urb\n", __FUNCTION__);
+		}
+		return;
+	}
+
+	smp_mb__before_atomic();
+
 	interrupt_flags = transfer_buffer[0];
 	if(test_bit(AIF_READ_COMPLETE_BN, &interrupt_flags))
 		set_bit(AIF_READ_COMPLETE_BN, &a_priv->interrupt_flags);
@@ -1061,15 +1077,16 @@ void agilent_82357a_interrupt_complete(struct urb *urb PT_REGS_ARG)
 		set_bit(AIF_WRITE_COMPLETE_BN, &a_priv->interrupt_flags);
 	if(test_bit(AIF_SRQ_BN, &interrupt_flags))
 		set_bit(SRQI_NUM, &board->status);
+
+	smp_mb__after_atomic();
+
+	wake_up_interruptible(&board->wait);
+
 	retval = usb_submit_urb(a_priv->interrupt_urb, GFP_ATOMIC);
 	if(retval)
 	{
 		printk("%s: failed to resubmit interrupt urb\n", __FUNCTION__);
 	}
-
-	smp_mb__after_atomic();
-
-	wake_up_interruptible(&board->wait);
 }
 
 static int agilent_82357a_setup_urbs(gpib_board_t *board)

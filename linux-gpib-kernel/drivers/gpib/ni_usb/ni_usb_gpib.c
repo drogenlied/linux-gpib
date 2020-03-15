@@ -1749,8 +1749,24 @@ void ni_usb_interrupt_complete(struct urb *urb PT_REGS_ARG)
 // 	printk("debug: %s: %s: status=0x%x, error_count=%i, actual_length=%i\n", __FILE__, __FUNCTION__,
 // 		urb->status, urb->error_count, urb->actual_length);
 
-	// don't resubmit if urb was unlinked
-	if(urb->status) return;
+	switch (urb->status) {
+	/* success */
+	case 0: 
+		break;
+	/* unlinked, don't resubmit */
+	case -ECONNRESET:
+	case -ENOENT:
+	case -ESHUTDOWN:
+		return;
+	default: /* other error, resubmit */
+		retval = usb_submit_urb(ni_priv->interrupt_urb, GFP_ATOMIC);
+		if(retval)
+		{
+			printk("%s: failed to resubmit interrupt urb\n", __FUNCTION__);
+		}
+		return;
+	}
+	
 	ni_usb_parse_status_block(urb->transfer_buffer, &status);
 // 	printk("debug: ibsta=0x%x\n", status.ibsta);
 
@@ -1759,12 +1775,13 @@ void ni_usb_interrupt_complete(struct urb *urb PT_REGS_ARG)
 // 	printk("debug: monitored_ibsta_bits=0x%x\n", ni_priv->monitored_ibsta_bits);
 	spin_unlock_irqrestore(&board->spinlock, flags);
 
+	wake_up_interruptible( &board->wait );
+
 	retval = usb_submit_urb(ni_priv->interrupt_urb, GFP_ATOMIC);
 	if(retval)
 	{
 		printk("%s: failed to resubmit interrupt urb\n", __FUNCTION__);
 	}
-	wake_up_interruptible( &board->wait );
 }
 
 static int ni_usb_set_interrupt_monitor(gpib_board_t *board, unsigned int monitored_bits)
