@@ -982,7 +982,7 @@ int fmh_gpib_init(fmh_gpib_private_t *e_priv, gpib_board_t *board, int handshake
 }
 
 /* Match callback for driver_find_device */
-static int fmh_gpib_device_match(struct device *dev, void *data)
+static int fmh_gpib_device_match(struct device *dev, DRIVER_FIND_DEVICE_DATA_TYPE data)
 {
 	const gpib_board_config_t *config = data;
 	
@@ -1014,7 +1014,7 @@ static int fmh_gpib_attach_impl(gpib_board_t *board, const gpib_board_config_t *
 	struct platform_device *pdev;
 	
 	board->dev = driver_find_device(&fmh_gpib_platform_driver.driver,
-		NULL, (void*)config, &fmh_gpib_device_match);
+		NULL, (DRIVER_FIND_DEVICE_DATA_TYPE)config, &fmh_gpib_device_match);
 	if(board->dev == NULL)
 	{
 		printk("No matching fmh_gpib_core device was found, attach failed.");
