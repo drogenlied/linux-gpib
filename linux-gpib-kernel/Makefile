@@ -1,6 +1,6 @@
 # Makefile
 
-GPIB_SRCDIR ?= $$PWD
+GPIB_SRCDIR ?= $(CURDIR)
 LINUX_SRCDIR ?= /lib/modules/`uname -r`/build
 VERBOSE ?= 0
 GPIB_DEBUG ?= 0
