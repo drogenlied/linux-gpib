@@ -36,6 +36,7 @@ enum
 	USB_DEVICE_ID_NI_USB_B_PREINIT = 0x702b,	// device id before firmware is loaded
 	USB_DEVICE_ID_NI_USB_HS = 0x709b,
 	USB_DEVICE_ID_NI_USB_HS_PLUS = 0x7618,
+	USB_DEVICE_ID_NI_USB_HS_PLUS_V2 = 0x761e, // alternate device id for GPIB-USB-HS+ reported by Athira <athi@users.sourceforge.net>
 	USB_DEVICE_ID_KUSB_488A = 0x725c,
 	USB_DEVICE_ID_MC_USB_488 = 0x725d
 };
