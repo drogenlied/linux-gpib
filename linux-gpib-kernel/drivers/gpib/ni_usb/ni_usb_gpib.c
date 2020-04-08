@@ -1822,6 +1822,9 @@ static int ni_usb_setup_urbs(gpib_board_t *board)
 	struct usb_device *usb_dev;
 	int int_pipe;
 	int retval;
+	
+	if (ni_priv->interrupt_in_endpoint < 0) return 0;
+	
 	mutex_lock(&ni_priv->interrupt_transfer_lock);
 	if(ni_priv->bus_interface == NULL)
 	{
@@ -2164,10 +2167,21 @@ int ni_usb_attach(gpib_board_t *board, const gpib_board_config_t *config)
 		}
 		break;
 	case USB_DEVICE_ID_NI_USB_HS_PLUS:
-	case USB_DEVICE_ID_NI_USB_HS_PLUS_V2:
 		ni_priv->bulk_out_endpoint = NIUSB_HS_PLUS_BULK_OUT_ENDPOINT;
 		ni_priv->bulk_in_endpoint = NIUSB_HS_PLUS_BULK_IN_ENDPOINT;
 		ni_priv->interrupt_in_endpoint = NIUSB_HS_PLUS_INTERRUPT_IN_ENDPOINT;
+		retval = ni_usb_hs_wait_for_ready(ni_priv);
+		if(retval < 0)
+		{
+			mutex_unlock(&ni_usb_hotplug_lock);
+			return retval;
+		}
+		break;
+	case USB_DEVICE_ID_NI_USB_HS_PLUS_V2:
+		printk("Support for newer NI GPIB-USB-HS+ variant with device id 0x%x is EXPERIMENTAL and probably doesn't work yet.\n", product_id);
+		ni_priv->bulk_out_endpoint = NIUSB_HS_PLUS_V2_BULK_OUT_ENDPOINT;
+		ni_priv->bulk_in_endpoint = NIUSB_HS_PLUS_V2_BULK_IN_ENDPOINT;
+		ni_priv->interrupt_in_endpoint = -1;
 		retval = ni_usb_hs_wait_for_ready(ni_priv);
 		if(retval < 0)
 		{

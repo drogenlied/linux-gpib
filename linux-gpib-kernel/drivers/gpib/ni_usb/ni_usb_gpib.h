@@ -74,6 +74,12 @@ enum hs_plus_endpoint_addresses
 	NIUSB_HS_PLUS_INTERRUPT_IN_ENDPOINT = 0x3,
 };
 
+enum hs_plus_v2_endpoint_addresses
+{
+  	NIUSB_HS_PLUS_V2_BULK_IN_ENDPOINT = 0x1,
+  	NIUSB_HS_PLUS_V2_BULK_OUT_ENDPOINT = 0x3,
+};
+
 typedef struct
 {
 	struct semaphore complete;
@@ -93,8 +99,8 @@ typedef struct
 	struct urb *bulk_urb;
 	struct urb *interrupt_urb;
 	uint8_t interrupt_buffer[0x11];
-        struct mutex addressed_transfer_lock;
-        struct mutex bulk_transfer_lock;
+	struct mutex addressed_transfer_lock;
+	struct mutex bulk_transfer_lock;
 	struct mutex control_transfer_lock;
 	struct mutex interrupt_transfer_lock;
 	struct timer_list bulk_timer;
