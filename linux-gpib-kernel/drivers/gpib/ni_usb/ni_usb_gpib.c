@@ -2177,18 +2177,6 @@ int ni_usb_attach(gpib_board_t *board, const gpib_board_config_t *config)
 			return retval;
 		}
 		break;
-	case USB_DEVICE_ID_NI_USB_HS_PLUS_V2:
-		printk("Support for newer NI GPIB-USB-HS+ variant with device id 0x%x is EXPERIMENTAL and probably doesn't work yet.\n", product_id);
-		ni_priv->bulk_out_endpoint = NIUSB_HS_PLUS_V2_BULK_OUT_ENDPOINT;
-		ni_priv->bulk_in_endpoint = NIUSB_HS_PLUS_V2_BULK_IN_ENDPOINT;
-		ni_priv->interrupt_in_endpoint = -1;
-		retval = ni_usb_hs_wait_for_ready(ni_priv);
-		if(retval < 0)
-		{
-			mutex_unlock(&ni_usb_hotplug_lock);
-			return retval;
-		}
-		break;
 	default:
 		mutex_unlock(&ni_usb_hotplug_lock);
 		printk("\tDriver bug: unknown endpoints for usb device id\n");
@@ -2318,7 +2306,6 @@ static struct usb_device_id ni_usb_driver_device_table [] =
 	{USB_DEVICE(USB_VENDOR_ID_NI, USB_DEVICE_ID_NI_USB_HS)},
 	// gpib-usb-hs+ has a second interface for the analyzer, which we ignore
 	{USB_DEVICE_INTERFACE_NUMBER(USB_VENDOR_ID_NI, USB_DEVICE_ID_NI_USB_HS_PLUS, 0)},
-	{USB_DEVICE_INTERFACE_NUMBER(USB_VENDOR_ID_NI, USB_DEVICE_ID_NI_USB_HS_PLUS_V2, 0)},
 	{USB_DEVICE(USB_VENDOR_ID_NI, USB_DEVICE_ID_KUSB_488A)},
 	{USB_DEVICE(USB_VENDOR_ID_NI, USB_DEVICE_ID_MC_USB_488)},
 	{} /* Terminating entry */
