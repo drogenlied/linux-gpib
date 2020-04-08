@@ -590,7 +590,7 @@ static int __init cb7210_init_module( void )
 	gpib_register_driver(&cb_isa_accel_interface, THIS_MODULE);
 	gpib_register_driver(&cb_isa_unaccel_interface, THIS_MODULE);
 
-#if defined(GPIB_CONFIG_PCMCIA)
+#if (GPIB_CONFIG_PCMCIA==1)
 	gpib_register_driver(&cb_pcmcia_interface, THIS_MODULE);
 	gpib_register_driver(&cb_pcmcia_accel_interface, THIS_MODULE);
 	gpib_register_driver(&cb_pcmcia_unaccel_interface, THIS_MODULE);
@@ -610,7 +610,7 @@ static void __exit cb7210_exit_module( void )
 	gpib_unregister_driver(&cb_pci_unaccel_interface);
 	gpib_unregister_driver(&cb_isa_accel_interface);
 	gpib_unregister_driver(&cb_isa_unaccel_interface);
-#if defined(GPIB_CONFIG_PCMCIA)
+#if (GPIB_CONFIG_PCMCIA==1)
 	gpib_unregister_driver(&cb_pcmcia_interface);
 	gpib_unregister_driver(&cb_pcmcia_accel_interface);
 	gpib_unregister_driver(&cb_pcmcia_unaccel_interface);

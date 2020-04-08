@@ -680,7 +680,7 @@ static int __init ines_init_module( void )
 	gpib_register_driver(&ines_pci_unaccel_interface, THIS_MODULE);
 	gpib_register_driver(&ines_pci_accel_interface, THIS_MODULE);
 	gpib_register_driver(&ines_isa_interface, THIS_MODULE);
-#if defined(GPIB_CONFIG_PCMCIA)
+#if (GPIB_CONFIG_PCMCIA==1)
 	gpib_register_driver(&ines_pcmcia_interface, THIS_MODULE);
 	gpib_register_driver(&ines_pcmcia_unaccel_interface, THIS_MODULE);
 	gpib_register_driver(&ines_pcmcia_accel_interface, THIS_MODULE);
@@ -698,7 +698,7 @@ static void __exit ines_exit_module( void )
 	gpib_unregister_driver(&ines_pci_unaccel_interface);
 	gpib_unregister_driver(&ines_pci_accel_interface);
 	gpib_unregister_driver(&ines_isa_interface);
-#if defined(GPIB_CONFIG_PCMCIA)
+#if (GPIB_CONFIG_PCMCIA==1)
 	gpib_unregister_driver(&ines_pcmcia_interface);
 	gpib_unregister_driver(&ines_pcmcia_unaccel_interface);
 	gpib_unregister_driver(&ines_pcmcia_accel_interface);

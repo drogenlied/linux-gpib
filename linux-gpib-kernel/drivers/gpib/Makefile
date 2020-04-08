@@ -4,6 +4,7 @@ endif
 
 subdir-ccflags-y := -I$(src)/include \
 			-DHAVE_DEV_OF_NODE=$(HAVE_DEV_OF_NODE) \
+			-DGPIB_CONFIG_PCMCIA=$(GPIB_CONFIG_PCMCIA) \
 			-DGPIB_CONFIG_KERNEL_DEBUG=$(GPIB_CONFIG_KERNEL_DEBUG)
 
 

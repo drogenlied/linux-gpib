@@ -813,7 +813,7 @@ static int __init tnt4882_init_module( void )
 	gpib_register_driver(&ni_nec_isa_accel_interface, THIS_MODULE);
 	gpib_register_driver(&ni_pci_interface, THIS_MODULE);
 	gpib_register_driver(&ni_pci_accel_interface, THIS_MODULE);
-#if defined(GPIB_CONFIG_PCMCIA)
+#if (GPIB_CONFIG_PCMCIA==1)
 	gpib_register_driver(&ni_pcmcia_interface, THIS_MODULE);
 	gpib_register_driver(&ni_pcmcia_accel_interface, THIS_MODULE);
 	if( init_ni_gpib_cs() < 0 )
@@ -836,7 +836,7 @@ static void __exit tnt4882_exit_module( void )
 	gpib_unregister_driver(&ni_nec_isa_accel_interface);
 	gpib_unregister_driver(&ni_pci_interface);
 	gpib_unregister_driver(&ni_pci_accel_interface);
-#if defined(GPIB_CONFIG_PCMCIA)
+#if (GPIB_CONFIG_PCMCIA==1)
 	gpib_unregister_driver(&ni_pcmcia_interface);
 	gpib_unregister_driver(&ni_pcmcia_accel_interface);
 	exit_ni_gpib_cs();

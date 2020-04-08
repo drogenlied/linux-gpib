@@ -67,15 +67,24 @@ C) Configuring the driver modules
 
 o) PCMCIA cards
 
-	If you are using a PCMCIA board, copy the files in the etc/pcmcia
-	subdirectory to /etc/pcmcia.  You may need to send a SIGHUP signal
-	to the cardmgr daemon to force it to reload the files in 
-	/etc/pcmcia (alternatively you could use your pcmcia init.d script
-	to restart the cardmgr, or you could just reboot).  The driver
-	module will be loaded as needed by the cardmgr.
-	You may wish to edit the options passed to the gpib_config call in the
+        If you have an old system with cardmgr support:
+	Copy the files in the etc/pcmcia subdirectory to /etc/pcmcia.
+	You may need to send a SIGHUP signal to the cardmgr daemon to
+	force it to reload the files in /etc/pcmcia (alternatively you
+	could use your pcmcia init.d script to restart the cardmgr, or
+	you could just reboot).  The driver module will be loaded as
+	needed by the cardmgr.  You may wish to edit the options
+	passed to the gpib_config call in the
 	/etc/pcmcia/linux-gpib-pcmcia script.
 
+        Other systems:
+	Load the appropriate module for your pcmcia card with modprobe.
+	For example with an NI PCMCIA card: sudo modprobe tnt4884
+	For other cards consult Table 2 Supported Hardware Matrix in
+	the linux-gpib.pdf doc for the name of the module to load that
+	corresponds to your PCMCIA card.
+	Then run gpib_config, for example: sudo gpib_config --minor 0
+	
 o) USB devices
 
         USB devices can be configured automatically by the udev
