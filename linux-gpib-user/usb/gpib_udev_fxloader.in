@@ -26,6 +26,13 @@ case $PRODUCT in
 		FXLOAD_OPTIONS="-t fx"
 		;;
 
+	# ni-usb-hs+ without firmware
+	3923/761e/*)
+		FIRMWARE=$DATADIR/usb/ni_usb_gpib/niusbhsplus_firmware.hex
+		SS_LOADER=$DATADIR/usb/ni_usb_gpib/niusbhsplus_loader.hex
+		FXLOAD_OPTIONS="-t fx2"
+		;;
+
 	# 82357a without firmware
 	957/7/*)
 		FIRMWARE=$DATADIR/usb/agilent_82357a/82357a_fw.hex

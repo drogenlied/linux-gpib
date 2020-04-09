@@ -1,5 +1,7 @@
 #gpib-usb-b without firmware
 SUBSYSTEM=="usb", ACTION=="add", ATTR{idVendor}=="3923", ATTR{idProduct}=="702b", ENV{DEVICE}="$devnode", RUN+="@UDEV_LIBDIR@/gpib_udev_fxloader"
+#gpib-usb-hs+ without firmware (most automatically load their firmware from their own eeprom but some do not)
+SUBSYSTEM=="usb", ACTION=="add", ATTR{idVendor}=="3923", ATTR{idProduct}=="761e", ENV{DEVICE}="$devnode", RUN+="@UDEV_LIBDIR@/gpib_udev_fxloader"
 #device id 713b is a keithley kusb-488 before we load it with firmware
 SUBSYSTEM=="usb", ACTION=="add", ATTR{idVendor}=="3923", ATTR{idProduct}=="713b", ENV{DEVICE}="$devnode", RUN+="@UDEV_LIBDIR@/gpib_udev_fxloader"
 
@@ -9,7 +11,6 @@ ACTION=="add|change", SUBSYSTEM=="usb", DRIVER=="ni_usb_gpib", ATTRS{serial}=="*
 SUBSYSTEM=="usb", ACTION=="add|change", DRIVER=="ni_usb_gpib", ATTRS{idVendor}=="3923", ATTRS{idProduct}=="702a", RUN+="@UDEV_LIBDIR@/gpib_udev_config"
 SUBSYSTEM=="usb", ACTION=="add|change", DRIVER=="ni_usb_gpib", ATTRS{idVendor}=="3923", ATTRS{idProduct}=="709b", RUN+="@UDEV_LIBDIR@/gpib_udev_config"
 SUBSYSTEM=="usb", ACTION=="add|change", DRIVER=="ni_usb_gpib", ATTRS{idVendor}=="3923", ATTRS{idProduct}=="7618", RUN+="@UDEV_LIBDIR@/gpib_udev_config"
-SUBSYSTEM=="usb", ACTION=="add|change", DRIVER=="ni_usb_gpib", ATTRS{idVendor}=="3923", ATTRS{idProduct}=="761e", RUN+="@UDEV_LIBDIR@/gpib_udev_config"
 SUBSYSTEM=="usb", ACTION=="add|change", DRIVER=="ni_usb_gpib", ATTRS{idVendor}=="3923", ATTRS{idProduct}=="725[cd]", RUN+="@UDEV_LIBDIR@/gpib_udev_config"
 
 #this rule generates new "change" udev events for devices supported by the
