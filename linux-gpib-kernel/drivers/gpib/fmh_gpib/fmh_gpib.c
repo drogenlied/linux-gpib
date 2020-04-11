@@ -356,9 +356,9 @@ static int fmh_gpib_dma_write(gpib_board_t *board,
 		BUG();
 	dmaengine_terminate_all(e_priv->dma_channel);
 	memcpy(e_priv->dma_buffer, buffer, length);
-	address = dma_map_single(NULL, e_priv->dma_buffer,
+	address = dma_map_single(board->dev, e_priv->dma_buffer,
 		 length, DMA_TO_DEVICE);
-	if(dma_mapping_error(NULL,  address))
+	if(dma_mapping_error(board->dev,  address))
 	{
 		printk("dma mapping error in dma write!\n");
 	}
@@ -425,7 +425,7 @@ static int fmh_gpib_dma_write(gpib_board_t *board,
 	/*	printk("length=%i, *bytes_written=%i, residue=%i, retval=%i\n",
 		length, *bytes_written, get_dma_residue(e_priv->dma_channel), retval);*/
 cleanup:
-	dma_unmap_single(NULL, address, length, DMA_TO_DEVICE);
+	dma_unmap_single(board->dev, address, length, DMA_TO_DEVICE);
 //	printk("%s: exit, retval=%d\n", __FUNCTION__, retval);
 	return retval;
 }
@@ -537,9 +537,9 @@ static int fmh_gpib_dma_read(gpib_board_t *board, uint8_t *buffer,
 	if(length == 0)
 		return 0;
 
-	bus_address = dma_map_single(NULL, e_priv->dma_buffer,
+	bus_address = dma_map_single(board->dev, e_priv->dma_buffer,
 		length, DMA_FROM_DEVICE);
-	if(dma_mapping_error(NULL, bus_address))
+	if(dma_mapping_error(board->dev, bus_address))
 	{
 		printk("dma mapping error in dma read!");
 	}
@@ -548,7 +548,7 @@ static int fmh_gpib_dma_read(gpib_board_t *board, uint8_t *buffer,
 	retval = fmh_gpib_config_dma(board, 0);
 	if(retval) 
 	{
-		dma_unmap_single(NULL, bus_address, length, DMA_FROM_DEVICE);
+		dma_unmap_single(board->dev, bus_address, length, DMA_FROM_DEVICE);
 		return retval;
 	}
 	tx_desc = dmaengine_prep_slave_single(e_priv->dma_channel, bus_address, length, DMA_DEV_TO_MEM, 
@@ -556,7 +556,7 @@ static int fmh_gpib_dma_read(gpib_board_t *board, uint8_t *buffer,
 	if(tx_desc == NULL)
 	{
 		printk("fmh_gpib_gpib: failed to allocate dma transmit descriptor\n");
-		dma_unmap_single(NULL, bus_address, length, DMA_FROM_DEVICE);
+		dma_unmap_single(board->dev, bus_address, length, DMA_FROM_DEVICE);
 		return -EIO;
 	}
 	tx_desc->callback = fmh_gpib_dma_callback;
@@ -608,7 +608,7 @@ static int fmh_gpib_dma_read(gpib_board_t *board, uint8_t *buffer,
 		fmh_gpib_dma_callback(board);
 	}
 
-	dma_unmap_single(NULL, bus_address, length, DMA_FROM_DEVICE);
+	dma_unmap_single(board->dev, bus_address, length, DMA_FROM_DEVICE);
 	memcpy(buffer, e_priv->dma_buffer, *bytes_read);
 
 	/* Manually read any dregs out of fifo. */

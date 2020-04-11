@@ -291,11 +291,18 @@ int pc2_generic_attach(gpib_board_t *board, const gpib_board_config_t *config, e
 	nec_priv->read_byte = nec7210_ioport_read_byte;
 	nec_priv->write_byte = nec7210_ioport_write_byte;
 	nec_priv->type = chipset;
+
+#if 1
+	/* board->dev hasn't been initialized, so forget about DMA until this drive is adapted to use isa_register_driver. */
+	if(config->ibdma)
+	{
+		printk("DMA disabled for pc2 gpib, driver needs to be adapted to use isa_register_driver to get a struct device*");
+	}
+#else
 	if(config->ibdma)
 	{
 		nec_priv->dma_buffer_length = 0x1000;
-		nec_priv->dma_buffer = pci_alloc_consistent(NULL, nec_priv->dma_buffer_length,
-			&nec_priv->dma_buffer_addr);
+		nec_priv->dma_buffer = dma_alloc_coherent(board->dev, nec_priv->dma_buffer_length, &nec_priv->dma_buffer_addr, GFP_ATOMIC);
 		if(nec_priv->dma_buffer == NULL)
 			return -ENOMEM;
 
@@ -307,6 +314,8 @@ int pc2_generic_attach(gpib_board_t *board, const gpib_board_config_t *config, e
 		}
 		nec_priv->dma_channel = config->ibdma;
 	}
+#endif
+
 	return 0;
 }
 
@@ -381,7 +390,7 @@ void pc2_detach(gpib_board_t *board)
 		}
 		if(nec_priv->dma_buffer)
 		{
-			pci_free_consistent(NULL, nec_priv->dma_buffer_length, nec_priv->dma_buffer,
+			dma_free_coherent(board->dev, nec_priv->dma_buffer_length, nec_priv->dma_buffer,
 				nec_priv->dma_buffer_addr);
 			nec_priv->dma_buffer = NULL;
 		}
@@ -537,7 +546,7 @@ void pc2a_common_detach( gpib_board_t *board, unsigned int num_registers )
 			release_region(pc2_priv->clear_intr_addr, 1);
 		if(nec_priv->dma_buffer)
 		{
-			pci_free_consistent(NULL, nec_priv->dma_buffer_length, nec_priv->dma_buffer,
+			dma_free_coherent(board->dev, nec_priv->dma_buffer_length, nec_priv->dma_buffer,
 				nec_priv->dma_buffer_addr);
 			nec_priv->dma_buffer = NULL;
 		}
