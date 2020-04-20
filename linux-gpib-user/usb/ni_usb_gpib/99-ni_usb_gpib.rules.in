@@ -1,7 +1,5 @@
 #gpib-usb-b without firmware
 SUBSYSTEM=="usb", ACTION=="add", ATTR{idVendor}=="3923", ATTR{idProduct}=="702b", ENV{DEVICE}="$devnode", RUN+="@UDEV_LIBDIR@/gpib_udev_fxloader"
-#gpib-usb-hs+ without firmware (most automatically load their firmware from their own eeprom but some do not)
-SUBSYSTEM=="usb", ACTION=="add", ATTR{idVendor}=="3923", ATTR{idProduct}=="761e", ENV{DEVICE}="$devnode", RUN+="@UDEV_LIBDIR@/gpib_udev_fxloader"
 #device id 713b is a keithley kusb-488 before we load it with firmware
 SUBSYSTEM=="usb", ACTION=="add", ATTR{idVendor}=="3923", ATTR{idProduct}=="713b", ENV{DEVICE}="$devnode", RUN+="@UDEV_LIBDIR@/gpib_udev_fxloader"
 
