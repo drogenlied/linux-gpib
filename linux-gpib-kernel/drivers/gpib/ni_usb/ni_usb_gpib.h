@@ -36,8 +36,6 @@ enum
 	USB_DEVICE_ID_NI_USB_B_PREINIT = 0x702b,	// device id before firmware is loaded
 	USB_DEVICE_ID_NI_USB_HS = 0x709b,
 	USB_DEVICE_ID_NI_USB_HS_PLUS = 0x7618,
-	// I believe 761e is the device id for a usb-hs without firmware (apparently some older versions require a firmware upload like the usb-b)
-	USB_DEVICE_ID_NI_USB_HS_PREINIT = 0x761e, 
 	USB_DEVICE_ID_KUSB_488A = 0x725c,
 	USB_DEVICE_ID_MC_USB_488 = 0x725d
 };
