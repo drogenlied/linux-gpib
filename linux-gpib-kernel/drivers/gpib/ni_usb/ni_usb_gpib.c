@@ -2130,12 +2130,6 @@ static int ni_usb_hs_plus_extra_init(ni_usb_private_t *ni_priv)
 				__FILE__, __FUNCTION__, (int)buffer[0], NI_USB_HS_PLUS_0x48_REQUEST);
 		}
 		
-		/* If the
-		adapter is plugged into a "full-speed" (slow) port the LED is supposed
-		to turn green instead of amber (which means the faster "high-speed").  However,
-		all my usb ports support high-speed so I can't sniff how to make the LED
-		turn green.  I do know changing the wValue parameter of the control urb
-		from 0x1 to 0x0 causes the LED to go black.  */
 		transfer_size = 2;
 		BUG_ON(transfer_size > buffer_size);
 		retval = ni_usb_receive_control_msg(ni_priv, NI_USB_HS_PLUS_LED_REQUEST, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
