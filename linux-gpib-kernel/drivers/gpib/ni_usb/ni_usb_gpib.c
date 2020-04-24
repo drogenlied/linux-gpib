@@ -1940,7 +1940,7 @@ static int ni_usb_hs_wait_for_ready(ni_usb_private_t *ni_priv)
 	buffer = kmalloc(buffer_size, GFP_KERNEL);
 	if(buffer == NULL)
 	{
-	        printk("%s: %s kmalloc failed\n", __FILE__,__FUNCTION__);
+		printk("%s: %s kmalloc failed\n", __FILE__,__FUNCTION__);
 		return -ENOMEM;
 	}
 	retval = ni_usb_receive_control_msg(ni_priv, NI_USB_SERIAL_NUMBER_REQUEST, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
@@ -2086,10 +2086,91 @@ static int ni_usb_hs_wait_for_ready(ni_usb_private_t *ni_priv)
 			goto ready_out;
 		}
 	}
-		retval = 0;
- ready_out:
+	retval = 0;
+
+ready_out:
 	kfree(buffer);
 	GPIB_DPRINTK("%s: %s exit retval=%d\n", __FILE__,__FUNCTION__,retval);
+	return retval;
+}
+
+/* This does some extra init for HS+ models, as observed on Windows.  One of the
+  control requests causes the LED to stop blinking.  
+  I'm not sure what the other 2 requests do.  None of these requests are actually required
+  for the adapter to work, maybe they do some init for the analyzer interface
+  (which we don't use). */
+static int ni_usb_hs_plus_extra_init(ni_usb_private_t *ni_priv)
+{
+	int retval;
+	uint8_t *buffer;
+	static const int buffer_size = 16;
+	int transfer_size;
+	
+	buffer = kmalloc(buffer_size, GFP_KERNEL);
+	if(buffer == NULL)
+	{
+		return -ENOMEM;
+	}
+	
+	do
+	{
+		transfer_size = 16;
+		BUG_ON(transfer_size > buffer_size);
+		retval = ni_usb_receive_control_msg(ni_priv, NI_USB_HS_PLUS_0x48_REQUEST, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+			0x0, 0x0, buffer, transfer_size, 1000);
+		if(retval < 0)
+		{
+			printk("%s: usb_control_msg request 0x%x returned %i\n", __FILE__, NI_USB_HS_PLUS_0x48_REQUEST, retval);
+			break;
+		}
+		// expected response data: 48 f3 30 00 00 00 00 00 00 00 00 00 00 00 00 00
+		if (buffer[0] != NI_USB_HS_PLUS_0x48_REQUEST)
+		{
+			printk("%s: %s: unexpected data: buffer[0]=0x%x, expected 0x%x\n",
+				__FILE__, __FUNCTION__, (int)buffer[0], NI_USB_HS_PLUS_0x48_REQUEST);
+		}
+		
+		/* If the
+		adapter is plugged into a "full-speed" (slow) port the LED is supposed
+		to turn green instead of amber (which means the faster "high-speed").  However,
+		all my usb ports support high-speed so I can't sniff how to make the LED
+		turn green.  I do know changing the wValue parameter of the control urb
+		from 0x1 to 0x0 causes the LED to go black.  */
+		transfer_size = 2;
+		BUG_ON(transfer_size > buffer_size);
+		retval = ni_usb_receive_control_msg(ni_priv, NI_USB_HS_PLUS_LED_REQUEST, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+			0x1, 0x0, buffer, transfer_size, 1000);
+		if(retval < 0)
+		{
+			printk("%s: usb_control_msg request 0x%x returned %i\n", __FILE__, NI_USB_HS_PLUS_LED_REQUEST, retval);
+			break;
+		}
+		// expected response data: 4b 00
+		if (buffer[0] != NI_USB_HS_PLUS_LED_REQUEST)
+		{
+			printk("%s: %s: unexpected data: buffer[0]=0x%x, expected 0x%x\n",
+				__FILE__, __FUNCTION__, (int)buffer[0], NI_USB_HS_PLUS_LED_REQUEST);
+		}
+		
+		transfer_size = 9;
+		BUG_ON(transfer_size > buffer_size);
+		retval = ni_usb_receive_control_msg(ni_priv, NI_USB_HS_PLUS_0xf8_REQUEST, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_INTERFACE,
+			0x0, 0x1, buffer, transfer_size, 1000);
+		if(retval < 0)
+		{
+			printk("%s: usb_control_msg request 0x%x returned %i\n", __FILE__, NI_USB_HS_PLUS_0xf8_REQUEST, retval);
+			break;
+		}
+		// expected response data: f8 01 00 00 00 01 00 00 00
+		if (buffer[0] != NI_USB_HS_PLUS_0xf8_REQUEST)
+		{
+			printk("%s: %s: unexpected data: buffer[0]=0x%x, expected 0x%x\n",
+				__FILE__, __FUNCTION__, (int)buffer[0], NI_USB_HS_PLUS_0xf8_REQUEST);
+		}
+	} while(0);
+
+	// cleanup
+	kfree(buffer);
 	return retval;
 }
 
@@ -2171,6 +2252,12 @@ int ni_usb_attach(gpib_board_t *board, const gpib_board_config_t *config)
 		ni_priv->bulk_in_endpoint = NIUSB_HS_PLUS_BULK_IN_ENDPOINT;
 		ni_priv->interrupt_in_endpoint = NIUSB_HS_PLUS_INTERRUPT_IN_ENDPOINT;
 		retval = ni_usb_hs_wait_for_ready(ni_priv);
+		if(retval < 0)
+		{
+			mutex_unlock(&ni_usb_hotplug_lock);
+			return retval;
+		}
+		retval = ni_usb_hs_plus_extra_init(ni_priv);
 		if(retval < 0)
 		{
 			mutex_unlock(&ni_usb_hotplug_lock);
