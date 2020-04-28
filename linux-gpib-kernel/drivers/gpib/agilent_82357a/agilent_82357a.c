@@ -840,7 +840,8 @@ unsigned int agilent_82357a_update_status( gpib_board_t *board, unsigned int cle
 	retval = agilent_82357a_read_registers(a_priv, &address_status, 1, 0);
 	if(retval)
 	{
-		printk("%s: %s: agilent_82357a_read_registers() returned error\n", __FILE__, __FUNCTION__);
+		if (retval != -EAGAIN)
+			printk("%s: %s: agilent_82357a_read_registers() returned error\n", __FILE__, __FUNCTION__);
 		return board->status;
 	}
 	// check for remote/local
@@ -979,7 +980,8 @@ int agilent_82357a_line_status( const gpib_board_t *board )
 	retval = agilent_82357a_read_registers(a_priv, &bus_status, 1, 0);
 	if(retval)
 	{
-		printk("%s: %s: agilent_82357a_read_registers() returned error\n", __FILE__, __FUNCTION__);
+		if (retval != -EAGAIN)
+			printk("%s: %s: agilent_82357a_read_registers() returned error\n", __FILE__, __FUNCTION__);
 		return 0;
 	}
 	if( bus_status.value & BSR_REN_BIT )
