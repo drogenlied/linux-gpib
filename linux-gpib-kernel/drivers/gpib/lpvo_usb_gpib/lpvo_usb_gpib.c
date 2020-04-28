@@ -1005,9 +1005,10 @@ void usb_gpib_parallel_poll_response( gpib_board_t *board, int ist ) {
 
 /* primary_address */
 
-void usb_gpib_primary_address(gpib_board_t *board, unsigned int address) {
+int  usb_gpib_primary_address(gpib_board_t *board, unsigned int address) {
 
 	printk (KERN_ALERT "%s:%s - currently a NOP\n", HERE);
+	return 0;
 }
 
 /* return_to_local */
@@ -1019,11 +1020,12 @@ void usb_gpib_return_to_local( gpib_board_t *board ) {
 
 /* secondary_address */
 
-void usb_gpib_secondary_address(gpib_board_t *board,
+int usb_gpib_secondary_address(gpib_board_t *board,
 				unsigned int address,
 				int enable) {
 
 	printk (KERN_ALERT "%s:%s - currently a NOP\n", HERE);
+	return 0;
 }
 
 /* serial_poll_response */

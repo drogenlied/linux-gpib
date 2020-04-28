@@ -99,8 +99,8 @@ int agilent_82350b_enable_eos( gpib_board_t *board, uint8_t eos_byte, int
  compare_8_bits );
 void agilent_82350b_disable_eos( gpib_board_t *board );
 unsigned int agilent_82350b_update_status( gpib_board_t *board, unsigned int clear_mask );
-void agilent_82350b_primary_address( gpib_board_t *board, unsigned int address );
-void agilent_82350b_secondary_address( gpib_board_t *board, unsigned int address, int
+int agilent_82350b_primary_address( gpib_board_t *board, unsigned int address );
+int agilent_82350b_secondary_address( gpib_board_t *board, unsigned int address, int
  enable );
 int agilent_82350b_parallel_poll( gpib_board_t *board, uint8_t *result );
 void agilent_82350b_parallel_poll_configure( gpib_board_t *board, uint8_t config );

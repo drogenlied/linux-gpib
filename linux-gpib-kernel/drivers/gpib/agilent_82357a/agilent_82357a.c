@@ -877,8 +877,8 @@ unsigned int agilent_82357a_update_status( gpib_board_t *board, unsigned int cle
 
 	return board->status;
 }
-//FIXME: prototype should return int
-void agilent_82357a_primary_address(gpib_board_t *board, unsigned int address)
+
+int agilent_82357a_primary_address(gpib_board_t *board, unsigned int address)
 {
 	agilent_82357a_private_t *a_priv = board->private_data;
 	struct agilent_82357a_register_pairlet write;
@@ -891,16 +891,16 @@ void agilent_82357a_primary_address(gpib_board_t *board, unsigned int address)
 	if(retval)
 	{
 		printk("%s: %s: agilent_82357a_write_registers() returned error\n", __FILE__, __FUNCTION__);
-		return;
+		return retval;
 	}
-	return;
+	return retval;
 }
 
-void agilent_82357a_secondary_address(gpib_board_t *board, unsigned int address, int enable)
+int agilent_82357a_secondary_address(gpib_board_t *board, unsigned int address, int enable)
 {
 	if(enable)
 		printk("%s: %s: warning: assigning a secondary address not supported\n", __FILE__, __FUNCTION__);
-	return;
+	return  -EOPNOTSUPP;
 }
 
 int agilent_82357a_parallel_poll(gpib_board_t *board, uint8_t *result)

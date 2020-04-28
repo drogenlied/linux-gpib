@@ -124,15 +124,15 @@ unsigned int agilent_82350b_update_status( gpib_board_t *board, unsigned int cle
 	agilent_82350b_private_t *priv = board->private_data;
 	return tms9914_update_status( board, &priv->tms9914_priv, clear_mask );
 }
-void agilent_82350b_primary_address( gpib_board_t *board, unsigned int address )
+int agilent_82350b_primary_address( gpib_board_t *board, unsigned int address )
 {
 	agilent_82350b_private_t *priv = board->private_data;
-	tms9914_primary_address( board, &priv->tms9914_priv, address );
+	return tms9914_primary_address( board, &priv->tms9914_priv, address );
 }
-void agilent_82350b_secondary_address( gpib_board_t *board, unsigned int address, int enable )
+int agilent_82350b_secondary_address( gpib_board_t *board, unsigned int address, int enable )
 {
 	agilent_82350b_private_t *priv = board->private_data;
-	tms9914_secondary_address( board, &priv->tms9914_priv, address, enable );
+	return tms9914_secondary_address( board, &priv->tms9914_priv, address, enable );
 }
 int agilent_82350b_parallel_poll( gpib_board_t *board, uint8_t *result )
 {

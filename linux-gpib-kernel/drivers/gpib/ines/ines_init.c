@@ -186,15 +186,15 @@ unsigned int ines_update_status( gpib_board_t *board, unsigned int clear_mask )
 	ines_private_t *priv = board->private_data;
 	return nec7210_update_status( board, &priv->nec7210_priv, clear_mask );
 }
-void ines_primary_address(gpib_board_t *board, unsigned int address)
+int ines_primary_address(gpib_board_t *board, unsigned int address)
 {
 	ines_private_t *priv = board->private_data;
-	nec7210_primary_address(board, &priv->nec7210_priv, address);
+	return nec7210_primary_address(board, &priv->nec7210_priv, address);
 }
-void ines_secondary_address(gpib_board_t *board, unsigned int address, int enable)
+int ines_secondary_address(gpib_board_t *board, unsigned int address, int enable)
 {
 	ines_private_t *priv = board->private_data;
-	nec7210_secondary_address(board, &priv->nec7210_priv, address, enable);
+	return nec7210_secondary_address(board, &priv->nec7210_priv, address, enable);
 }
 int ines_parallel_poll(gpib_board_t *board, uint8_t *result)
 {

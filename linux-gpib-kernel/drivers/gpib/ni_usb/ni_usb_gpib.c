@@ -1236,7 +1236,7 @@ static void ni_usb_stop(ni_usb_private_t *ni_priv)
 	kfree(buffer);
 }
 
-void ni_usb_primary_address(gpib_board_t *board, unsigned int address)
+int ni_usb_primary_address(gpib_board_t *board, unsigned int address)
 {
 	int retval;
 	ni_usb_private_t *ni_priv = board->private_data;
@@ -1256,10 +1256,10 @@ void ni_usb_primary_address(gpib_board_t *board, unsigned int address)
 	if(retval < 0)
 	{
 		printk("%s: %s: register write failed, retval=%i\n", __FILE__, __FUNCTION__, retval);
-		return; // retval;
+		return retval;
 	}
 	ni_usb_soft_update_status(board, ibsta, 0);
-	return; // 0;
+	return 0;
 }
 
 int ni_usb_write_sad(struct ni_usb_register *writes, int address, int enable)
@@ -1293,7 +1293,7 @@ int ni_usb_write_sad(struct ni_usb_register *writes, int address, int enable)
 	return i;
 }
 
-void ni_usb_secondary_address(gpib_board_t *board, unsigned int address, int enable)
+int ni_usb_secondary_address(gpib_board_t *board, unsigned int address, int enable)
 {
 	int retval;
 	ni_usb_private_t *ni_priv = board->private_data;
@@ -1306,10 +1306,10 @@ void ni_usb_secondary_address(gpib_board_t *board, unsigned int address, int ena
 	if(retval < 0)
 	{
 		printk("%s: %s: register write failed, retval=%i\n", __FILE__, __FUNCTION__, retval);
-		return; // retval;
+		return retval;
 	}
 	ni_usb_soft_update_status(board, ibsta, 0);
-	return; // 0;
+	return 0;
 }
 int ni_usb_parallel_poll(gpib_board_t *board, uint8_t *result)
 {

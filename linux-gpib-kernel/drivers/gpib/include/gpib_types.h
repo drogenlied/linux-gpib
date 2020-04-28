@@ -136,11 +136,11 @@ struct gpib_interface_struct
 	unsigned int (*update_status)( gpib_board_t *board, unsigned int clear_mask );
 	/* Sets primary address 0-30 for gpib interface card.
 	 */
-	void (*primary_address)(gpib_board_t *board, unsigned int address);
+	int (*primary_address)(gpib_board_t *board, unsigned int address);
 	/* Sets and enables, or disables secondary address 0-30
 	 * for gpib interface card.
 	 */
-	void (*secondary_address)(gpib_board_t *board, unsigned int address,
+	int (*secondary_address)(gpib_board_t *board, unsigned int address,
 	int enable);
 	/* Sets the byte the board should send in response to a serial poll.
 	 * This function should also start or stop requests for service via 
