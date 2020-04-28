@@ -1751,7 +1751,7 @@ void ni_usb_interrupt_complete(struct urb *urb PT_REGS_ARG)
 
 	switch (urb->status) {
 	/* success */
-	case 0: 
+	case 0:
 		break;
 	/* unlinked, don't resubmit */
 	case -ECONNRESET:
@@ -1766,7 +1766,7 @@ void ni_usb_interrupt_complete(struct urb *urb PT_REGS_ARG)
 		}
 		return;
 	}
-	
+
 	ni_usb_parse_status_block(urb->transfer_buffer, &status);
 // 	printk("debug: ibsta=0x%x\n", status.ibsta);
 
@@ -1822,9 +1822,9 @@ static int ni_usb_setup_urbs(gpib_board_t *board)
 	struct usb_device *usb_dev;
 	int int_pipe;
 	int retval;
-	
+
 	if (ni_priv->interrupt_in_endpoint < 0) return 0;
-	
+
 	mutex_lock(&ni_priv->interrupt_transfer_lock);
 	if(ni_priv->bus_interface == NULL)
 	{
@@ -2095,7 +2095,7 @@ ready_out:
 }
 
 /* This does some extra init for HS+ models, as observed on Windows.  One of the
-  control requests causes the LED to stop blinking.  
+  control requests causes the LED to stop blinking.
   I'm not sure what the other 2 requests do.  None of these requests are actually required
   for the adapter to work, maybe they do some init for the analyzer interface
   (which we don't use). */
@@ -2105,13 +2105,13 @@ static int ni_usb_hs_plus_extra_init(ni_usb_private_t *ni_priv)
 	uint8_t *buffer;
 	static const int buffer_size = 16;
 	int transfer_size;
-	
+
 	buffer = kmalloc(buffer_size, GFP_KERNEL);
 	if(buffer == NULL)
 	{
 		return -ENOMEM;
 	}
-	
+
 	do
 	{
 		transfer_size = 16;
@@ -2129,7 +2129,7 @@ static int ni_usb_hs_plus_extra_init(ni_usb_private_t *ni_priv)
 			printk("%s: %s: unexpected data: buffer[0]=0x%x, expected 0x%x\n",
 				__FILE__, __FUNCTION__, (int)buffer[0], NI_USB_HS_PLUS_0x48_REQUEST);
 		}
-		
+
 		transfer_size = 2;
 		BUG_ON(transfer_size > buffer_size);
 		retval = ni_usb_receive_control_msg(ni_priv, NI_USB_HS_PLUS_LED_REQUEST, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
@@ -2145,7 +2145,7 @@ static int ni_usb_hs_plus_extra_init(ni_usb_private_t *ni_priv)
 			printk("%s: %s: unexpected data: buffer[0]=0x%x, expected 0x%x\n",
 				__FILE__, __FUNCTION__, (int)buffer[0], NI_USB_HS_PLUS_LED_REQUEST);
 		}
-		
+
 		transfer_size = 9;
 		BUG_ON(transfer_size > buffer_size);
 		retval = ni_usb_receive_control_msg(ni_priv, NI_USB_HS_PLUS_0xf8_REQUEST, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_INTERFACE,
@@ -2201,7 +2201,8 @@ int ni_usb_attach(gpib_board_t *board, const gpib_board_config_t *config)
 		{
 			ni_priv->bus_interface = ni_usb_driver_interfaces[i];
 			usb_set_intfdata(ni_usb_driver_interfaces[i], board);
-			printk("\tattached to bus interface %i, address 0x%p\n", i, ni_priv->bus_interface);
+			printk("\tattached to minor %d, ni usb interface number %i, address 0x%p\n",
+				board->minor, i, ni_priv->bus_interface);
 			break;
 		}
 	}
@@ -2217,9 +2218,9 @@ int ni_usb_attach(gpib_board_t *board, const gpib_board_config_t *config)
 	}
 	product_id = USBID_TO_CPU(interface_to_usbdev(ni_priv->bus_interface)->descriptor.idProduct);
 	printk("\tproduct id=0x%x\n", product_id);
-    
+
 	COMPAT_TIMER_SETUP(&ni_priv->bulk_timer, ni_usb_timeout_handler, 0);
-    
+
 	switch(product_id)
 	{
 	case USB_DEVICE_ID_NI_USB_B:
@@ -2263,7 +2264,7 @@ int ni_usb_attach(gpib_board_t *board, const gpib_board_config_t *config)
 		printk("\tDriver bug: unknown endpoints for usb device id\n");
 		return -EINVAL;
 	}
-	
+
 	retval = ni_usb_setup_urbs(board);
 	if(retval < 0)
 	{
