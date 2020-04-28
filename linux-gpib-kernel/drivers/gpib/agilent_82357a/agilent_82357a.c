@@ -1052,7 +1052,7 @@ void agilent_82357a_interrupt_complete(struct urb *urb PT_REGS_ARG)
 #endif
 	switch (urb->status) {
 	/* success */
-	case 0: 
+	case 0:
 		break;
 	/* unlinked, don't resubmit */
 	case -ECONNRESET:
@@ -1343,7 +1343,8 @@ int agilent_82357a_attach(gpib_board_t *board, const gpib_board_config_t *config
 		{
 			a_priv->bus_interface = agilent_82357a_driver_interfaces[i];
 			usb_set_intfdata(agilent_82357a_driver_interfaces[i], board);
-			printk("attached to bus interface %i, address 0x%p\n", i, a_priv->bus_interface);
+			printk("attached to minor %d, agilent usb bus interface %i, address 0x%p\n",
+				board->minor, i, a_priv->bus_interface);
 			break;
 		}
 	}
