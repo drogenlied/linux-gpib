@@ -1327,6 +1327,8 @@ int agilent_82357a_attach(gpib_board_t *board, const gpib_board_config_t *config
 	int i;
 	unsigned product_id;
 	agilent_82357a_private_t *a_priv;
+	char *path;
+	static const int pathLength = 1024;
 
 	if(mutex_lock_interruptible(&agilent_82357a_hotplug_lock))
 		return -ERESTARTSYS;
@@ -1345,8 +1347,13 @@ int agilent_82357a_attach(gpib_board_t *board, const gpib_board_config_t *config
 		{
 			a_priv->bus_interface = agilent_82357a_driver_interfaces[i];
 			usb_set_intfdata(agilent_82357a_driver_interfaces[i], board);
-			printk("attached to minor %d, agilent usb bus interface %i, address 0x%p\n",
-				board->minor, i, a_priv->bus_interface);
+			path = kmalloc(pathLength, GFP_KERNEL);
+			if(path == NULL)
+			  path = "";
+			usb_make_path(interface_to_usbdev(a_priv->bus_interface), path, pathLength);
+			printk("%s attached to minor %d, agilent usb interface %i\n",
+			       path,board->minor, i);
+			if (path != NULL) kfree(path);
 			break;
 		}
 	}
