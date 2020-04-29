@@ -1,3 +1,178 @@
+2020-04-29 07:48  dpenkler
+
+	* [r1892] Add path to usb attach message for ni_usb_b
+
+2020-04-29 07:32  dpenkler
+
+	* [r1891] Add path to usb attach message for agilent_82357a
+
+2020-04-28 15:39  dpenkler
+
+	* [r1890] agilent_82357a.c: Reduce console spam: no error message
+	on -EAGAIN
+
+2020-04-28 15:30  dpenkler
+
+	* [r1889] Clarify agilent_82357a attach message, remove trailing blank
+
+2020-04-28 15:26  dpenkler
+
+	* [r1888] All drivers: change primary_ and secondary_address() to return int
+
+2020-04-28 12:53  dpenkler
+
+	* [r1887] ni_usb_gpib.c: Clarify attach message and remove
+	trailing blanks
+
+2020-04-28 12:32  dpenkler
+
+	* [r1886] Bump user and kernel versions to 4.3.1
+
+2020-04-28 12:21  dpenkler
+
+	* [r1885] Stop bison complaining about yacc compatibility issues
+
+2020-04-24 20:14  fmhess
+
+	* [r1884] ni_usb_gpib.c: It turns out the firmware handles whether
+	the LED should be amber or green on its own. So remove extraneous
+	comment.
+
+2020-04-24 19:25  fmhess
+
+	* [r1883] ni_usb_gpib: At long last, make the NI GPIB-USB-HS+ LED
+	stop blinking green/yellow.
+
+2020-04-20 22:55  fmhess
+
+	* [r1882] doc: Update board-specific notes on gpib-usb-hs+ to
+	mention hsplus_load.
+
+2020-04-20 22:49  fmhess
+
+	* [r1881] ni_usb_gpib.h: Remove unused value
+	USB_DEVICE_ID_NI_USB_HS_PREINIT
+
+2020-04-20 22:47  fmhess
+
+	* [r1880] Don't try to auto-init gpib-usb-hs+, as it is too
+	experimental and risky to do in udev rules.
+
+2020-04-16 15:13  fmhess
+
+	* [r1879] doc: Update gpib-usb-hs+ board specific notes with the
+	latest discovery.
+
+2020-04-12 00:19  fmhess
+
+	* [r1878] doc: Add note about GPIB-USB-HS+ possibly needing
+	firmware upload. Replace "hotplug scripts" with "udev rules".
+
+2020-04-11 01:36  fmhess
+
+	* [r1877] Newer kernels do not allow NULL to be passed as the
+	struct device* argument of the dma allocation functions.  So give
+	them valid device pointers (except pc2 which requires more work to
+	get a struct device* for a ISA device.
+
+2020-04-09 16:36  fmhess
+
+	* [r1876] Update usb udev rules for product id 0x761e
+	(ni gpib-usb-hs+ without firmware) so that it tries to fxload the
+	firmware.
+
+2020-04-09 01:23  fmhess
+
+	* [r1875] ni_usb_gpib.h: Remove unused enum
+	hs_plus_v2_endpoint_addresses
+
+2020-04-08 23:23  fmhess
+
+	* [r1874] ni_usb/ni_usb_gpib: Remove attempts to use adapters with
+	device id 0x761e. I now believe this is a gpib-usb-hs with no
+	firmware.
+
+2020-04-08 14:53  dpenkler
+
+	* [r1873] Re-enable support for PCMCIA boards
+
+2020-04-08 01:14  fmhess
+
+	* [r1872] ni_usb_gpib: Update support for new gpib-usb-hs+ variant
+	based on lsusb -v output. This is almost certainly not enough to
+	make it actually work.
+
+2020-04-02 21:18  fmhess
+
+	* [r1871] 99-ni_usb_gpib.rules.in: Add alternate device id for NI
+	GPIB-USB-HS+
+
+2020-04-02 21:15  fmhess
+
+	* [r1870] ni_usb_gpib: Add alternate device id for NI GPIB-USB-HS+
+	to driver.
+
+2020-03-16 21:58  fmhess
+
+	* [r1869] ibsys.h: Remove useless include of asm/segment.h
+
+2020-03-16 21:52  fmhess
+
+	* [r1868] fmh_gpib.c: Add compatibility macro for change to
+	driver_find_device prototype in kernel 5.3.
+
+2020-03-16 21:32  fmhess
+
+	* [r1867] Use CURDIR instead of PWD in Makefile.
+
+2020-03-15 17:00  fmhess
+
+	* [r1866] ni_usb_gpib.c: Resubmit interrupt urbs that have errors
+	other than those caused by the urb being unlinked. Based on bug
+	report/patch from Matthias Babel.
+
+2020-03-02 13:00  dpenkler
+
+	* [r1865] lpvo_usb_gpib.c: Change timespec to timespec64 for linux 5.6
+
+2020-02-19 23:54  fmhess
+
+	* [r1864] Skip access_ok checks on kernels older than 5.0, due to
+	difficulties caused by RHEL8 backporting changes to 4.X kernels.
+
+2020-02-19 22:58  fmhess
+
+	* [r1863] Add missing include of version.h to uaccess.h
+	compatibility header for correctness (it wasn't actually causing
+	problems at the moment).
+
+2019-10-04 17:00  fmhess
+
+	* [r1862] Explicitly run depmod after install, due to depmod.sh
+	failing on Debian during modules_install.
+
+2019-09-30 03:10  fmhess
+
+	* [r1861] Remove support for gpib_config --serial-number option,
+	since it ultimately was not how we achived support for configuring
+	by serial number. Rather, we use udev and the --sysfs-device-path
+	option of gpib_config.
+
+2019-09-20 16:14  fmhess
+
+	* [r1860] Change ACTION match in example rules to add|change, so
+	they work when the driver module is initially unloaded.
+
+2019-09-05 14:40  dpenkler
+
+	* [r1858] Update README and Changelog
+
+2019-09-03 01:41  fmhess
+
+	* [r1857] Don't generate kernel spam on unrecognized command
+	bytes.  We don't need to clear ppoll_configure_state on PPE/PPD
+	bytes for tms9914.
+
 
 2019-09-03 01:41  fmhess
 
