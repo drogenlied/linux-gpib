@@ -21,7 +21,7 @@ on building and installing.
 Send comments, questions and suggestions to to the linux-gpib mailing
 list at linux-gpib-general@lists.sourceforge.net
 
-Release Notes for linux-gpib-4.3.1
+Release Notes for linux-gpib-4.3.2
 ----------------------------------
 
 Changes since the linux-gpib-4.3.0 release
@@ -29,9 +29,13 @@ Changes since the linux-gpib-4.3.0 release
 	- Update doc for certain NI GPIB-USB-HS+ that may need a one
           time firmware download
 
+	- Update doc with new firmware repository
+	
 	- Make the NI GPIB-USB-HS+ LED stop blinking green/yellow.
 
 	- Re-enable support for PCMCIA
+
+	- Improve attach reporting for usb adaptors
 
 	- Resubmit interrupt urbs in ni_usb driver based on bug
 	report/patch from Matthias Babel
@@ -46,7 +50,7 @@ Changes since the linux-gpib-4.3.0 release
 	  
 Note: If you have any pre 4.3.0 gpib udev rules files in
       /etc/udev/rules.d/ please remove them before installing
-      linux-gpib-user-4.3.0.
+      linux-gpib-user-x.x.x.
       
       The files to remove are:
       	   99-agilent_82357a.rules

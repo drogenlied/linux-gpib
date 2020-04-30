@@ -1,3 +1,28 @@
+2020-04-30 11:30  dpenkler
+
+	* [r1898] Bump versions again
+
+2020-04-30 11:25  dpenkler
+
+	* [r1897]  doc: Update refs to firmware repository
+
+2020-04-30 11:22  dpenkler
+
+	* [r1896] Make attach message more useful in
+	ni_usb_b and agilent_82357a
+
+2020-04-29 10:05  dpenkler
+
+	* [r1895] Tag for 4.3.1 release
+
+2020-04-29 10:05  dpenkler
+
+	* [r1894] Update README
+
+2020-04-29 08:34  dpenkler
+
+	* [r1893] Update Changelog
+
 2020-04-29 07:48  dpenkler
 
 	* [r1892] Add path to usb attach message for ni_usb_b
@@ -88,7 +113,7 @@
 
 2020-04-08 23:23  fmhess
 
-	* [r1874] ni_usb/ni_usb_gpib: Remove attempts to use adapters with
+	* [r1874] ni_usb_gpib: Remove attempts to use adapters with
 	device id 0x761e. I now believe this is a gpib-usb-hs with no
 	firmware.
 
