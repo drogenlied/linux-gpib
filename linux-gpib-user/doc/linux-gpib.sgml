@@ -854,9 +854,8 @@ path is the absolute path to the device's directory under /sys/devices, with the
 After power-up, the Agilent 82341 boards require a firmware upload before they
 can be used.  This can be accomplished using the "--init-data" option of
 <link LINKEND="configuration-gpib-config">gpib_config</link>.  The
-firmware data can be found in the gpib_firmware
-tarball available from the
-<ulink URL="https://linux-gpib.sourceforge.io/">Linux-GPIB home page</ulink>.
+firmware data for the boards can be found at this
+<ulink URL="https://github.com/fmhess/linux_gpib_firmware">repository</ulink>.
 Note the C and D versions use different firmware data.
 </para>
 <para>
@@ -888,9 +887,8 @@ may not be noticeable depending on the device you are talking to).
 After power-up, the 82350A boards require a firmware upload before they
 can be used.  This can be accomplished using the "--init-data" option of
 <link LINKEND="configuration-gpib-config">gpib_config</link>.  The
-firmware data can be found in the gpib_firmware
-tarball available from the
-<ulink URL="https://linux-gpib.sourceforge.io/">Linux-GPIB home page</ulink>.
+firmware data for the 82350A can be found at this
+<ulink URL="https://github.com/fmhess/linux_gpib_firmware">repository</ulink>.
 The 82350B and 82351A do not require a firmware upload.
 </para>
 </section>
@@ -902,10 +900,9 @@ The Agilent 82357A and 82357B require a firmware upload
 after being plugged in.  The linux-gpib tarball contains udev rules
 for automatically running the fxload program to upload the firmware (and
 to run gpib_config after the firmware is uploaded).
-However, the actual firmware
-data itself must be obtained seperately, as part of the gpib_firmware
-tarball available from the
-<ulink URL="https://linux-gpib.sourceforge.io/">Linux-GPIB home page</ulink>.
+However, the actual firmware data itself must be obtained
+seperately. It can be found at this
+<ulink URL="https://github.com/fmhess/linux_gpib_firmware">repository</ulink>.
 </para>
 <para>
 The 82357A/B have a few limitation due to their firmware code:
@@ -932,7 +929,7 @@ compare all 8 bits).
 <section ID="beiming-F82357">
 <title>Beiming F/S82357</title>
 <para>
-Linux_gpib support requires a minimum firmware version of 1.10 for
+Linux-gpib support requires a minimum firmware version of 1.10 for
 the F82357 and version 1.20 for the S82357. These devices have
 on-board firmware and do not require a firmware upload before becoming
 functional afer plug-in. The on-board firmware can be re-flashed; contact the
@@ -1032,10 +1029,9 @@ run) to become functional
 after being plugged in.  The linux-gpib tarball contains udev rules
 for automatically running the fxload program to upload the firmware (and
 to run gpib_config after the firmware is uploaded).
-However, the actual firmware
-data itself must be obtained seperately, as part of the gpib_firmware
-tarball available from the
-<ulink URL="https://linux-gpib.sourceforge.io/">Linux-GPIB home page</ulink>.
+However, the actual firmware must be obtained separately.
+It can be found at this
+<ulink URL="https://github.com/fmhess/linux_gpib_firmware">repository</ulink>.
 </para>
 </section>
 <section ID="ni-usb-hs">
