@@ -2184,8 +2184,7 @@ int ni_usb_attach(gpib_board_t *board, const gpib_board_config_t *config)
 	int i;
 	ni_usb_private_t *ni_priv;
 	int product_id;
-	char *path;
-	static const int pathLength = 1024;
+	struct usb_device *usb_dev;
 	
 	printk("ni_usb_gpib: attach\n");
 	mutex_lock(&ni_usb_hotplug_lock);
@@ -2203,13 +2202,9 @@ int ni_usb_attach(gpib_board_t *board, const gpib_board_config_t *config)
 		{
 			ni_priv->bus_interface = ni_usb_driver_interfaces[i];
 			usb_set_intfdata(ni_usb_driver_interfaces[i], board);
-			path = kmalloc(pathLength, GFP_KERNEL);
-			if(path == NULL)
-			       path = "";
-			usb_make_path(interface_to_usbdev(ni_priv->bus_interface), path, pathLength);
-			printk("%s attached to minor %d, ni usb interface %i\n",
-			       path,board->minor, i);
-			if (path != NULL) kfree(path);
+			usb_dev = interface_to_usbdev(ni_priv->bus_interface);
+			dev_info(&usb_dev->dev,"bus %d dev num %d attached to gpib minor %d, NI usb interface %i\n",
+				 usb_dev->bus->busnum, usb_dev->devnum, board->minor, i);
 			break;
 		}
 	}
