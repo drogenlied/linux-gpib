@@ -100,15 +100,15 @@ unsigned int fmh_gpib_update_status( gpib_board_t *board, unsigned int clear_mas
 	fmh_gpib_private_t *priv = board->private_data;
 	return nec7210_update_status( board, &priv->nec7210_priv, clear_mask );
 }
-void fmh_gpib_primary_address(gpib_board_t *board, unsigned int address)
+int fmh_gpib_primary_address(gpib_board_t *board, unsigned int address)
 {
 	fmh_gpib_private_t *priv = board->private_data;
-	nec7210_primary_address(board, &priv->nec7210_priv, address);
+	return nec7210_primary_address(board, &priv->nec7210_priv, address);
 }
-void fmh_gpib_secondary_address(gpib_board_t *board, unsigned int address, int enable)
+int fmh_gpib_secondary_address(gpib_board_t *board, unsigned int address, int enable)
 {
 	fmh_gpib_private_t *priv = board->private_data;
-	nec7210_secondary_address(board, &priv->nec7210_priv, address, enable);
+	return nec7210_secondary_address(board, &priv->nec7210_priv, address, enable);
 }
 int fmh_gpib_parallel_poll(gpib_board_t *board, uint8_t *result)
 {

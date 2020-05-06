@@ -114,15 +114,15 @@ unsigned int fluke_update_status( gpib_board_t *board, unsigned int clear_mask )
 	fluke_private_t *priv = board->private_data;
 	return nec7210_update_status( board, &priv->nec7210_priv, clear_mask );
 }
-void fluke_primary_address(gpib_board_t *board, unsigned int address)
+int fluke_primary_address(gpib_board_t *board, unsigned int address)
 {
 	fluke_private_t *priv = board->private_data;
-	nec7210_primary_address(board, &priv->nec7210_priv, address);
+	return nec7210_primary_address(board, &priv->nec7210_priv, address);
 }
-void fluke_secondary_address(gpib_board_t *board, unsigned int address, int enable)
+int fluke_secondary_address(gpib_board_t *board, unsigned int address, int enable)
 {
 	fluke_private_t *priv = board->private_data;
-	nec7210_secondary_address(board, &priv->nec7210_priv, address, enable);
+	return nec7210_secondary_address(board, &priv->nec7210_priv, address, enable);
 }
 int fluke_parallel_poll(gpib_board_t *board, uint8_t *result)
 {
