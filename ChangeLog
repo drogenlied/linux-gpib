@@ -1,3 +1,17 @@
+
+2020-05-07 16:13  dpenkler
+
+	* [r1902] Update README and bump versions to 4.3.3
+
+2020-05-06 21:06  fmhess
+
+	* [r1901] Fix return type for primary/secondary address
+	          functions in OF drivers.
+
+2020-04-30 12:36  dpenkler
+
+	* [r1899] Update README and Changelog for 4.3.2
+
 2020-04-30 11:30  dpenkler
 
 	* [r1898] Bump versions again
