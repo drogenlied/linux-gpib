@@ -21,11 +21,14 @@ on building and installing.
 Send comments, questions and suggestions to to the linux-gpib mailing
 list at linux-gpib-general@lists.sourceforge.net
 
-Release Notes for linux-gpib-4.3.2
+Release Notes for linux-gpib-4.3.3
 ----------------------------------
 
 Changes since the linux-gpib-4.3.0 release
 
+        - Fix and update return types on _primary_ and 
+	  secondary_address() driver entry points
+         
 	- Update doc for certain NI GPIB-USB-HS+ that may need a one
           time firmware download
 
@@ -53,7 +56,7 @@ Note: If you have any pre 4.3.0 gpib udev rules files in
       linux-gpib-user-x.x.x.
       
       The files to remove are:
-      	   99-agilent_82357a.rules
+	   99-agilent_82357a.rules
 	   99-gpib-generic.rules
 	   99-ni_usb_gpib.rules
 
