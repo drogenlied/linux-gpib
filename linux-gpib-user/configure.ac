@@ -69,9 +69,9 @@ if test "$JW_PATH" = "no" ; then
 fi
 
 if test "$BIND_PYTHON" = "yes"; then
-	AM_PATH_PYTHON([2.0],,[:])
+	AM_PATH_PYTHON([3.0],,[:])
 	if test "$PYTHON" = :; then
-	   	AC_MSG_WARN([no usable python found, disabling python binding])
+	   	AC_MSG_NOTICE([no usable python found, disabling python binding])
 		BIND_PYTHON="no"
 	fi
 fi
