@@ -94,15 +94,15 @@ unsigned int pc2_update_status( gpib_board_t *board, unsigned int clear_mask )
 	pc2_private_t *priv = board->private_data;
 	return nec7210_update_status( board, &priv->nec7210_priv, clear_mask );
 }
-void pc2_primary_address(gpib_board_t *board, unsigned int address)
+int pc2_primary_address(gpib_board_t *board, unsigned int address)
 {
 	pc2_private_t *priv = board->private_data;
-	nec7210_primary_address(board, &priv->nec7210_priv, address);
+	return nec7210_primary_address(board, &priv->nec7210_priv, address);
 }
-void pc2_secondary_address(gpib_board_t *board, unsigned int address, int enable)
+int pc2_secondary_address(gpib_board_t *board, unsigned int address, int enable)
 {
 	pc2_private_t *priv = board->private_data;
-	nec7210_secondary_address(board, &priv->nec7210_priv, address, enable);
+	return nec7210_secondary_address(board, &priv->nec7210_priv, address, enable);
 }
 int pc2_parallel_poll(gpib_board_t *board, uint8_t *result)
 {
