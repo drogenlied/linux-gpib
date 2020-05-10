@@ -26,6 +26,8 @@ Release Notes for linux-gpib-4.3.3
 
 Changes since the linux-gpib-4.3.0 release
 
+	- Require python version >= 3.0 for python bindings
+
         - Fix and update return types on _primary_ and 
 	  secondary_address() driver entry points
          
@@ -41,7 +43,7 @@ Changes since the linux-gpib-4.3.0 release
 	- Improve attach reporting for usb adaptors
 
 	- Resubmit interrupt urbs in ni_usb driver based on bug
-	report/patch from Matthias Babel
+	  report/patch from Matthias Babel
 
 	- Remove support for gpib_config --serial-number option
 
