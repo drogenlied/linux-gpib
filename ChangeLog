@@ -1,3 +1,27 @@
+2020-05-09 15:33  dpenkler
+
+	* [r1908] Fix return type for primary/secondary address in
+	          pc2 (ISA) driver
+
+2020-05-09 07:17  dpenkler
+
+	* [r1907] bootstrap: Create a local ChangeLog if it does not exist
+
+2020-05-09 07:15  dpenkler
+
+	* [r1906] Change configure.ac to look for Python version >= 3.0
+
+2020-05-07 20:30  dpenkler
+
+	* [r1905] Fix configure error when no python found
+
+2020-05-07 20:30  dpenkler
+
+	* [r1904] Remove ChangeLogs in svn kernel and user directories
+
+2020-05-07 16:47  dpenkler
+
+	* [r1903] Update ChangeLog
 
 2020-05-07 16:13  dpenkler
 
@@ -23,7 +47,7 @@
 2020-04-30 11:22  dpenkler
 
 	* [r1896] Make attach message more useful in
-	ni_usb_b and agilent_82357a
+                  ni_usb_b and agilent_82357a
 
 2020-04-29 10:05  dpenkler
 
