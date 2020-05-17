@@ -76,6 +76,7 @@ typedef struct
 	unsigned short card_mode_bits;
 	unsigned short event_status_bits;
 	enum board_model model;
+	bool using_fifos;
 } agilent_82350b_private_t;
 
 // driver name

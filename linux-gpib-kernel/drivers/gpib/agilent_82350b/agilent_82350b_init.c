@@ -162,6 +162,7 @@ uint8_t agilent_82350b_serial_poll_status( gpib_board_t *board )
 int agilent_82350b_line_status( const gpib_board_t *board )
 {
 	agilent_82350b_private_t *priv = board->private_data;
+	if (priv->using_fifos && (board->status & TACS)) return -EBUSY;
 	return tms9914_line_status( board, &priv->tms9914_priv );
 }
 unsigned int agilent_82350b_t1_delay( gpib_board_t *board, unsigned int nanosec )
@@ -359,6 +360,7 @@ int agilent_82350b_generic_attach(gpib_board_t *board, const gpib_board_config_t
 	if(agilent_82350b_allocate_private(board))
 		return -ENOMEM;
 	a_priv = board->private_data;
+	a_priv->using_fifos = use_fifos;
 	tms_priv = &a_priv->tms9914_priv;
 	tms_priv->read_byte = tms9914_iomem_read_byte;
 	tms_priv->write_byte = tms9914_iomem_write_byte;
@@ -368,8 +370,8 @@ int agilent_82350b_generic_attach(gpib_board_t *board, const gpib_board_config_t
 	a_priv->pci_device = gpib_pci_get_device(config, PCI_VENDOR_ID_AGILENT,
 		PCI_DEVICE_ID_82350B, NULL);
 	if(a_priv->pci_device)
-	{       
-		a_priv->model = MODEL_82350B;	
+	{
+		a_priv->model = MODEL_82350B;
 		printk("%s: Agilent 82350B board found\n",driver_name);
 
 	}else
