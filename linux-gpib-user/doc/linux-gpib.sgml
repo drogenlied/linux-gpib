@@ -84,11 +84,15 @@ and the administration program
 The library, and the administration tool
 <link LINKEND="configuration-gpib-config">gpib_config</link>
 read their configuration information from the
-file gpib.conf.  The file is located in the sysconfdir directory configured
+file gpib.conf.  By default, file is located in the sysconfdir directory configured
 when linux-gpib was compiled.  The sysconfdir is typically set to /etc or
 /usr/local/etc.  A template gpib.conf
 file can be found in the util/templates/ subdirectory of the linux-gpib
 package.
+</para>
+<para>
+The default config file may be overriden by setting the
+IB_CONFIG environment variable to a custom file path.
 </para>
 <para>
 The configuration file must contain one or more 'interface' entries, and
