@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+
 /* Strictly speaking, addressing the controller as talker is
  * not part of the FindListener 488.2 protocol.  However, doing
  * so helps with boards that cannot reliably read the state of
@@ -28,7 +29,7 @@
  * the board as talker insures NDAC (and NRFD) will be inputs
  * while the FindListener protocol is running.
  */
-int address_board_as_talker( ibConf_t *conf)
+static int address_board_as_talker( ibConf_t *conf)
 {
 	uint8_t cmd[2];
 	int j;
@@ -47,7 +48,7 @@ int address_board_as_talker( ibConf_t *conf)
 	if(board_sad >= 0 )
 		cmd[j++] = MSA(board_sad);
 	retval = my_ibcmd( conf, cmd, j );
-	if (( retval < 1 ) && (( error == -ETIMEOUT ) || ( error == -EIO ) )) {
+	if (( retval < 1 ) && (( errno == ETIMEDOUT ) || ( errno == EIO ) )) {
 		setIberr( ENOL );
 	}
 	return retval;
@@ -265,7 +266,6 @@ int ibln( int ud, int pad, int sad, short *found_listener )
 	retval = address_board_as_talker(conf);
 	if( retval < 0 )
 	{
-		if (
 		return exit_library( ud, 1 );
 	}
 
