@@ -46,7 +46,11 @@ int address_board_as_talker( ibConf_t *conf)
 	if(query_sad(board, &board_sad) < 0) return 0;
 	if(board_sad >= 0 )
 		cmd[j++] = MSA(board_sad);
-	return my_ibcmd( conf, cmd, j );
+	retval = my_ibcmd( conf, cmd, j );
+	if (( retval < 1 ) && (( error == -ETIMEOUT ) || ( error == -EIO ) )) {
+		setIberr( ENOL );
+	}
+	return retval;
 }
 
 int unlisten_untalk( ibConf_t *conf)
@@ -63,6 +67,7 @@ int unlisten_untalk( ibConf_t *conf)
 
 int listenerFound( ibConf_t *conf, const Addr4882_t addressList[] )
 {
+
 	uint8_t *cmd;
 	int i, j;
 	short line_status;
@@ -260,6 +265,7 @@ int ibln( int ud, int pad, int sad, short *found_listener )
 	retval = address_board_as_talker(conf);
 	if( retval < 0 )
 	{
+		if (
 		return exit_library( ud, 1 );
 	}
 
