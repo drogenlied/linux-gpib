@@ -29,7 +29,7 @@
  * the board as talker insures NDAC (and NRFD) will be inputs
  * while the FindListener protocol is running.
  */
-static int address_board_as_talker( ibConf_t *conf)
+int address_board_as_talker( ibConf_t *conf)
 {
 	uint8_t cmd[2];
 	int j;
@@ -47,11 +47,7 @@ static int address_board_as_talker( ibConf_t *conf)
 	if(query_sad(board, &board_sad) < 0) return 0;
 	if(board_sad >= 0 )
 		cmd[j++] = MSA(board_sad);
-	retval = my_ibcmd( conf, cmd, j );
-	if (( retval < 1 ) && (( errno == ETIMEDOUT ) || ( errno == EIO ) )) {
-		setIberr( ENOL );
-	}
-	return retval;
+	return my_ibcmd( conf, cmd, j );
 }
 
 int unlisten_untalk( ibConf_t *conf)
