@@ -815,7 +815,7 @@ static int ni_usb_write(gpib_board_t *board, uint8_t *buffer, size_t length, int
 		retval = -ENXIO;
 		break;
 	case NIUSB_NO_LISTENER_ERROR:
-		retval = -EIO;
+		retval = -ECOMM;
 		break;
 	case NIUSB_TIMEOUT_ERROR:
 		retval = -ETIMEDOUT;
@@ -898,7 +898,7 @@ int ni_usb_command_chunk(gpib_board_t *board, uint8_t *buffer, size_t length, si
 			and returned -ERESTARTSYS */
 		break;
 	case NIUSB_NO_BUS_ERROR:
-		return -EIO;
+		return -ENOTCONN;
 		break;
 	case NIUSB_EOSMODE_ERROR:
 		printk("%s: %s: got eosmode error.  Driver bug?\n", __FILE__, __FUNCTION__);

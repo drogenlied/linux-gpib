@@ -116,7 +116,9 @@ ssize_t my_ibcmd( ibConf_t *conf, const uint8_t *buffer, size_t count)
 		{
 			case ETIMEDOUT:
 				conf->timed_out = 1;
-		        case EIO:
+				setIberr( EBUS );
+				break;
+			case ENOTCONN:
 				setIberr( ENOL );
 				break;
 			case EINTR:
