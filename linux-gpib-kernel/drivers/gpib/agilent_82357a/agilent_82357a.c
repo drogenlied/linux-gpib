@@ -583,6 +583,8 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 	int raw_bytes_written;
 	int i = 0, j;
 	int msec_timeout;
+	unsigned short bsr, adsr;
+	struct agilent_82357a_register_pairlet read_reg;
 
 	*bytes_written = 0;
 	out_data_length = length + 0x8;
@@ -636,11 +638,52 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 		mutex_unlock(&a_priv->bulk_transfer_lock);
 		return -ERESTARTSYS;
 	}
+
 	if(test_bit(AIF_WRITE_COMPLETE_BN, &a_priv->interrupt_flags) == 0)
 	{
-	        printk("%s: write aborted ibs %i, tmo %i\n", __FUNCTION__,test_bit(TIMO_NUM, &board->status),msec_timeout);
+	        GPIB_DPRINTK("%s: write aborted on timeout ibs %i, tmo %i\n", __FUNCTION__,
+			test_bit(TIMO_NUM, &board->status),msec_timeout);
+
 		agilent_82357a_abort(a_priv, 0);
+
 		mutex_unlock(&a_priv->bulk_transfer_lock);
+
+		read_reg.address = BSR;
+		retval = agilent_82357a_read_registers(a_priv, &read_reg, 1, 1);
+		if ( retval )
+		{
+			printk("%s: agilent_82357a_read_registers() returned error\n",  __FUNCTION__);
+			return -ETIMEDOUT;
+		}
+
+		bsr = read_reg.value;
+		GPIB_DPRINTK("%s: write aborted bsr 0x%hx\n", __FUNCTION__, bsr );
+
+		if (send_commands) /* check for no listeners */
+		{
+			if ((bsr & BSR_ATN_BIT) && !(bsr & ( BSR_NDAC_BIT | BSR_NRFD_BIT )))
+			{
+				GPIB_DPRINTK("%s: No listener on command\n", __FUNCTION__ );
+				clear_bit(TIMO_NUM, &board->status);
+				return -ENOTCONN; // no listener on bus
+			}
+		} else {
+			read_reg.address = ADSR;
+			retval = agilent_82357a_read_registers(a_priv, &read_reg, 1, 1);
+			if ( retval )
+			{
+				printk("%s: agilent_82357a_read_registers() returned error\n",  __FUNCTION__);
+				return -ETIMEDOUT;
+			}
+			adsr = read_reg.value;
+			if ((adsr & HR_TA) && !(bsr & ( BSR_NDAC_BIT | BSR_NRFD_BIT )))
+			{
+				GPIB_DPRINTK("%s: No listener on write\n", __FUNCTION__ );
+				clear_bit(TIMO_NUM, &board->status);
+				return -ECOMM;
+			}
+		}
+
 		return -ETIMEDOUT;
 	}
 
@@ -652,8 +695,9 @@ static ssize_t agilent_82357a_generic_write(gpib_board_t *board, uint8_t *buffer
 	}
 
 	// printk("%s: receiving control msg\n", __FUNCTION__);
-	retval = agilent_82357a_receive_control_msg(a_priv, agilent_82357a_control_request, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
-		XFER_STATUS, 0, status_data, STATUS_DATA_LEN, 100);
+	retval = agilent_82357a_receive_control_msg(a_priv, agilent_82357a_control_request,
+						USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+						XFER_STATUS, 0, status_data, STATUS_DATA_LEN, 100);
 	mutex_unlock(&a_priv->bulk_transfer_lock);
 	if(retval < 0)
 	{
