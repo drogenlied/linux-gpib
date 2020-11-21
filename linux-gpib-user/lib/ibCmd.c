@@ -41,7 +41,6 @@ int ibcmd(int ud, const void *cmd_buffer, long cnt)
 	count = my_ibcmd( conf, cmd_buffer, cnt);
 	if(count < 0)
 	{
-		// report no listeners error XXX
 		return exit_library( ud, 1);
 	}
 
