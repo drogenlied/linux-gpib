@@ -2381,6 +2381,7 @@ gpib_interface_t ni_usb_gpib_interface =
 	serial_poll_status: ni_usb_serial_poll_status,
 	t1_delay: ni_usb_t1_delay,
 	return_to_local: ni_usb_return_to_local,
+	skip_check_for_command_acceptors: 1
 };
 
 // Table with the USB-devices: just now only testing IDs

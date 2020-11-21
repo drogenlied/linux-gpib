@@ -179,6 +179,8 @@ struct gpib_interface_struct
 	void ( *return_to_local )( gpib_board_t *board );
 	/* board does not support 7 bit eos comparisons */
 	unsigned no_7_bit_eos : 1;
+	/* skip check for listeners before trying to send command bytes */
+	unsigned skip_check_for_command_acceptors : 1;
 };
 
 typedef struct

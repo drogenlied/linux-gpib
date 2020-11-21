@@ -1543,7 +1543,8 @@ gpib_interface_t agilent_82357a_gpib_interface =
 	serial_poll_status : agilent_82357a_serial_poll_status,
 	t1_delay : agilent_82357a_t1_delay,
 	return_to_local : agilent_82357a_return_to_local,
-	no_7_bit_eos : 1
+	no_7_bit_eos : 1,
+	skip_check_for_command_acceptors: 1
 };
 
 // Table with the USB-devices: just now only testing IDs
