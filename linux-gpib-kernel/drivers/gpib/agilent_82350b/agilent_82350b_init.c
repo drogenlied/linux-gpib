@@ -162,7 +162,7 @@ uint8_t agilent_82350b_serial_poll_status( gpib_board_t *board )
 int agilent_82350b_line_status( const gpib_board_t *board )
 {
 	agilent_82350b_private_t *priv = board->private_data;
-	if (priv->using_fifos && (board->status & TACS)) return -EBUSY;
+//	if (priv->using_fifos && (board->status & TACS)) return -EBUSY;
 	return tms9914_line_status( board, &priv->tms9914_priv );
 }
 unsigned int agilent_82350b_t1_delay( gpib_board_t *board, unsigned int nanosec )
@@ -380,7 +380,7 @@ int agilent_82350b_generic_attach(gpib_board_t *board, const gpib_board_config_t
 							  PCI_DEVICE_ID_82351A, NULL);
 	        if(a_priv->pci_device)
 		{
-		       a_priv->model = MODEL_82351A;	
+		       a_priv->model = MODEL_82351A;
 		       printk("%s: Agilent 82351B board found\n",driver_name);
 
 		}else
@@ -463,7 +463,7 @@ int agilent_82350b_generic_attach(gpib_board_t *board, const gpib_board_config_t
 		writel(PLX9050_LINTR1_EN_BIT | PLX9050_LINTR2_POLARITY_BIT | PLX9050_PCI_INTR_EN_BIT,
 			a_priv->plx_base + PLX9050_INTCSR_REG);
 	}
-	
+
 	if(use_fifos)
 	{
 		writeb(ENABLE_BUFFER_END_EVENTS_BIT | ENABLE_TERM_COUNT_EVENTS_BIT,
