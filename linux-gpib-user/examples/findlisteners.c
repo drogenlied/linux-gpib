@@ -33,12 +33,12 @@ static void myError(int erc, char * mess) {
   int sys_errno = ThreadIbcnt();
   fprintf(stderr,"%s: error: %s", myProg, mess);
   fprintf(stderr," - %s\n", gpib_error_string(erc));
-  if (sys_errno) fprintf(stderr," system error: %s\n",strerror(sys_errno));
+  if (!erc) fprintf(stderr," system error: %s\n",strerror(sys_errno));
   exit(1);
 }
 
 int findListeners(char * board, int from, int to) {
-  int erc, pad, n = 0;
+  int ibsta, erc, pad, n = 0;
   short stat;
   int bpad;  /* board primary address */
   ud = ibfind(board);
@@ -47,10 +47,11 @@ int findListeners(char * board, int from, int to) {
   ibask(ud, IbaTMO, &timeout); /* Remember old timeout */
   ibtmo(ud, T30ms); /* Set a shortish timeout for now */
   for (pad=from; pad<=to; pad++) {
-    if ( ibln(ud, pad, NO_SAD, &stat) & ERR) {
+    if ( ibln(ud, pad, NO_SAD, &stat) & ERR  ) {
+      ibsta = ThreadIbsta();
       erc = ThreadIberr();
       ibtmo(ud,timeout); /* Restore old timeout */
-      if (erc == ENOL) { /* No listeners on the bus */
+      if ((erc == ENOL) || (ibsta & TIMO)) { /* No listeners on the bus */
 	return(0);
       } else {
 	myError(erc, "unexpected error");
