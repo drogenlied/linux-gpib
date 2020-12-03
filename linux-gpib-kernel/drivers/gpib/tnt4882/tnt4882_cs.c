@@ -258,6 +258,7 @@ MODULE_DEVICE_TABLE(pcmcia, ni_pcmcia_ids);
 
 static struct pcmcia_driver ni_gpib_cs_driver =
 {
+	.name           = "ni_gpib_cs",
 	.owner		= THIS_MODULE,
 	.drv = { .name = "ni_gpib_cs", },
 	.id_table	= ni_pcmcia_ids,
