@@ -1,7 +1,7 @@
 
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([linux-gpib-user], [4.3.3])
+AC_INIT([linux-gpib-user],[4.3.4-rc1])
 # libtool version: current:revision:age
 #
 # If the library source code has changed at all since the last update, then
@@ -61,7 +61,7 @@ AC_PROG_CC
 AM_PROG_CC_C_O
 AM_PROG_LEX
 AC_PROG_YACC
-AC_PROG_LIBTOOL
+LT_INIT
 AC_PATH_PROG([JW_PATH], [jw], [no])
 if test "$JW_PATH" = "no" ; then
 	AC_MSG_NOTICE([docbook-tools (jw) not found, disabling documentation])
@@ -116,7 +116,15 @@ AC_CHECK_LIB([readline], [readline],
 	     [-lncurses])
 		       
 dnl Checks for header files.
-AC_HEADER_STDC
+m4_warn([obsolete],
+[The preprocessor macro `STDC_HEADERS' is obsolete.
+  Except in unusual embedded environments, you can safely include all
+  ISO C90 headers unconditionally.])dnl
+# Autoupdate added the next two lines to ensure that your configure
+# script's behavior did not change.  They are probably safe to remove.
+AC_CHECK_INCLUDES_DEFAULT
+AC_PROG_EGREP
+
 AC_CHECK_HEADERS(unistd.h sys/param.h sys/time.h time.h sys/mkdev.h sys/sysmacros.h string.h memory.h fcntl.h dirent.h sys/ndir.h ndir.h alloca.h locale.h )
 
 if test "$BIND_PYTHON" = "yes"; then
@@ -185,7 +193,7 @@ AX_DEFINE_DIR([SYSCONFDIR], [sysconfdir], [System configuration directory])
 AS_ECHO "sysconfdir: [$SYSCONFDIR]"
 AS_ECHO ""
 
-AC_OUTPUT([\
+AC_CONFIG_FILES([\
 	Makefile \
 	drivers/Makefile \
 	lib/Makefile \
@@ -205,6 +213,8 @@ AC_OUTPUT([\
 	usb/Makefile \
 	usb/ni_usb_gpib/Makefile \
 	usb/agilent_82357a/Makefile \
-]
-)
+	usb/lpvo_usb_gpib/Makefile \
+
+])
+AC_OUTPUT
 
