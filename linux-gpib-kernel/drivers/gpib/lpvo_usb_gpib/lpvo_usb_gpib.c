@@ -228,7 +228,7 @@ typedef struct {                /* private data to the device */
 static struct usb_interface * lpvo_usb_interfaces[MAX_DEV];   /* registered interfaces */
 static int usb_minors[MAX_DEV];                    /* usb minors */
 static int assigned_usb_minors = 0;                /* mask of filled slots */
-static struct mutex minors_lock;     /* opeations on usb_minors are to be protected */
+static struct mutex minors_lock;     /* operations on usb_minors are to be protected */
 
 /*
  *  usb-skeleton prototypes
@@ -300,12 +300,13 @@ int send_command (gpib_board_t *board, char * msg, int leng) {
         char buffer[64];
         int nchar, j;
         int retval;
+        struct timespec64 before, after;
+
+        ktime_get_real_ts64 (&before);
 
         if (!leng) leng = strlen(msg);
         retval = write_loop (GPIB_DEV, msg, leng);
         if (retval < 0) return retval;
-
-        DIA_LOG (1,"Sent %d - requesting status.\n", leng);
 
         nchar = skel_do_read (GPIB_DEV, buffer, 64);
 
@@ -323,6 +324,10 @@ int send_command (gpib_board_t *board, char * msg, int leng) {
                 }
                 return -EIO;
         }
+        ktime_get_real_ts64 (&after);
+
+        DIA_LOG (1,"Sent %d - done %d us.\n", leng, usec_diff(&after, &before));
+
         return buffer[0] & 0xff;
 }
 
@@ -458,9 +463,13 @@ int usb_gpib_attach(gpib_board_t *board, const gpib_board_config_t *config) {
 
         int retval, j;
         int base = (long int) config->ibbase;
+        char *device_path;
+        int match;
+        struct usb_device *udev;
 
-        DIA_LOG (0, "Configuring board %p with -t %s -m %d -b %d -a %p\n", board,
-                board->interface->name, board->minor, base, config->device_path);
+        DIA_LOG (0, "Board %p -t %s -m %d -a %p -u %d -l %d -b %d\n",
+                board, board->interface->name, board->minor, config->device_path,
+                config->pci_bus, config->pci_slot, base);
 
         board->private_data = NULL;  /* to be sure - we can detach before setting */
 
@@ -468,22 +477,28 @@ int usb_gpib_attach(gpib_board_t *board, const gpib_board_config_t *config) {
 
         mutex_lock(&minors_lock);
 
-        if (config->device_path) {        /* if config->device_path given, try that first */
+        if (config->device_path) {                 /* if config->device_path given, try that first */
                 printk (KERN_ALERT "%s:%s - Looking for device_path: %s\n", HERE, config->device_path);
                 for ( j=0 ; j<MAX_DEV ; j++ ) {
-                        char *device_path;
-                        int match;
-                        struct usb_device *udev;
                         if ((assigned_usb_minors & 1<<j) == 0) continue;
                         udev =  usb_get_dev(interface_to_usbdev(lpvo_usb_interfaces[j]));
                         device_path = kobject_get_path(&udev->dev.kobj, GFP_KERNEL);
                         match = gpib_match_device_path(&lpvo_usb_interfaces[j]->dev, config->device_path);
-                        printk (KERN_ALERT "%s:%s - dev. %d: minor %d  path: %s --> %d\n", HERE, j,
+                        DIA_LOG (1,"dev. %d: minor %d  path: %s --> %d\n", j,
                                 lpvo_usb_interfaces[j]->minor, device_path, match);
                         kfree(device_path);
                         if (match) break;
                 }
-        } else {                         /* with no device_path try with base number */
+        } else if (config->pci_bus != -1 && config->pci_slot != -1) {  /* second: look for bus and slot */
+                for ( j=0 ; j<MAX_DEV ; j++ ) {
+                        if ((assigned_usb_minors & 1<<j) == 0) continue;
+                        udev =  usb_get_dev(interface_to_usbdev(lpvo_usb_interfaces[j]));
+                        DIA_LOG (1,"dev. %d: bus %d -> %d  dev: %d -> %d\n", j,
+                               udev->bus->busnum, config->pci_bus, udev->devnum, config->pci_slot);
+                        if (config->pci_bus == udev->bus->busnum &&
+                                config->pci_slot == udev->devnum) break;
+                }
+        } else {                                        /* last chance: usb_minor, given as ibbase */
                 for ( j=0 ; j<MAX_DEV ; j++ ) {
                         if (usb_minors[j] == base && assigned_usb_minors & 1<<j) break;
                 }
@@ -848,7 +863,7 @@ static int usb_gpib_read (gpib_board_t *board,
         /* send read command and check <DLE><STX> sequence */
 
         retval = write_loop (GPIB_DEV, USB_GPIB_READ, strlen(USB_GPIB_READ));
-        if (retval < 0) return retval;
+        if (retval < 0) goto read_return;
 
         if (one_char(board, &b) != DLE || one_char(board, &b) != STX) {
                 printk (KERN_ALERT "%s:%s - wrong <DLE><STX> sequence\n",
@@ -1210,6 +1225,36 @@ static void usb_gpib_exit_module( int minor ) {
 exit:
         mutex_unlock (&minors_lock);
         return;
+}
+
+/*
+ *     Default latency time (16 msec) is too long.
+ *     We must use 1 msec (best); anyhow, no more than 5 msec.
+ *
+ *     Defines and function taken and modified from the kernel tree
+ *     (see ftdi_sio.h and ftdi_sio.c).
+ *
+ */
+
+#define FTDI_SIO_SET_LATENCY_TIMER      9 /* Set the latency timer */
+#define FTDI_SIO_SET_LATENCY_TIMER_REQUEST FTDI_SIO_SET_LATENCY_TIMER
+#define FTDI_SIO_SET_LATENCY_TIMER_REQUEST_TYPE 0x40
+#define WDR_TIMEOUT 5000 /* default urb timeout */
+#define WDR_SHORT_TIMEOUT 1000	/* shorter urb timeout */
+
+#define LATENCY_TIMER 1            /* use a small latency timer: 1 ... 5 msec */
+#define LATENCY_CHANNEL 0          /* channel selection in multichannel devices */
+static int write_latency_timer(struct usb_device * udev)
+{
+	int rv = usb_control_msg(udev,
+			     usb_sndctrlpipe(udev, 0),
+			     FTDI_SIO_SET_LATENCY_TIMER_REQUEST,
+			     FTDI_SIO_SET_LATENCY_TIMER_REQUEST_TYPE,
+                             LATENCY_TIMER, LATENCY_CHANNEL,
+			     NULL, 0, WDR_TIMEOUT);
+	if (rv < 0)
+                printk (KERN_ALERT "Unable to write latency timer: %i\n", rv);
+	return rv;
 }
 
 
@@ -1583,7 +1628,7 @@ retry:
         }
 exit:
         mutex_unlock(&dev->io_mutex);
-        if (rv == 2) goto restart;   /* ftdi chip returns two status bytes every 16 ms anyhow */
+        if (rv == 2) goto restart;   /* ftdi chip returns two status bytes after a latency anyhow */
         DIA_LOG (1,"exit with %d.\n", rv);
         if (rv > 0) return rv - 2;  /* account for 2 discarded bytes in a valid buffer */
         return rv;
@@ -1639,9 +1684,9 @@ static ssize_t skel_do_write(struct usb_skel * dev, const char *buffer, size_t c
          * limit the number of URBs in flight to stop a user from using up all
          * RAM
          */
-        /* Only one URB is used, because we can't have standing write() and go on */
+        /* Only one URB is used, because we can't have a pending write() and go on */
 
-//        if (!(file->f_flags & O_NONBLOCK)) {  /* non NONBLOCK provided */
+//        if (!(file->f_flags & O_NONBLOCK)) {  /* no NONBLOCK provided */
         if (down_interruptible(&dev->limit_sem)) {
                 retval = -ERESTARTSYS;
                 goto exit;
@@ -1972,6 +2017,8 @@ static int skel_probe(struct usb_interface *interface,
                  interface->minor);
 #endif
 
+        write_latency_timer (dev->udev);     /* adjust the latency timer */
+
         usb_gpib_init_module (interface);    /* last, init the lpvo for this minor */
 
         return 0;
@@ -2072,4 +2119,3 @@ static struct usb_driver skel_driver = {
 module_usb_driver(skel_driver);
 
 MODULE_LICENSE("GPL v2");
-
