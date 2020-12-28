@@ -2,9 +2,6 @@ ifneq ($(LINUXINCLUDE),)
 	LINUXINCLUDE := -I$(GPIB_TOP_DIR)/compat/include $(LINUXINCLUDE)
 endif
 
-KERNEL_GE_5_10 = $(shell expr \( $(VERSION) '>' "5" \) \| \
- \( \( $(VERSION) '=' "5" \) \& \( $(PATCHLEVEL) '>=' 10 \) \) )
-
 subdir-ccflags-y := -I$(src)/include \
 			-DHAVE_DEV_OF_NODE=$(HAVE_DEV_OF_NODE) \
 			-DGPIB_CONFIG_PCMCIA=$(GPIB_CONFIG_PCMCIA) \
@@ -22,9 +19,7 @@ obj-y += gpio/
 obj-y += hp_82335/
 obj-y += hp_82341/
 obj-y += ines/
-ifeq (${KERNEL_GE_5_10},0)
-	obj-$(CONFIG_USB) += lpvo_usb_gpib/
-endif
+obj-$(CONFIG_USB) += lpvo_usb_gpib/
 obj-y += nec7210/
 obj-$(CONFIG_USB) += ni_usb/
 ifeq ($(CONFIG_GPIB_ISA),yes)
