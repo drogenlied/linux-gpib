@@ -842,6 +842,12 @@ path is the absolute path to the device's directory under /sys/devices, with the
 	<entry>lpvo_usb_gpib</entry>
 	</row>
 	<row>
+	<entry>GPIO bitbang</entry>
+	<entry><link LINKEND="GPIO">GPIO</link></entry>
+	<entry>gpib_bitbang.ko</entry>
+	<entry>gpib_bitbang</entry>
+	</row>
+	<row>
 	<entry>Quancom</entry>
 	<entry>PCIGPIB-1</entry>
 	<entry>ines_gpib.ko (Ines iGPIB 72010 chip) or cb7210.ko (Measurement Computing cb7210 chip)</entry>
@@ -1009,24 +1015,17 @@ It offers basic capabilities like ibrd(),
 ibwrt(), WaitSRQ() and others. Requests for unsupported
 features are flagged by a diagnostic message to syslog.
 </para>
+</section>
+<section ID="GPIO">
+<title>GPIO bitbang adapter</title>
 <para>
-The driver assumes by default that the adapter is connected
-to port ttyUSB0.
-It is possible to change the 0 into any value
-<replaceable>n</replaceable> in the
-range 0-99 with the gpib_config option
--b <replaceable>n</replaceable> (or base = <replaceable>n</replaceable>
-in the configuration file).
-Currently there is no way for the kernel to know that a gpib
-adapter of this kind is available, hence the following commands
-have to be entered manually (as root), before gpib_config
-(<replaceable>n</replaceable> is the port number as before)
+This is a simple GPIO bitbang driver that currently only works on
+Raspberry Pi platforms. For information on the GPIO to GPIB pinouts as
+well as restrictions on fan-out see the source code:
 </para>
 <programlisting>
-modprobe lpvo_usb_gpib
-stty raw -echo -iexten -F /dev/ttyUSB<replaceable>n</replaceable>
-gpib_config ...
-<programlisting>
+  linux-gpib-kernel/drivers/gpib/gpio/gpib_bitbang.c
+</programlisting>
 </section>
 <section ID="ni-usb-b">
 <title>National Instruments GPIB-USB-B</title>
