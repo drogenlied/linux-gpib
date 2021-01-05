@@ -1,3 +1,28 @@
+2021-01-05 17:26  dpenkler
+
+	* [r1949] linux-gpib-user/doc/linux-gpib.sgml: Clarification for
+	  gpib.conf interface entries
+
+2021-01-05 17:12  dpenkler
+
+	* [r1948] linux-gpib-user/INSTALL: Add lpvo DIY adapter
+	  installation note
+
+2021-01-05 16:54  dpenkler
+
+	* [r1947]
+	  linux-gpib-kernel/drivers/gpib/lpvo_usb_gpib/lpvo_usb_gpib.c:
+	  Fixes for lpvo DIY adapter driver
+
+2021-01-05 16:53  dpenkler
+
+	* [r1946] linux-gpib-kernel/drivers/gpib/gpio/gpib_bitbang.c: Small
+	  fixes for gpio bitbang driver
+
+2020-12-29 10:07  dpenkler
+
+	* [r1945] ChangeLog: Update ChangeLog
+
 2020-12-29 09:38  dpenkler
 
 	* [r1944] linux-gpib-user/doc/linux-gpib.sgml: Update docs
