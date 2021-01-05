@@ -38,7 +38,6 @@
         return2local?
 */
 
-#define DEBUG 0
 #define TIMEOUT_US 1000000
 #define IRQ_DEBOUNCE_US 1000
 #define DELAY 10
@@ -136,7 +135,7 @@ MODULE_LICENSE("GPL");
 
 /****  global variables  ****/
 
-static int debug=1;
+static int debug = GPIB_CONFIG_KERNEL_DEBUG ? 1 : 0;
 module_param (debug, int, S_IRUGO | S_IWUSR);
 
 char printable (char x) {
@@ -723,7 +722,7 @@ static struct gpio gpios[] = {
 
 gpib_interface_t bb_interface =
 {
-        name:                     "NAME",
+        name:                     NAME,
         attach:                   bb_attach,
         detach:                   bb_detach,
         read:                     bb_read,
