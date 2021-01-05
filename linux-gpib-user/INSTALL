@@ -125,7 +125,20 @@ o) USB devices
 
 	In order to reload the rules files after editing you can use
 	sudo udevadm control -R
-	
+
+	lpvo self made usb gpib adapter:
+   	The lpvo DIY adapter uses a FTDI USB-Serial chip which by default
+	loads the ftdi_sio driver module.
+ 	The gpib adapter can be enabled after a reboot with the commands:
+
+ 	    sudo rmmod ftdi_sio lpvo_usb_gpib
+	    sudo modprobe lpvo_usb_gpi
+
+	or, enabled automatically for all subsequent boots, by copying
+	linux-gpib-user-x.x.x/usb/lpvo_usb_gpib/lpvo_usb_gpib.conf
+	to
+	/etc/modprobe.d
+
 D) Configuring the GPIB-Library
 -------------------------------
 
