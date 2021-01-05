@@ -12,7 +12,7 @@ this README and two tarballs:
 
 1) kernel modules in linux-gpib-kernel-x.x.x.tar.gz
 
-2) user space software in linux-gpib-use-x.x.x.tar.gz containing the
+2) user space software in linux-gpib-user-x.x.x.tar.gz containing the
    config program, library, device scripts, examples and documentation
 
 Untar each file and see the respective INSTALL files for instructions
@@ -21,37 +21,30 @@ on building and installing.
 Send comments, questions and suggestions to to the linux-gpib mailing
 list at linux-gpib-general@lists.sourceforge.net
 
-Release Notes for linux-gpib-4.3.3
+Release Notes for linux-gpib-4.3.4-rc2
 ----------------------------------
 
-Changes since the linux-gpib-4.3.0 release
+Changes since  linux-gpib-4.3.4-rc1
 
-	- Require python version >= 3.0 for python bindings
+        Updates to lpvo and gpio drivers
 
-        - Fix and update return types on _primary_ and 
-	  secondary_address() driver entry points
-         
-	- Update doc for certain NI GPIB-USB-HS+ that may need a one
-          time firmware download
+	Updates to doc and user INSTALL
 
-	- Update doc with new firmware repository
-	
-	- Make the NI GPIB-USB-HS+ LED stop blinking green/yellow.
+	Release candidate based on svn [r1950]
 
-	- Re-enable support for PCMCIA
+Changes since the linux-gpib-4.3.3 release
 
-	- Improve attach reporting for usb adaptors
+	New GPIO bitbang driver for Raspberry Pi from Marcello Carla'
 
-	- Resubmit interrupt urbs in ni_usb driver based on bug
-	  report/patch from Matthias Babel
+	Updated lpvo_usb_gpib to use usb directly from Marcello Carla'
 
-	- Remove support for gpib_config --serial-number option
+	Better support for detecting listeners with ibln
 
-	- Improve udev rules
+	New example programme findlisteners.c
 
-	- Updates for newer kernels
+	Various changes for new kernel and autoconf versions
 
-	- More details can be found in the Changelog since R1857
+	See ChangeLog since [r1912] for bug fixes and other changes.
 	  
 Note: If you have any pre 4.3.0 gpib udev rules files in
       /etc/udev/rules.d/ please remove them before installing
