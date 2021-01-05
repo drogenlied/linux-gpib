@@ -609,7 +609,7 @@ int usb_gpib_command(gpib_board_t *board,
         for ( i=0 ; i<length ; i++ ) {
                 command[3] = buffer[i];
                 retval = send_command (board, command, 5);
-                DIA_LOG (2,"%d %x %x\n", i, buffer[i], retval);
+                DIA_LOG (2,"%d ==> %x %x\n", i, buffer[i], retval);
                 if (retval != 0x06) return retval;
                 ++(*bytes_written);
         }
@@ -726,6 +726,8 @@ int usb_gpib_line_status (const gpib_board_t *board ) {
         unsigned long flags;
         int sleep=0;
 
+        DIA_LOG (1,"%s\n", "request");
+
         /* if we are on the wait queue (board->wait), do not hurry
            reading status line; instead, pause a little */
 
@@ -815,7 +817,7 @@ static int usb_gpib_read (gpib_board_t *board,
         int read_count = MAX_READ_EXCESS;
         usb_gpib_private_t * pd = (usb_gpib_private_t *)board->private_data;
 
-        DIA_LOG (1,"enter %p -> %ld\n", board, length);
+        DIA_LOG (1,"enter %p -> %zu\n", board, length);
 
         *bytes_read = 0;      /* by default, things go wrong */
         *end = 0;
@@ -1028,7 +1030,7 @@ static int usb_gpib_write(gpib_board_t *board,
         int retval;
         char * msg;
 
-        DIA_LOG (1,"enter %p -> %ld\n", board, length);
+        DIA_LOG (1,"enter %p -> %zu\n", board, length);
 
         set_timeout (board);
 
@@ -1152,6 +1154,7 @@ gpib_interface_t usb_gpib_interface =
         serial_poll_status: usb_gpib_serial_poll_status,
         t1_delay: usb_gpib_t1_delay,
         return_to_local: usb_gpib_return_to_local,
+        skip_check_for_command_acceptors: 1
 };
 
 /*
