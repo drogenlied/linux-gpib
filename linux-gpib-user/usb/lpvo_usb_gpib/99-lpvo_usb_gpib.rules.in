@@ -1,5 +1,5 @@
 #automatically set the correct --board-type option
-ACTION=="add|change", SUBSYSTEM=="usb", DRIVER=="lpvo_usb_gpib", ATTRS{serial}=="*", ENV{GPIB_CONFIG_OPTIONS}+="--board-type lpvo_usb_gipb", ENV{SERIAL}="$attr{serial}"
+ACTION=="add|change", SUBSYSTEM=="usb", DRIVER=="lpvo_usb_gpib", ATTRS{serial}=="*", ENV{GPIB_CONFIG_OPTIONS}+="--board-type lpvo_usb_gpib", ENV{SERIAL}="$attr{serial}"
 
 ACTION=="add|change", SUBSYSTEM=="usb", DRIVER=="lpvo_usb_gpib", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", RUN+="@UDEV_LIBDIR@/gpib_udev_config"
 
