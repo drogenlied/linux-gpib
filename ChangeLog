@@ -1,7 +1,22 @@
+2021-01-06 06:54  dpenkler
+
+	* [r1953] Fix typo in lpvo udev rules
+
+2021-01-05 20:45  dpenkler
+
+	* [r1952] Bump versions to 4.3.4-rc2
+
+2021-01-05 17:38  dpenkler
+
+	* [r1951] Update README for 4.3.4-rc2
+
+2021-01-05 17:34  dpenkler
+
+	* [r1950] Update Changelog for 4.3.4-rc2
+
 2021-01-05 17:26  dpenkler
 
-	* [r1949] linux-gpib-user/doc/linux-gpib.sgml: Clarification for
-	  gpib.conf interface entries
+	* [r1949] docs: Clarification for gpib.conf interface entries
 
 2021-01-05 17:12  dpenkler
 

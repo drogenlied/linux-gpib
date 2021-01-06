@@ -30,7 +30,7 @@ Changes since  linux-gpib-4.3.4-rc1
 
 	Updates to doc and user INSTALL
 
-	Release candidate based on svn [r1950]
+	Release candidate based on svn [r1953]
 
 Changes since the linux-gpib-4.3.3 release
 
