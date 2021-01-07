@@ -97,7 +97,7 @@ o) USB devices
 	
 	If your device requires external firmware you will need to
 	install firmware files for your device. A tarball is available
-	from https://linux-gpib.sourceforge.io/firmware/.  Make sure
+	from https://github.com/fmhess/linux_gpib_firmware Make sure
 	you have the "fxload" and "udev" packages installed on your
 	computer.  The udev scripts will automatically upload the
 	firmware to your device and load the driver module when the
