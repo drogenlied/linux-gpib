@@ -21,16 +21,8 @@ on building and installing.
 Send comments, questions and suggestions to to the linux-gpib mailing
 list at linux-gpib-general@lists.sourceforge.net
 
-Release Notes for linux-gpib-4.3.4-rc2
+Release Notes for linux-gpib-4.3.4
 ----------------------------------
-
-Changes since  linux-gpib-4.3.4-rc1
-
-        Updates to lpvo and gpio drivers
-
-	Updates to doc and user INSTALL
-
-	Release candidate based on svn [r1953]
 
 Changes since the linux-gpib-4.3.3 release
 

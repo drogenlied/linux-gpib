@@ -1,3 +1,29 @@
+2021-01-29 15:16  dpenkler
+
+	* [r1958] Add minor option and drop device range
+
+2021-01-29 15:15  dpenkler
+
+	* [r1957] Update library path for python3.9
+
+2021-01-29 15:14  dpenkler
+
+	* [r1956] Bump versions for 4.3.4 release
+
+2021-01-07 19:18  dpenkler
+
+	* [r1955] Update firmware repo reference in INSTALL
+
+2021-01-06 07:01  dpenkler
+
+	* [r1954] Update ChangeLog and README
+
+2021-01-06 06:54  dpenkler
+
+	* [r1953]
+	  linux-gpib-user/usb/lpvo_usb_gpib/99-lpvo_usb_gpib.rules.in: Fix
+	  type in lpvo udev rules
+
 2021-01-06 06:54  dpenkler
 
 	* [r1953] Fix typo in lpvo udev rules
