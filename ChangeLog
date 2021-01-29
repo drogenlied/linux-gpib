@@ -1,3 +1,7 @@
+2021-01-29 15:25  dpenkler
+
+	* [r1959] Update ChangeLog and README for 4.3.4
+
 2021-01-29 15:16  dpenkler
 
 	* [r1958] Add minor option and drop device range
@@ -17,12 +21,6 @@
 2021-01-06 07:01  dpenkler
 
 	* [r1954] Update ChangeLog and README
-
-2021-01-06 06:54  dpenkler
-
-	* [r1953]
-	  linux-gpib-user/usb/lpvo_usb_gpib/99-lpvo_usb_gpib.rules.in: Fix
-	  type in lpvo udev rules
 
 2021-01-06 06:54  dpenkler
 
@@ -46,19 +44,15 @@
 
 2021-01-05 17:12  dpenkler
 
-	* [r1948] linux-gpib-user/INSTALL: Add lpvo DIY adapter
-	  installation note
+	* [r1948] INSTALL: Add lpvo DIY adapter installation note
 
 2021-01-05 16:54  dpenkler
 
-	* [r1947]
-	  linux-gpib-kernel/drivers/gpib/lpvo_usb_gpib/lpvo_usb_gpib.c:
-	  Fixes for lpvo DIY adapter driver
+	* [r1947] Fixes for lpvo DIY adapter driver
 
 2021-01-05 16:53  dpenkler
 
-	* [r1946] linux-gpib-kernel/drivers/gpib/gpio/gpib_bitbang.c: Small
-	  fixes for gpio bitbang driver
+	* [r1946] Small fixes for gpio bitbang driver
 
 2020-12-29 10:07  dpenkler
 
@@ -66,7 +60,7 @@
 
 2020-12-29 09:38  dpenkler
 
-	* [r1944] linux-gpib-user/doc/linux-gpib.sgml: Update docs
+	* [r1944] Update docs
 
 	  Add info on GPIO adapter
 	  Update notes on lpvo DIY adapter
@@ -112,15 +106,11 @@
 
 2020-12-28 10:55  dpenkler
 
-	* [r1938] linux-gpib-user/configure.ac,
-	  linux-gpib-user/m4/am-check-python-headers.m4: Updates to remove
-	  autoconf obsolescence complaints
+	* [r1938] Updates to remove autoconf obsolescence complaints
 
 2020-12-26 11:47  dpenkler
 
-	* [r1937] linux-gpib-kernel/drivers/gpib/include/version.h,
-	  linux-gpib-user/configure.ac: Bump versions to 4.3.4-rc1 and
-	  update configure.ac
+	* [r1937] Bump versions to 4.3.4-rc1 and update configure.ac
 
 2020-12-26 10:15  dpenkler
 
@@ -134,8 +124,7 @@
 
 2020-12-03 14:14  dpenkler
 
-	* [r1934] linux-gpib-kernel/drivers/gpib/tnt4882/tnt4882_cs.c: Add
-	  device name for pcmcia device
+	* [r1934] tnt4882_cs.c: Add device name for pcmcia device
 
 2020-12-01 17:43  dpenkler
 
@@ -152,8 +141,7 @@
 
 2020-11-25 17:55  dpenkler
 
-	* [r1931] linux-gpib-kernel/AUTHORS, linux-gpib-user/AUTHORS:
-	  Update AUTHORS files
+	* [r1931] Update AUTHORS files
 
 2020-11-25 15:46  dpenkler
 
