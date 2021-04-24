@@ -1022,11 +1022,21 @@ features are flagged by a diagnostic message to syslog.
 <para>
 This is a simple GPIO bitbang driver that currently only works on
 Raspberry Pi platforms. For information on the GPIO to GPIB pinouts as
-well as restrictions on fan-out see the source code:
+well as restrictions on fan-out without line driver IC's see the
+source code at:
 </para>
 <programlisting>
   linux-gpib-kernel/drivers/gpib/gpio/gpib_bitbang.c
 </programlisting>
+<para>
+  For schematics, boards and information on driver IC's
+  see <ulink URL="http://elektronomikon.org">http://elektronomikon.org</ulink>.
+Note, to enable support for the SN75160/161 driver IC's the module parameter
+  sn7516x_used must be set to 1 when loading the module:
+<programlisting>
+  modprobe gpib_bitbang sn7516x_used=1
+</programlisting>
+</para>
 </section>
 <section ID="ni-usb-b">
 <title>National Instruments GPIB-USB-B</title>
