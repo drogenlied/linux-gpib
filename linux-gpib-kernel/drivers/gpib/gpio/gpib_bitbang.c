@@ -24,6 +24,13 @@
  **************************************************************************/
 
 /**************************************************************************
+ * Mar. 2021:	switch to GPIO descriptor driver interface                *
+ *		SN7516x driver option for compatability with raspi_gpib   *
+ * by:		Thomas Klima                                              *
+ **************************************************************************/
+
+
+/**************************************************************************
  *                                                                        *
  *   This program is free software; you can redistribute it and/or modify *
  *   it under the terms of the GNU General Public License as published by *
@@ -48,9 +55,9 @@
 
 #define dbg_printk(frm,...) if (debug) \
                printk(KERN_INFO "%s:%s - " frm, HERE, ## __VA_ARGS__ )
-#define LINVAL gpio_get_value(DAV),\
-               gpio_get_value(NRFD),\
-               gpio_get_value(SRQ)
+#define LINVAL gpiod_get_value(DAV),\
+               gpiod_get_value(NRFD),\
+               gpiod_get_value(SRQ)
 #define LINFMT "DAV: %d  NRFD:%d  SRQ: %d"
 
 #include "gpibP.h"
@@ -63,6 +70,9 @@
 #include <linux/gpio/consumer.h>
 #include <linux/gpio.h>
 
+static int sn7516x_used=0;
+module_param(sn7516x_used,int,0660);
+
 /**********************************************
  *  Signal pairing and pin wiring between the *
  *  Raspberry-Pi connector and the GPIB bus   *
@@ -71,23 +81,23 @@
  *     GPIB  Pi-gpio     GPIB  ->  RPi        *
 **********************************************/
 typedef enum {
-        D01 =  20,     /*   1  ->  38  */
-        D02 =  26,     /*   2  ->  37  */
-        D03 =  16,     /*   3  ->  36  */
-        D04 =  19,     /*   4  ->  35  */
-        D05 =  13,     /*  13  ->  33  */
-        D06 =  12,     /*  14  ->  32  */
-        D07 =   6,     /*  15  ->  31  */
-        D08 =   5,     /*  16  ->  29  */
-        EOI =   9,     /*   5  ->  21  */
-        DAV =  10,     /*   6  ->  19  */
-        NRFD = 24,     /*   7  ->  18  */
-        NDAC = 23,     /*   8  ->  16  */
-        IFC =  22,     /*   9  ->  15  */
-        SRQ =  11,     /*  10  ->  23  */
-        _ATN = 25,     /*  11  ->  22  */
-        REN =  27,     /*  17  ->  13  */
-/*                     
+        D01_pin_nr =  20,     /*   1  ->  38  */
+        D02_pin_nr =  26,     /*   2  ->  37  */
+        D03_pin_nr =  16,     /*   3  ->  36  */
+        D04_pin_nr =  19,     /*   4  ->  35  */
+        D05_pin_nr =  13,     /*  13  ->  33  */
+        D06_pin_nr =  12,     /*  14  ->  32  */
+        D07_pin_nr =   6,     /*  15  ->  31  */
+        D08_pin_nr =   5,     /*  16  ->  29  */
+        EOI_pin_nr =   9,     /*   5  ->  21  */
+        DAV_pin_nr =  10,     /*   6  ->  19  */
+        NRFD_pin_nr = 24,     /*   7  ->  18  */
+        NDAC_pin_nr = 23,     /*   8  ->  16  */
+        IFC_pin_nr =  22,     /*   9  ->  15  */
+        SRQ_pin_nr =  11,     /*  10  ->  23  */
+        _ATN_pin_nr = 25,     /*  11  ->  22  */
+        REN_pin_nr =  27,     /*  17  ->  13  */
+/*
  *  GROUND PINS
  *    12,18,19,20,21,22,23,24  => 14,20,25,30,34,39
  */
@@ -97,12 +107,19 @@ typedef enum {
  *  to control the external SN75160/161 driver chips.
  *  Not used in this module version, with reduced
  *  fan out; currently tested up to 4 devices.
- */  
-        PE =    7,    /*  26  ->   */
-        DC =    8,    /*  24  ->   */
-        TE =   18,    /*  12  ->   */
-        A_LED = 4,    /*   7  ->   */
+ */
+        PE_pin_nr =    7,    /*  26  ->   */
+        DC_pin_nr =    8,    /*  24  ->   */
+        TE_pin_nr =   18,    /*  12  ->   */
+        ACT_LED_pin_nr = 4,    /*   7  ->   */
 } lines_t;
+
+/*
+ * GPIO descriptors
+ */
+
+struct gpio_desc *D01, *D02, *D03, *D04, *D05, *D06, *D07, *D08, *EOI, *NRFD, *IFC, *_ATN, *REN, *DAV, *NDAC, *SRQ, *ACT_LED, *PE, *DC, *TE;
+
 
 /* struct which defines private_data for gpio driver */
 
@@ -175,7 +192,7 @@ int bb_read(gpib_board_t *board, uint8_t *buffer, size_t length,
         /* interrupt wait for first DAV valid */
 
         priv->go_read = 1;
-            gpio_direction_input(NRFD);
+            gpiod_direction_input(NRFD);
 
         retval = wait_event_interruptible (board->wait,
                  board->status & TIMO  || priv->go_read == 0);
@@ -191,7 +208,7 @@ int bb_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 
         while (1) {
 
-                while (gpio_get_value(DAV) && !(board->status & TIMO));
+                while (gpiod_get_value(DAV) && !(board->status & TIMO));
 
                 if (board->status & TIMO) {
                         retval = -ETIMEDOUT;
@@ -199,17 +216,17 @@ int bb_read(gpib_board_t *board, uint8_t *buffer, size_t length,
                         goto read_end;
                 }
 
-                gpio_direction_output(NRFD, 0);
+                gpiod_direction_output(NRFD, 0);
 
                 priv->rbuf[priv->count++] = get_data_lines();
-                priv->end = !gpio_get_value(EOI);
+                priv->end = !gpiod_get_value(EOI);
 
                 dbg_printk (LINFMT " count: %3d eoi: %d  val: %2x -> %c\n",
                             LINVAL, priv->count-1, priv->end,
                             priv->rbuf[priv->count-1],
                             printable(priv->rbuf[priv->count-1]));
 
-                gpio_direction_input(NDAC);
+                gpiod_direction_input(NDAC);
 
                 if ((priv->count >= priv->request) || priv->end ||
                             check_for_eos(priv, priv->rbuf[priv->count-1])) {
@@ -219,7 +236,7 @@ int bb_read(gpib_board_t *board, uint8_t *buffer, size_t length,
                         goto read_end;
                 }
 
-                while (!gpio_get_value(DAV) && !(board->status & TIMO));
+                while (!gpiod_get_value(DAV) && !(board->status & TIMO));
 
                 if (board->status & TIMO) {
                         retval = -ETIMEDOUT;
@@ -227,9 +244,9 @@ int bb_read(gpib_board_t *board, uint8_t *buffer, size_t length,
                         goto read_end;
                 }
 
-                gpio_direction_output(NDAC, 0);
+                gpiod_direction_output(NDAC, 0);
                 udelay (DELAY);
-                gpio_direction_input(NRFD);
+                gpiod_direction_input(NRFD);
         }
 
 read_end:
@@ -302,7 +319,7 @@ int bb_write(gpib_board_t *board, uint8_t *buffer, size_t length,
         SET_DIR_WRITE();
 
         retval = wait_event_interruptible (board->wait,
-                 gpio_get_value(NRFD) || priv->go_write == 0 || board->status & TIMO);
+                 gpiod_get_value(NRFD) || priv->go_write == 0 || board->status & TIMO);
 
         if (board->status & TIMO) {
                 retval = -ETIMEDOUT;
@@ -312,13 +329,13 @@ int bb_write(gpib_board_t *board, uint8_t *buffer, size_t length,
         if (retval) goto write_end;  /* -ERESTARTSYS */
 
         dbg_printk("NRFD: %d   NDAC: %d\n",
-                    gpio_get_value(NRFD), gpio_get_value(NDAC));
+                    gpiod_get_value(NRFD), gpiod_get_value(NDAC));
 
         /*  poll loop for data write */
 
         for (i=0; i < length; i++) {
 
-                while (!gpio_get_value(NRFD) && !(board->status & TIMO));
+                while (!gpiod_get_value(NRFD) && !(board->status & TIMO));
                 if (board->status & TIMO) {
                         retval = -ETIMEDOUT;
                         dbg_printk ("timeout - " LINFMT "\n", LINVAL);
@@ -326,22 +343,22 @@ int bb_write(gpib_board_t *board, uint8_t *buffer, size_t length,
                 }
 
                 if ((i >= length-1) && send_eoi) {
-                        gpio_direction_output(EOI, 0);
+                        gpiod_direction_output(EOI, 0);
                 } else {
-                        gpio_direction_output(EOI, 1);
+                        gpiod_direction_output(EOI, 1);
                 }
 
                 dbg_printk("sending %zu\n", i);
 
                 set_data_lines(buffer[i]);
-                gpio_direction_output(DAV, 0);
+                gpiod_direction_output(DAV, 0);
 
-                while (!gpio_get_value(NDAC) && !(board->status & TIMO));
+                while (!gpiod_get_value(NDAC) && !(board->status & TIMO));
 
                 dbg_printk("accepted %zu\n", i);
 
                 udelay(DELAY);
-                gpio_direction_output(DAV, 1);
+                gpiod_direction_output(DAV, 1);
         }
         retval = i;
 
@@ -385,7 +402,7 @@ irqreturn_t bb_SRQ_interrupt(int irq, void * arg)
 {
         gpib_board_t  * board = arg;
 
-        int val = gpio_get_value(SRQ);
+        int val = gpiod_get_value(SRQ);
 
         dbg_printk ("   " LINFMT " -> %d   st: %4lx\n", LINVAL,
                     val, board->status);
@@ -405,8 +422,8 @@ int bb_command(gpib_board_t *board, uint8_t *buffer,
     dbg_printk("%p  %p\n", buffer, board->buffer);
 
         SET_DIR_WRITE();
-        gpio_direction_output(_ATN, 0);
-        gpio_direction_output(NRFD, 0);
+        gpiod_direction_output(_ATN, 0);
+        gpiod_direction_output(NRFD, 0);
 
         if (debug) {
                 dbg_printk("CMD(%zu):\n", length);
@@ -420,7 +437,7 @@ int bb_command(gpib_board_t *board, uint8_t *buffer,
         }
 
         ret = bb_write(board, buffer, length, 0, bytes_written);
-        gpio_direction_output(_ATN, 1);
+        gpiod_direction_output(_ATN, 1);
 
         return ret;
 }
@@ -436,7 +453,7 @@ int bb_take_control(gpib_board_t *board, int synchronous)
 {
         udelay(DELAY);
     dbg_printk("%d\n", synchronous);
-        gpio_direction_output(_ATN, 0);
+        gpiod_direction_output(_ATN, 0);
         set_bit(CIC_NUM, &board->status);
         return 0;
 }
@@ -445,7 +462,7 @@ int bb_go_to_standby(gpib_board_t *board)
 {
     dbg_printk("\n");
         udelay(DELAY);
-        gpio_direction_output(_ATN, 1);
+        gpiod_direction_output(_ATN, 1);
         return 0;
 }
 
@@ -464,9 +481,9 @@ void bb_interface_clear(gpib_board_t *board, int assert)
         udelay(DELAY);
     dbg_printk("%d\n", assert);
         if (assert)
-                gpio_direction_output(IFC, 0);
+                gpiod_direction_output(IFC, 0);
         else
-                gpio_direction_output(IFC, 1);
+                gpiod_direction_output(IFC, 1);
 }
 
 void bb_remote_enable(gpib_board_t *board, int enable)
@@ -475,10 +492,10 @@ void bb_remote_enable(gpib_board_t *board, int enable)
         udelay(DELAY);
         if (enable) {
                 set_bit(REM_NUM, &board->status);
-                gpio_direction_output(REN, 0);
+                gpiod_direction_output(REN, 0);
         } else {
                 clear_bit(REM_NUM, &board->status);
-                gpio_direction_output(REN, 1);
+                gpiod_direction_output(REN, 1);
         }
 }
 
@@ -505,7 +522,7 @@ unsigned int bb_update_status(gpib_board_t *board, unsigned int clear_mask )
         dbg_printk("0x%lx mask 0x%x\n",board->status, clear_mask);
         board->status &= ~clear_mask;
 
-        if (gpio_get_value(SRQ)) {                    /* SRQ asserted low */
+        if (gpiod_get_value(SRQ)) {                    /* SRQ asserted low */
                 clear_bit (SRQI_NUM, &board->status);
         } else {
                 set_bit (SRQI_NUM, &board->status);
@@ -565,14 +582,14 @@ int bb_line_status(const gpib_board_t *board )
 {
             int line_status = 0x00;
 
-        if (gpio_get_value(REN) == 1) line_status |= BusREN;
-        if (gpio_get_value(IFC) == 1) line_status |= BusIFC;
-        if (gpio_get_value(NDAC) == 0) line_status |= BusNDAC;
-        if (gpio_get_value(NRFD) == 0) line_status |= BusNRFD;
-        if (gpio_get_value(DAV) == 0) line_status |= BusDAV;
-        if (gpio_get_value(EOI) == 0) line_status |= BusEOI;
-        if (gpio_get_value(_ATN) == 0) line_status |= BusATN;
-        if (gpio_get_value(SRQ) == 0) line_status |= BusSRQ;
+        if (gpiod_get_value(REN) == 1) line_status |= BusREN;
+        if (gpiod_get_value(IFC) == 1) line_status |= BusIFC;
+        if (gpiod_get_value(NDAC) == 0) line_status |= BusNDAC;
+        if (gpiod_get_value(NRFD) == 0) line_status |= BusNRFD;
+        if (gpiod_get_value(DAV) == 0) line_status |= BusDAV;
+        if (gpiod_get_value(EOI) == 0) line_status |= BusEOI;
+        if (gpiod_get_value(_ATN) == 0) line_status |= BusATN;
+        if (gpiod_get_value(SRQ) == 0) line_status |= BusSRQ;
 
         dbg_printk("status lines: %4x\n", line_status);
 
@@ -613,17 +630,17 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
         if (allocate_private(board)) return -ENOMEM;
         priv = board->private_data;
 
-//        SET_DIR_WRITE();
+        SET_DIR_WRITE();
 
-        priv->irq_DAV = gpio_to_irq(DAV);
-        priv->irq_NRFD = gpio_to_irq(NRFD);
-        priv->irq_SRQ = gpio_to_irq(SRQ);
+        priv->irq_DAV = gpiod_to_irq(DAV);
+        priv->irq_NRFD = gpiod_to_irq(NRFD);
+        priv->irq_SRQ = gpiod_to_irq(SRQ);
 
         dbg_printk("%s:%s - IRQ's: %d %d %d\n", HERE, priv->irq_DAV, priv->irq_NRFD, priv->irq_SRQ);
 
         /* request DAV interrupt for read */
 
-        gpio_direction_input(DAV);
+        gpiod_direction_input(DAV);
         ktime_get_ts64(&before);
         if (request_irq(priv->irq_DAV, bb_DAV_interrupt, IRQF_TRIGGER_FALLING,
                     "NAME", board)) {
@@ -697,29 +714,6 @@ void bb_detach(gpib_board_t *board)
         free_private(board);
 }
 
-static struct gpio gpios[] = {
-        {D01, GPIOF_IN, "D01" },
-        {D02, GPIOF_IN, "D02" },
-        {D03, GPIOF_IN, "D03" },
-        {D04, GPIOF_IN, "D04" },
-        {D05, GPIOF_IN, "D05" },
-        {D06, GPIOF_IN, "D06" },
-        {D07, GPIOF_IN, "D07" },
-        {D08, GPIOF_IN, "D08" },
-        {EOI, GPIOF_OUT_INIT_HIGH, "EOI" },
-        {NRFD, GPIOF_IN, "NRFD" },
-        {IFC, GPIOF_OUT_INIT_HIGH, "IFC" },
-        {_ATN, GPIOF_OUT_INIT_HIGH, "ATN" },
-        {REN, GPIOF_OUT_INIT_HIGH, "REN" },
-        {DAV, GPIOF_OUT_INIT_HIGH, "DAV" },
-        {NDAC, GPIOF_IN, "NDAC" },
-        {SRQ, GPIOF_IN, "SRQ" },
-//        {PE, GPIOF_OUT_INIT_LOW, "PE" },
-//        {DC, GPIOF_OUT_INIT_LOW, "DC" },
-//        {TE, GPIOF_OUT_INIT_LOW, "TE" },
-//        {A_LED , GPIOF_OUT_INIT_LOW, "A_LED" },
-};
-
 gpib_interface_t bb_interface =
 {
         name:                     NAME,
@@ -750,33 +744,77 @@ gpib_interface_t bb_interface =
 
 static int __init bb_init_module(void)
 {
-        int ret = 0;
+	int ret = 0;
 
-        ret = gpio_request_array(gpios, ARRAY_SIZE(gpios));
-        if (ret) {
-                printk("Unable to request GPIOs: %d\n", ret);
-                return ret;
-        }
+        D01 = gpio_to_desc(D01_pin_nr);
+        D02 = gpio_to_desc(D02_pin_nr);
+        D03 = gpio_to_desc(D03_pin_nr);
+        D04 = gpio_to_desc(D04_pin_nr);
+        D05 = gpio_to_desc(D05_pin_nr);
+        D06 = gpio_to_desc(D06_pin_nr);
+        D07 = gpio_to_desc(D07_pin_nr);
+        D08 = gpio_to_desc(D08_pin_nr);
 
-//        SET_DIR_WRITE();
-//        gpio_direction_output(A_LED, 1);
+        EOI = gpio_to_desc(EOI_pin_nr);
+        NRFD = gpio_to_desc(NRFD_pin_nr);
+        IFC = gpio_to_desc(IFC_pin_nr);
+        _ATN = gpio_to_desc(_ATN_pin_nr);
+        REN = gpio_to_desc(REN_pin_nr);
+        DAV = gpio_to_desc(DAV_pin_nr);
+        NDAC = gpio_to_desc(NDAC_pin_nr);
+        SRQ = gpio_to_desc(SRQ_pin_nr);
+
+	if (sn7516x_used)
+	{
+        PE = gpio_to_desc(PE_pin_nr);
+        DC = gpio_to_desc(DC_pin_nr);
+        TE = gpio_to_desc(TE_pin_nr);
+        gpiod_direction_output(DC, 1);
+        gpiod_direction_output(PE, 0);
+        gpiod_direction_output(TE, 0);
+	}
+
+        ACT_LED = gpio_to_desc(ACT_LED_pin_nr);
+
+        SET_DIR_READ();
+        gpiod_direction_input(IFC);
+        gpiod_direction_input(_ATN);
+        gpiod_direction_input(REN);
+        gpiod_direction_input(SRQ);
+        gpiod_direction_output(ACT_LED, 0);
+
         gpib_register_driver(&bb_interface, THIS_MODULE);
 
-        dbg_printk("%s\n", "module loaded!");
+        dbg_printk("module loaded%s!", (sn7516x_used)?" with SN7516x driver support":"");
         return ret;
 }
 
 static void __exit bb_exit_module(void)
 {
-        int i;
-
-        /* all to low inputs is the safe default */
-        for(i = 0; i < ARRAY_SIZE(gpios); i++) {
-                gpio_set_value(gpios[i].gpio, 0);
-                gpio_direction_output(i, 0);
-        }
-
-        gpio_free_array(gpios, ARRAY_SIZE(gpios));
+        // release GPIOs
+        gpiod_put(D01);
+        gpiod_put(D02);
+        gpiod_put(D03);
+        gpiod_put(D04);
+        gpiod_put(D05);
+        gpiod_put(D06);
+        gpiod_put(D07);
+        gpiod_put(D08);
+        gpiod_put(EOI);
+        gpiod_put(NRFD);
+        gpiod_put(IFC);
+        gpiod_put(_ATN);
+        gpiod_put(REN);
+        gpiod_put(DAV);
+        gpiod_put(NDAC);
+        gpiod_put(SRQ);
+	if (sn7516x_used)
+	{
+        gpiod_put(PE);
+        gpiod_put(DC);
+        gpiod_put(TE);
+	}
+        gpiod_put(ACT_LED);
 
         dbg_printk("%s\n", "module unloaded!");
 
@@ -819,67 +857,73 @@ int check_for_eos(bb_private_t *priv, uint8_t byte)
 
 void set_data_lines(uint8_t byte)
 {
-        gpio_direction_output(D01, !(byte & 0x01));
-        gpio_direction_output(D02, !(byte & 0x02));
-        gpio_direction_output(D03, !(byte & 0x04));
-        gpio_direction_output(D04, !(byte & 0x08));
-        gpio_direction_output(D05, !(byte & 0x10));
-        gpio_direction_output(D06, !(byte & 0x20));
-        gpio_direction_output(D07, !(byte & 0x40));
-        gpio_direction_output(D08, !(byte & 0x80));
+        gpiod_direction_output(D01, !(byte & 0x01));
+        gpiod_direction_output(D02, !(byte & 0x02));
+        gpiod_direction_output(D03, !(byte & 0x04));
+        gpiod_direction_output(D04, !(byte & 0x08));
+        gpiod_direction_output(D05, !(byte & 0x10));
+        gpiod_direction_output(D06, !(byte & 0x20));
+        gpiod_direction_output(D07, !(byte & 0x40));
+        gpiod_direction_output(D08, !(byte & 0x80));
 }
 
 uint8_t get_data_lines(void)
 {
         uint8_t ret = 0;
-//        set_data_lines_input();
-        ret += gpio_get_value(D01) * 0x01;
-        ret += gpio_get_value(D02) * 0x02;
-        ret += gpio_get_value(D03) * 0x04;
-        ret += gpio_get_value(D04) * 0x08;
-        ret += gpio_get_value(D05) * 0x10;
-        ret += gpio_get_value(D06) * 0x20;
-        ret += gpio_get_value(D07) * 0x40;
-        ret += gpio_get_value(D08) * 0x80;
+        set_data_lines_input();
+        ret += gpiod_get_value(D01) * 0x01;
+        ret += gpiod_get_value(D02) * 0x02;
+        ret += gpiod_get_value(D03) * 0x04;
+        ret += gpiod_get_value(D04) * 0x08;
+        ret += gpiod_get_value(D05) * 0x10;
+        ret += gpiod_get_value(D06) * 0x20;
+        ret += gpiod_get_value(D07) * 0x40;
+        ret += gpiod_get_value(D08) * 0x80;
         return ~ret;
 }
 
 void set_data_lines_input(void)
 {
-        gpio_direction_input(D01);
-        gpio_direction_input(D02);
-        gpio_direction_input(D03);
-        gpio_direction_input(D04);
-        gpio_direction_input(D05);
-        gpio_direction_input(D06);
-        gpio_direction_input(D07);
-        gpio_direction_input(D08);
+        gpiod_direction_input(D01);
+        gpiod_direction_input(D02);
+        gpiod_direction_input(D03);
+        gpiod_direction_input(D04);
+        gpiod_direction_input(D05);
+        gpiod_direction_input(D06);
+        gpiod_direction_input(D07);
+        gpiod_direction_input(D08);
 }
 
 inline void SET_DIR_WRITE(void)
 {
         udelay(DELAY);
-//        gpio_set_value(DC, 0);
-//        gpio_set_value(PE, 1);
-//        gpio_set_value(TE, 1);
-        gpio_direction_output(DAV, 1);
-        gpio_direction_output(EOI, 1);
+	if (sn7516x_used)
+	{
+        gpiod_set_value(DC, 0);
+        gpiod_set_value(PE, 1);
+        gpiod_set_value(TE, 1);
+	}
+        gpiod_direction_output(DAV, 1);
+        gpiod_direction_output(EOI, 1);
 
-        gpio_direction_input(NRFD);
-        gpio_direction_input(NDAC);
+        gpiod_direction_input(NRFD);
+        gpiod_direction_input(NDAC);
         set_data_lines(0);
 }
 
 inline void SET_DIR_READ(void)
 {
         udelay(DELAY);
-//        gpio_set_value(DC, 1);
-//        gpio_set_value(PE, 0);
-//        gpio_set_value(TE, 0);
-        gpio_direction_output(NRFD, 0);
-        gpio_direction_output(NDAC, 0); // Assert NDAC, informing the talker we have not yet accepted the byte
+	if (sn7516x_used)
+	{
+        gpiod_set_value(DC, 1);
+        gpiod_set_value(PE, 0);
+        gpiod_set_value(TE, 0);
+	}
+        gpiod_direction_output(NRFD, 0);
+        gpiod_direction_output(NDAC, 0); // Assert NDAC, informing the talker we have not yet accepted the byte
 
-        gpio_direction_input(DAV);
-        gpio_direction_input(EOI);
+        gpiod_direction_input(DAV);
+        gpiod_direction_input(EOI);
         set_data_lines_input();
 }
