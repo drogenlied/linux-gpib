@@ -70,7 +70,7 @@
 #include <linux/gpio/consumer.h>
 #include <linux/gpio.h>
 
-static int sn7516x_used=0;
+static int sn7516x_used=1;
 module_param(sn7516x_used,int,0660);
 
 /**********************************************
@@ -781,7 +781,7 @@ static int __init bb_init_module(void)
         gpiod_direction_input(_ATN);
         gpiod_direction_input(REN);
         gpiod_direction_input(SRQ);
-        gpiod_direction_output(ACT_LED, 0);
+        gpiod_direction_output(ACT_LED, 1);
 
         gpib_register_driver(&bb_interface, THIS_MODULE);
 
@@ -815,6 +815,7 @@ static void __exit bb_exit_module(void)
         gpiod_put(TE);
 	}
         gpiod_put(ACT_LED);
+	gpiod_direction_input(ACT_LED);
 
         dbg_printk("%s\n", "module unloaded!");
 
