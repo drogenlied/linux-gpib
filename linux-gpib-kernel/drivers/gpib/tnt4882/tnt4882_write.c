@@ -104,7 +104,8 @@ static int generic_write( gpib_board_t *board, uint8_t *buffer, size_t length,
 	imr1_bits = nec_priv->reg_bits[ IMR1 ];
 	imr2_bits = nec_priv->reg_bits[ IMR2 ];
 	nec7210_set_reg_bits( nec_priv, IMR1, 0xff, HR_ERRIE | HR_DECIE );
-	if( nec_priv->type != TNT4882 )
+
+	if(( nec_priv->type != TNT4882 ) && ( nec_priv->type != TNT5004 ))
 		nec7210_set_reg_bits( nec_priv, IMR2, 0xff, HR_DMAO );
 	else
 		nec7210_set_reg_bits( nec_priv, IMR2, 0xff, 0 );
@@ -119,7 +120,7 @@ static int generic_write( gpib_board_t *board, uint8_t *buffer, size_t length,
 	if( send_eoi )
 	{
 		bits |= TNT_CCEN;
-		if(nec_priv->type != TNT4882 )
+		if((nec_priv->type != TNT4882 ) && (nec_priv->type != TNT5004 ))
 			tnt_writeb( tnt_priv, AUX_SEOI, CCR );
 	}
 	if( send_commands )
