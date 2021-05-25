@@ -116,7 +116,7 @@ static int generic_write( gpib_board_t *board, uint8_t *buffer, size_t length,
 	tnt_writeb( tnt_priv, RESET_FIFO, CMDR );
 	udelay(1);
 
-	bits = TNT_TLCHE | TNT_B_16BIT;
+	bits = TNT_B_16BIT;
 	if( send_eoi )
 	{
 		bits |= TNT_CCEN;
