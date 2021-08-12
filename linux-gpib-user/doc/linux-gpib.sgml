@@ -1727,7 +1727,7 @@ volatile int ibsta;
 	<entry>0x200</entry>
 	<entry>Board index (minor number) of interface board which is
 	the controller-in-charge of this device's GPIB bus.</entry>
-	<entry>device</entry>
+	<entry>board or device</entry>
 	</row>
 	<row>
 	<entry>Iba7BitEOS</entry>
