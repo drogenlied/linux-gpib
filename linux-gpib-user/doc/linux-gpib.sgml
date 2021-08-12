@@ -1725,8 +1725,9 @@ volatile int ibsta;
 	<row>
 	<entry>IbaBNA</entry>
 	<entry>0x200</entry>
-	<entry>Board index (minor number) of interface board which is
-	the controller-in-charge of this device's GPIB bus.</entry>
+	<entry>For a device: the board index (minor number) of interface board through
+	which the device is being accessed.  For a board: the board index of the
+	board itself.</entry>
 	<entry>board or device</entry>
 	</row>
 	<row>
