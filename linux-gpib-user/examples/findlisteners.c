@@ -115,7 +115,7 @@ int main(int argc, char ** argv) {
       fprintf(stderr, "%s: can't find board \"%s\"\n",myProg, board);
       exit(0);
     }
-    if (ibask(ud,IbaBNA,&minor) & ERR)
+    if (ibask(ud,IbaBNA,&minor) & ERR) /* get minor of board */
       myError(ThreadIberr(), "ibask ibaBNA failed");
    } else {
     gotmin++;
