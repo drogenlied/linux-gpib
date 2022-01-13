@@ -86,7 +86,7 @@ int main(int argc, char ** argv) {
   int gotmin = 0;
   int from = 0;
   int to = 30;
-  char c;
+  int c;
   myProg = argv[0];
   
   while ((c = getopt (argc, argv, "m:d:h")) != -1) {
