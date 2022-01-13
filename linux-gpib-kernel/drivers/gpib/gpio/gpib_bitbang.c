@@ -580,7 +580,7 @@ void bb_return_to_local(gpib_board_t *board )
 
 int bb_line_status(const gpib_board_t *board )
 {
-            int line_status = 0x00;
+	int line_status = ValidALL;
 
         if (gpiod_get_value(REN) == 1) line_status |= BusREN;
         if (gpiod_get_value(IFC) == 1) line_status |= BusIFC;
