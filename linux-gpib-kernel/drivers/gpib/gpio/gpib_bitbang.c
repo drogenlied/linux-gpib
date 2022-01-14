@@ -1,4 +1,4 @@
-/**************************************************************************
+/*************************************************************************
  *                      gpib_bitbang.c  -  description                    *
  *                           -------------------                          *
  *  This code has been developed at the Institute of Sensor and Actuator  *
@@ -227,9 +227,9 @@ int bb_read(gpib_board_t *board, uint8_t *buffer, size_t length,
                             printable(priv->rbuf[priv->count-1]));
 
                 gpiod_direction_input(NDAC);
+		priv->end |= check_for_eos(priv, priv->rbuf[priv->count-1]);
 
-                if ((priv->count >= priv->request) || priv->end ||
-                            check_for_eos(priv, priv->rbuf[priv->count-1])) {
+                if ((priv->count >= priv->request) || priv->end) {
 
                         dbg_printk ("wake_up with %d %d %x\n", priv->count,
                                             priv->end, priv->rbuf[priv->count-1]);
@@ -379,7 +379,7 @@ write_end:
 irqreturn_t bb_NRFD_interrupt(int irq, void * arg)
 {
         gpib_board_t * board = arg;
-            bb_private_t *priv = board->private_data;
+	bb_private_t *priv = board->private_data;
 
         if (!priv->go_write) return IRQ_HANDLED;
         priv->go_write = 0;
@@ -419,7 +419,7 @@ int bb_command(gpib_board_t *board, uint8_t *buffer,
 {
         size_t ret,i;
 
-    dbg_printk("%p  %p\n", buffer, board->buffer);
+	dbg_printk("%p  %p\n", buffer, board->buffer);
 
         SET_DIR_WRITE();
         gpiod_direction_output(_ATN, 0);
@@ -428,11 +428,11 @@ int bb_command(gpib_board_t *board, uint8_t *buffer,
         if (debug) {
                 dbg_printk("CMD(%zu):\n", length);
                 for (i=0; i < length; i++) {
-            if (buffer[i] & 0x40) {
-                    dbg_printk("0x%x=TLK%d\n", buffer[i], buffer[i]&0x1F);
-            } else {
-                    dbg_printk("0x%x=LSN%d\n", buffer[i], buffer[i]&0x1F);
-                        }
+			if (buffer[i] & 0x40) {
+				dbg_printk("0x%x=TLK%d\n", buffer[i], buffer[i]&0x1F);
+			} else {
+				dbg_printk("0x%x=LSN%d\n", buffer[i], buffer[i]&0x1F);
+			}
                 }
         }
 
@@ -452,7 +452,7 @@ int bb_command(gpib_board_t *board, uint8_t *buffer,
 int bb_take_control(gpib_board_t *board, int synchronous)
 {
         udelay(DELAY);
-    dbg_printk("%d\n", synchronous);
+	dbg_printk("%d\n", synchronous);
         gpiod_direction_output(_ATN, 0);
         set_bit(CIC_NUM, &board->status);
         return 0;
@@ -460,7 +460,7 @@ int bb_take_control(gpib_board_t *board, int synchronous)
 
 int bb_go_to_standby(gpib_board_t *board)
 {
-    dbg_printk("\n");
+	dbg_printk("\n");
         udelay(DELAY);
         gpiod_direction_output(_ATN, 1);
         return 0;
@@ -468,7 +468,7 @@ int bb_go_to_standby(gpib_board_t *board)
 
 void bb_request_system_control(gpib_board_t *board, int request_control )
 {
-    dbg_printk("%d\n", request_control);
+	dbg_printk("%d\n", request_control);
         udelay(DELAY);
         if (request_control)
                 set_bit(CIC_NUM, &board->status);
@@ -479,7 +479,7 @@ void bb_request_system_control(gpib_board_t *board, int request_control )
 void bb_interface_clear(gpib_board_t *board, int assert)
 {
         udelay(DELAY);
-    dbg_printk("%d\n", assert);
+	dbg_printk("%d\n", assert);
         if (assert)
                 gpiod_direction_output(IFC, 0);
         else
@@ -488,7 +488,7 @@ void bb_interface_clear(gpib_board_t *board, int assert)
 
 void bb_remote_enable(gpib_board_t *board, int enable)
 {
-    dbg_printk("%d\n", enable);
+	dbg_printk("%d\n", enable);
         udelay(DELAY);
         if (enable) {
                 set_bit(REM_NUM, &board->status);
@@ -582,8 +582,8 @@ int bb_line_status(const gpib_board_t *board )
 {
 	int line_status = ValidALL;
 
-        if (gpiod_get_value(REN) == 1) line_status |= BusREN;
-        if (gpiod_get_value(IFC) == 1) line_status |= BusIFC;
+        if (gpiod_get_value(REN) == 0) line_status |= BusREN;
+        if (gpiod_get_value(IFC) == 0) line_status |= BusIFC;
         if (gpiod_get_value(NDAC) == 0) line_status |= BusNDAC;
         if (gpiod_get_value(NRFD) == 0) line_status |= BusNRFD;
         if (gpiod_get_value(DAV) == 0) line_status |= BusDAV;
@@ -681,34 +681,34 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
 }
 
 void bb_detach(gpib_board_t *board)
-{        
-    struct timespec64 before, after;
+{
+	struct timespec64 before, after;
         bb_private_t *bb_priv = board->private_data;
 
         dbg_printk("%s\n", "enter... ");
 
         if (bb_priv->irq_DAV) {
-        ktime_get_ts64(&before);
+		ktime_get_ts64(&before);
                 free_irq(bb_priv->irq_DAV, board);
-        ktime_get_ts64(&after);
-        printk("%s:%s - IRQ DAV free in %ld us\n",
-               HERE, usec_diff(&after, &before));
+		ktime_get_ts64(&after);
+		printk("%s:%s - IRQ DAV free in %ld us\n",
+			HERE, usec_diff(&after, &before));
         }
 
         if (bb_priv->irq_NRFD) {
-        ktime_get_ts64(&before);
+		ktime_get_ts64(&before);
                 free_irq(bb_priv->irq_NRFD, board);
-        ktime_get_ts64(&after);
-        printk("%s:%s - IRQ NRFD free in %ld us\n",
-               HERE, usec_diff(&after, &before));
+		ktime_get_ts64(&after);
+		printk("%s:%s - IRQ NRFD free in %ld us\n",
+			HERE, usec_diff(&after, &before));
         }
 
         if (bb_priv->irq_SRQ) {
-        ktime_get_ts64(&before);
-                free_irq(bb_priv->irq_SRQ, board);
-        ktime_get_ts64(&after);
-        printk("%s:%s - IRQ DAV free in %ld us\n",
-               HERE, usec_diff(&after, &before));
+		ktime_get_ts64(&before);
+		free_irq(bb_priv->irq_SRQ, board);
+		ktime_get_ts64(&after);
+		printk("%s:%s - IRQ DAV free in %ld us\n",
+			HERE, usec_diff(&after, &before));
         }
 
         free_private(board);
@@ -764,14 +764,13 @@ static int __init bb_init_module(void)
         NDAC = gpio_to_desc(NDAC_pin_nr);
         SRQ = gpio_to_desc(SRQ_pin_nr);
 
-	if (sn7516x_used)
-	{
-        PE = gpio_to_desc(PE_pin_nr);
-        DC = gpio_to_desc(DC_pin_nr);
-        TE = gpio_to_desc(TE_pin_nr);
-        gpiod_direction_output(DC, 1);
-        gpiod_direction_output(PE, 0);
-        gpiod_direction_output(TE, 0);
+	if (sn7516x_used) {
+		PE = gpio_to_desc(PE_pin_nr);
+		DC = gpio_to_desc(DC_pin_nr);
+		TE = gpio_to_desc(TE_pin_nr);
+		gpiod_direction_output(DC, 1);
+		gpiod_direction_output(PE, 0);
+		gpiod_direction_output(TE, 0);
 	}
 
         ACT_LED = gpio_to_desc(ACT_LED_pin_nr);
@@ -808,11 +807,10 @@ static void __exit bb_exit_module(void)
         gpiod_put(DAV);
         gpiod_put(NDAC);
         gpiod_put(SRQ);
-	if (sn7516x_used)
-	{
-        gpiod_put(PE);
-        gpiod_put(DC);
-        gpiod_put(TE);
+	if (sn7516x_used) {
+		gpiod_put(PE);
+		gpiod_put(DC);
+		gpiod_put(TE);
 	}
         gpiod_put(ACT_LED);
 	gpiod_direction_input(ACT_LED);
@@ -849,7 +847,7 @@ int check_for_eos(bb_private_t *priv, uint8_t byte)
                 if (priv->eos == byte)
                         return 1;
         } else {
-                if ((priv->eos & sevenBitCompareMask) == \
+                if ((priv->eos & sevenBitCompareMask) ==	\
                         (byte & sevenBitCompareMask))
                         return 1;
         }
@@ -898,11 +896,10 @@ void set_data_lines_input(void)
 inline void SET_DIR_WRITE(void)
 {
         udelay(DELAY);
-	if (sn7516x_used)
-	{
-        gpiod_set_value(DC, 0);
-        gpiod_set_value(PE, 1);
-        gpiod_set_value(TE, 1);
+	if (sn7516x_used) {
+		gpiod_set_value(DC, 0);
+		gpiod_set_value(PE, 1);
+		gpiod_set_value(TE, 1);
 	}
         gpiod_direction_output(DAV, 1);
         gpiod_direction_output(EOI, 1);
@@ -915,11 +912,10 @@ inline void SET_DIR_WRITE(void)
 inline void SET_DIR_READ(void)
 {
         udelay(DELAY);
-	if (sn7516x_used)
-	{
-        gpiod_set_value(DC, 1);
-        gpiod_set_value(PE, 0);
-        gpiod_set_value(TE, 0);
+	if (sn7516x_used) {
+		gpiod_set_value(DC, 0);
+		gpiod_set_value(PE, 0);
+		gpiod_set_value(TE, 0);
 	}
         gpiod_direction_output(NRFD, 0);
         gpiod_direction_output(NDAC, 0); // Assert NDAC, informing the talker we have not yet accepted the byte
