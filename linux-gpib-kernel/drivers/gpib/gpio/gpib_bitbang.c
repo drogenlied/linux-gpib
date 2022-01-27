@@ -141,6 +141,7 @@ typedef struct
         short int end;
         int request;
         int count;
+	int direction;
         uint8_t * rbuf;
         uint8_t * wbuf;
 } bb_private_t;
@@ -151,8 +152,11 @@ uint8_t get_data_lines(void);
 void set_data_lines_input(void);
 int check_for_eos(bb_private_t *priv, uint8_t byte);
 
-inline void SET_DIR_WRITE(void);
-inline void SET_DIR_READ(void);
+inline void SET_DIR_WRITE(bb_private_t *priv);
+inline void SET_DIR_READ(bb_private_t *priv);
+
+#define DIR_READ 0
+#define DIR_WRITE 1
 
 MODULE_LICENSE("GPL");
 
@@ -160,6 +164,9 @@ MODULE_LICENSE("GPL");
 
 static int debug = GPIB_CONFIG_KERNEL_DEBUG ? 1 : 0;
 module_param (debug, int, S_IRUGO | S_IWUSR);
+
+static int readdir=0;
+static int writedir=0;
 
 char printable (char x) {
         if (x < 32 || x > 126) return ' ';
@@ -190,7 +197,7 @@ int bb_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 
         priv->request = length;
 
-        SET_DIR_READ();
+        SET_DIR_READ(priv);
         udelay(DELAY);
 
         dbg_printk (".........." LINFMT "\n",LINVAL);
@@ -198,7 +205,8 @@ int bb_read(gpib_board_t *board, uint8_t *buffer, size_t length,
         /* interrupt wait for first DAV valid */
 
         priv->go_read = 1;
-            gpiod_direction_input(NRFD);
+
+	gpiod_direction_input(NRFD); // ready for data
 
         retval = wait_event_interruptible (board->wait,
                  board->status & TIMO  || priv->go_read == 0);
@@ -222,7 +230,7 @@ int bb_read(gpib_board_t *board, uint8_t *buffer, size_t length,
                         goto read_end;
                 }
 
-                gpiod_direction_output(NRFD, 0);
+                gpiod_direction_output(NRFD, 0); // not ready for data
 
                 priv->rbuf[priv->count++] = get_data_lines();
                 priv->end = !gpiod_get_value(EOI);
@@ -232,7 +240,7 @@ int bb_read(gpib_board_t *board, uint8_t *buffer, size_t length,
                             priv->rbuf[priv->count-1],
                             printable(priv->rbuf[priv->count-1]));
 
-                gpiod_direction_input(NDAC);
+                gpiod_direction_input(NDAC); // data accepted
 		priv->end |= check_for_eos(priv, priv->rbuf[priv->count-1]);
 
                 if ((priv->count >= priv->request) || priv->end) {
@@ -250,9 +258,9 @@ int bb_read(gpib_board_t *board, uint8_t *buffer, size_t length,
                         goto read_end;
                 }
 
-                gpiod_direction_output(NDAC, 0);
+                gpiod_direction_output(NDAC, 0); // data not accepted
                 udelay (DELAY);
-                gpiod_direction_input(NRFD);
+                gpiod_direction_input(NRFD); // ready for data
         }
 
 read_end:
@@ -322,7 +330,7 @@ int bb_write(gpib_board_t *board, uint8_t *buffer, size_t length,
         /* interrupt wait for first NRFD valid */
 
         priv->go_write = 1;
-        SET_DIR_WRITE();
+        SET_DIR_WRITE(priv);
 
         retval = wait_event_interruptible (board->wait,
                  gpiod_get_value(NRFD) || priv->go_write == 0 || board->status & TIMO);
@@ -340,7 +348,7 @@ int bb_write(gpib_board_t *board, uint8_t *buffer, size_t length,
         /*  poll loop for data write */
 
         for (i=0; i < length; i++) {
-
+		// wait for ready for data
                 while (!gpiod_get_value(NRFD) && !(board->status & TIMO));
                 if (board->status & TIMO) {
                         retval = -ETIMEDOUT;
@@ -349,22 +357,20 @@ int bb_write(gpib_board_t *board, uint8_t *buffer, size_t length,
                 }
 
                 if ((i >= length-1) && send_eoi) {
-                        gpiod_direction_output(EOI, 0);
-                } else {
-                        gpiod_direction_output(EOI, 1);
-                }
+                        gpiod_direction_output(EOI, 0); // Assert EIO
+		}
 
                 dbg_printk("sending %zu\n", i);
 
                 set_data_lines(buffer[i]);
-                gpiod_direction_output(DAV, 0);
-
+                gpiod_direction_output(DAV, 0); // Data available
+		// wait for data accepted
                 while (!gpiod_get_value(NDAC) && !(board->status & TIMO));
 
                 dbg_printk("accepted %zu\n", i);
 
                 udelay(DELAY);
-                gpiod_direction_output(DAV, 1);
+                gpiod_direction_output(DAV, 1); // Data not available
         }
         retval = i;
 
@@ -372,6 +378,7 @@ write_end:
         *bytes_written = i;
 
         dbg_printk("sent %zu bytes.\r\n\r\n", *bytes_written);
+	gpiod_direction_output(EOI, 1);
 
         return retval;
 }
@@ -427,9 +434,7 @@ int bb_command(gpib_board_t *board, uint8_t *buffer,
 
 	dbg_printk("%p  %p\n", buffer, board->buffer);
 
-        SET_DIR_WRITE();
         gpiod_direction_output(_ATN, 0);
-        gpiod_direction_output(NRFD, 0);
 
         if (debug) {
                 dbg_printk("CMD(%zu):\n", length);
@@ -624,12 +629,19 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
 {
         bb_private_t *priv;
         struct timespec64 before, after;
+	int retval;
 
         dbg_printk("%s\n", "Enter ...");
 
         board->status = 0;
+	if (!board->master) {
+		printk("gpib: gpio_bitbang driver must be master\n");
+		return -1;
+	}
+
         if (allocate_private(board)) return -ENOMEM;
         priv = board->private_data;
+	priv->direction = -1;
 
 	if (sn7516x_used) {
 	/* Configure SN7516X control lines.
@@ -637,12 +649,12 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
          * i.e. system controller. In this mode can only be the CIC
 	 * When not master then enable device mode ATN, IFC & REN as inputs
          */
-		gpiod_direction_output(DC,!board->master);
+		gpiod_direction_output(DC,0);
 		gpiod_direction_output(TE,1);
 		gpiod_direction_output(PE,1);
 	}
 
-        SET_DIR_WRITE();
+        SET_DIR_WRITE(priv);
 
         priv->irq_DAV = gpiod_to_irq(DAV);
         priv->irq_NRFD = gpiod_to_irq(NRFD);
@@ -657,7 +669,8 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
         if (request_irq(priv->irq_DAV, bb_DAV_interrupt, IRQF_TRIGGER_FALLING,
                     "NAME", board)) {
                 printk("gpib: can't request IRQ for DAV %d\n", priv->irq_DAV);
-                return -1;
+		retval = -1;
+                goto exit;
         }
         ktime_get_ts64(&after);
         dbg_printk("%s:%s - IRQ for DAV in %ld us\n", HERE,
@@ -668,7 +681,8 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
         if (request_irq(priv->irq_NRFD, bb_NRFD_interrupt, IRQF_TRIGGER_RISING,
                     "NAME", board)) {
                 printk(KERN_ALERT "%s:%s - can't request IRQ for NRFD %d\n", HERE, priv->irq_NRFD);
-                return -1;
+                retval =  -1;
+		goto exit;
         }
         ktime_get_ts64(&after);
         dbg_printk("%s:%s - IRQ for NRFD in %ld us\n", HERE, usec_diff(&after, &before));
@@ -679,18 +693,22 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
         if (request_irq(priv->irq_SRQ, bb_SRQ_interrupt, IRQF_TRIGGER_FALLING,
                     "NAME", board)) {
                 printk(KERN_ALERT "%s:%s - can't request IRQ for SRQ %d\n", HERE, priv->irq_SRQ);
-                return -1;
+                retval =  -1;
+		goto exit;
         }
         ktime_get_ts64(&after);
         dbg_printk("%s:%s - IRQ for SRQ in %ld us\n", HERE,
                                          usec_diff(&after, &before));
         /* done */
 
-        dbg_printk("registered board: %p with IRQ=%d %d as %s\n", board,
-                priv->irq_DAV, priv->irq_NRFD,
-		(board->master)?"master":"device");
+        dbg_printk("attached board: %p with IRQ=%d %d\n", board,
+                priv->irq_DAV, priv->irq_NRFD);
 
         return 0;
+exit:
+	free_private(board);
+	dbg_printk("attach failed\n");
+	return retval;
 }
 
 void bb_detach(gpib_board_t *board)
@@ -723,7 +741,7 @@ void bb_detach(gpib_board_t *board)
 		printk("%s:%s - IRQ DAV free in %ld us\n",
 			HERE, usec_diff(&after, &before));
         }
-
+	printk("gpib_bitbang: readdir = %d, writedir = %d\n",readdir,writedir);
         free_private(board);
 }
 
@@ -777,23 +795,28 @@ static int __init bb_init_module(void)
         NDAC = gpio_to_desc(NDAC_pin_nr);
         SRQ = gpio_to_desc(SRQ_pin_nr);
 
+	set_data_lines_input();
+
+	gpiod_direction_input(IFC);
+        gpiod_direction_input(_ATN);
+        gpiod_direction_input(REN);
+        gpiod_direction_input(SRQ);
+        gpiod_direction_input(DAV);
+        gpiod_direction_input(EOI);
+	gpiod_direction_output(NRFD,0);
+        gpiod_direction_output(NDAC,0);
+
 	if (sn7516x_used) {
 		PE = gpio_to_desc(PE_pin_nr);
 		DC = gpio_to_desc(DC_pin_nr);
 		TE = gpio_to_desc(TE_pin_nr);
+		gpiod_direction_output(DC, 1);
+		gpiod_direction_output(PE, 0);
+		gpiod_direction_output(TE, 0);
 	}
 
-        ACT_LED = gpio_to_desc(ACT_LED_pin_nr);
-
-	gpiod_direction_output(DC, 1); /* PE and TE are set in SET_DIR_READ */
-
-        SET_DIR_READ();
-
-        gpiod_direction_input(IFC);
-        gpiod_direction_input(_ATN);
-        gpiod_direction_input(REN);
-        gpiod_direction_input(SRQ);
-        gpiod_direction_output(ACT_LED, 1);
+	ACT_LED = gpio_to_desc(ACT_LED_pin_nr);
+	gpiod_direction_output(ACT_LED, 1); // show module is loaded
 
         gpib_register_driver(&bb_interface, THIS_MODULE);
 
@@ -825,8 +848,8 @@ static void __exit bb_exit_module(void)
 		gpiod_put(DC);
 		gpiod_put(TE);
 	}
-        gpiod_put(ACT_LED);
 	gpiod_direction_input(ACT_LED);
+        gpiod_put(ACT_LED);
 
         dbg_printk("%s\n", "module unloaded!");
 
@@ -883,14 +906,14 @@ uint8_t get_data_lines(void)
 {
         uint8_t ret = 0;
         set_data_lines_input();
-        ret += gpiod_get_value(D01) * 0x01;
-        ret += gpiod_get_value(D02) * 0x02;
-        ret += gpiod_get_value(D03) * 0x04;
-        ret += gpiod_get_value(D04) * 0x08;
-        ret += gpiod_get_value(D05) * 0x10;
-        ret += gpiod_get_value(D06) * 0x20;
-        ret += gpiod_get_value(D07) * 0x40;
-        ret += gpiod_get_value(D08) * 0x80;
+        ret = gpiod_get_value(D01);
+        ret |= gpiod_get_value(D02) << 1;
+        ret |= gpiod_get_value(D03) << 2;
+        ret |= gpiod_get_value(D04) << 3;
+        ret |= gpiod_get_value(D05) << 4;
+        ret |= gpiod_get_value(D06) << 5;
+        ret |= gpiod_get_value(D07) << 6;
+        ret |= gpiod_get_value(D08) << 7;
         return ~ret;
 }
 
@@ -906,32 +929,53 @@ void set_data_lines_input(void)
         gpiod_direction_input(D08);
 }
 
-inline void SET_DIR_WRITE(void)
+inline void SET_DIR_WRITE(bb_private_t *priv)
 {
-        udelay(DELAY);
-	if (sn7516x_used) {
-		gpiod_set_value(PE, 1);
-		gpiod_set_value(TE, 1);
-	}
+	udelay(DELAY);
+
         gpiod_direction_output(DAV, 1);
         gpiod_direction_output(EOI, 1);
 
+	if (priv->direction == DIR_WRITE) {
+		writedir++;
+		return;
+	}
+	priv->direction = DIR_WRITE;
+
         gpiod_direction_input(NRFD);
         gpiod_direction_input(NDAC);
+
         set_data_lines(0);
+
+	if (sn7516x_used) {
+                /* set data lines to transmit on sn75160b */
+		gpiod_set_value(PE, 1);
+		/* set NDAC and NRFD to receive and DAV to transmit on sn75161b */
+		gpiod_set_value(TE, 1);
+	}
 }
 
-inline void SET_DIR_READ(void)
+inline void SET_DIR_READ(bb_private_t *priv)
 {
-        udelay(DELAY);
+	udelay(DELAY);
+	gpiod_direction_output(NRFD, 0);  // hold off the talker
+        gpiod_direction_output(NDAC, 0);  // data not accepted
+
+	if (priv->direction == DIR_READ) {
+		readdir++;
+		return;
+	}
+	priv->direction = DIR_READ;
+
+	gpiod_direction_input(DAV);
+        gpiod_direction_input(EOI);
+
+	set_data_lines_input();
+
 	if (sn7516x_used) {
+                /* set data lines to receive on sn75160b */
 		gpiod_set_value(PE, 0);
+		/* set NDAC and NRFD to transmit and DAV to receive on sn75161b */
 		gpiod_set_value(TE, 0);
 	}
-        gpiod_direction_output(NRFD, 0);
-        gpiod_direction_output(NDAC, 0); // Assert NDAC, informing the talker we have not yet accepted the byte
-
-        gpiod_direction_input(DAV);
-        gpiod_direction_input(EOI);
-        set_data_lines_input();
 }
