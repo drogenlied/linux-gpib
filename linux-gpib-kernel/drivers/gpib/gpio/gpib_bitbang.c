@@ -42,7 +42,10 @@
 /*
   not implemented:
         parallel/serial polling
-        return2local?
+        return2local
+        set T1 delay
+  cannot function as non-CIC system controller with sn7516x_used==1 as
+  SN7561B cannot simultaneously make ATN input with IFC and REN as outputs.
 */
 
 #define TIMEOUT_US 1000000
@@ -103,15 +106,18 @@ typedef enum {
  */
 
 /*
- *  These lines were used in the original project
- *  to control the external SN75160/161 driver chips.
- *  Not used in this module version, with reduced
- *  fan out; currently tested up to 4 devices.
+ *  These lines are used to control the external
+ *  SN75160/161 driver chips when sn7516x_used==1
+ *  Not used when sn7516x_used==0. In this case there is
+ *  reduced fan out; currently tested up to 4 devices.
  */
-        PE_pin_nr =    7,    /*  26  ->   */
-        DC_pin_nr =    8,    /*  24  ->   */
-        TE_pin_nr =   18,    /*  12  ->   */
-        ACT_LED_pin_nr = 4,    /*   7  ->   */
+
+/*
+ *         	 Pi GPIO        RPI   75161B 75160B   Description      */
+        PE_pin_nr =    7,    /*  26  ->   nc     11   Pullup Enable    */
+        DC_pin_nr =    8,    /*  24  ->   12     nc   Directon control */
+        TE_pin_nr =   18,    /*  12  ->    2      1   Talk Enable      */
+        ACT_LED_pin_nr = 4,  /*   7  ->  LED  */
 } lines_t;
 
 /*
@@ -549,11 +555,11 @@ int bb_secondary_address(gpib_board_t *board, unsigned int address, int enable)
 int bb_parallel_poll(gpib_board_t *board, uint8_t *result)
 {
         dbg_printk("%s\n", "not implemented");
-        return 0;
+        return ENOSYS;
 }
 void bb_parallel_poll_configure(gpib_board_t *board, uint8_t config )
 {
-        dbg_printk("%s\n", "not implemented");
+	dbg_printk("%s\n", "not implemented");
 }
 void bb_parallel_poll_response(gpib_board_t *board, int ist )
 {
@@ -565,14 +571,9 @@ void bb_serial_poll_response(gpib_board_t *board, uint8_t status)
 uint8_t bb_serial_poll_status(gpib_board_t *board )
 {
         dbg_printk("%s\n", "not implemented");
-        return 0;
+        return ENOSYS;
 }
-unsigned int bb_t1_delay(gpib_board_t *board, unsigned int nano_sec )
-{
-        udelay(nano_sec/1000 + 1);
 
-        return 0;
-}
 void bb_return_to_local(gpib_board_t *board )
 {
         dbg_printk("%s\n", "not implemented");
@@ -630,6 +631,17 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
         if (allocate_private(board)) return -ENOMEM;
         priv = board->private_data;
 
+	if (sn7516x_used) {
+	/* Configure SN7516X control lines.
+	 * drive ATN, IFC and REN as outputs only when master
+         * i.e. system controller. In this mode can only be the CIC
+	 * When not master then enable device mode ATN, IFC & REN as inputs
+         */
+		gpiod_direction_output(DC,!board->master);
+		gpiod_direction_output(TE,1);
+		gpiod_direction_output(PE,1);
+	}
+
         SET_DIR_WRITE();
 
         priv->irq_DAV = gpiod_to_irq(DAV);
@@ -674,8 +686,9 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
                                          usec_diff(&after, &before));
         /* done */
 
-        dbg_printk("registered board: %p with IRQ=%d %d\n", board,
-                priv->irq_DAV, priv->irq_NRFD);
+        dbg_printk("registered board: %p with IRQ=%d %d as %s\n", board,
+                priv->irq_DAV, priv->irq_NRFD,
+		(board->master)?"master":"device");
 
         return 0;
 }
@@ -738,7 +751,7 @@ gpib_interface_t bb_interface =
         secondary_address:        bb_secondary_address,
         serial_poll_response:     bb_serial_poll_response,
         serial_poll_status:       bb_serial_poll_status,
-        t1_delay:                 bb_t1_delay,
+//        t1_delay:                 bb_t1_delay,
         return_to_local:          bb_return_to_local,
 };
 
@@ -768,14 +781,14 @@ static int __init bb_init_module(void)
 		PE = gpio_to_desc(PE_pin_nr);
 		DC = gpio_to_desc(DC_pin_nr);
 		TE = gpio_to_desc(TE_pin_nr);
-		gpiod_direction_output(DC, 1);
-		gpiod_direction_output(PE, 0);
-		gpiod_direction_output(TE, 0);
 	}
 
         ACT_LED = gpio_to_desc(ACT_LED_pin_nr);
 
+	gpiod_direction_output(DC, 1); /* PE and TE are set in SET_DIR_READ */
+
         SET_DIR_READ();
+
         gpiod_direction_input(IFC);
         gpiod_direction_input(_ATN);
         gpiod_direction_input(REN);
@@ -847,7 +860,7 @@ int check_for_eos(bb_private_t *priv, uint8_t byte)
                 if (priv->eos == byte)
                         return 1;
         } else {
-                if ((priv->eos & sevenBitCompareMask) ==	\
+                if ((priv->eos & sevenBitCompareMask) ==
                         (byte & sevenBitCompareMask))
                         return 1;
         }
@@ -897,7 +910,6 @@ inline void SET_DIR_WRITE(void)
 {
         udelay(DELAY);
 	if (sn7516x_used) {
-		gpiod_set_value(DC, 0);
 		gpiod_set_value(PE, 1);
 		gpiod_set_value(TE, 1);
 	}
@@ -913,7 +925,6 @@ inline void SET_DIR_READ(void)
 {
         udelay(DELAY);
 	if (sn7516x_used) {
-		gpiod_set_value(DC, 0);
 		gpiod_set_value(PE, 0);
 		gpiod_set_value(TE, 0);
 	}
