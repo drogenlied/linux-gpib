@@ -926,8 +926,7 @@ static int fmh_gpib_config_dma(gpib_board_t *board, int output)
 	fmh_gpib_private_t *e_priv = board->private_data;
 	struct dma_slave_config config;
 	config.device_fc = true;
-	config.slave_id = 0;
-	
+
 	if(e_priv->dma_burst_length < 1)
 	{
 		config.src_maxburst = 1;
