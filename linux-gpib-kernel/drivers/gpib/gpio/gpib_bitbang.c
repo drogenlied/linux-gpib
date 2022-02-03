@@ -271,8 +271,6 @@ read_end:
         *bytes_read = priv->count;
         *end = priv->end;
 
-        priv->rbuf[priv->count] = 0;
-
         dbg_printk(1,"return: %d  eoi|eos: %d count: %d\n\n", retval, priv->end, priv->count);
 
         return retval;
