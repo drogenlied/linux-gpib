@@ -48,8 +48,6 @@
         parallel poll
         return2local
         device support (non master operation)
-  bugs:
-        system crash with autospoll enabled when device asserts SRQ
 */
 
 #define TIMEOUT_US 1000000
@@ -92,8 +90,8 @@ module_param(sn7516x_used,int,0660);
  *  Signal pairing and pin wiring between the *
  *  Raspberry-Pi connector and the GPIB bus   *
  *                                            *
- *        signal           pin wiring         *
- *     GPIB  Pi-gpio     GPIB  ->  RPi        *
+ *               signal           pin wiring  *
+ *            GPIB  Pi-gpio     GPIB  ->  RPi *
 **********************************************/
 typedef enum {
         D01_pin_nr =  20,     /*   1  ->  38  */
@@ -136,8 +134,10 @@ typedef enum {
  * GPIO descriptors
  */
 
-struct gpio_desc *D01, *D02, *D03, *D04, *D05, *D06, *D07, *D08, *EOI, *NRFD, *IFC, *_ATN, *REN, *DAV, *NDAC, *SRQ, *ACT_LED, *PE, *DC, *TE;
-
+struct gpio_desc *D01, *D02, *D03, *D04, *D05, *D06, *D07, *D08; // data lines
+struct gpio_desc *EOI, *NRFD, *IFC, *_ATN, *REN, *DAV, *NDAC, *SRQ; // control
+struct gpio_desc *PE, *DC, *TE; // line driver control pins
+struct gpio_desc *ACT_LED;  // status led
 
 /* struct which defines private_data for gpio driver */
 
@@ -818,6 +818,7 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
 
         return 0;
 exit:
+	release_gpios();
 	free_private(board);
 	dbg_printk(0,"attach failed for board index: %d\n", board->minor);
 	return retval;
