@@ -60,7 +60,7 @@ AC_PROG_INSTALL
 AC_PROG_CC
 AM_PROG_CC_C_O
 AM_PROG_LEX([noyywrap])
-AC_PROG_YACC
+AM_MISSING_PROG(YACC,yacc)
 LT_INIT
 AC_PATH_PROG([JW_PATH], [jw], [no])
 if test "$JW_PATH" = "no" ; then
