@@ -59,16 +59,8 @@ dnl Checks for programs.
 AC_PROG_INSTALL
 AC_PROG_CC
 AM_PROG_CC_C_O
-AC_PROG_LEX([noyywrap])
+AM_PROG_LEX([noyywrap])
 AC_PROG_YACC
-if test "x$enable_maintainer_mode" = xyes; then
-  if test "$LEX" = ":" ; then
-     AC_MSG_ERROR([cannot find flex or lex])
-  fi		
-  if test  "$YACC" = "yacc" ; then
-     AC_MSG_ERROR([cannot find bison])
-  fi
-fi
 LT_INIT
 AC_PATH_PROG([JW_PATH], [jw], [no])
 if test "$JW_PATH" = "no" ; then
