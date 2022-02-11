@@ -60,7 +60,13 @@ AC_PROG_INSTALL
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_PROG_LEX([noyywrap])
+if test "$LEX" = ":" ; then
+   AC_MSG_ERROR([cannot find flex or lex])
+fi		
 AC_PROG_YACC
+if test  "$YACC" = "yacc" ; then
+      AC_MSG_ERROR([cannot find bison])
+fi
 LT_INIT
 AC_PATH_PROG([JW_PATH], [jw], [no])
 if test "$JW_PATH" = "no" ; then
