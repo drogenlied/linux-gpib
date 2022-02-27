@@ -1028,7 +1028,7 @@ int agilent_82357a_line_status( const gpib_board_t *board )
 	{
 		if (retval != -EAGAIN)
 			printk("%s: agilent_82357a_read_registers() returned error\n", __FUNCTION__);
-		return 0;
+		return retval;
 	}
 	if( bus_status.value & BSR_REN_BIT )
 		status |= BusREN;
