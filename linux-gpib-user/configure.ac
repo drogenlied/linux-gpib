@@ -59,7 +59,11 @@ dnl Checks for programs.
 AC_PROG_INSTALL
 AC_PROG_CC
 AM_PROG_CC_C_O
-AM_PROG_LEX([noyywrap])
+dnl Cannot use AM_PROG_LEX since it does not pass the [noyywrap] option
+AC_PROG_LEX([noyywrap])
+if test "$LEX" = ":" ; then
+   LEX="$SHELL "$srcdir"/../missing flex"
+fi
 AM_MISSING_PROG(YACC,yacc)
 LT_INIT
 AC_PATH_PROG([JW_PATH], [jw], [no])
