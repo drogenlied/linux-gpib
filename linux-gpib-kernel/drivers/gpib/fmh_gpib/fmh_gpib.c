@@ -39,9 +39,12 @@ MODULE_LICENSE("GPL");
 int fmh_gpib_attach_holdoff_all(gpib_board_t *board, const gpib_board_config_t *config);
 int fmh_gpib_attach_holdoff_end(gpib_board_t *board, const gpib_board_config_t *config);
 void fmh_gpib_detach(gpib_board_t *board);
+int fmh_gpib_pci_attach_holdoff_all(gpib_board_t *board, const gpib_board_config_t *config);
+void fmh_gpib_pci_detach(gpib_board_t *board);
 static int fmh_gpib_config_dma(gpib_board_t *board, int output);
 irqreturn_t fmh_gpib_internal_interrupt(gpib_board_t *board);
 static struct platform_driver fmh_gpib_platform_driver;
+static struct pci_driver fmh_gpib_pci_driver;
 
 // wrappers for interface functions
 int fmh_gpib_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, size_t *bytes_read)
@@ -792,6 +795,35 @@ gpib_interface_t fmh_gpib_interface =
 	return_to_local: fmh_gpib_return_to_local,
 };
 
+gpib_interface_t fmh_gpib_pci_unaccel_interface =
+{
+	name: "fmh_gpib_pci_unaccel",
+	attach: fmh_gpib_pci_attach_holdoff_all,
+	detach: fmh_gpib_pci_detach,
+	read: fmh_gpib_read,
+	write: fmh_gpib_write,
+	command: fmh_gpib_command,
+	take_control: fmh_gpib_take_control,
+	go_to_standby: fmh_gpib_go_to_standby,
+	request_system_control: fmh_gpib_request_system_control,
+	interface_clear: fmh_gpib_interface_clear,
+	remote_enable: fmh_gpib_remote_enable,
+	enable_eos: fmh_gpib_enable_eos,
+	disable_eos: fmh_gpib_disable_eos,
+	parallel_poll: fmh_gpib_parallel_poll,
+	parallel_poll_configure: fmh_gpib_parallel_poll_configure,
+	parallel_poll_response: fmh_gpib_parallel_poll_response,
+	local_parallel_poll_mode: fmh_gpib_local_parallel_poll_mode,
+	line_status: fmh_gpib_line_status,
+	update_status: fmh_gpib_update_status,
+	primary_address: fmh_gpib_primary_address,
+	secondary_address: fmh_gpib_secondary_address,
+	serial_poll_response2: fmh_gpib_serial_poll_response2,
+	serial_poll_status: fmh_gpib_serial_poll_status,
+	t1_delay: fmh_gpib_t1_delay,
+	return_to_local: fmh_gpib_return_to_local,
+};
+
 irqreturn_t fmh_gpib_internal_interrupt(gpib_board_t *board)
 {
 	int status0, status1, status2, ext_status_1;
@@ -1044,12 +1076,12 @@ static int fmh_gpib_attach_impl(gpib_board_t *board, const gpib_board_config_t *
 
 	nec_priv->iobase = ioremap_nocache(e_priv->gpib_iomem_res->start, 
 			resource_size(e_priv->gpib_iomem_res));
-	dev_info(board->dev, "iobase 0x%lx remapped to %p, length=%ld\n", (unsigned long)e_priv->gpib_iomem_res->start,
-		nec_priv->iobase, (unsigned long)resource_size(e_priv->gpib_iomem_res));
 	if (!nec_priv->iobase) {
-		dev_err(board->dev, "Could not map I/O memory\n");
+		dev_err(board->dev, "Could not map I/O memory for gpib\n");
 		return -ENOMEM;
 	}
+	dev_info(board->dev, "iobase 0x%lx remapped to %p, length=%ld\n", (unsigned long)e_priv->gpib_iomem_res->start,
+		nec_priv->iobase, (unsigned long)resource_size(e_priv->gpib_iomem_res));
 
 	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "dma_fifos");
 	if (!res) {
@@ -1065,6 +1097,10 @@ static int fmh_gpib_attach_impl(gpib_board_t *board, const gpib_board_config_t *
 	e_priv->dma_port_res = res;
 	e_priv->fifo_base = ioremap_nocache(e_priv->dma_port_res->start, 
 			resource_size(e_priv->dma_port_res));
+	if (!e_priv->fifo_base) {
+		dev_err(board->dev, "Could not map I/O memory for fifos\n");
+		return -ENOMEM;
+	}
 	dev_info(board->dev, "dma fifos 0x%lx remapped to %p, length=%ld\n",
 		(unsigned long)e_priv->dma_port_res->start, e_priv->fifo_base, 
 		(unsigned long)resource_size(e_priv->dma_port_res));
@@ -1120,6 +1156,10 @@ void fmh_gpib_detach(gpib_board_t *board)
 			dma_release_channel(e_priv->dma_channel);
 		nec_priv = &e_priv->nec7210_priv;
 
+		if(e_priv->irq)
+		{
+			free_irq(e_priv->irq, board);
+		}
 		if(e_priv->fifo_base != NULL)
 		{
 			fifos_write(e_priv, 0, FIFO_CONTROL_STATUS_REG); 
@@ -1128,10 +1168,6 @@ void fmh_gpib_detach(gpib_board_t *board)
 		{
 			write_byte(nec_priv, 0, ISR0_IMR0_REG);
 			nec7210_board_reset(nec_priv, board);
-		}
-		if(e_priv->irq)
-		{
-			free_irq(e_priv->irq, board);
 		}
 		if(e_priv->dma_port_res)
 		{
@@ -1147,7 +1183,102 @@ void fmh_gpib_detach(gpib_board_t *board)
 	fmh_gpib_generic_detach(board);
 }
 
-static int fmh_gpib_probe(struct platform_device *pdev) {
+int fmh_gpib_pci_attach_impl(gpib_board_t *board, const gpib_board_config_t *config, unsigned handshake_mode)
+{
+	fmh_gpib_private_t *e_priv;
+	nec7210_private_t *nec_priv;
+	int isr_flags = 0;
+	int retval;
+	struct pci_dev *pci_device;
+	
+	retval = fmh_gpib_generic_attach(board);
+	if(retval) return retval;
+
+	e_priv = board->private_data;
+	nec_priv = &e_priv->nec7210_priv;
+	
+	// find board
+	pci_device = gpib_pci_get_device(config, BOGUS_PCI_VENDOR_ID_FLUKE,
+		BOGUS_PCI_DEVICE_ID_FLUKE_BLADERUNNER, NULL);
+	if(pci_device == NULL)
+	{
+		printk("No matching fmh_gpib_core pci device was found, attach failed.");
+		return -ENODEV;
+	}
+	board->dev = &pci_device->dev;
+
+	if(pci_enable_device(pci_device))
+	{
+		dev_err(board->dev, "error enabling pci device\n");
+		return -EIO;
+	}
+	if(pci_request_regions(pci_device, KBUILD_MODNAME))
+	{
+		dev_err(board->dev, "pci_request_regions failed\n");
+		return -EIO;
+	}
+	e_priv->gpib_iomem_res = &pci_device->resource[gpib_control_status_pci_resource_index];
+	e_priv->dma_port_res =  &pci_device->resource[gpib_fifo_pci_resource_index];
+
+	nec_priv->iobase = ioremap_nocache(pci_resource_start(pci_device, gpib_control_status_pci_resource_index), 
+		pci_resource_len(pci_device, gpib_control_status_pci_resource_index));
+	dev_info(board->dev, "base address for gpib control/status registers remapped to 0x%p\n", nec_priv->iobase);
+
+	
+	e_priv->fifo_base = ioremap_nocache(pci_resource_start(pci_device, gpib_fifo_pci_resource_index), 
+		pci_resource_len(pci_device, gpib_fifo_pci_resource_index));
+	dev_info(board->dev, "base address for gpib fifo registers remapped to 0x%p\n", e_priv->fifo_base);
+	
+	retval = request_irq(pci_device->irq, fmh_gpib_interrupt, isr_flags, KBUILD_MODNAME, board);
+	if(retval){
+		dev_err(board->dev,
+			"cannot register interrupt handler err=%d\n",
+				retval);
+		return retval;
+	}
+	e_priv->irq = pci_device->irq;
+
+	return fmh_gpib_init(e_priv, board, handshake_mode);
+}
+
+int fmh_gpib_pci_attach_holdoff_all(gpib_board_t *board, const gpib_board_config_t *config)
+{
+	return fmh_gpib_pci_attach_impl(board, config, HR_HLDA);
+}
+
+void fmh_gpib_pci_detach(gpib_board_t *board)
+{
+	fmh_gpib_private_t *e_priv = board->private_data;
+	nec7210_private_t *nec_priv;
+
+	if(e_priv)
+	{
+		nec_priv = &e_priv->nec7210_priv;
+
+		if(e_priv->irq)
+		{
+			free_irq(e_priv->irq, board);
+		}
+		if(e_priv->fifo_base != NULL)
+		{
+			fifos_write(e_priv, 0, FIFO_CONTROL_STATUS_REG); 
+		}
+		if(nec_priv->iobase)
+		{
+			write_byte(nec_priv, 0, ISR0_IMR0_REG);
+			nec7210_board_reset(nec_priv, board);
+		}
+		if(e_priv->dma_port_res || e_priv->gpib_iomem_res)
+		{
+			pci_release_regions(to_pci_dev(board->dev));
+		}
+		if(board->dev)
+			pci_dev_put(to_pci_dev(board->dev));
+	}
+	fmh_gpib_generic_detach(board);
+}
+
+static int fmh_gpib_platform_probe(struct platform_device *pdev) {
 	return 0;
 }
 
@@ -1163,31 +1294,59 @@ static struct platform_driver fmh_gpib_platform_driver = {
 		.owner = THIS_MODULE,
 		.of_match_table = fmh_gpib_of_match,
 	},
-	.probe = &fmh_gpib_probe
+	.probe = &fmh_gpib_platform_probe
+};
+
+static int fmh_gpib_pci_probe(struct pci_dev *dev, const struct pci_device_id *id) {
+	return 0;
+}
+
+static const struct pci_device_id fmh_gpib_pci_match[] =
+{
+	{ BOGUS_PCI_VENDOR_ID_FLUKE, BOGUS_PCI_DEVICE_ID_FLUKE_BLADERUNNER, 0, 0, 0 },
+	{ 0 }
+};
+MODULE_DEVICE_TABLE(pci, fmh_gpib_pci_match);
+
+static struct pci_driver fmh_gpib_pci_driver = {
+	.name = "fmh_gpib",
+	.id_table = fmh_gpib_pci_match,
+	.probe = &fmh_gpib_pci_probe
 };
 
 static int __init fmh_gpib_init_module( void )
 {
 	int result;
-	
+
 	result = platform_driver_register(&fmh_gpib_platform_driver);
 	if (result) {
-		printk("fmh_gpib_gpib: platform_driver_register failed!\n");
+		printk("fmh_gpib: platform_driver_register failed!\n");
+		return result;
+	}
+	
+	result = pci_register_driver(&fmh_gpib_pci_driver);
+	if (result) {
+		printk("fmh_gpib: pci_driver_register failed!\n");
 		return result;
 	}
 	
 	gpib_register_driver(&fmh_gpib_unaccel_interface, THIS_MODULE);
 	gpib_register_driver(&fmh_gpib_interface, THIS_MODULE);
+	gpib_register_driver(&fmh_gpib_pci_unaccel_interface, THIS_MODULE);
 
-	printk("fmh_gpib_gpib\n");
+	printk("fmh_gpib\n");
 	return 0;
 }
 
 static void __exit fmh_gpib_exit_module( void )
 {
+	gpib_unregister_driver(&fmh_gpib_pci_unaccel_interface);
 	gpib_unregister_driver(&fmh_gpib_unaccel_interface);
 	gpib_unregister_driver(&fmh_gpib_interface);
+
+	pci_unregister_driver(&fmh_gpib_pci_driver);
 	platform_driver_unregister(&fmh_gpib_platform_driver);
+	
 }
 
 module_init( fmh_gpib_init_module );

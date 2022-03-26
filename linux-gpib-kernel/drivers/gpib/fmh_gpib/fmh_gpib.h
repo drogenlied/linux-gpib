@@ -21,11 +21,19 @@
 
 #include <linux/dmaengine.h>
 #include <linux/ioport.h>
+#include <linux/pci.h>
 #include <asm/io.h>
 #include "nec7210.h"
 
 static const int gpib_cs_reg_offset = 1;
 static const int fifo_reg_offset = 2;
+
+static const int gpib_control_status_pci_resource_index = 0;
+static const int gpib_fifo_pci_resource_index = 1;
+
+/* We don't have a real pci vendor/device id, the following will need to be patched to match prototype hardware. */
+#define BOGUS_PCI_VENDOR_ID_FLUKE 0xffff
+#define BOGUS_PCI_DEVICE_ID_FLUKE_BLADERUNNER 0x0
 
 typedef struct
 {
