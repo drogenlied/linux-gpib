@@ -47,8 +47,13 @@ typedef struct
 	int dma_buffer_size;
 	int dma_burst_length;
 	void *fifo_base;
+	unsigned supports_fifo_interrupts : 1;
 } fmh_gpib_private_t;
 
+static inline int fmh_gpib_half_fifo_size(fmh_gpib_private_t *priv)
+{
+	return priv->dma_burst_length;
+}
 
 // registers beyond the nec7210 register set
 enum fmh_gpib_regs
@@ -110,20 +115,33 @@ enum dma_fifo_regs
 	FIFO_MAX_BURST_LENGTH_REG = 0x3
 };
 
+enum fifo_data_bits
+{
+	FIFO_DATA_EOI_FLAG = 0x100
+};
+
 enum fifo_control_bits
 {
 	TX_FIFO_DMA_REQUEST_ENABLE = 0x0001,
 	TX_FIFO_CLEAR = 0x0002,
+	TX_FIFO_HALF_EMPTY_INTERRUPT_ENABLE = 0x0008,
 	RX_FIFO_DMA_REQUEST_ENABLE = 0x0100,
-	RX_FIFO_CLEAR = 0x0200
+	RX_FIFO_CLEAR = 0x0200,
+	RX_FIFO_HALF_FULL_INTERRUPT_ENABLE = 0x0800
 };
 
 enum fifo_status_bits
 {
 	TX_FIFO_EMPTY = 0x0001,
 	TX_FIFO_FULL = 0x0002,
+	TX_FIFO_HALF_EMPTY = 0x0004,
+	TX_FIFO_HALF_EMPTY_INTERRUPT_IS_ENABLED = 0x0008,
+	TX_FIFO_DMA_REQUEST_IS_ENABLED = 0x0010,
 	RX_FIFO_EMPTY = 0x0100,
-	RX_FIFO_FULL = 0x0200
+	RX_FIFO_FULL = 0x0200,
+	RX_FIFO_HALF_FULL = 0x0400,
+	RX_FIFO_HALF_FULL_INTERRUPT_IS_ENABLED = 0x0800,
+	RX_FIFO_DMA_REQUEST_IS_ENABLED = 0x1000
 };
 
 static const unsigned fifo_data_mask = 0x00ff;
