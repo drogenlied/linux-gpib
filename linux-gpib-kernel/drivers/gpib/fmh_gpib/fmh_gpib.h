@@ -162,11 +162,13 @@ static inline void gpib_cs_write_byte(nec7210_private_t *nec_priv,
 
 static inline uint16_t fifos_read(fmh_gpib_private_t *fmh_priv, int register_num)
 {
+	if (fmh_priv->fifo_base == NULL) return 0;
 	return readw(fmh_priv->fifo_base + register_num * fifo_reg_offset);
 }
 
 static inline void fifos_write(fmh_gpib_private_t *fmh_priv, uint16_t data, int register_num)
 {
+	if (fmh_priv->fifo_base == NULL) return;
 	writew(data, fmh_priv->fifo_base + register_num * fifo_reg_offset);
 }
 

@@ -1536,6 +1536,14 @@ void fmh_gpib_detach(gpib_board_t *board)
 			write_byte(nec_priv, 0, ISR0_IMR0_REG);
 			nec7210_board_reset(nec_priv, board);
 		}
+		if(e_priv->fifo_base != NULL)
+		{
+			iounmap(e_priv->fifo_base);
+		}
+		if(nec_priv->iobase)
+		{
+			iounmap(nec_priv->iobase);
+		}
 		if(e_priv->dma_port_res)
 		{
 			release_mem_region(e_priv->dma_port_res->start, 
@@ -1590,17 +1598,26 @@ int fmh_gpib_pci_attach_impl(gpib_board_t *board, const gpib_board_config_t *con
 		pci_resource_len(pci_device, gpib_control_status_pci_resource_index));
 	dev_info(board->dev, "base address for gpib control/status registers remapped to 0x%p\n", nec_priv->iobase);
 
+	if (e_priv->dma_port_res->flags & IORESOURCE_MEM)
+	{
+		e_priv->fifo_base = ioremap_nocache(pci_resource_start(pci_device, gpib_fifo_pci_resource_index), 
+			pci_resource_len(pci_device, gpib_fifo_pci_resource_index));
+		dev_info(board->dev, "base address for gpib fifo registers remapped to 0x%p\n", e_priv->fifo_base);
+	}else
+	{
+		e_priv->fifo_base = NULL;
+		dev_info(board->dev, "hardware has no gpib fifo registers.\n");
+	}
 	
-	e_priv->fifo_base = ioremap_nocache(pci_resource_start(pci_device, gpib_fifo_pci_resource_index), 
-		pci_resource_len(pci_device, gpib_fifo_pci_resource_index));
-	dev_info(board->dev, "base address for gpib fifo registers remapped to 0x%p\n", e_priv->fifo_base);
-	
-	retval = request_irq(pci_device->irq, fmh_gpib_interrupt, IRQF_SHARED, KBUILD_MODNAME, board);
-	if(retval){
-		dev_err(board->dev,
-			"cannot register interrupt handler err=%d\n",
-				retval);
-		return retval;
+	if (pci_device->irq)
+	{
+		retval = request_irq(pci_device->irq, fmh_gpib_interrupt, IRQF_SHARED, KBUILD_MODNAME, board);
+		if(retval){
+			dev_err(board->dev,
+				"cannot register interrupt handler err=%d\n",
+					retval);
+			return retval;
+		}
 	}
 	e_priv->irq = pci_device->irq;
 
@@ -1650,6 +1667,14 @@ void fmh_gpib_pci_detach(gpib_board_t *board)
 		{
 			write_byte(nec_priv, 0, ISR0_IMR0_REG);
 			nec7210_board_reset(nec_priv, board);
+		}
+		if(e_priv->fifo_base != NULL)
+		{
+			iounmap(e_priv->fifo_base);
+		}
+		if(nec_priv->iobase)
+		{
+			iounmap(nec_priv->iobase);
 		}
 		if(e_priv->dma_port_res || e_priv->gpib_iomem_res)
 		{
