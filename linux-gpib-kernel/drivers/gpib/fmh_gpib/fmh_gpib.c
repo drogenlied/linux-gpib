@@ -1306,7 +1306,7 @@ int fmh_gpib_generic_attach(gpib_board_t *board)
 	nec_priv = &e_priv->nec7210_priv;
 	nec_priv->read_byte = gpib_cs_read_byte;
 	nec_priv->write_byte = gpib_cs_write_byte;
-	nec_priv->offset = gpib_cs_reg_offset;
+	nec_priv->offset = 1;
 	nec_priv->type = CB7210;
 	return 0;
 }
@@ -1581,6 +1581,9 @@ int fmh_gpib_pci_attach_impl(gpib_board_t *board, const gpib_board_config_t *con
 	}
 	board->dev = &pci_device->dev;
 
+	// bladerunner prototype has offset of 4 between gpib control/status registers
+	nec_priv->offset = 4;
+	
 	if(pci_enable_device(pci_device))
 	{
 		dev_err(board->dev, "error enabling pci device\n");

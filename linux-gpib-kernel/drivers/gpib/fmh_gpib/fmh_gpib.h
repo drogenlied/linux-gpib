@@ -25,7 +25,6 @@
 #include <asm/io.h>
 #include "nec7210.h"
 
-static const int gpib_cs_reg_offset = 1;
 static const int fifo_reg_offset = 2;
 
 static const int gpib_control_status_pci_resource_index = 0;
