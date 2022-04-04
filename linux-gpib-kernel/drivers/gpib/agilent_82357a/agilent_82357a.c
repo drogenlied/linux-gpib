@@ -453,6 +453,7 @@ static int agilent_82357a_abort(agilent_82357a_private_t *a_priv, int flush)
 			retval = 0;
 			break;
 		}
+		fallthrough;
 		// fallthrough;
 	case UGP_ERR_FLUSHING_ALREADY:
 	default:
