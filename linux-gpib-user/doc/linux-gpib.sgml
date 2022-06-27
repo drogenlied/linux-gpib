@@ -1026,8 +1026,7 @@ IEEE 488 standards.
 <para>
 This is a simple GPIO bitbang driver that currently only works on
 Raspberry Pi platforms. For information on the GPIO to GPIB pinouts as
-well as restrictions on fan-out without line driver IC's see the
-source code at:
+well as limitations see the source code at:
 </para>
 <programlisting>
   linux-gpib-kernel/drivers/gpib/gpio/gpib_bitbang.c
@@ -1035,10 +1034,11 @@ source code at:
 <para>
   For schematics, boards and information on driver IC's
   see <ulink URL="http://elektronomikon.org">http://elektronomikon.org</ulink>.
-Note, to enable support for the SN75160/161 driver IC's the module parameter
-  sn7516x_used must be set to 1 when loading the module:
+Note, by default support for the SN75160/161 driver IC's is
+  enabled (sn7516x_used=1). To disable support for the IC's
+  when they are not installed sn7516x_used must be set to 0:
 <programlisting>
-  modprobe gpib_bitbang sn7516x_used=1
+  modprobe gpib_bitbang sn7516x_used=0
 </programlisting>
 </para>
 </section>
