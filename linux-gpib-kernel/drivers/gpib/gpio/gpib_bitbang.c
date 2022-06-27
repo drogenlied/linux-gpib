@@ -679,10 +679,12 @@ void bb_request_system_control(gpib_board_t *board, int request_control )
 {
 	dbg_printk(1,"%d\n", request_control);
         UDELAY;
-        if (request_control)
+        if (request_control) {
                 set_bit(CIC_NUM, &board->status);
-        else
+                SET_DIR_WRITE(board->private_data); // drive DAV & EOI false, enable NRFD & NDAC irqs
+        } else {
                 clear_bit(CIC_NUM, &board->status);
+        }
 }
 
 void bb_interface_clear(gpib_board_t *board, int assert)
@@ -855,15 +857,16 @@ int bb_get_irq(gpib_board_t *board, char * name, int irq,
       return 0;
 }
 
-void bb_free_irq(gpib_board_t *board, int irq, char * name)
+void bb_free_irq(gpib_board_t *board, int *irq, char * name)
 {
-      struct timespec64 before, after;
+        struct timespec64 before, after;
 
-      if (irq) {
-	      ktime_get_ts64(&before);
-	      free_irq(irq, board);
-	      ktime_get_ts64(&after);
-	      dbg_printk(3,"IRQ %s free in %ld us\n", name, usec_diff(&after, &before));
+        if (*irq) {
+                ktime_get_ts64(&before);
+                free_irq(*irq, board);
+                ktime_get_ts64(&after);
+                *irq = 0;
+                dbg_printk(3,"IRQ %s free in %ld us\n", name, usec_diff(&after, &before));
         }
 }
 
@@ -905,10 +908,6 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
         dbg_printk(1,"%s\n", "Enter ...");
 
         board->status = 0;
-        if (!board->master) {
-                printk("gpib: gpio_bitbang driver must be master\n");
-                return -1;
-        }
 
         if (allocate_private(board)) return -ENOMEM;
         priv = board->private_data;
@@ -972,8 +971,6 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
 
         /* done */
 
-	SET_DIR_WRITE(priv); // drive DAV & EOI false, enable NRFD & NDAC irqs
-
         dbg_printk(0,"attached board index: %d\n", board->minor);
 
         return 0;
@@ -985,10 +982,10 @@ void bb_detach(gpib_board_t *board)
 
         dbg_printk(1,"%s\n", "enter... ");
 
-        bb_free_irq(board, priv->irq_DAV, "DAV");
-        bb_free_irq(board, priv->irq_NRFD, "NRFD");
-        bb_free_irq(board, priv->irq_NDAC, "NDAC");
-        bb_free_irq(board, priv->irq_SRQ, "SRQ");
+        bb_free_irq(board, &priv->irq_DAV, "DAV");
+        bb_free_irq(board, &priv->irq_NRFD, "NRFD");
+        bb_free_irq(board, &priv->irq_NDAC, "NDAC");
+        bb_free_irq(board, &priv->irq_SRQ, "SRQ");
 
         release_gpios();
 
