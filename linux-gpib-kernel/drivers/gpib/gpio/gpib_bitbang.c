@@ -539,9 +539,14 @@ irqreturn_t bb_NDAC_interrupt(int irq, void * arg)
         }
 
         dbg_printk(3,"accepted %zu\n", priv->w_cnt-1);
-
-        gpiod_set_value(DAV, 1); // Data not available
-        priv->phase = 4;
+	if (priv->w_cnt >= priv->length) {
+                priv->ndac_done = 1;
+                priv->w_busy = 0;
+                wake_up_interruptible(&board->wait);
+        } else {
+        	gpiod_set_value(DAV, 1); // Data not available
+        	priv->phase = 4;
+	}
 
 ndac_exit:
         spin_unlock_irqrestore (&priv->rw_lock, flags);
