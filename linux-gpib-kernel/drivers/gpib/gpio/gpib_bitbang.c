@@ -466,14 +466,14 @@ irqreturn_t bb_NRFD_interrupt(int irq, void * arg)
         gpib_board_t * board = arg;
         bb_private_t *priv = board->private_data;
         unsigned long flags;
-        int nrfd, ndac;
+        int nrfd;
 
         spin_lock_irqsave (&priv->rw_lock, flags);
 
         nrfd = gpiod_get_value(NRFD);
-        ndac  = gpiod_get_value(NDAC);
+
         dbg_printk (3,"> irq: %d  NRFD: %d   NDAC: %d   st: %4lx dir: %d  busy: %d:%d \n",
-		        irq, nrfd, ndac, board->status, priv->direction, priv->w_busy, priv->r_busy);
+		        irq, nrfd, gpiod_get_value(NDAC), board->status, priv->direction, priv->w_busy, priv->r_busy);
 
         if (priv->w_busy == 0) {
                 dbg_printk(1,"interrupt while idle\n");
@@ -487,23 +487,18 @@ irqreturn_t bb_NRFD_interrupt(int irq, void * arg)
 
         dbg_printk(3,"sending %zu\n", priv->w_cnt);
 
-        if (priv->w_cnt >= priv->length) {
-                priv->ndac_done = 1;
-                priv->w_busy = 0;
-                wake_up_interruptible(&board->wait);
-        } else {
-                set_data_lines(priv->w_buf[priv->w_cnt++]); // put the data on the lines
-                if ((priv->w_cnt == priv->length) && priv->end) {
-                        dbg_printk(3,"Asserting EOI\n");
-                        gpiod_set_value(EOI, 0); // Assert EIO
-                }
-                gpiod_set_value(DAV, 0); // Data available
-                priv->phase = 2;
-       }
+	set_data_lines(priv->w_buf[priv->w_cnt++]); // put the data on the lines
+
+	if ((priv->w_cnt == priv->length) && priv->end) {
+		dbg_printk(3,"Asserting EOI\n");
+		gpiod_set_value(EOI, 0); // Assert EIO
+	}
+
+	gpiod_set_value(DAV, 0); // Data available
+	priv->phase = 2;
 
 nrfd_exit:
         spin_unlock_irqrestore (&priv->rw_lock, flags);
-
 
         return IRQ_HANDLED;
 }
@@ -519,14 +514,13 @@ irqreturn_t bb_NDAC_interrupt(int irq, void * arg)
         gpib_board_t * board = arg;
         bb_private_t *priv = board->private_data;
         unsigned long flags;
-        int nrfd, ndac;
+        int ndac;
 
         spin_lock_irqsave (&priv->rw_lock, flags);
 
-        nrfd = gpiod_get_value(NRFD);
         ndac = gpiod_get_value(NDAC);
         dbg_printk (3,"> irq: %d  NRFD: %d   NDAC: %d   st: %4lx dir: %d  busy: %d:%d \n",
-		irq, nrfd, ndac, board->status, priv->direction, priv->w_busy, priv->r_busy);
+		irq, gpiod_get_value(NRFD), ndac, board->status, priv->direction, priv->w_busy, priv->r_busy);
 
         if (priv->w_busy == 0) {
                 dbg_printk(1,"interrupt while idle.\n");
@@ -539,7 +533,8 @@ irqreturn_t bb_NDAC_interrupt(int irq, void * arg)
         }
 
         dbg_printk(3,"accepted %zu\n", priv->w_cnt-1);
-	if (priv->w_cnt >= priv->length) {
+
+	if (priv->w_cnt >= priv->length) { // test for end of transfer
                 priv->ndac_done = 1;
                 priv->w_busy = 0;
                 wake_up_interruptible(&board->wait);
