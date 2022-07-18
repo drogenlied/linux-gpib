@@ -2604,9 +2604,14 @@ volatile int ibsta;
 	</title>
 	<para>
 	ibfind() returns a board or device descriptor based on the information
-	found in the <link LINKEND="configuration">configuration file</link>.
-	It is not required to use this function, since device descriptors
-	can be obtained with <link LINKEND="reference-function-ibdev">ibdev()</link>
+	found in the
+	<link LINKEND="configuration">configuration file</link>. To
+	suppress error messages printed to stderr by ibfind() set the
+	evironment variable IB_NO_ERROR before calling the routine.
+	
+	It is not required to use ibfind(), since device descriptors
+	can be obtained with
+	<link LINKEND="reference-function-ibdev">ibdev()</link>
 	and the 'board index' (minor number in the configuration file)
 	can be used directly as a board descriptor.
 	</para>
