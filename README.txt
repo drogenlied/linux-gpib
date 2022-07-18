@@ -21,22 +21,26 @@ on building and installing.
 Send comments, questions and suggestions to to the linux-gpib mailing
 list at linux-gpib-general@lists.sourceforge.net
 
-Release Notes for linux-gpib-4.3.4
+Release Notes for linux-gpib-4.3.5
 ----------------------------------
 
-Changes since the linux-gpib-4.3.3 release
+Changes since the linux-gpib-4.3.4 release
 
-	New GPIO bitbang driver for Raspberry Pi from Marcello Carla'
+	Add board support to ibask for IbaBNA option
 
-	Updated lpvo_usb_gpib to use usb directly from Marcello Carla'
+	Improvements to findlisteners.c
 
-	Better support for detecting listeners with ibln
+	Fixes for python3.10 from mika
 
-	New example programme findlisteners.c
+	Optionally suppress printing error messages in ibfind()
+	by setting IB_NO_ERROR environment variable.
 
-	Various changes for new kernel and autoconf versions
+	Add support for pci version of fmh_gpib_core
 
-	See ChangeLog since [r1912] for bug fixes and other changes.
+	New and improved interrupt driven version of gpib_bitbang
+	driver for RPi gpios from Marcello Carla'
+	
+	See ChangeLog since [r1962] for bug fixes and other changes.
 	  
 Note: If you have any pre 4.3.0 gpib udev rules files in
       /etc/udev/rules.d/ please remove them before installing
