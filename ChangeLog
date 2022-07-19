@@ -1,3 +1,8 @@
+2022-07-18 13:55  dpenkler
+
+	* [r2028] ChangeLog, README.txt: Update ChangeLog and README for
+	  4.3.5
+
 2022-07-18 10:19  dpenkler
 
 	* [r2027] linux-gpib-user/doc/linux-gpib.sgml: Update docs for
