@@ -79,6 +79,7 @@
 #define UDELAY udelay(DELAY)
 
 #include "gpibP.h"
+#include "gpib_state_machines.h"
 #include <linux/sched.h>
 #include <linux/module.h>
 #include <linux/slab.h>
@@ -222,18 +223,21 @@ typedef struct
         uint8_t *w_buf;
         spinlock_t rw_lock;
         int phase;
+	enum talker_function_state talker_state;
+	enum listener_function_state listener_state;
 } bb_private_t;
 
 inline long int usec_diff(struct timespec64 *a, struct timespec64 *b);
-void bb_buffer_print(unsigned char * buffer, size_t length, int cmd, int eoi);
-void set_data_lines(uint8_t byte);
-uint8_t get_data_lines(void);
-void set_data_lines_input(void);
-void set_data_lines_output(void);
+static void bb_buffer_print(unsigned char * buffer, size_t length, int cmd, int eoi);
+static void set_data_lines(uint8_t byte);
+static uint8_t get_data_lines(void);
+static void set_data_lines_input(void);
+static void set_data_lines_output(void);
 static inline int check_for_eos(bb_private_t *priv, uint8_t byte);
+static void set_atn(bb_private_t *priv, int atn_asserted);
 
-inline void SET_DIR_WRITE(bb_private_t *priv);
-inline void SET_DIR_READ(bb_private_t *priv);
+inline static void SET_DIR_WRITE(bb_private_t *priv);
+inline static void SET_DIR_READ(bb_private_t *priv);
 
 #define DIR_READ 0
 #define DIR_WRITE 1
@@ -245,7 +249,7 @@ MODULE_LICENSE("GPL");
 static int debug = GPIB_CONFIG_KERNEL_DEBUG ? 1 : 0;
 module_param (debug, int, S_IRUGO | S_IWUSR);
 
-char printable (char x) {
+static char printable (char x) {
         if (x < 32 || x > 126) return ' ';
         return x;
 }
@@ -574,14 +578,28 @@ int bb_command(gpib_board_t *board, uint8_t *buffer,
 {
         size_t ret;
         bb_private_t *priv = board->private_data;
+	int i;
 
         dbg_printk(1,"%p  %p\n", buffer, board->buffer);
 
-        gpiod_direction_output(_ATN, 0);
+        set_atn(priv, 1);
         priv->cmd = 1;
 
         ret = bb_write(board, buffer, length, 0, bytes_written); // no eoi
-        gpiod_direction_output(_ATN, 1);
+
+	for (i=0;i<length;i++) {
+		if (buffer[i]==UNT) priv->talker_state = talker_idle;
+		else if (buffer[i]==UNL) priv->listener_state = listener_idle;
+		else if (buffer[i]==(MTA(board->pad))) {
+			priv->talker_state = talker_addressed;
+			priv->listener_state = listener_idle;
+		}
+		else if (buffer[i]==(MLA(board->pad))) {
+			priv->listener_state = listener_addressed;
+			priv->talker_state = talker_idle;
+		}
+	}
+//        gpiod_direction_output(_ATN, 1)/set_atn(priv 0); this is done in ibrd/wrt via gts
         priv->cmd = 0;
 
         return ret;
@@ -628,7 +646,7 @@ static char *cmd_string[32] = {
         "CFE"  // 0x1f
 };
 
-void bb_buffer_print(unsigned char * buffer, size_t length, int cmd, int eoi)
+static void bb_buffer_print(unsigned char * buffer, size_t length, int cmd, int eoi)
 {
         int i;
 
@@ -658,11 +676,35 @@ void bb_buffer_print(unsigned char * buffer, size_t length, int cmd, int eoi)
  *                                                                         *
  ***************************************************************************/
 
+
+static void set_atn(bb_private_t *priv, int atn_asserted) {
+	if ((priv->listener_state != listener_idle) && (priv->talker_state != talker_idle)) {
+		dbg_printk(0,"listener/talker state machine conflict\n");
+	}
+	if (atn_asserted) {
+		if (priv->listener_state == listener_active) {
+			priv->listener_state = listener_addressed;
+		}
+		if (priv->talker_state == talker_active) {
+			priv->talker_state = talker_addressed;
+		}
+	} else {
+		if (priv->listener_state == listener_addressed) {
+			priv->listener_state = listener_active;
+			SET_DIR_READ(priv); // make sure holdoff is active when we unassert ATN
+		}
+		if (priv->talker_state == talker_addressed) {
+			priv->talker_state = talker_active;
+		}
+	}
+        gpiod_direction_output(_ATN, !atn_asserted);
+}
+
 int bb_take_control(gpib_board_t *board, int synchronous)
 {
         UDELAY;
         dbg_printk(1,"%d\n", synchronous);
-        gpiod_direction_output(_ATN, 0);
+        set_atn(board->private_data, 1);
         set_bit(CIC_NUM, &board->status);
         return 0;
 }
@@ -670,8 +712,7 @@ int bb_take_control(gpib_board_t *board, int synchronous)
 int bb_go_to_standby(gpib_board_t *board)
 {
 	dbg_printk(1,"\n");
-        UDELAY;
-        gpiod_direction_output(_ATN, 1);
+	set_atn(board->private_data, 0);
         return 0;
 }
 
@@ -689,12 +730,16 @@ void bb_request_system_control(gpib_board_t *board, int request_control )
 
 void bb_interface_clear(gpib_board_t *board, int assert)
 {
-        UDELAY;
+        bb_private_t *priv = board->private_data;
+	UDELAY;
 	dbg_printk(1,"%d\n", assert);
-        if (assert)
+        if (assert) {
                 gpiod_direction_output(IFC, 0);
-        else
+		priv->talker_state = talker_idle;
+		priv->listener_state = listener_idle;
+	} else {
                 gpiod_direction_output(IFC, 1);
+	}
 }
 
 void bb_remote_enable(gpib_board_t *board, int enable)
@@ -730,13 +775,30 @@ void bb_disable_eos(gpib_board_t *board)
 
 unsigned int bb_update_status(gpib_board_t *board, unsigned int clear_mask )
 {
-        board->status &= ~clear_mask;
+        bb_private_t *priv = board->private_data;
+
+	board->status &= ~clear_mask;
 
         if (gpiod_get_value(SRQ)) {                    /* SRQ asserted low */
                 clear_bit (SRQI_NUM, &board->status);
         } else {
                 set_bit (SRQI_NUM, &board->status);
         }
+	if (gpiod_get_value(_ATN)) {                    /* ATN asserted low */
+                clear_bit (ATN_NUM, &board->status);
+        } else {
+                set_bit (ATN_NUM, &board->status);
+        }
+	if (priv->talker_state == talker_active || priv->talker_state == talker_addressed) {
+		set_bit(TACS_NUM, &board->status);
+	} else {
+		clear_bit(TACS_NUM, &board->status);
+	}
+	if (priv->listener_state == listener_active || priv->listener_state == listener_addressed) {
+		set_bit(LACS_NUM, &board->status);
+	} else {
+		clear_bit(LACS_NUM, &board->status);
+	}
         dbg_printk(1,"0x%lx mask 0x%x\n",board->status, clear_mask);
 
         return board->status;
@@ -841,7 +903,7 @@ static void free_private(gpib_board_t *board)
         }
 }
 
-int bb_get_irq(gpib_board_t *board, char * name, int irq,
+static int bb_get_irq(gpib_board_t *board, char * name, int irq,
 	irq_handler_t handler, irq_handler_t thread_fn, unsigned long flags)
 {
       struct timespec64 before, after;
@@ -857,7 +919,7 @@ int bb_get_irq(gpib_board_t *board, char * name, int irq,
       return 0;
 }
 
-void bb_free_irq(gpib_board_t *board, int *irq, char * name)
+static void bb_free_irq(gpib_board_t *board, int *irq, char * name)
 {
         struct timespec64 before, after;
 
@@ -913,7 +975,8 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
         priv = board->private_data;
         priv->direction = -1;
         priv->t1_delay = 2000;
-
+	priv->listener_state = listener_idle;
+	priv->talker_state = talker_idle;
         if (allocate_gpios()) return -EBUSY;
 
         if (sn7516x_used) {
@@ -1070,7 +1133,7 @@ static inline int check_for_eos(bb_private_t *priv, uint8_t byte) {
         return 0;
 }
 
-void set_data_lines_output()
+static void set_data_lines_output()
 {
         gpiod_direction_output(D01, 1);
         gpiod_direction_output(D02, 1);
@@ -1082,7 +1145,7 @@ void set_data_lines_output()
         gpiod_direction_output(D08, 1);
 }
 
-void set_data_lines(uint8_t byte)
+static void set_data_lines(uint8_t byte)
 {
         gpiod_set_value(D01, !(byte & 0x01));
         gpiod_set_value(D02, !(byte & 0x02));
@@ -1094,7 +1157,7 @@ void set_data_lines(uint8_t byte)
         gpiod_set_value(D08, !(byte & 0x80));
 }
 
-uint8_t get_data_lines(void)
+static uint8_t get_data_lines(void)
 {
         uint8_t ret;
         ret = gpiod_get_value(D01);
@@ -1108,7 +1171,7 @@ uint8_t get_data_lines(void)
         return ~ret;
 }
 
-void set_data_lines_input(void)
+static void set_data_lines_input(void)
 {
         gpiod_direction_input(D01);
         gpiod_direction_input(D02);
@@ -1120,7 +1183,7 @@ void set_data_lines_input(void)
         gpiod_direction_input(D08);
 }
 
-inline void SET_DIR_WRITE(bb_private_t *priv)
+inline static void SET_DIR_WRITE(bb_private_t *priv)
 {
 	if (priv->direction == DIR_WRITE)
 		return;
@@ -1142,7 +1205,7 @@ inline void SET_DIR_WRITE(bb_private_t *priv)
         priv->direction = DIR_WRITE;
 }
 
-inline void SET_DIR_READ(bb_private_t *priv)
+inline static void SET_DIR_READ(bb_private_t *priv)
 {
 	if (priv->direction == DIR_READ)
 		return;
