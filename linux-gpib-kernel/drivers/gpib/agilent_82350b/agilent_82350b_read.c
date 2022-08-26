@@ -29,7 +29,7 @@ int agilent_82350b_accel_read( gpib_board_t *board, uint8_t *buffer, size_t leng
 	//hardware doesn't support checking for end-of-string character when using fifo
 	if(tms_priv->eos_flags & REOS)
 	{
-		printk("ag-rd: using tms9914 read for REOS %x EOS %x\n",tms_priv->eos_flags, tms_priv->eos);
+		//printk("ag-rd: using tms9914 read for REOS %x EOS %x\n",tms_priv->eos_flags, tms_priv->eos);
 		return tms9914_read( board, tms_priv, buffer, length, end, bytes_read);
 	}
 
