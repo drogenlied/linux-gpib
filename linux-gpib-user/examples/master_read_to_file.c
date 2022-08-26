@@ -97,17 +97,17 @@ int main( int argc, char *argv[] )
 	printf( "Transferred %lu bytes in %g seconds: %g bytes/sec\n",
 		ThreadIbcntl(), elapsed_time, ThreadIbcntl() / elapsed_time );
 
-	if (ERR & ibcmd(board_index, utul, 2)) { // send Untalk and Unlisten
-                fprintf( stderr, "ibcmd() failed\n" );
-                fprintf( stderr, "%s\n", gpib_error_string( ThreadIberr() ) );
-                return -1;
-        }
-
 	if( fwrite( buffer, 1, ThreadIbcntl(), filep ) != ThreadIbcntl() )
 	{
 		perror( "fwrite()" );
 		return -1;
 	}
+
+	if (ERR & ibcmd(board_index, utul, 2)) { // send Untalk and Unlisten
+                fprintf( stderr, "ibcmd() failed\n" );
+                fprintf( stderr, "%s\n", gpib_error_string( ThreadIberr() ) );
+                return -1;
+        }
 
 	fclose( filep );
 	free( buffer );
