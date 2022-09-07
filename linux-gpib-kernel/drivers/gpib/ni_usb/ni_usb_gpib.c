@@ -812,6 +812,7 @@ static int ni_usb_write(gpib_board_t *board, uint8_t *buffer, size_t length, int
 			and returned -ERESTARTSYS */
 		break;
 	case NIUSB_ADDRESSING_ERROR:
+		printk("%s: %s: Addressing error retval %d error code=%i\n", __FILE__, __FUNCTION__, retval, status.error_code);
 		retval = -ENXIO;
 		break;
 	case NIUSB_NO_LISTENER_ERROR:
