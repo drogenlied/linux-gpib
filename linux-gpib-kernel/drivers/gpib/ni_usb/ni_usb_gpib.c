@@ -2033,10 +2033,9 @@ static int ni_usb_hs_wait_for_ready(ni_usb_private_t *ni_priv)
 		{
 			ready = 1;
 			// NI-USB-HS+ sends 0xf here
-			// NI-USB-HS Clone sends 0x15 here
-			if(buffer[j] != 0x2 && buffer[j] != 0xe && buffer[j] != 0xf  && buffer[j] != 0x15   )
+			if(buffer[j] != 0x2 && buffer[j] != 0xe && buffer[j] != 0xf)
 			{
-				printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x2, 0xe, 0xf or 0x15\n",
+				printk("%s: %s: unexpected data: buffer[%i]=0x%x, expected 0x2, 0xe or 0xf\n",
 					__FILE__, __FUNCTION__, j, (int)buffer[j]);
 				unexpected = 1;
 			}
