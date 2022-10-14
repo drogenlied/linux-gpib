@@ -264,6 +264,7 @@ int bb_read(gpib_board_t *board, uint8_t *buffer, size_t length,
             int *end, size_t *bytes_read)
 {
         bb_private_t *priv = board->private_data;
+	unsigned long flags;
         int retval=0;
 
         SET_DIR_READ(priv);
@@ -284,8 +285,9 @@ int bb_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 
         dbg_printk (3,".........." LINFMT "\n",LINVAL);
 
-        spin_lock_irq(&priv->rw_lock);
-               enable_irq(priv->irq_DAV);
+	enable_irq(priv->irq_DAV);
+
+        spin_lock_irqsave(&priv->rw_lock, flags);
                if (gpiod_get_value(DAV) == 0) {         /* in case an interrupt already fired */
                        dbg_printk(0,"DAV already fired\n");
                        gpiod_set_value(NRFD, 0); // not ready for data
@@ -299,7 +301,7 @@ int bb_read(gpib_board_t *board, uint8_t *buffer, size_t length,
                         gpiod_set_value(NRFD,1); // ready for data
                 }
                 priv->r_busy = 1;
-        spin_unlock_irq(&priv->rw_lock);
+	spin_unlock_irqrestore(&priv->rw_lock, flags);
 
         /* wait for the interrupt routines finish their work */
 
@@ -315,11 +317,11 @@ int bb_read(gpib_board_t *board, uint8_t *buffer, size_t length,
                 retval = -ERESTARTSYS;
         }
 
-        spin_lock_irq(&priv->rw_lock);
+	disable_irq(priv->irq_DAV);
+        spin_lock_irqsave(&priv->rw_lock, flags);
                 gpiod_set_value (NRFD, 0); // DIR_READ line state
                 priv->r_busy = 0;
-                disable_irq(priv->irq_DAV);
-        spin_unlock_irq(&priv->rw_lock);
+	spin_unlock_irqrestore(&priv->rw_lock, flags);
 
 read_end:
         *bytes_read = priv->count;
@@ -386,6 +388,7 @@ dav_exit:
 int bb_write(gpib_board_t *board, uint8_t *buffer, size_t length,
              int send_eoi, size_t *bytes_written)
 {
+	unsigned long flags;
         int retval = 0;
 
         bb_private_t *priv = board->private_data;
@@ -408,7 +411,7 @@ int bb_write(gpib_board_t *board, uint8_t *buffer, size_t length,
 
         dbg_printk(3,"NRFD: %d   NDAC: %d\n", gpiod_get_value(NRFD), gpiod_get_value(NDAC));
 
-        spin_lock_irq (&priv->rw_lock);
+        spin_lock_irqsave (&priv->rw_lock, flags);
                 if (gpiod_get_value(NRFD)) {         /* in case an interrupt already fired */
 			dbg_printk(1,"NRFD already fired - sending %zu\n", priv->w_cnt);
 			set_data_lines(buffer[priv->w_cnt++]);         /* put the data on the lines */
@@ -419,7 +422,7 @@ int bb_write(gpib_board_t *board, uint8_t *buffer, size_t length,
 		}
 		priv->w_busy = 1;          /* make the interrupt routines active */
 		priv->ndac_done = 0;
-        spin_unlock_irq (&priv->rw_lock);
+	spin_unlock_irqrestore(&priv->rw_lock, flags);
 
         /* wait for the interrupt routines finish their work */
 
@@ -441,13 +444,13 @@ int bb_write(gpib_board_t *board, uint8_t *buffer, size_t length,
                 retval = -ERESTARTSYS;
         }
 
-        spin_lock_irq (&priv->rw_lock);
+        disable_irq(priv->irq_NRFD);
+        disable_irq(priv->irq_NDAC);
+        spin_lock_irqsave(&priv->rw_lock, flags);
                 priv->w_busy = 0;
                 gpiod_set_value(DAV, 1); // DIR_WRITE line state
                 gpiod_set_value(EOI, 1); // De-assert EIO (in case)
-                disable_irq(priv->irq_NRFD);
-                disable_irq(priv->irq_NDAC);
-        spin_unlock_irq (&priv->rw_lock);
+	spin_unlock_irqrestore(&priv->rw_lock, flags);
 
 write_end:
         *bytes_written = priv->w_cnt;
@@ -906,7 +909,7 @@ static int bb_get_irq(gpib_board_t *board, char * name, int irq,
       struct timespec64 before, after;
 
       ktime_get_ts64(&before);
-      if (request_threaded_irq(irq, handler ,thread_fn, flags, "NAME", board)) {
+      if (request_threaded_irq(irq, handler ,thread_fn, flags, name, board)) {
 	      printk("gpib: can't request IRQ for %s %d\n", name,irq);
 	      return -1;
       }
@@ -966,10 +969,10 @@ void bb_detach(gpib_board_t *board)
 
         dbg_printk(1,"%s\n", "enter... ");
 
-        bb_free_irq(board, &priv->irq_DAV, "DAV");
-        bb_free_irq(board, &priv->irq_NRFD, "NRFD");
-        bb_free_irq(board, &priv->irq_NDAC, "NDAC");
-        bb_free_irq(board, &priv->irq_SRQ, "SRQ");
+        bb_free_irq(board, &priv->irq_DAV, NAME "_DAV");
+        bb_free_irq(board, &priv->irq_NRFD, NAME "_NRFD");
+        bb_free_irq(board, &priv->irq_NDAC, NAME "_NDAC");
+        bb_free_irq(board, &priv->irq_SRQ, NAME "_SRQ");
 
         release_gpios();
 
@@ -1018,7 +1021,7 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
         spin_lock_init(&priv->rw_lock);
 
         /* request DAV interrupt for read */
-        if (bb_get_irq(board, "DAV", priv->irq_DAV, bb_DAV_interrupt, NULL,
+        if (bb_get_irq(board, NAME "_DAV", priv->irq_DAV, bb_DAV_interrupt, NULL,
                                               IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING)) {
                 priv->irq_DAV = 0;
                 goto bb_attach_fail;
@@ -1026,7 +1029,7 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
         disable_irq (priv->irq_DAV);
 
         /* request NRFD interrupt for write */
-        if (bb_get_irq(board, "NRFD", priv->irq_NRFD, bb_NRFD_interrupt, NULL,
+        if (bb_get_irq(board, NAME "_NRFD", priv->irq_NRFD, bb_NRFD_interrupt, NULL,
                                               IRQF_TRIGGER_RISING)) {
                 priv->irq_NRFD = 0;
                 goto bb_attach_fail;
@@ -1034,7 +1037,7 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
         disable_irq (priv->irq_NRFD);
 
         /* request NDAC interrupt for write */
-        if (bb_get_irq(board, "NDAC", priv->irq_NDAC, bb_NDAC_interrupt, NULL,
+        if (bb_get_irq(board, NAME "_NDAC", priv->irq_NDAC, bb_NDAC_interrupt, NULL,
                                               IRQF_TRIGGER_RISING)) {
                 priv->irq_NDAC = 0;
                 goto bb_attach_fail;
@@ -1042,7 +1045,7 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
         disable_irq (priv->irq_NDAC);
 
         /* request SRQ interrupt for Service Request */
-        if (bb_get_irq(board, "SRQ", priv->irq_SRQ, bb_SRQ_interrupt, NULL,
+        if (bb_get_irq(board, NAME "_SRQ", priv->irq_SRQ, bb_SRQ_interrupt, NULL,
                                               IRQF_TRIGGER_FALLING)) {
                 priv->irq_SRQ = 0;
                 goto bb_attach_fail;
