@@ -92,6 +92,10 @@
 static int sn7516x_used=1;
 module_param(sn7516x_used,int,0660);
 
+static char *board_id = "default";
+module_param(board_id, charp, 0660);
+MODULE_PARM_DESC(board_id, "Valid values: default, gpib4pi-1.1");
+
 /**********************************************
  *  Signal pairing and pin wiring between the *
  *  Raspberry-Pi connector and the GPIB bus   *
@@ -996,6 +1000,12 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
         priv->t1_delay = 2000;
         priv->listener_state = listener_idle;
         priv->talker_state = talker_idle;
+
+        if(0==strcmp("gpib4pi-1.1", board_id)) {
+		dbg_printk(3,"Using pin mapping for %s\n", board_id);
+		gpios_vector[12] = 0; /* 27 -> 0 REN on GPIB pin 0 */
+        }
+
         if (allocate_gpios()) goto bb_attach_fail;
 
 /* Configure SN7516X control lines.
