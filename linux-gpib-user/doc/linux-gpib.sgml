@@ -1032,13 +1032,20 @@ well as limitations see the source code at:
   linux-gpib-kernel/drivers/gpib/gpio/gpib_bitbang.c
 </programlisting>
 <para>
+  Three boards are currently supported: Elektronomikon board with and without
+  driver IC's and the Lightside instruments gpib4pi-1.1 board.
   For schematics, boards and information on driver IC's
-  see <ulink URL="http://elektronomikon.org">http://elektronomikon.org</ulink>.
-Note, by default support for the SN75160/161 driver IC's is
-  enabled (sn7516x_used=1). To disable support for the IC's
-  when they are not installed sn7516x_used must be set to 0:
+  see <ulink URL="http://elektronomikon.org">http://elektronomikon.org</ulink>
+  and <ulink URL="https://www.hackster.io/lightside-instruments/the-gpib4pi-gpib-for-raspberry-pi-hat-4b3e9a">lightside-instruments gpib4pi</ulink>
+Note, by default support for the elekronomikon board with SN75160/161 driver IC's is
+  enabled. To disable support for the IC's
+  when they are not installed board_id="barewires" must be used
 <programlisting>
-  modprobe gpib_bitbang sn7516x_used=0
+  modprobe gpib_bitbang board_id="barewires"
+</programlisting>
+For the Lightside instruments gpib4pi-1.1 board
+<programlisting>
+  modprobe gpib_bitbang board_id="gpib4pi-1.1"
 </programlisting>
 </para>
 </section>
