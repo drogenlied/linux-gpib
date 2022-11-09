@@ -90,11 +90,13 @@
 #include <linux/gpio.h>
 
 static int sn7516x_used=1;
-module_param(sn7516x_used,int,0660);
 
-static char *board_id = "default";
+#define BOARD_TYPE_0 "barewires"
+#define BOARD_TYPE_1 "elektronomikon"
+#define BOARD_TYPE_2 "gpib4pi-1.1"
+static char *board_id = BOARD_TYPE_1;
 module_param(board_id, charp, 0660);
-MODULE_PARM_DESC(board_id, "Valid values: default, gpib4pi-1.1");
+MODULE_PARM_DESC(board_id, " valid values: " BOARD_TYPE_0 " " BOARD_TYPE_1 " " BOARD_TYPE_2);
 
 /**********************************************
  *  Signal pairing and pin wiring between the *
@@ -351,7 +353,7 @@ irqreturn_t bb_DAV_interrupt (int irq, void * arg) {
         spin_lock_irqsave(&priv->rw_lock, flags);
 
         if (priv->r_busy == 0) {
-                dbg_printk(0, "interrupt while idle\n");
+                dbg_printk(1, "interrupt while idle\n");
                 goto dav_exit;  /* idle */
         }
 
@@ -980,10 +982,8 @@ void bb_detach(gpib_board_t *board)
 
         release_gpios();
 
+        dbg_printk(1,"detached board: %d\n", board->minor);
         free_private(board);
-
-        dbg_printk(0,"detached board index: %d\n", board->minor);
-
 }
 
 int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
@@ -1001,12 +1001,24 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
         priv->listener_state = listener_idle;
         priv->talker_state = talker_idle;
 
-        if(0==strcmp("gpib4pi-1.1", board_id)) {
-		dbg_printk(3,"Using pin mapping for %s\n", board_id);
-		gpios_vector[12] = 0; /* 27 -> 0 REN on GPIB pin 0 */
+        if (strcmp (BOARD_TYPE_0, board_id) == 0) {
+                sn7516x_used = 0;
+        } else if (strcmp (BOARD_TYPE_1, board_id) == 0) {
+                sn7516x_used = 1;
+        } else if (strcmp (BOARD_TYPE_2, board_id) == 0) {
+                sn7516x_used = 1;
+                gpios_vector[&(REN) - &(all_descriptors[0])] = 0; /* 27 -> 0 REN on GPIB pin 0 */
+        } else {
+                dbg_printk (0, "Unrecognized board type.\n");
+                free_private(board);
+		return -1;
         }
+        dbg_printk(0, "Using pin mapping for board \"%s\"\n", board_id);
 
-        if (allocate_gpios()) goto bb_attach_fail;
+        if (allocate_gpios()) {
+		free_private(board);
+		return -1;
+	}
 
 /* Configure SN7516X control lines.
  * drive ATN, IFC and REN as outputs only when master
@@ -1063,12 +1075,11 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
 
         /* done */
 
-        dbg_printk(0,"attached board index: %d\n", board->minor);
-
+        dbg_printk(0,"attached board: %d\n", board->minor);
         return 0;
 
 bb_attach_fail:
-        bb_detach(board);
+	bb_detach(board);
         return -1;
 }
 
