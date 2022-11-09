@@ -47,8 +47,8 @@
 /*
   limitations:
         works only on RPi
-	cannot function as non-CIC system controller with sn7516x_used==1 because
-	SN7561B cannot simultaneously make ATN input with IFC and REN as outputs.
+	cannot function as non-CIC system controller with SN7516x because
+	SN75161B cannot simultaneously make ATN input with IFC and REN as outputs.
   not implemented:
         parallel poll
         return2local
@@ -129,9 +129,9 @@ typedef enum {
 
 /*
  *  These lines are used to control the external
- *  SN75160/161 driver chips when sn7516x_used==1
- *  Not used when sn7516x_used==0. In this case there is
- *  reduced fan out; currently tested up to 4 devices.
+ *  SN75160/161 driver chips when used.
+ *  When not used there is reduced fan out;
+ *  currently tested with up to 4 devices.
  */
 
 /*
@@ -147,9 +147,9 @@ typedef enum {
  */
 
 #define GPIB_PINS 16
-#define SN7415X_PINS 4
+#define SN7516X_PINS 4
 
-struct gpio_desc * all_descriptors[GPIB_PINS+SN7415X_PINS];
+struct gpio_desc * all_descriptors[GPIB_PINS+SN7516X_PINS];
 
 #define D01 all_descriptors[0]
 #define D02 all_descriptors[1]
@@ -940,7 +940,7 @@ static void bb_free_irq(gpib_board_t *board, int *irq, char * name)
 
 static int allocate_gpios(void) {
         int j;
-        int last = sn7516x_used ? GPIB_PINS + SN7415X_PINS : GPIB_PINS ;
+        int last = sn7516x_used ? GPIB_PINS + SN7516X_PINS : GPIB_PINS ;
         for ( j=0 ; j<last ; j++ ) {
                 if (gpio_request_one (gpios_vector[j], GPIOF_DIR_IN, NULL)) break;
                 all_descriptors[j] = gpio_to_desc (gpios_vector[j]);
@@ -959,7 +959,7 @@ static int allocate_gpios(void) {
 }
 
 static void release_gpios(void) {
-        int j = sn7516x_used ? GPIB_PINS + SN7415X_PINS : GPIB_PINS ;
+        int j = sn7516x_used ? GPIB_PINS + SN7516X_PINS : GPIB_PINS ;
         while (j) {
                 if (all_descriptors[--j]) {
                         gpiod_put(all_descriptors[j]);
@@ -973,7 +973,8 @@ void bb_detach(gpib_board_t *board)
 {
         bb_private_t *priv = board->private_data;
 
-        dbg_printk(1,"%s\n", "enter... ");
+	dbg_printk(1, "Enter with data %p\n", board->private_data);
+	if (board->private_data == NULL) return;
 
         bb_free_irq(board, &priv->irq_DAV, NAME "_DAV");
         bb_free_irq(board, &priv->irq_NRFD, NAME "_NRFD");
@@ -1010,15 +1011,11 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
                 gpios_vector[&(REN) - &(all_descriptors[0])] = 0; /* 27 -> 0 REN on GPIB pin 0 */
         } else {
                 dbg_printk (0, "Unrecognized board type.\n");
-                free_private(board);
-		return -1;
+		goto bb_attach_fail;
         }
         dbg_printk(0, "Using pin mapping for board \"%s\"\n", board_id);
 
-        if (allocate_gpios()) {
-		free_private(board);
-		return -1;
-	}
+        if (allocate_gpios()) goto bb_attach_fail;
 
 /* Configure SN7516X control lines.
  * drive ATN, IFC and REN as outputs only when master
@@ -1079,7 +1076,6 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
         return 0;
 
 bb_attach_fail:
-	bb_detach(board);
         return -1;
 }
 
