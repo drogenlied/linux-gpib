@@ -1032,20 +1032,26 @@ well as limitations see the source code at:
   linux-gpib-kernel/drivers/gpib/gpio/gpib_bitbang.c
 </programlisting>
 <para>
-  Three boards are currently supported: Elektronomikon board with and without
-  driver IC's and the Lightside instruments gpib4pi-1.1 board.
+  Two pin maps between gpio and gpib are currently supported: elektronomikon and gpib4pi-1.1.
   For schematics, boards and information on driver IC's
   see <ulink URL="http://elektronomikon.org">http://elektronomikon.org</ulink>
-  and <ulink URL="https://www.hackster.io/lightside-instruments/the-gpib4pi-gpib-for-raspberry-pi-hat-4b3e9a">lightside-instruments gpib4pi</ulink>
-Note, by default support for the elekronomikon board with SN75160/161 driver IC's is
-  enabled. To disable support for the IC's
-  when they are not installed board_id="barewires" must be used
+  and <ulink URL="https://www.hackster.io/lightside-instruments/the-gpib4pi-gpib-for-raspberry-pi-hat-4b3e9a">lightside-instruments
+    gpib4pi</ulink>
+</para>
+<para>
+  The pin_maps are configured via the pin_map module parameter.
+  By default support for the elekronomikon pin_map with SN75160/161 driver IC's is
+  enabled. i.e. the default module parameter settings are
+  pin_map=elektonomikon and sn7516x_used=1. 
+  To disable support for the IC's
+  when they are not installed the module parameter sn7516x_used must
+  be set to zero:
 <programlisting>
-  modprobe gpib_bitbang board_id="barewires"
+  modprobe gpib_bitbang sn7516x_used=0
 </programlisting>
-For the Lightside instruments gpib4pi-1.1 board
+To set the pin_map for the Lightside instruments gpib4pi-1.1 board
 <programlisting>
-  modprobe gpib_bitbang board_id="gpib4pi-1.1"
+  modprobe gpib_bitbang pin_map="gpib4pi-1.1"
 </programlisting>
 </para>
 </section>
