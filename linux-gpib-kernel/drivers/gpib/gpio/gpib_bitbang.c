@@ -89,14 +89,14 @@
 #include <linux/gpio/consumer.h>
 #include <linux/gpio.h>
 
-static int sn7516x_used=1;
+static int sn7516x_used=1, sn7516x;
+module_param(sn7516x_used,int,0660);
 
-#define BOARD_TYPE_0 "barewires"
-#define BOARD_TYPE_1 "elektronomikon"
-#define BOARD_TYPE_2 "gpib4pi-1.1"
-static char *board_id = BOARD_TYPE_1;
-module_param(board_id, charp, 0660);
-MODULE_PARM_DESC(board_id, " valid values: " BOARD_TYPE_0 " " BOARD_TYPE_1 " " BOARD_TYPE_2);
+#define PINMAP_0 "elektronomikon"
+#define PINMAP_1 "gpib4pi-1.1"
+static char *pin_map = PINMAP_0;
+module_param(pin_map, charp, 0660);
+MODULE_PARM_DESC(pin_map, " valid values: " PINMAP_0 " " PINMAP_1);
 
 /**********************************************
  *  Signal pairing and pin wiring between the *
@@ -940,7 +940,7 @@ static void bb_free_irq(gpib_board_t *board, int *irq, char * name)
 
 static int allocate_gpios(void) {
         int j;
-        int last = sn7516x_used ? GPIB_PINS + SN7516X_PINS : GPIB_PINS ;
+        int last = sn7516x ? GPIB_PINS + SN7516X_PINS : GPIB_PINS ;
         for ( j=0 ; j<last ; j++ ) {
                 if (gpio_request_one (gpios_vector[j], GPIOF_DIR_IN, NULL)) break;
                 all_descriptors[j] = gpio_to_desc (gpios_vector[j]);
@@ -954,12 +954,12 @@ static int allocate_gpios(void) {
                 }
                 return -1;
         }
-        if (sn7516x_used) gpiod_direction_output(ACT_LED, 1); /* show module is active */
+        if (sn7516x) gpiod_direction_output(ACT_LED, 1); /* show module is active */
         return 0;
 }
 
 static void release_gpios(void) {
-        int j = sn7516x_used ? GPIB_PINS + SN7516X_PINS : GPIB_PINS ;
+        int j = sn7516x ? GPIB_PINS + SN7516X_PINS : GPIB_PINS ;
         while (j) {
                 if (all_descriptors[--j]) {
                         gpiod_put(all_descriptors[j]);
@@ -1002,18 +1002,15 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
         priv->listener_state = listener_idle;
         priv->talker_state = talker_idle;
 
-        if (strcmp (BOARD_TYPE_0, board_id) == 0) {
-                sn7516x_used = 0;
-        } else if (strcmp (BOARD_TYPE_1, board_id) == 0) {
-                sn7516x_used = 1;
-        } else if (strcmp (BOARD_TYPE_2, board_id) == 0) {
-                sn7516x_used = 1;
+        sn7516x = sn7516x_used;
+        if (strcmp (PINMAP_0, pin_map) == 0) {
+        } else if (strcmp (PINMAP_1, pin_map) == 0) {
                 gpios_vector[&(REN) - &(all_descriptors[0])] = 0; /* 27 -> 0 REN on GPIB pin 0 */
         } else {
-                dbg_printk (0, "Unrecognized board type.\n");
-		goto bb_attach_fail;
+                dbg_printk (0, "Unrecognized pin mapping.\n");
+                goto bb_attach_fail;
         }
-        dbg_printk(0, "Using pin mapping for board \"%s\"\n", board_id);
+        dbg_printk(0, "Using pin map \"%s\" %s\n", pin_map, (sn7516x)? " with SN7516x driver support":"");
 
         if (allocate_gpios()) goto bb_attach_fail;
 
@@ -1022,7 +1019,7 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
  * i.e. system controller. In this mode can only be the CIC
  * When not master then enable device mode ATN, IFC & REN as inputs
  */
-        if (sn7516x_used) {
+        if (sn7516x) {
                 gpiod_direction_output(DC,0);
                 gpiod_direction_output(TE,1);
                 gpiod_direction_output(PE,1);
@@ -1111,7 +1108,8 @@ static int __init bb_init_module(void)
 {
         gpib_register_driver(&bb_interface, THIS_MODULE);
 
-        dbg_printk(1,"module loaded%s",(sn7516x_used)?" with SN7516x driver support":"");
+        dbg_printk(0,"module loaded with pin map \"%s\"%s\n",
+                pin_map, (sn7516x_used)? " and SN7516x driver support":"");
         return 0;
 }
 
@@ -1214,7 +1212,7 @@ inline static void SET_DIR_WRITE(bb_private_t *priv)
         gpiod_direction_input(NRFD);
         gpiod_direction_input(NDAC);
 
-        if (sn7516x_used) {
+        if (sn7516x) {
                 gpiod_set_value(PE, 1);  /* set data lines to transmit on sn75160b */
                 gpiod_set_value(TE, 1);  /* set NDAC and NRFD to receive and DAV to transmit */
         }
@@ -1238,7 +1236,7 @@ inline static void SET_DIR_READ(bb_private_t *priv)
 
         set_data_lines_input();
 
-        if (sn7516x_used) {
+        if (sn7516x) {
                 gpiod_set_value(PE, 0);  /* set data lines to receive on sn75160b */
                 gpiod_set_value(TE, 0);	 /* set NDAC and NRFD to transmit and DAV to receive */
         }
@@ -1248,5 +1246,4 @@ inline static void SET_DIR_READ(bb_private_t *priv)
 
         priv->direction = DIR_READ;
 }
-
 
