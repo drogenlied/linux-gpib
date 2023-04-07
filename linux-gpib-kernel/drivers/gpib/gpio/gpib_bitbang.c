@@ -55,13 +55,20 @@
         device support (non master operation)
 */
 
-#define TIMEOUT_US 1000000
-#define IRQ_DEBOUNCE_US 1000
 #define DELAY 10
-#define JIFFY (1000000 / HZ)
-
 #define NAME "gpib_bitbang"
 #define HERE  NAME, (char *) __FUNCTION__
+
+/* Set to 1 to use irq_set_irq_type instead of enable/disable_irq */
+#define USE_SET_IRQ_TYPE 1
+
+#if (USE_SET_IRQ_TYPE)
+#define ENABLE_IRQ(IRQ, TYPE) irq_set_irq_type(IRQ, TYPE)
+#define DISABLE_IRQ(IRQ) irq_set_irq_type(IRQ, IRQ_TYPE_NONE)
+#else
+#define ENABLE_IRQ(IRQ, TYPE) enable_irq(IRQ)
+#define DISABLE_IRQ(IRQ) disable_irq(IRQ)
+#endif
 
 /* Debug print levels:
    0 = no debug messages
@@ -88,6 +95,7 @@
 #include <linux/delay.h>
 #include <linux/gpio/consumer.h>
 #include <linux/gpio.h>
+#include <linux/irq.h>
 
 static int sn7516x_used=1, sn7516x;
 module_param(sn7516x_used,int,0660);
@@ -222,13 +230,21 @@ typedef struct
         int end_flag;
         int r_busy;        /* 0==idle   1==busy  */
         int w_busy;
-        int ndac_done;
+        int write_done;
         int cmd;           /* 1 = cmd write in  progress */
         size_t w_cnt;
         size_t length;
         uint8_t *w_buf;
         spinlock_t rw_lock;
         int phase;
+        int ndac_idle;
+        int ndac_seq;
+        int nrfd_idle;
+        int nrfd_seq;
+	int nrfd_already;
+        int dav_idle;
+        int atn_asserted;
+
 	enum talker_function_state talker_state;
 	enum listener_function_state listener_state;
 } bb_private_t;
@@ -244,7 +260,7 @@ static void set_atn(bb_private_t *priv, int atn_asserted);
 
 inline static void SET_DIR_WRITE(bb_private_t *priv);
 inline static void SET_DIR_READ(bb_private_t *priv);
-
+inline static void SET_READ_HOLDOFF(bb_private_t *priv);
 #define DIR_READ 0
 #define DIR_WRITE 1
 
@@ -291,7 +307,7 @@ int bb_read(gpib_board_t *board, uint8_t *buffer, size_t length,
 
         dbg_printk (3,".........." LINFMT "\n",LINVAL);
 
-	enable_irq(priv->irq_DAV);
+        ENABLE_IRQ (priv->irq_DAV, IRQ_TYPE_EDGE_BOTH);
 
         spin_lock_irqsave(&priv->rw_lock, flags);
                if (gpiod_get_value(DAV) == 0) {         /* in case an interrupt already fired */
@@ -307,7 +323,7 @@ int bb_read(gpib_board_t *board, uint8_t *buffer, size_t length,
                         gpiod_set_value(NRFD,1); // ready for data
                 }
                 priv->r_busy = 1;
-	spin_unlock_irqrestore(&priv->rw_lock, flags);
+        spin_unlock_irqrestore(&priv->rw_lock, flags);
 
         /* wait for the interrupt routines finish their work */
 
@@ -323,7 +339,7 @@ int bb_read(gpib_board_t *board, uint8_t *buffer, size_t length,
                 retval = -ERESTARTSYS;
         }
 
-	disable_irq(priv->irq_DAV);
+        DISABLE_IRQ (priv->irq_DAV);
         spin_lock_irqsave(&priv->rw_lock, flags);
                 gpiod_set_value (NRFD, 0); // DIR_READ line state
                 priv->r_busy = 0;
@@ -354,6 +370,7 @@ irqreturn_t bb_DAV_interrupt (int irq, void * arg) {
 
         if (priv->r_busy == 0) {
                 dbg_printk(1, "interrupt while idle\n");
+		priv->dav_idle++;
                 goto dav_exit;  /* idle */
         }
 
@@ -406,34 +423,40 @@ int bb_write(gpib_board_t *board, uint8_t *buffer, size_t length,
 
         if (debug>1) bb_buffer_print(buffer, length, priv->cmd, send_eoi);
         priv->count = 0;
+        priv->phase = 99;
 
         if (length == 0) goto write_end;
         priv->end = send_eoi;
         priv->length = length;
 
         SET_DIR_WRITE(priv);
-        enable_irq(priv->irq_NRFD);
-        enable_irq(priv->irq_NDAC);
 
-        dbg_printk(3,"NRFD: %d   NDAC: %d\n", gpiod_get_value(NRFD), gpiod_get_value(NDAC));
+        dbg_printk(1,"Enabling interrupts - NRFD: %d   NDAC: %d\n",
+                        gpiod_get_value(NRFD), gpiod_get_value(NDAC));
+
+        ENABLE_IRQ (priv->irq_NRFD, IRQ_TYPE_EDGE_RISING);
+        ENABLE_IRQ (priv->irq_NDAC, IRQ_TYPE_EDGE_RISING);
+
+        if (priv->atn_asserted) udelay (20);
 
         spin_lock_irqsave (&priv->rw_lock, flags);
                 if (gpiod_get_value(NRFD)) {         /* in case an interrupt already fired */
-			dbg_printk(1,"NRFD already fired - sending %zu\n", priv->w_cnt);
-			set_data_lines(buffer[priv->w_cnt++]);         /* put the data on the lines */
-			if (send_eoi && (priv->w_cnt == length))       /* in case, send EOI */
-				gpiod_set_value(EOI, 0);
-			gpiod_set_value(DAV, 0);   /* flag data available */
+		                dbg_printk(1,"NRFD already fired - sending %zu\n", priv->w_cnt);
+                        set_data_lines(buffer[priv->w_cnt++]);         /* put the data on the lines */
+                        if (send_eoi && (priv->w_cnt == length))       /* in case, send EOI */
+                                gpiod_set_value(EOI, 0);
+                        gpiod_set_value(DAV, 0);   /* flag data available */
+                        priv->nrfd_already++;
 			priv->phase = 1;
-		}
-		priv->w_busy = 1;          /* make the interrupt routines active */
-		priv->ndac_done = 0;
-	spin_unlock_irqrestore(&priv->rw_lock, flags);
+                }
+                priv->w_busy = 1;          /* make the interrupt routines active */
+                priv->write_done = 0;
+        spin_unlock_irqrestore(&priv->rw_lock, flags);
 
         /* wait for the interrupt routines finish their work */
 
         retval = wait_event_interruptible(board->wait,
-				priv->ndac_done || (board->status & TIMO));
+				priv->write_done || (board->status & TIMO));
 
         dbg_printk(3,"awake from wait queue: %d\n", retval);
 
@@ -450,18 +473,19 @@ int bb_write(gpib_board_t *board, uint8_t *buffer, size_t length,
                 retval = -ERESTARTSYS;
         }
 
-        disable_irq(priv->irq_NRFD);
-        disable_irq(priv->irq_NDAC);
+        DISABLE_IRQ (priv->irq_NRFD);
+        DISABLE_IRQ (priv->irq_NDAC);
+
         spin_lock_irqsave(&priv->rw_lock, flags);
                 priv->w_busy = 0;
                 gpiod_set_value(DAV, 1); // DIR_WRITE line state
-                gpiod_set_value(EOI, 1); // De-assert EIO (in case)
-	spin_unlock_irqrestore(&priv->rw_lock, flags);
+                gpiod_set_value(EOI, 1); // De-assert EOI (in case)
+        spin_unlock_irqrestore(&priv->rw_lock, flags);
 
 write_end:
         *bytes_written = priv->w_cnt;
         dbg_printk(1,"sent %zu bytes\r\n\r\n", *bytes_written);
-        priv->phase = 0;
+        priv->phase = 9;
         return retval;
 }
 
@@ -486,14 +510,25 @@ irqreturn_t bb_NRFD_interrupt(int irq, void * arg)
 		        irq, nrfd, gpiod_get_value(NDAC), board->status, priv->direction, priv->w_busy, priv->r_busy);
 
         if (priv->w_busy == 0) {
-                dbg_printk(1,"interrupt while idle\n");
+                dbg_printk(1,"interrupt while idle after %zu/%zu at %d\n",
+                                      priv->w_cnt, priv->length, priv->phase);
+		priv->nrfd_idle++;
                 goto nrfd_exit;  /* idle */
         }
         if (nrfd == 0) {
-                dbg_printk(1,"out of order interrupt at %zu:%d.\n", priv->w_cnt, priv->phase);
+                dbg_printk(1,"out of order interrupt after %zu/%zu at %d cmd %d " LINFMT ".\n",
+                                      priv->w_cnt, priv->length, priv->phase, priv->cmd, LINVAL);
                 priv->phase = 3;
+		priv->nrfd_seq++;
                 goto nrfd_exit;
         }
+
+        if (priv->atn_asserted && priv->w_cnt >= priv->length) { // test for end of transfer
+                priv->write_done = 1;
+                priv->w_busy = 0;
+                wake_up_interruptible(&board->wait);
+                goto nrfd_exit;
+        } 
 
         dbg_printk(3,"sending %zu\n", priv->w_cnt);
 
@@ -501,7 +536,7 @@ irqreturn_t bb_NRFD_interrupt(int irq, void * arg)
 
         if ((priv->w_cnt == priv->length) && priv->end) {
 	        	dbg_printk(3,"Asserting EOI\n");
-	        	gpiod_set_value(EOI, 0); // Assert EIO
+	        	gpiod_set_value(EOI, 0); // Assert EOI
         }
 
         gpiod_set_value(DAV, 0); // Data available
@@ -533,25 +568,27 @@ irqreturn_t bb_NDAC_interrupt(int irq, void * arg)
 		irq, gpiod_get_value(NRFD), ndac, board->status, priv->direction, priv->w_busy, priv->r_busy);
 
         if (priv->w_busy == 0) {
-                dbg_printk(1,"interrupt while idle.\n");
+                dbg_printk(0,"interrupt while idle.\n");
+		priv->ndac_idle++;
                 goto ndac_exit;
         }
         if (ndac == 0) {
                 dbg_printk(1,"out of order interrupt at %zu:%d.\n", priv->w_cnt, priv->phase);
                 priv->phase = 5;
+		priv->ndac_seq++;
                 goto ndac_exit;
         }
 
         dbg_printk(3,"accepted %zu\n", priv->w_cnt-1);
 
-	if (priv->w_cnt >= priv->length) { // test for end of transfer
-                priv->ndac_done = 1;
+        if ((!priv->atn_asserted) && priv->w_cnt >= priv->length) { // test for end of transfer
+                priv->write_done = 1;
                 priv->w_busy = 0;
                 wake_up_interruptible(&board->wait);
         } else {
-        	gpiod_set_value(DAV, 1); // Data not available
-        	priv->phase = 4;
-	}
+                gpiod_set_value(DAV, 1); // Data not available
+                priv->phase = 4;
+        }
 
 ndac_exit:
         spin_unlock_irqrestore (&priv->rw_lock, flags);
@@ -588,7 +625,8 @@ int bb_command(gpib_board_t *board, uint8_t *buffer,
 
         dbg_printk(1,"%p  %p\n", buffer, board->buffer);
 
-        set_atn(priv, 1);
+        /* the _ATN line has already been asserted by bb_take_control() */
+
         priv->cmd = 1;
 
         ret = bb_write(board, buffer, length, 0, bytes_written); // no eoi
@@ -605,7 +643,9 @@ int bb_command(gpib_board_t *board, uint8_t *buffer,
 			priv->talker_state = talker_idle;
 		}
 	}
-//        gpiod_direction_output(_ATN, 1)/set_atn(priv 0); this is done in ibrd/wrt via gts
+
+        /* the _ATN line will be released by bb_go_to_stby */
+
         priv->cmd = 0;
 
         return ret;
@@ -697,13 +737,15 @@ static void set_atn(bb_private_t *priv, int atn_asserted) {
 	} else {
 		if (priv->listener_state == listener_addressed) {
 			priv->listener_state = listener_active;
-			SET_DIR_READ(priv); // make sure holdoff is active when we unassert ATN
+			SET_READ_HOLDOFF(priv); // make sure holdoff is active when we unassert ATN
 		}
 		if (priv->talker_state == talker_addressed) {
 			priv->talker_state = talker_active;
 		}
 	}
         gpiod_direction_output(_ATN, !atn_asserted);
+        priv->atn_asserted = atn_asserted;
+
 }
 
 int bb_take_control(gpib_board_t *board, int synchronous)
@@ -984,6 +1026,10 @@ void bb_detach(gpib_board_t *board)
         release_gpios();
 
         dbg_printk(1,"detached board: %d\n", board->minor);
+	dbg_printk(0,"nrfd idle %d, seq %d, already %d, ndac idle %d, seq %d dav idle %d",
+                priv->nrfd_idle, priv->nrfd_seq, priv->nrfd_already,
+                priv->ndac_idle, priv->ndac_seq, priv->dav_idle);
+
         free_private(board);
 }
 
@@ -1042,7 +1088,7 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
                 priv->irq_DAV = 0;
                 goto bb_attach_fail;
         }
-        disable_irq (priv->irq_DAV);
+        DISABLE_IRQ (priv->irq_DAV);
 
         /* request NRFD interrupt for write */
         if (bb_get_irq(board, NAME "_NRFD", priv->irq_NRFD, bb_NRFD_interrupt, NULL,
@@ -1050,7 +1096,7 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
                 priv->irq_NRFD = 0;
                 goto bb_attach_fail;
         }
-        disable_irq (priv->irq_NRFD);
+        DISABLE_IRQ (priv->irq_NRFD);
 
         /* request NDAC interrupt for write */
         if (bb_get_irq(board, NAME "_NDAC", priv->irq_NDAC, bb_NDAC_interrupt, NULL,
@@ -1058,7 +1104,7 @@ int bb_attach(gpib_board_t *board, const gpib_board_config_t *config)
                 priv->irq_NDAC = 0;
                 goto bb_attach_fail;
         }
-        disable_irq (priv->irq_NDAC);
+        DISABLE_IRQ (priv->irq_NDAC);
 
         /* request SRQ interrupt for Service Request */
         if (bb_get_irq(board, NAME "_SRQ", priv->irq_SRQ, bb_SRQ_interrupt, NULL,
@@ -1207,19 +1253,19 @@ inline static void SET_DIR_WRITE(bb_private_t *priv)
 	if (priv->direction == DIR_WRITE)
 		return;
 
-        UDELAY;
+//        UDELAY;
 
         gpiod_direction_input(NRFD);
         gpiod_direction_input(NDAC);
+        set_data_lines_output();
+        gpiod_direction_output(DAV, 1);
+        gpiod_direction_output(EOI, 1);
+
 
         if (sn7516x) {
                 gpiod_set_value(PE, 1);  /* set data lines to transmit on sn75160b */
                 gpiod_set_value(TE, 1);  /* set NDAC and NRFD to receive and DAV to transmit */
         }
-
-        set_data_lines_output();
-        gpiod_direction_output(DAV, 1);
-        gpiod_direction_output(EOI, 1);
 
         priv->direction = DIR_WRITE;
 }
@@ -1229,7 +1275,7 @@ inline static void SET_DIR_READ(bb_private_t *priv)
 	if (priv->direction == DIR_READ)
 		return;
 
-        UDELAY;
+//      UDELAY;
 
         gpiod_direction_input(DAV);
         gpiod_direction_input(EOI);
@@ -1245,5 +1291,17 @@ inline static void SET_DIR_READ(bb_private_t *priv)
         gpiod_direction_output(NDAC, 0);  // data not accepted
 
         priv->direction = DIR_READ;
+}
+
+inline static void SET_READ_HOLDOFF(bb_private_t *priv)
+{
+
+        gpiod_direction_output(NRFD, 0);  // hold off the talker
+        gpiod_direction_output(NDAC, 0);  // data not accepted
+
+        if (sn7516x) {
+                gpiod_set_value(TE, 0);	 /* set NDAC and NRFD to transmit and DAV to receive */
+        }
+
 }
 
