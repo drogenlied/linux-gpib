@@ -60,7 +60,6 @@
         device support (non master operation)
 */
 
-#define DELAY 10
 #define NAME "gpib_bitbang"
 #define HERE  NAME, (char *) __FUNCTION__
 
@@ -80,7 +79,6 @@
                gpiod_get_value(NDAC),\
                gpiod_get_value(SRQ)
 #define LINFMT "DAV: %d  NRFD:%d  NDAC: %d SRQ: %d"
-#define UDELAY udelay(DELAY)
 
 #include "gpibP.h"
 #include "gpib_state_machines.h"
