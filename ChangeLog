@@ -1,3 +1,14 @@
+2023-07-19 13:31  dpenkler
+
+	* [r2057] ChangeLog, README.txt: Update README.txt and ChangeLog
+	  for 4.3.6
+
+2023-07-19 13:29  dpenkler
+
+	* [r2056] linux-gpib-user/doc/linux-gpib.sgml: Add note in docs on
+	  NI GPIB-USB-HS clones
+
+
 2023-07-19 12:11  dpenkler
 
 	* [r2055] linux-gpib-kernel/drivers/gpib/include/version.h,
