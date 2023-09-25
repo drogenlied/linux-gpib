@@ -468,6 +468,8 @@ cleanup:
 }
 
 // interface functions
+int agilent_82357a_command(gpib_board_t *board, uint8_t *buffer, size_t length, size_t *bytes_written);
+
 int agilent_82357a_read(gpib_board_t *board, uint8_t *buffer, size_t length, int *end, size_t *nbytes)
 {
 	int retval;
@@ -734,6 +736,12 @@ int agilent_82357a_take_control(gpib_board_t *board, int synchronous)
 	struct agilent_82357a_register_pairlet write;
 	int retval;
 	int i;
+
+/* It looks like the 9914 does not handle tcs properly.
+   See comment above tms9914_take_control_workaround() in
+   drivers/gpib/tms9914/tms9914_aux.c
+*/
+	if (synchronous) return -ETIMEDOUT;
 
 	write.address = AUXCR;
 	if(synchronous)
