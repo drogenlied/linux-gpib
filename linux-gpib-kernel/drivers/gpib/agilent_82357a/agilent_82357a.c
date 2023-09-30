@@ -34,6 +34,8 @@ DEFINE_MUTEX(agilent_82357a_hotplug_lock);
 
 unsigned int agilent_82357a_update_status( gpib_board_t *board, unsigned int clear_mask );
 
+int agilent_82357a_take_control(gpib_board_t *board, int synchronous);
+
 static void agilent_82357a_bulk_complete(struct urb *urb PT_REGS_ARG)
 {
 	agilent_82357a_urb_context_t *context = urb->context;
@@ -571,6 +573,12 @@ int agilent_82357a_read(gpib_board_t *board, uint8_t *buffer, size_t length, int
 		if(trailing_flags & (ATRF_EOI | ATRF_EOS)) *end = 1;
 	}
 	kfree(in_data);
+
+	/* Fix for a bug in 9914A that does not return the contents of ADSR
+           when the board is in listener active state and ATN is not asserted.
+           Set ATN here to obtain a valid board level ibsta  */
+	agilent_82357a_take_control(board,0);
+
 	//FIXME check trailing flags for error
 	return retval;
 }
