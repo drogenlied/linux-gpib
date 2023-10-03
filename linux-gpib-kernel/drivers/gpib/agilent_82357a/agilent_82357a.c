@@ -34,7 +34,7 @@ DEFINE_MUTEX(agilent_82357a_hotplug_lock);
 
 unsigned int agilent_82357a_update_status( gpib_board_t *board, unsigned int clear_mask );
 
-int agilent_82357a_take_control(gpib_board_t *board, int synchronous);
+int agilent_82357a_take_control_internal(gpib_board_t *board, int synchronous);
 
 static void agilent_82357a_bulk_complete(struct urb *urb PT_REGS_ARG)
 {
@@ -577,7 +577,7 @@ int agilent_82357a_read(gpib_board_t *board, uint8_t *buffer, size_t length, int
 	/* Fix for a bug in 9914A that does not return the contents of ADSR
            when the board is in listener active state and ATN is not asserted.
            Set ATN here to obtain a valid board level ibsta  */
-	agilent_82357a_take_control(board,0);
+	agilent_82357a_take_control_internal(board,0);
 
 	//FIXME check trailing flags for error
 	return retval;
@@ -737,19 +737,11 @@ int agilent_82357a_command(gpib_board_t *board, uint8_t *buffer, size_t length, 
 	return agilent_82357a_generic_write(board, buffer, length, 1, 0, bytes_written);
 }
 
-int agilent_82357a_take_control(gpib_board_t *board, int synchronous)
+int agilent_82357a_take_control_internal(gpib_board_t *board, int synchronous)
 {
 	agilent_82357a_private_t *a_priv = board->private_data;
-	const int timeout = 10;
 	struct agilent_82357a_register_pairlet write;
 	int retval;
-	int i;
-
-/* It looks like the 9914 does not handle tcs properly.
-   See comment above tms9914_take_control_workaround() in
-   drivers/gpib/tms9914/tms9914_aux.c
-*/
-	if (synchronous) return -ETIMEDOUT;
 
 	write.address = AUXCR;
 	if(synchronous)
@@ -762,6 +754,20 @@ int agilent_82357a_take_control(gpib_board_t *board, int synchronous)
 	{
 		printk("%s: agilent_82357a_write_registers() returned error\n", __FUNCTION__);
 	}
+	return retval;
+}
+int agilent_82357a_take_control(gpib_board_t *board, int synchronous)
+{
+	const int timeout = 10;
+	int i;
+
+/* It looks like the 9914 does not handle tcs properly.
+   See comment above tms9914_take_control_workaround() in
+   drivers/gpib/tms9914/tms9914_aux.c
+*/
+	if (synchronous) return -ETIMEDOUT;
+
+	agilent_82357a_take_control_internal( board, synchronous );
 	// busy wait until ATN is asserted
 	for(i = 0; i < timeout; ++i)
 	{
