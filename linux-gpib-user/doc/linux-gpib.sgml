@@ -2287,7 +2287,7 @@ volatile int ibsta;
 	<entry>0x1b</entry>
 	<entry>If setting is nonzero then UNT (untalk) and UNL (unlisten) commands
 	are automatically sent after a completed io operation using this descriptor.
-	This option is off by default.</entry>
+	 Enabling this option is currently unsupported.</entry>
 	<entry>device</entry>
 	</row>
 	<row>
