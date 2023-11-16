@@ -374,15 +374,11 @@ int ibconfig( int ud, int option, int value )
 				}
 				break;
 			case IbcUnAddr:
-				// XXX
-				if( value )
-				{
-					fprintf( stderr, "libgpib: no support for UNT/UNL at end of "
-						"device read and writes\n" );
-					setIberr( ECAP );
-					return exit_library( ud, 1 );
-				}else
-					return exit_library( ud, 0 );
+				if (value)
+					conf->settings.send_unt_unl = 1;
+				else
+					conf->settings.send_unt_unl = 0;
+				return exit_library( ud, 0 );
 				break;
 			case IbcBNA:
 				retval = my_ibbna( conf, value );

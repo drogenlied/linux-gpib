@@ -236,6 +236,7 @@ void init_descriptor_settings( descriptor_settings_t *settings )
 	settings->send_eoi = 1;
 	settings->local_lockout = 0;
 	settings->readdr = 0;
+	settings->send_unt_unl = 0;
 }
 
 void init_ibconf( ibConf_t *conf )

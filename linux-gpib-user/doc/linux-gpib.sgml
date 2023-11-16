@@ -1724,7 +1724,7 @@ volatile int ibsta;
 	<entry>IbaUnAddr</entry>
 	<entry>0x1b</entry>
 	<entry>Nonzero if UNT (untalk) and UNL (unlisten) commands are automatically
-	sent after a completed io operation using this descriptor.</entry>
+	sent after a completed ibrd* or ibwrt* operation using this descriptor.</entry>
 	<entry>device</entry>
 	</row>
 	<row>
@@ -2286,8 +2286,7 @@ volatile int ibsta;
 	<entry>IbcUnAddr</entry>
 	<entry>0x1b</entry>
 	<entry>If setting is nonzero then UNT (untalk) and UNL (unlisten) commands
-	are automatically sent after a completed io operation using this descriptor.
-	 Enabling this option is currently unsupported.</entry>
+	are automatically sent after a completed ibrd* or ibwrt* operation using this descriptor.
 	<entry>device</entry>
 	</row>
 	<row>
@@ -4466,7 +4465,7 @@ constant NOADDR.
 	</title>
 	<para>
 	DevClear() causes the interface board specified by <parameter>board_desc</parameter>
-	to send the clear command to the GPIB addresses specified by <parameter>address</parameter>.  The results of the serial polls are stored into <parameter>resultList</parameter>.
+	to send the clear command to the GPIB address specified by <parameter>address</parameter>.
 	If you wish to clear multiple devices simultaneously, use
 	<link LINKEND="reference-function-devclearlist">DevClearList()</link>
 	</para>

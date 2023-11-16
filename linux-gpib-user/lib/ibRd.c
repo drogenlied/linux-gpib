@@ -63,7 +63,7 @@ int InternalReceiveSetup( ibConf_t *conf, Addr4882_t address )
 	return 0;
 }
 
-ssize_t read_data(ibConf_t *conf, unsigned int usec_timeout, uint8_t *buffer, size_t count, size_t *bytes_read)
+static int read_data(ibConf_t *conf, unsigned int usec_timeout, uint8_t *buffer, size_t count, size_t *bytes_read)
 {
 	ibBoard_t *board;
 	read_write_ioctl_t read_cmd;
@@ -107,8 +107,9 @@ ssize_t read_data(ibConf_t *conf, unsigned int usec_timeout, uint8_t *buffer, si
 	return retval;
 }
 
-ssize_t my_ibrd( ibConf_t *conf, unsigned int usec_timeout, uint8_t *buffer, size_t count, size_t *bytes_read)
+int my_ibrd( ibConf_t *conf, unsigned int usec_timeout, uint8_t *buffer, size_t count, size_t *bytes_read)
 {
+	int retval;
 	*bytes_read = 0;
 	// set eos mode
 	iblcleos( conf );
@@ -122,7 +123,12 @@ ssize_t my_ibrd( ibConf_t *conf, unsigned int usec_timeout, uint8_t *buffer, siz
 		}
 	}
 
-	return read_data(conf, usec_timeout, buffer, count, bytes_read);
+	retval =  read_data(conf, usec_timeout, buffer, count, bytes_read);
+
+	if ( !conf->is_interface && conf->settings.send_unt_unl ) {
+		retval = unlisten_untalk(conf);
+	}
+	return retval;
 }
 
 int ibrd(int ud, void *rd, long cnt)
@@ -221,7 +227,16 @@ int ibrdf(int ud, const char *file_path )
 		}
 	}while( conf->end == 0 && error == 0 );
 
-	setIbcnt( byte_count );
+	if ( !conf->is_interface && conf->settings.send_unt_unl ) {
+		retval = unlisten_untalk(conf);
+		if ( retval < 0)
+			error++;
+	}
+
+	if ( !error )
+	{
+		setIbcnt( byte_count );
+	}
 
 	if( fclose( save_file ) )
 	{
