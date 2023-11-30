@@ -62,7 +62,7 @@ int main( int argc, char *argv[] )
 
 	if (optind == argc)
 	{
-		fprintf( stderr, "Must provide file path as arguement\n" );
+		fprintf( stderr, "Must provide file path as argument\n" );
 		usage(0);
 	}
 
