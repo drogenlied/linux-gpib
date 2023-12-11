@@ -58,13 +58,15 @@ irqreturn_t nec7210_interrupt_have_status( gpib_board_t *board,
 	unsigned long dma_flags;
 #endif
 	int retval = IRQ_NONE;
-	
+
 	smp_mb__before_atomic();
 
 	// record service request in status
 	if(status2 & HR_SRQI)
 	{
 		set_bit(SRQI_NUM, &board->status);
+	} else {
+		clear_bit(SRQI_NUM, &board->status);
 	}
 
 	// change in lockout status
@@ -182,9 +184,9 @@ irqreturn_t nec7210_interrupt_have_status( gpib_board_t *board,
 		(status2 & (priv->reg_bits[ IMR2 ] & IMR2_ENABLE_INTR_MASK)) ||
 		nec7210_atn_has_changed(board, priv))
 	{
-		GPIB_DPRINTK( "minor %i, isr1 0x%x, imr1 0x%x, isr2 0x%x, imr2 0x%x\n",
-			board->minor, status1, priv->reg_bits[ IMR1 ], status2, priv->reg_bits[ IMR2 ] );
 		update_status_nolock(board, priv);
+		GPIB_DPRINTK( "minor %i, stat %lx, isr1 0x%x, imr1 0x%x, isr2 0x%x, imr2 0x%x\n",
+			board->minor, board->status, status1, priv->reg_bits[ IMR1 ], status2, priv->reg_bits[ IMR2 ] );
 		wake_up_interruptible(&board->wait); /* wake up sleeping process */
 		retval = IRQ_HANDLED;
 	}
