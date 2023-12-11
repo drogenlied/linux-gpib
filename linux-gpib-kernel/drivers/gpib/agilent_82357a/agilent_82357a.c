@@ -894,7 +894,7 @@ void agilent_82357a_disable_eos(gpib_board_t *board)
 unsigned int agilent_82357a_update_status( gpib_board_t *board, unsigned int clear_mask )
 {
 	agilent_82357a_private_t *a_priv = board->private_data;
-	struct agilent_82357a_register_pairlet address_status;
+	struct agilent_82357a_register_pairlet address_status, bus_status;
 	int retval;
 
 	smp_mb__before_atomic();
@@ -941,6 +941,19 @@ unsigned int agilent_82357a_update_status( gpib_board_t *board, unsigned int cle
 		set_bit(LACS_NUM, &board->status);
 	}else
 		clear_bit( LACS_NUM, &board->status );
+
+	bus_status.address = BSR;
+	retval = agilent_82357a_read_registers(a_priv, &bus_status, 1, 0);
+	if(retval)
+	{
+		if (retval != -EAGAIN)
+			printk("%s: agilent_82357a_read_registers() returned error\n", __FUNCTION__);
+		return board->status;
+	}
+	if( bus_status.value & BSR_SRQ_BIT )
+		set_bit(SRQI_NUM, &board->status);
+	else
+		clear_bit(SRQI_NUM, &board->status);
 
 	smp_mb__after_atomic();
 
