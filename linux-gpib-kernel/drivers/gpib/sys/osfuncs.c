@@ -461,6 +461,7 @@ long ibioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 
 done:
 	mutex_unlock(&board->big_gpib_mutex);
+	GPIB_DPRINTK( "ioctl done status = 0x%lx\n", board->status);
 	return retval;
 }
 
