@@ -65,8 +65,6 @@ irqreturn_t nec7210_interrupt_have_status( gpib_board_t *board,
 	if(status2 & HR_SRQI)
 	{
 		set_bit(SRQI_NUM, &board->status);
-	} else {
-		clear_bit(SRQI_NUM, &board->status);
 	}
 
 	// change in lockout status
