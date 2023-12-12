@@ -182,7 +182,7 @@ irqreturn_t nec7210_interrupt_have_status( gpib_board_t *board,
 		(status2 & (priv->reg_bits[ IMR2 ] & IMR2_ENABLE_INTR_MASK)) ||
 		nec7210_atn_has_changed(board, priv))
 	{
-		update_status_nolock(board, priv);
+		nec7210_update_status_nolock(board, priv);
 		GPIB_DPRINTK( "minor %i, stat %lx, isr1 0x%x, imr1 0x%x, isr2 0x%x, imr2 0x%x\n",
 			board->minor, board->status, status1, priv->reg_bits[ IMR1 ], status2, priv->reg_bits[ IMR2 ] );
 		wake_up_interruptible(&board->wait); /* wake up sleeping process */
