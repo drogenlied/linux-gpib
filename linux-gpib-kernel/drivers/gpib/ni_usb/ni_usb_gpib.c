@@ -916,6 +916,9 @@ int ni_usb_command_chunk(gpib_board_t *board, uint8_t *buffer, size_t length, si
 		printk("%s: %s: got eosmode error.  Driver bug?\n", __FILE__, __FUNCTION__);
 		return -EIO;
 		break;
+	case NIUSB_TIMEOUT_ERROR:
+		return -ETIMEDOUT;
+		break;
 	default:
 		printk("%s: %s: unknown error code=%i\n", __FILE__, __FUNCTION__, status.error_code);
 		return -EIO;
