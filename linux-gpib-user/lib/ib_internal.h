@@ -115,7 +115,7 @@ int internal_ibrsc( ibConf_t *conf, int request_control );
 int internal_ibsic( ibConf_t *conf );
 int internal_ibstop( ibConf_t *conf );
 int InternalDevClearList( ibConf_t *conf, const Addr4882_t addressList[] );
-int InternalReceiveSetup( ibConf_t *conf, Addr4882_t address );
+int InternalReceiveSetup( ibConf_t *conf, unsigned int usec_timeout, Addr4882_t address );
 int InternalSendSetup( ibConf_t *conf, const Addr4882_t addressList[] );
 int InternalSendList( ibConf_t *conf, const Addr4882_t addressList[],
 	const void *buffer, long count, int eotmode );

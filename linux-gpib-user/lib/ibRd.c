@@ -23,7 +23,7 @@
 #include "ib_internal.h"
 
 // sets up bus to receive data from device with address pad/sad
-int InternalReceiveSetup( ibConf_t *conf, Addr4882_t address )
+int InternalReceiveSetup( ibConf_t *conf, unsigned int usec_timeout, Addr4882_t address )
 {
 	ibBoard_t *board;
 	uint8_t cmdString[8];
@@ -54,7 +54,7 @@ int InternalReceiveSetup( ibConf_t *conf, Addr4882_t address )
 	if( sad >= 0 )
 		cmdString[ i++ ] = MSA( sad );
 
-	if ( my_ibcmd( conf, conf->settings.usec_timeout, cmdString, i ) < 0)
+	if ( my_ibcmd( conf, usec_timeout, cmdString, i ) < 0)
 	{
 		fprintf(stderr, "%s: command failed\n", __FUNCTION__ );
 		return -1;
@@ -117,7 +117,7 @@ int my_ibrd( ibConf_t *conf, unsigned int usec_timeout, uint8_t *buffer, size_t 
 	if( conf->is_interface == 0 )
 	{
 		// set up addressing
-		if( InternalReceiveSetup( conf, packAddress( conf->settings.pad, conf->settings.sad ) ) < 0 )
+		if( InternalReceiveSetup( conf, usec_timeout, packAddress( conf->settings.pad, conf->settings.sad ) ) < 0 )
 		{
 			return -1;
 		}
@@ -196,7 +196,7 @@ int ibrdf(int ud, const char *file_path )
 	if( conf->is_interface == 0 )
 	{
 		// set up addressing
-		if( InternalReceiveSetup( conf, packAddress( conf->settings.pad, conf->settings.sad ) ) < 0 )
+		if( InternalReceiveSetup( conf, conf->settings.usec_timeout, packAddress( conf->settings.pad, conf->settings.sad ) ) < 0 )
 		{
 			return exit_library( ud, 1 );
 		}
@@ -330,7 +330,7 @@ void ReceiveSetup( int boardID, Addr4882_t address )
 		return;
 	}
 
-	retval = InternalReceiveSetup( conf, address );
+	retval = InternalReceiveSetup( conf, conf->settings.usec_timeout, address );
 	if( retval < 0 )
 	{
 		exit_library( boardID, 1 );
@@ -345,7 +345,7 @@ int InternalReceive( ibConf_t *conf, Addr4882_t address,
 {
 	int retval;
 
-	retval = InternalReceiveSetup( conf, address );
+	retval = InternalReceiveSetup( conf, conf->settings.usec_timeout, address );
 	if( retval < 0 ) return retval;
 
 	retval = InternalRcvRespMsg( conf, buffer, count, termination );
