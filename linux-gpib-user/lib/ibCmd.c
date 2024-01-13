@@ -38,7 +38,7 @@ int ibcmd(int ud, const void *cmd_buffer, long cnt)
 		return exit_library( ud, 1 );
 	}
 
-	count = my_ibcmd( conf, cmd_buffer, cnt);
+	count = my_ibcmd( conf, conf->settings.usec_timeout, cmd_buffer, cnt);
 	if(count < 0)
 	{
 		return exit_library( ud, 1);
@@ -85,7 +85,7 @@ int ibcmda( int ud, const void *cmd_buffer, long cnt )
 	return general_exit_library( ud, 0, 0, 0, 0, 0, 1 );
 }
 
-ssize_t my_ibcmd( ibConf_t *conf, const uint8_t *buffer, size_t count)
+ssize_t my_ibcmd( ibConf_t *conf, unsigned int usec_timeout, const uint8_t *buffer, size_t count)
 {
 	read_write_ioctl_t cmd;
 	int retval;
@@ -106,7 +106,7 @@ ssize_t my_ibcmd( ibConf_t *conf, const uint8_t *buffer, size_t count)
 	cmd.handle = conf->handle;
 	cmd.end = 0;
 	
-	set_timeout( board, conf->settings.usec_timeout);
+	set_timeout( board, usec_timeout);
 
 	retval = ioctl( board->fileno, IBCMD, &cmd );
 	if( retval < 0 )
@@ -196,7 +196,7 @@ int send_setup( ibConf_t *conf )
 
 	retval = send_setup_string( conf, cmdString );
 
-	if( my_ibcmd( conf, cmdString, retval ) < 0 )
+	if( my_ibcmd( conf, conf->settings.usec_timeout, cmdString, retval ) < 0 )
 		return -1;
 
 	return 0;
@@ -241,7 +241,7 @@ int InternalSendSetup( ibConf_t *conf, const Addr4882_t addressList[] )
 	i = create_send_setup( board, addressList, cmd );
 
 	//XXX detect no listeners (EBUS) error
-	count = my_ibcmd( conf, cmd, i );
+	count = my_ibcmd( conf, conf->settings.usec_timeout, cmd, i );
 
 	free( cmd );
 	cmd = NULL;

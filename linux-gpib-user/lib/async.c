@@ -146,7 +146,7 @@ static void* do_aio( void *varg )
 	switch( arg.gpib_aio_type )
 	{
 	case GPIB_AIO_COMMAND:
-		count = retval = my_ibcmd( conf, conf->async.buffer, conf->async.buffer_length );
+		count = retval = my_ibcmd( conf, usec_timeout, conf->async.buffer, conf->async.buffer_length );
 		break;
 	case GPIB_AIO_READ:
 		retval = my_ibrd( conf, usec_timeout, conf->async.buffer, conf->async.buffer_length, &count);

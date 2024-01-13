@@ -113,7 +113,7 @@ static int set_cable_length (ibConf_t *conf, int num_meters)
 	{
 		cmd [length++] = CFGn(num_meters);
 	}
-	retval = my_ibcmd (conf, cmd, length);
+	retval = my_ibcmd (conf, conf->settings.usec_timeout, cmd, length);
 	if (retval != length)
 	{
 			return -1;

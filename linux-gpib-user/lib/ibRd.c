@@ -54,7 +54,7 @@ int InternalReceiveSetup( ibConf_t *conf, Addr4882_t address )
 	if( sad >= 0 )
 		cmdString[ i++ ] = MSA( sad );
 
-	if ( my_ibcmd( conf, cmdString, i ) < 0)
+	if ( my_ibcmd( conf, conf->settings.usec_timeout, cmdString, i ) < 0)
 	{
 		fprintf(stderr, "%s: command failed\n", __FUNCTION__ );
 		return -1;
