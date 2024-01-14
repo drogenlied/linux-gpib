@@ -136,7 +136,7 @@ int my_ibwrt( ibConf_t *conf, unsigned int usec_timeout,
 	if( conf->is_interface == 0 )
 	{
 		// set up addressing
-		if( send_setup( conf ) < 0 )
+		if( send_setup( conf, usec_timeout ) < 0 )
 		{
 			return -1;
 		}
@@ -235,7 +235,7 @@ int my_ibwrtf( ibConf_t *conf, const char *file_path, size_t *bytes_written)
 	if( conf->is_interface == 0 )
 	{
 		// set up addressing
-		if( send_setup( conf ) < 0 )
+		if( send_setup( conf, conf->settings.usec_timeout) < 0 )
 		{
 			return -1;
 		}

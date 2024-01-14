@@ -189,14 +189,14 @@ unsigned int send_setup_string( const ibConf_t *conf,
 	return create_send_setup( board, addressList, cmdString );
 }
 
-int send_setup( ibConf_t *conf )
+int send_setup( ibConf_t *conf, unsigned int usec_timeout )
 {
 	uint8_t cmdString[8];
 	int retval;
 
 	retval = send_setup_string( conf, cmdString );
 
-	if( my_ibcmd( conf, conf->settings.usec_timeout, cmdString, retval ) < 0 )
+	if( my_ibcmd( conf, usec_timeout, cmdString, retval ) < 0 )
 		return -1;
 
 	return 0;
