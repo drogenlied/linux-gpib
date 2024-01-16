@@ -104,8 +104,9 @@ ssize_t my_ibcmd( ibConf_t *conf, unsigned int usec_timeout, const uint8_t *buff
 	cmd.requested_transfer_count = count;
 	cmd.completed_transfer_count = 0;
 	cmd.handle = conf->handle;
-	cmd.end = 0;
-	
+	/* set the suppress setting CMPL flag if an asyc read or write is in progress */
+	cmd.end = ( conf->async.in_progress &&
+		( conf->async.aio_type == GPIB_AIO_READ || conf->async.aio_type == GPIB_AIO_WRITE ) );
 	set_timeout( board, usec_timeout);
 
 	retval = ioctl( board->fileno, IBCMD, &cmd );

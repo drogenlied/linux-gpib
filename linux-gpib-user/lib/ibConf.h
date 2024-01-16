@@ -44,6 +44,7 @@ struct async_operation
 	volatile int ibsta;
 	volatile long ibcntl;
 	volatile short in_progress;
+	volatile short aio_type;  /* The type of aio in progress */
 	volatile short abort;
 };
 
