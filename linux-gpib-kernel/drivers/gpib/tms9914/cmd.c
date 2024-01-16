@@ -19,7 +19,7 @@
 #include "board.h"
 #include <linux/delay.h>
 
-void check_my_address_state( gpib_board_t *board, tms9914_private_t *priv, int cmd_byte )
+static void check_my_address_state( gpib_board_t *board, tms9914_private_t *priv, int cmd_byte )
 {
 	if( cmd_byte == MLA( board->pad ) )
 	{

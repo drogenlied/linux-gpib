@@ -194,7 +194,7 @@ void tnt4882_serial_poll_response(gpib_board_t *board, uint8_t status)
 	nec7210_serial_poll_response(board, &priv->nec7210_priv, status);
 }
 
-void tnt4882_serial_poll_response2(gpib_board_t *board, 
+static void tnt4882_serial_poll_response2(gpib_board_t *board,
 	uint8_t status, int new_reason_for_service)
 {
 	tnt4882_private_t *priv = board->private_data;
@@ -688,7 +688,7 @@ void ni_pci_detach(gpib_board_t *board)
 	tnt4882_free_private(board);
 }
 
-int ni_isapnp_find( struct pnp_dev **dev )
+static int ni_isapnp_find( struct pnp_dev **dev )
 {
 	*dev = pnp_find_dev( NULL, ISAPNP_VENDOR_ID_NI,
 		ISAPNP_FUNCTION( ISAPNP_ID_NI_ATGPIB_TNT ), NULL );
@@ -717,7 +717,7 @@ int ni_isapnp_find( struct pnp_dev **dev )
 	return 0;
 }
 
-int ni_isa_attach_common( gpib_board_t *board, const gpib_board_config_t *config, enum nec7210_chipset chipset )
+static int ni_isa_attach_common( gpib_board_t *board, const gpib_board_config_t *config, enum nec7210_chipset chipset )
 {
 	tnt4882_private_t *tnt_priv;
 	nec7210_private_t *nec_priv;

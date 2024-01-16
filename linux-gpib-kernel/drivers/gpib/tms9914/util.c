@@ -44,7 +44,7 @@ int tms9914_parallel_poll(gpib_board_t *board, tms9914_private_t *priv, uint8_t 
 	return 0;
 }
 
-void set_ppoll_reg( tms9914_private_t *priv, int enable,
+static void set_ppoll_reg( tms9914_private_t *priv, int enable,
 	unsigned int dio_line, int sense, int ist )
 {
 	uint8_t dio_byte;
