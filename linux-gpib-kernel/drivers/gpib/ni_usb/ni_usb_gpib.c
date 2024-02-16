@@ -710,6 +710,10 @@ static int ni_usb_read(gpib_board_t *board, uint8_t *buffer, size_t length, int 
 		/*this is expected if ni_usb_receive_bulk_msg got interrupted by a signal
 			and returned -ERESTARTSYS */
 		break;
+	case NIUSB_ATN_STATE_ERROR:
+		retval = -EIO;
+		printk("%s: %s: read when ATN set\n", __FILE__, __FUNCTION__);
+		break;
 	case NIUSB_ADDRESSING_ERROR:
 		retval = -EIO;
 		break;

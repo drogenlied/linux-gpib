@@ -138,6 +138,8 @@ enum ni_usb_error_codes
 	/* NIUSB_ABORTED_ERROR occurs when I/O is interrupted early by doing a NI_USB_STOP_REQUEST
 		on the control endpoint. */
 	NIUSB_ABORTED_ERROR = 1,
+	// NIUSB_READ_ATN_ERROR occurs when you do a board read while ATN is set
+	NIUSB_ATN_STATE_ERROR = 2,
 	// NIUSB_ADDRESSING_ERROR occurs when you do a board read/write as CIC but are not in LACS/TACS
 	NIUSB_ADDRESSING_ERROR = 3,
 	// NIUSB_EOSMODE_ERROR occurs on reads if any eos mode or char bits are set when REOS is not set.
