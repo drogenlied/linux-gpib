@@ -130,12 +130,13 @@ unsigned int tnt4882_update_status( gpib_board_t *board, unsigned int clear_mask
 	retval = nec7210_update_status_nolock( board, &priv->nec7210_priv );
 	/* set / clear SRQ state since it is not cleared by interrupt */
 	line_status = tnt_readb( priv, BSR );
-	if( line_status & BCSR_SRQ_BIT )
+	if( line_status & BCSR_SRQ_BIT ) {
 		set_bit( SRQI_NUM, &board->status );
-	else
+		wake_up_interruptible( &board->wait );
+	} else {
 		clear_bit( SRQI_NUM, &board->status );
+	}
 	spin_unlock_irqrestore( &board->spinlock, flags );
-
 	return board->status;
 }
 int tnt4882_primary_address(gpib_board_t *board, unsigned int address)
