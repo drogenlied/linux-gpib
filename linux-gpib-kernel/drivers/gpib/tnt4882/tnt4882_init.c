@@ -132,7 +132,6 @@ unsigned int tnt4882_update_status( gpib_board_t *board, unsigned int clear_mask
 	line_status = tnt_readb( priv, BSR );
 	if( line_status & BCSR_SRQ_BIT ) {
 		set_bit( SRQI_NUM, &board->status );
-		wake_up_interruptible( &board->wait );
 	} else {
 		clear_bit( SRQI_NUM, &board->status );
 	}
