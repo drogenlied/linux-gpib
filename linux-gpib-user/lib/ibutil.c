@@ -70,7 +70,6 @@ int insert_descriptor( ibConf_t p, int ud )
 		setIbcnt( ENOMEM );
 		return -1;
 	}
-	init_ibconf(ibConfigs[ ud ]);
 	/* put entry to the table */
 	*ibConfigs[ud] = p;
 
