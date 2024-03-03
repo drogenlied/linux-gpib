@@ -3027,18 +3027,24 @@ volatile int ibsta;
 	Description
 	</title>
 	<para>
-	If the <parameter>online</parameter> is zero, then ibonl() frees the
+	If the parameter <parameter>online</parameter> is zero, then ibonl() frees the
 	resources associated with the board or device descriptor
 	<parameter>ud</parameter>.  The descriptor cannot be used again after the
-	ibonl() call.
+	ibonl() call. The parameter <parameter>ud</parameter> cannot be a board
+	index (aka minor).
 	</para>
 	<para>
-	If the <parameter>online</parameter> is nonzero, then all the settings
+	If the parameter <parameter>online</parameter> is nonzero, then all the settings
 	associated with the descriptor (GPIB address, end-of-string mode, timeout,
 	etc.) are reset to their 'default' values.  The 'default' values are
 	the settings the descriptor had when it was first obtained with
 	<link LINKEND="reference-function-ibdev">ibdev()</link> or
 	<link LINKEND="reference-function-ibfind">ibfind()</link>.
+	The parameter <parameter>ud</parameter> can be a board index
+	(aka minor). The 'default' values are the standard default
+	values as modified by the
+	corresponding <link LINKEND="configuration-gpib-conf">gpib.conf</link> 
+	interface definition.
 	</para>
 </refsect1>
 <refsect1>
