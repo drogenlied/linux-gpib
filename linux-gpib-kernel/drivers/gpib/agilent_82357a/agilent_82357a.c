@@ -1676,14 +1676,67 @@ static void agilent_82357a_driver_disconnect(struct usb_interface *interface)
 	mutex_unlock(&agilent_82357a_hotplug_lock);
 }
 
-static struct usb_driver agilent_82357a_bus_driver =
-{
+static int agilent_82357a_driver_suspend( struct usb_interface *interface, pm_message_t message ) {
+	int i;
+
+	for(i = 0; i < MAX_NUM_82357A_INTERFACES; ++i) {
+		if ( agilent_82357a_driver_interfaces[i] == interface )	{
+			gpib_board_t *board = usb_get_intfdata(interface);
+			if ( board ) {
+				agilent_82357a_private_t *a_priv = board->private_data;
+				if ( a_priv ) {
+					mutex_lock(&a_priv->control_alloc_lock);
+					mutex_lock(&a_priv->bulk_alloc_lock);
+					mutex_lock(&a_priv->interrupt_alloc_lock);
+					agilent_82357a_cleanup_urbs(a_priv);
+					mutex_unlock(&a_priv->interrupt_alloc_lock);
+					mutex_unlock(&a_priv->bulk_alloc_lock);
+					mutex_unlock(&a_priv->control_alloc_lock);
+				}
+			}
+			break;
+		}
+	}
+	return 0;
+}
+
+static int agilent_82357a_driver_resume(struct usb_interface *interface) {
+	struct usb_device *usb_dev;
+	int i, retval;
+
+	for(i = 0; i < MAX_NUM_82357A_INTERFACES; ++i)	{
+		if ( agilent_82357a_driver_interfaces[i] == interface ) {
+			gpib_board_t *board = usb_get_intfdata(interface);
+			if ( board ) {
+				agilent_82357a_private_t *a_priv = board->private_data;
+				mutex_lock(&a_priv->interrupt_alloc_lock);
+				if ( a_priv && a_priv->interrupt_urb ) {
+					retval = usb_submit_urb(a_priv->interrupt_urb, GFP_KERNEL);
+					if ( retval ) {
+						printk("%s: failed to resubmit interrupt urb, retval=%i\n", __FUNCTION__, retval);
+					} else {
+						usb_dev = interface_to_usbdev(a_priv->bus_interface);
+						dev_info(&usb_dev->dev,"bus %d dev num %d  gpib minor %d, agilent usb interface %i resumed\n",
+							usb_dev->bus->busnum, usb_dev->devnum, board->minor, i);
+					}
+				}
+				mutex_unlock(&a_priv->interrupt_alloc_lock);
+			}
+			break;
+		}
+	}
+	return 0;
+}
+
+static struct usb_driver agilent_82357a_bus_driver = {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,16)
 	.owner = THIS_MODULE,
 #endif
 	.name = "agilent_82357a_gpib",
 	.probe = agilent_82357a_driver_probe,
 	.disconnect = agilent_82357a_driver_disconnect,
+	.suspend = agilent_82357a_driver_suspend,
+	.resume = agilent_82357a_driver_resume,
 	.id_table = agilent_82357a_driver_device_table,
 };
 
