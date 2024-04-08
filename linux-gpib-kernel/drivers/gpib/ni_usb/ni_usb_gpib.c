@@ -2229,7 +2229,6 @@ static void ni_usb_driver_disconnect(struct usb_interface *interface) {
 					mutex_lock(&ni_priv->control_transfer_lock);
 					mutex_lock(&ni_priv->interrupt_transfer_lock);
 					ni_usb_cleanup_urbs(ni_priv);
-					ni_usb_free_private(ni_priv);
 					ni_priv->bus_interface = NULL;
 					mutex_unlock(&ni_priv->interrupt_transfer_lock);
 					mutex_unlock(&ni_priv->control_transfer_lock);
