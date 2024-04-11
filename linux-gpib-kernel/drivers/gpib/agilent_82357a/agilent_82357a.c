@@ -1677,7 +1677,10 @@ static void agilent_82357a_driver_disconnect(struct usb_interface *interface)
 }
 
 static int agilent_82357a_driver_suspend( struct usb_interface *interface, pm_message_t message ) {
-	int i;
+	struct agilent_82357a_register_pairlet address_status, bus_status;
+	unsigned short adsr, bsr;
+	struct usb_device *usb_dev;
+	int i, retval;
 
 	for(i = 0; i < MAX_NUM_82357A_INTERFACES; ++i) {
 		if ( agilent_82357a_driver_interfaces[i] == interface )	{
@@ -1685,6 +1688,27 @@ static int agilent_82357a_driver_suspend( struct usb_interface *interface, pm_me
 			if ( board ) {
 				agilent_82357a_private_t *a_priv = board->private_data;
 				if ( a_priv ) {
+					agilent_82357a_abort(a_priv, 0);
+					agilent_82357a_abort(a_priv, 0);
+					address_status.address = ADSR;
+					retval = agilent_82357a_read_registers(a_priv, &address_status, 1, 0);
+					if ( retval ) {
+						printk("%s: failed to read ADSR, retval=%i\n", __FUNCTION__, retval);
+					}
+					adsr = address_status.value;
+					if ( adsr != 0x20 ) {
+						printk("%s:  ADSR is 0x%02x expected 0x20\n", __FUNCTION__, adsr);
+					}
+					agilent_82357a_take_control_internal (board, 0);  // Set ATN async
+					bus_status.address = BSR;
+					retval = agilent_82357a_read_registers(a_priv, &bus_status, 1, 0);
+					if ( retval ) {
+						printk("%s: failed to read BSR, retval=%i\n", __FUNCTION__, retval);
+					}
+					bsr = bus_status.value;
+					if ( bsr != 0x81 ) {
+						printk("%s:  BSR is 0x%02x expected 0x81\n", __FUNCTION__, bsr);
+					}
 					mutex_lock(&a_priv->control_alloc_lock);
 					mutex_lock(&a_priv->bulk_alloc_lock);
 					mutex_lock(&a_priv->interrupt_alloc_lock);
@@ -1692,6 +1716,9 @@ static int agilent_82357a_driver_suspend( struct usb_interface *interface, pm_me
 					mutex_unlock(&a_priv->interrupt_alloc_lock);
 					mutex_unlock(&a_priv->bulk_alloc_lock);
 					mutex_unlock(&a_priv->control_alloc_lock);
+					usb_dev = interface_to_usbdev(a_priv->bus_interface);
+					dev_info(&usb_dev->dev,"bus %d dev num %d  gpib minor %d, agilent usb interface %i suspended\n",
+						usb_dev->bus->busnum, usb_dev->devnum, board->minor, i);
 				}
 			}
 			break;
@@ -1709,18 +1736,22 @@ static int agilent_82357a_driver_resume(struct usb_interface *interface) {
 			gpib_board_t *board = usb_get_intfdata(interface);
 			if ( board ) {
 				agilent_82357a_private_t *a_priv = board->private_data;
-				mutex_lock(&a_priv->interrupt_alloc_lock);
-				if ( a_priv && a_priv->interrupt_urb ) {
-					retval = usb_submit_urb(a_priv->interrupt_urb, GFP_KERNEL);
-					if ( retval ) {
-						printk("%s: failed to resubmit interrupt urb, retval=%i\n", __FUNCTION__, retval);
-					} else {
-						usb_dev = interface_to_usbdev(a_priv->bus_interface);
-						dev_info(&usb_dev->dev,"bus %d dev num %d  gpib minor %d, agilent usb interface %i resumed\n",
-							usb_dev->bus->busnum, usb_dev->devnum, board->minor, i);
+				if ( a_priv ) {
+					agilent_82357a_abort(a_priv, 0);
+					agilent_82357a_abort(a_priv, 0);
+					if ( a_priv->interrupt_urb ) {
+						mutex_lock(&a_priv->interrupt_alloc_lock);
+						retval = usb_submit_urb(a_priv->interrupt_urb, GFP_KERNEL);
+						if ( retval ) {
+							printk("%s: failed to resubmit interrupt urb, retval=%i\n", __FUNCTION__, retval);
+						} else {
+							usb_dev = interface_to_usbdev(a_priv->bus_interface);
+							dev_info(&usb_dev->dev,"bus %d dev num %d  gpib minor %d, agilent usb interface %i resumed\n",
+								usb_dev->bus->busnum, usb_dev->devnum, board->minor, i);
+						}
+						mutex_unlock(&a_priv->interrupt_alloc_lock);
 					}
 				}
-				mutex_unlock(&a_priv->interrupt_alloc_lock);
 			}
 			break;
 		}
