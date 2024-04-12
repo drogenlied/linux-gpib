@@ -1412,46 +1412,56 @@ printk("\n");
 	return line_status;
 }
 
+static int ni_usb_setup_t1_delay( struct ni_usb_register *reg, unsigned int nano_sec ,  unsigned int *actual_ns ) {
+	int i = 0;
+
+	*actual_ns = 2000;
+
+	reg[i].device = NIUSB_SUBDEV_TNT4882;
+	reg[i].address = nec7210_to_tnt4882_offset(AUXMR);
+	if ( nano_sec <= 1100 )	{
+		reg[i].value = AUXRI | USTD | SISB;
+		*actual_ns = 1100;
+	} else {
+		reg[i].value = AUXRI | SISB;
+	}
+	i++;
+	reg[i].device = NIUSB_SUBDEV_TNT4882;
+	reg[i].address = nec7210_to_tnt4882_offset(AUXMR);
+	if ( nano_sec <= 500 )	{
+		reg[i].value = AUXRB | HR_TRI;
+		*actual_ns = 500;
+	} else {
+		reg[i].value = AUXRB;
+	}
+	i++;
+	reg[i].device = NIUSB_SUBDEV_TNT4882;
+	reg[i].address = KEYREG;
+	if ( nano_sec <= 350 ) {
+		reg[i].value = MSTD;
+		*actual_ns = 350;
+	} else {
+		reg[i].value = 0x0;
+	}
+	i++;
+	return i;
+}
+
 static unsigned int ni_usb_t1_delay( gpib_board_t *board, unsigned int nano_sec ) {
 	int retval;
 	ni_usb_private_t *ni_priv = board->private_data;
-	int i = 0;
 	struct ni_usb_register writes[3];
 	unsigned int ibsta;
-	unsigned int actual_ns = 2000;
+	unsigned int actual_ns;
+	int i;
 
-	writes[i].device = NIUSB_SUBDEV_TNT4882;
-	writes[i].address = nec7210_to_tnt4882_offset(AUXMR);
-	if ( nano_sec <= 1100 )	{
-		writes[i].value = AUXRI | USTD | SISB;
-		actual_ns = 1100;
-	} else {
-		writes[i].value = AUXRI | SISB;
-	}
-	i++;
-	writes[i].device = NIUSB_SUBDEV_TNT4882;
-	writes[i].address = nec7210_to_tnt4882_offset(AUXMR);
-	if ( nano_sec <= 500 )	{
-		writes[i].value = AUXRB | HR_TRI;
-		actual_ns = 500;
-	} else {
-		writes[i].value = AUXRB;
-	}
-	i++;
-	writes[i].device = NIUSB_SUBDEV_TNT4882;
-	writes[i].address = KEYREG;
-	if ( nano_sec <= 350 ) {
-		writes[i].value = MSTD;
-		actual_ns = 350;
-	} else {
-		writes[i].value = 0x0;
-	}
-	i++;
+	i = ni_usb_setup_t1_delay(writes, nano_sec, &actual_ns);
 	retval = ni_usb_write_registers(ni_priv, writes, i, &ibsta);
 	if ( retval < 0 ) {
 		printk("%s: %s: register write failed, retval=%i\n", __FILE__, __FUNCTION__, retval);
 		return -1;	//FIXME should change return type to int for error reporting
 	}
+	board->t1_nano_sec = actual_ns;
 	ni_usb_soft_update_status(board, ibsta, 0);
 	return actual_ns;
 }
@@ -1476,19 +1486,12 @@ static void ni_usb_free_private(ni_usb_private_t *ni_priv) {
 	return;
 }
 
-static int ni_usb_init(gpib_board_t *board) {
-	int retval;
+#define NUM_INIT_WRITES 26
+static int ni_usb_setup_init(gpib_board_t *board, struct ni_usb_register *writes) {
 	ni_usb_private_t *ni_priv = board->private_data;
+	unsigned int mask, actual_ns;
 	int i = 0;
-	struct ni_usb_register *writes;
-	unsigned int ibsta;
-	static const int writes_length = 24;
 
-	writes = kmalloc(sizeof(struct ni_usb_register) * writes_length, GFP_KERNEL);
-	if ( writes == NULL ) {
-		printk("%s: %s: kmalloc failed\n", __FILE__, __FUNCTION__);
-		return -ENOMEM;
-	}
 	writes[i].device = NIUSB_SUBDEV_UNKNOWN3;
 	writes[i].address = 0x10;
 	writes[i].value = 0x0;
@@ -1497,13 +1500,15 @@ static int ni_usb_init(gpib_board_t *board) {
 	writes[i].address = CMDR;
 	writes[i].value = SOFT_RESET;
 	i++;
-	writes[i].device = NIUSB_SUBDEV_TNT4882;
-	writes[i].address = nec7210_to_tnt4882_offset(AUXMR);
-	writes[i].value = AUX_7210;
+	writes[i].device =  NIUSB_SUBDEV_TNT4882;
+	writes[i].address =  nec7210_to_tnt4882_offset(AUXMR);
+	mask = AUXRA | HR_HLDA;
+	if ( ni_priv->eos_mode & BIN) mask |= HR_BIN;
+	writes[i].value = mask;
 	i++;
 	writes[i].device = NIUSB_SUBDEV_TNT4882;
-	writes[i].address = SWAPPED_AUXCR;
-	writes[i].value = AUX_7210;
+	writes[i].address = AUXCR;
+	writes[i].value = mask;
 	i++;
 	writes[i].device = NIUSB_SUBDEV_TNT4882;
 	writes[i].address = HSSEL;
@@ -1522,7 +1527,7 @@ static int ni_usb_init(gpib_board_t *board) {
 	writes[i].value = 0x0;
 	i++;
 	writes[i].device = NIUSB_SUBDEV_TNT4882;
-	writes[i].address = nec7210_to_tnt4882_offset(IMR2);
+	writes[i].address =  nec7210_to_tnt4882_offset(IMR2);
 	writes[i].value = 0x0;
 	i++;
 	writes[i].device = NIUSB_SUBDEV_TNT4882;
@@ -1533,29 +1538,23 @@ static int ni_usb_init(gpib_board_t *board) {
 	writes[i].address = nec7210_to_tnt4882_offset(AUXMR);
 	writes[i].value = AUX_HLDI;
 	i++;
-	/* the following three writes should share code with set_t1_delay */
-	board->t1_nano_sec = 500;
-	writes[i].device = NIUSB_SUBDEV_TNT4882;
-	writes[i].address = nec7210_to_tnt4882_offset(AUXMR);
-	writes[i].value = AUXRI | SISB | USTD;
-	i++;
-	writes[i].device = NIUSB_SUBDEV_TNT4882;
-	writes[i].address = nec7210_to_tnt4882_offset(AUXMR);
-	writes[i].value = AUXRB | HR_TRI;
-	i++;
-	writes[i].device = NIUSB_SUBDEV_TNT4882;
-	writes[i].address = KEYREG;
-	writes[i].value = 0x0;
-	i++;
+
+	i += ni_usb_setup_t1_delay(&writes[i], board->t1_nano_sec, &actual_ns);
+
 	writes[i].device = NIUSB_SUBDEV_TNT4882;
 	writes[i].address = nec7210_to_tnt4882_offset(AUXMR);
 	writes[i].value = AUXRG | NTNL_BIT;
 	i++;
-#if 0	// request system control
-	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, CMDR, SETSC);
-	i += ni_usb_bulk_register_write(&out_data[i], NIUSB_SUBDEV_TNT4882, nec7210_to_tnt4882_offset(AUXMR), AUX_CIFC);
-#endif
-	// primary address
+	writes[i].device = NIUSB_SUBDEV_TNT4882;
+	writes[i].address = CMDR;
+	if ( board-> master) mask = SETSC; // set system controller
+	else                 mask = CLRSC; // clear system controller
+	writes[i].value = mask;
+	i++;
+	writes[i].device = NIUSB_SUBDEV_TNT4882;
+	writes[i].address = nec7210_to_tnt4882_offset(AUXMR);
+	writes[i].value = AUX_CIFC;
+	i++;
 	writes[i].device = NIUSB_SUBDEV_TNT4882;
 	writes[i].address = nec7210_to_tnt4882_offset(ADR);
 	writes[i].value = board->pad;
@@ -1564,16 +1563,15 @@ static int ni_usb_init(gpib_board_t *board) {
 	writes[i].address = 0x0;
 	writes[i].value = board->pad;
 	i++;
-	// secondary address
+
 	i += ni_usb_write_sad(&writes[i], board->sad, board->sad >= 0);
-	// is this a timeout?
+
 	writes[i].device = NIUSB_SUBDEV_UNKNOWN2;
-	writes[i].address = 0x2;
+	writes[i].address = 0x2; // could this be a timeout ?
 	writes[i].value = 0xfd;
 	i++;
-	// what is this?  There is no documented tnt4882 register at offset 0xf
 	writes[i].device = NIUSB_SUBDEV_TNT4882;
-	writes[i].address = 0xf;
+	writes[i].address = 0xf; // undocumented address
 	writes[i].value = 0x11;
 	i++;
 	writes[i].device = NIUSB_SUBDEV_TNT4882;
@@ -1584,11 +1582,34 @@ static int ni_usb_init(gpib_board_t *board) {
 	writes[i].address = nec7210_to_tnt4882_offset(AUXMR);
 	writes[i].value = AUX_CPPF;
 	i++;
-	if ( i > writes_length ) {
+	if ( i > NUM_INIT_WRITES ) {
 		printk("%s: %s: bug!, buffer overrun, i=%i\n", __FILE__, __FUNCTION__, i);
-		return -EINVAL;
+		return 0;
 	}
-	retval = ni_usb_write_registers(ni_priv, writes, i, &ibsta);
+	return i;
+}
+
+static int ni_usb_init(gpib_board_t *board) {
+	int retval;
+	ni_usb_private_t *ni_priv = board->private_data;
+	struct ni_usb_register *writes;
+	unsigned int ibsta;
+	int writes_len;
+
+	writes = kmalloc(sizeof(struct ni_usb_register) * NUM_INIT_WRITES, GFP_KERNEL);
+	if ( writes == NULL ) {
+		printk("%s: %s: kmalloc failed\n", __FILE__, __FUNCTION__);
+		return -ENOMEM;
+	}
+
+	board->t1_nano_sec = 500;
+
+	writes_len = ni_usb_setup_init(board, writes);
+	if ( writes_len ) {
+		retval = ni_usb_write_registers(ni_priv, writes, writes_len, &ibsta);
+	} else {
+		return -EFAULT;
+	}
 	kfree(writes);
 	if ( retval ) {
 		printk("%s: %s: register write failed, retval=%i\n", __FILE__, __FUNCTION__, retval);
@@ -2249,7 +2270,10 @@ static void ni_usb_driver_disconnect(struct usb_interface *interface) {
 }
 
 static int ni_usb_driver_suspend(struct usb_interface *interface, pm_message_t message ) {
-	int i;
+	struct usb_device *usb_dev;
+	struct ni_usb_register susp[2];
+	unsigned int ibsta;
+	int i, retval;
 
 	for (i = 0; i < MAX_NUM_NI_USB_INTERFACES; i++)	{
 		if ( ni_usb_driver_interfaces[i] == interface ) {
@@ -2257,15 +2281,29 @@ static int ni_usb_driver_suspend(struct usb_interface *interface, pm_message_t m
 			if ( board ) {
 				ni_usb_private_t *ni_priv = board->private_data;
 				ni_usb_set_interrupt_monitor(board, 0);
-				if ( ni_priv && ni_priv->interrupt_urb ) {
-					mutex_lock(&ni_priv->bulk_transfer_lock);
-					mutex_lock(&ni_priv->control_transfer_lock);
-					mutex_lock(&ni_priv->interrupt_transfer_lock);
-					ni_usb_cleanup_urbs(ni_priv);
-					mutex_unlock(&ni_priv->interrupt_transfer_lock);
-					mutex_unlock(&ni_priv->control_transfer_lock);
-					mutex_unlock(&ni_priv->bulk_transfer_lock);
+				if ( ni_priv ) {
+					i = 0;
+					susp[i].device = NIUSB_SUBDEV_TNT4882;
+					susp[i].address = nec7210_to_tnt4882_offset(AUXMR);
+					susp[i].value = AUX_CR; // chip reset
+					i++;
+					susp[i].device = NIUSB_SUBDEV_UNKNOWN3;
+					susp[i].address = 0x10;
+					susp[i].value = 0x0;
+					i++;
+					retval = ni_usb_write_registers(ni_priv, susp, i, &ibsta);
+					if ( retval ) {
+						printk("%s: register write failed, retval=%i\n",  __FUNCTION__, retval);
+					}
+					if ( ni_priv->interrupt_urb ) {
+						mutex_lock(&ni_priv->interrupt_transfer_lock);
+						ni_usb_cleanup_urbs(ni_priv);
+						mutex_unlock(&ni_priv->interrupt_transfer_lock);
+					}
 				}
+				usb_dev = interface_to_usbdev( ni_priv->bus_interface );
+				dev_info( &usb_dev->dev, "bus %d dev num %d  gpib minor %d, ni usb interface %i suspended\n",
+					usb_dev->bus->busnum, usb_dev->devnum, board->minor, i);
 			}
 			break;
 		}
@@ -2274,29 +2312,49 @@ static int ni_usb_driver_suspend(struct usb_interface *interface, pm_message_t m
 }
 
 static int ni_usb_driver_resume(struct usb_interface *interface ) {
-	int i, retval;
 	struct usb_device *usb_dev;
+	struct ni_usb_register *writes;
+	unsigned int ibsta;
+	int i, retval, writes_len;
 
 	for (i = 0; i < MAX_NUM_NI_USB_INTERFACES; i++)	{
 		if ( ni_usb_driver_interfaces[i] == interface ) {
 			gpib_board_t *board = usb_get_intfdata(interface);
 			if ( board ) {
 				ni_usb_private_t *ni_priv = board->private_data;
-				if ( ni_priv && ni_priv->interrupt_urb ) {
-					mutex_lock( &ni_priv->interrupt_transfer_lock );
-					retval = usb_submit_urb( ni_priv->interrupt_urb, GFP_KERNEL );
-					if ( retval ) {
-						printk("%s: failed to resubmit interrupt urb, retval=%i\n", __FUNCTION__, retval);
-					} else {
-						usb_dev = interface_to_usbdev( ni_priv->bus_interface );
-						dev_info( &usb_dev->dev, "bus %d dev num %d  gpib minor %d, ni usb interface %i resumed\n",
-							usb_dev->bus->busnum, usb_dev->devnum, board->minor, i);
-						retval = ni_usb_set_interrupt_monitor(board,  ni_usb_ibsta_monitor_mask);
-						if ( retval < 0 ) {
-							printk("%s: failed to set interrupt monitor, retval=%i\n", __FUNCTION__, retval);
+				if ( ni_priv ) {
+					if ( ni_priv->interrupt_urb ) {
+						mutex_lock( &ni_priv->interrupt_transfer_lock );
+						retval = usb_submit_urb( ni_priv->interrupt_urb, GFP_KERNEL );
+						if ( retval ) {
+							printk("%s: failed to resubmit interrupt urb, retval=%i\n", __FUNCTION__, retval);
+						} else {
+							usb_dev = interface_to_usbdev( ni_priv->bus_interface );
+							dev_info( &usb_dev->dev, "bus %d dev num %d  gpib minor %d, ni usb interface %i resumed\n",
+								usb_dev->bus->busnum, usb_dev->devnum, board->minor, i);
 						}
+						mutex_unlock( &ni_priv->interrupt_transfer_lock );
 					}
-					mutex_unlock( &ni_priv->interrupt_transfer_lock );
+
+					writes = kmalloc(sizeof(struct ni_usb_register) * NUM_INIT_WRITES, GFP_KERNEL);
+					if ( writes == NULL ) {
+						printk("%s: %s: kmalloc failed\n", __FILE__, __FUNCTION__);
+						return -ENOMEM;
+					}
+
+				 	writes_len = ni_usb_setup_init(board, writes);
+
+					if ( writes_len ) {
+						retval = ni_usb_write_registers(ni_priv, writes, writes_len, &ibsta);
+					} else {
+						return -EFAULT;
+					}
+					kfree(writes);
+					if ( retval ) {
+						printk("%s: %s: register write failed, retval=%i\n", __FILE__, __FUNCTION__, retval);
+						return retval;
+					}
+					ni_usb_soft_update_status(board, ibsta, 0);
 				}
 			}
 			break;
