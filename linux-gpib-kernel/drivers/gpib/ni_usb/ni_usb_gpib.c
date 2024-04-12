@@ -2354,7 +2354,14 @@ static int ni_usb_driver_resume(struct usb_interface *interface ) {
 						printk("%s: %s: register write failed, retval=%i\n", __FILE__, __FUNCTION__, retval);
 						return retval;
 					}
+
 					ni_usb_soft_update_status(board, ibsta, 0);
+
+					retval = ni_usb_set_interrupt_monitor(board, ni_usb_ibsta_monitor_mask);
+					if ( retval ) {
+						printk("%s: %s: set interrupt monitor  failed, retval=%i\n", __FILE__, __FUNCTION__, retval);
+						return retval;
+					}
 				}
 			}
 			break;
