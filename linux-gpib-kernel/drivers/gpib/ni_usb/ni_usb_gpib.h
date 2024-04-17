@@ -99,6 +99,7 @@ typedef struct
 	struct timer_list bulk_timer;
 	ni_usb_urb_context_t context;
 	int product_id;
+	unsigned short ren_state;
 } ni_usb_private_t;
 
 struct ni_usb_status_block

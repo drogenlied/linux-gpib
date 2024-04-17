@@ -997,6 +997,7 @@ static void ni_usb_request_system_control( gpib_board_t *board, int request_cont
 		printk("%s: %s: register write failed, retval=%i\n", __FILE__, __FUNCTION__, retval);
 		return; // retval;
 	}
+	if (!request_control) ni_priv->ren_state = 0;
 	ni_usb_soft_update_status(board, ibsta, 0);
 	return; // 0;
 }
@@ -1065,6 +1066,7 @@ static void ni_usb_remote_enable(gpib_board_t *board, int enable) {
 		printk("%s: %s: register write failed, retval=%i\n", __FILE__, __FUNCTION__, retval);
 		return; //retval;
 	}
+	ni_priv->ren_state = enable;
 	ni_usb_soft_update_status(board, ibsta, 0);
 	return;// 0;
 }
@@ -2384,6 +2386,9 @@ static int ni_usb_driver_resume(struct usb_interface *interface ) {
 					if ( retval < 0 ) 	{
 						mutex_unlock(&ni_usb_hotplug_lock);
 						return retval;
+					}
+					if ( ni_priv->ren_state) {
+						ni_usb_remote_enable(board, 1);
 					}
 					usb_dev = interface_to_usbdev( ni_priv->bus_interface );
 					dev_info( &usb_dev->dev, "bus %d dev num %d  gpib minor %d, ni usb interface %i resumed\n",
