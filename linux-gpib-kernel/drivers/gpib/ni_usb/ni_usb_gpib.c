@@ -1602,8 +1602,6 @@ static int ni_usb_init(gpib_board_t *board) {
 		return -ENOMEM;
 	}
 
-	board->t1_nano_sec = 500;
-
 	writes_len = ni_usb_setup_init(board, writes);
 	if ( writes_len ) {
 		retval = ni_usb_write_registers(ni_priv, writes, writes_len, &ibsta);
@@ -1774,7 +1772,11 @@ static int ni_usb_b_read_serial_number(ni_usb_private_t *ni_priv) {
 		ni_usb_dump_raw_block(in_data, bytes_read);
 		goto serial_out;
 	}
-	if ( sizeof(results) / sizeof(results[0] ) < num_reads ) BUG();
+	if ( sizeof(results) / sizeof(results[0] ) < num_reads ) {
+		printk("Setup bug\n");
+		retval = -EINVAL;
+		goto serial_out;
+	}
 	ni_usb_parse_register_read_block(in_data, results, num_reads);
 	serial_number = 0;
 	for (j = 0; j < num_reads; ++j) {
@@ -2038,7 +2040,7 @@ static int ni_usb_attach(gpib_board_t *board, const gpib_board_config_t *config)
 		printk("ni_usb_gpib: usb_reset_configuration() failed.\n");
 	}
 	product_id = USBID_TO_CPU(interface_to_usbdev(ni_priv->bus_interface)->descriptor.idProduct);
-	printk("\tproduct id=0x%x\n", product_id);
+	ni_priv->product_id = product_id;
 
 	COMPAT_TIMER_SETUP(&ni_priv->bulk_timer, ni_usb_timeout_handler, 0);
 
@@ -2092,6 +2094,8 @@ static int ni_usb_attach(gpib_board_t *board, const gpib_board_config_t *config)
 		mutex_unlock(&ni_usb_hotplug_lock);
 		return retval;
 	}
+
+	board->t1_nano_sec = 500;
 
 	retval = ni_usb_init(board);
 	if ( retval < 0) {
@@ -2271,51 +2275,46 @@ static void ni_usb_driver_disconnect(struct usb_interface *interface) {
 
 static int ni_usb_driver_suspend(struct usb_interface *interface, pm_message_t message ) {
 	struct usb_device *usb_dev;
-	struct ni_usb_register susp[2];
-	unsigned int ibsta;
 	int i, retval;
+
+	mutex_lock(&ni_usb_hotplug_lock);
 
 	for (i = 0; i < MAX_NUM_NI_USB_INTERFACES; i++)	{
 		if ( ni_usb_driver_interfaces[i] == interface ) {
 			gpib_board_t *board = usb_get_intfdata(interface);
 			if ( board ) {
 				ni_usb_private_t *ni_priv = board->private_data;
-				ni_usb_set_interrupt_monitor(board, 0);
 				if ( ni_priv ) {
-					i = 0;
-					susp[i].device = NIUSB_SUBDEV_TNT4882;
-					susp[i].address = nec7210_to_tnt4882_offset(AUXMR);
-					susp[i].value = AUX_CR; // chip reset
-					i++;
-					susp[i].device = NIUSB_SUBDEV_UNKNOWN3;
-					susp[i].address = 0x10;
-					susp[i].value = 0x0;
-					i++;
-					retval = ni_usb_write_registers(ni_priv, susp, i, &ibsta);
+					ni_usb_set_interrupt_monitor(board, 0);
+					retval = ni_usb_shutdown_hardware(ni_priv);
 					if ( retval ) {
-						printk("%s: register write failed, retval=%i\n",  __FUNCTION__, retval);
+						mutex_unlock(&ni_usb_hotplug_lock);
+						return retval;
 					}
 					if ( ni_priv->interrupt_urb ) {
 						mutex_lock(&ni_priv->interrupt_transfer_lock);
 						ni_usb_cleanup_urbs(ni_priv);
 						mutex_unlock(&ni_priv->interrupt_transfer_lock);
 					}
+					usb_dev = interface_to_usbdev( ni_priv->bus_interface );
+					dev_info( &usb_dev->dev, "bus %d dev num %d  gpib minor %d, ni usb interface %i suspended\n",
+						usb_dev->bus->busnum, usb_dev->devnum, board->minor, i);
 				}
-				usb_dev = interface_to_usbdev( ni_priv->bus_interface );
-				dev_info( &usb_dev->dev, "bus %d dev num %d  gpib minor %d, ni usb interface %i suspended\n",
-					usb_dev->bus->busnum, usb_dev->devnum, board->minor, i);
+
 			}
 			break;
 		}
 	}
+
+	mutex_unlock(&ni_usb_hotplug_lock);
 	return 0;
 }
 
 static int ni_usb_driver_resume(struct usb_interface *interface ) {
 	struct usb_device *usb_dev;
-	struct ni_usb_register *writes;
-	unsigned int ibsta;
-	int i, retval, writes_len;
+	int i, retval;
+
+	mutex_lock(&ni_usb_hotplug_lock);
 
 	for (i = 0; i < MAX_NUM_NI_USB_INTERFACES; i++)	{
 		if ( ni_usb_driver_interfaces[i] == interface ) {
@@ -2328,45 +2327,73 @@ static int ni_usb_driver_resume(struct usb_interface *interface ) {
 						retval = usb_submit_urb( ni_priv->interrupt_urb, GFP_KERNEL );
 						if ( retval ) {
 							printk("%s: failed to resubmit interrupt urb, retval=%i\n", __FUNCTION__, retval);
-						} else {
-							usb_dev = interface_to_usbdev( ni_priv->bus_interface );
-							dev_info( &usb_dev->dev, "bus %d dev num %d  gpib minor %d, ni usb interface %i resumed\n",
-								usb_dev->bus->busnum, usb_dev->devnum, board->minor, i);
+							mutex_unlock( &ni_priv->interrupt_transfer_lock );
+							mutex_unlock(&ni_usb_hotplug_lock);
+							return retval;
 						}
 						mutex_unlock( &ni_priv->interrupt_transfer_lock );
-					}
-
-					writes = kmalloc(sizeof(struct ni_usb_register) * NUM_INIT_WRITES, GFP_KERNEL);
-					if ( writes == NULL ) {
-						printk("%s: %s: kmalloc failed\n", __FILE__, __FUNCTION__);
-						return -ENOMEM;
-					}
-
-				 	writes_len = ni_usb_setup_init(board, writes);
-
-					if ( writes_len ) {
-						retval = ni_usb_write_registers(ni_priv, writes, writes_len, &ibsta);
 					} else {
-						return -EFAULT;
+						printk("%s: bug! int urb not set up \n", __FUNCTION__ );
+						mutex_unlock(&ni_usb_hotplug_lock);
+						return -EINVAL;
 					}
-					kfree(writes);
-					if ( retval ) {
-						printk("%s: %s: register write failed, retval=%i\n", __FILE__, __FUNCTION__, retval);
+
+					switch (ni_priv->product_id) {
+					case USB_DEVICE_ID_NI_USB_B:
+						ni_usb_b_read_serial_number(ni_priv);
+						break;
+					case USB_DEVICE_ID_NI_USB_HS:
+					case USB_DEVICE_ID_MC_USB_488:
+					case USB_DEVICE_ID_KUSB_488A:
+						retval = ni_usb_hs_wait_for_ready(ni_priv);
+						if ( retval < 0 ) {
+							mutex_unlock(&ni_usb_hotplug_lock);
+							return retval;
+						}
+						break;
+					case USB_DEVICE_ID_NI_USB_HS_PLUS:
+						retval = ni_usb_hs_wait_for_ready(ni_priv);
+						if ( retval < 0 ) {
+							mutex_unlock(&ni_usb_hotplug_lock);
+							return retval;
+						}
+						retval = ni_usb_hs_plus_extra_init(ni_priv);
+						if ( retval < 0 ) {
+							mutex_unlock(&ni_usb_hotplug_lock);
+							return retval;
+						}
+						break;
+					default:
+						mutex_unlock(&ni_usb_hotplug_lock);
+						printk("\tDriver bug: unknown endpoints for usb device id\n");
+						return -EINVAL;
+					}
+
+					retval = ni_usb_set_interrupt_monitor(board, 0);
+					if ( retval < 0 ) {
+						mutex_unlock(&ni_usb_hotplug_lock);
 						return retval;
 					}
 
-					ni_usb_soft_update_status(board, ibsta, 0);
-
+					retval = ni_usb_init(board);
+					if ( retval < 0) {
+						mutex_unlock(&ni_usb_hotplug_lock);
+						return retval;
+					}
 					retval = ni_usb_set_interrupt_monitor(board, ni_usb_ibsta_monitor_mask);
-					if ( retval ) {
-						printk("%s: %s: set interrupt monitor  failed, retval=%i\n", __FILE__, __FUNCTION__, retval);
+					if ( retval < 0 ) 	{
+						mutex_unlock(&ni_usb_hotplug_lock);
 						return retval;
 					}
+					usb_dev = interface_to_usbdev( ni_priv->bus_interface );
+					dev_info( &usb_dev->dev, "bus %d dev num %d  gpib minor %d, ni usb interface %i resumed\n",
+						usb_dev->bus->busnum, usb_dev->devnum, board->minor, i);
 				}
 			}
 			break;
 		}
 	}
+	mutex_unlock(&ni_usb_hotplug_lock);
 	return 0;
 }
 
