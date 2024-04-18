@@ -1953,7 +1953,7 @@ static int ni_usb_hs_plus_extra_init(ni_usb_private_t *ni_priv) {
 
 	do {
 		transfer_size = 16;
-		BUG_ON(transfer_size > buffer_size);
+
 		retval = ni_usb_receive_control_msg(ni_priv, NI_USB_HS_PLUS_0x48_REQUEST, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 			0x0, 0x0, buffer, transfer_size, 1000);
 		if ( retval < 0 ) {
@@ -1967,7 +1967,7 @@ static int ni_usb_hs_plus_extra_init(ni_usb_private_t *ni_priv) {
 		}
 
 		transfer_size = 2;
-		BUG_ON(transfer_size > buffer_size);
+
 		retval = ni_usb_receive_control_msg(ni_priv, NI_USB_HS_PLUS_LED_REQUEST, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 						0x1, 0x0, buffer, transfer_size, 1000);
 		if ( retval < 0 ) {
@@ -1981,7 +1981,7 @@ static int ni_usb_hs_plus_extra_init(ni_usb_private_t *ni_priv) {
 		}
 
 		transfer_size = 9;
-		BUG_ON(transfer_size > buffer_size);
+
 		retval = ni_usb_receive_control_msg(ni_priv, NI_USB_HS_PLUS_0xf8_REQUEST, USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_INTERFACE,
 			0x0, 0x1, buffer, transfer_size, 1000);
 		if ( retval < 0 ) {
