@@ -1702,6 +1702,7 @@ static int agilent_82357a_driver_suspend( struct usb_interface *interface, pm_me
 					mutex_lock(&a_priv->interrupt_alloc_lock);
 					agilent_82357a_cleanup_urbs(a_priv);
 					mutex_unlock(&a_priv->interrupt_alloc_lock);
+					usb_dev = interface_to_usbdev(a_priv->bus_interface);
 					dev_info(&usb_dev->dev,"bus %d dev num %d  gpib minor %d, agilent usb interface %i suspended\n",
 						usb_dev->bus->busnum, usb_dev->devnum, board->minor, i);
 				}
