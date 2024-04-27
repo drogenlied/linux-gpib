@@ -1728,8 +1728,6 @@ static int agilent_82357a_driver_resume(struct usb_interface *interface) {
 			if ( board ) {
 				agilent_82357a_private_t *a_priv = board->private_data;
 				if ( a_priv ) {
-					agilent_82357a_abort(a_priv, 0);
-					agilent_82357a_abort(a_priv, 0);
 					if ( a_priv->interrupt_urb ) {
 						mutex_lock(&a_priv->interrupt_alloc_lock);
 						retval = usb_submit_urb(a_priv->interrupt_urb, GFP_KERNEL);
