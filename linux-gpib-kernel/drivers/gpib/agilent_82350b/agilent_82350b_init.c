@@ -162,7 +162,6 @@ uint8_t agilent_82350b_serial_poll_status( gpib_board_t *board )
 int agilent_82350b_line_status( const gpib_board_t *board )
 {
 	agilent_82350b_private_t *priv = board->private_data;
-//	if (priv->using_fifos && (board->status & TACS)) return -EBUSY;
 	return tms9914_line_status( board, &priv->tms9914_priv );
 }
 unsigned int agilent_82350b_t1_delay( gpib_board_t *board, unsigned int nanosec )
