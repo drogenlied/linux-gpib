@@ -84,6 +84,7 @@ enum
 	BUS_ERROR_BN,	// output error has occurred
 	RFD_HOLDOFF_BN,	// rfd holdoff in effect
 	DEV_CLEAR_BN,	// device clear received
+	ADR_CHANGE_BN,	// address state change occured
 };
 
 // interface functions
