@@ -177,6 +177,8 @@ struct gpio_desc * all_descriptors[GPIB_PINS+SN7516X_PINS];
 #define TE all_descriptors[18]
 #define ACT_LED all_descriptors[19]
 
+static int gpio_offset=0;
+module_param(gpio_offset,int,0660);
 int gpios_vector[] = {
         D01_pin_nr,
         D02_pin_nr,
@@ -963,15 +965,15 @@ static int allocate_gpios(void) {
         int j;
         int last = sn7516x ? GPIB_PINS + SN7516X_PINS : GPIB_PINS ;
         for ( j=0 ; j<last ; j++ ) {
-                if (gpio_request_one (gpios_vector[j], GPIOF_DIR_IN, NULL)) break;
-                all_descriptors[j] = gpio_to_desc (gpios_vector[j]);
+                if (gpio_request_one (gpios_vector[j]+gpio_offset, GPIOF_DIR_IN, NULL)) break;
+                all_descriptors[j] = gpio_to_desc (gpios_vector[j]+gpio_offset);
         }
         if ( j != last) {                    /* error - undo what already done */
                 dbg_printk (0, "request for gpios failed at %d.\n", j);
                 while (j) {
                         gpiod_put(all_descriptors[--j]);
                         all_descriptors[j] = 0;
-                        gpio_free (gpios_vector[j]);
+                        gpio_free (gpios_vector[j]+gpio_offset);
                 }
                 return -1;
         }
@@ -985,7 +987,7 @@ static void release_gpios(void) {
                 if (all_descriptors[--j]) {
                         gpiod_put(all_descriptors[j]);
                         all_descriptors[j] = 0;
-                        gpio_free (gpios_vector[j]);
+                        gpio_free (gpios_vector[j]+gpio_offset);
                 }
         }
 }
